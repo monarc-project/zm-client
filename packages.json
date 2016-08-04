@@ -1,0 +1,42 @@
+{
+    "packages": {
+        "monarc/frontoffice": {
+            "dev-master": {
+                "name": "monarc/frontoffice",
+                "type": "library",
+                "version": "dev-master",
+                "description": "Frontoffice for Monarc project",
+                "authors": [
+                    {"name": "Cyril Rouyer", "email": "cyril@netlor.fr"},
+                    {"name": "Guillaume Lesniak", "email": "guillaume@netlor.fr"},
+                    {"name": "Jerôme De Almeida", "email": "jerome.dealmeida@vesperiagroup.com"},
+                    {"name": "Benjamin Ganivet", "email": "benjamin@netlor.fr"},
+                    {"name": "Thomas Metois", "email": "thomas@netlor.fr"}
+                ],
+                "dist": {
+                    "url": "https://rhea.netlor.fr/monarc/zm_client/archive/master.zip",
+                    "type": "zip"
+                },
+                "source": {
+                    "url": "https://rhea.netlor.fr:3000/monarc/zm_client.git",
+                    "type": "git",
+                    "reference": "master"
+                },
+                "require": {
+                    "php": ">=5.5",
+                    "monarc/core": "dev-master"
+                },
+                "autoload": {
+                    "psr-0": {"MonarcFO\\":"/"}
+                },
+                "repositories":[
+                    {
+                        "type": "composer",
+                        "url": "https://rhea.netlor.fr/monarc/zm_core/raw/master/packages.json"
+                    }
+                ]
+            }
+        }
+    }
+}
+
