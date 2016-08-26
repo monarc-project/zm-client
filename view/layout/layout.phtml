@@ -23,12 +23,16 @@
         // Global files
         ->appendFile($this->basePath('js/angular-common-libs.js'))
         ->appendFile($this->basePath('js/translations.js'))
+        // ANR Module
+        ->appendFile($this->basePath('js/anr/AnrModule.js'))
+        ->appendFile($this->basePath('js/anr/AnrService.js'))
         // Client app files
         ->appendFile($this->basePath('js/ClientApp.js'))
         ->appendFile($this->basePath('js/UserService.js'))
         ->appendFile($this->basePath('js/ConfigService.js'))
         ->appendFile($this->basePath('js/ErrorService.js'))
         ->appendFile($this->basePath('js/ClientLoginCtrl.js'))
+        ->appendFile($this->basePath('js/ClientMainCtrl.js'))
  ?>
 
 </head>

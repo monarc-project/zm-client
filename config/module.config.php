@@ -84,6 +84,16 @@ return array(
                     ),
                 ),
             ),
+
+            'monarc_api_config' => array(
+                'type' => 'literal',
+                'options' => array(
+                    'route' => '/api/config',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiConfig',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -98,6 +108,7 @@ return array(
             '\MonarcFO\Controller\ApiAdminUsers'            => '\MonarcFO\Controller\ApiAdminUsersControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsersRoles'       => '\MonarcFO\Controller\ApiAdminUsersRolesControllerFactory',
             '\MonarcFO\Controller\ApiUserProfile'           => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
+            '\MonarcFO\Controller\ApiConfig'                => '\MonarcFO\Controller\ApiConfigControllerFactory',
         ),
     ),
 
