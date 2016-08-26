@@ -4,7 +4,18 @@ namespace MonarcFO;
 return array(
     'router' => array(
         'routes' => array(
-        	'monarc_api_user_profile' => array(
+            'home' => array(
+                'type' => 'Zend\Mvc\Router\Http\Literal',
+                'options' => array(
+                    'route' => '/',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\Index',
+                        'action' => 'index',
+                    ),
+                ),
+            ),
+
+            'monarc_api_user_profile' => array(
                 'type' => 'literal',
                 'options' => array(
                     'route' => '/api/user/profile',
@@ -80,12 +91,13 @@ return array(
         'invokables' => array(
         ),
         'factories' => array(
-            '\MonarcBO\Controller\ApiUserPassword'          => '\MonarcBO\Controller\ApiUserPasswordControllerFactory',
-            '\MonarcBO\Controller\ApiAdminPasswords'        => '\MonarcBO\Controller\ApiAdminPasswordsControllerFactory',
-            '\MonarcBO\Controller\ApiAdminRoles'            => '\MonarcBO\Controller\ApiAdminRolesControllerFactory',
-            '\MonarcBO\Controller\ApiAdminUsers'            => '\MonarcBO\Controller\ApiAdminUsersControllerFactory',
-            '\MonarcBO\Controller\ApiAdminUsersRoles'       => '\MonarcBO\Controller\ApiAdminUsersRolesControllerFactory',
-            '\MonarcBO\Controller\ApiUserProfile'           => '\MonarcBO\Controller\ApiUserProfileControllerFactory',
+            '\MonarcFO\Controller\Index'                    => '\MonarcCore\Controller\IndexControllerFactory',
+            '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
+            '\MonarcFO\Controller\ApiAdminPasswords'        => '\MonarcFO\Controller\ApiAdminPasswordsControllerFactory',
+            '\MonarcFO\Controller\ApiAdminRoles'            => '\MonarcFO\Controller\ApiAdminRolesControllerFactory',
+            '\MonarcFO\Controller\ApiAdminUsers'            => '\MonarcFO\Controller\ApiAdminUsersControllerFactory',
+            '\MonarcFO\Controller\ApiAdminUsersRoles'       => '\MonarcFO\Controller\ApiAdminUsersRolesControllerFactory',
+            '\MonarcFO\Controller\ApiUserProfile'           => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
         ),
     ),
 
@@ -100,6 +112,7 @@ return array(
         ),
         'template_map' => array(
             'monarc-fo/index/index' => __DIR__ . '/../view/layout/layout.phtml',
+            'error/404' => __DIR__ . '/../view/layout/layout.phtml',
         ),
         'template_path_stack' => array(
             __DIR__ . '/../view',

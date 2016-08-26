@@ -1,0 +1,37 @@
+<?php echo $this->doctype(); ?>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <?php echo $this->headTitle('The SMILE Project')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+    <?php echo $this->headMeta()
+        ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+        ->appendHttpEquiv('X-UA-Compatible', 'IE=edge');
+    ?>
+
+    <!-- Le styles -->
+    <?php echo $this->headLink(array('rel' => 'shortcut icon', 'type' => 'image/png', 'href' => $this->basePath() . '/img/favicon.png'))
+        ->prependStylesheet($this->basePath('css/style.css'))
+        ->prependStylesheet($this->basePath('css/material-icons.css'))
+        ->prependStylesheet($this->basePath('css/angular-common-libs.css')) ?>
+
+    <!-- Scripts -->
+    <?php echo $this->headScript()
+        // TODO: In Production mode, use app.min.js which is a minified version of everything below. It must be
+        // generated using grunt concat/uglify task.
+        // Global files
+        ->appendFile($this->basePath('js/angular-common-libs.js'))
+        ->appendFile($this->basePath('js/translations.js'))
+ ?>
+
+</head>
+<body ng-app="ClientApp" layout="column" flex>
+<section layout="row" flex ui-view="main">
+</section>
+
+<?php echo $this->inlineScript() ?>
+
+</body>
+</html>
+

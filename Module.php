@@ -45,8 +45,8 @@ class Module
             ),
             'factories' => array(
                '\MonarcCli\Model\Db' => function($sm){
-                    return new \MonarcCore\Model\Db($sm->get('doctrine.entitymanager.orm_default'));
-                },
+                   return new \MonarcCore\Model\Db($sm->get('doctrine.entitymanager.orm_cli'));
+               },
             ),
         );
     }
