@@ -94,6 +94,98 @@ return array(
                     ),
                 ),
             ),
+
+
+            'monarc_api_anr' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiAnr',
+                    ),
+                ),
+            ),
+
+            'monarc_api_anr_library' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/library[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiAnrLibrary',
+                    ),
+                ),
+            ),
+
+            'monarc_api_anr_instances' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/instances[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiAnrInstances',
+                    ),
+                ),
+            ),
+
+            'monarc_api_anr_instances_risks' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/instances-risks[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiAnrInstancesRisks',
+                    ),
+                ),
+            ),
+
+            'monarc_api_anr_instances_consequences' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/instances-consequences[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiAnrInstancesConsequences',
+                    ),
+                ),
+            ),
+
+            'monarc_api_anr_instances_risksop' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/instances-oprisks[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiAnrInstancesRisksOp',
+                    ),
+                ),
+            ),
+
+            'monarc_api_models' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/models[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiModels',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -147,10 +239,22 @@ return array(
         // Utilisateur : Accès RWD par analyse
         'userfo'=> array(
             'monarc_api_user_profile',
+            'monarc_api_anr_instances',
+            'monarc_api_anr_instances_risks',
+            'monarc_api_anr_instances_risksop',
+            'monarc_api_anr_instances_consequences',
+            'monarc_api_anr_instances',
+            'monarc_api_anr_library',
         ),
         // Utilisateur réduit : Accès consultation uniquement
         'userminfo'=> array(
             'monarc_api_user_profile',
+            'monarc_api_anr_instances',
+            'monarc_api_anr_instances_risks',
+            'monarc_api_anr_instances_risksop',
+            'monarc_api_anr_instances_consequences',
+            'monarc_api_anr_instances',
+            'monarc_api_anr_library',
         ),
     )
 );
