@@ -186,6 +186,47 @@ return array(
                     ),
                 ),
             ),
+
+            'monarc_api_scales_comments' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrId/scales/:scaleId/comments[/:id]',
+                    'constraints' => array(
+                        'anrId' => '[0-9]+',
+                        'scaleId' => '[0-9]+',
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiScalesComments',
+                    ),
+                ),
+            ),
+
+            'monarc_api_scales' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrId/scales[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiScales',
+                    ),
+                ),
+            ),
+
+            'monarc_api_scales_types' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrId/scales-types[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcCore\Controller\ApiScalesTypes',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -245,6 +286,9 @@ return array(
             'monarc_api_anr_instances_consequences',
             'monarc_api_anr_instances',
             'monarc_api_anr_library',
+            'monarc_api_scales',
+            'monarc_api_scales_comments',
+            'monarc_api_scales_types',
         ),
         // Utilisateur réduit : Accès consultation uniquement
         'userminfo'=> array(
@@ -255,6 +299,9 @@ return array(
             'monarc_api_anr_instances_consequences',
             'monarc_api_anr_instances',
             'monarc_api_anr_library',
+            'monarc_api_scales',
+            'monarc_api_scales_comments',
+            'monarc_api_scales_types',
         ),
     )
 );
