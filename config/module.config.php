@@ -56,7 +56,7 @@ return array(
                         'id' => '[0-9]+',
                     ),
                     'defaults' => array(
-                        'controller' => 'MonarcBO\Controller\ApiAdminRoles',
+                        'controller' => 'MonarcFO\Controller\ApiAdminRoles',
                     ),
                 ),
             ),

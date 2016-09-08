@@ -9,7 +9,7 @@ use Zend\View\Model\JsonModel;
  * Api Config Controller
  *
  * Class ApiConfigController
- * @package MonarcBO\Controller
+ * @package MonarcFO\Controller
  */
 class ApiConfigController extends AbstractController
 {
