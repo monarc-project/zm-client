@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class AddUserLanguage extends AbstractMigration
+class AddLanguageToUser extends AbstractMigration
 {
     /**
      * Change Method.
@@ -27,8 +27,6 @@ class AddUserLanguage extends AbstractMigration
      */
     public function change()
     {
-        $this->table('users')
-            ->addColumn('language', 'integer', array('null' => false, 'signed' => false))
-            ->save();
+        $this->table('users')->addColumn('language', 'integer')->update();
     }
 }
