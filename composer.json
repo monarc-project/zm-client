@@ -10,17 +10,10 @@
         {"name": "Thomas Metois", "email": "thomas@netlor.fr"}
     ],
     "require": {
-        "php": ">=5.5",
-        "monarc/core": "dev-master"
+        "php": ">=5.5"
     },
     "autoload": {
         "psr-0": {"MonarcFO\\":"/"}
-    },
-    "repositories":[
-        {
-            "type": "composer",
-            "url": "https://rhea.netlor.fr/monarc/zm_core/raw/master/packages.json"
-        }
-    ]
+    }
 }
 
