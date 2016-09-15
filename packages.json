@@ -13,28 +13,17 @@
                     {"name": "Benjamin Ganivet", "email": "benjamin@netlor.fr"},
                     {"name": "Thomas Metois", "email": "thomas@netlor.fr"}
                 ],
-                "dist": {
-                    "url": "https://rhea.netlor.fr/monarc/zm_client/archive/master.zip",
-                    "type": "zip"
-                },
                 "source": {
-                    "url": "https://rhea.netlor.fr:3000/monarc/zm_client.git",
+                    "url": "https://github.com/CASES-LU/zm-client",
                     "type": "git",
                     "reference": "master"
                 },
                 "require": {
-                    "php": ">=5.5",
-                    "monarc/core": "dev-master"
+                    "php": ">=5.5"
                 },
                 "autoload": {
                     "psr-0": {"MonarcFO\\":"/"}
-                },
-                "repositories":[
-                    {
-                        "type": "composer",
-                        "url": "https://rhea.netlor.fr/monarc/zm_core/raw/master/packages.json"
-                    }
-                ]
+                }
             }
         }
     }
