@@ -128,7 +128,7 @@ class InitialDb extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
 
-        // Migration for table vulnerabilities_models
+        // Migration for table clients
         $table = $this->table('clients');
         $table
             ->addForeignKey('server_id', 'servers', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
