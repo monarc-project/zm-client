@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class DeleteClients extends AbstractMigration
+class RecreateClients extends AbstractMigration
 {
     /**
      * Change Method.
@@ -26,16 +26,6 @@ class DeleteClients extends AbstractMigration
      * with the Table class.
      */
     public function up()
-    {
-        $this->table('clients')
-            ->dropForeignKey('server_id')
-            ->dropForeignKey('logo_id')
-            ->update();
-
-        $this->dropTable('clients');
-    }
-
-    public function down()
     {
         // Migration for table clients
         $table = $this->table('clients');
@@ -73,5 +63,15 @@ class DeleteClients extends AbstractMigration
             ->addForeignKey('server_id', 'servers', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
             ->addForeignKey('logo_id', 'clients', 'id', array('delete' => 'SET_NULL','update' => 'RESTRICT'))
             ->update();
+    }
+
+    public function down()
+    {
+        $this->table('clients')
+            ->dropForeignKey('server_id')
+            ->dropForeignKey('logo_id')
+            ->update();
+
+        $this->dropTable('clients');
     }
 }

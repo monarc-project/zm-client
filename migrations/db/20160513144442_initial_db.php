@@ -116,7 +116,6 @@ class InitialDb extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
 
-
         // Migration for table users_roles
         $table = $this->table('users_roles');
         $table
