@@ -28,6 +28,16 @@ return array(
                 ),
             ),
 
+            'monarc_api_client_anr' => array(
+                'type' => 'literal',
+                'options' => array(
+                    'route' => '/api/client-anr',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnr',
+                    ),
+                ),
+            ),
+
             'monarc_api_config' => array(
                 'type' => 'literal',
                 'options' => array(
@@ -45,13 +55,14 @@ return array(
         ),
         'factories' => array(
             '\MonarcFO\Controller\Index'                    => '\MonarcCore\Controller\IndexControllerFactory',
-            '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
             '\MonarcFO\Controller\ApiAdminPasswords'        => '\MonarcFO\Controller\ApiAdminPasswordsControllerFactory',
             '\MonarcFO\Controller\ApiAdminRoles'            => '\MonarcFO\Controller\ApiAdminRolesControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsers'            => '\MonarcFO\Controller\ApiAdminUsersControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsersRoles'       => '\MonarcFO\Controller\ApiAdminUsersRolesControllerFactory',
-            '\MonarcFO\Controller\ApiUserProfile'           => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
+            '\MonarcFO\Controller\ApiAnr'                   => '\MonarcFO\Controller\ApiAnrControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                => '\MonarcFO\Controller\ApiConfigControllerFactory',
+            '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
+            '\MonarcFO\Controller\ApiUserProfile'           => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
         ),
     ),
 
@@ -72,6 +83,7 @@ return array(
             __DIR__ . '/../view',
         ),
     ),
+
     // Placeholder for console routes
     'console' => array(
         'router' => array(
@@ -96,10 +108,11 @@ return array(
             'monarc_api_anr_instances_consequences',
             'monarc_api_anr_instances',
             'monarc_api_anr_library',
+            'monarc_api_client_anr',
+            'monarc_api_models',
             'monarc_api_scales',
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
-            'monarc_api_models',
         ),
         // Utilisateur réduit : Accès consultation uniquement
         'userminfo'=> array(

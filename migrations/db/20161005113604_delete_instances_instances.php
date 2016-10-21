@@ -28,7 +28,6 @@ class DeleteInstancesInstances extends AbstractMigration
      */
     public function change()
     {
-
         //instances
         $this->table('instances')
             ->addColumn('position', 'integer', array('null' => true, 'default' => '0', 'limit' => 11))
