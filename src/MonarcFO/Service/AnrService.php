@@ -3,7 +3,10 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Model\Table\AmvTable;
 use MonarcCore\Model\Table\ModelTable;
+use MonarcCore\Model\Table\RolfRiskTable;
+use MonarcCore\Model\Table\RolfTagTable;
 use MonarcCore\Service\AbstractService;
+use MonarcCore\Model\Table\RolfCategoryTable;
 
 /**
  * Anr Service
@@ -18,6 +21,9 @@ class AnrService extends AbstractService
     protected $modelTable;
     protected $measureTable;
     protected $objectTable;
+    protected $rolfCategoryTable;
+    protected $rolfRiskTable;
+    protected $rolfTagTable;
     protected $threatTable;
     protected $vulnerabilityTable;
 
@@ -25,6 +31,9 @@ class AnrService extends AbstractService
     protected $assetCliTable;
     protected $measureCliTable;
     protected $objectCliTable;
+    protected $rolfCategoryCliTable;
+    protected $rolfRiskCliTable;
+    protected $rolfTagCliTable;
     protected $threatCliTable;
     protected $vulnerabilityCliTable;
 
@@ -86,6 +95,64 @@ class AnrService extends AbstractService
             $i++;
         }
 
+        //duplicate rolf categories
+        $i = 1;
+        /** @var RolfCategoryTable $rolfCategoryTable */
+        $rolfCategoryTable = $this->get('rolfCategoryTable');
+        $rolfCategories = $rolfCategoryTable->fetchAllObject();
+        $rolfCategoriesNewIds = [];
+        foreach($rolfCategories as $rolfCategory) {
+            $last = ($i == count($rolfCategories)) ? true : false;
+
+            $newRolfCategory = clone $rolfCategory;
+
+            $this->get('rolfCategoryCliTable')->save($newRolfCategory, $last);
+
+            $rolfCategoriesNewIds[$rolfCategory->id] = $newRolfCategory;
+
+            $i++;
+        }
+
+        //duplicate rolf tags
+        $i = 1;
+        /** @var RolfTagTable $rolfTagTable */
+        $rolfTagTable = $this->get('rolfTagTable');
+        $rolfTags = $rolfTagTable->fetchAllObject();
+        $rolfTagsNewIds = [];
+        foreach($rolfTags as $rolfTag) {
+            $last = ($i == count($rolfTags)) ? true : false;
+
+            $newRolfTag = clone $rolfTag;
+
+            $this->get('rolfTagCliTable')->save($newRolfTag, $last);
+
+            $rolfTagsNewIds[$rolfTag->id] = $newRolfTag;
+
+            $i++;
+        }
+
+        //duplicate rolf risk
+        $i = 1;
+        /** @var RolfRiskTable $rolfRiskTable */
+        $rolfRiskTable = $this->get('rolfRiskTable');
+        $rolfRisks = $rolfRiskTable->fetchAllObject();
+        foreach($rolfRisks as $rolfRisk) {
+            $last = ($i == count($rolfRisks)) ? true : false;
+
+            $newRolfRisk = clone $rolfRisk;
+
+            foreach($rolfRisk->categories as $key => $category) {
+                $newRolfRisk->setCategory($key, $rolfCategoriesNewIds[$category->id]);
+            }
+
+            foreach($rolfRisk->tags as $key => $tag) {
+                $newRolfRisk->setTag($key, $rolfTagsNewIds[$tag->id]);
+            }
+
+            $this->get('rolfRiskCliTable')->save($newRolfRisk, $last);
+
+            $i++;
+        }
 
         return $id;
     }

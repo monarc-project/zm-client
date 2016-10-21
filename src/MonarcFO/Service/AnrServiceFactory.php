@@ -8,12 +8,16 @@ class AnrServiceFactory extends AbstractServiceFactory
     protected $ressources = array(
 
         //core
-        'entity' => 'MonarcCore\Model\Entity\Anr',
-        'table' => 'MonarcCore\Model\Table\AnrTable',
-        'amvTable' => 'MonarcCore\Model\Table\AmvTable',
+        'entity'    => 'MonarcCore\Model\Entity\Anr',
+        'table'     => 'MonarcCore\Model\Table\AnrTable',
+        'amvTable'  => 'MonarcCore\Model\Table\AmvTable',
         'assetTable' => 'MonarcCore\Model\Table\AssetTable',
         'measureTable' => 'MonarcCore\Model\Table\MeasureTable',
         'modelTable' => 'MonarcCore\Model\Table\ModelTable',
+        'objectTable'   => 'MonarcCore\Model\Table\ObjectTable',
+        'rolfCategoryTable' => 'MonarcCore\Model\Table\RolfCategoryTable',
+        'rolfRiskTable' => 'MonarcCore\Model\Table\RolfRiskTable',
+        'rolfTagTable' => 'MonarcCore\Model\Table\RolfTagTable',
         'threatTable' => 'MonarcCore\Model\Table\ThreatTable',
         'vulnerabilityTable' => 'MonarcCore\Model\Table\VulnerabilityTable',
 
@@ -23,6 +27,9 @@ class AnrServiceFactory extends AbstractServiceFactory
         'amvCliTable' => 'MonarcFO\Model\Table\AmvTable',
         'assetCliTable' => 'MonarcFO\Model\Table\AssetTable',
         'measureCliTable' => 'MonarcFO\Model\Table\MeasureTable',
+        'rolfCategoryCliTable' => 'MonarcFO\Model\Table\RolfCategoryTable',
+        'rolfRiskCliTable' => 'MonarcFO\Model\Table\RolfRiskTable',
+        'rolfTagCliTable' => 'MonarcFO\Model\Table\RolfTagTable',
         'objectCliTable' => 'MonarcFO\Model\Table\ObjectTable',
         'threatCliTable' => 'MonarcFO\Model\Table\ThreatTable',
         'vulnerabilityCliTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
