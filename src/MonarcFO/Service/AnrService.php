@@ -32,12 +32,9 @@ class AnrService extends AbstractService
     public function createFromModelToClient($modelId) {
 
         //retrieve model information
-        /** @var ModelTable $modeltable */
+        /** @var ModelTable $modelTable */
         $modelTable = $this->get('modelTable');
         $model = $modelTable->getEntity($modelId);
-        if (!$model) {
-            throw new \Exception('Model not exist', 412);
-        }
 
         $anr = $model->anr;
 
@@ -60,6 +57,7 @@ class AnrService extends AbstractService
 
                 $newEntity = clone $entity;
                 $newEntity->setAnr($newAnr);
+                $newEntity->setModels(null);
 
                 $this->get($value . 'CliTable')->save($newEntity, $last);
 
@@ -81,7 +79,7 @@ class AnrService extends AbstractService
             $newAmv->setAnr($newAnr);
             $newAmv->setAsset($assetNewIds[$amv->asset->id]);
             $newAmv->setThreat($threatNewIds[$amv->threat->id]);
-            $newAmv->setVulnerability($vulnerabilityNewIds[$amv->threat->id]);
+            $newAmv->setVulnerability($vulnerabilityNewIds[$amv->vulnerability->id]);
 
             $this->get('amvCliTable')->save($newAmv, $last);
 
