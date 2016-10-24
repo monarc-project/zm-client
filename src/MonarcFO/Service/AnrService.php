@@ -3,6 +3,8 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Model\Table\AmvTable;
 use MonarcCore\Model\Table\ModelTable;
+use MonarcCore\Model\Table\ObjectCategoryTable;
+use MonarcCore\Model\Table\ObjectTable;
 use MonarcCore\Model\Table\RolfRiskTable;
 use MonarcCore\Model\Table\RolfTagTable;
 use MonarcCore\Service\AbstractService;
@@ -21,6 +23,7 @@ class AnrService extends AbstractService
     protected $modelTable;
     protected $measureTable;
     protected $objectTable;
+    protected $objectCategoryTable;
     protected $rolfCategoryTable;
     protected $rolfRiskTable;
     protected $rolfTagTable;
@@ -31,6 +34,7 @@ class AnrService extends AbstractService
     protected $assetCliTable;
     protected $measureCliTable;
     protected $objectCliTable;
+    protected $objectCategoryCliTable;
     protected $rolfCategoryCliTable;
     protected $rolfRiskCliTable;
     protected $rolfTagCliTable;
@@ -97,14 +101,15 @@ class AnrService extends AbstractService
 
         //duplicate rolf categories
         $i = 1;
+        $rolfCategoriesNewIds = [];
         /** @var RolfCategoryTable $rolfCategoryTable */
         $rolfCategoryTable = $this->get('rolfCategoryTable');
         $rolfCategories = $rolfCategoryTable->fetchAllObject();
-        $rolfCategoriesNewIds = [];
         foreach($rolfCategories as $rolfCategory) {
             $last = ($i == count($rolfCategories)) ? true : false;
 
             $newRolfCategory = clone $rolfCategory;
+            $newRolfCategory->setAnr($newAnr);
 
             $this->get('rolfCategoryCliTable')->save($newRolfCategory, $last);
 
@@ -115,14 +120,15 @@ class AnrService extends AbstractService
 
         //duplicate rolf tags
         $i = 1;
+        $rolfTagsNewIds = [];
         /** @var RolfTagTable $rolfTagTable */
         $rolfTagTable = $this->get('rolfTagTable');
         $rolfTags = $rolfTagTable->fetchAllObject();
-        $rolfTagsNewIds = [];
         foreach($rolfTags as $rolfTag) {
             $last = ($i == count($rolfTags)) ? true : false;
 
             $newRolfTag = clone $rolfTag;
+            $newRolfTag->setAnr($newAnr);
 
             $this->get('rolfTagCliTable')->save($newRolfTag, $last);
 
@@ -140,6 +146,7 @@ class AnrService extends AbstractService
             $last = ($i == count($rolfRisks)) ? true : false;
 
             $newRolfRisk = clone $rolfRisk;
+            $newRolfRisk->setAnr($newAnr);
 
             foreach($rolfRisk->categories as $key => $category) {
                 $newRolfRisk->setCategory($key, $rolfCategoriesNewIds[$category->id]);
@@ -150,6 +157,58 @@ class AnrService extends AbstractService
             }
 
             $this->get('rolfRiskCliTable')->save($newRolfRisk, $last);
+
+            $i++;
+        }
+
+        //duplicate objects categories
+        $i = 1;
+        $objectsCategoriesNewIds = [];
+        /** @var ObjectCategoryTable $objectCategoryTable */
+        $objectCategoryTable = $this->get('objectCategoryTable');
+        $objectsCategories = $objectCategoryTable->fetchAllObject();
+        foreach($objectsCategories as $objectCategory) {
+            $last = ($i == count($objectsCategories)) ? true : false;
+
+            $newObjectCategory = clone $objectCategory;
+            $newObjectCategory->setAnr($newAnr);
+
+            if ($objectCategory->parent) {
+                $newObjectCategory->setParent($objectsCategoriesNewIds[$objectCategory->parent->id]);
+            }
+
+            if ($objectCategory->root) {
+                $newObjectCategory->setRoot($objectsCategoriesNewIds[$objectCategory->root->id]);
+            }
+
+            $this->get('objectCategoryCliTable')->save($newObjectCategory, $last);
+
+            $objectsCategoriesNewIds[$objectCategory->id] = $newObjectCategory;
+
+            $i++;
+        }
+
+
+        //duplicate objects
+        $i = 1;
+        $objectsNewIds = [];
+        /** @var ObjectTable $objectTable */
+        $objectTable = $this->get('objectTable');
+        $objects = $objectTable->fetchAllObject();
+        foreach($objects as $object) {
+            $last = ($i == count($objects)) ? true : false;
+
+            $newObject = clone $object;
+            $newObject->setAnr($newAnr);
+            $newObject->setCategory($objectsCategoriesNewIds[$object->category->id]);
+            $newObject->setAsset($assetNewIds[$object->asset->id]);
+            if ($object->rolfTag) {
+                $newObject->setRolfTag($rolfTagsNewIds[$object->rolfTag->id]);
+            }
+
+            $this->get('objectCliTable')->save($newObject, $last);
+
+            $objectsNewIds[$object->id] = $newObject;
 
             $i++;
         }
