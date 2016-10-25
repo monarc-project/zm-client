@@ -52,6 +52,7 @@ class Module
 
                 //tables
                 '\MonarcFO\Model\Table\AmvTable' => '\MonarcFO\Service\Model\Table\AmvServiceModelTable',
+                '\MonarcFO\Model\Table\AnrObjectCategoryTable' => '\MonarcFO\Service\Model\Table\AnrObjectCategoryServiceModelTable',
                 '\MonarcFO\Model\Table\AnrTable' => '\MonarcFO\Service\Model\Table\AnrServiceModelTable',
                 '\MonarcFO\Model\Table\AssetTable' => '\MonarcFO\Service\Model\Table\AssetServiceModelTable',
                 '\MonarcFO\Model\Table\MeasureTable' => '\MonarcFO\Service\Model\Table\MeasureServiceModelTable',
@@ -67,6 +68,7 @@ class Module
                 //entities
                 '\MonarcFO\Model\Entity\Amv' => '\MonarcFO\Service\Model\Entity\AmvServiceModelEntity',
                 '\MonarcFO\Model\Entity\Anr' => '\MonarcFO\Service\Model\Entity\AnrServiceModelEntity',
+                '\MonarcFO\Model\Entity\AnrObjectCategory' => '\MonarcFO\Service\Model\Entity\AnrObjectCategoryServiceModelEntity',
                 '\MonarcFO\Model\Entity\Asset' => '\MonarcFO\Service\Model\Entity\AssetServiceModelEntity',
                 '\MonarcFO\Model\Entity\Measure' => '\MonarcFO\Service\Model\Entity\MeasureServiceModelEntity',
                 '\MonarcFO\Model\Entity\Object' => '\MonarcFO\Service\Model\Entity\ObjectServiceModelEntity',

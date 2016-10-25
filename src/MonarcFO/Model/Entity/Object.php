@@ -349,13 +349,22 @@ class Object extends AbstractEntity
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \MonarcCore\Model\Entity\Anr
      */
     public function getAnrs()
     {
         return $this->anrs;
     }
 
+    /**
+     * @param \MonarcCore\Model\Entity\Anr $anrs
+     * @return Object
+     */
+    public function setAnrs($anrs)
+    {
+        $this->anrs = $anrs;
+        return $this;
+    }
 
     /**
      * Add Anr
