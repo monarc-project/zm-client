@@ -4,11 +4,19 @@ namespace MonarcFO\Service;
 use MonarcCore\Model\Table\AmvTable;
 use MonarcCore\Model\Table\AnrObjectCategoryTable;
 use MonarcCore\Model\Table\AssetTable;
+use MonarcCore\Model\Table\InstanceConsequenceTable;
+use MonarcCore\Model\Table\InstanceRiskOpTable;
+use MonarcCore\Model\Table\InstanceRiskTable;
+use MonarcCore\Model\Table\InstanceTable;
 use MonarcCore\Model\Table\ModelTable;
 use MonarcCore\Model\Table\ObjectCategoryTable;
 use MonarcCore\Model\Table\ObjectTable;
 use MonarcCore\Model\Table\RolfRiskTable;
 use MonarcCore\Model\Table\RolfTagTable;
+use MonarcCore\Model\Table\ScaleCommentTable;
+use MonarcCore\Model\Table\ScaleImpactTypeTable;
+use MonarcCore\Model\Table\ScaleTable;
+use MonarcCore\Model\Table\ThemeTable;
 use MonarcCore\Service\AbstractService;
 use MonarcCore\Model\Table\RolfCategoryTable;
 
@@ -23,6 +31,10 @@ class AnrService extends AbstractService
     protected $amvTable;
     protected $anrObjectCategoryTable;
     protected $assetTable;
+    protected $instanceTable;
+    protected $instanceConsequenceTable;
+    protected $instanceRiskTable;
+    protected $instanceRiskOpTable;
     protected $modelTable;
     protected $measureTable;
     protected $objectTable;
@@ -31,12 +43,20 @@ class AnrService extends AbstractService
     protected $rolfCategoryTable;
     protected $rolfRiskTable;
     protected $rolfTagTable;
+    protected $scaleTable;
+    protected $scaleCommentTable;
+    protected $scaleImpactTypeTable;
     protected $threatTable;
+    protected $themeTable;
     protected $vulnerabilityTable;
 
     protected $amvCliTable;
     protected $anrObjectCategoryCliTable;
     protected $assetCliTable;
+    protected $instanceCliTable;
+    protected $instanceConsequenceCliTable;
+    protected $instanceRiskCliTable;
+    protected $instanceRiskOpCliTable;
     protected $measureCliTable;
     protected $objectCliTable;
     protected $objectCategoryCliTable;
@@ -44,7 +64,11 @@ class AnrService extends AbstractService
     protected $rolfCategoryCliTable;
     protected $rolfRiskCliTable;
     protected $rolfTagCliTable;
+    protected $scaleCliTable;
+    protected $scaleCommentCliTable;
+    protected $scaleImpactTypeCliTable;
     protected $threatCliTable;
+    protected $themeCliTable;
     protected $vulnerabilityCliTable;
 
 
@@ -65,6 +89,21 @@ class AnrService extends AbstractService
         $anrCliTable = $this->get('cliTable');
         $id = $anrCliTable->save($newAnr);
 
+        //duplicate themes
+        $i = 1;
+        $themesNewIds = [];
+        /** @var ThemeTable $themeTable */
+        $themeTable = $this->get('themeTable');
+        $themes = $themeTable->fetchAllObject();
+        foreach($themes as $theme) {
+            $last = ($i == count($themes)) ? true : false;
+            $newTheme = clone $theme;
+            $newTheme->setAnr($newAnr);
+            $this->get('themeCliTable')->save($newTheme, $last);
+            $themesNewIds[$theme->id] = $newTheme;
+            $i++;
+        }
+
         //duplicate assets, threats, vulnerabilities ans measures
         $array = ['asset', 'threat', 'vulnerability', 'measure'];
         foreach($array as $value) {
@@ -77,6 +116,11 @@ class AnrService extends AbstractService
                 $newEntity = clone $entity;
                 $newEntity->setAnr($newAnr);
                 $newEntity->setModels(null);
+                if ($value == 'threat') {
+                    if ($entity->theme) {
+                        $newEntity->setTheme($themesNewIds[$entity->theme->id]);
+                    }
+                }
                 $this->get($value . 'CliTable')->save($newEntity, $last);
                 ${$arrayNewIdsName}[$entity->id] = $newEntity;
                 $i++;
@@ -85,6 +129,7 @@ class AnrService extends AbstractService
 
         //duplicate amvs
         $i = 1;
+        $amvsNewIds = [];
         /** @var AmvTable $amvTable */
         $amvTable = $this->get('amvTable');
         $amvs = $amvTable->fetchAllObject();
@@ -96,6 +141,7 @@ class AnrService extends AbstractService
             $newAmv->setThreat($threatNewIds[$amv->threat->id]);
             $newAmv->setVulnerability($vulnerabilityNewIds[$amv->vulnerability->id]);
             $this->get('amvCliTable')->save($newAmv, $last);
+            $amvsNewIds[$amv->id] = $newAmv;
             $i++;
         }
 
@@ -131,6 +177,7 @@ class AnrService extends AbstractService
 
         //duplicate rolf risk
         $i = 1;
+        $rolfRisksNewIds = [];
         /** @var RolfRiskTable $rolfRiskTable */
         $rolfRiskTable = $this->get('rolfRiskTable');
         $rolfRisks = $rolfRiskTable->fetchAllObject();
@@ -145,6 +192,7 @@ class AnrService extends AbstractService
                 $newRolfRisk->setTag($key, $rolfTagsNewIds[$tag->id]);
             }
             $this->get('rolfRiskCliTable')->save($newRolfRisk, $last);
+            $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             $i++;
         }
 
@@ -168,7 +216,6 @@ class AnrService extends AbstractService
             $objectsCategoriesNewIds[$objectCategory->id] = $newObjectCategory;
             $i++;
         }
-
 
         //duplicate objects
         $i = 1;
@@ -251,6 +298,126 @@ class AnrService extends AbstractService
             $newObjectObject->setFather($objectsNewIds[$objectObject->father->id]);
             $newObjectObject->setChild($objectsNewIds[$objectObject->child->id]);
             $this->get('objectObjectCliTable')->save($newObjectObject, $last);
+            $i++;
+        }
+
+        //duplicate instances
+        $i = 1;
+        $instancesNewIds = [];
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('instanceTable');
+        $instances = $instanceTable->getEntityByFields(['anr' => $anr->id]);
+        foreach($instances as $instance) {
+            $last = ($i == count($instances)) ? true : false;
+            $newInstance = clone $instance;
+            $newInstance->setAnr($newAnr);
+            $newInstance->setAsset($assetNewIds[$instance->asset->id]);
+            $newInstance->setObject($objectsNewIds[$instance->object->id]);
+            if ($instance->root) {
+                $newInstance->setRoot($instancesNewIds[$instance->root->id]);
+            }
+            if ($instance->parent) {
+                $newInstance->setParent($instancesNewIds[$instance->parent->id]);
+            }
+            $this->get('instanceCliTable')->save($newInstance, $last);
+            $instancesNewIds[$instance->id] = $newInstance;
+            $i++;
+        }
+
+        //duplicate scales
+        $i = 1;
+        $scalesNewIds = [];
+        /** @var ScaleTable $scaleTable */
+        $scaleTable = $this->get('scaleTable');
+        $scales = $scaleTable->getEntityByFields(['anr' => $anr->id]);
+        foreach($scales as $scale) {
+            $last = ($i == count($scales)) ? true : false;
+            $newScale = clone $scale;
+            $newScale->setAnr($newAnr);
+            $this->get('scaleCliTable')->save($newScale, $last);
+            $scalesNewIds[$scale->id] = $newScale;
+            $i++;
+        }
+
+        //duplicate scales impact types
+        $i = 1;
+        $scalesImpactTypesNewIds = [];
+        /** @var ScaleImpactTypeTable $scaleImpactTypeTable */
+        $scaleImpactTypeTable = $this->get('scaleImpactTypeTable');
+        $scalesImpactTypes = $scaleImpactTypeTable->getEntityByFields(['anr' => $anr->id]);
+        foreach($scalesImpactTypes as $scaleImpactType) {
+            $last = ($i == count($scalesImpactTypes)) ? true : false;
+            $newScaleImpactType = clone $scaleImpactType;
+            $newScaleImpactType->setAnr($newAnr);
+            $newScaleImpactType->setScale($scalesNewIds[$scaleImpactType->scale->id]);
+            $this->get('scaleImpactTypeCliTable')->save($newScaleImpactType, $last);
+            $scalesImpactTypesNewIds[$scaleImpactType->id] = $newScaleImpactType;
+            $i++;
+        }
+
+        //duplicate scales comments
+        $i = 1;
+        /** @var ScaleCommentTable $scaleCommentTable */
+        $scaleCommentTable = $this->get('scaleCommentTable');
+        $scalesComments = $scaleCommentTable->getEntityByFields(['anr' => $anr->id]);
+        foreach($scalesComments as $scaleComment) {
+            $last = ($i == count($scalesComments)) ? true : false;
+            $newScaleComment = clone $scaleComment;
+            $newScaleComment->setAnr($newAnr);
+            $newScaleComment->setScale($scalesNewIds[$scaleComment->scale->id]);
+            if ($scaleComment->scaleImpactType) {
+                $newScaleComment->setScaleImpactType($scalesImpactTypesNewIds[$scaleComment->scaleImpactType->id]);
+            }
+            $this->get('scaleCommentCliTable')->save($newScaleComment, $last);
+            $i++;
+        }
+
+        //duplicate instances risks
+        $i = 1;
+        /** @var InstanceRiskTable $instanceRiskTable */
+        $instanceRiskTable = $this->get('instanceRiskTable');
+        $instancesRisks = $instanceRiskTable->getEntityByFields(['anr' => $anr->id]);
+        foreach($instancesRisks as $instanceRisk) {
+            $last = ($i == count($instancesRisks)) ? true : false;
+            $newInstanceRisk = clone $instanceRisk;
+            $newInstanceRisk->setAnr($newAnr);
+            $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
+            $newInstanceRisk->setAsset($assetNewIds[$instanceRisk->asset->id]);
+            $newInstanceRisk->setThreat($threatNewIds[$instanceRisk->threat->id]);
+            $newInstanceRisk->setVulnerability($vulnerabilityNewIds[$instanceRisk->vulnerability->id]);
+            $this->get('instanceRiskCliTable')->save($newInstanceRisk, $last);
+            $i++;
+        }
+
+        //duplicate instances risks op
+        $i = 1;
+        /** @var InstanceRiskOpTable $instanceRiskOpTable */
+        $instanceRiskOpTable = $this->get('instanceRiskOpTable');
+        $instancesRisksOp = $instanceRiskOpTable->getEntityByFields(['anr' => $anr->id]);
+        foreach($instancesRisksOp as $instanceRiskOp) {
+            $last = ($i == count($instancesRisksOp)) ? true : false;
+            $newInstanceRiskOp = clone $instanceRiskOp;
+            $newInstanceRiskOp->setAnr($newAnr);
+            $newInstanceRiskOp->setInstance($instancesNewIds[$instanceRiskOp->instance->id]);
+            $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->id]);
+            $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
+            $this->get('instanceRiskOpCliTable')->save($newInstanceRiskOp, $last);
+            $i++;
+        }
+
+        //duplicate instances consequences
+        $i = 1;
+        /** @var InstanceConsequenceTable $instanceConsequenceTable */
+        $instanceConsequenceTable = $this->get('instanceConsequenceTable');
+        $instancesConsequences = $instanceConsequenceTable->getEntityByFields(['anr' => $anr->id]);
+        foreach($instancesConsequences as $instanceConsequence) {
+            $last = ($i == count($instancesConsequences)) ? true : false;
+            $newInstanceConsequence = clone $instanceConsequence;
+            $newInstanceConsequence->setAnr($newAnr);
+            $newInstanceConsequence->setInstance($instancesNewIds[$instanceConsequence->instance->id]);
+            $newInstanceConsequence->setObject($objectsNewIds[$instanceConsequence->object->id]);
+            $newInstanceConsequence->setScaleImpactType($scalesImpactTypesNewIds[$instanceConsequence->scaleImpactType->id]);
+            $this->get('instanceConsequenceCliTable')->save($newInstanceConsequence, $last);
             $i++;
         }
 
