@@ -64,6 +64,19 @@ class AnrService extends AbstractService
     protected $vulnerabilityCliTable;
 
     /**
+     * Get Anrs
+     * @return array|bool
+     */
+    public function getAnrs() {
+
+        /** @var \MonarcFO\Model\Table\AnrTable $anrCliTable */
+        $anrCliTable = $this->get('anrCliTable');
+        $anrs = $anrCliTable->fetchAll();
+
+        return $anrs;
+    }
+
+    /**
      * Create From Model To Client
      *
      * @param $modelId

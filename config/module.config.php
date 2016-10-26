@@ -29,9 +29,12 @@ return array(
             ),
 
             'monarc_api_client_anr' => array(
-                'type' => 'literal',
+                'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/client-anr',
+                    'route' => '/api/client-anr[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
                     'defaults' => array(
                         'controller' => 'MonarcFO\Controller\ApiAnr',
                     ),

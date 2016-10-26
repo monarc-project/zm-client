@@ -7,9 +7,10 @@ class AnrServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
 
+        'entity'=> 'MonarcFO\Model\Entity\Anr',
+        'table'=> 'MonarcFO\Model\Table\AnrTable',
+
         //core
-        'entity'    => 'MonarcCore\Model\Entity\Anr',
-        'table'     => 'MonarcCore\Model\Table\AnrTable',
         'anrTable'     => 'MonarcCore\Model\Table\AnrTable',
         'amvTable'  => 'MonarcCore\Model\Table\AmvTable',
         'anrObjectCategoryTable'   => 'MonarcCore\Model\Table\AnrObjectCategoryTable',
@@ -34,8 +35,6 @@ class AnrServiceFactory extends AbstractServiceFactory
         'vulnerabilityTable' => 'MonarcCore\Model\Table\VulnerabilityTable',
 
         //fo
-        'cliEntity'=> 'MonarcFO\Model\Entity\Anr',
-        'cliTable'=> 'MonarcFO\Model\Table\AnrTable',
         'anrCliTable'=> 'MonarcFO\Model\Table\AnrTable',
         'amvCliTable' => 'MonarcFO\Model\Table\AmvTable',
         'anrObjectCategoryCliTable' => 'MonarcFO\Model\Table\AnrObjectCategoryTable',
