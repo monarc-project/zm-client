@@ -4,6 +4,7 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\AbstractEntity;
 
 /**
  * Object
@@ -19,6 +20,9 @@ class Object extends AbstractEntity
 
     const SCOPE_LOCAL = 1;
     const SCOPE_GLOBAL = 2;
+
+    const SOURCE_COMMON = 'common';
+    const SOURCE_CLIENT = 'cli';
 
     /**
      * @var integer
@@ -40,9 +44,8 @@ class Object extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
-     *
-     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Anr", inversedBy="anrs", cascade={"persist"})
+     * @var \Doctrine\Common\Collections\Collection
+     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Anr", inversedBy="objects", cascade={"persist"})
      * @ORM\JoinTable(name="anrs_objects",
      *  joinColumns={@ORM\JoinColumn(name="object_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="anr_id", referencedColumnName="id")}

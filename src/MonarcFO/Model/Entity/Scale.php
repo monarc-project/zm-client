@@ -3,6 +3,7 @@
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\AbstractEntity;
 
 /**
  * Scale
@@ -30,7 +31,7 @@ class Scale extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id")
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $anr;

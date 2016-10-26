@@ -4,6 +4,7 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\AbstractEntity;
 use Zend\InputFilter\InputFilter;
 
 /**

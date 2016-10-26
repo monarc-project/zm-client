@@ -9,6 +9,8 @@ return array(
     'MonarcFO\Controller\ApiAnrControllerFactory'                         => __DIR__ . '/src/MonarcFO/Controller/ApiAnrControllerFactory.php',
     'MonarcFO\Controller\ApiConfigController'                             => __DIR__ . '/src/MonarcFO/Controller/ApiConfigController.php',
     'MonarcFO\Controller\ApiConfigControllerFactory'                      => __DIR__ . '/src/MonarcFO/Controller/ApiConfigControllerFactory.php',
+    'MonarcFO\Controller\ApiDuplicateAnrController'                       => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrController.php',
+    'MonarcFO\Controller\ApiDuplicateAnrControllerFactory'                => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrControllerFactory.php',
     'MonarcFO\Controller\ApiUserProfileController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiUserProfileController.php',
     'MonarcFO\Controller\ApiUserProfileControllerFactory'                 => __DIR__ . '/src/MonarcFO/Controller/ApiUserProfileControllerFactory.php',
     'MonarcFO\Controller\IndexController'                                 => __DIR__ . '/src/MonarcFO/Controller/IndexController.php',

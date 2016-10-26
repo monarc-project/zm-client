@@ -38,6 +38,16 @@ return array(
                 ),
             ),
 
+            'monarc_api_duplicate_client_anr' => array(
+                'type' => 'literal',
+                'options' => array(
+                    'route' => '/api/client-duplicate-anr',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiDuplicateAnr',
+                    ),
+                ),
+            ),
+
             'monarc_api_config' => array(
                 'type' => 'literal',
                 'options' => array(
@@ -61,6 +71,7 @@ return array(
             '\MonarcFO\Controller\ApiAdminUsersRoles'       => '\MonarcFO\Controller\ApiAdminUsersRolesControllerFactory',
             '\MonarcFO\Controller\ApiAnr'                   => '\MonarcFO\Controller\ApiAnrControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                => '\MonarcFO\Controller\ApiConfigControllerFactory',
+            '\MonarcFO\Controller\ApiDuplicateAnr'          => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
             '\MonarcFO\Controller\ApiUserProfile'           => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
         ),
@@ -109,6 +120,7 @@ return array(
             'monarc_api_anr_instances',
             'monarc_api_anr_library',
             'monarc_api_client_anr',
+            'monarc_api_duplicate_client_anr',
             'monarc_api_models',
             'monarc_api_scales',
             'monarc_api_scales_comments',

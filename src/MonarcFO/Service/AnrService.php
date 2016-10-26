@@ -1,24 +1,11 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcCore\Model\Table\AmvTable;
-use MonarcCore\Model\Table\AnrObjectCategoryTable;
-use MonarcCore\Model\Table\AssetTable;
-use MonarcCore\Model\Table\InstanceConsequenceTable;
-use MonarcCore\Model\Table\InstanceRiskOpTable;
-use MonarcCore\Model\Table\InstanceRiskTable;
-use MonarcCore\Model\Table\InstanceTable;
+use MonarcCore\Model\Entity\Anr;
+use MonarcCore\Model\Table\AnrTable;
 use MonarcCore\Model\Table\ModelTable;
-use MonarcCore\Model\Table\ObjectCategoryTable;
-use MonarcCore\Model\Table\ObjectTable;
-use MonarcCore\Model\Table\RolfRiskTable;
-use MonarcCore\Model\Table\RolfTagTable;
-use MonarcCore\Model\Table\ScaleCommentTable;
-use MonarcCore\Model\Table\ScaleImpactTypeTable;
-use MonarcCore\Model\Table\ScaleTable;
-use MonarcCore\Model\Table\ThemeTable;
 use MonarcCore\Service\AbstractService;
-use MonarcCore\Model\Table\RolfCategoryTable;
+use MonarcFO\Model\Entity\Object;
 
 /**
  * Anr Service
@@ -29,6 +16,7 @@ use MonarcCore\Model\Table\RolfCategoryTable;
 class AnrService extends AbstractService
 {
     protected $amvTable;
+    protected $anrTable;
     protected $anrObjectCategoryTable;
     protected $assetTable;
     protected $instanceTable;
@@ -51,6 +39,7 @@ class AnrService extends AbstractService
     protected $vulnerabilityTable;
 
     protected $amvCliTable;
+    protected $anrCliTable;
     protected $anrObjectCategoryCliTable;
     protected $assetCliTable;
     protected $instanceCliTable;
@@ -71,7 +60,12 @@ class AnrService extends AbstractService
     protected $themeCliTable;
     protected $vulnerabilityCliTable;
 
-
+    /**
+     * Create From Model To Client
+     *
+     * @param $modelId
+     * @return mixed|null
+     */
     public function createFromModelToClient($modelId) {
 
         //retrieve model information
@@ -79,22 +73,38 @@ class AnrService extends AbstractService
         $modelTable = $this->get('modelTable');
         $model = $modelTable->getEntity($modelId);
 
-        $anr = $model->anr;
+        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON);
+    }
+
+    /**
+     * Duplicate Anr
+     *
+     * @param $anr
+     * @param string $source
+     * @return mixed
+     * @throws \Exception
+     */
+    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT) {
+
+        if (is_integer($anr)) {
+            $anrTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrTable') : $this->get('anrCliTable');
+            $anr = $anrTable->getEntity($anr);
+        }
+
+        if (!$anr instanceof Anr) {
+            throw new \Exception('Anr missing', 412);
+        }
 
         //duplicate anr
         $newAnr = clone $anr;
         $newAnr->setId(null);
         $newAnr->setObjects(null);
-        /** @var \MonarcFO\Model\Table\AnrTable $anrCliTable */
-        $anrCliTable = $this->get('cliTable');
-        $id = $anrCliTable->save($newAnr);
+        $id = $this->get('cliTable')->save($newAnr);
 
         //duplicate themes
         $i = 1;
         $themesNewIds = [];
-        /** @var ThemeTable $themeTable */
-        $themeTable = $this->get('themeTable');
-        $themes = $themeTable->fetchAllObject();
+        $themes = ($source == Object::SOURCE_COMMON) ? $this->get('themeTable')->fetchAllObject() : $this->get('themeCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($themes as $theme) {
             $last = ($i == count($themes)) ? true : false;
             $newTheme = clone $theme;
@@ -104,42 +114,84 @@ class AnrService extends AbstractService
             $i++;
         }
 
-        //duplicate assets, threats, vulnerabilities ans measures
-        $array = ['asset', 'threat', 'vulnerability', 'measure'];
-        foreach($array as $value) {
-            $i = 1;
-            $arrayNewIdsName = $value . 'NewIds';
-            ${$arrayNewIdsName} = [];
-            $entities = $this->get($value . 'Table')->fetchAllObject();
-            foreach ($entities as $entity) {
-                $last = ($i == count($entities)) ? true : false;
-                $newEntity = clone $entity;
-                $newEntity->setAnr($newAnr);
-                $newEntity->setModels(null);
-                if ($value == 'threat') {
-                    if ($entity->theme) {
-                        $newEntity->setTheme($themesNewIds[$entity->theme->id]);
-                    }
-                }
-                $this->get($value . 'CliTable')->save($newEntity, $last);
-                ${$arrayNewIdsName}[$entity->id] = $newEntity;
-                $i++;
+        //duplicate assets
+        $i = 1;
+        $assetsNewIds = [];
+        $assets = ($source == Object::SOURCE_COMMON) ? $this->get('assetTable')->fetchAllObject() : $this->get('assetCliTable')->getEntityByFields(['anr' => $anr->id]);
+        foreach($assets as $asset) {
+            $last = ($i == count($assets)) ? true : false;
+            $newAsset = clone $asset;
+            $newAsset->setAnr($newAnr);
+            $newAsset->setModels(null);
+            $this->get('assetCliTable')->save($newAsset, $last);
+            $assetsNewIds[$asset->id] = $newAsset;
+            $i++;
+        }
+
+        //duplicate threats
+        $i = 1;
+        $threatsNewIds = [];
+        $threats = ($source == Object::SOURCE_COMMON) ? $this->get('threatTable')->fetchAllObject() : $this->get('threatCliTable')->getEntityByFields(['anr' => $anr->id]);
+        foreach($threats as $threat) {
+            $last = ($i == count($threats)) ? true : false;
+            $newThreat = clone $threat;
+            $newThreat->setAnr($newAnr);
+            $newThreat->setModels(null);
+            if ($threat->theme) {
+                $newThreat->setTheme($themesNewIds[$threat->theme->id]);
             }
+            $this->get('threatCliTable')->save($newThreat, $last);
+            $threatsNewIds[$threat->id] = $newThreat;
+            $i++;
+        }
+
+        //duplicate vulnerabilities
+        $i = 1;
+        $vulnerabilitiesNewIds = [];
+        $vulnerabilities = ($source == Object::SOURCE_COMMON) ? $this->get('vulnerabilityTable')->fetchAllObject() : $this->get('vulnerabilityCliTable')->getEntityByFields(['anr' => $anr->id]);
+        foreach($vulnerabilities as $vulnerability) {
+            $last = ($i == count($vulnerabilities)) ? true : false;
+            $newVulnerability = clone $vulnerability;
+            $newVulnerability->setAnr($newAnr);
+            $newVulnerability->setModels(null);
+            $this->get('vulnerabilityCliTable')->save($newVulnerability, $last);
+            $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
+            $i++;
+        }
+
+        //duplicate measures
+        $i = 1;
+        $measuresNewIds = [];
+        $measures = ($source == Object::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
+        foreach($measures as $measure) {
+            $last = ($i == count($measures)) ? true : false;
+            $newMeasure = clone $measure;
+            $newMeasure->setAnr($newAnr);
+            $this->get('measureCliTable')->save($newMeasure, $last);
+            $measuresNewIds[$measure->id] = $newMeasure;
+            $i++;
         }
 
         //duplicate amvs
         $i = 1;
         $amvsNewIds = [];
-        /** @var AmvTable $amvTable */
-        $amvTable = $this->get('amvTable');
-        $amvs = $amvTable->fetchAllObject();
+        $amvs = ($source == Object::SOURCE_COMMON) ? $this->get('amvTable')->fetchAllObject() : $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($amvs as $amv) {
             $last = ($i == count($amvs)) ? true : false;
             $newAmv = clone $amv;
             $newAmv->setAnr($newAnr);
-            $newAmv->setAsset($assetNewIds[$amv->asset->id]);
-            $newAmv->setThreat($threatNewIds[$amv->threat->id]);
-            $newAmv->setVulnerability($vulnerabilityNewIds[$amv->vulnerability->id]);
+            $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
+            $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
+            $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
+            if ($amv->measure1) {
+                $newAmv->setMeasure1($measuresNewIds[$amv->measure1->id]);
+            }
+            if ($amv->measure2) {
+                $newAmv->setMeasure2($measuresNewIds[$amv->measure2->id]);
+            }
+            if ($amv->measure3) {
+                $newAmv->setMeasure3($measuresNewIds[$amv->measure3->id]);
+            }
             $this->get('amvCliTable')->save($newAmv, $last);
             $amvsNewIds[$amv->id] = $newAmv;
             $i++;
@@ -148,9 +200,7 @@ class AnrService extends AbstractService
         //duplicate rolf categories
         $i = 1;
         $rolfCategoriesNewIds = [];
-        /** @var RolfCategoryTable $rolfCategoryTable */
-        $rolfCategoryTable = $this->get('rolfCategoryTable');
-        $rolfCategories = $rolfCategoryTable->fetchAllObject();
+        $rolfCategories = ($source == Object::SOURCE_COMMON) ? $this->get('rolfCategoryTable')->fetchAllObject() : $this->get('rolfCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($rolfCategories as $rolfCategory) {
             $last = ($i == count($rolfCategories)) ? true : false;
             $newRolfCategory = clone $rolfCategory;
@@ -163,9 +213,7 @@ class AnrService extends AbstractService
         //duplicate rolf tags
         $i = 1;
         $rolfTagsNewIds = [];
-        /** @var RolfTagTable $rolfTagTable */
-        $rolfTagTable = $this->get('rolfTagTable');
-        $rolfTags = $rolfTagTable->fetchAllObject();
+        $rolfTags = ($source == Object::SOURCE_COMMON) ? $this->get('rolfTagTable')->fetchAllObject() : $this->get('rolfTagCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($rolfTags as $rolfTag) {
             $last = ($i == count($rolfTags)) ? true : false;
             $newRolfTag = clone $rolfTag;
@@ -178,9 +226,7 @@ class AnrService extends AbstractService
         //duplicate rolf risk
         $i = 1;
         $rolfRisksNewIds = [];
-        /** @var RolfRiskTable $rolfRiskTable */
-        $rolfRiskTable = $this->get('rolfRiskTable');
-        $rolfRisks = $rolfRiskTable->fetchAllObject();
+        $rolfRisks = ($source == Object::SOURCE_COMMON) ? $this->get('rolfRiskTable')->fetchAllObject() : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($rolfRisks as $rolfRisk) {
             $last = ($i == count($rolfRisks)) ? true : false;
             $newRolfRisk = clone $rolfRisk;
@@ -199,9 +245,7 @@ class AnrService extends AbstractService
         //duplicate objects categories
         $i = 1;
         $objectsCategoriesNewIds = [];
-        /** @var ObjectCategoryTable $objectCategoryTable */
-        $objectCategoryTable = $this->get('objectCategoryTable');
-        $objectsCategories = $objectCategoryTable->fetchAllObject();
+        $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($objectsCategories as $objectCategory) {
             $last = ($i == count($objectsCategories)) ? true : false;
             $newObjectCategory = clone $objectCategory;
@@ -221,9 +265,7 @@ class AnrService extends AbstractService
         $i = 1;
         $objectsNewIds = [];
         $objectsRootCategories = [];
-        /** @var ObjectTable $objectTable */
-        $objectTable = $this->get('objectTable');
-        $objects = $objectTable->fetchAllObject();
+        $objects = ($source == Object::SOURCE_COMMON) ? $this->get('objectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($objects as $key => $object) {
             $existInAnr = false;
             foreach($object->anrs as $anrObject) {
@@ -242,7 +284,7 @@ class AnrService extends AbstractService
             $newObject->setAnrs(null);
             $newObject->addAnr($newAnr);
             $newObject->setCategory($objectsCategoriesNewIds[$object->category->id]);
-            $newObject->setAsset($assetNewIds[$object->asset->id]);
+            $newObject->setAsset($assetsNewIds[$object->asset->id]);
             if ($object->rolfTag) {
                 $newObject->setRolfTag($rolfTagsNewIds[$object->rolfTag->id]);
             }
@@ -252,6 +294,7 @@ class AnrService extends AbstractService
             $i++;
 
             //root category
+            $objectCategoryTable = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable') : $this->get('objectCategoryCliTable');
             $objectCategory = $objectCategoryTable->getEntity($object->category->id);
             $objectsRootCategories[] = ($objectCategory->root) ? $objectCategory->root->id : $objectCategory->id;
         }
@@ -260,8 +303,7 @@ class AnrService extends AbstractService
 
         //duplicate anrs objects categories
         $i = 1;
-        /** @var AnrObjectCategoryTable $anrObjectCategoryTable */
-        $anrObjectCategoryTable = $this->get('anrObjectCategoryTable');
+        $anrObjectCategoryTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrObjectCategoryTable') : $this->get('anrObjectCategoryCliTable');
         $anrObjectsCategories = $anrObjectCategoryTable->getEntityByFields(['anr' => $anr->id]);
         foreach($anrObjectsCategories as $key => $anrObjectCategory) {
             if (!in_array($anrObjectCategory->category->id, $objectsRootCategories)) {
@@ -279,9 +321,7 @@ class AnrService extends AbstractService
 
         //duplicate objects objects
         $i = 1;
-        /** @var ObjectTable $objectTable */
-        $objectObjectTable = $this->get('objectObjectTable');
-        $objectsObjects = $objectObjectTable->fetchAllObject();
+        $objectsObjects = ($source == Object::SOURCE_COMMON) ? $this->get('objectObjectTable')->fetchAllObject() : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($objectsObjects as $key => $objectObject) {
             $relationInAnr = true;
             if ((!isset($objectsNewIds[$objectObject->father->id])) || (!isset($objectsNewIds[$objectObject->child->id]))) {
@@ -304,14 +344,13 @@ class AnrService extends AbstractService
         //duplicate instances
         $i = 1;
         $instancesNewIds = [];
-        /** @var InstanceTable $instanceTable */
-        $instanceTable = $this->get('instanceTable');
+        $instanceTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceTable') : $this->get('instanceCliTable');
         $instances = $instanceTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instances as $instance) {
             $last = ($i == count($instances)) ? true : false;
             $newInstance = clone $instance;
             $newInstance->setAnr($newAnr);
-            $newInstance->setAsset($assetNewIds[$instance->asset->id]);
+            $newInstance->setAsset($assetsNewIds[$instance->asset->id]);
             $newInstance->setObject($objectsNewIds[$instance->object->id]);
             if ($instance->root) {
                 $newInstance->setRoot($instancesNewIds[$instance->root->id]);
@@ -327,8 +366,7 @@ class AnrService extends AbstractService
         //duplicate scales
         $i = 1;
         $scalesNewIds = [];
-        /** @var ScaleTable $scaleTable */
-        $scaleTable = $this->get('scaleTable');
+        $scaleTable = ($source == Object::SOURCE_COMMON) ? $this->get('scaleTable') : $this->get('scaleCliTable');
         $scales = $scaleTable->getEntityByFields(['anr' => $anr->id]);
         foreach($scales as $scale) {
             $last = ($i == count($scales)) ? true : false;
@@ -342,8 +380,7 @@ class AnrService extends AbstractService
         //duplicate scales impact types
         $i = 1;
         $scalesImpactTypesNewIds = [];
-        /** @var ScaleImpactTypeTable $scaleImpactTypeTable */
-        $scaleImpactTypeTable = $this->get('scaleImpactTypeTable');
+        $scaleImpactTypeTable = ($source == Object::SOURCE_COMMON) ? $this->get('scaleImpactTypeTable') : $this->get('scaleImpactTypeCliTable');
         $scalesImpactTypes = $scaleImpactTypeTable->getEntityByFields(['anr' => $anr->id]);
         foreach($scalesImpactTypes as $scaleImpactType) {
             $last = ($i == count($scalesImpactTypes)) ? true : false;
@@ -357,8 +394,7 @@ class AnrService extends AbstractService
 
         //duplicate scales comments
         $i = 1;
-        /** @var ScaleCommentTable $scaleCommentTable */
-        $scaleCommentTable = $this->get('scaleCommentTable');
+        $scaleCommentTable = ($source == Object::SOURCE_COMMON) ? $this->get('scaleCommentTable') : $this->get('scaleCommentCliTable');
         $scalesComments = $scaleCommentTable->getEntityByFields(['anr' => $anr->id]);
         foreach($scalesComments as $scaleComment) {
             $last = ($i == count($scalesComments)) ? true : false;
@@ -374,25 +410,24 @@ class AnrService extends AbstractService
 
         //duplicate instances risks
         $i = 1;
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('instanceRiskTable');
+        $instanceRiskTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceRiskTable') : $this->get('instanceRiskCliTable');
         $instancesRisks = $instanceRiskTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instancesRisks as $instanceRisk) {
             $last = ($i == count($instancesRisks)) ? true : false;
             $newInstanceRisk = clone $instanceRisk;
             $newInstanceRisk->setAnr($newAnr);
             $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
-            $newInstanceRisk->setAsset($assetNewIds[$instanceRisk->asset->id]);
-            $newInstanceRisk->setThreat($threatNewIds[$instanceRisk->threat->id]);
-            $newInstanceRisk->setVulnerability($vulnerabilityNewIds[$instanceRisk->vulnerability->id]);
+            $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->id]);
+            $newInstanceRisk->setThreat($threatsNewIds[$instanceRisk->threat->id]);
+            $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->vulnerability->id]);
+            $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
             $this->get('instanceRiskCliTable')->save($newInstanceRisk, $last);
             $i++;
         }
 
         //duplicate instances risks op
         $i = 1;
-        /** @var InstanceRiskOpTable $instanceRiskOpTable */
-        $instanceRiskOpTable = $this->get('instanceRiskOpTable');
+        $instanceRiskOpTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceRiskOpTable') : $this->get('instanceRiskOpCliTable');
         $instancesRisksOp = $instanceRiskOpTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instancesRisksOp as $instanceRiskOp) {
             $last = ($i == count($instancesRisksOp)) ? true : false;
@@ -407,8 +442,7 @@ class AnrService extends AbstractService
 
         //duplicate instances consequences
         $i = 1;
-        /** @var InstanceConsequenceTable $instanceConsequenceTable */
-        $instanceConsequenceTable = $this->get('instanceConsequenceTable');
+        $instanceConsequenceTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceConsequenceTable') : $this->get('instanceConsequenceCliTable');
         $instancesConsequences = $instanceConsequenceTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instancesConsequences as $instanceConsequence) {
             $last = ($i == count($instancesConsequences)) ? true : false;

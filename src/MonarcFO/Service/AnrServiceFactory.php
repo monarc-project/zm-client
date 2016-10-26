@@ -10,6 +10,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         //core
         'entity'    => 'MonarcCore\Model\Entity\Anr',
         'table'     => 'MonarcCore\Model\Table\AnrTable',
+        'anrTable'     => 'MonarcCore\Model\Table\AnrTable',
         'amvTable'  => 'MonarcCore\Model\Table\AmvTable',
         'anrObjectCategoryTable'   => 'MonarcCore\Model\Table\AnrObjectCategoryTable',
         'assetTable' => 'MonarcCore\Model\Table\AssetTable',
@@ -35,6 +36,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         //fo
         'cliEntity'=> 'MonarcFO\Model\Entity\Anr',
         'cliTable'=> 'MonarcFO\Model\Table\AnrTable',
+        'anrCliTable'=> 'MonarcFO\Model\Table\AnrTable',
         'amvCliTable' => 'MonarcFO\Model\Table\AmvTable',
         'anrObjectCategoryCliTable' => 'MonarcFO\Model\Table\AnrObjectCategoryTable',
         'assetCliTable' => 'MonarcFO\Model\Table\AssetTable',
