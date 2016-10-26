@@ -34,9 +34,9 @@ class Object extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -45,7 +45,7 @@ class Object extends AbstractEntity
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Anr", inversedBy="objects", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Anr", inversedBy="objects", cascade={"persist"})
      * @ORM\JoinTable(name="anrs_objects",
      *  joinColumns={@ORM\JoinColumn(name="object_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="anr_id", referencedColumnName="id")}
@@ -54,9 +54,9 @@ class Object extends AbstractEntity
     protected $anrs;
 
     /**
-     * @var \MonarcCore\Model\Entity\Model
+     * @var \MonarcFO\Model\Entity\Model
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Model", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Model", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="model_id", referencedColumnName="id", nullable=true)
      * })
@@ -64,9 +64,9 @@ class Object extends AbstractEntity
     protected $model;
 
     /**
-     * @var \MonarcCore\Model\Entity\ObjectCategory
+     * @var \MonarcFO\Model\Entity\ObjectCategory
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\ObjectCategory", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\ObjectCategory", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_category_id", referencedColumnName="id", nullable=true)
      * })
@@ -74,9 +74,9 @@ class Object extends AbstractEntity
     protected $category;
 
     /**
-     * @var \MonarcCore\Model\Entity\Asset
+     * @var \MonarcFO\Model\Entity\Asset
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
      * })
@@ -84,9 +84,9 @@ class Object extends AbstractEntity
     protected $asset;
 
     /**
-     * @var \MonarcCore\Model\Entity\RolfTag
+     * @var \MonarcFO\Model\Entity\RolfTag
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\RolfTag", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RolfTag", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="rolf_tag_id", referencedColumnName="id", nullable=true)
      * })
@@ -352,7 +352,7 @@ class Object extends AbstractEntity
     }
 
     /**
-     * @return \MonarcCore\Model\Entity\Anr
+     * @return \MonarcFO\Model\Entity\Anr
      */
     public function getAnrs()
     {
@@ -360,7 +360,7 @@ class Object extends AbstractEntity
     }
 
     /**
-     * @param \MonarcCore\Model\Entity\Anr $anrs
+     * @param \MonarcFO\Model\Entity\Anr $anrs
      * @return Object
      */
     public function setAnrs($anrs)
@@ -380,13 +380,15 @@ class Object extends AbstractEntity
         $currentAnrs = $this->anrs;
 
         $errors = false;
-        foreach ($currentAnrs as $currentAnr) {
-            if ($currentAnr->id == $anr->id) {
-                $errors = true;
+        if ($currentAnrs) {
+            foreach ($currentAnrs as $currentAnr) {
+                if ($currentAnr->id == $anr->id) {
+                    $errors = true;
+                }
             }
         }
 
-        if  (!$errors) {
+        if (!$errors) {
             $this->anrs[] = $anr;
         }
     }

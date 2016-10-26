@@ -30,9 +30,9 @@ class InstanceRisk extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -40,9 +40,9 @@ class InstanceRisk extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \MonarcCore\Model\Entity\Amv
+     * @var \MonarcFO\Model\Entity\Amv
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Amv", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Amv", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="amv_id", referencedColumnName="id", nullable=true)
      * })
@@ -50,9 +50,9 @@ class InstanceRisk extends AbstractEntity
     protected $amv;
 
     /**
-     * @var \MonarcCore\Model\Entity\Asset
+     * @var \MonarcFO\Model\Entity\Asset
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
      * })
@@ -60,9 +60,9 @@ class InstanceRisk extends AbstractEntity
     protected $asset;
 
     /**
-     * @var \MonarcCore\Model\Entity\Threat
+     * @var \MonarcFO\Model\Entity\Threat
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Threat", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Threat", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="id", nullable=true)
      * })
@@ -70,9 +70,9 @@ class InstanceRisk extends AbstractEntity
     protected $threat;
 
     /**
-     * @var \MonarcCore\Model\Entity\Vulnerability
+     * @var \MonarcFO\Model\Entity\Vulnerability
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Vulnerability", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="id", nullable=true)
      * })
@@ -80,9 +80,9 @@ class InstanceRisk extends AbstractEntity
     protected $vulnerability;
 
     /**
-     * @var \MonarcCore\Model\Entity\Instance
+     * @var \MonarcFO\Model\Entity\Instance
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
      * })

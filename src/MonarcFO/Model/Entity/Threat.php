@@ -24,9 +24,9 @@ class Threat extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -34,9 +34,9 @@ class Threat extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \MonarcCore\Model\Entity\Theme
+     * @var \MonarcFO\Model\Entity\Theme
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Theme", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Theme", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="theme_id", referencedColumnName="id", nullable=true)
      * })
@@ -44,9 +44,9 @@ class Threat extends AbstractEntity
     protected $theme;
 
     /**
-     * @var \MonarcCore\Model\Entity\Model
+     * @var \MonarcFO\Model\Entity\Model
      *
-     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Model", inversedBy="threats", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Model", inversedBy="threats", cascade={"persist"})
      * @ORM\JoinTable(name="threats_models",
      *  joinColumns={@ORM\JoinColumn(name="threat_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="model_id", referencedColumnName="id")}

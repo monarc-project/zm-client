@@ -29,9 +29,9 @@ class Instance extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -39,9 +39,9 @@ class Instance extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \MonarcCore\Model\Entity\Asset
+     * @var \MonarcFO\Model\Entity\Asset
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
      * })
@@ -49,9 +49,9 @@ class Instance extends AbstractEntity
     protected $asset;
 
     /**
-     * @var \MonarcCore\Model\Entity\Object
+     * @var \MonarcFO\Model\Entity\Object
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Object", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Object", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="id", nullable=true)
      * })
@@ -59,9 +59,9 @@ class Instance extends AbstractEntity
     protected $object;
 
     /**
-     * @var \MonarcCore\Model\Entity\Instance
+     * @var \MonarcFO\Model\Entity\Instance
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="root_id", referencedColumnName="id", nullable=true)
      * })
@@ -69,9 +69,9 @@ class Instance extends AbstractEntity
     protected $root;
 
     /**
-     * @var \MonarcCore\Model\Entity\Instance
+     * @var \MonarcFO\Model\Entity\Instance
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="parent_id", referencedColumnName="id", nullable=true)
      * })

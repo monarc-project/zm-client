@@ -24,9 +24,9 @@ class InstanceConsequence extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -34,9 +34,9 @@ class InstanceConsequence extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \MonarcCore\Model\Entity\Instance
+     * @var \MonarcFO\Model\Entity\Instance
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
      * })
@@ -44,9 +44,9 @@ class InstanceConsequence extends AbstractEntity
     protected $instance;
 
     /**
-     * @var \MonarcCore\Model\Entity\Object
+     * @var \MonarcFO\Model\Entity\Object
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Object", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Object", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="id", nullable=true)
      * })
@@ -54,9 +54,9 @@ class InstanceConsequence extends AbstractEntity
     protected $object;
 
     /**
-     * @var \MonarcCore\Model\Entity\ScaleImpactType
+     * @var \MonarcFO\Model\Entity\ScaleImpactType
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\ScaleImpactType", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\ScaleImpactType", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="scale_impact_type_id", referencedColumnName="id", nullable=true)
      * })

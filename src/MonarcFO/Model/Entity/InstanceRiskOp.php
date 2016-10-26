@@ -30,9 +30,9 @@ class InstanceRiskOp extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -40,9 +40,9 @@ class InstanceRiskOp extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \MonarcCore\Model\Entity\Instance
+     * @var \MonarcFO\Model\Entity\Instance
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
      * })
@@ -50,9 +50,9 @@ class InstanceRiskOp extends AbstractEntity
     protected $instance;
 
     /**
-     * @var \MonarcCore\Model\Entity\Object
+     * @var \MonarcFO\Model\Entity\Object
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Object", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Object", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="id", nullable=true)
      * })
@@ -60,9 +60,9 @@ class InstanceRiskOp extends AbstractEntity
     protected $object;
 
     /**
-     * @var \MonarcCore\Model\Entity\RolfRisk
+     * @var \MonarcFO\Model\Entity\RolfRisk
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\RolfRisk", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RolfRisk", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id", nullable=true)
      * })

@@ -23,9 +23,9 @@ class Amv extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -33,9 +33,9 @@ class Amv extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \MonarcCore\Model\Entity\Asset
+     * @var \MonarcFO\Model\Entity\Asset
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
      * })
@@ -43,9 +43,9 @@ class Amv extends AbstractEntity
     protected $asset;
 
     /**
-     * @var \MonarcCore\Model\Entity\Threat
+     * @var \MonarcFO\Model\Entity\Threat
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Threat", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Threat", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="id", nullable=true)
      * })
@@ -53,9 +53,9 @@ class Amv extends AbstractEntity
     protected $threat;
 
     /**
-     * @var \MonarcCore\Model\Entity\Vulnerability
+     * @var \MonarcFO\Model\Entity\Vulnerability
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Vulnerability", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="id", nullable=true)
      * })
@@ -63,9 +63,9 @@ class Amv extends AbstractEntity
     protected $vulnerability;
 
     /**
-     * @var \MonarcCore\Model\Entity\Measure
+     * @var \MonarcFO\Model\Entity\Measure
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Measure", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="measure1_id", referencedColumnName="id", nullable=true)
      * })
@@ -73,9 +73,9 @@ class Amv extends AbstractEntity
     protected $measure1;
 
     /**
-     * @var \MonarcCore\Model\Entity\Measure
+     * @var \MonarcFO\Model\Entity\Measure
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Measure", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="measure2_id", referencedColumnName="id", nullable=true)
      * })
@@ -83,9 +83,9 @@ class Amv extends AbstractEntity
     protected $measure2;
 
     /**
-     * @var \MonarcCore\Model\Entity\Measure
+     * @var \MonarcFO\Model\Entity\Measure
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Measure", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="measure3_id", referencedColumnName="id", nullable=true)
      * })

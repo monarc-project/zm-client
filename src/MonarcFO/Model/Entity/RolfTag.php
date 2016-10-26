@@ -23,9 +23,9 @@ class RolfTag extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -114,7 +114,7 @@ class RolfTag extends AbstractEntity
     }
 
     /**
-     * @return \MonarcCore\Model\Entity\Anr
+     * @return \MonarcFO\Model\Entity\Anr
      */
     public function getAnr()
     {
@@ -122,7 +122,7 @@ class RolfTag extends AbstractEntity
     }
 
     /**
-     * @param \MonarcCore\Model\Entity\Anr $anr
+     * @param \MonarcFO\Model\Entity\Anr $anr
      * @return RolfTag
      */
     public function setAnr($anr)
