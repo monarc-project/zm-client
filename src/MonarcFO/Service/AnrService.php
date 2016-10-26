@@ -5,7 +5,10 @@ use MonarcCore\Model\Entity\Anr;
 use MonarcCore\Model\Table\AnrTable;
 use MonarcCore\Model\Table\ModelTable;
 use MonarcCore\Service\AbstractService;
+use MonarcFO\Model\Entity\Asset;
 use MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Entity\Threat;
+use MonarcFO\Model\Entity\Vulnerability;
 
 /**
  * Anr Service
@@ -73,7 +76,7 @@ class AnrService extends AbstractService
         $modelTable = $this->get('modelTable');
         $model = $modelTable->getEntity($modelId);
 
-        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON);
+        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model);
     }
 
     /**
@@ -84,7 +87,7 @@ class AnrService extends AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT) {
+    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null) {
 
         if (is_integer($anr)) {
             $anrTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrTable') : $this->get('anrCliTable');
@@ -117,7 +120,19 @@ class AnrService extends AbstractService
         //duplicate assets
         $i = 1;
         $assetsNewIds = [];
-        $assets = ($source == Object::SOURCE_COMMON) ? $this->get('assetTable')->fetchAllObject() : $this->get('assetCliTable')->getEntityByFields(['anr' => $anr->id]);
+        if ($source == Object::SOURCE_COMMON) {
+            $assets1 = [];
+            if (($model->isGeneric) || (!$model->isRegulator)) {
+                $assets1 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_GENERIC]);
+            }
+            $assets2 = [];
+            if (!$model->isGeneric) {
+                $assets2 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
+            }
+            $assets = $assets1 + $assets2;
+        } else {
+            $assets = $this->get('assetCliTable')->getEntityByFields(['anr' => $anr->id]);
+        }
         foreach($assets as $asset) {
             $last = ($i == count($assets)) ? true : false;
             $newAsset = clone $asset;
@@ -131,7 +146,19 @@ class AnrService extends AbstractService
         //duplicate threats
         $i = 1;
         $threatsNewIds = [];
-        $threats = ($source == Object::SOURCE_COMMON) ? $this->get('threatTable')->fetchAllObject() : $this->get('threatCliTable')->getEntityByFields(['anr' => $anr->id]);
+        if ($source == Object::SOURCE_COMMON) {
+            $threats1 = [];
+            if (($model->isGeneric) || (!$model->isRegulator)) {
+                $threats1 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_GENERIC]);
+            }
+            $threats2 = [];
+            if (!$model->isGeneric) {
+                $threats2 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_SPECIFIC]);
+            }
+            $threats = $threats1 + $threats2;
+        } else {
+            $threats = $this->get('threatCliTable')->getEntityByFields(['anr' => $anr->id]);
+        }
         foreach($threats as $threat) {
             $last = ($i == count($threats)) ? true : false;
             $newThreat = clone $threat;
@@ -148,7 +175,19 @@ class AnrService extends AbstractService
         //duplicate vulnerabilities
         $i = 1;
         $vulnerabilitiesNewIds = [];
-        $vulnerabilities = ($source == Object::SOURCE_COMMON) ? $this->get('vulnerabilityTable')->fetchAllObject() : $this->get('vulnerabilityCliTable')->getEntityByFields(['anr' => $anr->id]);
+        if ($source == Object::SOURCE_COMMON) {
+            $vulnerabilities1 = [];
+            if (($model->isGeneric) || (!$model->isRegulator)) {
+                $vulnerabilities1 = $this->get('vulnerabilityTable')->getEntityByFields(['mode' => Vulnerability::MODE_GENERIC]);
+            }
+            $vulnerabilities2 = [];
+            if (!$model->isGeneric) {
+                $vulnerabilities2 = $this->get('vulnerabilityTable')->getEntityByFields(['mode' => Vulnerability::MODE_SPECIFIC]);
+            }
+            $vulnerabilities = $vulnerabilities1 + $vulnerabilities2;
+        } else {
+            $vulnerabilities = $this->get('vulnerabilityCliTable')->getEntityByFields(['anr' => $anr->id]);
+        }
         foreach($vulnerabilities as $vulnerability) {
             $last = ($i == count($vulnerabilities)) ? true : false;
             $newVulnerability = clone $vulnerability;
@@ -176,6 +215,15 @@ class AnrService extends AbstractService
         $i = 1;
         $amvsNewIds = [];
         $amvs = ($source == Object::SOURCE_COMMON) ? $this->get('amvTable')->fetchAllObject() : $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
+        foreach($amvs as $key => $amv) {
+            if (
+                (!isset($assetsNewIds[$amv->asset->id])) ||
+                (!isset($threatsNewIds[$amv->threat->id])) ||
+                (!isset($vulnerabilitiesNewIds[$amv->vulnerability->id]))
+            ) {
+                unset($amvs[$key]);
+            }
+        }
         foreach($amvs as $amv) {
             $last = ($i == count($amvs)) ? true : false;
             $newAmv = clone $amv;
