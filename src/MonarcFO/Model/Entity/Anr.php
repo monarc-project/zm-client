@@ -275,6 +275,13 @@ class Anr extends AbstractEntity
     protected $updatedAt;
 
     /**
+     * @var integer
+     *
+     * @ORM\Column(name="language", type="integer", options={"unsigned":true})
+     */
+    protected $language;
+
+    /**
      * @return int
      */
     public function getId()
