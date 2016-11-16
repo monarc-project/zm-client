@@ -23,7 +23,7 @@ abstract class AbstractEntityTable
     public function getDb()
     {
         if(!$this->db) {
-            $this->db = $this->getServiceLocator()->get('MonarcFO\Model\Db');
+            $this->db = $this->getServiceLocator()->get('MonarcCli\Model\Db');
         }
         return $this->db;
     }

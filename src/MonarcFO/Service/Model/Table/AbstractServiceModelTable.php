@@ -6,7 +6,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 
 abstract class AbstractServiceModelTable implements FactoryInterface
 {
-    protected $dbService = '\MonarcFO\Model\Db';
+    protected $dbService = '\MonarcCli\Model\Db';
 
     public function createService(ServiceLocatorInterface $serviceLocator){
         $class = str_replace('Service\\', '', substr(get_class($this),0,-17)).'Table';

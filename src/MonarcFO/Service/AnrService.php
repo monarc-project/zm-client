@@ -130,7 +130,6 @@ class AnrService extends AbstractService
         $user->addAnr($newAnr);
         $userCliTable->save($user);
 
-
         //duplicate themes
         $i = 1;
         $themesNewIds = [];

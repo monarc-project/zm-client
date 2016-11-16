@@ -8,7 +8,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 abstract class AbstractServiceModelEntity implements FactoryInterface
 {
     protected $ressources = [
-    	'setDbAdapter' => '\MonarcFO\Model\Db',
+    	'setDbAdapter' => '\MonarcCli\Model\Db',
     ];
 
     public function createService(ServiceLocatorInterface $serviceLocator){
