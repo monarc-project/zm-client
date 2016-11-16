@@ -1,8 +1,6 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcCore\Service\AbstractServiceFactory;
-
 class AnrServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(

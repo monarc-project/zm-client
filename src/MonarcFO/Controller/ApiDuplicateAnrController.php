@@ -1,7 +1,6 @@
 <?php
 namespace MonarcFO\Controller;
 
-use MonarcCore\Controller\AbstractController;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Service\AnrService;
 use Zend\View\Model\JsonModel;

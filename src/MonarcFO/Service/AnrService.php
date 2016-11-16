@@ -1,10 +1,10 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcCore\Model\Entity\Anr;
-use MonarcCore\Model\Table\AnrTable;
-use MonarcCore\Model\Table\ModelTable;
-use MonarcCore\Service\AbstractService;
+use MonarcFO\Model\Entity\Anr;
+use MonarcFO\Model\Table\AnrTable;
+use MonarcFO\Model\Table\ModelTable;
+use MonarcFO\Service\AbstractService;
 use MonarcFO\Model\Entity\Asset;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Entity\Threat;

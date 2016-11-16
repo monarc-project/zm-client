@@ -3,7 +3,6 @@
 namespace MonarcFO\Controller;
 
 use MonarcCore\Service\UserService;
-use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
 class ApiAdminUsersController extends AbstractController

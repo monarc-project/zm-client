@@ -2,8 +2,6 @@
 
 namespace MonarcFO\Controller;
 
-use MonarcCore\Controller\AbstractControllerFactory;
-
 class ApiUserProfileControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = array(

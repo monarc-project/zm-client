@@ -29,9 +29,9 @@ class Anr extends AbstractEntity
     protected $objects;
 
     /**
-     * @var \MonarcCore\Model\Entity\User
+     * @var \MonarcFO\Model\Entity\User
      *
-     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\User", mappedBy="users", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\User", mappedBy="users", cascade={"persist"})
      */
     protected $risks;
 

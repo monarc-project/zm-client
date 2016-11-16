@@ -318,7 +318,7 @@ class Amv extends AbstractEntity
                                 if(empty($adapter)){
                                     return false;
                                 }else{
-                                    $res = $adapter->getRepository('\MonarcCore\Model\Entity\Amv')->createQueryBuilder('a')
+                                    $res = $adapter->getRepository('\MonarcFO\Model\Entity\Amv')->createQueryBuilder('a')
                                         ->select(array('a.id'))
                                         ->where(' a.vulnerability = :vulnerability ')
                                         ->andWhere(' a.asset = :asset ')

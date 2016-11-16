@@ -17,7 +17,7 @@ abstract class AbstractEntityTable
             $thisClassName = get_class($this);
             $classParts = explode('\\', $thisClassName);
             $lastClassPart = end($classParts);
-            $this->class = '\MonarcCore\Model\Entity\\' . substr($lastClassPart, 0, -5);
+            $this->class = '\MonarcFO\Model\Entity\\' . substr($lastClassPart, 0, -5);
         }
     }
     public function getDb()
@@ -144,7 +144,7 @@ abstract class AbstractEntityTable
         }
     }
 
-    public function save(\MonarcCore\Model\Entity\AbstractEntity $entity, $last = true)
+    public function save(\MonarcFO\Model\Entity\AbstractEntity $entity, $last = true)
     {
         if(!empty($this->connectedUser) && isset($this->connectedUser['firstname']) && isset($this->connectedUser['lastname'])){
             $id = $entity->get('id');
