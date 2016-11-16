@@ -1,8 +1,6 @@
 <?php
 namespace MonarcFO\Service\Model\Entity;
 
-use MonarcCore\Service\Model\Entity\AbstractServiceModelEntity;
-
 class AssetServiceModelEntity extends AbstractServiceModelEntity
 {
 	protected $ressources = [

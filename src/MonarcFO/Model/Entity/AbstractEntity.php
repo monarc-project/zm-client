@@ -9,7 +9,7 @@ use Zend\InputFilter\InputFilterInterface;
 
 abstract class AbstractEntity implements InputFilterAwareInterface
 {
-    use \MonarcCore\Model\GetAndSet;
+    use \MonarcFO\Model\GetAndSet;
 
     protected $inputFilter;
     protected $language;

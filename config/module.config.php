@@ -67,7 +67,11 @@ return array(
         'invokables' => array(
         ),
         'factories' => array(
-            '\MonarcFO\Controller\Index'                    => '\MonarcCore\Controller\IndexControllerFactory',
+            // DBs
+            '\MonarcCore\Model\Db' => '\MonarcFO\Service\Model\DbFactory',
+            '\MonarcCli\Model\Db' => '\MonarcFO\Service\Model\DbCliFactory',
+
+            '\MonarcFO\Controller\Index'                    => '\MonarcFO\Controller\IndexControllerFactory',
             '\MonarcFO\Controller\ApiAdminPasswords'        => '\MonarcFO\Controller\ApiAdminPasswordsControllerFactory',
             '\MonarcFO\Controller\ApiAdminRoles'            => '\MonarcFO\Controller\ApiAdminRolesControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsers'            => '\MonarcFO\Controller\ApiAdminUsersControllerFactory',
