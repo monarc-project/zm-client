@@ -3,7 +3,6 @@
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use MonarcCore\Model\Entity\AbstractEntity;
 
 /**
  * Anr
@@ -28,6 +27,13 @@ class Anr extends AbstractEntity
      * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Object", mappedBy="anrs", cascade={"persist"})
      */
     protected $objects;
+
+    /**
+     * @var \MonarcCore\Model\Entity\User
+     *
+     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\User", mappedBy="users", cascade={"persist"})
+     */
+    protected $risks;
 
     /**
      * @var string

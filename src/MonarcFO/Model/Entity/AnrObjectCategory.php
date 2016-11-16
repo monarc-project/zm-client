@@ -3,7 +3,6 @@
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use MonarcCore\Model\Entity\AbstractEntity;
 
 /**
  * Anr Object Category

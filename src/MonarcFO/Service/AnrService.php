@@ -9,6 +9,7 @@ use MonarcFO\Model\Entity\Asset;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Entity\Threat;
 use MonarcFO\Model\Entity\Vulnerability;
+use MonarcFO\Model\Table\UserTable;
 
 /**
  * Anr Service
@@ -61,6 +62,7 @@ class AnrService extends AbstractService
     protected $scaleImpactTypeCliTable;
     protected $threatCliTable;
     protected $themeCliTable;
+    protected $userCliTable;
     protected $vulnerabilityCliTable;
 
     /**
@@ -117,6 +119,13 @@ class AnrService extends AbstractService
         $newAnr->setId(null);
         $newAnr->setObjects(null);
         $id = $this->get('anrCliTable')->save($newAnr);
+
+        //add user to anr
+        $userCliTable = $this->get('userCliTable');
+        $userArray = $userCliTable->getConnectedUser();
+        $user = $userCliTable->getEntity($userArray['id']);
+        $user->addAnr($newAnr);
+        $userCliTable->save($user);
 
         //duplicate themes
         $i = 1;

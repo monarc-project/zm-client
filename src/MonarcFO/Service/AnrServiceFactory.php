@@ -11,9 +11,9 @@ class AnrServiceFactory extends AbstractServiceFactory
         'table'=> 'MonarcFO\Model\Table\AnrTable',
 
         //core
-        'anrTable' => 'MonarcCore\Model\Table\AnrTable',
-        'amvTable' => 'MonarcCore\Model\Table\AmvTable',
-        'anrObjectCategoryTable' => 'MonarcCore\Model\Table\AnrObjectCategoryTable',
+        'anrTable'     => 'MonarcCore\Model\Table\AnrTable',
+        'amvTable'  => 'MonarcCore\Model\Table\AmvTable',
+        'anrObjectCategoryTable'   => 'MonarcCore\Model\Table\AnrObjectCategoryTable',
         'assetTable' => 'MonarcCore\Model\Table\AssetTable',
         'instanceTable' => 'MonarcCore\Model\Table\InstanceTable',
         'instanceConsequenceTable' => 'MonarcCore\Model\Table\InstanceConsequenceTable',
@@ -55,6 +55,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'scaleImpactTypeCliTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
         'threatCliTable' => 'MonarcFO\Model\Table\ThreatTable',
         'themeCliTable' => 'MonarcFO\Model\Table\ThemeTable',
+        'userCliTable' => 'MonarcFO\Model\Table\UserTable',
         'vulnerabilityCliTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
     );
 }
