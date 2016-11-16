@@ -97,6 +97,7 @@ class AnrService extends AbstractService
      *
      * @param $anr
      * @param string $source
+     * @param null $model
      * @return mixed
      * @throws \Exception
      */
@@ -115,7 +116,7 @@ class AnrService extends AbstractService
         $newAnr = clone $anr;
         $newAnr->setId(null);
         $newAnr->setObjects(null);
-        $id = $this->get('cliTable')->save($newAnr);
+        $id = $this->get('anrCliTable')->save($newAnr);
 
         //duplicate themes
         $i = 1;
