@@ -1,5 +1,7 @@
 <?php
 namespace MonarcFO\Model\Table;
 
-class ThreatTable extends AbstractEntityTable  {
+use MonarcCore\Model\Table\AbstractEntityTable;
+
+class ThreatTable extends AbstractEntityTable   {
 }

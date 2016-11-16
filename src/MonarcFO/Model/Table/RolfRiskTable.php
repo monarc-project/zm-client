@@ -1,5 +1,7 @@
 <?php
 namespace MonarcFO\Model\Table;
 
-class RolfRiskTable extends AbstractEntityTable  {
+use MonarcCore\Model\Table\AbstractEntityTable;
+
+class RolfRiskTable extends AbstractEntityTable   {
 }

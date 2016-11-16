@@ -1,5 +1,7 @@
 <?php
 namespace MonarcFO\Model\Table;
 
-class ScaleCommentTable extends AbstractEntityTable  {
+use MonarcCore\Model\Table\AbstractEntityTable;
+
+class ScaleCommentTable extends AbstractEntityTable   {
 }

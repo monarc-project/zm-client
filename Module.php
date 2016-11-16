@@ -49,7 +49,6 @@ class Module
             ),
             'factories' => array(
                 '\MonarcCli\Model\Db' => '\MonarcFO\Service\Model\DbCliFactory',
-                '\MonarcCore\Model\Db' => '\MonarcFO\Service\Model\DbFactory',
 
                 //tables
                 '\MonarcFO\Model\Table\AmvTable' => '\MonarcFO\Service\Model\Table\AmvServiceModelTable',
@@ -100,7 +99,6 @@ class Module
                 '\MonarcFO\Model\Entity\Vulnerability' => '\MonarcFO\Service\Model\Entity\VulnerabilityServiceModelEntity',
 
                 //services
-                '\MonarcFO\Service\IndexService' => '\MonarcFO\Service\IndexServiceFactory',
                 '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
             ),
         );

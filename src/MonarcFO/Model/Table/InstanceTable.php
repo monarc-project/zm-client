@@ -1,5 +1,7 @@
 <?php
 namespace MonarcFO\Model\Table;
 
-class InstanceTable extends AbstractEntityTable  {
+use MonarcCore\Model\Table\AbstractEntityTable;
+
+class InstanceTable extends AbstractEntityTable   {
 }

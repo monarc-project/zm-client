@@ -1,5 +1,7 @@
 <?php
 namespace MonarcFO\Model\Table;
 
-class MeasureTable extends AbstractEntityTable  {
+use MonarcCore\Model\Table\AbstractEntityTable;
+
+class MeasureTable extends AbstractEntityTable   {
 }

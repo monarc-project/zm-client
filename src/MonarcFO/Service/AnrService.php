@@ -17,7 +17,7 @@ use MonarcFO\Model\Table\UserTable;
  * Class AnrService
  * @package MonarcFO\Service
  */
-class AnrService extends AbstractService
+class AnrService extends \MonarcCore\Service\AbstractService
 {
     protected $amvTable;
     protected $anrTable;

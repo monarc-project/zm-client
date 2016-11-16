@@ -2,6 +2,7 @@
 
 namespace MonarcFO\Model\Entity;
 
+use MonarcCore\Model\Entity\AbstractEntity;
 use Zend\InputFilter\InputFilterInterface;
 
 use Doctrine\ORM\Mapping as ORM;
