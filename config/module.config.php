@@ -120,6 +120,8 @@ return array(
         // Utilisateur : Accès RWD par analyse
         'userfo'=> array(
             'monarc_api_user_profile',
+            'monarc_api_anr_risks',
+            'monarc_api_anr_risks_op',
             'monarc_api_anr_instances',
             'monarc_api_anr_instances_risks',
             'monarc_api_anr_instances_risksop',
