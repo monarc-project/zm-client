@@ -1,7 +1,7 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcFO\Model\Entity\Anr;
+use MonarcCore\Model\Entity\Anr;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ModelTable;
 use MonarcFO\Service\AbstractService;
@@ -110,6 +110,7 @@ class AnrService extends AbstractService
             $anr = $anrTable->getEntity($anr);
         }
 
+
         if (!$anr instanceof Anr) {
             throw new \Exception('Anr missing', 412);
         }
@@ -118,7 +119,9 @@ class AnrService extends AbstractService
         $newAnr = clone $anr;
         $newAnr->setId(null);
         $newAnr->setObjects(null);
-        $id = $this->get('anrCliTable')->save($newAnr);
+        /** @var AnrTable $anrCliTable */
+        $anrCliTable = $this->get('anrCliTable');
+        $id = $anrCliTable->save($newAnr);
 
         //add user to anr
         $userCliTable = $this->get('userCliTable');
@@ -126,6 +129,7 @@ class AnrService extends AbstractService
         $user = $userCliTable->getEntity($userArray['id']);
         $user->addAnr($newAnr);
         $userCliTable->save($user);
+
 
         //duplicate themes
         $i = 1;

@@ -8,7 +8,7 @@ abstract class AbstractEntityTable
     protected $language;
     protected $connectedUser;
 
-    public function __construct(\MonarcFO\Model\Db $dbService, $class = null)
+    public function __construct($dbService, $class = null)
     {
         $this->db = $dbService;
         if ($class != null) {
@@ -144,7 +144,7 @@ abstract class AbstractEntityTable
         }
     }
 
-    public function save(\MonarcFO\Model\Entity\AbstractEntity $entity, $last = true)
+    public function save($entity, $last = true)
     {
         if(!empty($this->connectedUser) && isset($this->connectedUser['firstname']) && isset($this->connectedUser['lastname'])){
             $id = $entity->get('id');
