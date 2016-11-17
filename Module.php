@@ -30,7 +30,7 @@ class Module
     public function getAutoloaderConfig()
     {
         return array(
-            // ./vendor/bin/classmap_generator.php --library module/MonarcBO/src/MonarcBO -w -s -o module/MonarcBO/autoload_classmap.php
+            // ./vendor/bin/classmap_generator.php --library module/MonarcFO/src/MonarcFO -w -s -o module/MonarcFO/autoload_classmap.php
             'Zend\Loader\ClassMapAutoloader' => array(
                 __DIR__ . '/autoload_classmap.php',
             ),
@@ -48,8 +48,6 @@ class Module
             'invokables' => array(
             ),
             'factories' => array(
-                '\MonarcCli\Model\Db' => '\MonarcFO\Service\Model\DbCliFactory',
-
                 //tables
                 '\MonarcFO\Model\Table\AmvTable' => '\MonarcFO\Service\Model\Table\AmvServiceModelTable',
                 '\MonarcFO\Model\Table\AnrObjectCategoryTable' => '\MonarcFO\Service\Model\Table\AnrObjectCategoryServiceModelTable',
