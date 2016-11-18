@@ -63,6 +63,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $threatCliTable;
     protected $themeCliTable;
     protected $userCliTable;
+    protected $userAnrCliTable;
     protected $vulnerabilityCliTable;
 
     /**
@@ -128,8 +129,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
         $user = $userCliTable->getEntity($userArray['id']);
-        $user->addAnr($newAnr);
-        $userCliTable->save($user);
+        $userAnr =  new \MonarcFO\Model\Entity\UserAnr();
+        $userAnr->setUser($user);
+        $userAnr->setAnr($newAnr);
+        $userAnr->setRwd(1);
+        $this->get('userAnrCliTable')->save($userAnr);
 
         //duplicate themes
         $i = 1;
