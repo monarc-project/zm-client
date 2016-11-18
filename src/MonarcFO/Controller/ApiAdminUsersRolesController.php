@@ -15,9 +15,7 @@ class ApiAdminUsersRolesController extends AbstractController
 
         $currentUserRoles = $this->getService()->getByUserToken($token);
 
-        return new JsonModel(array(
-            $currentUserRoles
-        ));
+        return new JsonModel($currentUserRoles);
     }
 
     public function get($id)

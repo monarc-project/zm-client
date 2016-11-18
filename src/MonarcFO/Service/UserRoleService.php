@@ -3,7 +3,6 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Model\Table\UserRoleTable;
 use MonarcCore\Service\AbstractService;
-use MonarcFO\Model\Table\UserTable;
 use Zend\Http\Header\GenericHeader;
 
 class UserRoleService extends AbstractService
