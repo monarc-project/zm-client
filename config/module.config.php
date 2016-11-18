@@ -60,6 +60,16 @@ return array(
                     ),
                 ),
             ),
+
+            'monarc_api_user_profile' => array(
+                'type' => 'literal',
+                'options' => array(
+                    'route' => '/api/user/profile',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiUserProfile',
+                    ),
+                ),
+            ),
         ),
     ),
 
