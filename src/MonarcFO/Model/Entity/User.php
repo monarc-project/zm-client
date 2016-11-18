@@ -26,9 +26,9 @@ class User extends AbstractEntity
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Anr", inversedBy="objects", cascade={"persist"})
-     * @ORM\JoinTable(name="anrs_objects",
-     *  joinColumns={@ORM\JoinColumn(name="object_id", referencedColumnName="id")},
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Anr", inversedBy="users", cascade={"persist"})
+     * @ORM\JoinTable(name="users_anrs",
+     *  joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="anr_id", referencedColumnName="id")}
      * )
      */
@@ -145,6 +145,7 @@ class User extends AbstractEntity
         }
 
         if (!$errors) {
+            var_dump(get_class($anr));
             $this->anrs[] = $anr;
         }
     }
