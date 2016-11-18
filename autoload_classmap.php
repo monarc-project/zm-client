@@ -106,4 +106,6 @@ return array(
     'MonarcFO\Service\Model\Table\ThreatServiceModelTable'                => __DIR__ . '/src/MonarcFO/Service/Model/Table/ThreatServiceModelTable.php',
     'MonarcFO\Service\Model\Table\UserServiceModelTable'                  => __DIR__ . '/src/MonarcFO/Service/Model/Table/UserServiceModelTable.php',
     'MonarcFO\Service\Model\Table\VulnerabilityServiceModelTable'         => __DIR__ . '/src/MonarcFO/Service/Model/Table/VulnerabilityServiceModelTable.php',
+    'MonarcFO\Service\UserRoleService'                                    => __DIR__ . '/src/MonarcFO/Service/UserRoleService.php',
+    'MonarcFO\Service\UserRoleServiceFactory'                             => __DIR__ . '/src/MonarcFO/Service/UserRoleServiceFactory.php',
 );

@@ -100,6 +100,7 @@ class Module
 
                 //services
                 '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
+                '\MonarcFO\Service\UserRoleService' => '\MonarcFO\Service\UserRoleServiceFactory',
             ),
         );
     }
