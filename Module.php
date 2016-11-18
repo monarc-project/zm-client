@@ -48,6 +48,8 @@ class Module
             'invokables' => array(
             ),
             'factories' => array(
+                '\MonarcCli\Model\Db' => '\MonarcFO\Service\Model\DbCliFactory',
+
                 //tables
                 '\MonarcFO\Model\Table\AmvTable' => '\MonarcFO\Service\Model\Table\AmvServiceModelTable',
                 '\MonarcFO\Model\Table\AnrObjectCategoryTable' => '\MonarcFO\Service\Model\Table\AnrObjectCategoryServiceModelTable',

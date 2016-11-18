@@ -98,6 +98,24 @@ return array(
         ),
     ),
 
+    'doctrine' => array(
+        'driver' => array(
+            'Monarc_cli_driver' => array(
+                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
+                'cache' => 'array',
+                'paths' => array(
+                    __DIR__ . '/../src/MonarcFO/Model/Entity',
+                ),
+            ),
+            'orm_cli' => array(
+                'class' => 'Doctrine\ORM\Mapping\Driver\DriverChain',
+                'drivers' => array(
+                    'MonarcFO\Model\Entity' => 'Monarc_cli_driver',
+                ),
+            ),
+        ),
+    ),
+
     // Placeholder for console routes
     'console' => array(
         'router' => array(

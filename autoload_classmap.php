@@ -61,6 +61,7 @@ return array(
     'MonarcFO\Model\Table\VulnerabilityTable'                             => __DIR__ . '/src/MonarcFO/Model/Table/VulnerabilityTable.php',
     'MonarcFO\Service\AnrService'                                         => __DIR__ . '/src/MonarcFO/Service/AnrService.php',
     'MonarcFO\Service\AnrServiceFactory'                                  => __DIR__ . '/src/MonarcFO/Service/AnrServiceFactory.php',
+    'MonarcFO\Service\Model\DbCliFactory'                                 => __DIR__ . '/src/MonarcFO/Service/Model/DbClifactory.php',
     'MonarcFO\Service\Model\Entity\AmvServiceModelEntity'                 => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AmvServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\AnrObjectCategoryServiceModelEntity'   => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AnrObjectCategoryServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\AnrServiceModelEntity'                 => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AnrServiceModelEntity.php',
