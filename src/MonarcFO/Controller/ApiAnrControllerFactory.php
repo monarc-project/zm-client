@@ -1,7 +1,7 @@
 <?php
 namespace MonarcFO\Controller;
 
-class ApiAnrControllerFactory extends AbstractControllerFactory
+class ApiAnrControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
 {
     protected $serviceName = '\MonarcFO\Service\AnrService';
 }

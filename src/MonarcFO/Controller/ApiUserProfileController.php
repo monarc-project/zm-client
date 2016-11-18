@@ -4,7 +4,7 @@ namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
 
-class ApiUserProfileController extends AbstractController
+class ApiUserProfileController extends \MonarcCore\Controller\AbstractController
 {
     protected $connectedUser;
 

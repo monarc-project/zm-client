@@ -5,7 +5,7 @@ use MonarcFO\Model\Entity\Object;
 use MonarcFO\Service\AnrService;
 use Zend\View\Model\JsonModel;
 
-class ApiDuplicateAnrController extends AbstractController
+class ApiDuplicateAnrController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'anrs';
 

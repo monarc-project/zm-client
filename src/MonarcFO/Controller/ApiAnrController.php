@@ -4,7 +4,7 @@ namespace MonarcFO\Controller;
 use MonarcFO\Service\AnrService;
 use Zend\View\Model\JsonModel;
 
-class ApiAnrController extends AbstractController
+class ApiAnrController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'anrs';
 

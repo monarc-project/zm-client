@@ -2,7 +2,7 @@
 
 namespace MonarcFO\Controller;
 
-class ApiUserProfileControllerFactory extends AbstractControllerFactory
+class ApiUserProfileControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
 {
     protected $serviceName = array(
     	'service' => '\MonarcCore\Service\UserProfileService',
