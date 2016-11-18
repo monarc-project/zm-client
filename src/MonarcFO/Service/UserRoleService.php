@@ -3,11 +3,12 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Model\Table\UserRoleTable;
 use MonarcCore\Service\AbstractService;
+use MonarcFO\Model\Table\UserAnrTable;
 use Zend\Http\Header\GenericHeader;
 
 class UserRoleService extends AbstractService
 {
-    protected $userCliTable;
+    protected $userAnrCliTable;
     protected $userRoleTable;
     protected $userTokenTable;
     protected $userRoleEntity;
@@ -69,13 +70,16 @@ class UserRoleService extends AbstractService
         if (count($userToken)) {
             $userId = $userToken[0]['userId'];
 
-            /** @var UserTable $userCliTable */
-            $userCliTable = $this->get('userCliTable');
-            $user = $userCliTable->getEntity($userId);
+            /** @var UserAnrTable $userAnrCliTable */
+            $userAnrCliTable = $this->get('userAnrCliTable');
+            $userAnrs = $userAnrCliTable->getEntityByFields(['user' => $userId]);
 
             $anrs = [];
-            foreach($user->anrs as $anr) {
-                $anrs[] = $anr->getJsonArray();
+            foreach($userAnrs as $userAnr) {
+                $array = [];
+                $array['anr'] = $userAnr->anr->id;
+                $array['rwd'] = $userAnr->rwd;
+                $anrs[] = $array;
             }
 
             return [

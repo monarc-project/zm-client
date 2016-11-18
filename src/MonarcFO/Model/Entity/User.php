@@ -25,16 +25,6 @@ class User extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Anr", inversedBy="users", cascade={"persist"})
-     * @ORM\JoinTable(name="users_anrs",
-     *  joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="anr_id", referencedColumnName="id")}
-     * )
-     */
-    protected $anrs;
-
-    /**
      * @var \DateTime
      *
      * @ORM\Column(name="date_start", type="date", nullable=true)
@@ -124,31 +114,6 @@ class User extends AbstractEntity
      * @ORM\Column(name="language", type="integer", precision=0, scale=0, nullable=false, unique=false)
      */
     protected $language;
-
-    /**
-     * Add Anr
-     *
-     * @param Anr $anr
-     * @throws \Exception
-     */
-    public function addAnr(Anr $anr)
-    {
-        $currentAnrs = $this->anrs;
-
-        $errors = false;
-        if ($currentAnrs) {
-            foreach ($currentAnrs as $currentAnr) {
-                if ($currentAnr->id == $anr->id) {
-                    $errors = true;
-                }
-            }
-        }
-
-        if (!$errors) {
-            var_dump(get_class($anr));
-            $this->anrs[] = $anr;
-        }
-    }
 
     public function getInputFilter($partial = false){
 

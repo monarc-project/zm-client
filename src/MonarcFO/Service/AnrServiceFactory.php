@@ -56,6 +56,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'threatCliTable' => 'MonarcFO\Model\Table\ThreatTable',
         'themeCliTable' => 'MonarcFO\Model\Table\ThemeTable',
         'userCliTable' => 'MonarcFO\Model\Table\UserTable',
+        'userAnrCliTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'vulnerabilityCliTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
     );
 }
