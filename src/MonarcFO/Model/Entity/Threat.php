@@ -44,17 +44,6 @@ class Threat extends AbstractEntity
     protected $theme;
 
     /**
-     * @var \MonarcFO\Model\Entity\Model
-     *
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Model", inversedBy="threats", cascade={"persist"})
-     * @ORM\JoinTable(name="threats_models",
-     *  joinColumns={@ORM\JoinColumn(name="threat_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="model_id", referencedColumnName="id")}
-     * )
-     */
-    protected $models;
-
-    /**
      * @var string
      *
      * @ORM\Column(name="label1", type="string", length=255, nullable=true)

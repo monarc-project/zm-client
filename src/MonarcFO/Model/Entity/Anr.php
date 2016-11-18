@@ -23,9 +23,8 @@ class Anr extends AbstractEntity
     protected $id;
 
     /**
-     * @var \MonarcFO\Model\Entity\Object
-     *
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Object", mappedBy="anrs", cascade={"persist"})
+     * @var \Doctrine\Common\Collections\Collection
+     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Object", mappedBy="anrs", cascade={"persist"})
      */
     protected $objects;
 
@@ -277,9 +276,9 @@ class Anr extends AbstractEntity
     /**
      * @var integer
      *
-     * @ORM\Column(name="language", type="integer", options={"unsigned":true})
+     * @ORM\Column(name="language", type="integer", options={"unsigned":true, "default":1})
      */
-    protected $language;
+    protected $language = 1;
 
     /**
      * @return int
@@ -299,5 +298,22 @@ class Anr extends AbstractEntity
         return $this;
     }
 
+    /**
+     * @return Object
+     */
+    public function getObjects()
+    {
+        return $this->objects;
+    }
+
+    /**
+     * @param Object $objects
+     * @return Anr
+     */
+    public function setObjects($objects)
+    {
+        $this->objects = $objects;
+        return $this;
+    }
 }
 

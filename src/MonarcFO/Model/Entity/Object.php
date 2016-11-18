@@ -54,14 +54,11 @@ class Object extends AbstractEntity
     protected $anrs;
 
     /**
-     * @var \MonarcFO\Model\Entity\Model
+     * @var smallint
      *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Model", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="model_id", referencedColumnName="id", nullable=true)
-     * })
+     * @ORM\Column(name="model_id", type="smallint", options={"unsigned":true, "default":null})
      */
-    protected $model;
+    protected $model = null;
 
     /**
      * @var \MonarcFO\Model\Entity\ObjectCategory

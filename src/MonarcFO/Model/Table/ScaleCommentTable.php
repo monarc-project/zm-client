@@ -3,5 +3,8 @@ namespace MonarcFO\Model\Table;
 
 use MonarcCore\Model\Table\AbstractEntityTable;
 
-class ScaleCommentTable extends AbstractEntityTable   {
+class ScaleCommentTable extends AbstractEntityTable {
+    public function __construct(\MonarcCore\Model\Db $dbService) {
+        parent::__construct($dbService, '\MonarcFO\Model\Entity\ScaleComment');
+    }
 }
