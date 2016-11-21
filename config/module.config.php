@@ -136,6 +136,45 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_client_rolf_tags' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/rolf-tags[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrRolfTags',
+                    ),
+                ),
+            ),
+            'monarc_api_client_rolf_categories' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/rolf-categories[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrRolfCategories',
+                    ),
+                ),
+            ),
+            'monarc_api_client_rolf_risks' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/rolf-risks[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrRolfRisks',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -158,6 +197,9 @@ return array(
             '\MonarcFO\Controller\ApiAnrMeasures'           => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrThreats'            => '\MonarcFO\Controller\ApiAnrThreatsControllerFactory',
             '\MonarcFO\Controller\ApiAnrVulnerabilities'    => '\MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRolfTags'           => '\MonarcFO\Controller\ApiAnrRolfTagsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRolfCategories'     => '\MonarcFO\Controller\ApiAnrRolfCategoriesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRolfRisks'          => '\MonarcFO\Controller\ApiAnrRolfRisksControllerFactory',
         ),
     ),
 
@@ -234,6 +276,9 @@ return array(
             'monarc_api_client_measures',
             'monarc_api_client_threats',
             'monarc_api_client_vulnerabilities',
+            'monarc_api_client_rolf_tags',
+            'monarc_api_client_rolf_categories',
+            'monarc_api_client_rolf_risks',
         ),
         // Utilisateur réduit : Accès consultation uniquement
         'userminfo'=> array(

@@ -8,6 +8,6 @@ class AnrAssetServiceFactory extends AbstractServiceFactory
     protected $ressources = array(
         'entity'=> 'MonarcFO\Model\Entity\Asset',
         'table'=> 'MonarcFO\Model\Table\AssetTable',
-        'anrTable' => 'MonarcFO\Model\Table\AnrTable'
+        'anrTable' => 'MonarcFO\Model\Table\AnrTable',
     );
 }

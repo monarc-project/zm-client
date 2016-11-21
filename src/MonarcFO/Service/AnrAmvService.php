@@ -9,6 +9,12 @@ namespace MonarcFO\Service;
  */
 class AnrAmvService extends \MonarcCore\Service\AbstractService
 {
+    protected $anrTable;
+    protected $assetTable;
+    protected $threatTable;
+    protected $vulnerabilityTable;
+    protected $measureTable;
+
 	protected $filterColumns = ['status'];
     protected $dependencies = ['anr', 'asset', 'threat', 'vulnerability', 'measure[1]()', 'measure[2]()', 'measure[3]()'];
 
