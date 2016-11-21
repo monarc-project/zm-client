@@ -73,6 +73,7 @@ class Module
                 '\MonarcFO\Model\Table\ThreatTable' => '\MonarcFO\Service\Model\Table\ThreatServiceModelTable',
                 '\MonarcFO\Model\Table\UserTable' => '\MonarcFO\Service\Model\Table\UserServiceModelTable',
                 '\MonarcFO\Model\Table\UserAnrTable' => '\MonarcFO\Service\Model\Table\UserAnrServiceModelTable',
+                '\MonarcFO\Model\Table\UserRoleTable' => '\MonarcFO\Service\Model\Table\UserRoleServiceModelTable',
                 '\MonarcFO\Model\Table\VulnerabilityTable' => '\MonarcFO\Service\Model\Table\VulnerabilityServiceModelTable',
 
                 //entities
@@ -98,10 +99,12 @@ class Module
                 '\MonarcFO\Model\Entity\Threat' => '\MonarcFO\Service\Model\Entity\ThreatServiceModelEntity',
                 '\MonarcFO\Model\Entity\User' => '\MonarcFO\Service\Model\Entity\UserServiceModelEntity',
                 '\MonarcFO\Model\Entity\UserAnr' => '\MonarcFO\Service\Model\Entity\UserAnrServiceModelEntity',
+                '\MonarcFO\Model\Entity\UserRole' => '\MonarcFO\Service\Model\Entity\UserRoleServiceModelEntity',
                 '\MonarcFO\Model\Entity\Vulnerability' => '\MonarcFO\Service\Model\Entity\VulnerabilityServiceModelEntity',
 
                 //services
                 '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
+                '\MonarcFO\Service\UserService' => '\MonarcFO\Service\UserServiceFactory',
                 '\MonarcFO\Service\UserRoleService' => '\MonarcFO\Service\UserRoleServiceFactory',
             ),
         );

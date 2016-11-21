@@ -41,6 +41,19 @@ return array(
                 ),
             ),
 
+            'monarc_api_admin_users' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/users/[:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAdminUsers',
+                    ),
+                ),
+            ),
+
             'monarc_api_duplicate_client_anr' => array(
                 'type' => 'literal',
                 'options' => array(
