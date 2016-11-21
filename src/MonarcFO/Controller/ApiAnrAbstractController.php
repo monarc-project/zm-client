@@ -21,11 +21,11 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         if(empty($anrId)){
         	throw new \Exception('Anr id missing', 412);
         }
-        $filter['anr'] = $anrId;
+        $filterAnd = ['anr' => $anrId];
 
         $service = $this->getService();
 
-        $entities = $service->getList($page, $limit, $order, $filter);
+        $entities = $service->getList($page, $limit, $order, $filter,$filterAnd);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);
@@ -33,7 +33,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($page, $limit, $order, $filter),
+            'count' => $service->getFilteredCount($page, $limit, $order, $filter,$filterAnd),
             $this->name => $entities
         ));
     }
@@ -52,7 +52,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         if(empty($anrId)){
         	throw new \Exception('Anr id missing', 412);
         }
-        if($entity->get('anr') || $entity->get('anr')->get('id') != $anrId){
+        if(!$entity['anr'] || $entity['anr']->get('id') != $anrId){
         	throw new \Exception('Anr ids diffence', 412);
         }
 
@@ -100,10 +100,6 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         if(empty($anrId)){
         	throw new \Exception('Anr id missing', 412);
         }
-        if(!isset($data['anr']) || $data['anr'] != $anrId){
-        	throw new \Exception('Anr ids diffence', 412);
-
-        }
 
         $this->getService()->update($id, $data);
 
@@ -122,10 +118,6 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     	$anrId = (int) $this->params()->fromRoute('anrid');
         if(empty($anrId)){
         	throw new \Exception('Anr id missing', 412);
-        }
-        if(!isset($data['anr']) || $data['anr'] != $anrId){
-        	throw new \Exception('Anr ids diffence', 412);
-
         }
 
         $this->getService()->patch($id, $data);
