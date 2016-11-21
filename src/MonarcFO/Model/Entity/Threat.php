@@ -382,17 +382,6 @@ class Threat extends AbstractEntity
     }
 
     /**
-     * Set model
-     *
-     * @param key
-     * @param Model $model
-     */
-    public function setModel($id, Model $model)
-    {
-        $this->models[$id] = $model;
-    }
-
-    /**
      * Set theme
      *
      * @param key
@@ -401,34 +390,6 @@ class Threat extends AbstractEntity
     public function setTheme(Theme $theme)
     {
         $this->theme = $theme;
-    }
-
-    /**
-     * @return Model
-     */
-    public function getModels()
-    {
-        return $this->models;
-    }
-
-    /**
-     * @param Model $models
-     * @return Threat
-     */
-    public function setModels($models)
-    {
-        $this->models = $models;
-        return $this;
-    }
-
-    /**
-     * Add model
-     *
-     * @param Model $model
-     */
-    public function addModel(Model $model)
-    {
-        $this->models->add($model);
     }
 
     public function getInputFilter($partial = false){
@@ -562,11 +523,6 @@ class Threat extends AbstractEntity
             ));
         }
         return $this->inputFilter;
-    }
-
-    public function __construct()
-    {
-        $this->models = new ArrayCollection();
     }
 }
 

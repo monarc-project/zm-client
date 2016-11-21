@@ -110,6 +110,7 @@ class Module
                 '\MonarcFO\Service\AnrAmvService' => '\MonarcFO\Service\AnrAmvServiceFactory',
                 '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
                 '\MonarcFO\Service\AnrThreatService' => '\MonarcFO\Service\AnrThreatServiceFactory',
+                '\MonarcFO\Service\AnrThemeService' => '\MonarcFO\Service\AnrThemeServiceFactory',
                 '\MonarcFO\Service\AnrVulnerabilityService' => '\MonarcFO\Service\AnrVulnerabilityServiceFactory',
                 '\MonarcFO\Service\AnrRolfTagService' => '\MonarcFO\Service\AnrRolfTagServiceFactory',
                 '\MonarcFO\Service\AnrRolfCategoryService' => '\MonarcFO\Service\AnrRolfCategoryServiceFactory',

@@ -256,7 +256,8 @@ class RolfRisk extends AbstractEntity
 
     public function __construct()
     {
-        $this->rolfTags = new ArrayCollection();
+        $this->tags = new ArrayCollection();
+        $this->categories = new ArrayCollection();
     }
 }
 

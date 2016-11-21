@@ -18,4 +18,8 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     ];
 
     protected $dependencies = ['anr'];
+
+    public function importFromFile($anrId,$data){
+    	
+    }
 }

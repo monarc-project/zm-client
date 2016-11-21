@@ -13,4 +13,5 @@ use Zend\View\Model\JsonModel;
 class ApiAnrAmvsController extends ApiAnrAbstractController
 {
     protected $name = 'amvs';
+    protected $dependencies = ['asset', 'threat', 'vulnerability', 'measure1', 'measure2', 'measure3'];
 }

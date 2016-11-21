@@ -97,6 +97,18 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_client_assets_import' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/assets/import',
+                    'constraints' => array(
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrAssetsImport',
+                    ),
+                ),
+            ),
             'monarc_api_client_amvs' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -133,6 +145,19 @@ return array(
                     ),
                     'defaults' => array(
                         'controller' => 'MonarcFO\Controller\ApiAnrThreats',
+                    ),
+                ),
+            ),
+            'monarc_api_client_themes' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/themes[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrThemes',
                     ),
                 ),
             ),
@@ -209,10 +234,14 @@ return array(
             '\MonarcFO\Controller\ApiAnrAmvs'               => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures'           => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrThreats'            => '\MonarcFO\Controller\ApiAnrThreatsControllerFactory',
+
+            '\MonarcFO\Controller\ApiAnrThemes'            => '\MonarcFO\Controller\ApiAnrThemesControllerFactory',
+
             '\MonarcFO\Controller\ApiAnrVulnerabilities'    => '\MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfTags'           => '\MonarcFO\Controller\ApiAnrRolfTagsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfCategories'     => '\MonarcFO\Controller\ApiAnrRolfCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfRisks'          => '\MonarcFO\Controller\ApiAnrRolfRisksControllerFactory',
+            '\MonarcFO\Controller\ApiAnrAssetsImport'       => '\MonarcFO\Controller\ApiAnrAssetsImportControllerFactory',
         ),
     ),
 
@@ -288,6 +317,7 @@ return array(
             'monarc_api_client_amvs',
             'monarc_api_client_measures',
             'monarc_api_client_threats',
+            'monarc_api_client_themes',
             'monarc_api_client_vulnerabilities',
             'monarc_api_client_rolf_tags',
             'monarc_api_client_rolf_categories',

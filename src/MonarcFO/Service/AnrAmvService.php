@@ -33,8 +33,11 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         if (!$entity) {
             throw new \Exception('Entity does not exist', 412);
         }
+        if($entity->get('anr')->get('id') != $data['anr']){
+            throw new \Exception('Anr id error', 412);
+        }
 
-        unset($data['asset']); // on ne permet pas de modifier l'asset
+        $data['asset'] = $entity->get('asset')->get('id'); // on ne permet pas de modifier l'asset
 
         $this->filterPostFields($data, $entity);
 
@@ -67,8 +70,11 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         if (!$entity) {
             throw new \Exception('Entity does not exist', 412);
         }
+        if($entity->get('anr')->get('id') != $data['anr']){
+            throw new \Exception('Anr id error', 412);
+        }
 
-        unset($data['asset']); // on ne permet pas de modifier l'asset
+        $data['asset'] = $entity->get('asset')->get('id'); // on ne permet pas de modifier l'asset
 
         $entity->setLanguage($this->getLanguage());
 

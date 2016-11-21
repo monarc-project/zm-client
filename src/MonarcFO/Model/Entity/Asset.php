@@ -186,53 +186,6 @@ class Asset extends AbstractEntity
         return $this;
     }
 
-    /**
-     * @return Model
-     */
-    public function getModels()
-    {
-        return $this->models;
-    }
-
-    /**
-     * @return Model
-     */
-    public function getModel($id)
-    {
-        return $this->models[$id];
-    }
-
-    /**
-     * @param Model $models
-     * @return Asset
-     */
-    public function setModels($models)
-    {
-        $this->models = $models;
-        return $this;
-    }
-
-    /**
-     * Add model
-     *
-     * @param Model $model
-     */
-    public function addModel(Model $model)
-    {
-        $this->models[] = $model;
-    }
-
-    /**
-     * Set model
-     *
-     * @param key
-     * @param Model $model
-     */
-    public function setModel($id, Model $model)
-    {
-        $this->models[$id] = $model;
-    }
-
     public function getInputFilter($partial = true){
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
@@ -317,11 +270,6 @@ class Asset extends AbstractEntity
         ));
 
         return $this->inputFilter;
-    }
-
-    public function __construct()
-    {
-        $this->models = new ArrayCollection();
     }
 }
 

@@ -9,5 +9,7 @@ class AnrRolfRiskServiceFactory extends AbstractServiceFactory
         'entity'=> 'MonarcFO\Model\Entity\RolfRisk',
         'table'=> 'MonarcFO\Model\Table\RolfRiskTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+    	'categoryTable' => 'MonarcFO\Model\Table\RolfCategoryTable',
+    	'tagTable' => 'MonarcFO\Model\Table\RolfTagTable',
     );
 }

@@ -100,6 +100,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         if(empty($anrId)){
         	throw new \Exception('Anr id missing', 412);
         }
+        $data['anr'] = $anrId;
 
         $this->getService()->update($id, $data);
 
@@ -119,6 +120,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         if(empty($anrId)){
         	throw new \Exception('Anr id missing', 412);
         }
+        $data['anr'] = $anrId;
 
         $this->getService()->patch($id, $data);
 
