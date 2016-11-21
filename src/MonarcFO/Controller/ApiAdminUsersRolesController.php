@@ -4,7 +4,7 @@ namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
 
-class ApiAdminUsersRolesController extends AbstractController
+class ApiAdminUsersRolesController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'roles';
 

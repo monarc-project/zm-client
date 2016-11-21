@@ -17,6 +17,7 @@ use MonarcFO\Model\Table\UserRoleTable;
 class UserService extends AbstractService
 {
     protected $userRoleTable;
+    protected $userRoleService;
 
     /**
      * Get Filtered Count
@@ -68,7 +69,7 @@ class UserService extends AbstractService
      */
     public function update($id,$data){
 
-        $this->verifyUserStatus($id, $data);
+        $this->verifyAuthorizedAction($id, $data);
 
         if (isset($data['dateEnd'])) {
             $data['dateEnd'] = new \DateTime($data['dateEnd']);
@@ -92,7 +93,37 @@ class UserService extends AbstractService
      */
     public function patch($id, $data){
 
-        $this->verifyUserStatus($id, $data);
+        $this->verifyAuthorizedAction($id, $data);
+
+        if (isset($data['superadminfo'])) {
+            /** @var UserRoleTable $userRoleTable */
+            $isAdmin = false;
+            $userRoleTable = $this->get('userRoleTable');
+            $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
+            foreach($userRoles as $userRole) {
+                if ($userRole->role == \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO) {
+                    $isAdmin = true;
+                }
+            }
+
+            if (($data['superadminfo']) && (!$isAdmin)) {
+                //add role
+                $dataUserRole = [
+                    'user' => $id,
+                    'role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO,
+                ];
+                /** @var UserRoleService $userRoleService */
+                $userRoleService = $this->get('userRoleService');
+                $userRoleService->create($dataUserRole);
+            } else if ((!$data['superadminfo']) && ($isAdmin)){
+                //delete role
+                foreach($userRoles as $userRole) {
+                    if ($userRole->role == \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO) {
+                        $userRoleTable->delete($userRole->id);
+                    }
+                }
+            }
+        }
 
         if (isset($data['dateEnd'])) {
             $data['dateEnd'] = new \DateTime($data['dateEnd']);
@@ -106,13 +137,26 @@ class UserService extends AbstractService
     }
 
     /**
-     * Verify User Status
+     * Delete
+     *
+     * @param $id
+     * @return mixed
+     */
+    public function delete($id) {
+
+        $this->verifyAuthorizedAction($id, null);
+
+        return parent::delete($id);
+    }
+
+    /**
+     * Verify Authorized Action
      *
      * @param $id
      * @param $data
      * @throws \Exception
      */
-    public function verifyUserStatus($id, $data) {
+    public function verifyAuthorizedAction($id, $data) {
 
         /** @var UserRoleTable $userRoleTable */
         $isAdmin = false;
@@ -129,22 +173,27 @@ class UserService extends AbstractService
             $userTable = $this->get('table');
             $user = $userTable->getEntity($id);
 
+            $nbActivateAdminUser = 0;
+            $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO]);
+            foreach($adminUsersRoles as $adminUsersRole) {
+                $user = $userTable->getEntity($adminUsersRole->user->id);
+                if (($user->status) && (is_null($user->dateEnd))) {
+                    $nbActivateAdminUser++;
+                }
+            }
+
             if (
                 (($user->status) && (isset($data['status'])) && (!$data['status'])) //change status 1 -> 0
                 ||
                 ((is_null($user->dateEnd)) && (isset($data['dateEnd']))) //change dateEnd null -> date
+                ||
+                ((isset($data['superadminfo'])) && (!$data['superadminfo'])) //delete superadminfo role
+                ||
+                (is_null($data)) //delete superadminfo role
             ) {
                 //verify if is not the last superadminfo and verify date_end
-                $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO]);
-                $nbActivateUser = 0;
-                foreach($adminUsersRoles as $adminUsersRole) {
-                    $user = $userTable->getEntity($adminUsersRole->user->id);
-                    if (($user->status) && (is_null($user->dateEnd))) {
-                        $nbActivateUser++;
-                    }
-                }
-                if (count($nbActivateUser) <= 1) {
-                    throw new \Exception('You can not desactivate the last admin', 412);
+                if ($nbActivateAdminUser <= 1) {
+                    throw new \Exception('You can not desactivate, delete or change role of the last admin', 412);
                 }
             }
         }

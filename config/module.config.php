@@ -83,6 +83,72 @@ return array(
                     ),
                 ),
             ),
+
+            'monarc_api_client_assets' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/assets[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrAssets',
+                    ),
+                ),
+            ),
+            'monarc_api_client_amvs' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/amvs[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrAmvs',
+                    ),
+                ),
+            ),
+            'monarc_api_client_measures' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/measures[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrMeasures',
+                    ),
+                ),
+            ),
+            'monarc_api_client_threats' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/threats[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrThreats',
+                    ),
+                ),
+            ),
+            'monarc_api_client_vulnerabilities' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/vulnerabilities[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrVulnerabilities',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -100,6 +166,11 @@ return array(
             '\MonarcFO\Controller\ApiDuplicateAnr'          => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
             '\MonarcFO\Controller\ApiUserProfile'           => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
+            '\MonarcFO\Controller\ApiAnrAssets'             => '\MonarcFO\Controller\ApiAnrAssetsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrAmvs'               => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrMeasures'           => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
+            '\MonarcFO\Controller\ApiAnrThreats'            => '\MonarcFO\Controller\ApiAnrThreatsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrVulnerabilities'    => '\MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory',
         ),
     ),
 
@@ -171,6 +242,11 @@ return array(
             'monarc_api_scales',
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
+            'monarc_api_client_assets',
+            'monarc_api_client_amvs',
+            'monarc_api_client_measures',
+            'monarc_api_client_threats',
+            'monarc_api_client_vulnerabilities',
         ),
         // Utilisateur réduit : Accès consultation uniquement
         'userminfo'=> array(

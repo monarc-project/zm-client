@@ -10,7 +10,7 @@ use Zend\View\Model\JsonModel;
  * Class ApiConfigController
  * @package MonarcFO\Controller
  */
-class ApiConfigController extends AbstractController
+class ApiConfigController extends \MonarcCore\Controller\AbstractController
 {
     /**
      * Get list

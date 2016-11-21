@@ -106,6 +106,11 @@ class Module
                 '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
                 '\MonarcFO\Service\UserService' => '\MonarcFO\Service\UserServiceFactory',
                 '\MonarcFO\Service\UserRoleService' => '\MonarcFO\Service\UserRoleServiceFactory',
+                '\MonarcFO\Service\AnrAssetService' => '\MonarcFO\Service\AnrAssetServiceFactory',
+                '\MonarcFO\Service\AnrAmvService' => '\MonarcFO\Service\AnrAmvServiceFactory',
+                '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
+                '\MonarcFO\Service\AnrThreatService' => '\MonarcFO\Service\AnrThreatServiceFactory',
+                '\MonarcFO\Service\AnrVulnerabilityService' => '\MonarcFO\Service\AnrVulnerabilityServiceFactory',
             ),
         );
     }

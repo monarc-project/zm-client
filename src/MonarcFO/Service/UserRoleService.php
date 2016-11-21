@@ -9,9 +9,12 @@ use Zend\Http\Header\GenericHeader;
 class UserRoleService extends AbstractService
 {
     protected $userAnrCliTable;
+    protected $userTable;
     protected $userRoleTable;
     protected $userTokenTable;
     protected $userRoleEntity;
+
+    protected $dependencies = ['user'];
 
     /**
      * Get List
