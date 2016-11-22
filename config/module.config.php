@@ -284,6 +284,7 @@ return array(
                 'cache' => 'array',
                 'paths' => array(
                     __DIR__ . '/../src/MonarcFO/Model/Entity',
+                    __DIR__ . '/../../MonarcCore/src/MonarcCore/Model/Entity',
                 ),
             ),
             'orm_cli' => array(
