@@ -105,6 +105,7 @@ class Module
                 //services
                 '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
                 '\MonarcFO\Service\UserService' => '\MonarcFO\Service\UserServiceFactory',
+                '\MonarcFO\Service\UserAnrService' => '\MonarcFO\Service\UserAnrServiceFactory',
                 '\MonarcFO\Service\UserRoleService' => '\MonarcFO\Service\UserRoleServiceFactory',
                 '\MonarcFO\Service\AnrAssetService' => '\MonarcFO\Service\AnrAssetServiceFactory',
                 '\MonarcFO\Service\AnrAmvService' => '\MonarcFO\Service\AnrAmvServiceFactory',
