@@ -2,9 +2,7 @@
 
 namespace MonarcFO\Model\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-use MonarcCore\Model\Entity\AbstractEntity;
 use Zend\InputFilter\InputFilter;
 
 /**
@@ -16,7 +14,7 @@ use Zend\InputFilter\InputFilter;
 class Asset extends \MonarcCore\Model\Entity\AssetSuperClass
 {
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
