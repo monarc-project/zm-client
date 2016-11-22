@@ -17,6 +17,8 @@ return array(
     'MonarcFO\Controller\ApiAnrImportAbstractController'                  => __DIR__ . '/src/MonarcFO/Controller/ApiAnrImportAbstractController.php',
     'MonarcFO\Controller\ApiAnrMeasuresController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiAnrMeasuresController.php',
     'MonarcFO\Controller\ApiAnrMeasuresControllerFactory'                 => __DIR__ . '/src/MonarcFO/Controller/ApiAnrMeasuresControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrObjectsController'                         => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsController.php',
+    'MonarcFO\Controller\ApiAnrObjectsControllerFactory'                  => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRolfCategoriesController'                  => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRolfCategoriesController.php',
     'MonarcFO\Controller\ApiAnrRolfCategoriesControllerFactory'           => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRolfCategoriesControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRolfRisksController'                       => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRolfRisksController.php',

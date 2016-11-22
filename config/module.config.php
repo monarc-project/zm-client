@@ -213,6 +213,19 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_client_objects' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/objects[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrObjects',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -233,9 +246,10 @@ return array(
             '\MonarcFO\Controller\ApiAnrAssets'             => '\MonarcFO\Controller\ApiAnrAssetsControllerFactory',
             '\MonarcFO\Controller\ApiAnrAmvs'               => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures'           => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
+            '\MonarcFO\Controller\ApiAnrObjects'            => '\MonarcFO\Controller\ApiAnrObjectsControllerFactory',
             '\MonarcFO\Controller\ApiAnrThreats'            => '\MonarcFO\Controller\ApiAnrThreatsControllerFactory',
 
-            '\MonarcFO\Controller\ApiAnrThemes'            => '\MonarcFO\Controller\ApiAnrThemesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrThemes'             => '\MonarcFO\Controller\ApiAnrThemesControllerFactory',
 
             '\MonarcFO\Controller\ApiAnrVulnerabilities'    => '\MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfTags'           => '\MonarcFO\Controller\ApiAnrRolfTagsControllerFactory',
@@ -322,6 +336,8 @@ return array(
             'monarc_api_client_rolf_tags',
             'monarc_api_client_rolf_categories',
             'monarc_api_client_rolf_risks',
+            'monarc_api_client_objects',
+
         ),
         // Utilisateur réduit : Accès consultation uniquement
         'userminfo'=> array(
@@ -336,6 +352,7 @@ return array(
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
             'monarc_api_models',
+            'monarc_api_client_objects',
         ),
     )
 );
