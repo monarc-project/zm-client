@@ -13,4 +13,6 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {
     protected $name = 'risks';
+
+    protected $dependencies = ['categories', 'tags'];
 }
