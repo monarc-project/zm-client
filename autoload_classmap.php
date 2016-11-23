@@ -128,7 +128,6 @@ return array(
     'MonarcFO\Service\Model\Entity\ScaleServiceModelEntity'               => __DIR__ . '/src/MonarcFO/Service/Model/Entity/ScaleServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\ThemeServiceModelEntity'               => __DIR__ . '/src/MonarcFO/Service/Model/Entity/ThemeServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\ThreatServiceModelEntity'              => __DIR__ . '/src/MonarcFO/Service/Model/Entity/ThreatServiceModelEntity.php',
-    'MonarcFO\Service\Model\Entity\UserAnrServiceModelEntity'             => __DIR__ . '/src/MonarcFO/Service/Model/Entity/UserAnrServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\UserRoleServiceModelEntity'            => __DIR__ . '/src/MonarcFO/Service/Model/Entity/UserRoleServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\UserServiceModelEntity'                => __DIR__ . '/src/MonarcFO/Service/Model/Entity/UserServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\VulnerabilityServiceModelEntity'       => __DIR__ . '/src/MonarcFO/Service/Model/Entity/VulnerabilityServiceModelEntity.php',

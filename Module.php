@@ -11,15 +11,17 @@ class Module
 {
     public function onBootstrap(MvcEvent $e)
     {
-        $eventManager = $e->getApplication()->getEventManager();
-        $moduleRouteListener = new ModuleRouteListener();
-        $moduleRouteListener->attach($eventManager);
+        if(!$e->getRequest() instanceof \Zend\Console\Request){
+            $eventManager = $e->getApplication()->getEventManager();
+            $moduleRouteListener = new ModuleRouteListener();
+            $moduleRouteListener->attach($eventManager);
 
-        $this->initRbac($e);
+            $this->initRbac($e);
 
-        $eventManager->attach(MvcEvent::EVENT_ROUTE, array($this, 'checkRbac'), 0);
-        $eventManager->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this, 'onDispatchError'), 0);
-        $eventManager->attach(MvcEvent::EVENT_RENDER_ERROR, array($this, 'onRenderError'), 0);
+            $eventManager->attach(MvcEvent::EVENT_ROUTE, array($this, 'checkRbac'), 0);
+            $eventManager->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this, 'onDispatchError'), 0);
+            $eventManager->attach(MvcEvent::EVENT_RENDER_ERROR, array($this, 'onRenderError'), 0);
+        }
     }
 
     public function getConfig()
