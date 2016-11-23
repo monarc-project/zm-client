@@ -116,6 +116,10 @@ class Module
                 '\MonarcFO\Service\AnrRolfTagService' => '\MonarcFO\Service\AnrRolfTagServiceFactory',
                 '\MonarcFO\Service\AnrRolfCategoryService' => '\MonarcFO\Service\AnrRolfCategoryServiceFactory',
                 '\MonarcFO\Service\AnrRolfRiskService' => '\MonarcFO\Service\AnrRolfRiskServiceFactory',
+                '\MonarcFO\Service\AmvService' => '\MonarcFO\Service\AmvServiceFactory',
+                '\MonarcFO\Service\AssetService' => '\MonarcFO\Service\AssetServiceFactory',
+                '\MonarcFO\Service\ObjectService' => '\MonarcFO\Service\ObjectServiceFactory',
+                '\MonarcFO\Service\ObjectObjectService' => '\MonarcFO\Service\ObjectObjectServiceFactory',
             ),
         );
     }

@@ -2,6 +2,7 @@
 
 namespace MonarcFO\Controller;
 
+use MonarcCore\Model\Entity\AbstractEntity;
 use Zend\View\Model\JsonModel;
 
 /**
