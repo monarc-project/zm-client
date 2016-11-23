@@ -44,7 +44,7 @@ return array(
             'monarc_api_admin_users' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/users/[:id]',
+                    'route' => '/api/users[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                     ),
