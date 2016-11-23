@@ -322,6 +322,7 @@ return array(
             'monarc_api_anr_instances_consequences',
             'monarc_api_anr_instances',
             'monarc_api_anr_library',
+            'monarc_api_anr_objects',
             'monarc_api_client_anr',
             'monarc_api_duplicate_client_anr',
             'monarc_api_models',
