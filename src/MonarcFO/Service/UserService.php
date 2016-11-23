@@ -54,7 +54,16 @@ class UserService extends AbstractService
 
         $id = $this->get('table')->save($user);
 
-        $this->manageRoles($user, $data);
+        if (isset($data['superadminfo'])) {
+            $dataUserRole = [
+                'user' => $id,
+                'role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO,
+            ];
+            /** @var UserRoleService $userRoleService */
+            $userRoleService = $this->get('userRoleService');
+            $userRoleService->create($dataUserRole);
+
+        }
 
         return $id;
     }
@@ -71,6 +80,8 @@ class UserService extends AbstractService
         $this->verifyAuthorizedAction($id, $data);
 
         $this->updateUserRole($id, $data);
+
+        $this->updateUserAnr($id, $data);
 
         if (isset($data['dateEnd'])) {
             $data['dateEnd'] = new \DateTime($data['dateEnd']);
