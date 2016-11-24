@@ -28,6 +28,19 @@ return array(
                 ),
             ),
 
+            'monarc_api_admin_users_rights' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/users-rights[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAdminUsersRights',
+                    ),
+                ),
+            ),
+
             'monarc_api_client_anr' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -238,6 +251,7 @@ return array(
             '\MonarcFO\Controller\ApiAdminRoles'            => '\MonarcFO\Controller\ApiAdminRolesControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsers'            => '\MonarcFO\Controller\ApiAdminUsersControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsersRoles'       => '\MonarcFO\Controller\ApiAdminUsersRolesControllerFactory',
+            '\MonarcFO\Controller\ApiAdminUsersRights'       => '\MonarcFO\Controller\ApiAdminUsersRightsControllerFactory',
             '\MonarcFO\Controller\ApiAnr'                   => '\MonarcFO\Controller\ApiAnrControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                => '\MonarcFO\Controller\ApiConfigControllerFactory',
             '\MonarcFO\Controller\ApiDuplicateAnr'          => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
@@ -308,6 +322,7 @@ return array(
         'superadminfo'=> array(
             'monarc_api_admin_users',
             'monarc_api_admin_users_roles',
+            'monarc_api_admin_users_rights',
             'monarc_api_user_password',
             'monarc_api_user_profile',
         ),
@@ -340,21 +355,6 @@ return array(
             'monarc_api_client_rolf_risks',
             'monarc_api_client_objects',
 
-        ),
-        // Utilisateur réduit : Accès consultation uniquement
-        'userminfo'=> array(
-            'monarc_api_user_profile',
-            'monarc_api_anr_instances',
-            'monarc_api_anr_instances_risks',
-            'monarc_api_anr_instances_risksop',
-            'monarc_api_anr_instances_consequences',
-            'monarc_api_anr_instances',
-            'monarc_api_anr_library',
-            'monarc_api_scales',
-            'monarc_api_scales_comments',
-            'monarc_api_scales_types',
-            'monarc_api_models',
-            'monarc_api_client_objects',
         ),
     )
 );

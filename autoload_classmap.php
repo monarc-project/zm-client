@@ -3,6 +3,8 @@
 return array(
     'MonarcFO\Controller\ApiAdminUsersController'                         => __DIR__ . '/src/MonarcFO/Controller/ApiAdminUsersController.php',
     'MonarcFO\Controller\ApiAdminUsersControllerFactory'                  => __DIR__ . '/src/MonarcFO/Controller/ApiAdminUsersControllerFactory.php',
+    'MonarcFO\Controller\ApiAdminUsersRightsController'                   => __DIR__ . '/src/MonarcFO/Controller/ApiAdminUsersRightsController.php',
+    'MonarcFO\Controller\ApiAdminUsersRightsControllerFactory'            => __DIR__ . '/src/MonarcFO/Controller/ApiAdminUsersRightsControllerFactory.php',
     'MonarcFO\Controller\ApiAdminUsersRolesController'                    => __DIR__ . '/src/MonarcFO/Controller/ApiAdminUsersRolesController.php',
     'MonarcFO\Controller\ApiAdminUsersRolesControllerFactory'             => __DIR__ . '/src/MonarcFO/Controller/ApiAdminUsersRolesControllerFactory.php',
     'MonarcFO\Controller\ApiAnrAbstractController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiAnrAbstractController.php',
