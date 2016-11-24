@@ -19,6 +19,7 @@ class UserAnrService extends AbstractService
         $rights = [];
         foreach($usersAnrs as $userAnr) {
             $rights[] = [
+                'id' => $userAnr->id,
                 'userId' => $userAnr->user->id,
                 'firstname' => $userAnr->user->firstname,
                 'lastname' => $userAnr->user->lastname,
@@ -33,5 +34,27 @@ class UserAnrService extends AbstractService
         }
 
         return $rights;
+    }
+
+
+    /**
+     * Create
+     *
+     * @param $data
+     * @param bool $last
+     * @return mixed
+     * @throws \Exception
+     */
+    public function create($data, $last = true) {
+
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $this->get('table');
+        $userAnr = $userAnrTable->getEntityByFields(['user' => $data['user'], 'anr' => $data['anr']]);
+
+        if(count($userAnr)) {
+            throw new \Exception('This right already exist', 412);
+        }
+
+        return parent::create($data, $last);
     }
 }

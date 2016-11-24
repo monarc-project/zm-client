@@ -24,25 +24,9 @@ class ApiAdminUsersRightsController extends \MonarcCore\Controller\AbstractContr
         return $this->methodNotAllowed();
     }
 
-    public function create($data)
-    {
-        return $this->methodNotAllowed();
-    }
-
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
-
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
 }
 

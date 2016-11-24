@@ -132,5 +132,35 @@ class UserAnr extends AbstractEntity
         $this->rwd = $rwd;
         return $this;
     }
+
+    public function getInputFilter($partial = false){
+
+        if (!$this->inputFilter) {
+            parent::getInputFilter($partial);
+
+            $this->inputFilter->add(array(
+                'name' => 'user',
+                'required' => true,
+                'allow_empty' => false,
+                'filters' => array(
+                    array(
+                        'name' => 'Digits',
+                    ),
+                ),
+            ));
+
+            $this->inputFilter->add(array(
+                'name' => 'anr',
+                'required' => true,
+                'allow_empty' => false,
+                'filters' => array(
+                    array(
+                        'name' => 'Digits',
+                    ),
+                ),
+            ));
+        }
+        return $this->inputFilter;
+    }
 }
 
