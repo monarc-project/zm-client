@@ -19,11 +19,6 @@ class ApiAdminUsersRightsController extends \MonarcCore\Controller\AbstractContr
         return new JsonModel($rights);
     }
 
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
     public function update($id, $data)
     {
         return $this->methodNotAllowed();

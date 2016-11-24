@@ -57,4 +57,55 @@ class UserAnrService extends AbstractService
 
         return parent::create($data, $last);
     }
+
+    /**
+     * Get Entity
+     *
+     * @param $id
+     * @return array
+     * @throws \Exception
+     */
+    public function getEntity($id){
+
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $this->get('table');
+        $userAnr = $userAnrTable->get($id);
+
+        return [
+            'id' => $userAnr['id'],
+            'userId' => $userAnr['user']->id,
+            'firstname' => $userAnr['user']->firstname,
+            'lastname' => $userAnr['user']->lastname,
+            'email' => $userAnr['user']->email,
+            'anrId' => $userAnr['anr']->id,
+            'label1' => $userAnr['anr']->label1,
+            'label2' => $userAnr['anr']->label2,
+            'label3' => $userAnr['anr']->label3,
+            'label4' => $userAnr['anr']->label4,
+            'rwd' => $userAnr['rwd'],
+        ];
+    }
+
+    public function patch($id, $data){
+
+        //verify not create a doublon
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $this->get('table');
+        $userAnr = $userAnrTable->get($id);
+        if (
+            ((isset($data['user'])) && ($data['user'] != $userAnr['user']->id))
+            ||
+            ((isset($data['anr'])) && ($data['anr'] != $userAnr['anr']->id))
+        ) {
+            $newUser = (isset($data['user'])) ? $data['user'] : $userAnr['user']->id;
+            $newAnr = (isset($data['anr'])) ? $data['anr'] : $userAnr['anr']->id;
+
+            $existingUserAnr = $userAnrTable->getEntityByFields(['user' => $newUser, 'anr' => $newAnr]);
+            if (count($existingUserAnr)) {
+                throw new \Exception('This right already exist', 412);
+            }
+        }
+
+        parent::patch($id, $data);
+    }
 }
