@@ -2,8 +2,11 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractService;
+use MonarcFO\Model\Entity\UserRole;
 use MonarcFO\Model\Table\UserAnrTable;
 use MonarcFO\Model\Table\UserRoleTable;
+use MonarcFO\Model\Table\UserTable;
+use Zend\View\Model\JsonModel;
 
 /**
  * User Service
@@ -29,8 +32,109 @@ class UserService extends AbstractService
      */
     public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null) {
 
-        return $this->get('table')->countFiltered($page, $limit, $this->parseFrontendOrder($order),
+        /** @var UserTable $table */
+        $table = $this->get('table');
+
+        return $table->countFiltered($page, $limit, $this->parseFrontendOrder($order),
             $this->parseFrontendFilter($filter, array('firstname', 'lastname', 'email')));
+    }
+
+    /**
+     * Get List
+     *
+     * @param int $page
+     * @param int $limit
+     * @param null $order
+     * @param null $filter
+     * @return mixed
+     */
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+
+        /** @var UserTable $table */
+        $table = $this->get('table');
+        $users =  $table->fetchAllFiltered(
+            array_keys($this->get('entity')->getJsonArray()),
+            $page,
+            $limit,
+            $this->parseFrontendOrder($order),
+            $this->parseFrontendFilter($filter, $this->filterColumns),
+            $filterAnd
+        );
+
+        /** @var UserRoleTable $userRoleTable */
+        $userRoleTable = $this->get('userRoleTable');
+        $usersRoles = $userRoleTable->fetchAllObject();
+        foreach($users as $key => $user) {
+            $admin = 0;
+            foreach ($usersRoles as $userRole) {
+                if ($user['id'] == $userRole->user->id) {
+                    if ($userRole->role == UserRole::SUPER_ADMIN_FO) {
+                        $admin = 1;
+                    }
+                }
+            }
+            $users[$key]['superadminfo'] = $admin;
+        }
+
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $this->get('userAnrTable');
+        $usersAnrs = $userAnrTable->fetchAllObject();
+        foreach($users as $key => $user) {
+            foreach ($usersAnrs as $userAnr) {
+                if ($user['id'] == $userAnr->user->id) {
+                    $anr = [
+                        'id' => $userAnr->anr->id,
+                        'label1' => $userAnr->anr->label1,
+                        'label2' => $userAnr->anr->label2,
+                        'label3' => $userAnr->anr->label3,
+                        'label4' => $userAnr->anr->label4,
+                        'rwd' => $userAnr->rwd,
+                    ];
+                    $users[$key]['anrs'][] = $anr;
+                }
+            }
+        }
+
+        return $users;
+    }
+
+    public function getCompleteUser($id) {
+
+        /** @var UserTable $table */
+        $table = $this->get('table');
+        $user = $table->get($id);
+
+        /** @var UserRoleTable $userRoleTable */
+        $userRoleTable = $this->get('userRoleTable');
+        $usersRoles = $userRoleTable->fetchAllObject();
+        $admin = 0;
+        foreach ($usersRoles as $userRole) {
+            if ($id == $userRole->user->id) {
+                if ($userRole->role == UserRole::SUPER_ADMIN_FO) {
+                    $admin = 1;
+                }
+            }
+        }
+        $user['superadminfo'] = $admin;
+
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $this->get('userAnrTable');
+        $usersAnrs = $userAnrTable->fetchAllObject();
+        foreach ($usersAnrs as $userAnr) {
+            if ($id == $userAnr->user->id) {
+                $anr = [
+                    'id' => $userAnr->anr->id,
+                    'label1' => $userAnr->anr->label1,
+                    'label2' => $userAnr->anr->label2,
+                    'label3' => $userAnr->anr->label3,
+                    'label4' => $userAnr->anr->label4,
+                    'rwd' => $userAnr->rwd,
+                ];
+                $user['anrs'][] = $anr;
+            }
+        }
+        
+        return $user;
     }
 
 
@@ -52,7 +156,9 @@ class UserService extends AbstractService
 
         $user->exchangeArray($data);
 
-        $id = $this->get('table')->save($user);
+        /** @var UserTable $table */
+        $table = $this->get('table');
+        $id = $table->save($user);
 
         if (isset($data['superadminfo'])) {
             $dataUserRole = [
@@ -63,6 +169,19 @@ class UserService extends AbstractService
             $userRoleService = $this->get('userRoleService');
             $userRoleService->create($dataUserRole);
 
+        }
+
+        if (isset($data['anrs'])) {
+            foreach($data['anrs'] as $anr) {
+                $dataAnr = [
+                    'user' => $id,
+                    'anr' => $anr['id'],
+                    'rwd' => $anr['rwd'],
+                ];
+                /** @var UserAnrService $userAnrService */
+                $userAnrService = $this->get('userAnrService');
+                $userAnrService->create($dataAnr);
+            }
         }
 
         return $id;

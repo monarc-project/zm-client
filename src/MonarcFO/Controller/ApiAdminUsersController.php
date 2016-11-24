@@ -44,5 +44,24 @@ class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
 
         return new JsonModel(array('status' => 'ok'));
     }
+
+    /**
+     * Get
+     *
+     * @param mixed $id
+     * @return JsonModel
+     */
+    public function get($id)
+    {
+        /** @var UserService $service */
+        $service = $this->getService();
+        $entity = $service->getCompleteUser($id);
+
+        if (count($this->dependencies)) {
+            $this->formatDependencies($entity, $this->dependencies);
+        }
+
+        return new JsonModel($entity);
+    }
 }
 
