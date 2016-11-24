@@ -133,7 +133,7 @@ class UserService extends AbstractService
                 $user['anrs'][] = $anr;
             }
         }
-        
+
         return $user;
     }
 

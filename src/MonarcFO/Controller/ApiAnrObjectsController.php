@@ -117,4 +117,51 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
             )
         );
     }
+
+
+    /**
+     * Update
+     *
+     * @param mixed $id
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
+    public function update($id, $data)
+    {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+        $data['anr'] = $anrId;
+
+        /** @var ObjectService $service */
+        $service = $this->getService();
+        $service->update($id, $data, AbstractEntity::FRONT_OFFICE);
+
+        return new JsonModel(array('status' => 'ok'));
+    }
+
+    /**
+     * Patch
+     *
+     * @param mixed $id
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
+    public function patch($id, $data)
+    {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+        $data['anr'] = $anrId;
+
+        /** @var ObjectService $service */
+        $service = $this->getService();
+        $service->patch($id, $data, AbstractEntity::FRONT_OFFICE);
+
+        return new JsonModel(array('status' => 'ok'));
+    }
 }
