@@ -23,4 +23,22 @@ class Theme extends \MonarcCore\Model\Entity\ThemeSuperclass
      * })
      */
     protected $anr;
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return Theme
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
 }

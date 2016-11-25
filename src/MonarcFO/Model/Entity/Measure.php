@@ -23,5 +23,25 @@ class Measure extends \MonarcCore\Model\Entity\MeasureSuperClass
      * })
      */
     protected $anr;
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return Measure
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
+
+
 }
 

@@ -22,4 +22,22 @@ class RolfCategory extends \MonarcCore\Model\Entity\RolfCategorySuperclass
      * })
      */
     protected $anr;
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return RolfCategory
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
 }

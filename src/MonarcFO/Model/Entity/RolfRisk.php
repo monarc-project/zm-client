@@ -46,5 +46,59 @@ class RolfRisk extends \MonarcCore\Model\Entity\RolfRiskSuperclass
      * )
      */
     protected $tags;
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return RolfRisk
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
+
+    /**
+     * @return RolfCategory
+     */
+    public function getCategories()
+    {
+        return $this->categories;
+    }
+
+    /**
+     * @param RolfCategory $categories
+     * @return RolfRisk
+     */
+    public function setCategories($categories)
+    {
+        $this->categories = $categories;
+        return $this;
+    }
+
+    /**
+     * @return RolfTag
+     */
+    public function getTags()
+    {
+        return $this->tags;
+    }
+
+    /**
+     * @param RolfTag $tags
+     * @return RolfRisk
+     */
+    public function setTags($tags)
+    {
+        $this->tags = $tags;
+        return $this;
+    }
 }
 

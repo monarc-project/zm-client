@@ -23,5 +23,23 @@ class RolfTag extends \MonarcCore\Model\Entity\RolfTagSuperclass
      * })
      */
     protected $anr;
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return RolfTag
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
 }
 

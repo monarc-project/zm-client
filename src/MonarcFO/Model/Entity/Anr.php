@@ -25,4 +25,42 @@ class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
      * @ORM\Column(name="language", type="integer", options={"unsigned":true, "default":1})
      */
     protected $language = 1;
+
+    /**
+     * @return User
+     */
+    public function getUsers()
+    {
+        return $this->users;
+    }
+
+    /**
+     * @param User $users
+     * @return Anr
+     */
+    public function setUsers($users)
+    {
+        $this->users = $users;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLanguage()
+    {
+        return $this->language;
+    }
+
+    /**
+     * @param int $language
+     * @return Anr
+     */
+    public function setLanguage($language)
+    {
+        $this->language = $language;
+        return $this;
+    }
+
+
 }

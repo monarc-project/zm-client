@@ -22,4 +22,22 @@ class Asset extends \MonarcCore\Model\Entity\AssetSuperClass
      * })
      */
     protected $anr;
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return Asset
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
 }

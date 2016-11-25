@@ -34,5 +34,31 @@ class Threat extends \MonarcCore\Model\Entity\ThreatSuperClass
      * })
      */
     protected $theme;
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return Threat
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
+
+    /**
+     * @return Theme
+     */
+    public function getTheme()
+    {
+        return $this->theme;
+    }
 }
 
