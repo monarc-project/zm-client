@@ -252,6 +252,16 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_admin_passwords' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/admin/passwords',
+                    'constraints' => array(),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAdminPasswords',
+                    ),
+                ),
+            ),
         ),
     ),
 

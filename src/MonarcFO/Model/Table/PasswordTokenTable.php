@@ -3,8 +3,8 @@ namespace MonarcFO\Model\Table;
 
 use MonarcCore\Model\Table\AbstractEntityTable;
 
-class UserTable extends \MonarcCore\Model\Table\UserTable   {
+class PasswordTokenTable extends AbstractEntityTable  {
     public function __construct(\MonarcCore\Model\Db $dbService) {
-        parent::__construct($dbService, '\MonarcFO\Model\Entity\User');
+        parent::__construct($dbService, '\MonarcFO\Model\Entity\PasswordToken');
     }
 }
