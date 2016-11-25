@@ -120,6 +120,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $newAnr =  new \MonarcFO\Model\Entity\Anr($anr);
         $newAnr->setId(null);
         $newAnr->setObjects(null);
+        $newAnr->set('model',$model->get('id'));
 
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');

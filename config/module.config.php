@@ -122,6 +122,19 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_client_assets_import_common' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/anr/:anrid/assets/importcomm[/:id]',
+                    'constraints' => array(
+                        'anrid' => '[0-9]+',
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrAssetsImportCommon',
+                    ),
+                ),
+            ),
             'monarc_api_client_amvs' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -270,6 +283,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrRolfCategories'     => '\MonarcFO\Controller\ApiAnrRolfCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfRisks'          => '\MonarcFO\Controller\ApiAnrRolfRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrAssetsImport'       => '\MonarcFO\Controller\ApiAnrAssetsImportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrAssetsImportCommon' => '\MonarcFO\Controller\ApiAnrAssetsImportCommonControllerFactory',
         ),
     ),
 
@@ -354,7 +368,8 @@ return array(
             'monarc_api_client_rolf_categories',
             'monarc_api_client_rolf_risks',
             'monarc_api_client_objects',
-
+            'monarc_api_client_assets_import',
+            'monarc_api_client_assets_import_common',
         ),
     )
 );

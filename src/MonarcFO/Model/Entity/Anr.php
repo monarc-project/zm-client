@@ -27,6 +27,13 @@ class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
     protected $language = 1;
 
     /**
+     * @var smallint
+     *
+     * @ORM\Column(name="model_id", type="integer", options={"unsigned":true, "default":0})
+     */
+    protected $model = '0';
+
+    /**
      * @return User
      */
     public function getUsers()
