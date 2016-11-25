@@ -65,6 +65,7 @@ class Module
                 '\MonarcFO\Model\Table\ObjectTable' => '\MonarcFO\Service\Model\Table\ObjectServiceModelTable',
                 '\MonarcFO\Model\Table\ObjectCategoryTable' => '\MonarcFO\Service\Model\Table\ObjectCategoryServiceModelTable',
                 '\MonarcFO\Model\Table\ObjectObjectTable' => '\MonarcFO\Service\Model\Table\ObjectObjectServiceModelTable',
+                '\MonarcFO\Model\Table\PasswordTokenTable' => '\MonarcFO\Service\Model\Table\PasswordTokenServiceModelTable',
                 '\MonarcFO\Model\Table\RolfCategoryTable' => '\MonarcFO\Service\Model\Table\RolfCategoryServiceModelTable',
                 '\MonarcFO\Model\Table\RolfRiskTable' => '\MonarcFO\Service\Model\Table\RolfRiskServiceModelTable',
                 '\MonarcFO\Model\Table\RolfTagTable' => '\MonarcFO\Service\Model\Table\RolfTagServiceModelTable',
@@ -91,6 +92,7 @@ class Module
                 '\MonarcFO\Model\Entity\Object' => '\MonarcFO\Service\Model\Entity\ObjectServiceModelEntity',
                 '\MonarcFO\Model\Entity\ObjectCategory' => '\MonarcFO\Service\Model\Entity\ObjectCategoryServiceModelEntity',
                 '\MonarcFO\Model\Entity\ObjectObject' => '\MonarcFO\Service\Model\Entity\ObjectObjectServiceModelEntity',
+                '\MonarcFO\Model\Entity\PasswordToken' => '\MonarcFO\Service\Model\Entity\PasswordTokenServiceModelEntity',
                 '\MonarcFO\Model\Entity\RolfCategory' => '\MonarcFO\Service\Model\Entity\RolfCategoryServiceModelEntity',
                 '\MonarcFO\Model\Entity\RolfRisk' => '\MonarcFO\Service\Model\Entity\RolfRiskServiceModelEntity',
                 '\MonarcFO\Model\Entity\RolfTag' => '\MonarcFO\Service\Model\Entity\RolfTagServiceModelEntity',
@@ -122,6 +124,8 @@ class Module
                 '\MonarcFO\Service\AssetService' => '\MonarcFO\Service\AssetServiceFactory',
                 '\MonarcFO\Service\ObjectService' => '\MonarcFO\Service\ObjectServiceFactory',
                 '\MonarcFO\Service\ObjectObjectService' => '\MonarcFO\Service\ObjectObjectServiceFactory',
+                '\MonarcFO\Service\PasswordService' => '\MonarcFO\Service\PasswordServiceFactory',
+                '\MonarcFO\Service\MailService' => '\MonarcFO\Service\MailServiceFactory',
             ),
         );
     }
