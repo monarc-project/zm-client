@@ -35,5 +35,23 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
 
         return new JsonModel($entitie);
     }
+
+    public function create($data){
+    	$anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+        	throw new \Exception('Anr id missing', 412);
+        }
+        if(empty($data['asset'])){
+        	throw new \Exception('Asset id missing', 412);
+        }
+    	$id = $this->getService()->importAsset($anrId,$data['asset']);
+
+        return new JsonModel(
+            array(
+                'status' => 'ok',
+                'id' => $id,
+            )
+        );
+    }
 }
 

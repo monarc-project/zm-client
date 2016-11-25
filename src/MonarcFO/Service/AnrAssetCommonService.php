@@ -14,6 +14,9 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
 	protected $clientity;
 	protected $clitable;
 
+	protected $coreServiceAsset;
+	protected $cliServiceAsset;
+
 	public function getListAssets($anrId){
 		$anr = $this->get('anrTable')->getEntity($anrId);
 		if($anr){
@@ -50,9 +53,8 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
 				->where('m.id = :mid')
 				->setParameter(':mid',$anr->get('model'))
 				->setFirstResult(0)->setMaxResults(1)
-				->getQuery()->getResult();
+				->getQuery()->getSingleResult();
 			if($asset){
-				$asset = current($asset);
 				$return = $asset->getJsonArray([
 					'id',
 					'label'.$anr->get('language'),
@@ -109,9 +111,16 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
 				->where('m.id = :mid')
 				->setParameter(':mid',$anr->get('model'))
 				->setFirstResult(0)->setMaxResults(1)
-				->getQuery()->getResult();
+				->getQuery()->getSingleResult(); // même si on fait une autre requête dans AssetService::generateExportArray(), cela permet d'avoir un contrôle sur asset_id & model_id
 			if($asset){
-				$asset = current($asset);
+				/*
+				- faire un export de cet asset
+				- utiliser l'import déjà en place
+				*/
+				$f = null;
+				$data = $this->get('coreServiceAsset')->generateExportArray($asset->get('id'),$f);
+				$id = $this->get('cliServiceAsset')->importFromArray($data,$anr);
+				return $id;
 			}else{
 				throw new \Exception('Asset does not exist', 412);
 			}

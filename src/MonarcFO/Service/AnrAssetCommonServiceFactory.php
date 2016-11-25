@@ -13,5 +13,8 @@ class AnrAssetCommonServiceFactory extends AbstractServiceFactory
 
         'clientity' => 'MonarcFO\Model\Entity\Asset',
         'clitable' => 'MonarcFO\Model\Table\AssetTable',
+
+        'coreServiceAsset' => 'MonarcCore\Service\AssetService',
+		'cliServiceAsset' => 'MonarcFO\Service\AnrAssetService',
     );
 }

@@ -21,6 +21,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     protected $vulnerabilityEntity;
     protected $measureTable;
     protected $measureEntity;
+    protected $assetTable; // for setDependencies
 
 
 	protected $filterColumns = [
@@ -32,56 +33,57 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr'];
 
     public function importFromFile($anrId,$data){
-    	// password ?
+    	// on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];
+        // On aura la possibilité d'avoir plusieurs fichiers (même pwd: si un fichier ne match pas, on renvoie un warning)
         $data = $this->decrypt($data,$key);
 
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
+        return $this->importFromArray($data,$anr);
+    }
 
-        /*
-        TODO:
-        - lors de la création: tester le code utilisé
-        */
-
+    public function importFromArray($data,$anr){
         if(isset($data['type']) && $data['type'] == 'asset' &&
-            isset($data['version']) && $data['version'] == $this->getVersion()){
-            $asset = $this->get('table')->getEntityByFields(['anr'=>$anrId,'code'=>$data['asset']['code']]);
+            array_key_exists('version', $data) && $data['version'] == $this->getVersion()){
+            $asset = $this->get('table')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['asset']['code']]);
             if($asset){
+                $asset = current($asset);
                 $idAsset = $asset->get('id');
             }else{
                 $asset = $this->get('entity');
                 $asset->exchangeArray($data['asset']);
                 $asset->set('id',null);
-                $asset->set('anr',$anrId);
+                $asset->set('anr',$anr->get('id'));
                 $this->setDependencies($asset,['anr']);
                 $idAsset = $this->get('table')->save($asset);
             }
 
-            if(!empty($data['amvs'])){
+            if(!empty($data['amvs']) && !empty($idAsset)){
                 foreach($data['amvs'] as $amvArray){
                     $amv = $this->get('amvEntity');
                     $amv->set('asset',$idAsset);
-                    $amv->set('anr',$anrId);
+                    $amv->set('anr',$anr->get('id'));
                     $amv->set('status',$amvArray['status']);
-                    if(isset($data['threat'][$amvArray['threat']])){ // Threats
-                        if(is_array($data['threat'][$amvArray['threat']])){
-                            $threat = $this->get('threatTable')->getEntityByFields(['anr'=>$anrId,'code'=>$data['threat'][$amvArray['threat']]['code']]);
+                    if(isset($data['threats'][$amvArray['threat']])){ // Threats
+                        if(is_array($data['threats'][$amvArray['threat']])){
+                            $threat = $this->get('threatTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['threats'][$amvArray['threat']]['code']]);
                             if($threat){
-                                $data['threat'][$amvArray['threat']] = $threat->get('id');
+                                $threat = current($threat);
+                                $data['threats'][$amvArray['threat']] = $threat->get('id');
                                 // TODO: que fait-on si le theme est différent ?
                             }else{
                                 $threat = $this->get('threatEntity');
-                                $data['threat'][$amvArray['threat']]['id'] = null;
-                                $themeArray = $data['threat'][$amvArray['threat']]['theme'];
-                                unset($data['threat'][$amvArray['threat']]['theme']);
-                                $threat->exchangeArray($data['threat'][$amvArray['threat']]);
-                                $threat->set('anr',$anrId);
+                                $data['threats'][$amvArray['threat']]['id'] = null;
+                                $themeArray = $data['threats'][$amvArray['threat']]['theme'];
+                                unset($data['threats'][$amvArray['threat']]['theme']);
+                                $threat->exchangeArray($data['threats'][$amvArray['threat']]);
+                                $threat->set('anr',$anr->get('id'));
                                 if(!empty($themeArray) && isset($data['themes'][$themeArray['id']])){ // Themes
                                     if(is_array($data['themes'][$themeArray['id']])){
                                         $theme = $this->get('themeEntity');
                                         $data['themes'][$themeArray['id']]['id'] = null;
                                         $theme->exchangeArray($data['themes'][$themeArray['id']]);
-                                        $theme->set('anr',$anrId);
+                                        $theme->set('anr',$anr->get('id'));
                                         $this->setDependencies($theme,['anr']);
                                         $idTheme = $this->get('themeTable')->save($theme);
                                         $data['themes'][$themeArray['id']] = $idTheme;
@@ -89,22 +91,23 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                     $threat->set('theme',$data['themes'][$themeArray['id']]);
                                 }
                                 $this->setDependencies($threat,['anr', 'theme']);
-                                $data['threat'][$amvArray['threat']] = $this->get('threatTable')->save($threat);
+                                $data['threats'][$amvArray['threat']] = $this->get('threatTable')->save($threat);
                             }
                         }
-                        $amv->set('threat',$data['threat'][$amvArray['threat']]);
+                        $amv->set('threat',$data['threats'][$amvArray['threat']]);
                     }
 
                     if(isset($data['vuls'][$amvArray['vulnerability']])){ // Vulnerabilities
                         if(is_array($data['vuls'][$amvArray['vulnerability']])){
-                            $vul = $this->get('vulnerabilityTable')->getEntityByFields(['anr'=>$anrId,'code'=>$data['vuls'][$amvArray['vulnerability']]['code']]);
+                            $vul = $this->get('vulnerabilityTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['vuls'][$amvArray['vulnerability']]['code']]);
                             if($vul){
+                                $vul = current($vul);
                                 $data['vuls'][$amvArray['vulnerability']] = $vul->get('id');
                             }else{
                                 $vul = $this->get('vulnerabilityEntity');
                                 $data['vuls'][$amvArray['vulnerability']]['id'] = null;
                                 $vul->exchangeArray($data['vuls'][$amvArray['vulnerability']]);
-                                $vul->set('anr',$anrId);
+                                $vul->set('anr',$anr->get('id'));
                                 $this->setDependencies($vul,['anr']);
                                 $data['vuls'][$amvArray['vulnerability']] = $this->get('vulnerabilityTable')->save($vul);
                             }
@@ -115,14 +118,15 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                     for($i=1;$i<=3;$i++){
                         if(isset($data['measures'][$amvArray['measure'.$i]])){ // Measure 1 / 2 / 3
                             if(is_array($data['measures'][$amvArray['measure'.$i]])){
-                                $measure = $this->get('measureTable')->getEntityByFields(['anr'=>$anrId,'code'=>$data['measures'][$amvArray['measure'.$i]]['code']]);
+                                $measure = $this->get('measureTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['measures'][$amvArray['measure'.$i]]['code']]);
                                 if($measure){
+                                    $measure = current($measure);
                                     $data['measures'][$amvArray['measure'.$i]] = $measure->get('id');
                                 }else{
                                     $measure = $this->get('measureEntity');
                                     $data['measures'][$amvArray['measure'.$i]]['id'] = null;
                                     $measure->exchangeArray($data['measures'][$amvArray['measure'.$i]]);
-                                    $measure->set('anr',$anrId);
+                                    $measure->set('anr',$anr->get('id'));
                                     $this->setDependencies($measure,['anr']);
                                     $data['measures'][$amvArray['measure'.$i]] = $this->get('measureTable')->save($measure);
                                 }
@@ -134,7 +138,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                     }
 
                     $amvTest = $this->get('amvTable')->getEntityByFields([
-                        'anr'=>$anrId,
+                        'anr'=>$anr->get('id'),
                         'asset'=>$amv->get('asset'),
                         'threat'=>$amv->get('threat'),
                         'vulnerability'=>$amv->get('vulnerability'),
@@ -144,8 +148,8 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $this->get('amvTable')->save($amv);
                     }
                 }
+                return $idAsset;
             }
-            return $idAsset;
         }
         return false;
     }
