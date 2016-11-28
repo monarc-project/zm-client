@@ -20,11 +20,22 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
 	public function getListAssets($anrId){
 		$anr = $this->get('anrTable')->getEntity($anrId);
 		if($anr){
-			$assets = $this->get('table')->getRepository()->createQueryBuilder('a')
-				->innerJoin('a.models', 'm')
-				->where('m.id = :mid')
-				->setParameter(':mid',$anr->get('model'))
-				->orderBy('a.code', 'ASC')
+			$model = $this->get('coreServiceAsset')->get('modelTable')->getEntity($anr->get('model'));
+
+			$assets = $this->get('table')->getRepository()->createQueryBuilder('a');
+			$fctWhere = 'where';
+			if($model->get('isGeneric') || !$model->get('isRegulator')){
+				$assets = $assets->where('a.mode = :mode')
+					->setParameter(':mode',0); // generic
+				$fctWhere = 'andWhere';
+			}
+			if(!$model->get('isGeneric')){
+				$assets = $assets->innerJoin('a.models', 'm')
+					->$fctWhere('m.id = :mid')
+					->setParameter(':mid',$anr->get('model'));
+			}
+
+			$assets = $assets->orderBy('a.code', 'ASC')
 				->getQuery()->getResult();
 			$return = [];
 			$aObj = [
@@ -48,11 +59,22 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
     public function getAsset($anrId, $assetId){
     	$anr = $this->get('anrTable')->getEntity($anrId);
 		if($anr){
-			$asset = $this->get('table')->getRepository()->createQueryBuilder('a')
-				->innerJoin('a.models', 'm')
-				->where('m.id = :mid')
-				->setParameter(':mid',$anr->get('model'))
-				->setFirstResult(0)->setMaxResults(1)
+			$asset = $this->get('table')->getRepository()->createQueryBuilder('a');
+			$model = $this->get('coreServiceAsset')->get('modelTable')->getEntity($anr->get('model'));
+
+			$asset = $this->get('table')->getRepository()->createQueryBuilder('a');
+			$fctWhere = 'where';
+			if($model->get('isGeneric') || !$model->get('isRegulator')){
+				$assets = $assets->where('a.mode = :mode')
+					->setParameter(':mode',0); // generic
+				$fctWhere = 'andWhere';
+			}
+			if(!$model->get('isGeneric')){
+				$assets = $assets->innerJoin('a.models', 'm')
+					->$fctWhere('m.id = :mid')
+					->setParameter(':mid',$anr->get('model'));
+			}
+			$assets = $assets->setFirstResult(0)->setMaxResults(1)
 				->getQuery()->getSingleResult();
 			if($asset){
 				$return = $asset->getJsonArray([
@@ -106,11 +128,21 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
     public function importAsset($anrId, $assetId){
     	$anr = $this->get('anrTable')->getEntity($anrId);
 		if($anr){
-			$asset = $this->get('table')->getRepository()->createQueryBuilder('a')
-				->innerJoin('a.models', 'm')
-				->where('m.id = :mid')
-				->setParameter(':mid',$anr->get('model'))
-				->setFirstResult(0)->setMaxResults(1)
+			$model = $this->get('coreServiceAsset')->get('modelTable')->getEntity($anr->get('model'));
+
+			$asset = $this->get('table')->getRepository()->createQueryBuilder('a');
+			$fctWhere = 'where';
+			if($model->get('isGeneric') || !$model->get('isRegulator')){
+				$assets = $assets->where('a.mode = :mode')
+					->setParameter(':mode',0); // generic
+				$fctWhere = 'andWhere';
+			}
+			if(!$model->get('isGeneric')){
+				$assets = $assets->innerJoin('a.models', 'm')
+					->$fctWhere('m.id = :mid')
+					->setParameter(':mid',$anr->get('model'));
+			}
+			$assets = $assets->setFirstResult(0)->setMaxResults(1)
 				->getQuery()->getSingleResult(); // même si on fait une autre requête dans AssetService::generateExportArray(), cela permet d'avoir un contrôle sur asset_id & model_id
 			if($asset){
 				/*
