@@ -14,5 +14,13 @@ use Zend\InputFilter\InputFilter;
  */
 class PasswordToken extends PasswordTokenSuperClass
 {
-
+    /**
+     * @var \MonarcCore\Model\Entity\User
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\User", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $user;
 }
