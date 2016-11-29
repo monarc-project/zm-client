@@ -33,6 +33,8 @@ class AnrServiceFactory extends AbstractServiceFactory
         'threatTable' => 'MonarcCore\Model\Table\ThreatTable',
         'themeTable' => 'MonarcCore\Model\Table\ThemeTable',
         'vulnerabilityTable' => 'MonarcCore\Model\Table\VulnerabilityTable',
+        'questionTable' => 'MonarcCore\Model\Table\QuestionTable',
+        'questionChoiceTable' => 'MonarcCore\Model\Table\QuestionChoiceTable',
 
         //fo
         'anrCliTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -58,5 +60,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'userCliTable' => 'MonarcFO\Model\Table\UserTable',
         'userAnrCliTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'vulnerabilityCliTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
+        'questionCliTable' => 'MonarcFO\Model\Table\QuestionTable',
+        'questionChoiceCliTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
     );
 }

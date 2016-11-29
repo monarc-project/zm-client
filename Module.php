@@ -78,6 +78,8 @@ class Module
                 '\MonarcFO\Model\Table\UserAnrTable' => '\MonarcFO\Service\Model\Table\UserAnrServiceModelTable',
                 '\MonarcFO\Model\Table\UserRoleTable' => '\MonarcFO\Service\Model\Table\UserRoleServiceModelTable',
                 '\MonarcFO\Model\Table\VulnerabilityTable' => '\MonarcFO\Service\Model\Table\VulnerabilityServiceModelTable',
+                '\MonarcFO\Model\Table\QuestionTable' => '\MonarcFO\Service\Model\Table\QuestionServiceModelTable',
+                '\MonarcFO\Model\Table\QuestionChoiceTable' => '\MonarcFO\Service\Model\Table\QuestionChoiceServiceModelTable',
 
                 //entities
                 '\MonarcFO\Model\Entity\Amv' => '\MonarcFO\Service\Model\Entity\AmvServiceModelEntity',
@@ -105,6 +107,8 @@ class Module
                 '\MonarcFO\Model\Entity\UserAnr' => '\MonarcFO\Service\Model\Entity\UserAnrServiceModelEntity',
                 '\MonarcFO\Model\Entity\UserRole' => '\MonarcFO\Service\Model\Entity\UserRoleServiceModelEntity',
                 '\MonarcFO\Model\Entity\Vulnerability' => '\MonarcFO\Service\Model\Entity\VulnerabilityServiceModelEntity',
+                '\MonarcFO\Model\Entity\Question' => '\MonarcFO\Service\Model\Entity\QuestionServiceModelEntity',
+                '\MonarcFO\Model\Entity\QuestionChoice' => '\MonarcFO\Service\Model\Entity\QuestionChoiceServiceModelEntity',
 
                 //services
                 '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',

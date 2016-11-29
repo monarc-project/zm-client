@@ -41,6 +41,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $threatTable;
     protected $themeTable;
     protected $vulnerabilityTable;
+    protected $questionTable;
+    protected $questionChoiceTable;
 
     protected $amvCliTable;
     protected $anrCliTable;
@@ -65,6 +67,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $userCliTable;
     protected $userAnrCliTable;
     protected $vulnerabilityCliTable;
+    protected $questionCliTable;
+    protected $questionChoiceCliTable;
 
     /**
      * Get Anrs
@@ -85,14 +89,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @param $modelId
      * @return mixed|null
      */
-    public function createFromModelToClient($modelId) {
+    public function createFromModelToClient($data) {
 
         //retrieve model information
         /** @var ModelTable $modelTable */
         $modelTable = $this->get('modelTable');
-        $model = $modelTable->getEntity($modelId);
+        $model = $modelTable->getEntity($data['model']);
+        unset($data['model']);
 
-        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model);
+        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model,$data);
     }
 
     /**
@@ -104,7 +109,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null) {
+    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null,$data=[]) {
 
         if (is_integer($anr)) {
             $anrTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrTable') : $this->get('anrCliTable');
@@ -117,9 +122,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         //duplicate anr
-        $newAnr =  new \MonarcFO\Model\Entity\Anr($anr);
+        $newAnr = new \MonarcFO\Model\Entity\Anr($anr);
         $newAnr->setId(null);
         $newAnr->setObjects(null);
+        $newAnr->exchangeArray($data);
         $newAnr->set('model',$model->get('id'));
 
         /** @var AnrTable $anrCliTable */
@@ -130,7 +136,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
         $user = $userCliTable->getEntity($userArray['id']);
-        $userAnr =  new \MonarcFO\Model\Entity\UserAnr();
+        $userAnr = new \MonarcFO\Model\Entity\UserAnr();
+        $userAnr->set('id',null);
         $userAnr->setUser($user);
         $userAnr->setAnr($newAnr);
         $userAnr->setRwd(1);
@@ -142,7 +149,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $themes = ($source == Object::SOURCE_COMMON) ? $this->get('themeTable')->fetchAllObject() : $this->get('themeCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($themes as $theme) {
             $last = ($i == count($themes)) ? true : false;
-            $newTheme =  new \MonarcFO\Model\Entity\Theme($theme);
+            $newTheme = new \MonarcFO\Model\Entity\Theme($theme);
+            $newTheme->set('id',null);
             $newTheme->setAnr($newAnr);
             $this->get('themeCliTable')->save($newTheme, $last);
             $themesNewIds[$theme->id] = $newTheme;
@@ -167,7 +175,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         foreach($assets as $asset) {
             $last = ($i == count($assets)) ? true : false;
-            $newAsset =  new \MonarcFO\Model\Entity\Asset($asset);
+            $newAsset = new \MonarcFO\Model\Entity\Asset($asset);
+            $newAsset->set('id',null);
             $newAsset->setAnr($newAnr);
             $this->get('assetCliTable')->save($newAsset, $last);
             $assetsNewIds[$asset->id] = $newAsset;
@@ -192,7 +201,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         foreach($threats as $threat) {
             $last = ($i == count($threats)) ? true : false;
-            $newThreat =  new \MonarcFO\Model\Entity\Threat($threat);
+            $newThreat = new \MonarcFO\Model\Entity\Threat($threat);
+            $newThreat->set('id',null);
             $newThreat->setAnr($newAnr);
             if ($threat->theme) {
                 $newThreat->setTheme($themesNewIds[$threat->theme->id]);
@@ -220,7 +230,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         foreach($vulnerabilities as $vulnerability) {
             $last = ($i == count($vulnerabilities)) ? true : false;
-            $newVulnerability =  new \MonarcFO\Model\Entity\Vulnerability($vulnerability);
+            $newVulnerability = new \MonarcFO\Model\Entity\Vulnerability($vulnerability);
+            $newVulnerability->set('id',null);
             $newVulnerability->setAnr($newAnr);
             $this->get('vulnerabilityCliTable')->save($newVulnerability, $last);
             $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
@@ -233,7 +244,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $measures = ($source == Object::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($measures as $measure) {
             $last = ($i == count($measures)) ? true : false;
-            $newMeasure =  new \MonarcFO\Model\Entity\Measure($measure);
+            $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
+            $newMeasure->set('id',null);
             $newMeasure->setAnr($newAnr);
             $this->get('measureCliTable')->save($newMeasure, $last);
             $measuresNewIds[$measure->id] = $newMeasure;
@@ -255,7 +267,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         foreach($amvs as $amv) {
             $last = ($i == count($amvs)) ? true : false;
-            $newAmv =  new \MonarcFO\Model\Entity\Amv($amv);
+            $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
+            $newAmv->set('id',null);
             $newAmv->setAnr($newAnr);
             $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
             $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
@@ -280,7 +293,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $rolfCategories = ($source == Object::SOURCE_COMMON) ? $this->get('rolfCategoryTable')->fetchAllObject() : $this->get('rolfCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($rolfCategories as $rolfCategory) {
             $last = ($i == count($rolfCategories)) ? true : false;
-            $newRolfCategory =  new \MonarcFO\Model\Entity\RolfCategory($rolfCategory);
+            $newRolfCategory = new \MonarcFO\Model\Entity\RolfCategory($rolfCategory);
+            $newRolfCategory->set('id',null);
             $newRolfCategory->setAnr($newAnr);
             $this->get('rolfCategoryCliTable')->save($newRolfCategory, $last);
             $rolfCategoriesNewIds[$rolfCategory->id] = $newRolfCategory;
@@ -293,7 +307,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $rolfTags = ($source == Object::SOURCE_COMMON) ? $this->get('rolfTagTable')->fetchAllObject() : $this->get('rolfTagCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($rolfTags as $rolfTag) {
             $last = ($i == count($rolfTags)) ? true : false;
-            $newRolfTag =  new \MonarcFO\Model\Entity\RolfTag($rolfTag);
+            $newRolfTag = new \MonarcFO\Model\Entity\RolfTag($rolfTag);
+            $newRolfTag->set('id',null);
             $newRolfTag->setAnr($newAnr);
             $this->get('rolfTagCliTable')->save($newRolfTag, $last);
             $rolfTagsNewIds[$rolfTag->id] = $newRolfTag;
@@ -306,7 +321,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $rolfRisks = ($source == Object::SOURCE_COMMON) ? $this->get('rolfRiskTable')->fetchAllObject() : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($rolfRisks as $rolfRisk) {
             $last = ($i == count($rolfRisks)) ? true : false;
-            $newRolfRisk =  new \MonarcFO\Model\Entity\RolfRisk($rolfRisk);
+            $newRolfRisk = new \MonarcFO\Model\Entity\RolfRisk($rolfRisk);
+            $newRolfRisk->set('id',null);
             $newRolfRisk->setAnr($newAnr);
             foreach($rolfRisk->categories as $key => $category) {
                 $newRolfRisk->setCategory($key, $rolfCategoriesNewIds[$category->id]);
@@ -325,7 +341,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($objectsCategories as $objectCategory) {
             $last = ($i == count($objectsCategories)) ? true : false;
-            $newObjectCategory =  new \MonarcFO\Model\Entity\ObjectCategory($objectCategory);
+            $newObjectCategory = new \MonarcFO\Model\Entity\ObjectCategory($objectCategory);
+            $newObjectCategory->set('id',null);
             $newObjectCategory->setAnr($newAnr);
             if ($objectCategory->parent) {
                 $newObjectCategory->setParent($objectsCategoriesNewIds[$objectCategory->parent->id]);
@@ -356,7 +373,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         foreach($objects as $object) {
             $last = ($i == count($objects)) ? true : false;
-            $newObject =  new \MonarcFO\Model\Entity\Object($object);
+            $newObject = new \MonarcFO\Model\Entity\Object($object);
+            $newObject->set('id',null);
             $newObject->setAnr($newAnr);
             $newObject->setAnrs(null);
             $newObject->addAnr($newAnr);
@@ -389,7 +407,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         foreach($anrObjectsCategories as $key => $anrObjectCategory) {
             $last = ($i == count($anrObjectsCategories)) ? true : false;
-            $newAnrObjectCategory =  new \MonarcFO\Model\Entity\AnrObjectCategory($anrObjectCategory);
+            $newAnrObjectCategory = new \MonarcFO\Model\Entity\AnrObjectCategory($anrObjectCategory);
+            $newAnrObjectCategory->set('id',null);
             $newAnrObjectCategory->setAnr($newAnr);
             $newAnrObjectCategory->setCategory($objectsCategoriesNewIds[$anrObjectCategory->category->id]);
             $this->get('anrObjectCategoryCliTable')->save($newAnrObjectCategory, $last);
@@ -400,18 +419,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $i = 1;
         $objectsObjects = ($source == Object::SOURCE_COMMON) ? $this->get('objectObjectTable')->fetchAllObject() : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($objectsObjects as $key => $objectObject) {
-            $relationInAnr = true;
-            if ((!isset($objectsNewIds[$objectObject->father->id])) || (!isset($objectsNewIds[$objectObject->child->id]))) {
-                $relationInAnr = false;
-            }
-            if (!$relationInAnr) {
+            if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->id]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->id]))) {
                 unset($objectsObjects[$key]);
             }
         }
         foreach($objectsObjects as $objectObject) {
             $last = ($i == count($objectsObjects)) ? true : false;
-            $newObjectObject = clone $objectObject;
-            $newObjectObject =  new \MonarcFO\Model\Entity\ObjectObject($objectObject);
+            $newObjectObject = new \MonarcFO\Model\Entity\ObjectObject($objectObject);
+            $newObjectObject->set('id',null);
             $newObjectObject->setAnr($newAnr);
             $newObjectObject->setFather($objectsNewIds[$objectObject->father->id]);
             $newObjectObject->setChild($objectsNewIds[$objectObject->child->id]);
@@ -426,7 +441,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $instances = $instanceTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instances as $instance) {
             $last = ($i == count($instances)) ? true : false;
-            $newInstance =  new \MonarcFO\Model\Entity\Instance($instance);
+            $newInstance = new \MonarcFO\Model\Entity\Instance($instance);
+            $newInstance->set('id',null);
             $newInstance->setAnr($newAnr);
             $newInstance->setAsset($assetsNewIds[$instance->asset->id]);
             $newInstance->setObject($objectsNewIds[$instance->object->id]);
@@ -448,7 +464,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $scales = $scaleTable->getEntityByFields(['anr' => $anr->id]);
         foreach($scales as $scale) {
             $last = ($i == count($scales)) ? true : false;
-            $newScale =  new \MonarcFO\Model\Entity\Scale($scale);
+            $newScale = new \MonarcFO\Model\Entity\Scale($scale);
+            $newScale->set('id',null);
             $newScale->setAnr($newAnr);
             $this->get('scaleCliTable')->save($newScale, $last);
             $scalesNewIds[$scale->id] = $newScale;
@@ -462,7 +479,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $scalesImpactTypes = $scaleImpactTypeTable->getEntityByFields(['anr' => $anr->id]);
         foreach($scalesImpactTypes as $scaleImpactType) {
             $last = ($i == count($scalesImpactTypes)) ? true : false;
-            $newScaleImpactType =  new \MonarcFO\Model\Entity\ScaleImpactType($scaleImpactType);
+            $newScaleImpactType = new \MonarcFO\Model\Entity\ScaleImpactType($scaleImpactType);
+            $newScaleImpactType->set('id',null);
             $newScaleImpactType->setAnr($newAnr);
             $newScaleImpactType->setScale($scalesNewIds[$scaleImpactType->scale->id]);
             $this->get('scaleImpactTypeCliTable')->save($newScaleImpactType, $last);
@@ -476,7 +494,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $scalesComments = $scaleCommentTable->getEntityByFields(['anr' => $anr->id]);
         foreach($scalesComments as $scaleComment) {
             $last = ($i == count($scalesComments)) ? true : false;
-            $newScaleComment =  new \MonarcFO\Model\Entity\ScaleComment($scaleComment);
+            $newScaleComment = new \MonarcFO\Model\Entity\ScaleComment($scaleComment);
+            $newScaleComment->set('id',null);
             $newScaleComment->setAnr($newAnr);
             $newScaleComment->setScale($scalesNewIds[$scaleComment->scale->id]);
             if ($scaleComment->scaleImpactType) {
@@ -492,7 +511,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $instancesRisks = $instanceRiskTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instancesRisks as $instanceRisk) {
             $last = ($i == count($instancesRisks)) ? true : false;
-            $newInstanceRisk =  new \MonarcFO\Model\Entity\InstanceRisk($instanceRisk);
+            $newInstanceRisk = new \MonarcFO\Model\Entity\InstanceRisk($instanceRisk);
+            $newInstanceRisk->set('id',null);
             $newInstanceRisk->setAnr($newAnr);
             $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
             $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->id]);
@@ -509,7 +529,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $instancesRisksOp = $instanceRiskOpTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instancesRisksOp as $instanceRiskOp) {
             $last = ($i == count($instancesRisksOp)) ? true : false;
-            $newInstanceRiskOp =  new \MonarcFO\Model\Entity\InstanceRiskOp($instanceRiskOp);
+            $newInstanceRiskOp = new \MonarcFO\Model\Entity\InstanceRiskOp($instanceRiskOp);
+            $newInstanceRiskOp->set('id',null);
             $newInstanceRiskOp->setAnr($newAnr);
             $newInstanceRiskOp->setInstance($instancesNewIds[$instanceRiskOp->instance->id]);
             $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->id]);
@@ -524,12 +545,36 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $instancesConsequences = $instanceConsequenceTable->getEntityByFields(['anr' => $anr->id]);
         foreach($instancesConsequences as $instanceConsequence) {
             $last = ($i == count($instancesConsequences)) ? true : false;
-            $newInstanceConsequence =  new \MonarcFO\Model\Entity\InstanceConsequence($instanceConsequence);
+            $newInstanceConsequence = new \MonarcFO\Model\Entity\InstanceConsequence($instanceConsequence);
+            $newInstanceConsequence->set('id',null);
             $newInstanceConsequence->setAnr($newAnr);
             $newInstanceConsequence->setInstance($instancesNewIds[$instanceConsequence->instance->id]);
             $newInstanceConsequence->setObject($objectsNewIds[$instanceConsequence->object->id]);
             $newInstanceConsequence->setScaleImpactType($scalesImpactTypesNewIds[$instanceConsequence->scaleImpactType->id]);
             $this->get('instanceConsequenceCliTable')->save($newInstanceConsequence, $last);
+            $i++;
+        }
+
+        // duplicate questions & choices
+        $questions = ($source == Object::SOURCE_COMMON) ? $this->get('questionTable')->fetchAllObject() : $this->get('questionCliTable')->getEntityByFields(['anr' => $anr->id]);
+        $questionsNewIds = [];
+        $i = 1;
+        foreach($questions as $q){
+            $newQuestion = new \MonarcFO\Model\Entity\Question($q);
+            $newQuestion->set('id',null);
+            $newQuestion->set('anr',$newAnr);
+            $this->get('questionCliTable')->save($newQuestion, ($i == count($questions)));
+            $questionsNewIds[$q->id] = $newQuestion;
+            $i++;
+        }
+        $questionChoices = ($source == Object::SOURCE_COMMON) ? $this->get('questionChoiceTable')->fetchAllObject() : $this->get('questionChoiceCliTable')->getEntityByFields(['anr' => $anr->id]);
+        $i = 1;
+        foreach($questionChoices as $qc){
+            $newQuestionChoice = new \MonarcFO\Model\Entity\QuestionChoice($qc);
+            $newQuestionChoice->set('id',null);
+            $newQuestionChoice->set('anr',$newAnr);
+            $newQuestionChoice->set('question',$questionsNewIds[$qc->get('question')->get('id')]);
+            $this->get('questionChoiceCliTable')->save($newQuestionChoice, ($i == count($questions)));
             $i++;
         }
 

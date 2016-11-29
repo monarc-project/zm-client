@@ -17,7 +17,7 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
             throw new \Exception('Model missing', 412);
         }
 
-        $id = $service->createFromModelToClient($data['model']);
+        $id = $service->createFromModelToClient($data);
 
         return new JsonModel(
             array(
