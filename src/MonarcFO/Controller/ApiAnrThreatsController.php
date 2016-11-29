@@ -13,4 +13,6 @@ use Zend\View\Model\JsonModel;
 class ApiAnrThreatsController extends ApiAnrAbstractController
 {
     protected $name = 'threats';
+
+    protected $dependencies = ['anr', 'theme'];
 }
