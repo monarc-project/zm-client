@@ -1,5 +1,6 @@
 <?php
 namespace MonarcFO\Service;
+use MonarcFO\Model\Table\InstanceRiskTable;
 
 /**
  * Anr Threat Service
@@ -17,4 +18,67 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'theme'];
     protected $anrTable;
     protected $themeTable;
+    protected $instanceRiskTable;
+
+    /**
+     * Update
+     *
+     * @param $id
+     * @param $data
+     * @return mixed
+     */
+    public function update($id, $data){
+
+        $this->manageQualification($id, $data);
+
+        return parent::update($id, $data);
+    }
+
+    /**
+     * Patch
+     *
+     * @param $id
+     * @param $data
+     * @return mixed
+     */
+    public function patch($id, $data){
+
+        $this->manageQualification($id, $data);
+
+        return parent::patch($id, $data);
+    }
+
+    /**
+     * Manage Qualification
+     *
+     * @param $id
+     * @param $data
+     */
+    public function manageQualification ($id, $data) {
+
+        if (isset($data['qualification'])) {
+            /** @var InstanceRiskTable $instanceRiskTable */
+            $instanceRiskTable = $this->get('instanceRiskTable');
+            $filter = [
+                'anr' => $data['anr'],
+                'threat' => $id,
+            ];
+            if ((!isset($data['forceQualification'])) || $data['forceQualification'] == 0) {
+                $filter['mh'] = 1;
+            }
+            $instancesRisks = $instanceRiskTable->getEntityByFields($filter);
+
+            $nb = 1;
+            foreach($instancesRisks as $instanceRisk) {
+                $last = (count($instancesRisks) == $nb) ? true : false;
+                $instanceRisk->threatRate = $data['qualification'];
+                if ((isset($data['forceQualification'])) && $data['forceQualification'] == 1) {
+                    $instanceRisk->mh = 1;
+                }
+                $instanceRiskTable->save($instanceRisk, $last);
+
+                $nb++;
+            }
+        }
+    }
 }

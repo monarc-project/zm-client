@@ -10,5 +10,6 @@ class AnrThreatServiceFactory extends AbstractServiceFactory
         'table'=> 'MonarcFO\Model\Table\ThreatTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'themeTable' => 'MonarcFO\Model\Table\ThemeTable',
+        'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
     );
 }

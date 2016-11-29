@@ -6,9 +6,10 @@ use Zend\View\Model\JsonModel;
 abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractController
 {
     /**
-     * Get list
+     * Get List
      *
      * @return JsonModel
+     * @throws \Exception
      */
     public function getList()
     {
@@ -43,6 +44,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      *
      * @param mixed $id
      * @return JsonModel
+     * @throws \Exception
      */
     public function get($id)
     {
@@ -68,6 +70,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      *
      * @param mixed $data
      * @return JsonModel
+     * @throws \Exception
      */
     public function create($data)
     {
@@ -93,6 +96,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      * @param mixed $id
      * @param mixed $data
      * @return JsonModel
+     * @throws \Exception
      */
     public function update($id, $data)
     {
@@ -113,6 +117,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      * @param mixed $id
      * @param mixed $data
      * @return JsonModel
+     * @throws \Exception
      */
     public function patch($id, $data)
     {
