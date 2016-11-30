@@ -54,6 +54,19 @@ return array(
                 ),
             ),
 
+            'monarc_api_client_snapshot' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-snapshot[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiSnapshot',
+                    ),
+                ),
+            ),
+
             'monarc_api_admin_users' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -329,6 +342,7 @@ return array(
             '\MonarcFO\Controller\ApiAdminUsersRoles'       => '\MonarcFO\Controller\ApiAdminUsersRolesControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsersRights'      => '\MonarcFO\Controller\ApiAdminUsersRightsControllerFactory',
             '\MonarcFO\Controller\ApiAnr'                   => '\MonarcFO\Controller\ApiAnrControllerFactory',
+            '\MonarcFO\Controller\ApiSnapshot'              => '\MonarcFO\Controller\ApiSnapshotControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                => '\MonarcFO\Controller\ApiConfigControllerFactory',
             '\MonarcFO\Controller\ApiDuplicateAnr'          => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
@@ -426,6 +440,7 @@ return array(
             'monarc_api_client_rolf_categories',
             'monarc_api_client_rolf_risks',
             'monarc_api_client_rolf_tags',
+            'monarc_api_client_snapshot',
             'monarc_api_client_themes',
             'monarc_api_client_threats',
             'monarc_api_client_vulnerabilities',

@@ -112,6 +112,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null,$data=[]) {
 
         if (is_integer($anr)) {
+            /** @var AnrTable $anrTable */
             $anrTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrTable') : $this->get('anrCliTable');
             $anr = $anrTable->getEntity($anr);
         }
