@@ -275,6 +275,46 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_client_anr_scales' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/scales[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrScales',
+                    ),
+                ),
+            ),
+            'monarc_api_client_anr_scales_types' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/scales-types[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrScalesTypes',
+                    ),
+                ),
+            ),
+            'monarc_api_client_anr_scales_comments' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/scales/:scaleid/comments[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                        'scaleid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrScalesComments',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -306,6 +346,9 @@ return array(
             '\MonarcFO\Controller\ApiAnrAssetsImport'       => '\MonarcFO\Controller\ApiAnrAssetsImportControllerFactory',
             '\MonarcFO\Controller\ApiAnrAssetsImportCommon' => '\MonarcFO\Controller\ApiAnrAssetsImportCommonControllerFactory',
             '\MonarcFO\Controller\ApiAnrInterviews'         => '\MonarcFO\Controller\ApiAnrInterviewsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrScales'             => '\MonarcFO\Controller\ApiAnrScalesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrScalesTypes'        => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrScalesComments'     => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
         ),
     ),
 
@@ -392,6 +435,10 @@ return array(
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
             'monarc_api_user_profile',
+
+            'monarc_api_client_anr_scales',
+            'monarc_api_client_anr_scales_types',
+            'monarc_api_client_anr_scales_comments',
         ),
     )
 );
