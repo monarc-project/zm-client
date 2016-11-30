@@ -16,7 +16,6 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     protected $anrTable;
     protected $anrService;
 
-
     public function create($data, $last = true) {
 
         $anrReferenceId = $data['anr'];
@@ -26,25 +25,13 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
         $anrService = $this->get('anrService');
         $anrId = $anrService->duplicateAnr(intval($anrReferenceId));
 
-        $data['anrReference'] = $anrReferenceId;
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anrReference = $anrTable->getEntity($anrReferenceId);
+
+        $data['anrReference'] = $anrReference;
         $data['anr'] = $anrId;
 
-
-
-
-        //$entity = $this->get('entity');
-        $class = $this->get('entity');
-        $entity = new $class();
-        $entity->setLanguage($this->getLanguage());
-        $entity->setDbAdapter($this->get('table')->getDb());
-        $entity->exchangeArray($data);
-
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($entity, $dependencies);
-
-        /** @var AnrTable $table */
-        $table = $this->get('table');
-
-        return $table->save($entity, $last);
+        return parent::create($data);
     }
 }

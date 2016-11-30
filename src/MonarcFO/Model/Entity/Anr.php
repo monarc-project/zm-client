@@ -13,13 +13,6 @@ use Doctrine\ORM\Mapping as ORM;
 class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
 {
     /**
-     * @var \MonarcFO\Model\Entity\User
-     *
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\User", mappedBy="users", cascade={"persist"})
-     */
-    protected $users;
-
-    /**
      * @var integer
      *
      * @ORM\Column(name="language", type="integer", options={"unsigned":true, "default":1})
@@ -32,24 +25,6 @@ class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
      * @ORM\Column(name="model_id", type="integer", options={"unsigned":true, "default":0})
      */
     protected $model = '0';
-
-    /**
-     * @return User
-     */
-    public function getUsers()
-    {
-        return $this->users;
-    }
-
-    /**
-     * @param User $users
-     * @return Anr
-     */
-    public function setUsers($users)
-    {
-        $this->users = $users;
-        return $this;
-    }
 
     /**
      * @return int
