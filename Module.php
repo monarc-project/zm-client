@@ -137,6 +137,9 @@ class Module
                 '\MonarcFO\Service\ObjectObjectService' => '\MonarcFO\Service\ObjectObjectServiceFactory',
                 '\MonarcFO\Service\PasswordService' => '\MonarcFO\Service\PasswordServiceFactory',
                 '\MonarcFO\Service\MailService' => '\MonarcFO\Service\MailServiceFactory',
+                '\MonarcFO\Service\AnrScaleService' => '\MonarcFO\Service\AnrScaleServiceFactory',
+                '\MonarcFO\Service\AnrScaleTypeService' => '\MonarcFO\Service\AnrScaleTypeServiceFactory',
+                '\MonarcFO\Service\AnrScaleCommentService' => '\MonarcFO\Service\AnrScaleCommentServiceFactory',
             ),
         );
     }
