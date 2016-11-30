@@ -7,5 +7,7 @@ class ApiSnapshotController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'snapshots';
 
+    protected $dependencies = ['anr'];
+
 }
 
