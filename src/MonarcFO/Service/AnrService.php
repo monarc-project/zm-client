@@ -105,6 +105,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      *
      * @param $anr
      * @param string $source
+     * @param string $source
      * @param null $model
      * @return mixed
      * @throws \Exception
@@ -112,12 +113,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
     public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null,$data=[]) {
 
         if (is_integer($anr)) {
+            /** @var AnrTable $anrTable */
             $anrTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrTable') : $this->get('anrCliTable');
             $anr = $anrTable->getEntity($anr);
         }
 
-
-        if (!$anr instanceof Anr) {
+        if ((!$anr instanceof \MonarcCore\Model\Entity\Anr) && (!$anr instanceof \MonarcFO\Model\Entity\Anr)) {
             throw new \Exception('Anr missing', 412);
         }
 
@@ -126,7 +127,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $newAnr->setId(null);
         $newAnr->setObjects(null);
         $newAnr->exchangeArray($data);
-        $newAnr->set('model',$model->get('id'));
+        if ($model) {
+            $newAnr->set('model', $model->get('id'));
+        } else {
+            $newAnr->set('model', null);
+        }
 
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');

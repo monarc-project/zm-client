@@ -73,6 +73,7 @@ class Module
                 '\MonarcFO\Model\Table\ScaleTable' => '\MonarcFO\Service\Model\Table\ScaleServiceModelTable',
                 '\MonarcFO\Model\Table\ScaleCommentTable' => '\MonarcFO\Service\Model\Table\ScaleCommentServiceModelTable',
                 '\MonarcFO\Model\Table\ScaleImpactTypeTable' => '\MonarcFO\Service\Model\Table\ScaleImpactTypeServiceModelTable',
+                '\MonarcFO\Model\Table\SnapshotTable' => '\MonarcFO\Service\Model\Table\SnapshotServiceModelTable',
                 '\MonarcFO\Model\Table\ThemeTable' => '\MonarcFO\Service\Model\Table\ThemeServiceModelTable',
                 '\MonarcFO\Model\Table\ThreatTable' => '\MonarcFO\Service\Model\Table\ThreatServiceModelTable',
                 '\MonarcFO\Model\Table\UserTable' => '\MonarcFO\Service\Model\Table\UserServiceModelTable',
@@ -103,6 +104,7 @@ class Module
                 '\MonarcFO\Model\Entity\Scale' => '\MonarcFO\Service\Model\Entity\ScaleServiceModelEntity',
                 '\MonarcFO\Model\Entity\ScaleComment' => '\MonarcFO\Service\Model\Entity\ScaleCommentServiceModelEntity',
                 '\MonarcFO\Model\Entity\ScaleImpactType' => '\MonarcFO\Service\Model\Entity\ScaleImpactTypeServiceModelEntity',
+                '\MonarcFO\Model\Entity\Snapshot' => '\MonarcFO\Service\Model\Entity\SnapshotServiceModelEntity',
                 '\MonarcFO\Model\Entity\Theme' => '\MonarcFO\Service\Model\Entity\ThemeServiceModelEntity',
                 '\MonarcFO\Model\Entity\Threat' => '\MonarcFO\Service\Model\Entity\ThreatServiceModelEntity',
                 '\MonarcFO\Model\Entity\User' => '\MonarcFO\Service\Model\Entity\UserServiceModelEntity',
@@ -114,6 +116,7 @@ class Module
 
                 //services
                 '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
+                '\MonarcFO\Service\SnapshotService' => '\MonarcFO\Service\SnapshotServiceFactory',
                 '\MonarcFO\Service\UserService' => '\MonarcFO\Service\UserServiceFactory',
                 '\MonarcFO\Service\UserAnrService' => '\MonarcFO\Service\UserAnrServiceFactory',
                 '\MonarcFO\Service\UserRoleService' => '\MonarcFO\Service\UserRoleServiceFactory',
