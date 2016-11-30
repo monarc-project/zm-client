@@ -1,7 +1,7 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcCore\Model\Entity\Anr;
+use MonarcCore\Model\Entity\AnrSuperClass;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ModelTable;
 use MonarcFO\Service\AbstractService;
@@ -116,9 +116,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $anr = $anrTable->getEntity($anr);
         }
 
-
-        if (!$anr instanceof Anr) {
+        if (!$anr instanceof AnrSuperClass) {
             throw new \Exception('Anr missing', 412);
+        }
+        if(empty($model)){
+            $idModel = $anr->get('model');
+        }else{
+            $idModel = $model->get('id');
         }
 
         //duplicate anr
@@ -126,7 +130,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $newAnr->setId(null);
         $newAnr->setObjects(null);
         $newAnr->exchangeArray($data);
-        $newAnr->set('model',$model->get('id'));
+        $newAnr->set('model',$idModel);
 
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');
