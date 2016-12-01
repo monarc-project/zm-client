@@ -26,10 +26,5 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
             )
         );
     }
-
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
-    }
 }
 
