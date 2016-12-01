@@ -4,6 +4,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Model\Entity\AnrSuperClass;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ModelTable;
+use MonarcFO\Model\Table\SnapshotTable;
 use MonarcFO\Service\AbstractService;
 use MonarcFO\Model\Entity\Asset;
 use MonarcFO\Model\Entity\Object;
@@ -62,6 +63,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $scaleCliTable;
     protected $scaleCommentCliTable;
     protected $scaleImpactTypeCliTable;
+    protected $snapshotCliTable;
     protected $threatCliTable;
     protected $themeCliTable;
     protected $userCliTable;
@@ -69,6 +71,55 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $vulnerabilityCliTable;
     protected $questionCliTable;
     protected $questionChoiceCliTable;
+
+    /**
+     * Get List
+     *
+     * @param int $page
+     * @param int $limit
+     * @param null $order
+     * @param null $filter
+     * @return mixed
+     */
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+
+        /** @var SnapshotTable $snapshotCliTable */
+        $snapshotCliTable = $this->get('snapshotCliTable');
+        $snapshots = $snapshotCliTable->fetchAll();
+
+        $anrsSnapshots = [];
+        foreach($snapshots as $snapshot) {
+            $anrsSnapshots[] = $snapshot['anr']->id;
+        }
+
+        $anrs = $this->get('table')->fetchAllFiltered(
+            array_keys($this->get('entity')->getJsonArray()),
+            $page,
+            $limit,
+            $this->parseFrontendOrder($order),
+            $this->parseFrontendFilter($filter, $this->filterColumns),
+            $filterAnd
+        );
+
+        foreach($anrs as $key => $anr) {
+            if (in_array($anr['id'], $anrsSnapshots)) {
+                unset($anrs[$key]);
+            }
+        }
+
+        return $anrs;
+    }
+
+    /**
+     * Get Filtered Count
+     *
+     * @param null $filter
+     * @return int
+     */
+    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null) {
+
+        return count($this->getList($page, $limit, $order, $filter, $filterAnd));
+    }
 
     /**
      * Get Anrs
