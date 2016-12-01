@@ -140,6 +140,7 @@ class Module
                 '\MonarcFO\Service\AnrScaleService' => '\MonarcFO\Service\AnrScaleServiceFactory',
                 '\MonarcFO\Service\AnrScaleTypeService' => '\MonarcFO\Service\AnrScaleTypeServiceFactory',
                 '\MonarcFO\Service\AnrScaleCommentService' => '\MonarcFO\Service\AnrScaleCommentServiceFactory',
+                '\MonarcFO\Service\AnrCheckStartedService' => '\MonarcFO\Service\AnrCheckStartedServiceFactory',
             ),
         );
     }

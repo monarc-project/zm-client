@@ -13,6 +13,7 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
 	protected $filterColumns = array( );
 
     protected $anrTable;
+    protected $AnrCheckStartedService;
     protected $dependencies = ['anr'];
 
     protected $types = [
@@ -39,6 +40,7 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      * @return mixed
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+        $anrId = isset($filterAnd['anr'])?$filterAnd['anr']:null;
 
         $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
 
@@ -48,6 +50,6 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
             $scales[$key]['type'] = $types[$scale['type']];
         }
 
-        return $scales;
+        return [$scales,$this->get('AnrCheckStartedService')->canChange($anrId)];
     }
 }

@@ -118,6 +118,8 @@ return array(
     'MonarcFO\Service\AnrAssetCommonServiceFactory'                       => __DIR__ . '/src/MonarcFO/Service/AnrAssetCommonServiceFactory.php',
     'MonarcFO\Service\AnrAssetService'                                    => __DIR__ . '/src/MonarcFO/Service/AnrAssetService.php',
     'MonarcFO\Service\AnrAssetServiceFactory'                             => __DIR__ . '/src/MonarcFO/Service/AnrAssetServiceFactory.php',
+    'MonarcFO\Service\AnrCheckStartedService'                             => __DIR__ . '/src/MonarcFO/Service/AnrCheckStartedService.php',
+    'MonarcFO\Service\AnrCheckStartedServiceFactory'                      => __DIR__ . '/src/MonarcFO/Service/AnrCheckStartedServiceFactory.php',
     'MonarcFO\Service\AnrInterviewService'                                => __DIR__ . '/src/MonarcFO/Service/AnrInterviewService.php',
     'MonarcFO\Service\AnrInterviewServiceFactory'                         => __DIR__ . '/src/MonarcFO/Service/AnrInterviewServiceFactory.php',
     'MonarcFO\Service\AnrMeasureService'                                  => __DIR__ . '/src/MonarcFO/Service/AnrMeasureService.php',
