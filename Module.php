@@ -125,6 +125,8 @@ class Module
                 '\MonarcFO\Service\AnrAmvService' => '\MonarcFO\Service\AnrAmvServiceFactory',
                 '\MonarcFO\Service\AnrInterviewService' => '\MonarcFO\Service\AnrInterviewServiceFactory',
                 '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
+                '\MonarcFO\Service\AnrQuestionService' => '\MonarcFO\Service\AnrQuestionServiceFactory',
+                '\MonarcFO\Service\AnrQuestionChoiceService' => '\MonarcFO\Service\AnrQuestionChoiceServiceFactory',
                 '\MonarcFO\Service\AnrThreatService' => '\MonarcFO\Service\AnrThreatServiceFactory',
                 '\MonarcFO\Service\AnrThemeService' => '\MonarcFO\Service\AnrThemeServiceFactory',
                 '\MonarcFO\Service\AnrVulnerabilityService' => '\MonarcFO\Service\AnrVulnerabilityServiceFactory',

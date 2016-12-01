@@ -34,5 +34,41 @@ class QuestionChoice extends \MonarcCore\Model\Entity\QuestionChoiceSuperclass
      * })
      */
     protected $anr;
+
+    /**
+     * @return Question
+     */
+    public function getQuestion()
+    {
+        return $this->question;
+    }
+
+    /**
+     * @param Question $question
+     * @return QuestionChoice
+     */
+    public function setQuestion($question)
+    {
+        $this->question = $question;
+        return $this;
+    }
+
+    /**
+     * @return Anr
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param Anr $anr
+     * @return QuestionChoice
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+        return $this;
+    }
 }
 

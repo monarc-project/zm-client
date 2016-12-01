@@ -328,6 +328,32 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_anr_questions' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/questions[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrQuestions',
+                    ),
+                ),
+            ),
+            'monarc_api_anr_questions_choices' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/questions-choices[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrQuestionsChoices',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -351,6 +377,8 @@ return array(
             '\MonarcFO\Controller\ApiAnrAmvs'               => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures'           => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjects'            => '\MonarcFO\Controller\ApiAnrObjectsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrQuestions'          => '\MonarcFO\Controller\ApiAnrQuestionsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrQuestionsChoices'   => '\MonarcFO\Controller\ApiAnrQuestionsChoicesControllerFactory',
             '\MonarcFO\Controller\ApiAnrThreats'            => '\MonarcFO\Controller\ApiAnrThreatsControllerFactory',
             '\MonarcFO\Controller\ApiAnrThemes'             => '\MonarcFO\Controller\ApiAnrThemesControllerFactory',
             '\MonarcFO\Controller\ApiAnrVulnerabilities'    => '\MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory',
@@ -428,6 +456,8 @@ return array(
             'monarc_api_anr_interviews',
             'monarc_api_anr_library',
             'monarc_api_anr_objects',
+            'monarc_api_anr_questions',
+            'monarc_api_anr_questions_choices',
             'monarc_api_anr_risks',
             'monarc_api_anr_risks_op',
             'monarc_api_client_amvs',
