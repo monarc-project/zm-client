@@ -10,5 +10,6 @@ class AnrScaleServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
         'entity' => 'MonarcFO\Model\Entity\Scale',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'AnrCheckStartedService' => 'MonarcFO\Service\AnrCheckStartedService',
+        'scaleImpactTypeService' => 'MonarcFO\Service\AnrScaleTypeService',
     );
 }
