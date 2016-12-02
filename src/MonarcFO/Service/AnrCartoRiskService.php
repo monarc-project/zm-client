@@ -41,7 +41,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     public function getCartoTargeted($anrId){
         $this->buildListScalesAndHeaders($anrId);
 
-        if($this->anr->get('eval_risks')){
+        if($this->anr->get('evalRisks')){
             list($counters, $distrib) = $this->getCountersRisks('target');
             return [
                 'Impact' => $this->listScales[Scale::TYPE_IMPACT],
