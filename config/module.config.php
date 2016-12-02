@@ -364,6 +364,20 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_anr_carto_risks' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/carto-risks[/:type]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'type' => 'all|real|targeted',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrCartoRisks',
+                        'type' => 'all',
+                    ),
+                ),
+            ),
         ),
     ),
 
