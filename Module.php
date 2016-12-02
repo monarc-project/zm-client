@@ -143,6 +143,7 @@ class Module
                 '\MonarcFO\Service\AnrScaleTypeService' => '\MonarcFO\Service\AnrScaleTypeServiceFactory',
                 '\MonarcFO\Service\AnrScaleCommentService' => '\MonarcFO\Service\AnrScaleCommentServiceFactory',
                 '\MonarcFO\Service\AnrCheckStartedService' => '\MonarcFO\Service\AnrCheckStartedServiceFactory',
+                '\MonarcFO\Service\AnrCartoRiskService' => '\MonarcFO\Service\AnrCartoRiskServiceFactory',
             ),
         );
     }
