@@ -55,6 +55,8 @@ return array(
     'MonarcFO\Controller\ApiDuplicateAnrControllerFactory'                => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrControllerFactory.php',
     'MonarcFO\Controller\ApiSnapshotController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiSnapshotController.php',
     'MonarcFO\Controller\ApiSnapshotControllerFactory'                    => __DIR__ . '/src/MonarcFO/Controller/ApiSnapshotControllerFactory.php',
+    'MonarcFO\Controller\ApiSnapshotRestoreController'                    => __DIR__ . '/src/MonarcFO/Controller/ApiSnapshotRestoreController.php',
+    'MonarcFO\Controller\ApiSnapshotRestoreControllerFactory'             => __DIR__ . '/src/MonarcFO/Controller/ApiSnapshotRestoreControllerFactory.php',
     'MonarcFO\Controller\ApiUserProfileController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiUserProfileController.php',
     'MonarcFO\Controller\ApiUserProfileControllerFactory'                 => __DIR__ . '/src/MonarcFO/Controller/ApiUserProfileControllerFactory.php',
     'MonarcFO\Model\Entity\Amv'                                           => __DIR__ . '/src/MonarcFO/Model/Entity/Amv.php',

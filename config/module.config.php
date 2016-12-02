@@ -67,6 +67,16 @@ return array(
                 ),
             ),
 
+            'monarc_api_client_snapshot_restore' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-restore-snapshot',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiSnapshotRestore',
+                    ),
+                ),
+            ),
+
             'monarc_api_admin_users' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -369,6 +379,7 @@ return array(
             '\MonarcFO\Controller\ApiAdminUsersRights'      => '\MonarcFO\Controller\ApiAdminUsersRightsControllerFactory',
             '\MonarcFO\Controller\ApiAnr'                   => '\MonarcFO\Controller\ApiAnrControllerFactory',
             '\MonarcFO\Controller\ApiSnapshot'              => '\MonarcFO\Controller\ApiSnapshotControllerFactory',
+            '\MonarcFO\Controller\ApiSnapshotRestore'       => '\MonarcFO\Controller\ApiSnapshotRestoreControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                => '\MonarcFO\Controller\ApiConfigControllerFactory',
             '\MonarcFO\Controller\ApiDuplicateAnr'          => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
@@ -471,6 +482,7 @@ return array(
             'monarc_api_client_rolf_risks',
             'monarc_api_client_rolf_tags',
             'monarc_api_client_snapshot',
+            'monarc_api_client_snapshot_restore',
             'monarc_api_client_themes',
             'monarc_api_client_threats',
             'monarc_api_client_vulnerabilities',
@@ -480,7 +492,6 @@ return array(
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
             'monarc_api_user_profile',
-
             'monarc_api_client_anr_scales',
             'monarc_api_client_anr_scales_types',
             'monarc_api_client_anr_scales_comments',

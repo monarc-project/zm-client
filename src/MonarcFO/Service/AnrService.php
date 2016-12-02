@@ -135,6 +135,31 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
+     * Get Entity
+     *
+     * @param $id
+     * @return array
+     */
+    public function getEntity($id){
+
+        $anr = $this->get('table')->get($id);
+
+        //retrieve snapshots
+        /** @var SnapshotTable $snapshotCliTable */
+        $snapshotCliTable = $this->get('snapshotCliTable');
+        $anrSnapshots = $snapshotCliTable->getEntityByFields(['anrReference' => $id]);
+
+        $snapshots = [];
+        foreach($anrSnapshots as $anrSnapshot) {
+            $snapshots[] = $this->get('table')->get($anrSnapshot->anr->id);
+        }
+
+        $anr['snapshots'] = $snapshots;
+
+        return $anr;
+    }
+
+    /**
      * Create From Model To Client
      *
      * @param $modelId

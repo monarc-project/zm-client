@@ -88,4 +88,29 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
 
         return $anrService->delete($snapshot->anr->id);
     }
+
+    public function restore($anrId) {
+
+        //switch anr and anrReference
+        /** @var SnapshotTable $snapshotTable */
+        $snapshotTable = $this->get('table');
+        $anrSnapshots = $snapshotTable->getEntityByFields(['anr' => $anrId]);
+        $anrReference = null;
+        foreach ($anrSnapshots as $anrSnapshot) {
+            $anr = $anrSnapshot->anr;
+            $anrReference = $anrSnapshot->anrReference;
+
+            $anrSnapshot->anr = $anrReference;
+            $anrSnapshot->anrReference = $anr;
+            $snapshotTable->save($anrSnapshot);
+        }
+
+        //delete others snapshots with anrReference
+        $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrReference->id]);
+        foreach ($anrSnapshots as $anrSnapshot) {
+            $snapshotTable->delete($anrSnapshot->id);
+        }
+
+        return $anrId;
+    }
 }
