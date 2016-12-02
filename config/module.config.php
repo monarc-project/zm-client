@@ -67,6 +67,16 @@ return array(
                 ),
             ),
 
+            'monarc_api_client_snapshot_restore' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-restore-snapshot',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiSnapshotRestore',
+                    ),
+                ),
+            ),
+
             'monarc_api_admin_users' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -354,20 +364,6 @@ return array(
                     ),
                 ),
             ),
-            'monarc_api_anr_carto_risks' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/carto-risks[/:type]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'type' => 'all|real|targeted',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrCartoRisks',
-                        'type' => 'all',
-                    ),
-                ),
-            ),
         ),
     ),
 
@@ -383,6 +379,7 @@ return array(
             '\MonarcFO\Controller\ApiAdminUsersRights'      => '\MonarcFO\Controller\ApiAdminUsersRightsControllerFactory',
             '\MonarcFO\Controller\ApiAnr'                   => '\MonarcFO\Controller\ApiAnrControllerFactory',
             '\MonarcFO\Controller\ApiSnapshot'              => '\MonarcFO\Controller\ApiSnapshotControllerFactory',
+            '\MonarcFO\Controller\ApiSnapshotRestore'       => '\MonarcFO\Controller\ApiSnapshotRestoreControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                => '\MonarcFO\Controller\ApiConfigControllerFactory',
             '\MonarcFO\Controller\ApiDuplicateAnr'          => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword'          => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
@@ -486,6 +483,7 @@ return array(
             'monarc_api_client_rolf_risks',
             'monarc_api_client_rolf_tags',
             'monarc_api_client_snapshot',
+            'monarc_api_client_snapshot_restore',
             'monarc_api_client_themes',
             'monarc_api_client_threats',
             'monarc_api_client_vulnerabilities',
