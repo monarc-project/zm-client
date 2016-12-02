@@ -23,6 +23,13 @@ class Question extends \MonarcCore\Model\Entity\QuestionSuperclass
     protected $anr;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="response", type="string", length=255, nullable=true)
+     */
+    protected $response;
+
+    /**
      * @return Anr
      */
     public function getAnr()
@@ -37,6 +44,24 @@ class Question extends \MonarcCore\Model\Entity\QuestionSuperclass
     public function setAnr($anr)
     {
         $this->anr = $anr;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getResponse()
+    {
+        return $this->response;
+    }
+
+    /**
+     * @param string $response
+     * @return Question
+     */
+    public function setResponse($response)
+    {
+        $this->response = $response;
         return $this;
     }
 }

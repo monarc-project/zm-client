@@ -55,6 +55,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'scaleCliTable' => 'MonarcFO\Model\Table\ScaleTable',
         'scaleCommentCliTable' => 'MonarcFO\Model\Table\ScaleCommentTable',
         'scaleImpactTypeCliTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
+        'snapshotCliTable' => 'MonarcFO\Model\Table\SnapshotTable',
         'threatCliTable' => 'MonarcFO\Model\Table\ThreatTable',
         'themeCliTable' => 'MonarcFO\Model\Table\ThemeTable',
         'userCliTable' => 'MonarcFO\Model\Table\UserTable',
