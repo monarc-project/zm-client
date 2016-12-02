@@ -96,6 +96,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $modelTable = $this->get('modelTable');
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
+        if($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE){ // disabled or deleted
+            throw new \Exception('Model not found', 421);
+        }
 
         return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model,$data);
     }
