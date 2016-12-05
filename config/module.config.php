@@ -369,11 +369,25 @@ return array(
                 'options' => array(
                     'route' => '/api/client-anr/:anrid/carto-risks[/:type]',
                     'constraints' => array(
-                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
                         'type' => 'all|real|targeted',
                     ),
                     'defaults' => array(
                         'controller' => 'MonarcFO\Controller\ApiAnrCartoRisks',
+                        'type' => 'all',
+                    ),
+                ),
+            ),
+            'monarc_api_anr_risks' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/risks[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrRisks',
                         'type' => 'all',
                     ),
                 ),
@@ -417,6 +431,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrScalesTypes'        => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesComments'     => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
             '\MonarcFO\Controller\ApiAnrCartoRisks'         => '\MonarcFO\Controller\ApiAnrCartoRisksControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRisks'              => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
         ),
     ),
 
