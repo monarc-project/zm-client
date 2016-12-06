@@ -14,8 +14,32 @@ use MonarcFO\Service\AbstractService;
 class SnapshotService extends \MonarcCore\Service\AbstractService
 {
     protected $dependencies = ['anr'];
+    protected $filterColumns = [];
     protected $anrTable;
     protected $anrService;
+
+    /**
+     * Get List
+     *
+     * @param int $page
+     * @param int $limit
+     * @param null $order
+     * @param null $filter
+     * @return mixed
+     */
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+
+        /** @var SnapshotTable $table */
+        $table = $this->get('table');
+        return $table->fetchAllFiltered(
+            array_keys($this->get('entity')->getJsonArray()),
+            $page,
+            $limit,
+            $this->parseFrontendOrder($order),
+            $this->parseFrontendFilter($filter, $this->filterColumns),
+            $filterAnd
+        );
+    }
 
     /**
      * Create
@@ -89,6 +113,12 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
         return $anrService->delete($snapshot->anr->id);
     }
 
+    /**
+     * Restore
+     *
+     * @param $anrId
+     * @return mixed
+     */
     public function restore($anrId) {
 
         //switch anr and anrReference
@@ -108,6 +138,11 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
         //delete others snapshots with anrReference
         $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrReference->id]);
         foreach ($anrSnapshots as $anrSnapshot) {
+
+            //delete anr associated
+            $this->get('anrTable')->delete($anrSnapshot->anr->id);
+
+            //delete snapshot
             $snapshotTable->delete($anrSnapshot->id);
         }
 
