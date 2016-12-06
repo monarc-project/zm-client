@@ -1,9 +1,12 @@
 <?php
 namespace MonarcFO\Service;
 
+use MonarcFO\Model\Entity\InstanceRisk;
+use MonarcFO\Model\Entity\InstanceRiskOp;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\InstanceRiskTable;
+use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Service\AbstractService;
 
 /**
@@ -19,6 +22,60 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $recommandationTable;
     protected $instanceRiskTable;
     protected $instanceRiskOpTable;
+
+    /**
+     * Get Treatment Plans
+     *
+     * @param $anrId
+     * @return mixed
+     */
+    public function getTreatmentPlan($anrId, $id = false){
+
+
+        /** @var RecommandationTable $table */
+        $table = $this->get('table');
+        $recommandationsRisks = ($id) ? $table->getEntity($id) : $table->getEntityByFields(['anr' => $anrId]);
+
+        $order = [
+            'position' => 'ASC',
+            'importance' => 'DESC',
+        ];
+
+        /** @var RecommandationTable $recommandationTable */
+        $recommandationTable = $this->get('recommandationTable');
+        $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], $order);
+        foreach($recommandations as $key => $recommandation) {
+            $recommandations[$key] = $recommandation->getJsonArray();
+            $nbRisks = 0;
+            foreach($recommandationsRisks as $recommandationRisk) {
+                if ($recommandationRisk->recommandation->id == $recommandation->id) {
+                    //retrieve instance risk associated
+                    if ($recommandationRisk->instanceRisk) {
+                        if ($recommandationRisk->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
+                            $instanceRisk = $recommandationRisk->instanceRisk;
+                            $instanceRisk->asset = $instanceRisk->asset->getJsonArray();
+                            $instanceRisk->threat = $instanceRisk->threat->getJsonArray();
+                            $instanceRisk->vulnerability = $instanceRisk->vulnerability->getJsonArray();
+                            $recommandations[$key]['risks'][] = $instanceRisk->getJsonArray();
+                            $nbRisks++;
+                        }
+                    }
+                    //retrieve instance risk op associated
+                    if ($recommandationRisk->instanceRiskOp) {
+                        if ($recommandationRisk->instanceRiskOp->kindOfMeasure != InstanceRiskOp::KIND_NOT_TREATED) {
+                            $recommandations[$key]['risksop'][] = $recommandationRisk->instanceRiskOp->getJsonArray();
+                            $nbRisks++;
+                        }
+                    }
+                }
+            }
+            if (!$nbRisks) {
+                unset($recommandations[$key]);
+            }
+        }
+
+        return $recommandations;
+    }
 
     /**
      * Create

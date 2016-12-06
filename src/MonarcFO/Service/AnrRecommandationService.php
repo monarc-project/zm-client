@@ -1,6 +1,7 @@
 <?php
 namespace MonarcFO\Service;
 
+use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Service\AbstractService;
 
 /**
@@ -14,7 +15,6 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     protected $filterColumns = ['code', 'description'];
     protected $dependencies = ['anr'];
     protected $anrTable;
-
 
     /**
      * Create

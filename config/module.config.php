@@ -364,7 +364,6 @@ return array(
                     ),
                 ),
             ),
-
             'monarc_api_anr_recommandations' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -432,6 +431,19 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_anr_treatment_plan' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/treatment-plan[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrTreatmentPlan',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -470,11 +482,12 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecommandations'            => '\MonarcFO\Controller\ApiAnrRecommandationsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsRisks'       => '\MonarcFO\Controller\ApiAnrRecommandationsRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsMeasures'    => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
+            '\MonarcFO\Controller\ApiAnrTreatmentPlan'              => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
             '\MonarcFO\Controller\ApiAnrScales'                     => '\MonarcFO\Controller\ApiAnrScalesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesTypes'                => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesComments'             => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
             '\MonarcFO\Controller\ApiAnrCartoRisks'                 => '\MonarcFO\Controller\ApiAnrCartoRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRisks'              => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRisks'                      => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
         ),
     ),
 
@@ -572,6 +585,7 @@ return array(
             'monarc_api_anr_recommandations',
             'monarc_api_anr_recommandations_risks',
             'monarc_api_anr_recommandations_measures',
+            'monarc_api_anr_treatment_plan',
         ),
     )
 );

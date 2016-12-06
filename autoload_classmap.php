@@ -57,6 +57,8 @@ return array(
     'MonarcFO\Controller\ApiAnrThemesControllerFactory'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrThemesControllerFactory.php',
     'MonarcFO\Controller\ApiAnrThreatsController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiAnrThreatsController.php',
     'MonarcFO\Controller\ApiAnrThreatsControllerFactory'                    => __DIR__ . '/src/MonarcFO/Controller/ApiAnrThreatsControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrTreatmentPlanController'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrTreatmentPlanController.php',
+    'MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory'              => __DIR__ . '/src/MonarcFO/Controller/ApiAnrTreatmentPlanControllerFactory.php',
     'MonarcFO\Controller\ApiAnrVulnerabilitiesController'                   => __DIR__ . '/src/MonarcFO/Controller/ApiAnrVulnerabilitiesController.php',
     'MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory'            => __DIR__ . '/src/MonarcFO/Controller/ApiAnrVulnerabilitiesControllerFactory.php',
     'MonarcFO\Controller\ApiConfigController'                               => __DIR__ . '/src/MonarcFO/Controller/ApiConfigController.php',
