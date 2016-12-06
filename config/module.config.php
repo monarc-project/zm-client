@@ -428,7 +428,19 @@ return array(
                     ),
                     'defaults' => array(
                         'controller' => 'MonarcFO\Controller\ApiAnrRisks',
-                        'type' => 'all',
+                    ),
+                ),
+            ),
+            'monarc_api_anr_client_library' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/library[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrLibrary',
                     ),
                 ),
             ),
@@ -474,7 +486,8 @@ return array(
             '\MonarcFO\Controller\ApiAnrScalesTypes'                => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesComments'             => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
             '\MonarcFO\Controller\ApiAnrCartoRisks'                 => '\MonarcFO\Controller\ApiAnrCartoRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRisks'              => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRisks'                      => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
+            '\MonarcFO\Controller\ApiAnrLibrary'                    => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
         ),
     ),
 
@@ -538,7 +551,7 @@ return array(
             'monarc_api_anr_instances_risksop',
             'monarc_api_anr_instances_consequences',
             'monarc_api_anr_interviews',
-            'monarc_api_anr_library',
+            'monarc_api_anr_client_library',
             'monarc_api_anr_objects',
             'monarc_api_anr_questions',
             'monarc_api_anr_questions_choices',

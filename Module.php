@@ -154,6 +154,7 @@ class Module
                 '\MonarcFO\Service\AnrCheckStartedService' => '\MonarcFO\Service\AnrCheckStartedServiceFactory',
                 '\MonarcFO\Service\AnrCartoRiskService' => '\MonarcFO\Service\AnrCartoRiskServiceFactory',
                 '\MonarcFO\Service\AnrRiskService' => '\MonarcFO\Service\AnrRiskServiceFactory',
+                '\MonarcFO\Service\AnrObjectService' => '\MonarcFO\Service\AnrObjectServiceFactory',
             ),
         );
     }
