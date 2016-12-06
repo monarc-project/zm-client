@@ -31,10 +31,13 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function getTreatmentPlan($anrId, $id = false){
 
-
         /** @var RecommandationTable $table */
         $table = $this->get('table');
-        $recommandationsRisks = ($id) ? $table->getEntity($id) : $table->getEntityByFields(['anr' => $anrId]);
+        $params = ['anr' => $anrId];
+        if ($id) {
+            $params['recommandation'] = $id;
+        }
+        $recommandationsRisks = $table->getEntityByFields($params);
 
         $order = [
             'position' => 'ASC',
@@ -46,6 +49,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], $order);
         foreach($recommandations as $key => $recommandation) {
             $recommandations[$key] = $recommandation->getJsonArray();
+            unset($recommandations[$key]['__initializer__']);
+            unset($recommandations[$key]['__cloner__']);
+            unset($recommandations[$key]['__isInitialized__']);
             $nbRisks = 0;
             foreach($recommandationsRisks as $recommandationRisk) {
                 if ($recommandationRisk->recommandation->id == $recommandation->id) {
