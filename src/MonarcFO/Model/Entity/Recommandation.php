@@ -130,6 +130,13 @@ class Recommandation extends AbstractEntity
      */
     protected $updatedAt;
 
+
+    protected $parameters = [
+        'implicitPosition' => [
+            'field' => 'anr'
+        ]
+    ];
+
     /**
      * @return int
      */
