@@ -74,6 +74,28 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
 
     }
 
+    /**
+     * Delete List
+     *
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
+    public function deleteList($data)
+    {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+
+        /** @var AnrRecommandationRiskService $service */
+        $service = $this->getService();
+        $entities = $service->initPosition($anrId);
+
+        return new JsonModel(array('status' => 'ok'));
+    }
+
+
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
