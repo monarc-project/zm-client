@@ -171,4 +171,23 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         return $table->save($entity, $last);
     }
+
+    public function initPosition($anrId) {
+
+        //retrieve recommandations
+        /** @var RecommandationTable $recommandationTable */
+        $recommandationTable = $this->get('recommandationTable');
+        $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], ['importance' => 'DESC']);
+
+        $position = 0;
+        $i = 1;
+        foreach ($recommandations as $recommandation) {
+            $last = ($i == count($recommandations)) ? true : false;
+            $recommandation->position = $position;
+            $recommandationTable->save($recommandation, $last);
+
+            $position++;
+            $i++;
+        }
+    }
 }
