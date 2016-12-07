@@ -31,6 +31,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function getTreatmentPlan($anrId, $id = false){
 
+        //retrieve recommandations risks
         /** @var RecommandationTable $table */
         $table = $this->get('table');
         $params = ['anr' => $anrId];
@@ -39,29 +40,35 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
         $recommandationsRisks = $table->getEntityByFields($params);
 
-        $order = [
-            'position' => 'ASC',
-            'importance' => 'DESC',
-        ];
-
+        //retrieve recommandations
         /** @var RecommandationTable $recommandationTable */
         $recommandationTable = $this->get('recommandationTable');
-        $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], $order);
+        $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], ['position' => 'ASC', 'importance' => 'DESC']);
+
         foreach($recommandations as $key => $recommandation) {
             $recommandations[$key] = $recommandation->getJsonArray();
             unset($recommandations[$key]['__initializer__']);
             unset($recommandations[$key]['__cloner__']);
             unset($recommandations[$key]['__isInitialized__']);
             $nbRisks = 0;
+            $global = [];
+            $risksToUnset = [];
             foreach($recommandationsRisks as $recommandationRisk) {
                 if ($recommandationRisk->recommandation->id == $recommandation->id) {
+
                     //retrieve instance risk associated
                     if ($recommandationRisk->instanceRisk) {
                         if ($recommandationRisk->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
                             $instanceRisk = $recommandationRisk->instanceRisk;
-                            $instanceRisk->asset = $instanceRisk->asset->getJsonArray();
-                            $instanceRisk->threat = $instanceRisk->threat->getJsonArray();
-                            $instanceRisk->vulnerability = $instanceRisk->vulnerability->getJsonArray();
+                            if (is_object($instanceRisk->asset)) {
+                                $instanceRisk->asset = $instanceRisk->asset->getJsonArray();
+                            }
+                            if (is_object($instanceRisk->threat)) {
+                                $instanceRisk->threat = $instanceRisk->threat->getJsonArray();
+                            }
+                            if (is_object($instanceRisk->vulnerability)) {
+                                $instanceRisk->vulnerability = $instanceRisk->vulnerability->getJsonArray();
+                            }
                             $recommandations[$key]['risks'][] = $instanceRisk->getJsonArray();
                             $nbRisks++;
                         }
@@ -73,14 +80,42 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                             $nbRisks++;
                         }
                     }
+
+                    //delete risk of global with risk value is not the higher
+                    if ($recommandationRisk->objectGlobal) {
+                        foreach($global as $glob) {
+                            if ($glob['objectId'] == $recommandationRisk->objectGlobal->id) {
+                                if ($glob['maxRisk'] < $recommandationRisk->instanceRisk->cacheMaxRisk) {
+                                    $risksToUnset[] = $glob['riskId'];
+                                } else {
+                                    $risksToUnset[] = $recommandationRisk->instanceRisk->id;
+                                }
+                            }
+                        }
+
+                        $global[] = [
+                            'objectId' => $recommandationRisk->objectGlobal->id,
+                            'maxRisk' => $recommandationRisk->instanceRisk->cacheMaxRisk,
+                            'riskId' => $recommandationRisk->instanceRisk->id,
+                        ];
+                    }
                 }
             }
+
+            if (isset($recommandations[$key]['risks'])) {
+                foreach ($recommandations[$key]['risks'] as $k => $risk) {
+                    if (in_array($risk['id'], $risksToUnset)) {
+                        unset($recommandations[$key]['risks'][$k]);
+                    }
+                }
+            }
+
             if (!$nbRisks) {
                 unset($recommandations[$key]);
             }
         }
 
-        return $recommandations;
+        return array_values($recommandations);
     }
 
     /**
