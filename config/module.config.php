@@ -123,7 +123,7 @@ return array(
             'monarc_api_client_assets' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/assets[/:id]',
+                    'route' => '/api/client-anr/:anrid/assets[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -136,7 +136,7 @@ return array(
             'monarc_api_client_assets_import' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/assets/import',
+                    'route' => '/api/client-anr/:anrid/assets/import',
                     'constraints' => array(
                         'anrid' => '[0-9]+',
                     ),
@@ -148,7 +148,7 @@ return array(
             'monarc_api_client_assets_import_common' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/assets/importcomm[/:id]',
+                    'route' => '/api/client-anr/:anrid/assets/importcomm[/:id]',
                     'constraints' => array(
                         'anrid' => '[0-9]+',
                         'id' => '[0-9]+',
@@ -161,7 +161,7 @@ return array(
             'monarc_api_client_amvs' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/amvs[/:id]',
+                    'route' => '/api/client-anr/:anrid/amvs[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -174,7 +174,7 @@ return array(
             'monarc_api_client_measures' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/measures[/:id]',
+                    'route' => '/api/client-anr/:anrid/measures[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -187,7 +187,7 @@ return array(
             'monarc_api_client_threats' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/threats[/:id]',
+                    'route' => '/api/client-anr/:anrid/threats[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -200,7 +200,7 @@ return array(
             'monarc_api_client_themes' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/themes[/:id]',
+                    'route' => '/api/client-anr/:anrid/themes[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -213,7 +213,7 @@ return array(
             'monarc_api_client_vulnerabilities' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/vulnerabilities[/:id]',
+                    'route' => '/api/client-anr/:anrid/vulnerabilities[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -226,7 +226,7 @@ return array(
             'monarc_api_client_rolf_tags' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/rolf-tags[/:id]',
+                    'route' => '/api/client-anr/:anrid/rolf-tags[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -239,7 +239,7 @@ return array(
             'monarc_api_client_rolf_categories' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/rolf-categories[/:id]',
+                    'route' => '/api/client-anr/:anrid/rolf-categories[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -252,7 +252,7 @@ return array(
             'monarc_api_client_rolf_risks' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/rolf-risks[/:id]',
+                    'route' => '/api/client-anr/:anrid/rolf-risks[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -265,7 +265,7 @@ return array(
             'monarc_api_client_objects' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/objects[/:id]',
+                    'route' => '/api/client-anr/:anrid/objects[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
@@ -288,7 +288,7 @@ return array(
             'monarc_api_anr_interviews' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/anr/:anrid/interviews[/:id]',
+                    'route' => '/api/client-anr/:anrid/interviews[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
