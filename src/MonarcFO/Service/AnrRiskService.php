@@ -91,10 +91,10 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                 'asset.label2',
                 'asset.label3',
                 'asset.label4',
-                'amv.label1',
-                'amv.label2',
-                'amv.label3',
-                'amv.label4',
+                //'amv.label1',
+                //'amv.label2',
+                //'amv.label3',
+                //'amv.label4',
                 'threat.label1',
                 'threat.label2',
                 'threat.label3',
@@ -118,17 +118,17 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                 'measure3.description2',
                 'measure3.description3',
                 'measure3.description4',
-                'ir.name1',
-                'ir.name2',
-                'ir.name3',
-                'ir.name4',
+                'i.name1',
+                'i.name2',
+                'i.name3',
+                'i.name4',
                 'ir.comment',
             ];
             $orFilter = [];
             foreach($filters as $f){
                 $k = str_replace('.', '', $f);
-                $orFilter[] = $f." LIKE ".$k;
-                $query->setParameter($k,'%'.$params['keywords'].'%');
+                $orFilter[] = $f." LIKE :".$k;
+                $query->setParameter(":$k",'%'.$params['keywords'].'%');
             }
             $query->andWhere('('.implode(' OR ',$orFilter).')');
         }
