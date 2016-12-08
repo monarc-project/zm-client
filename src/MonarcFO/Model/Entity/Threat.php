@@ -60,5 +60,6 @@ class Threat extends \MonarcCore\Model\Entity\ThreatSuperClass
     {
         return $this->theme;
     }
+
 }
 
