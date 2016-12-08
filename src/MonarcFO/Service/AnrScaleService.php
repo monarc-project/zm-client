@@ -188,11 +188,11 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      *
      * @param $id
      * @param $data
-     * @return mixed
+     * @throws \Exception
      */
     public function patch($id,$data)
     {
-        $anrId = isset($filterAnd['anr'])?$filterAnd['anr']:null;
+        $anrId = isset($data['anr']) ? $data['anr'] : null;
         if($this->get('AnrCheckStartedService')->canChange($anrId)){
             //security
             $this->filterPatchFields($data);
@@ -209,13 +209,12 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      * @param $id
      * @param $data
      * @return mixed
+     * @throws \Exception
      */
     public function update($id,$data)
     {
-        $anrId = isset($filterAnd['anr'])?$filterAnd['anr']:null;
+        $anrId = isset($data['anr']) ? $data['anr'] : null;
         if($this->get('AnrCheckStartedService')->canChange($anrId)){
-            $scale = $this->get('table')->getEntity($id);
-
             $result = parent::patch($id, $data);
 
             return $result;
