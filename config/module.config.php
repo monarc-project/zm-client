@@ -599,6 +599,7 @@ return array(
         ),
         // Utilisateur : Accès RWD par analyse
         'userfo'=> array(
+            'monarc_api_admin_users_roles',
             'monarc_api_anr_instances',
             'monarc_api_anr_instances_risks',
             'monarc_api_anr_instances_risksop',
