@@ -157,15 +157,16 @@ class UserService extends AbstractService
         $table = $this->get('table');
         $id = $table->save($user);
 
-        if (isset($data['superadminfo'])) {
-            $dataUserRole = [
-                'user' => $id,
-                'role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO,
-            ];
-            /** @var UserRoleService $userRoleService */
-            $userRoleService = $this->get('userRoleService');
-            $userRoleService->create($dataUserRole);
-
+        if (isset($data['roles'])) {
+            foreach($data['roles'] as $role) {
+                $dataUserRole = [
+                    'user' => $id,
+                    'role' => $role,
+                ];
+                /** @var UserRoleService $userRoleService */
+                $userRoleService = $this->get('userRoleService');
+                $userRoleService->create($dataUserRole);
+            }
         }
 
         if (isset($data['anrs'])) {
