@@ -67,10 +67,7 @@ class UserService extends AbstractService
         foreach($users as $key => $user) {
             foreach ($usersRoles as $userRole) {
                 if ($user['id'] == $userRole->user->id) {
-                    $users[$key]['roles'][] = [
-                        'id' => $userRole->id,
-                        'role' => $userRole->role,
-                    ];
+                    $users[$key]['roles'][] = $userRole->role;
                 }
             }
         }
@@ -97,6 +94,12 @@ class UserService extends AbstractService
         return $users;
     }
 
+    /**
+     * Get Complete User
+     *
+     * @param $id
+     * @return bool
+     */
     public function getCompleteUser($id) {
 
         /** @var UserTable $table */
@@ -106,12 +109,8 @@ class UserService extends AbstractService
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
         $usersRoles = $userRoleTable->getEntityByFields(['user' => $id]);
-        $admin = 0;
         foreach ($usersRoles as $userRole) {
-            $user['roles'][] = [
-                'id' => $userRole->id,
-                'role' => $userRole->role,
-            ];
+            $user['role'][] = $userRole->role;
         }
 
         /** @var UserAnrTable $userAnrTable */
@@ -157,8 +156,8 @@ class UserService extends AbstractService
         $table = $this->get('table');
         $id = $table->save($user);
 
-        if (isset($data['roles'])) {
-            foreach($data['roles'] as $role) {
+        if (isset($data['role'])) {
+            foreach($data['role'] as $role) {
                 $dataUserRole = [
                     'user' => $id,
                     'role' => $role,
@@ -310,32 +309,32 @@ class UserService extends AbstractService
      */
     public function updateUserRole($id, $data) {
 
-        if (isset($data['superadminfo'])) {
+
+        if (isset($data['role'])) {
+
             /** @var UserRoleTable $userRoleTable */
-            $isAdmin = false;
             $userRoleTable = $this->get('userRoleTable');
             $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
+            $userRolesArray = [];
             foreach($userRoles as $userRole) {
-                if ($userRole->role == \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO) {
-                    $isAdmin = true;
+                if (!in_array($userRole->role, $data['role'])) {
+                    //delete role
+                    $userRoleTable->delete($userRole->id);
+                } else {
+                    $userRolesArray[] = $userRole->role;
                 }
             }
 
-            if (($data['superadminfo']) && (!$isAdmin)) {
-                //add role
-                $dataUserRole = [
-                    'user' => $id,
-                    'role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO,
-                ];
-                /** @var UserRoleService $userRoleService */
-                $userRoleService = $this->get('userRoleService');
-                $userRoleService->create($dataUserRole);
-            } else if ((!$data['superadminfo']) && ($isAdmin)){
-                //delete role
-                foreach($userRoles as $userRole) {
-                    if ($userRole->role == \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO) {
-                        $userRoleTable->delete($userRole->id);
-                    }
+            foreach($data['role'] as $role) {
+                if (!in_array($role, $userRolesArray)) {
+                    //add role
+                    $dataUserRole = [
+                        'user' => $id,
+                        'role' => $role,
+                    ];
+                    /** @var UserRoleService $userRoleService */
+                    $userRoleService = $this->get('userRoleService');
+                    $userRoleService->create($dataUserRole);
                 }
             }
         }
