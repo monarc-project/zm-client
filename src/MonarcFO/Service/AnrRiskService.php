@@ -35,7 +35,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         if(!empty($instanceId)){
             $instance = $this->get('instanceTable')->getEntity($instanceId);
-            if($instanceId->get('anr')->get('id') != $anrId){
+            if($instance->get('anr')->get('id') != $anrId){
                 throw new \Exception('Anr ids differents', 412);
             }
         }
@@ -63,10 +63,10 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     }
                 }
             }
-            $query->where('i.ids IN (:ids)')
+            $query->andWhere('i.id IN (:ids)')
                 ->setParameter(':ids',$instanceIds);
         }else{
-            $query->where('i.id = :id')
+            $query->andWhere('i.id = :id')
                 ->setParameter(':id',$instance->get('id'));
         }
 
