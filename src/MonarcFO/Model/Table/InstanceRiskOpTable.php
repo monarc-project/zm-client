@@ -1,9 +1,7 @@
 <?php
 namespace MonarcFO\Model\Table;
 
-use MonarcCore\Model\Table\InstanceRiskOpTable;
-
-class InstanceRiskOpTable extends InstanceRiskOpTable   {
+class InstanceRiskOpTable extends \MonarcCore\Model\Table\InstanceRiskOpTable   {
     public function __construct(\MonarcCore\Model\Db $dbService) {
         parent::__construct($dbService, '\MonarcFO\Model\Entity\InstanceRiskOp');
     }
