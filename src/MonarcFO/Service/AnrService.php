@@ -455,7 +455,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 unset($objects[$key]);
             }
         }
-        $labels = ['name1','name2','name3','name4','label1','label2','label3','label4'];
         foreach($objects as $object) {
             $last = ($i == count($objects)) ? true : false;
             $newObject = new \MonarcFO\Model\Entity\Object($object);
@@ -467,10 +466,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newObject->setAsset($assetsNewIds[$object->asset->id]);
             if ($object->rolfTag) {
                 $newObject->setRolfTag($rolfTagsNewIds[$object->rolfTag->id]);
-            }
-            $newObject->setModel(null);
-            foreach($labels as $label) {
-                $newObject->$label = $object->$label;
             }
             $this->get('objectCliTable')->save($newObject, $last);
             $objectsNewIds[$object->id] = $newObject;
@@ -523,7 +518,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         //duplicate instances
-        $labels = ['name1','name2','name3','name4','label1','label2','label3','label4'];
         $i = 1;
         $instancesNewIds = [];
         $instanceTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceTable') : $this->get('instanceCliTable');
@@ -540,9 +534,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             if ($instance->parent) {
                 $newInstance->setParent($instancesNewIds[$instance->parent->id]);
-            }
-            foreach($labels as $label) {
-                $newInstance->$label = $instance->$label;
             }
             $this->get('instanceCliTable')->save($newInstance, $last);
             $instancesNewIds[$instance->id] = $newInstance;
