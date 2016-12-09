@@ -456,6 +456,19 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_anr_client_instance' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/instances[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrInstances',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -501,6 +514,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrCartoRisks'                 => '\MonarcFO\Controller\ApiAnrCartoRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisks'                      => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibrary'                    => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
+            '\MonarcFO\Controller\ApiAnrInstances'                  => '\MonarcFO\Controller\ApiAnrInstancesControllerFactory',
         ),
     ),
 
@@ -556,7 +570,7 @@ return array(
             'monarc_api_admin_users_rights',
             'monarc_api_user_password',
             'monarc_api_user_profile',
-            'monarc_api_anr_instances',
+            'monarc_api_anr_client_instance',
             'monarc_api_anr_instances_risks',
             'monarc_api_anr_instances_risksop',
             'monarc_api_anr_instances_consequences',

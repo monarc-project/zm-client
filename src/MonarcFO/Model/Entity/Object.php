@@ -54,16 +54,6 @@ class Object extends AbstractEntity
     protected $anrs;
 
     /**
-     * @var \MonarcCore\Model\Entity\Model
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Model", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="model_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $model;
-
-    /**
      * @var \MonarcFO\Model\Entity\ObjectCategory
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\ObjectCategory", cascade={"persist"})

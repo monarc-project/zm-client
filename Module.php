@@ -157,6 +157,10 @@ class Module
                 '\MonarcFO\Service\AnrCartoRiskService' => '\MonarcFO\Service\AnrCartoRiskServiceFactory',
                 '\MonarcFO\Service\AnrRiskService' => '\MonarcFO\Service\AnrRiskServiceFactory',
                 '\MonarcFO\Service\AnrObjectService' => '\MonarcFO\Service\AnrObjectServiceFactory',
+                '\MonarcFO\Service\AnrInstanceConsequenceService' => '\MonarcFO\Service\AnrInstanceConsequenceServiceFactory',
+                '\MonarcFO\Service\AnrInstanceRiskOpService' => '\MonarcFO\Service\AnrInstanceRiskOpServiceFactory',
+                '\MonarcFO\Service\AnrInstanceRiskService' => '\MonarcFO\Service\AnrInstanceRiskServiceFactory',
+                '\MonarcFO\Service\AnrInstanceService' => '\MonarcFO\Service\AnrInstanceServiceFactory',
             ),
         );
     }
