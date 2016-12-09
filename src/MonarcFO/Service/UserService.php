@@ -65,15 +65,12 @@ class UserService extends AbstractService
         $userRoleTable = $this->get('userRoleTable');
         $usersRoles = $userRoleTable->fetchAllObject();
         foreach($users as $key => $user) {
-            $admin = 0;
             foreach ($usersRoles as $userRole) {
-                if ($user['id'] == $userRole->user->id) {
-                    if ($userRole->role == UserRole::SUPER_ADMIN_FO) {
-                        $admin = 1;
-                    }
-                }
+                $users[$key]['roles'][] = [
+                    'id' => $userRole->id,
+                    'role' => $userRole->role,
+                ];
             }
-            $users[$key]['superadminfo'] = $admin;
         }
 
         /** @var UserAnrTable $userAnrTable */
@@ -159,6 +156,8 @@ class UserService extends AbstractService
         /** @var UserTable $table */
         $table = $this->get('table');
         $id = $table->save($user);
+
+        die;
 
         if (isset($data['superadminfo'])) {
             $dataUserRole = [
