@@ -66,10 +66,12 @@ class UserService extends AbstractService
         $usersRoles = $userRoleTable->fetchAllObject();
         foreach($users as $key => $user) {
             foreach ($usersRoles as $userRole) {
-                $users[$key]['roles'][] = [
-                    'id' => $userRole->id,
-                    'role' => $userRole->role,
-                ];
+                if ($user['id'] == $userRole->user->id) {
+                    $users[$key]['roles'][] = [
+                        'id' => $userRole->id,
+                        'role' => $userRole->role,
+                    ];
+                }
             }
         }
 
@@ -103,16 +105,14 @@ class UserService extends AbstractService
 
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
-        $usersRoles = $userRoleTable->fetchAllObject();
+        $usersRoles = $userRoleTable->getEntityByFields(['user' => $id]);
         $admin = 0;
         foreach ($usersRoles as $userRole) {
-            if ($id == $userRole->user->id) {
-                if ($userRole->role == UserRole::SUPER_ADMIN_FO) {
-                    $admin = 1;
-                }
-            }
+            $user['roles'][] = [
+                'id' => $userRole->id,
+                'role' => $userRole->role,
+            ];
         }
-        $user['superadminfo'] = $admin;
 
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
@@ -156,8 +156,6 @@ class UserService extends AbstractService
         /** @var UserTable $table */
         $table = $this->get('table');
         $id = $table->save($user);
-
-        die;
 
         if (isset($data['superadminfo'])) {
             $dataUserRole = [
