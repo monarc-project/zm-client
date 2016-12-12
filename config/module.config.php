@@ -479,6 +479,18 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_user_password' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/user/password/:id',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiUserPassword',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -655,6 +667,16 @@ return array(
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
             'monarc_api_user_profile',
+            'monarc_api_anr_carto_risks',
+            'monarc_api_client_anr_scales',
+            'monarc_api_client_anr_scales_types',
+            'monarc_api_client_anr_scales_comments',
+            'monarc_api_anr_recommandations',
+            'monarc_api_anr_recommandations_risks',
+            'monarc_api_anr_recommandations_measures',
+            'monarc_api_anr_treatment_plan',
+            'monarc_api_anr_client_objects_categories',
+            'monarc_api_user_password',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_global_client_anr/scales',
             'monarc_api_global_client_anr/scales_types',
