@@ -10,6 +10,7 @@ class AnrRecommandationRiskServiceFactory extends AbstractServiceFactory
         'table'=> 'MonarcFO\Model\Table\RecommandationRiskTable',
         'anrTable'=> 'MonarcFO\Model\Table\AnrTable',
         'recommandationTable'=> 'MonarcFO\Model\Table\RecommandationTable',
+        'recommandationMeasureTable'=> 'MonarcFO\Model\Table\RecommandationMeasureTable',
         'instanceRiskTable'=> 'MonarcFO\Model\Table\InstanceRiskTable',
         'instanceRiskOpTable'=> 'MonarcFO\Model\Table\InstanceRiskOpTable',
     );

@@ -27,6 +27,14 @@ class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
     protected $model = '0';
 
     /**
+     * @var smallint
+     *
+     * @ORM\Column(name="model_impacts", type="smallint", options={"unsigned":true, "default":0})
+     */
+    protected $modelImpacts = '0';
+
+
+    /**
      * @return int
      */
     public function getLanguage()

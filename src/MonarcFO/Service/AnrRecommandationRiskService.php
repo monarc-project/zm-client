@@ -6,6 +6,7 @@ use MonarcFO\Model\Entity\InstanceRiskOp;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\InstanceRiskTable;
+use MonarcFO\Model\Table\RecommandationMeasureTable;
 use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Service\AbstractService;
 
@@ -20,8 +21,49 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'recommandation'];
     protected $anrTable;
     protected $recommandationTable;
+    protected $recommandationMeasureTable;
     protected $instanceRiskTable;
     protected $instanceRiskOpTable;
+
+    /**
+     * Get List
+     *
+     * @param int $page
+     * @param int $limit
+     * @param null $order
+     * @param null $filter
+     * @return mixed
+     */
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+
+        $recos =  $this->get('table')->fetchAllFiltered(
+            array_keys($this->get('entity')->getJsonArray()),
+            $page,
+            $limit,
+            $this->parseFrontendOrder($order),
+            $this->parseFrontendFilter($filter, $this->filterColumns),
+            $filterAnd
+        );
+
+        /** @var RecommandationMeasureTable $recommandationMeasureTable */
+        $recommandationMeasureTable = $this->get('recommandationMeasureTable');
+
+        foreach($recos as $key => $reco) {
+
+            $recommandationsMeasures = $recommandationMeasureTable->getEntityByFields(['recommandation' => $reco['id']]);
+
+            $measures = [];
+            foreach ($recommandationsMeasures as $recommandationMeasure) {
+                $recommandationMeasure = $recommandationMeasure->getJsonArray();
+                $recommandationMeasure['measure'] = $recommandationMeasure['measure']->getJsonArray();
+                $measures[] = $recommandationMeasure;
+            }
+
+            $recos[$key]['measures'] = $measures;
+        }
+
+        return $recos;
+    }
 
     /**
      * Get Treatment Plans
@@ -55,7 +97,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $risksToUnset = [];
             foreach($recommandationsRisks as $recommandationRisk) {
                 if ($recommandationRisk->recommandation->id == $recommandation->id) {
-
                     //retrieve instance risk associated
                     if ($recommandationRisk->instanceRisk) {
                         if ($recommandationRisk->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
@@ -109,7 +150,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     }
                 }
             }
-
+            
             if (!$nbRisks) {
                 unset($recommandations[$key]);
             }
