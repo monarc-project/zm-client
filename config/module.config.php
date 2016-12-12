@@ -495,6 +495,18 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_user_password' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/user/password/:id',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiUserPassword',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -684,6 +696,7 @@ return array(
             'monarc_api_anr_recommandations_measures',
             'monarc_api_anr_treatment_plan',
             'monarc_api_anr_client_objects_categories',
+            'monarc_api_user_password',
         ),
     )
 );
