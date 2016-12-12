@@ -300,8 +300,24 @@ class Module
         $isGranted = false;
         foreach($roles as $role) {
             if ($e->getViewModel()->rbac->isGranted($role, $route)) {
-                $isGranted = true;
-                break; // pas besoin d'aller plus loin
+                if(strpos($route, 'monarc_api_global_client_anr/') === 0){
+                    $anrid = (int)$e->getRouteMatch()->getParam('anrid');
+                    if(empty($anrid)){
+                        break; // pas besoin d'aller plus loin
+                    }else{
+                        $lk = current($sm->get('MonarcFO\Model\Table\UserAnrTable')->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser['id']]));
+                        if(empty($lk) ||
+                            ($lk->get('rwd') == 0 && $e->getRequest()->getMethod() != 'GET')){
+                            break; //
+                        }else{
+                            $isGranted = true;
+                            break;
+                        }
+                    }
+                }else{
+                    $isGranted = true;
+                    break; // pas besoin d'aller plus loin
+                }
             }
         }
 
