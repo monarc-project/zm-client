@@ -39,11 +39,10 @@ class AnrCheckStartedService extends \MonarcCore\Service\AbstractService
             $isScalesUpdatable = $model->get('isScalesUpdatable');
         }
 
-        return !($this->get('instanceRiskTable')->started($anr->get('id')) && 
-                    $this->get('instanceConsequenceTable')->started($anr->get('id')) && 
-                    $this->get('threatTable')->started($anr->get('id')) && 
-                    $this->get('instanceRiskOpTable')->started($anr->get('id'))
-                ) && 
+        return !$this->get('instanceRiskTable')->started($anr->get('id')) && 
+                !$this->get('instanceConsequenceTable')->started($anr->get('id')) && 
+                !$this->get('threatTable')->started($anr->get('id')) && 
+                !$this->get('instanceRiskOpTable')->started($anr->get('id')) && 
                 $isScalesUpdatable;
     }
 }
