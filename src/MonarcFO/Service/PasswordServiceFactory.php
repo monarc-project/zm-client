@@ -7,8 +7,8 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class PasswordServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
-        'passwordTokenEntity' => 'MonarcFO\Model\Entity\PasswordToken',
-        'passwordTokenTable'=> 'MonarcFO\Model\Table\PasswordTokenTable',
+        'entity' => 'MonarcFO\Model\Entity\PasswordToken',
+        'table'=> 'MonarcFO\Model\Table\PasswordTokenTable',
         'userTable'=> 'MonarcFO\Model\Table\UserTable',
         'userService'=> 'MonarcFO\Service\UserService',
         'mailService'=> 'MonarcFO\Service\MailService'
