@@ -17,16 +17,22 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
+        $status = $this->params()->fromQuery('status');
 
         $anrId = (int) $this->params()->fromRoute('anrid');
         if(empty($anrId)){
         	throw new \Exception('Anr id missing', 412);
         }
+
         $filterAnd = ['anr' => $anrId];
+
+        if (!is_null($status)) {
+            $filterAnd['status'] = $status;
+        }
 
         $service = $this->getService();
 
-        $entities = $service->getList($page, $limit, $order, $filter,$filterAnd);
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);
@@ -34,7 +40,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($page, $limit, $order, $filter,$filterAnd),
+            'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities
         ));
     }
