@@ -2,6 +2,7 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractService;
+use MonarcCore\Validator\PasswordStrength;
 use MonarcFO\Model\Entity\UserRole;
 use MonarcFO\Model\Table\UserAnrTable;
 use MonarcFO\Model\Table\UserRoleTable;
@@ -228,6 +229,10 @@ class UserService extends AbstractService
      */
     public function patch($id, $data){
 
+        if (isset($data['password'])) {
+            $this->validatePassword($data);
+        }
+
         $this->verifyAuthorizedAction($id, $data);
 
         $this->updateUserRole($id, $data);
@@ -395,6 +400,29 @@ class UserService extends AbstractService
                     $userAnrService->delete($currentUserAnr['id']);
                 }
             }
+        }
+    }
+
+
+
+    /**
+     * Validate password
+     *
+     * @param $data
+     * @throws \Exception
+     */
+    protected function validatePassword($data) {
+
+        $password = $data['password'];
+
+        $passwordValidator = new PasswordStrength();
+        if (! $passwordValidator->isValid($password)) {
+            $errors = [];
+            foreach ($passwordValidator->getMessages() as $messageId => $message) {
+                $errors[] = $message;
+            }
+
+            throw new \Exception("Password must " . implode($errors, ', ') . ".", 412);
         }
     }
 
