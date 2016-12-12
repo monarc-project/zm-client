@@ -8,6 +8,33 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'anrs';
 
+    /**
+     * Get list
+     *
+     * @return JsonModel
+     */
+    public function getList()
+    {
+        $page = $this->params()->fromQuery('page');
+        $limit = $this->params()->fromQuery('limit');
+        $order = $this->params()->fromQuery('order');
+        $filter = $this->params()->fromQuery('filter');
+
+        $service = $this->getService();
+
+        $entities = $service->getList($page, $limit, $order, $filter);
+        if (count($this->dependencies)) {
+            foreach ($entities as $key => $entity) {
+                $this->formatDependencies($entities[$key], $this->dependencies);
+            }
+        }
+
+        return new JsonModel(array(
+            'count' => count($entities),
+            $this->name => $entities
+        ));
+    }
+
     public function create($data)
     {
         /** @var AnrService $service */

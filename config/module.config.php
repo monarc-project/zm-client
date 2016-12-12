@@ -41,19 +41,6 @@ return array(
                 ),
             ),
 
-            'monarc_api_client_anr' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnr',
-                    ),
-                ),
-            ),
-
             'monarc_api_client_snapshot' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -119,162 +106,6 @@ return array(
                     ),
                 ),
             ),
-
-            'monarc_api_client_assets' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/assets[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrAssets',
-                    ),
-                ),
-            ),
-            'monarc_api_client_assets_import' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/assets/import',
-                    'constraints' => array(
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrAssetsImport',
-                    ),
-                ),
-            ),
-            'monarc_api_client_assets_import_common' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/assets/importcomm[/:id]',
-                    'constraints' => array(
-                        'anrid' => '[0-9]+',
-                        'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrAssetsImportCommon',
-                    ),
-                ),
-            ),
-            'monarc_api_client_amvs' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/amvs[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrAmvs',
-                    ),
-                ),
-            ),
-            'monarc_api_client_measures' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/measures[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrMeasures',
-                    ),
-                ),
-            ),
-            'monarc_api_client_threats' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/threats[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrThreats',
-                    ),
-                ),
-            ),
-            'monarc_api_client_themes' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/themes[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrThemes',
-                    ),
-                ),
-            ),
-            'monarc_api_client_vulnerabilities' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/vulnerabilities[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrVulnerabilities',
-                    ),
-                ),
-            ),
-            'monarc_api_client_rolf_tags' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/rolf-tags[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRolfTags',
-                    ),
-                ),
-            ),
-            'monarc_api_client_rolf_categories' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/rolf-categories[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRolfCategories',
-                    ),
-                ),
-            ),
-            'monarc_api_client_rolf_risks' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/rolf-risks[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRolfRisks',
-                    ),
-                ),
-            ),
-            'monarc_api_client_objects' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/objects[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrObjects',
-                    ),
-                ),
-            ),
             'monarc_api_admin_passwords' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -285,213 +116,366 @@ return array(
                     ),
                 ),
             ),
-            'monarc_api_anr_interviews' => array(
+
+            'monarc_api_client_anr' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/client-anr/:anrid/interviews[/:id]',
+                    'route' => '/api/client-anr[/:id]',
                     'constraints' => array(
                         'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
                     ),
                     'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrInterviews',
+                        'controller' => 'MonarcFO\Controller\ApiAnr',
                     ),
                 ),
             ),
-            'monarc_api_client_anr_scales' => array(
+
+            'monarc_api_global_client_anr' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/client-anr/:anrid/scales[/:id]',
+                    'route' => '/api/client-anr/:anrid/',
                     'constraints' => array(
-                        'id' => '[0-9]+',
                         'anrid' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrScales',
                     ),
                 ),
-            ),
-            'monarc_api_client_anr_scales_types' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/scales-types[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                'may_terminate' => false,
+                'child_routes' => array(
+                    'assets' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'assets[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrAssets',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrScalesTypes',
+                    'assets_import' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'assets/import',
+                            'constraints' => array(
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrAssetsImport',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_client_anr_scales_comments' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/scales/:scaleid/comments[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
-                        'scaleid' => '[0-9]+',
+                    'assets_import_common' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'assets/importcomm[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrAssetsImportCommon',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrScalesComments',
+                    'amvs' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'amvs[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrAmvs',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_questions' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/questions[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'measures' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'measures[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrMeasures',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrQuestions',
+                    'threats' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'threats[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrThreats',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_questions_choices' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/questions-choices[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'themes' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'themes[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrThemes',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrQuestionsChoices',
+                    'vulnerabilities' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'vulnerabilities[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrVulnerabilities',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_recommandations' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/recommandations[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'rolf_tags' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'rolf-tags[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRolfTags',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRecommandations',
+                    'rolf_categories' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'rolf-categories[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRolfCategories',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_recommandations_risks' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/recommandations-risks[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'rolf_risks' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'rolf-risks[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRolfRisks',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsRisks',
+                    'objects' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'objects[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrObjects',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_recommandations_measures' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/recommandations-measures[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'interviews' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'interviews[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrInterviews',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsMeasures',
+                    'scales' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'scales[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrScales',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_carto_risks' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/carto-risks[/:type]',
-                    'constraints' => array(
-                        'anrid' => '[0-9]+',
-                        'type' => 'all|real|targeted',
+                    'scales_types' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'scales-types[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrScalesTypes',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrCartoRisks',
-                        'type' => 'all',
+                    'scales_comments' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'scales/:scaleid/comments[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                                'scaleid' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrScalesComments',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_risks' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/risks[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'questions' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'questions[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrQuestions',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRisks',
+                    'questions_choices' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'questions-choices[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrQuestionsChoices',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_risks_op' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/risksop[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'recommandations' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recommandations[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandations',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrRisksOp',
+                    'recommandations_risks' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recommandations-risks[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsRisks',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_client_library' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/library[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'recommandations_measures' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recommandations-measures[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsMeasures',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrLibrary',
+                    'carto_risks' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'carto-risks[/:type]',
+                            'constraints' => array(
+                                'type' => 'all|real|targeted',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrCartoRisks',
+                                'type' => 'all',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_treatment_plan' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/treatment-plan[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'risks' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'risks[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRisks',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrTreatmentPlan',
+                    'risks_op' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'risksop[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRisksOp',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_client_instance' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/instances[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'library' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'library[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrLibrary',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrInstances',
+                    'treatment_plan' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'treatment-plan[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrTreatmentPlan',
+                            ),
+                        ),
                     ),
-                ),
-            ),
-            'monarc_api_anr_client_objects_categories' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr/:anrid/objects-categories[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                        'anrid' => '[0-9]+',
+                    'instance' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'instances[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrInstances',
+                            ),
+                        ),
                     ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrObjectsCategories',
+                    'objects_categories' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'objects-categories[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsCategories',
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -610,77 +594,73 @@ return array(
             'monarc_api_admin_users_rights',
             'monarc_api_user_password',
             'monarc_api_user_profile',
-            'monarc_api_anr_client_instance',
-            'monarc_api_anr_instances_risks',
-            'monarc_api_anr_instances_risksop',
+            'monarc_api_global_client_anr/instance',
             'monarc_api_anr_instances_consequences',
-            'monarc_api_anr_interviews',
-            'monarc_api_anr_client_library',
+            'monarc_api_global_client_anr/interviews',
+            'monarc_api_global_client_anr/library',
             'monarc_api_anr_objects',
-            'monarc_api_anr_questions',
-            'monarc_api_anr_questions_choices',
-            'monarc_api_anr_risks',
-            'monarc_api_anr_risks_op',
-            'monarc_api_client_amvs',
+            'monarc_api_global_client_anr/questions',
+            'monarc_api_global_client_anr/questions_choices',
+            'monarc_api_global_client_anr/risks',
+            'monarc_api_global_client_anr/risks_op',
+            'monarc_api_global_client_anr/amvs',
             'monarc_api_client_anr',
-            'monarc_api_client_assets',
-            'monarc_api_client_assets_import',
-            'monarc_api_client_assets_import_common',
-            'monarc_api_client_measures',
-            'monarc_api_client_objects',
-            'monarc_api_client_rolf_categories',
-            'monarc_api_client_rolf_risks',
-            'monarc_api_client_rolf_tags',
+            'monarc_api_global_client_anr/assets',
+            'monarc_api_global_client_anr/assets_import',
+            'monarc_api_global_client_anr/assets_import_common',
+            'monarc_api_global_client_anr/measures',
+            'monarc_api_global_client_anr/objects',
+            'monarc_api_global_client_anr/rolf_categories',
+            'monarc_api_global_client_anr/rolf_risks',
+            'monarc_api_global_client_anr/tags',
             'monarc_api_client_snapshot',
             'monarc_api_client_snapshot_restore',
-            'monarc_api_client_themes',
-            'monarc_api_client_threats',
-            'monarc_api_client_vulnerabilities',
+            'monarc_api_global_client_anr/themes',
+            'monarc_api_global_client_anr/threats',
+            'monarc_api_global_client_anr/vulnerabilities',
             'monarc_api_duplicate_client_anr',
             'monarc_api_models',
             'monarc_api_scales',
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
             'monarc_api_user_profile',
-            'monarc_api_anr_carto_risks',
-            'monarc_api_client_anr_scales',
-            'monarc_api_client_anr_scales_types',
-            'monarc_api_client_anr_scales_comments',
-            'monarc_api_anr_recommandations',
-            'monarc_api_anr_recommandations_risks',
-            'monarc_api_anr_recommandations_measures',
-            'monarc_api_anr_treatment_plan',
-            'monarc_api_anr_client_objects_categories',
+            'monarc_api_global_client_anr/carto_risks',
+            'monarc_api_global_client_anr/scales',
+            'monarc_api_global_client_anr/scales_types',
+            'monarc_api_global_client_anr/scales_comments',
+            'monarc_api_global_client_anr/recommandations',
+            'monarc_api_global_client_anr/recommandations_risks',
+            'monarc_api_global_client_anr/recommandations_measures',
+            'monarc_api_global_client_anr/treatment_plan',
+            'monarc_api_global_client_anr/objects_categories',
         ),
         // Utilisateur : Accès RWD par analyse
         'userfo'=> array(
             'monarc_api_admin_users_roles',
-            'monarc_api_anr_instances',
-            'monarc_api_anr_instances_risks',
-            'monarc_api_anr_instances_risksop',
+            'monarc_api_global_client_anr/instance',
             'monarc_api_anr_instances_consequences',
-            'monarc_api_anr_interviews',
-            'monarc_api_anr_client_library',
+            'monarc_api_global_client_anr/interviews',
+            'monarc_api_global_client_anr/library',
             'monarc_api_anr_objects',
-            'monarc_api_anr_questions',
-            'monarc_api_anr_questions_choices',
-            'monarc_api_anr_risks',
-            'monarc_api_anr_risks_op',
-            'monarc_api_client_amvs',
+            'monarc_api_global_client_anr/questions',
+            'monarc_api_global_client_anr/questions_choices',
+            'monarc_api_global_client_anr/risks',
+            'monarc_api_global_client_anr/risks_op',
+            'monarc_api_global_client_anr/amvs',
             'monarc_api_client_anr',
-            'monarc_api_client_assets',
-            'monarc_api_client_assets_import',
-            'monarc_api_client_assets_import_common',
-            'monarc_api_client_measures',
-            'monarc_api_client_objects',
-            'monarc_api_client_rolf_categories',
-            'monarc_api_client_rolf_risks',
-            'monarc_api_client_rolf_tags',
+            'monarc_api_global_client_anr/assets',
+            'monarc_api_global_client_anr/assets_import',
+            'monarc_api_global_client_anr/assets_import_common',
+            'monarc_api_global_client_anr/measures',
+            'monarc_api_global_client_anr/objects',
+            'monarc_api_global_client_anr/rolf_categories',
+            'monarc_api_global_client_anr/rolf_risks',
+            'monarc_api_global_client_anr/tags',
             'monarc_api_client_snapshot',
             'monarc_api_client_snapshot_restore',
-            'monarc_api_client_themes',
-            'monarc_api_client_threats',
-            'monarc_api_client_vulnerabilities',
+            'monarc_api_global_client_anr/themes',
+            'monarc_api_global_client_anr/threats',
+            'monarc_api_global_client_anr/vulnerabilities',
             'monarc_api_duplicate_client_anr',
             'monarc_api_models',
             'monarc_api_scales',
@@ -697,6 +677,15 @@ return array(
             'monarc_api_anr_treatment_plan',
             'monarc_api_anr_client_objects_categories',
             'monarc_api_user_password',
+            'monarc_api_global_client_anr/carto_risks',
+            'monarc_api_global_client_anr/scales',
+            'monarc_api_global_client_anr/scales_types',
+            'monarc_api_global_client_anr/scales_comments',
+            'monarc_api_global_client_anr/recommandations',
+            'monarc_api_global_client_anr/recommandations_risks',
+            'monarc_api_global_client_anr/recommandations_measures',
+            'monarc_api_global_client_anr/treatment_plan',
+            'monarc_api_global_client_anr/objects_categories',
         ),
     )
 );
