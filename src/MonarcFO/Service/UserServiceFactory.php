@@ -12,5 +12,6 @@ class UserServiceFactory extends AbstractServiceFactory
         'entity'=> '\MonarcFO\Model\Entity\User',
         'userAnrService' => 'MonarcFO\Service\UserAnrService',
         'userRoleService' => 'MonarcFO\Service\UserRoleService',
+        'anrTable' => '\MonarcFO\Model\Table\AnrTable',
     );
 }
