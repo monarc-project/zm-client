@@ -261,6 +261,6 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                 }
             }
         }
-        return $return;
+        return array_values($return);
     }
 }
