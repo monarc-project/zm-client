@@ -176,10 +176,10 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                 break;
         }
         if($params['order'] != 'instance'){
-            $query->orderBy('i.name'.$this->getLanguage(),'ASC');
+            $query->addOrderBy('i.name'.$this->getLanguage(),'ASC');
         }
-        $query->orderBy('threat.code','ASC')
-            ->orderBy('vulnerability.code','ASC');
+        $query->addOrderBy('threat.code','ASC')
+            ->addOrderBy('vulnerability.code','ASC');
         $result = $query->getQuery()->getScalarResult();
 
         $globalRisks = $return = [];
