@@ -674,7 +674,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newQuestionChoice->set('id',null);
             $newQuestionChoice->set('anr',$newAnr);
             $newQuestionChoice->set('question',$questionsNewIds[$qc->get('question')->get('id')]);
-            $this->get('questionChoiceCliTable')->save($newQuestionChoice, ($i == count($questions)));
+            $this->get('questionChoiceCliTable')->save($newQuestionChoice, ($i == count($questionChoices)));
             $i++;
         }
 
