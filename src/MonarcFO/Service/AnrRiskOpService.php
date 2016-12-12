@@ -4,6 +4,8 @@ namespace MonarcFO\Service;
 use \Doctrine\ORM\Query\Expr\Join;
 use \MonarcFO\Model\Entity\InstanceRisk;
 use \MonarcFO\Model\Entity\Object;
+use \MonarcFO\Model\Entity\Asset;
+use \MonarcFO\Model\Entity\InstanceRiskOp;
 
 /**
  * Anr RiskOp Service
@@ -17,11 +19,11 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'scale'];
 
     protected $instanceRiskOpService;
-
+    protected $instanceTable;
 
 	public function getRisksOp($anrId, $instance = null, $params = []) {
         /** @var InstanceTable $instanceTable */
-        $instanceTable = $this->get('table');
+        $instanceTable = $this->get('instanceTable');
 
         $instances = [];
         if ($instance) {

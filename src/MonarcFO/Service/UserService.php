@@ -20,6 +20,7 @@ class UserService extends AbstractService
     protected $userRoleTable;
     protected $userAnrService;
     protected $userRoleService;
+    protected $anrTable;
 
     /**
      * Get Filtered Count
@@ -113,22 +114,28 @@ class UserService extends AbstractService
             $user['role'][] = $userRole->role;
         }
 
+        $anrs = $this->get('anrTable')->fetchAllObject();
+        $user['anrs'] = [];
+        foreach($anrs as $a){
+            $user['anrs'][$a->get('id')] = [
+                'id' => $a->get('id'),
+                'label1' => $a->get('label1'),
+                'label2' => $a->get('label2'),
+                'label3' => $a->get('label3'),
+                'label4' => $a->get('label4'),
+                'rwd' => -1,
+            ];
+        }
+
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
-        $usersAnrs = $userAnrTable->fetchAllObject();
+        $usersAnrs = $userAnrTable->getEntityByFields(['user'=>$user['id']]);
         foreach ($usersAnrs as $userAnr) {
-            if ($id == $userAnr->user->id) {
-                $anr = [
-                    'id' => $userAnr->anr->id,
-                    'label1' => $userAnr->anr->label1,
-                    'label2' => $userAnr->anr->label2,
-                    'label3' => $userAnr->anr->label3,
-                    'label4' => $userAnr->anr->label4,
-                    'rwd' => $userAnr->rwd,
-                ];
-                $user['anrs'][] = $anr;
+            if(isset($user['anrs'][$userAnr->get('anr')->get('id')])){
+                $user['anrs'][$userAnr->get('anr')->get('id')]['rwd'] = $userAnr->get('rwd');
             }
         }
+        $user['anrs'] = array_values($user['anrs']);
 
         return $user;
     }

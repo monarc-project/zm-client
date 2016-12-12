@@ -482,6 +482,19 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_anr_client_objects_categories' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr/:anrid/objects-categories[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                        'anrid' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrObjectsCategories',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -529,6 +542,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrRisksOp'                    => '\MonarcFO\Controller\ApiAnrRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibrary'                    => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstances'                  => '\MonarcFO\Controller\ApiAnrInstancesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrObjectsCategories'          => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
         ),
     ),
 
@@ -624,6 +638,7 @@ return array(
             'monarc_api_anr_recommandations_risks',
             'monarc_api_anr_recommandations_measures',
             'monarc_api_anr_treatment_plan',
+            'monarc_api_anr_client_objects_categories',
         ),
         // Utilisateur : Accès RWD par analyse
         'userfo'=> array(
@@ -668,6 +683,7 @@ return array(
             'monarc_api_anr_recommandations_risks',
             'monarc_api_anr_recommandations_measures',
             'monarc_api_anr_treatment_plan',
+            'monarc_api_anr_client_objects_categories',
         ),
     )
 );

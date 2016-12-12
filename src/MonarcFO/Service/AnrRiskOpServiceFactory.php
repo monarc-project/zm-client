@@ -9,5 +9,6 @@ class AnrRiskOpServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\InstanceRiskOpTable',
         'entity' => 'MonarcFO\Model\Entity\InstanceRiskOp',
         'instanceRiskOpService' => 'MonarcFO\Service\AnrInstanceRiskOpService',
+        'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
     );
 }

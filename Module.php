@@ -162,6 +162,7 @@ class Module
                 '\MonarcFO\Service\AnrInstanceRiskService' => '\MonarcFO\Service\AnrInstanceRiskServiceFactory',
                 '\MonarcFO\Service\AnrInstanceService' => '\MonarcFO\Service\AnrInstanceServiceFactory',
                 '\MonarcFO\Service\AnrRiskOpService' => '\MonarcFO\Service\AnrRiskOpServiceFactory',
+                '\MonarcFO\Service\AnrObjectCategoryService' => '\MonarcFO\Service\AnrObjectCategoryServiceFactory',
             ),
         );
     }

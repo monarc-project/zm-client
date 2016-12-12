@@ -256,8 +256,8 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                         'description4' => $r['measure3_description4'],
                     ],
                 ];
-                if($r['scope']== Object::SCOPE_GLOBAL){
-                    $globalRisks[$r['i_id']][$r['threat_id']][$r['vulnerability_id']];
+                if($r['scope'] == Object::SCOPE_GLOBAL){
+                    $globalRisks[$r['i_id']][$r['threat_id']][$r['vulnerability_id']] = 1;
                 }
             }
         }
