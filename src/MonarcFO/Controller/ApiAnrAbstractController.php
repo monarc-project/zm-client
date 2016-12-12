@@ -26,7 +26,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
 
         $filterAnd = ['anr' => $anrId];
 
-        if (!is_null($status)) {
+        if (!is_null($status) && $status != 'all') {
             $filterAnd['status'] = $status;
         }
 
