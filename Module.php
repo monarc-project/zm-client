@@ -301,6 +301,7 @@ class Module
         foreach($roles as $role) {
             if ($e->getViewModel()->rbac->isGranted($role, $route)) {
                 $isGranted = true;
+                break; // pas besoin d'aller plus loin
             }
         }
 
