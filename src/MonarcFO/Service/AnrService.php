@@ -92,6 +92,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $anrsSnapshots[] = $snapshot['anr']->id;
         }
 
+        $userCliTable = $this->get('userCliTable');
+        $userArray = $userCliTable->getConnectedUser();
+        $anrs = $this->get('userAnrCliTable')->getEntityByFields(['user'=>$userArray['id']]);
+        $filterAnd['id'] = [];
+        foreach($anrs as $a){
+            $filterAnd['id'][] = $a->get('anr')->get('id');
+        }
+
         $anrs = $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
@@ -156,6 +164,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         $anr['snapshots'] = $snapshots;
 
+        $userCliTable = $this->get('userCliTable');
+        $userArray = $userCliTable->getConnectedUser();
+        $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user'=>$userArray['id'], 'anr'=>$anr['id']]));
+        if(empty($lk)){
+            throw new \Exception('Restricted ANR', 412);
+        }else{
+            $anr['rwd'] = $lk->get('rwd');
+        }
+
         return $anr;
     }
 
@@ -173,7 +190,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
         if($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE){ // disabled or deleted
-            throw new \Exception('Model not found', 421);
+            throw new \Exception('Model not found', 412);
         }
 
         return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model,$data);
