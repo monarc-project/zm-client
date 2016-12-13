@@ -30,11 +30,11 @@ class AnrRemoveSnapshotIds extends AbstractMigration
         $table = $this->table('anrs');
         $exists = $table->hasForeignKey('snapshot_id');
         if ($exists) {
-            $table->dropForeignKey('snapshot_id');
+            $table->dropForeignKey('snapshot_id')->update();
         }
-        $exists = $table->hasForeignKey('snapshot_ref_id ');
+        $exists = $table->hasForeignKey('snapshot_ref_id');
         if ($exists) {
-            $table->dropForeignKey('snapshot_ref_id ');
+            $table->dropForeignKey('snapshot_ref_id')->update();
         }
         $table
             ->removeColumn('snapshot_id')
