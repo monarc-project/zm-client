@@ -82,22 +82,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
-
-        /** @var SnapshotTable $snapshotCliTable */
-        $snapshotCliTable = $this->get('snapshotCliTable');
-        $snapshots = $snapshotCliTable->fetchAll();
-
-        $anrsSnapshots = [];
-        foreach($snapshots as $snapshot) {
-            $anrsSnapshots[] = $snapshot['anr']->id;
-        }
-
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
         $anrs = $this->get('userAnrCliTable')->getEntityByFields(['user'=>$userArray['id']]);
         $filterAnd['id'] = [];
         foreach($anrs as $a){
-            $filterAnd['id'][] = $a->get('anr')->get('id');
+            $filterAnd['id'][$a->get('anr')->get('id')] = $a->get('anr')->get('id');
+        }
+
+        /** @var SnapshotTable $snapshotCliTable */
+        $snapshotCliTable = $this->get('snapshotCliTable');
+        $snapshots = $snapshotCliTable->getEntityByFields(['anr'=>$filterAnd['id']]);
+        foreach($snapshots as $snapshot) {
+            unset($filterAnd['id'][$snapshot->get('anr')->get('id')]);
         }
 
         $anrs = $this->get('table')->fetchAllFiltered(
@@ -108,12 +105,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $this->parseFrontendFilter($filter, $this->filterColumns),
             $filterAnd
         );
-
-        foreach($anrs as $key => $anr) {
-            if (in_array($anr['id'], $anrsSnapshots)) {
-                unset($anrs[$key]);
-            }
-        }
 
         return $anrs;
     }
@@ -149,14 +140,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return array
      */
     public function getEntity($id){
-
         $anr = $this->get('table')->get($id);
 
-        //retrieve snapshots
+        //retrieve snapshot
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $anrSnapshot = current($snapshotCliTable->getEntityByFields(['anr' => $id]));
-        $anr['snapshots'] = [];
 
         $anr['isSnapshot'] = 0;
         $anr['snapshotParent'] = null;
@@ -172,13 +161,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 throw new \Exception('Restricted ANR', 412);
             }else{
                 $anr['rwd'] = $lk->get('rwd');
-            }
-
-            // TODO: utilité de remonter les snapshots ?
-            $anrSnapshots = $snapshotCliTable->getEntityByFields(['anrReference' => $id]);
-
-            foreach($anrSnapshots as $anrSnapshot) {
-                $anr['snapshots'][] = $this->get('table')->get($anrSnapshot->anr->id);
             }
         }
         return $anr;
@@ -213,7 +195,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null,$data=[]) {
+    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null,$data=[], $isSnapshot = false) {
 
         if (is_integer($anr)) {
             /** @var AnrTable $anrTable */
@@ -236,21 +218,31 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $newAnr->setObjects(null);
         $newAnr->exchangeArray($data);
         $newAnr->set('model',$idModel);
+        if($isSnapshot){ // Si c'est un snapshot on ajoute le préfixe "[SNAP]"
+            for($i=1;$i<=4;$i++){
+                $lab = trim($newAnr->get('label'.$i));
+                if(!empty($lab)){
+                    $newAnr->set('label'.$i,'[SNAP] '.$lab);
+                }
+            }
+        }
 
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');
         $id = $anrCliTable->save($newAnr);
 
-        //add user to anr
-        $userCliTable = $this->get('userCliTable');
-        $userArray = $userCliTable->getConnectedUser();
-        $user = $userCliTable->getEntity($userArray['id']);
-        $userAnr = new \MonarcFO\Model\Entity\UserAnr();
-        $userAnr->set('id',null);
-        $userAnr->setUser($user);
-        $userAnr->setAnr($newAnr);
-        $userAnr->setRwd(1);
-        $this->get('userAnrCliTable')->save($userAnr);
+        if(!$isSnapshot){ // inutile si c'est un snapshot
+            //add user to anr
+            $userCliTable = $this->get('userCliTable');
+            $userArray = $userCliTable->getConnectedUser();
+            $user = $userCliTable->getEntity($userArray['id']);
+            $userAnr = new \MonarcFO\Model\Entity\UserAnr();
+            $userAnr->set('id',null);
+            $userAnr->setUser($user);
+            $userAnr->setAnr($newAnr);
+            $userAnr->setRwd(1);
+            $this->get('userAnrCliTable')->save($userAnr);
+        }
 
         //duplicate themes
         $i = 1;

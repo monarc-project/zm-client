@@ -303,8 +303,13 @@ class Module
         $isGranted = false;
         foreach($roles as $role) {
             if ($e->getViewModel()->rbac->isGranted($role, $route)) {
-                if(strpos($route, 'monarc_api_global_client_anr/') === 0){
-                    $anrid = (int)$e->getRouteMatch()->getParam('anrid');
+                $id = (int)$e->getRouteMatch()->getParam('id');
+                if(strpos($route, 'monarc_api_global_client_anr/') === 0 || ($route == 'monarc_api_client_anr' && !empty($id))){
+                    if($route == 'monarc_api_client_anr'){
+                        $anrid = $id;
+                    }else{
+                        $anrid = (int)$e->getRouteMatch()->getParam('anrid');
+                    }
                     if(empty($anrid)){
                         break; // pas besoin d'aller plus loin
                     }else{

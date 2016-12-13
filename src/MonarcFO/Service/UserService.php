@@ -22,6 +22,7 @@ class UserService extends AbstractService
     protected $userAnrService;
     protected $userRoleService;
     protected $anrTable;
+    protected $snapshotCliTable;
 
     /**
      * Get Filtered Count
@@ -51,7 +52,6 @@ class UserService extends AbstractService
      * @return mixed
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
-
         /** @var UserTable $table */
         $table = $this->get('table');
         $users =  $table->fetchAllFiltered(
@@ -103,6 +103,14 @@ class UserService extends AbstractService
      * @return bool
      */
     public function getCompleteUser($id) {
+        /** @var SnapshotTable $snapshotCliTable */
+        $snapshotCliTable = $this->get('snapshotCliTable');
+        $snapshots = $snapshotCliTable->fetchAll();
+
+        $anrsSnapshots = [0];
+        foreach($snapshots as $snapshot) {
+            $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
+        }
 
         /** @var UserTable $table */
         $table = $this->get('table');
@@ -115,7 +123,7 @@ class UserService extends AbstractService
             $user['role'][] = $userRole->role;
         }
 
-        $anrs = $this->get('anrTable')->fetchAllObject();
+        $anrs = $this->get('anrTable')->getEntityByFields(['id'=>['op'=>'NOT IN','value'=>$anrsSnapshots]]);
         $user['anrs'] = [];
         foreach($anrs as $a){
             $user['anrs'][$a->get('id')] = [
@@ -177,15 +185,25 @@ class UserService extends AbstractService
         }
 
         if (isset($data['anrs'])) {
+            /** @var SnapshotTable $snapshotCliTable */
+            $snapshotCliTable = $this->get('snapshotCliTable');
+            $snapshots = $snapshotCliTable->fetchAll();
+
+            $anrsSnapshots = [0];
+            foreach($snapshots as $snapshot) {
+                $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
+            }
             foreach($data['anrs'] as $anr) {
-                $dataAnr = [
-                    'user' => $id,
-                    'anr' => $anr['id'],
-                    'rwd' => $anr['rwd'],
-                ];
-                /** @var UserAnrService $userAnrService */
-                $userAnrService = $this->get('userAnrService');
-                $userAnrService->create($dataAnr);
+                if(!isset($anrsSnapshots[$anr['id']])){
+                    $dataAnr = [
+                        'user' => $id,
+                        'anr' => $anr['id'],
+                        'rwd' => $anr['rwd'],
+                    ];
+                    /** @var UserAnrService $userAnrService */
+                    $userAnrService = $this->get('userAnrService');
+                    $userAnrService->create($dataAnr);
+                }
             }
         }
 
@@ -380,6 +398,13 @@ class UserService extends AbstractService
 
             /** @var UserAnrService $userAnrService */
             $userAnrService = $this->get('userAnrService');
+
+            /** @var SnapshotTable $snapshotCliTable */
+            $snapshotCliTable = $this->get('snapshotCliTable');
+            $snapshots = $snapshotCliTable->fetchAll();
+            foreach($snapshots as $snapshot) {
+                unset($futureUserAnrs[$snapshot['anr']->id]);
+            }
 
             //create or update
             foreach($futureUserAnrs as $key => $futureUserAnr) {
