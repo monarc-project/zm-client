@@ -7,6 +7,7 @@ use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\InstanceRiskTable;
 use MonarcFO\Model\Table\RecommandationMeasureTable;
+use MonarcFO\Model\Table\RecommandationRiskTable;
 use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Service\AbstractService;
 
@@ -36,7 +37,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
 
-        $recos =  $this->get('table')->fetchAllFiltered(
+        /** @var RecommandationRiskTable $table */
+        $table = $this->get('table');
+        $recos =  $table->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
             $limit,
