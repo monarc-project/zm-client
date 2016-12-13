@@ -155,24 +155,32 @@ class AnrService extends \MonarcCore\Service\AbstractService
         //retrieve snapshots
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
-        $anrSnapshots = $snapshotCliTable->getEntityByFields(['anrReference' => $id]);
+        $anrSnapshot = current($snapshotCliTable->getEntityByFields(['anr' => $id]));
+        $anr['snapshots'] = [];
 
-        $snapshots = [];
-        foreach($anrSnapshots as $anrSnapshot) {
-            $snapshots[] = $this->get('table')->get($anrSnapshot->anr->id);
-        }
-
-        $anr['snapshots'] = $snapshots;
-
-        $userCliTable = $this->get('userCliTable');
-        $userArray = $userCliTable->getConnectedUser();
-        $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user'=>$userArray['id'], 'anr'=>$anr['id']]));
-        if(empty($lk)){
-            throw new \Exception('Restricted ANR', 412);
+        $anr['isSnapshot'] = 0;
+        $anr['snapshotParent'] = null;
+        if(!empty($anrSnapshot)){ // On est sur un snapshot
+            $anr['isSnapshot'] = 1;
+            $anr['rwd'] = 0;
+            $anr['snapshotParent'] = $anrSnapshot->get('anrReference')->get('id');
         }else{
-            $anr['rwd'] = $lk->get('rwd');
-        }
+            $userCliTable = $this->get('userCliTable');
+            $userArray = $userCliTable->getConnectedUser();
+            $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user'=>$userArray['id'], 'anr'=>$anr['id']]));
+            if(empty($lk)){
+                throw new \Exception('Restricted ANR', 412);
+            }else{
+                $anr['rwd'] = $lk->get('rwd');
+            }
 
+            // TODO: utilité de remonter les snapshots ?
+            $anrSnapshots = $snapshotCliTable->getEntityByFields(['anrReference' => $id]);
+
+            foreach($anrSnapshots as $anrSnapshot) {
+                $anr['snapshots'][] = $this->get('table')->get($anrSnapshot->anr->id);
+            }
+        }
         return $anr;
     }
 
