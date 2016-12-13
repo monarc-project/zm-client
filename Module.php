@@ -146,6 +146,7 @@ class Module
                 '\MonarcFO\Service\AmvService' => '\MonarcFO\Service\AmvServiceFactory',
                 '\MonarcFO\Service\AssetService' => '\MonarcFO\Service\AssetServiceFactory',
                 '\MonarcFO\Service\ObjectService' => '\MonarcFO\Service\ObjectServiceFactory',
+                '\MonarcFO\Service\ObjectCategoryService' => '\MonarcFO\Service\ObjectCategoryServiceFactory',
                 '\MonarcFO\Service\ObjectObjectService' => '\MonarcFO\Service\ObjectObjectServiceFactory',
                 '\MonarcFO\Service\PasswordService' => '\MonarcFO\Service\PasswordServiceFactory',
                 '\MonarcFO\Service\MailService' => '\MonarcFO\Service\MailServiceFactory',
