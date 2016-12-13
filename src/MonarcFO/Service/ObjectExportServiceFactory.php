@@ -4,30 +4,18 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class AnrObjectServiceFactory extends AbstractServiceFactory
+class ObjectExportServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
         'table'=> '\MonarcFO\Model\Table\ObjectTable',
         'entity'=> '\MonarcFO\Model\Entity\Object',
-        'anrObjectCategoryEntity' => 'MonarcFO\Model\Entity\AnrObjectCategory',
-        'assetTable'=> '\MonarcFO\Model\Table\AssetTable',
-        'assetService' => 'MonarcCore\Service\AssetService',
-        'anrTable'=> '\MonarcFO\Model\Table\AnrTable',
-        'anrObjectCategoryTable'=> '\MonarcFO\Model\Table\AnrObjectCategoryTable',
-        'amvTable'=> '\MonarcFO\Model\Table\AmvTable',
-        'categoryTable'=> '\MonarcFO\Model\Table\ObjectCategoryTable',
-        'instanceTable'=> '\MonarcFO\Model\Table\InstanceTable',
-        'modelTable'=> '\MonarcCore\Model\Table\ModelTable',
-        'objectObjectTable'=> '\MonarcFO\Model\Table\ObjectObjectTable',
-        'rolfTagTable'=> '\MonarcFO\Model\Table\RolfTagTable',
-        //'modelService'=> 'MonarcFO\Service\ModelService',
-        //'objectObjectService'=> 'MonarcFO\Service\ObjectObjectService', // to complete
-        'objectExportService' => 'MonarcFO\Service\ObjectExportService',
+        'assetExportService' => 'MonarcFO\Service\AssetExportService',
+        'objectObjectService'=> 'MonarcFO\Service\ObjectObjectService',
     );
 
     public function createService(ServiceLocatorInterface $serviceLocator){
 
-        $class = "\\MonarcCore\\Service\\ObjectService";
+        $class = "\\MonarcCore\\Service\\ObjectExportService";
 
         if(class_exists($class)){
             $ressources = $this->getRessources();
