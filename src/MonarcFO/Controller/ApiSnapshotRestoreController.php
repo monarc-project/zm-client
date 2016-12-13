@@ -4,7 +4,7 @@ namespace MonarcFO\Controller;
 use MonarcFO\Service\SnapshotService;
 use Zend\View\Model\JsonModel;
 
-class ApiSnapshotRestoreController extends \MonarcCore\Controller\AbstractController
+class ApiSnapshotRestoreController extends ApiAnrAbstractController
 {
     protected $name = 'snapshots';
 
@@ -20,11 +20,10 @@ class ApiSnapshotRestoreController extends \MonarcCore\Controller\AbstractContro
 
     public function create($data)
     {
-        if (!isset($data['anr'])) {
-            throw new \Exception('Anr missing', 412);
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
         }
-
-        $anrId = $data['anr'];
 
         /** @var SnapshotService $service */
         $service = $this->getService();

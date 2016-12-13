@@ -41,29 +41,6 @@ return array(
                 ),
             ),
 
-            'monarc_api_client_snapshot' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-snapshot[/:id]',
-                    'constraints' => array(
-                        'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiSnapshot',
-                    ),
-                ),
-            ),
-
-            'monarc_api_client_snapshot_restore' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-restore-snapshot',
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiSnapshotRestore',
-                    ),
-                ),
-            ),
-
             'monarc_api_admin_users' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -489,6 +466,32 @@ return array(
                             ),
                         ),
                     ),
+
+                    'snapshot' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'snapshot[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiSnapshot',
+                            ),
+                        ),
+                    ),
+
+                    'snapshot_restore' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'restore-snapshot/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiSnapshotRestore',
+                            ),
+                        ),
+                    ),
                 ),
             ),
             'monarc_api_user_password' => array(
@@ -626,9 +629,10 @@ return array(
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/rolf_categories',
             'monarc_api_global_client_anr/rolf_risks',
+            'monarc_api_global_client_anr/rolf_tags',
             'monarc_api_global_client_anr/tags',
-            'monarc_api_client_snapshot',
-            'monarc_api_client_snapshot_restore',
+            'monarc_api_global_client_anr/snapshot',
+            'monarc_api_global_client_anr/snapshot_restore',
             'monarc_api_global_client_anr/themes',
             'monarc_api_global_client_anr/threats',
             'monarc_api_global_client_anr/vulnerabilities',
@@ -670,9 +674,10 @@ return array(
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/rolf_categories',
             'monarc_api_global_client_anr/rolf_risks',
+            'monarc_api_global_client_anr/rolf_tags',
             'monarc_api_global_client_anr/tags',
-            'monarc_api_client_snapshot',
-            'monarc_api_client_snapshot_restore',
+            'monarc_api_global_client_anr/snapshot',
+            'monarc_api_global_client_anr/snapshot_restore',
             'monarc_api_global_client_anr/themes',
             'monarc_api_global_client_anr/threats',
             'monarc_api_global_client_anr/vulnerabilities',
