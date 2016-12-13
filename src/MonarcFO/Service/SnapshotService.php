@@ -13,7 +13,7 @@ use MonarcFO\Service\AbstractService;
  */
 class SnapshotService extends \MonarcCore\Service\AbstractService
 {
-    protected $dependencies = ['anr'];
+    protected $dependencies = ['anr', 'anrReference'];
     protected $filterColumns = [];
     protected $anrTable;
     protected $anrService;
@@ -45,23 +45,22 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * Create
      *
      * @param $data
-     * @param bool $last
      * @return mixed
      */
-    public function create($data, $last = true) {
+    public function create($data) {
 
-        $anrReferenceId = $data['anr'];
+        $data['anrReference'] = $data['anr'];
         unset($data['anr']);
 
         /** @var AnrService $anrService */
         $anrService = $this->get('anrService');
-        $anrId = $anrService->duplicateAnr(intval($anrReferenceId));
+        $anrId = $anrService->duplicateAnr($data['anrReference']);
 
         /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        $anrReference = $anrTable->getEntity($anrReferenceId);
+        //$anrTable = $this->get('anrTable');
+        //$anrReference = $anrTable->getEntity($anrReferenceId);
 
-        $data['anrReference'] = $anrReference;
+        //$data['anrReference'] = $anrReference;
         $data['anr'] = $anrId;
 
         return parent::create($data);
@@ -119,33 +118,25 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @param $anrId
      * @return mixed
      */
-    public function restore($anrId) {
-
+    public function restore($anrId, $id) {
         //switch anr and anrReference
         /** @var SnapshotTable $snapshotTable */
         $snapshotTable = $this->get('table');
-        $anrSnapshots = $snapshotTable->getEntityByFields(['anr' => $anrId]);
-        $anrReference = null;
-        foreach ($anrSnapshots as $anrSnapshot) {
-            $anr = $anrSnapshot->anr;
-            $anrReference = $anrSnapshot->anrReference;
+        $anrSnapshot = current($snapshotTable->getEntityByFields(['anrReference' => $anrId, 'id' => $id]));
 
-            $anrSnapshot->anr = $anrReference;
-            $anrSnapshot->anrReference = $anr;
-            $snapshotTable->save($anrSnapshot);
+        $newAnrId = $this->get('anrService')->duplicateAnr($anrSnapshot->get('anr')->get('id')); // on duplique l'anr liée au snapshot
+
+        $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
+        $i = 1;
+        foreach($anrSnapshots as $s){
+            $s->set('anrReference',$newAnrId); // et on définie la nouvelle référence pour tous les snapshots
+            $this->setDependencies($s,$this->dependencies);
+            $snapshotTable->save($s,count($anrSnapshots) >= $i);
+            $i++;
         }
 
-        //delete others snapshots with anrReference
-        $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrReference->id]);
-        foreach ($anrSnapshots as $anrSnapshot) {
+        $this->get('anrTable')->delete($anrId); // on supprime l'ancienne anr
 
-            //delete anr associated
-            $this->get('anrTable')->delete($anrSnapshot->anr->id);
-
-            //delete snapshot
-            $snapshotTable->delete($anrSnapshot->id);
-        }
-
-        return $anrId;
+        return $newAnrId;
     }
 }
