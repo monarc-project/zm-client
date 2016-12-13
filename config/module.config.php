@@ -345,6 +345,18 @@ return array(
                             ),
                         ),
                     ),
+                    'recommandations_historics' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recommandations-historics[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsHistorics',
+                            ),
+                        ),
+                    ),
                     'recommandations_risks' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -542,6 +554,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrAssetsImportCommon'         => '\MonarcFO\Controller\ApiAnrAssetsImportCommonControllerFactory',
             '\MonarcFO\Controller\ApiAnrInterviews'                 => '\MonarcFO\Controller\ApiAnrInterviewsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandations'            => '\MonarcFO\Controller\ApiAnrRecommandationsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecommandationsHistorics'   => '\MonarcFO\Controller\ApiAnrRecommandationsHistoricsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsRisks'       => '\MonarcFO\Controller\ApiAnrRecommandationsRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsMeasures'    => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrTreatmentPlan'              => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
@@ -647,6 +660,7 @@ return array(
             'monarc_api_global_client_anr/scales_types',
             'monarc_api_global_client_anr/scales_comments',
             'monarc_api_global_client_anr/recommandations',
+            'monarc_api_global_client_anr/recommandations_historics',
             'monarc_api_global_client_anr/recommandations_risks',
             'monarc_api_global_client_anr/recommandations_measures',
             'monarc_api_global_client_anr/treatment_plan',
@@ -692,6 +706,7 @@ return array(
             'monarc_api_client_anr_scales_types',
             'monarc_api_client_anr_scales_comments',
             'monarc_api_anr_recommandations',
+            'monarc_api_anr_recommandations_historics',
             'monarc_api_anr_recommandations_risks',
             'monarc_api_anr_recommandations_measures',
             'monarc_api_anr_treatment_plan',
@@ -702,6 +717,7 @@ return array(
             'monarc_api_global_client_anr/scales_types',
             'monarc_api_global_client_anr/scales_comments',
             'monarc_api_global_client_anr/recommandations',
+            'monarc_api_global_client_anr/recommandations_historics',
             'monarc_api_global_client_anr/recommandations_risks',
             'monarc_api_global_client_anr/recommandations_measures',
             'monarc_api_global_client_anr/treatment_plan',
