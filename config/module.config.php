@@ -430,6 +430,18 @@ return array(
                             ),
                         ),
                     ),
+                    'library_category' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'library-category[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrLibraryCategory',
+                            ),
+                        ),
+                    ),
                     'treatment_plan' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -565,6 +577,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrRisks'                      => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisksOp'                    => '\MonarcFO\Controller\ApiAnrRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibrary'                    => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
+            '\MonarcFO\Controller\ApiAnrLibraryCategory'            => '\MonarcFO\Controller\ApiAnrLibraryCategoryControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstances'                  => '\MonarcFO\Controller\ApiAnrInstancesControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesRisks'             => '\MonarcFO\Controller\ApiAnrInstancesRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsCategories'          => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
@@ -628,6 +641,7 @@ return array(
             'monarc_api_anr_instances_consequences',
             'monarc_api_global_client_anr/interviews',
             'monarc_api_global_client_anr/library',
+            'monarc_api_global_client_anr/library_category',
             'monarc_api_anr_objects',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
@@ -674,6 +688,7 @@ return array(
             'monarc_api_anr_instances_consequences',
             'monarc_api_global_client_anr/interviews',
             'monarc_api_global_client_anr/library',
+            'monarc_api_global_client_anr/library_category',
             'monarc_api_anr_objects',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
