@@ -2,6 +2,7 @@
 
 namespace MonarcFO\Controller;
 
+use MonarcFO\Service\AnrRecommandationRiskService;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -47,6 +48,7 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
             $filterAnd[$fieldName] = intval($risk);
         }
 
+        /** @var AnrRecommandationRiskService $service */
         $service = $this->getService();
 
         $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);

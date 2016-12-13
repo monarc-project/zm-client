@@ -39,7 +39,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
-        $recos =  $table->fetchAllFiltered(
+        $recosRisks =  $table->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
             $limit,
@@ -51,9 +51,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         /** @var RecommandationMeasureTable $recommandationMeasureTable */
         $recommandationMeasureTable = $this->get('recommandationMeasureTable');
 
-        foreach($recos as $key => $reco) {
+        foreach($recosRisks as $key => $recoRisk) {
 
-            $recommandationsMeasures = $recommandationMeasureTable->getEntityByFields(['recommandation' => $reco['id']]);
+            $recommandationsMeasures = $recommandationMeasureTable->getEntityByFields(['recommandation' => $recoRisk['recommandation']->id]);
 
             $measures = [];
             foreach ($recommandationsMeasures as $recommandationMeasure) {
@@ -62,10 +62,10 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 $measures[] = $recommandationMeasure;
             }
 
-            $recos[$key]['measures'] = $measures;
+            $recosRisks[$key]['measures'] = $measures;
         }
 
-        return $recos;
+        return $recosRisks;
     }
 
     /**
