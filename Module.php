@@ -306,9 +306,23 @@ class Module
                         break; // pas besoin d'aller plus loin
                     }else{
                         $lk = current($sm->get('MonarcFO\Model\Table\UserAnrTable')->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser['id']]));
-                        if(empty($lk) ||
-                            ($lk->get('rwd') == 0 && $e->getRequest()->getMethod() != 'GET')){
-                            break; //
+                        if(empty($lk)){
+                            // On doit tester si c'est un snapshot, dans ce cas, on autorise l'accès mais en READ-ONLY
+                            if($e->getRequest()->getMethod() != 'GET'){
+                                break; // même si c'est un snapshot, on n'autorise que du GET
+                            }
+                            $snap = current($sm->get('MonarcFO\Model\Table\SnapshotTable')->getEntityByFields(['anr'=>$anrid]));
+                            if(empty($snap)){
+                                break; // ce n'est pas un snapshot
+                            }
+                            $lk = current($sm->get('MonarcFO\Model\Table\UserAnrTable')->getEntityByFields(['anr'=>$snap->get('anrReference')->get('id'),'user'=>$connectedUser['id']]));
+                            if(empty($lk)){
+                                break; // l'user n'avait de toute façon pas accès à l'anr dont est issue ce snapshot
+                            }
+                            $isGranted = true;
+                            break;
+                        }elseif($lk->get('rwd') == 0 && $e->getRequest()->getMethod() != 'GET'){
+                            break; // les droits ne sont pas bon
                         }else{
                             $isGranted = true;
                             break;
