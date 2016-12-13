@@ -6,6 +6,7 @@ use MonarcFO\Model\Entity\InstanceRiskOp;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\InstanceRiskTable;
+use MonarcFO\Model\Table\RecommandationHistoricTable;
 use MonarcFO\Model\Table\RecommandationMeasureTable;
 use MonarcFO\Model\Table\RecommandationRiskTable;
 use MonarcFO\Model\Table\RecommandationTable;
@@ -22,9 +23,11 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'recommandation'];
     protected $anrTable;
     protected $recommandationTable;
+    protected $recommandationHistoricTable;
     protected $recommandationMeasureTable;
     protected $instanceRiskTable;
     protected $instanceRiskOpTable;
+    protected $recommandationHistoricEntity;
 
     /**
      * Get List
@@ -233,5 +236,75 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $position++;
             $i++;
         }
+    }
+
+    /**
+     * Validate For
+     *
+     * @param $id
+     */
+    public function validateFor($id) {
+
+        /** @var InstanceRiskTable $table */
+        $table = $this->get('table');
+        $recommandationRisk = $this->getEntity($id);
+
+        //detach risk of recommendation
+        $table->delete($id);
+
+        //repositioning recommendation in hierarchy
+
+        //automatically record in history before modify recommendation and risk values
+        $reco = $recommandationRisk['recommandation'];
+        $risk = $recommandationRisk['instanceRisk'];
+        $data = [
+            'implComment' => '',
+            'recoCode' => $reco->code,
+            'recoDescription' => $reco->description,
+            'recoImportance' => $reco->importance,
+            'recoComment' => $reco->comment,
+            'recoResponsable' => $reco->responsable,
+            'recoDuedate' => $reco->duedate,
+            'riskInstance' => $risk->instance->label1,
+            'riskInstanceContext' => '',
+            'riskAsset' => $risk->asset->label1,
+            'riskThreat' => $risk->threat->label1,
+            'riskThreatVal' => '',
+            'riskVul' => $risk->vul->label1,
+            'riskVulValBefore' => '',
+            'riskVulValAfter' => '',
+            'riskKindOfMeasure' => $risk->kindOfMeasure,
+            'riskCommentBefore' => $risk->comment,
+            'riskCommentAfter' => $risk->commentAfter,
+            'riskMaxRiskBefore' => $risk->cacheMaxRisk,
+            'riskColorBefore' => '',
+            'riskMaxRiskAfter' => '',
+            'riskColorAfter' => '',
+        ];
+
+        $class = $this->get('recommandationHistoricEntity');
+        $recoHisto = new $class();
+        $recoHisto->setLanguage($this->getLanguage());
+        $recoHisto->setDbAdapter($this->get('recommandationHistoricTable')->getDb());
+        $recoHisto->exchangeArray($data);
+
+        $recoHisto->anr = $recommandationRisk->anr;
+
+        /** @var RecommandationHistoricTable $recoHistoTable */
+        $recoHistoTable = $this->get('recommandationHistoricTable');
+        $recoHistoTable->save($recoHisto);
+
+        //overload constatation for volatile comment (after measure)
+
+        //apply reduction vulnerability on risk
+
+        //set reduction amount to 0
+
+        //change status to NOT_TREATED
+
+        //increment counter treated
+
+        //si la reco n'a plus de lien avec des risques, on nettoie son commentaire, sa duedate et son responsable
+
     }
 }
