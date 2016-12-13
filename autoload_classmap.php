@@ -25,6 +25,8 @@ return array(
     'MonarcFO\Controller\ApiAnrImportAbstractController'                    => __DIR__ . '/src/MonarcFO/Controller/ApiAnrImportAbstractController.php',
     'MonarcFO\Controller\ApiAnrInstancesController'                         => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesController.php',
     'MonarcFO\Controller\ApiAnrInstancesControllerFactory'                  => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrInstancesRisksController'                    => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesRisksController.php',
+    'MonarcFO\Controller\ApiAnrInstancesRisksControllerFactory'             => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesRisksControllerFactory.php',
     'MonarcFO\Controller\ApiAnrInterviewsController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInterviewsController.php',
     'MonarcFO\Controller\ApiAnrInterviewsControllerFactory'                 => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInterviewsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrLibraryController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiAnrLibraryController.php',

@@ -150,7 +150,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     }
                 }
             }
-            
+
             if (!$nbRisks) {
                 unset($recommandations[$key]);
             }
