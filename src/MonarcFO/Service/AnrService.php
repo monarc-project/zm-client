@@ -263,7 +263,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $assetsNewIds = [];
         if ($source == Object::SOURCE_COMMON) {
             $assets1 = [];
-            if (($model->isGeneric) || (!$model->isRegulator)) {
+            if (!$model->isRegulator) {
                 $assets1 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_GENERIC]);
             }
             $assets2 = [];
@@ -289,7 +289,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $threatsNewIds = [];
         if ($source == Object::SOURCE_COMMON) {
             $threats1 = [];
-            if (($model->isGeneric) || (!$model->isRegulator)) {
+            if (!$model->isRegulator) {
                 $threats1 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_GENERIC]);
             }
             $threats2 = [];
@@ -318,7 +318,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $vulnerabilitiesNewIds = [];
         if ($source == Object::SOURCE_COMMON) {
             $vulnerabilities1 = [];
-            if (($model->isGeneric) || (!$model->isRegulator)) {
+            if (!$model->isRegulator) {
                 $vulnerabilities1 = $this->get('vulnerabilityTable')->getEntityByFields(['mode' => Vulnerability::MODE_GENERIC]);
             }
             $vulnerabilities2 = [];
