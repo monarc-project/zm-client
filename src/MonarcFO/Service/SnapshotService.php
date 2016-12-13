@@ -47,7 +47,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @return mixed
      */
-    public function create($data) {
+    public function create($data, $last = true) {
 
         $data['anrReference'] = $data['anr'];
         unset($data['anr']);
