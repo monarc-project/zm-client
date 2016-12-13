@@ -17,6 +17,34 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     protected $anrTable;
 
     /**
+     * Get List
+     *
+     * @param int $page
+     * @param int $limit
+     * @param null $order
+     * @param null $filter
+     * @return mixed
+     */
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+
+        $recos =  $this->get('table')->fetchAllFiltered(
+            array_keys($this->get('entity')->getJsonArray()),
+            $page,
+            $limit,
+            $this->parseFrontendOrder($order),
+            $this->parseFrontendFilter($filter, $this->filterColumns),
+            $filterAnd
+        );
+
+        foreach($recos as $key => $reco) {
+            $recos[$key]['timerColor'] = $this->getDueDateColor($reco['duedate']);
+            $recos[$key]['counterTreated'] = ($reco['counterTreated'] == 0) ? 'COMING' : '_SMILE_IN_PROGRESS (<span>'.$reco['counterTreated'].'</span>)';
+        }
+
+        return $recos;
+    }
+
+    /**
      * Create
      *
      * @param $data
@@ -44,5 +72,33 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         $table = $this->get('table');
 
         return $table->save($entity, $last);
+    }
+
+    /**
+     * Due date
+     *
+     * @param $dueDate
+     * @return string
+     */
+    protected function getDueDateColor($dueDate){
+        if(empty($dueDate) || $dueDate == '0000-00-00'){
+            return 'no-date';
+        }
+        else{
+            $now = time();
+            $dueDate = strtotime($dueDate);
+            $diff = $dueDate - $now;
+
+            if($diff < 0){
+                return "alert";
+            }
+            else{
+                $days = round($diff / 60 / 60 / 24);
+                if($days <= 15){//arbitraire, on avait évoqué 15 jours par tél pendant la réunion liée au cahier des charges
+                    return "warning";
+                }
+                else return "large";
+            }
+        }
     }
 }
