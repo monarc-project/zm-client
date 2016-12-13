@@ -54,7 +54,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
 
         /** @var AnrService $anrService */
         $anrService = $this->get('anrService');
-        $anrId = $anrService->duplicateAnr($data['anrReference']);
+        $anrId = $anrService->duplicateAnr($data['anrReference'], \MonarcFO\Model\Entity\Object::SOURCE_CLIENT, null, [], true);
 
         /** @var AnrTable $anrTable */
         //$anrTable = $this->get('anrTable');

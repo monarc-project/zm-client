@@ -13,5 +13,6 @@ class UserServiceFactory extends AbstractServiceFactory
         'userAnrService' => 'MonarcFO\Service\UserAnrService',
         'userRoleService' => 'MonarcFO\Service\UserRoleService',
         'anrTable' => '\MonarcFO\Model\Table\AnrTable',
+        'snapshotCliTable' => '\MonarcFO\Model\Table\SnapshotTable',
     );
 }
