@@ -53,7 +53,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         foreach($recos as $key => $reco) {
 
-            $recommandationsMeasures = $recommandationMeasureTable->getEntityByFields(['recommandation' => $reco['id']]);
+            $recommandationsMeasures = $recommandationMeasureTable->getEntityByFields(['recommandation' => $reco['recommandation']->id]);
 
             $measures = [];
             foreach ($recommandationsMeasures as $recommandationMeasure) {
