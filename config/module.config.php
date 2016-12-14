@@ -272,6 +272,17 @@ return array(
                             ),
                         ),
                     ),
+                    'objects_import' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'objects/import',
+                            'constraints' => array(
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsImport',
+                            ),
+                        ),
+                    ),
                     'interviews' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -619,6 +630,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrInstancesRisksOp'           => '\MonarcFO\Controller\ApiAnrInstancesRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsCategories'          => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsExport'              => '\MonarcFO\Controller\ApiAnrObjectsExportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrObjectsImport'              => '\MonarcFO\Controller\ApiAnrObjectsImportControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesExport'            => '\MonarcFO\Controller\ApiAnrInstancesExportControllerFactory',
         ),
     ),
@@ -696,6 +708,7 @@ return array(
             'monarc_api_global_client_anr/measures',
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/objects_export',
+            'monarc_api_global_client_anr/objects_import',
             'monarc_api_global_client_anr/rolf_categories',
             'monarc_api_global_client_anr/rolf_risks',
             'monarc_api_global_client_anr/rolf_tags',
@@ -746,6 +759,7 @@ return array(
             'monarc_api_global_client_anr/measures',
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/objects_export',
+            'monarc_api_global_client_anr/objects_import',
             'monarc_api_global_client_anr/rolf_categories',
             'monarc_api_global_client_anr/rolf_risks',
             'monarc_api_global_client_anr/rolf_tags',
