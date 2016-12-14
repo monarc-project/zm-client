@@ -23,6 +23,8 @@ return array(
     'MonarcFO\Controller\ApiAnrController'                                   => __DIR__ . '/src/MonarcFO/Controller/ApiAnrController.php',
     'MonarcFO\Controller\ApiAnrControllerFactory'                            => __DIR__ . '/src/MonarcFO/Controller/ApiAnrControllerFactory.php',
     'MonarcFO\Controller\ApiAnrImportAbstractController'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrImportAbstractController.php',
+    'MonarcFO\Controller\ApiAnrInstanceExportController'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstanceExportController.php',
+    'MonarcFO\Controller\ApiAnrInstanceExportControllerFactory'              => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstanceExportControllerFactory.php',
     'MonarcFO\Controller\ApiAnrInstancesController'                          => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesController.php',
     'MonarcFO\Controller\ApiAnrInstancesControllerFactory'                   => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesControllerFactory.php',
     'MonarcFO\Controller\ApiAnrInstancesRisksController'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesRisksController.php',

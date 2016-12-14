@@ -30,8 +30,8 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'rolfRiskTable' => 'MonarcFO\Model\Table\RolfRiskTable',
 
         // Export (Services)
-        //'objectExportService' => 'MonarcFO\Service\ObjectExportService',
-        //'amvService' =>  'MonarcFO\Service\AmvService',
+        'objectExportService' => 'MonarcFO\Service\ObjectExportService',
+        'amvService' =>  'MonarcFO\Service\AmvService',
     );
 
     public function createService(ServiceLocatorInterface $serviceLocator){

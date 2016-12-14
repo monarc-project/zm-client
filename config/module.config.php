@@ -478,6 +478,18 @@ return array(
                             ),
                         ),
                     ),
+                    'instance_export' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'instances/:id/export',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesExport',
+                            ),
+                        ),
+                    ),
                     'instance_risk' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -594,6 +606,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrInstancesRisks'             => '\MonarcFO\Controller\ApiAnrInstancesRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsCategories'          => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsExport'              => '\MonarcFO\Controller\ApiAnrObjectsExportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrInstancesExport'            => '\MonarcFO\Controller\ApiAnrInstancesExportControllerFactory',
         ),
     ),
 
