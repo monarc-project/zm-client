@@ -478,6 +478,18 @@ return array(
                             ),
                         ),
                     ),
+                    'instance_risk_op' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'instances-oprisks[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesRisksOp',
+                            ),
+                        ),
+                    ),
                     'objects_categories' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -580,6 +592,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrLibraryCategory'            => '\MonarcFO\Controller\ApiAnrLibraryCategoryControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstances'                  => '\MonarcFO\Controller\ApiAnrInstancesControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesRisks'             => '\MonarcFO\Controller\ApiAnrInstancesRisksControllerFactory',
+            '\MonarcFO\Controller\ApiAnrInstancesRisksOp'           => '\MonarcFO\Controller\ApiAnrInstancesRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsCategories'          => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
         ),
     ),
@@ -638,6 +651,7 @@ return array(
             'monarc_api_user_profile',
             'monarc_api_global_client_anr/instance',
             'monarc_api_global_client_anr/instance_risk',
+            'monarc_api_global_client_anr/instance_risk_op',
             'monarc_api_anr_instances_consequences',
             'monarc_api_global_client_anr/interviews',
             'monarc_api_global_client_anr/library',
@@ -685,6 +699,7 @@ return array(
             'monarc_api_admin_users_roles',
             'monarc_api_global_client_anr/instance',
             'monarc_api_global_client_anr/instance_risk',
+            'monarc_api_global_client_anr/instance_risk_op',
             'monarc_api_anr_instances_consequences',
             'monarc_api_global_client_anr/interviews',
             'monarc_api_global_client_anr/library',
