@@ -167,6 +167,8 @@ class Module
                 '\MonarcFO\Service\AnrInstanceService' => '\MonarcFO\Service\AnrInstanceServiceFactory',
                 '\MonarcFO\Service\AnrRiskOpService' => '\MonarcFO\Service\AnrRiskOpServiceFactory',
                 '\MonarcFO\Service\AnrObjectCategoryService' => '\MonarcFO\Service\AnrObjectCategoryServiceFactory',
+                '\MonarcFO\Service\ObjectExportService' => '\MonarcFO\Service\ObjectExportServiceFactory',
+                '\MonarcFO\Service\AssetExportService' => '\MonarcFO\Service\AssetExportServiceFactory',
             ),
         );
     }
