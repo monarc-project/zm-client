@@ -173,6 +173,8 @@ class Recommandation extends AbstractEntity
         return $this;
     }
 
+    protected $parameters = [];
+
     public function getInputFilter($partial = true){
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
