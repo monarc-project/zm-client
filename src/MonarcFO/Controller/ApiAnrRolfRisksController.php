@@ -15,4 +15,46 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
     protected $name = 'risks';
 
     protected $dependencies = ['categories', 'tags'];
+
+    /**
+     * Get list
+     *
+     * @return JsonModel
+     */
+    public function getList()
+    {
+        $page = $this->params()->fromQuery('page');
+        $limit = $this->params()->fromQuery('limit');
+        $order = $this->params()->fromQuery('order');
+        $filter = $this->params()->fromQuery('filter');
+        $category = $this->params()->fromQuery('category');
+        $tag = $this->params()->fromQuery('tag');
+
+        /** @var RolfRiskService $service */
+        $service = $this->getService();
+
+        $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $category, $tag);
+        foreach($rolfRisks as $key => $rolfRisk){
+
+            $rolfRisk['categories']->initialize();
+            $rolfCategories = $rolfRisk['categories']->getSnapshot();
+            $rolfRisks[$key]['categories'] = array();
+            foreach($rolfCategories as $rolfCategory){
+
+                $rolfRisks[$key]['categories'][] = $rolfCategory->getJsonArray();
+            }
+
+            $rolfRisk['tags']->initialize();
+            $rolfTags = $rolfRisk['tags']->getSnapshot();
+            $rolfRisks[$key]['tags'] = array();
+            foreach($rolfTags as $rolfTag){
+                $rolfRisks[$key]['tags'][] = $rolfTag->getJsonArray();
+            }
+        }
+
+        return new JsonModel(array(
+            'count' => $service->getFilteredCount($page, $limit, $order, $filter),
+            $this->name => $rolfRisks
+        ));
+    }
 }
