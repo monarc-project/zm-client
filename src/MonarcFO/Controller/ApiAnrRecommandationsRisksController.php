@@ -14,7 +14,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
 {
     protected $name = 'recommandations-risks';
-    protected $dependencies = ['anr', 'recommandation'];
+    protected $dependencies = ['recommandation', 'asset', 'threat', 'vulnerability'];
 
     /**
      * Get List
@@ -30,6 +30,7 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
         $filter = $this->params()->fromQuery('filter');
         $status = $this->params()->fromQuery('status');
         $risk = $this->params()->fromQuery('risk');
+        $recommandation = $this->params()->fromQuery('recommandation');
         $op = $this->params()->fromQuery('op');
 
         $anrId = (int) $this->params()->fromRoute('anrid');
@@ -46,6 +47,10 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
         if (!is_null($risk)) {
             $fieldName = ($op) ? 'instanceRiskOp' : 'instanceRisk';
             $filterAnd[$fieldName] = intval($risk);
+        }
+
+        if (!is_null($recommandation)) {
+            $filterAnd['recommandation'] = intval($recommandation);
         }
 
         /** @var AnrRecommandationRiskService $service */
@@ -65,11 +70,6 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
     }
 
     public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function patch($token, $data)
     {
         return $this->methodNotAllowed();
     }
