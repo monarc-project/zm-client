@@ -14,7 +14,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
 {
     protected $name = 'recommandations-risks';
-    protected $dependencies = ['anr', 'recommandation'];
+    protected $dependencies = ['recommandation', 'asset', 'threat', 'vulnerability'];
 
     /**
      * Get List
