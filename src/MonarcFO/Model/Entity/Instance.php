@@ -66,5 +66,7 @@ class Instance extends \MonarcCore\Model\Entity\InstanceSuperClass
      * })
      */
     protected $parent;
+
+    protected $ascendance;
 }
 

@@ -33,6 +33,23 @@ class RecommandationHistoric extends AbstractEntity
     protected $anr;
 
     /**
+     * @var \MonarcFO\Model\Entity\InstanceRisk
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\InstanceRisk", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="instance_risk_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $instanceRisk;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="final", type="smallint", options={"unsigned":false, "default":1})
+     */
+    protected $final = 1;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="impl_comment", type="string", length=255, nullable=true)
@@ -185,6 +202,13 @@ class RecommandationHistoric extends AbstractEntity
      * @ORM\Column(name="risk_color_after", type="string", length=100, nullable=true)
      */
     protected $riskColorAfter;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="cache_comment_after", type="string", length=255, nullable=true)
+     */
+    protected $cacheCommentAfter;
 
     /**
      * @var string

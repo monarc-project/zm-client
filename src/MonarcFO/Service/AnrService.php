@@ -684,4 +684,25 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         return $id;
     }
+
+
+
+    /**
+     * Get Color
+     *
+     * @param $anr
+     * @param $value
+     * @param array $classes
+     * @return mixed
+     */
+    public function getColor($anr, $value, $classes = ['green', 'orange', 'alerte']){
+
+        if ($value <= $anr->get('seuil1')) {
+            return $classes[0];
+        } else if ($value <= $anr->get('seuil2')) {
+            return $classes[1];
+        } else {
+            return $classes[2];
+        }
+    }
 }
