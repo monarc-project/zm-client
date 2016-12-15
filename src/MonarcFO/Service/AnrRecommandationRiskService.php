@@ -246,12 +246,20 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      *
      * @param $recoRiskId
      * @param $data
+     * @param null $vulA
+     * @param null $commentA
+     * @param null $maxriskA
+     * @throws \Exception
      */
     public function validateFor($recoRiskId, $data, $vulA = null, $commentA = null, $maxriskA = null) {
 
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
         $recommandationRisk = $table->getEntity($recoRiskId);
+
+        if (is_null($recommandationRisk->instanceRisk)) {
+            throw new \Exception('Not possible to validate operational risk', 412);
+        }
 
         $reco = $recommandationRisk->recommandation;
         $risk = $recommandationRisk->instanceRisk;
