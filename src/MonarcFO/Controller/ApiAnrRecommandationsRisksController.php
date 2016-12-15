@@ -73,9 +73,4 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
     {
         return $this->methodNotAllowed();
     }
-
-    public function patch($token, $data)
-    {
-        return $this->methodNotAllowed();
-    }
 }
