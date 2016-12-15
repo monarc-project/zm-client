@@ -260,6 +260,19 @@ return array(
                             ),
                         ),
                     ),
+                    'objects_parents' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'objects/:id/parents',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller'    => 'MonarcFO\Controller\ApiAnrObject',
+                                'action'        => 'parents'
+                            ),
+                        ),
+                    ),
                     'objects_export' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -613,6 +626,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrAmvs'                           => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures'                       => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjects'                        => '\MonarcFO\Controller\ApiAnrObjectsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrObject'                         => '\MonarcFO\Controller\ApiAnrObjectControllerFactory',
             '\MonarcFO\Controller\ApiAnrQuestions'                      => '\MonarcFO\Controller\ApiAnrQuestionsControllerFactory',
             '\MonarcFO\Controller\ApiAnrQuestionsChoices'               => '\MonarcFO\Controller\ApiAnrQuestionsChoicesControllerFactory',
             '\MonarcFO\Controller\ApiAnrThreats'                        => '\MonarcFO\Controller\ApiAnrThreatsControllerFactory',
@@ -707,6 +721,7 @@ return array(
             'monarc_api_global_client_anr/library',
             'monarc_api_global_client_anr/library_category',
             'monarc_api_anr_objects',
+            'monarc_api_anr_objects_parents',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/risks',
@@ -718,6 +733,7 @@ return array(
             'monarc_api_global_client_anr/assets_import_common',
             'monarc_api_global_client_anr/measures',
             'monarc_api_global_client_anr/objects',
+            'monarc_api_global_client_anr/objects_parents',
             'monarc_api_global_client_anr/objects_export',
             'monarc_api_global_client_anr/objects_import',
             'monarc_api_global_client_anr/rolf_categories',
@@ -759,6 +775,7 @@ return array(
             'monarc_api_global_client_anr/library',
             'monarc_api_global_client_anr/library_category',
             'monarc_api_anr_objects',
+            'monarc_api_anr_objects_parents',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/risks',
@@ -770,6 +787,7 @@ return array(
             'monarc_api_global_client_anr/assets_import_common',
             'monarc_api_global_client_anr/measures',
             'monarc_api_global_client_anr/objects',
+            'monarc_api_global_client_anr/objects_parents',
             'monarc_api_global_client_anr/objects_export',
             'monarc_api_global_client_anr/objects_import',
             'monarc_api_global_client_anr/rolf_categories',

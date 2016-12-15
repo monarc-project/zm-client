@@ -150,6 +150,7 @@ class Module
                 '\MonarcFO\Service\ObjectObjectService' => '\MonarcFO\Service\ObjectObjectServiceFactory',
                 '\MonarcFO\Service\PasswordService' => '\MonarcFO\Service\PasswordServiceFactory',
                 '\MonarcFO\Service\MailService' => '\MonarcFO\Service\MailServiceFactory',
+                '\MonarcFO\Service\AnrLibraryService' => '\MonarcFO\Service\AnrLibraryServiceFactory',
                 '\MonarcFO\Service\AnrRecommandationService' => '\MonarcFO\Service\AnrRecommandationServiceFactory',
                 '\MonarcFO\Service\AnrRecommandationHistoricService' => '\MonarcFO\Service\AnrRecommandationHistoricServiceFactory',
                 '\MonarcFO\Service\AnrRecommandationMeasureService' => '\MonarcFO\Service\AnrRecommandationMeasureServiceFactory',
