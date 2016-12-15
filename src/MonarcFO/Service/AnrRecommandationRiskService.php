@@ -369,11 +369,11 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         if ($recommandationRisk->objectGlobal) {
 
             $brothersRecommandationsRisks = $table->getEntityByFields([
-                'recommandation' => $recommandationRisk['recommandation']->get('id'),
-                'objectGlobal' => $recommandationRisk['objectGlobal']->get('id'),
-                'asset' => $recommandationRisk['asset']->get('id'),
-                'threat' => $recommandationRisk['threat']->get('id'),
-                'vulnerability' => $recommandationRisk['vulnerability']->get('id'),
+                'recommandation' => $recommandationRisk->get('recommandation')->get('id'),
+                'objectGlobal' => $recommandationRisk->get('objectGlobal')->get('id'),
+                'asset' => $recommandationRisk->get('asset')->get('id'),
+                'threat' => $recommandationRisk->get('threat')->get('id'),
+                'vulnerability' => $recommandationRisk->get('vulnerability')->get('id'),
             ]);
 
             $i = i;
