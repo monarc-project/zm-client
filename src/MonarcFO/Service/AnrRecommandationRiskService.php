@@ -376,7 +376,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 'vulnerability' => $recommandationRisk->get('vulnerability')->get('id'),
             ]);
 
-            $i = i;
+            $i = 1;
             foreach($brothersRecommandationsRisks as $brotherRecommandationRisk) {
                 $last = ($i == count($brothersRecommandationsRisks)) ? true : false;
                 $table->delete($brotherRecommandationRisk['id'], $last);
