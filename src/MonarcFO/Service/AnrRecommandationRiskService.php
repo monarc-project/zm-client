@@ -379,7 +379,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $i = 1;
             foreach($brothersRecommandationsRisks as $brotherRecommandationRisk) {
                 $last = ($i == count($brothersRecommandationsRisks)) ? true : false;
-                $table->delete($brotherRecommandationRisk['id'], $last);
+                $table->delete($brotherRecommandationRisk->get('id'), $last);
                 $i++;
             }
         } else {
