@@ -91,6 +91,8 @@ return array(
     'MonarcFO\Controller\ApiConfigControllerFactory'                          => __DIR__ . '/src/MonarcFO/Controller/ApiConfigControllerFactory.php',
     'MonarcFO\Controller\ApiDuplicateAnrController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrController.php',
     'MonarcFO\Controller\ApiDuplicateAnrControllerFactory'                    => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrControllerFactory.php',
+    'MonarcFO\Controller\ApiGuidesController'                                 => __DIR__ . '/src/MonarcFO/Controller/ApiGuidesController.php',
+    'MonarcFO\Controller\ApiGuidesControllerFactory'                          => __DIR__ . '/src/MonarcFO/Controller/ApiGuidesControllerFactory.php',
     'MonarcFO\Controller\ApiSnapshotController'                               => __DIR__ . '/src/MonarcFO/Controller/ApiSnapshotController.php',
     'MonarcFO\Controller\ApiSnapshotControllerFactory'                        => __DIR__ . '/src/MonarcFO/Controller/ApiSnapshotControllerFactory.php',
     'MonarcFO\Controller\ApiSnapshotRestoreController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiSnapshotRestoreController.php',
