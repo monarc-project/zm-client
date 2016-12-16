@@ -177,6 +177,7 @@ return array(
     'MonarcFO\Service\AnrInstanceConsequenceServiceFactory'                  => __DIR__ . '/src/MonarcFO/Service/AnrInstanceConsequenceServiceFactory.php',
     'MonarcFO\Service\AnrInstanceRiskOpServiceFactory'                       => __DIR__ . '/src/MonarcFO/Service/AnrInstanceRiskOpServiceFactory.php',
     'MonarcFO\Service\AnrInstanceRiskServiceFactory'                         => __DIR__ . '/src/MonarcFO/Service/AnrInstanceRiskServiceFactory.php',
+    'MonarcFO\Service\AnrInstanceService'                                    => __DIR__ . '/src/MonarcFO/Service/AnrInstanceService.php',
     'MonarcFO\Service\AnrInstanceServiceFactory'                             => __DIR__ . '/src/MonarcFO/Service/AnrInstanceServiceFactory.php',
     'MonarcFO\Service\AnrInterviewService'                                   => __DIR__ . '/src/MonarcFO/Service/AnrInterviewService.php',
     'MonarcFO\Service\AnrInterviewServiceFactory'                            => __DIR__ . '/src/MonarcFO/Service/AnrInterviewServiceFactory.php',

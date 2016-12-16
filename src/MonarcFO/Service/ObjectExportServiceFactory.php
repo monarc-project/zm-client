@@ -11,6 +11,7 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
         'entity'=> '\MonarcFO\Model\Entity\Object',
         'assetExportService' => 'MonarcFO\Service\AssetExportService',
         'objectObjectService'=> 'MonarcFO\Service\ObjectObjectService',
+        'categoryTable' => '\MonarcFO\Model\Table\ObjectCategoryTable',
     );
 
     public function createService(ServiceLocatorInterface $serviceLocator){
