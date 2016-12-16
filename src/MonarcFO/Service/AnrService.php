@@ -441,29 +441,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         //duplicate objects categories
-        $i = 1;
-        $objectsCategoriesNewIds = [];
-        $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
-        foreach($objectsCategories as $objectCategory) {
-            $last = ($i == count($objectsCategories)) ? true : false;
-            $newObjectCategory = new \MonarcFO\Model\Entity\ObjectCategory($objectCategory);
-            $newObjectCategory->set('id',null);
-            $newObjectCategory->setAnr($newAnr);
-            if ($objectCategory->parent) {
-                $newObjectCategory->setParent($objectsCategoriesNewIds[$objectCategory->parent->id]);
-            }
-            if ($objectCategory->root) {
-                $newObjectCategory->setRoot($objectsCategoriesNewIds[$objectCategory->root->id]);
-            }
-            $this->get('objectCategoryCliTable')->save($newObjectCategory, $last);
-            $objectsCategoriesNewIds[$objectCategory->id] = $newObjectCategory;
-            $i++;
-        }
-
-        //duplicate objects
-        $i = 1;
-        $objectsNewIds = [];
-        $objectsRootCategories = [];
         $objects = ($source == Object::SOURCE_COMMON) ? $this->get('objectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($objects as $key => $object) {
             $existInAnr = false;
@@ -476,6 +453,37 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 unset($objects[$key]);
             }
         }
+        $categoriesIds = [];
+        foreach($objects as $object) {
+            $categoriesIds[] = $object->category->id;
+            $this->getParentsCategoryIds($object->category, $categoriesIds);
+
+        }
+        $objectsCategoriesNewIds = [];
+        $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+        foreach($objectsCategories as $objectCategory) {
+            if (in_array($objectCategory->id, $categoriesIds)) {
+                $newObjectCategory = new \MonarcFO\Model\Entity\ObjectCategory($objectCategory);
+                $newObjectCategory->set('id', null);
+                $newObjectCategory->setAnr($newAnr);
+                if ($objectCategory->parent) {
+                    $newObjectCategory->setParent($objectsCategoriesNewIds[$objectCategory->parent->id]);
+                }
+                if ($objectCategory->root) {
+                    $newObjectCategory->setRoot($objectsCategoriesNewIds[$objectCategory->root->id]);
+                }
+                $this->get('objectCategoryCliTable')->save($newObjectCategory);
+                $objectsCategoriesNewIds[$objectCategory->id] = $newObjectCategory;
+            }
+        }
+
+        //duplicate objects
+        $i = 1;
+        $objectsNewIds = [];
+        $objectsRootCategories = [];
+
+
+
         foreach($objects as $object) {
             $last = ($i == count($objects)) ? true : false;
             $newObject = new \MonarcFO\Model\Entity\Object($object);
@@ -687,6 +695,23 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         return $id;
+    }
+
+    /**
+     * Get Parents Category Ids
+     *
+     * @param $category
+     * @param $categoriesIds
+     * @return array
+     */
+    public function getParentsCategoryIds($category, &$categoriesIds) {
+
+        if ($category->parent) {
+            $categoriesIds[] = $category->parent->id;
+            $this->getParentsCategoryIds($category->parent, $categoriesIds);
+        }
+
+        return $categoriesIds;
     }
 
 
