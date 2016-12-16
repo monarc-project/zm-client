@@ -47,9 +47,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             if(!isset($sharedData['objects'])){
                 $sharedData['objects'] = [];
             }
-            $idObject = $this->get('objectExportService')->importFromArray($data['object'],$anr, $modeImport, $sharedData['objects']);
-
-            // TODO: gérer les recommandations
+            $idObject = $this->get('objectExportService')->importFromArray($data['object'],$anr, $modeImport, $sharedData);
 
             // Instance
             $class = $this->get('table')->getClass();
@@ -250,7 +248,89 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $localrisk->get('vulnerabilityRate')) : 0 );
                         $idRisk = $this->get('instanceRiskTable')->save($r);
 
-                        // TODO recommandations
+                        // Recommandations
+                        if(!empty($data['recos'][$r->get('id')])){
+                            foreach($data['recos'][$r->get('id')] as $reco){
+                                // La recommandation
+                                if(isset($sharedData['recos'][$reco['id']])){ // Cette recommandation a déjà été gérée dans cet import
+                                }else{ // sinon, on teste sa présence
+                                    $toExchange = $reco;
+                                    unset($toExchange['id']);
+                                    unset($toExchange['commentAfter']); // data du link
+                                    $toExchange['anr'] = $anr->get('id');
+                                    // on test l'unicité du code
+                                    $aReco = current($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'),'code' => $reco['code']]));
+                                    if(empty($aReco)){ // Code absent, on crée une nouvelle recommandation
+                                        $class = $this->get('recommandationTable')->getClass();
+                                        $aReco = new $class();
+                                        $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
+                                        $aReco->setLanguage($this->getLanguage());
+                                        $toExchange['implicitPosition'] = 2;
+                                    }
+                                    $aReco->exchangeArray($toExchange);
+                                    $this->setDependencies($aReco,['anr']);
+                                    $sharedData['recos'][$reco['id']] = $this->get('recommandationTable')->save($aReco);
+                                }
+
+                                // Le lien recommandation <-> risk
+                                $class = $this->get('recommandationRiskTable')->getClass();
+                                $rr = new $class();
+                                $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
+                                $rr->setLanguage($this->getLanguage());
+                                $toExchange = [
+                                    'anr' => $anr->get('id'),
+                                    'recommandation' => $sharedData['recos'][$reco['id']],
+                                    'instanceRisk' => $idRisk,
+                                    'instance' => $instanceId,
+                                    'objectGlobal' => (($obj && $obj->get('scope') == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL)?$obj->get('id'):null),
+                                    'asset' => $r->get('asset')->get('id'),
+                                    'threat' => $r->get('threat')->get('id'),
+                                    'vulnerability' => $r->get('vulnerability')->get('id'),
+                                    'commentAfter' => $reco['commentAfter'],
+                                ];
+                                $rr->exchangeArray($toExchange);
+                                $this->setDependencies($rr,['anr','recommandation','instanceRisk','instance','objectGlobal','asset','threat','vulnerability']);
+                                $this->get('recommandationRiskTable')->save($rr);
+
+                                // Recommandation <-> Measures
+                                if(!empty($data['recolinks'][$reco['id']])){
+                                    foreach($data['recolinks'][$reco['id']] as $mid){
+                                        if(isset($sharedData['measures'][$mid])){ // Cette measure a déjà été gérée dans cet import
+                                        }elseif($data['measures'][$mid]){
+                                            // on teste sa présence
+                                            $toExchange = $data['measures'][$mid];
+                                            unset($toExchange['id']);
+                                            $toExchange['anr'] = $anr->get('id');
+                                            $measure = current($this->get('measureTable')->getEntityByFields(['anr' => $anr->get('id'),'code' => $data['measures'][$mid]['code']]));
+                                            if(empty($measure)){
+                                                $class = $this->get('measureTable')->getClass();
+                                                $measure = new $class();
+                                                $measure->setDbAdapter($this->get('measureTable')->getDb());
+                                                $measure->setLanguage($this->getLanguage());
+                                            }
+                                            $measure->exchangeArray($toExchange);
+                                            $this->setDependencies($measure,['anr']);
+                                            $sharedData['measures'][$mid] = $this->get('measureTable')->save($measure);
+                                        }
+
+                                        if(isset($sharedData['measures'][$mid])){
+                                            // On crée le lien
+                                            $class = $this->get('recommandationMeasureTable')->getClass();
+                                            $lk = new $class();
+                                            $lk->setDbAdapter($this->get('recommandationMeasureTable')->getDb());
+                                            $lk->setLanguage($this->getLanguage());
+                                            $lk->exchangeArray([
+                                                'anr' => $anr->get('id'),
+                                                'recommandation' => $sharedData['recos'][$reco['id']],
+                                                'measure' => $sharedData['measures'][$mid],
+                                            ]);
+                                            $this->setDependencies($lk,['anr','recommandation','measure']);
+                                            $this->get('recommandationMeasureTable')->save($lk);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
