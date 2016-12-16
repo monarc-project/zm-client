@@ -2,6 +2,7 @@
 
 namespace MonarcFO\Controller;
 
+use MonarcCore\Model\Entity\AbstractEntity;
 use Zend\View\Model\JsonModel;
 
 class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
@@ -57,7 +58,7 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
 
         /** @var ObjectService $service */
         $service = $this->getService();
-        $id = $service->attachObjectToAnr($data['objectId'], $anrId);
+        $id = $service->attachObjectToAnr($data['objectId'], $anrId, null, null, AbstractEntity::FRONT_OFFICE);
 
         return new JsonModel(
             array(

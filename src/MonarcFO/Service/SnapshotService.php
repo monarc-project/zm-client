@@ -1,6 +1,7 @@
 <?php
 namespace MonarcFO\Service;
 
+use MonarcFO\Model\Entity\Anr;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\SnapshotTable;
 use MonarcFO\Service\AbstractService;
@@ -122,9 +123,14 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
         //switch anr and anrReference
         /** @var SnapshotTable $snapshotTable */
         $snapshotTable = $this->get('table');
+        /** @var AnrService $anrService */
+        $anrService = $this->get('anrService');
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+
         $anrSnapshot = current($snapshotTable->getEntityByFields(['anrReference' => $anrId, 'id' => $id]));
 
-        $newAnrId = $this->get('anrService')->duplicateAnr($anrSnapshot->get('anr')->get('id')); // on duplique l'anr liée au snapshot
+        $newAnrId = $anrService->duplicateAnr($anrSnapshot->get('anr')->get('id')); // on duplique l'anr liée au snapshot
 
         $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
         $i = 1;
@@ -135,7 +141,16 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
             $i++;
         }
 
-        $this->get('anrTable')->delete($anrId); // on supprime l'ancienne anr
+        $anrTable->delete($anrId); // on supprime l'ancienne anr
+
+        /** @var Anr $newAnrSnapshot */
+        $newAnrSnapshot = $anrTable->getEntity($newAnrId);
+
+        // Remove the snap suffix
+        for ($i = 1; $i <= 4; ++$i) {
+            $newAnrSnapshot->set('label' . $i, substr($newAnrSnapshot->get('label' . $i), 7));
+        }
+        $anrTable->save($newAnrSnapshot);
 
         return $newAnrId;
     }

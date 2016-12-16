@@ -14,4 +14,14 @@ class ApiAnrInstancesRisksOpController extends ApiAnrAbstractController
 {
     protected $name = 'instances-oprisks';
 
+
+    public function update($id, $data){
+        $risk = $this->getService()->update($id, $data);
+        unset($risk['anr']);
+        unset($risk['instance']);
+        unset($risk['object']);
+        unset($risk['rolfRisk']);
+
+        return new JsonModel($risk);
+    }
 }

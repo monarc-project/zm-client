@@ -115,6 +115,13 @@ class RecommandationRisk extends AbstractEntity
     /**
      * @var string
      *
+     * @ORM\Column(name="comment_after", type="string", length=255, nullable=true)
+     */
+    protected $commentAfter;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="creator", type="string", length=255, nullable=true)
      */
     protected $creator;

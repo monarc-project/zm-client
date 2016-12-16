@@ -483,7 +483,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newObject->setAnr($newAnr);
             $newObject->setAnrs(null);
             $newObject->addAnr($newAnr);
-            $newObject->setCategory($objectsCategoriesNewIds[$object->category->id]);
+            if (!is_null($object->category)) {
+                $newObject->setCategory($objectsCategoriesNewIds[$object->category->id]);
+            }
             $newObject->setAsset($assetsNewIds[$object->asset->id]);
             if ($object->rolfTag) {
                 $newObject->setRolfTag($rolfTagsNewIds[$object->rolfTag->id]);
@@ -493,9 +495,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $i++;
 
             //root category
-            $objectCategoryTable = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable') : $this->get('objectCategoryCliTable');
-            $objectCategory = $objectCategoryTable->getEntity($object->category->id);
-            $objectsRootCategories[] = ($objectCategory->root) ? $objectCategory->root->id : $objectCategory->id;
+            if (!is_null($object->category)) {
+                $objectCategoryTable = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable') : $this->get('objectCategoryCliTable');
+                $objectCategory = $objectCategoryTable->getEntity($object->category->id);
+                $objectsRootCategories[] = ($objectCategory->root) ? $objectCategory->root->id : $objectCategory->id;
+            }
         }
 
         $objectsRootCategories = array_unique($objectsRootCategories);
@@ -683,5 +687,26 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         return $id;
+    }
+
+
+
+    /**
+     * Get Color
+     *
+     * @param $anr
+     * @param $value
+     * @param array $classes
+     * @return mixed
+     */
+    public function getColor($anr, $value, $classes = ['green', 'orange', 'alerte']){
+
+        if ($value <= $anr->get('seuil1')) {
+            return $classes[0];
+        } else if ($value <= $anr->get('seuil2')) {
+            return $classes[1];
+        } else {
+            return $classes[2];
+        }
     }
 }
