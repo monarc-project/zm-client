@@ -41,5 +41,12 @@ class RolfTag extends \MonarcCore\Model\Entity\RolfTagSuperclass
         $this->anr = $anr;
         return $this;
     }
+
+    /**
+     * @var \MonarFO\Model\Entity\RolfRisk
+     *
+     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\RolfRisk", mappedBy="tags", cascade={"persist"})
+     */
+    protected $risks;
 }
 

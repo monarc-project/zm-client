@@ -173,11 +173,77 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      *
      * @param $data
      * @param bool $last
-     * @return mixed
+     * @return mixed|null
+     * @throws \Exception
      */
     public function create($data, $last = true) {
 
-        //$entity = $this->get('entity');
+        //verify not already exist
+        /** @var RecommandationRiskTable $table */
+        $table = $this->get('table');
+        if ($data['op']) {
+            $exist = $table->getEntityByFields([
+                'anr' => $data['anr'],
+                'recommandation' => $data['recommandation'],
+                'instanceRiskOp' => $data['risk']
+            ]);
+        } else {
+            $exist = $table->getEntityByFields([
+                'anr' => $data['anr'],
+                'recommandation' => $data['recommandation'],
+                'instanceRisk' => $data['risk']
+            ]);
+        }
+        if (count($exist)) {
+            throw new \Exception('Risk already link to this recommendation', 412);
+        }
+
+        if ($data['op']) {
+
+            /** @var InstanceRiskOpTable $instanceRiskOpTable */
+            $instanceRiskOpTable = $this->get('instanceRiskOpTable');
+            $riskOp = $instanceRiskOpTable->getEntity($data['risk']);
+
+            $id = $this->createRecommandationRisk($data, $riskOp);
+
+            if ($riskOp->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
+                $brothers = $instanceRiskOpTable->getEntityByFields(['anr' => $riskOp->anr->id, 'rolfRisk' => $riskOp->rolfRisk->id]);
+                foreach($brothers as $brother) {
+                    if ($riskOp->id != $brother->id) {
+                        $this->createRecommandationRisk($data, $brother);
+                    }
+                }
+            }
+        } else {
+
+            /** @var InstanceRiskTable $instanceRiskTable */
+            $instanceRiskTable = $this->get('instanceRiskTable');
+            $risk = $instanceRiskTable->getEntity($data['risk']);
+
+            $id = $this->createRecommandationRisk($data, $risk);
+
+            if ($risk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
+                $brothers = $instanceRiskTable->getEntityByFields(['anr' => $risk->anr->id, 'amv' => $risk->amv->id]);
+                foreach($brothers as $brother) {
+                    if ($risk->id != $brother->id) {
+                        $this->createRecommandationRisk($data, $brother);
+                    }
+                }
+            }
+        }
+
+        return $id;
+    }
+
+    /**
+     * Create Recommandation Risk
+     *
+     * @param $data
+     * @param $risk
+     * @return mixed|null
+     */
+    public function createRecommandationRisk($data, $risk) {
+
         $class = $this->get('entity');
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
@@ -187,20 +253,10 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
-        //retrieve risk
         if ($data['op']) {
-            /** @var InstanceRiskOpTable $instanceRiskOpTable */
-            $instanceRiskOpTable = $this->get('instanceRiskOpTable');
-            $risk = $instanceRiskOpTable->getEntity($data['risk']);
-
             $entity->setInstanceRisk(null);
             $entity->setInstanceRiskOp($risk);
-
         } else {
-            /** @var InstanceRiskTable $instanceRiskOpTable */
-            $instanceRiskTable = $this->get('instanceRiskTable');
-            $risk = $instanceRiskTable->getEntity($data['risk']);
-
             $entity->setInstanceRisk($risk);
             $entity->setInstanceRiskOp(null);
 
@@ -215,13 +271,17 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $entity->setObjectGlobal($risk->getInstance()->getObject());
         }
 
-
-        /** @var AnrTable $table */
+        /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
 
-        return $table->save($entity, $last);
+        return $table->save($entity);
     }
 
+    /**
+     * Init Position
+     * 
+     * @param $anrId
+     */
     public function initPosition($anrId) {
 
         //retrieve recommandations
@@ -407,6 +467,69 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         else if($final && $recommandation->get('position') > 0){
             $recommandation->position = 0;
             $recommandationTable->save($recommandation);
+        }
+    }
+
+
+    /**
+     * Delete
+     *
+     * @param $id
+     */
+    public function delete($id) {
+
+        /** @var RecommandationRiskTable $table */
+        $table = $this->get('table');
+        $recommandationRisk = $table->getEntity($id);
+
+        if ($recommandationRisk->instanceRisk) {
+
+
+            /** @var InstanceRiskTable $instanceRiskTable */
+            $instanceRiskTable = $this->get('instanceRiskTable');
+            $risk = $instanceRiskTable->getEntity($recommandationRisk->instanceRisk->id);
+
+            if ($risk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
+                $brothers = $instanceRiskTable->getEntityByFields(['anr' => $risk->anr->id, 'amv' => $risk->amv->id]);
+                $brothersIds = [];
+                foreach($brothers as $brother) {
+                    $brothersIds[] = $brother->id;
+                }
+
+                $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $recommandationRisk->recommandation->id]);
+                foreach($recommandationRisksReco as $recommandationRiskReco) {
+                    if ($recommandationRiskReco->instanceRisk) {
+                        if (in_array($recommandationRiskReco->instanceRisk->id, $brothersIds)) {
+                            $this->get('table')->delete($recommandationRiskReco->id);
+                        }
+                    }
+                }
+            } else {
+                $this->get('table')->delete($id);
+            }
+        } else {
+            /** @var InstanceRiskOpTable $instanceRiskOpTable */
+            $instanceRiskOpTable = $this->get('instanceRiskOpTable');
+            $riskOp = $instanceRiskOpTable->getEntity($recommandationRisk->instanceRiskOp->id);
+
+            if ($riskOp->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
+                $brothers = $instanceRiskOpTable->getEntityByFields(['anr' => $riskOp->anr->id, 'rolfRisk' => $riskOp->rolfRisk->id]);
+                $brothersIds = [];
+                foreach($brothers as $brother) {
+                    $brothersIds[] = $brother->id;
+                }
+
+                $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $recommandationRisk->recommandation->id]);
+                foreach($recommandationRisksReco as $recommandationRiskReco) {
+                    if ($recommandationRiskReco->instanceRiskOp) {
+                        if (in_array($recommandationRiskReco->instanceRiskOp->id, $brothersIds)) {
+                            $this->get('table')->delete($recommandationRiskReco->id);
+                        }
+                    }
+                }
+            } else {
+                $this->get('table')->delete($id);
+            }
         }
     }
 }

@@ -108,6 +108,10 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 
         $counters = $distrib = $temp = [];
         foreach($result as $r){
+            if (!isset($r['asset']) || !isset($r['threat']) || !isset($r['vulnerabiltity'])) {
+                continue;
+            }
+
             //on détermine le contexte de travail
             //A. Quel est l'impact MAX au regard du masque CID de la menace
             $imax = $c = $i = $d = 0;
