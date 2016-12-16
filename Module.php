@@ -170,6 +170,7 @@ class Module
                 '\MonarcFO\Service\AnrObjectCategoryService' => '\MonarcFO\Service\AnrObjectCategoryServiceFactory',
                 '\MonarcFO\Service\ObjectExportService' => '\MonarcFO\Service\ObjectExportServiceFactory',
                 '\MonarcFO\Service\AssetExportService' => '\MonarcFO\Service\AssetExportServiceFactory',
+                '\MonarcFO\Service\DeliverableGenerationService' => '\MonarcFO\Service\DeliverableGenerationServiceFactory',
             ),
         );
     }

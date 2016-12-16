@@ -598,6 +598,16 @@ return array(
                             ),
                         ),
                     ),
+
+                    'deliverable' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'deliverable',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrDeliverable',
+                            ),
+                        ),
+                    ),
                 ),
             ),
             'monarc_api_user_password' => array(
@@ -668,6 +678,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrInstancesRisksOp'               => '\MonarcFO\Controller\ApiAnrInstancesRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsCategories'              => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsExport'                  => '\MonarcFO\Controller\ApiAnrObjectsExportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrDeliverable'                    => '\MonarcFO\Controller\ApiAnrDeliverableControllerFactory',
         ),
     ),
 
@@ -756,6 +767,7 @@ return array(
             'monarc_api_global_client_anr/themes',
             'monarc_api_global_client_anr/threats',
             'monarc_api_global_client_anr/vulnerabilities',
+            'monarc_api_global_client_anr/deliverable',
             'monarc_api_duplicate_client_anr',
             'monarc_api_guides',
             'monarc_api_models',
@@ -812,6 +824,7 @@ return array(
             'monarc_api_global_client_anr/themes',
             'monarc_api_global_client_anr/threats',
             'monarc_api_global_client_anr/vulnerabilities',
+            'monarc_api_global_client_anr/deliverable',
             'monarc_api_duplicate_client_anr',
             'monarc_api_models',
             'monarc_api_scales',
