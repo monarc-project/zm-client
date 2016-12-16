@@ -42,7 +42,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
         return $this->importFromArray($data,$anr);
     }
 
-    public function importFromArray($data,$anr){
+    public function importFromArray($data,$anr,&$objectsCache = array()){
         if(isset($data['type']) && $data['type'] == 'asset' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()){
             $asset = $this->get('table')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['asset']['code']]);
@@ -91,7 +91,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                     $threat->set('theme',$data['themes'][$themeArray['id']]);
                                 }
                                 $this->setDependencies($threat,['anr', 'theme']);
-                                $data['threats'][$amvArray['threat']] = $this->get('threatTable')->save($threat);
+                                $objectsCache['threats'][$amvArray['threat']] = $data['threats'][$amvArray['threat']] = $this->get('threatTable')->save($threat);
                             }
                         }
                         $amv->set('threat',$data['threats'][$amvArray['threat']]);
@@ -109,7 +109,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $vul->exchangeArray($data['vuls'][$amvArray['vulnerability']]);
                                 $vul->set('anr',$anr->get('id'));
                                 $this->setDependencies($vul,['anr']);
-                                $data['vuls'][$amvArray['vulnerability']] = $this->get('vulnerabilityTable')->save($vul);
+                                $objectsCache['vuls'][$amvArray['vulnerability']] = $data['vuls'][$amvArray['vulnerability']] = $this->get('vulnerabilityTable')->save($vul);
                             }
                         }
                         $amv->set('vulnerability',$data['vuls'][$amvArray['vulnerability']]);
@@ -128,7 +128,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                     $measure->exchangeArray($data['measures'][$amvArray['measure'.$i]]);
                                     $measure->set('anr',$anr->get('id'));
                                     $this->setDependencies($measure,['anr']);
-                                    $data['measures'][$amvArray['measure'.$i]] = $this->get('measureTable')->save($measure);
+                                    $objectsCache['measures'][$amvArray['measure'.$i]] = $data['measures'][$amvArray['measure'.$i]] = $this->get('measureTable')->save($measure);
                                 }
                             }
                             $amv->set('measure'.$i,$data['measures'][$amvArray['measure'.$i]]);
