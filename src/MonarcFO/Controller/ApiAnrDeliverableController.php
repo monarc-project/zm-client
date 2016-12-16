@@ -27,7 +27,15 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 
     public function getList()
     {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+
         $modelId = $this->params()->fromQuery('model');
+        if(empty($anrId)){
+            throw new \Exception('Model id missing', 412);
+        }
 
         $params = [
             'VERSION' => $this->params()->fromQuery('version'),
@@ -40,7 +48,7 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
         ];
 
         // Generate the DOCX file
-        $filePath = $this->getService()->generateDeliverableWithValues($modelId, $params);
+        $filePath = $this->getService()->generateDeliverableWithValues($anrId, $modelId, $params);
 
         if (file_exists($filePath)) {
             $response = $this->getResponse();
