@@ -107,6 +107,17 @@ return array(
                 ),
             ),
 
+            'monarc_api_client_anr_export' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client-anr-export',
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiAnrExport',
+                    ),
+                ),
+            ),
+
+
             'monarc_api_guides' => array(
                 'type' => 'literal',
                 'options' => array(
@@ -679,6 +690,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrObjectsCategories'              => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsExport'                  => '\MonarcFO\Controller\ApiAnrObjectsExportControllerFactory',
             '\MonarcFO\Controller\ApiAnrDeliverable'                    => '\MonarcFO\Controller\ApiAnrDeliverableControllerFactory',
+            '\MonarcFO\Controller\ApiAnrExport'                         => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
         ),
     ),
 
@@ -750,6 +762,7 @@ return array(
             'monarc_api_global_client_anr/risks_op',
             'monarc_api_global_client_anr/amvs',
             'monarc_api_client_anr',
+            'monarc_api_client_anr_export',
             'monarc_api_global_client_anr/assets',
             'monarc_api_global_client_anr/assets_import',
             'monarc_api_global_client_anr/assets_import_common',
@@ -799,6 +812,7 @@ return array(
             'monarc_api_global_client_anr/library',
             'monarc_api_global_client_anr/library_category',
             'monarc_api_anr_objects',
+            'monarc_api_client_anr_export',
             'monarc_api_guides',
             'monarc_api_anr_objects_parents',
             'monarc_api_global_client_anr/questions',

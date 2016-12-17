@@ -24,6 +24,8 @@ return array(
     'MonarcFO\Controller\ApiAnrControllerFactory'                             => __DIR__ . '/src/MonarcFO/Controller/ApiAnrControllerFactory.php',
     'MonarcFO\Controller\ApiAnrDeliverableController'                         => __DIR__ . '/src/MonarcFO/Controller/ApiAnrDeliverableController.php',
     'MonarcFO\Controller\ApiAnrDeliverableControllerFactory'                  => __DIR__ . '/src/MonarcFO/Controller/ApiAnrDeliverableControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrExportController'                              => __DIR__ . '/src/MonarcFO/Controller/ApiAnrExportController.php',
+    'MonarcFO\Controller\ApiAnrExportControllerFactory'                       => __DIR__ . '/src/MonarcFO/Controller/ApiAnrExportControllerFactory.php',
     'MonarcFO\Controller\ApiAnrImportAbstractController'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrImportAbstractController.php',
     'MonarcFO\Controller\ApiAnrInstanceExportController'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstanceExportController.php',
     'MonarcFO\Controller\ApiAnrInstanceExportControllerFactory'               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstanceExportControllerFactory.php',

@@ -313,9 +313,12 @@ class Module
         foreach($roles as $role) {
             if ($e->getViewModel()->rbac->isGranted($role, $route)) {
                 $id = (int)$e->getRouteMatch()->getParam('id');
-                if(strpos($route, 'monarc_api_global_client_anr/') === 0 || ($route == 'monarc_api_client_anr' && !empty($id))){
-                    if($route == 'monarc_api_client_anr'){
+                if(strpos($route, 'monarc_api_global_client_anr/') === 0 || ($route == 'monarc_api_client_anr_export') || ($route == 'monarc_api_client_anr' && !empty($id))){
+                    if($route == 'monarc_api_client_anr') {
                         $anrid = $id;
+                    }else if($route == 'monarc_api_client_anr_export'){
+                        $anrid = json_decode($e->getRequest()->getContent());
+                        $anrid = $anrid->id;
                     }else{
                         $anrid = (int)$e->getRouteMatch()->getParam('anrid');
                     }
