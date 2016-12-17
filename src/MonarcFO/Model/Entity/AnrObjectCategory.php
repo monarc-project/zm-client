@@ -132,6 +132,12 @@ class AnrObjectCategory extends AbstractEntity
         return $this;
     }
 
+    protected $parameters = [
+        'implicitPosition' => [
+            'field' => 'anr'
+        ]
+    ];
+
     public function getInputFilter($partial = false){
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
