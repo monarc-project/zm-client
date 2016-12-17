@@ -29,11 +29,12 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         $filter = $this->params()->fromQuery('filter');
         $category = $this->params()->fromQuery('category');
         $tag = $this->params()->fromQuery('tag');
+        $anr = $this->params()->fromRoute("anrid");
 
         /** @var RolfRiskService $service */
         $service = $this->getService();
 
-        $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $category, $tag);
+        $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $category, $tag, $anr);
         foreach($rolfRisks as $key => $rolfRisk){
 
             $rolfRisk['categories']->initialize();
