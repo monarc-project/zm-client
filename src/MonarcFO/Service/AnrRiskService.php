@@ -168,7 +168,10 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             case 'vulnerabilityRate':
                 $query->orderBy('ir.vulnerabilityRate',$params['order_direction']);
                 break;
-            case 'vulnerabilityRate':
+            case 'threatRate':
+                $query->orderBy('ir.threatRate',$params['order_direction']);
+                break;
+            case 'targetRisk':
                 $query->orderBy('ir.cacheTargetedRisk',$params['order_direction']);
                 break;
             default:
