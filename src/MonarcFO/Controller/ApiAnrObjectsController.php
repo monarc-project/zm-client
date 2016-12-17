@@ -16,6 +16,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrObjectsController extends ApiAnrAbstractController
 {
     protected $name = 'objects';
+    protected $dependencies = ['asset', 'category', 'rolfTag'];
 
     /**
      * Get list
