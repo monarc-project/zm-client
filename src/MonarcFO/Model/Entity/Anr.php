@@ -33,6 +33,12 @@ class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
      */
     protected $modelImpacts = '0';
 
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="cache_model_is_scales_updatable", type="smallint", options={"unsigned":true, "default":0})
+     */
+    protected $cacheModelIsScalesUpdatable = '0';
 
     /**
      * @return int

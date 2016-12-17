@@ -253,6 +253,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $newAnr->set('model',$idModel);
         if (!empty($model) && is_object($model)) {
             $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
+            $newAnr->set('cacheModelIsScalesUpdatable', $model->isScalesUpdatable);
         }
         if($isSnapshot){ // Si c'est un snapshot on ajoute le préfixe "[SNAP]"
             for($i=1;$i<=4;$i++){
