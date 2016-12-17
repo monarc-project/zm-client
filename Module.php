@@ -338,7 +338,7 @@ class Module
                             }
                             $isGranted = true;
                             break;
-                        }elseif(($isSuperAdmin || $lk->get('rwd') == 0) && $e->getRequest()->getMethod() != 'GET'){
+                        }elseif(!$isSuperAdmin && $lk->get('rwd') == 0 && $e->getRequest()->getMethod() != 'GET'){
                             break; // les droits ne sont pas bon
                         }else{
                             $isGranted = true;
