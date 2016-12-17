@@ -218,6 +218,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $newAnr->setObjects(null);
         $newAnr->exchangeArray($data);
         $newAnr->set('model',$idModel);
+        if (!empty($model) && is_object($model)) {
+            $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
+        }
         if($isSnapshot){ // Si c'est un snapshot on ajoute le préfixe "[SNAP]"
             for($i=1;$i<=4;$i++){
                 $lab = trim($newAnr->get('label'.$i));
@@ -455,10 +458,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         $categoriesIds = [];
         foreach($objects as $object) {
-            $categoriesIds[] = $object->category->id;
-            $this->getParentsCategoryIds($object->category, $categoriesIds);
-
+            if ($object->category) {
+                $categoriesIds[] = $object->category->id;
+                $this->getParentsCategoryIds($object->category, $categoriesIds);
+            }
         }
+
         $objectsCategoriesNewIds = [];
         $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
         foreach($objectsCategories as $objectCategory) {
