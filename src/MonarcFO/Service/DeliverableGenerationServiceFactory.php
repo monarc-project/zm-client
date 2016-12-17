@@ -11,5 +11,8 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'scaleService'          => '\MonarcFO\Service\AnrScaleService',
         'scaleTypeService'      => '\MonarcFO\Service\AnrScaleTypeService',
         'scaleCommentService'   => '\MonarcFO\Service\AnrScaleCommentService',
+        'questionService'       => '\MonarcFO\Service\AnrQuestionService',
+        'questionChoiceService' => '\MonarcFO\Service\AnrQuestionChoiceService',
+        'interviewService'      => '\MonarcFO\Service\AnrInterviewService',
     );
 }

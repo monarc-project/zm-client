@@ -2,6 +2,8 @@
 namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use MonarcCore\Service\DeliveriesModelsService;
+use MonarcCore\Service\QuestionChoiceService;
+use MonarcCore\Service\QuestionService;
 use MonarcFO\Model\Table\AnrTable;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -27,6 +29,12 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected $scaleTypeService;
     /** @var AnrScaleCommentService */
     protected $scaleCommentService;
+    /** @var QuestionService */
+    protected $questionService;
+    /** @var QuestionChoiceService */
+    protected $questionChoiceService;
+    /** @var AnrInterviewService */
+    protected $interviewService;
 
     /**
      * Construct
@@ -107,7 +115,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $section = $tableWord->addSection();
         $table = $section->addTable();
 
-        $styleHeaderCell = array('valign' => 'center');
+        $styleHeaderCell = array('valign' => 'center', 'BorderSize' => 6, 'BorderColor' => '999999');
         $styleHeaderFont = array('bold' => true);
 
         $table->addRow(400);
@@ -145,7 +153,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable();
+        $table = $section->addTable(['align' => 'center']);
 
         // Fill in each row
         for ($row = $threatsScale['min']; $row <= $threatsScale['max']; ++$row) {
@@ -174,7 +182,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable();
+        $table = $section->addTable(['align' => 'center']);
 
         // Fill in each row
         for ($row = $vulnsScale['min']; $row <= $vulnsScale['max']; ++$row) {
@@ -198,19 +206,131 @@ class DeliverableGenerationService extends AbstractServiceFactory
         unset($tableWord);
 
         // Generate risks table
-        $values['TABLE_RISKS'] = '';
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable(['align' => 'center']);
+
+        $risksTableCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFFFFF');
+        $risksTableGreenCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => '4CAF50');
+        $risksTableOrangeCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FF9800');
+        $risksTableRedCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => 'F44336');
+        $risksTableFontStyle = array('bold' => true);
+        $risksTableValueFontStyle = array('Alignment' => 'center', 'bold' => true, 'color' => 'FFFFFF');
+
+        $header = [];
+        for ($t = $threatsScale['min']; $t <= $threatsScale['max']; ++$t) {
+            for ($v = $vulnsScale['min']; $v <= $vulnsScale['max']; ++$v) {
+                $prod = $t * $v;
+                if (array_search($prod, $header) === false) {
+                    $header[] = $prod;
+                }
+            }
+        }
+        asort($header);
+
+        $table->addRow(400);
+        $table->addCell(400, $risksTableCellStyle)->addText('');
+        foreach ($header as $MxV) {
+            $table->addCell(400, $risksTableCellStyle)->addText($MxV, $risksTableFontStyle);
+        }
+
+        for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
+            $table->addRow(400);
+            $table->addCell(400, $risksTableCellStyle)->addText($row, $risksTableFontStyle);
+
+            foreach ($header as $MxV) {
+                $value = $MxV * $row;
+
+                if ($value <= $anr->seuil1) {
+                    $style = $risksTableGreenCellStyle;
+                } else if ($value <= $anr->seuil2) {
+                    $style = $risksTableOrangeCellStyle;
+                } else {
+                    $style = $risksTableRedCellStyle;
+                }
+
+                $table->addCell(400, $style)->addText($MxV * $row, $risksTableValueFontStyle, ['align' => 'center']);
+            }
+        }
+
+        $values['TABLE_RISKS'] = $this->getWordXmlFromWordObject($tableWord);
+        unset($tableWord);
 
         // Table which represents "particular attention" threats
         $values['TABLE_THREATS'] = '';
 
         // Figure A: Trends (Q/A)
-        $values['TABLE_EVAL_TEND'] = '';
+        $questions = $this->questionService->getList(1, 0, null, null, ['anr' => $anr->id]);
+        $questionsChoices = $this->questionChoiceService->getList(1, 0, null, null, ['anr' => $anr->id]);
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable(['align' => 'center']);
+
+        // Fill in each row
+        foreach ($questions as $question) {
+            $table->addRow(400);
+
+            $table->addCell(3000, $styleHeaderCell)->addText($question['label' . $anr->language]);
+
+            if ($question['type'] == 1) {
+                // Simple text
+                $response = $question['response'];
+            } else {
+                // Choice, either simple or multiple
+                if ($question['multichoice']) {
+                    $responseIds = json_decode($question['response']);
+                    $responses = [];
+
+                    foreach ($questionsChoices as $choice) {
+                        if (array_search($choice['id'], $responseIds) !== false) {
+                            $responses[] = '- ' . $choice['label' . $anr->language];
+                        }
+                    }
+
+                    $response = join("\n", $responses);
+                } else {
+                    foreach ($questionsChoices as $choice) {
+                        if ($choice['id'] == $question['response']) {
+                            $response = $choice['label' . $anr->language];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            $table->addCell(5000, $styleHeaderCell)->addText($response, ['alignment' => 'start'], ['align' => 'start']);
+        }
+
+        $values['TABLE_EVAL_TEND'] = $this->getWordXmlFromWordObject($tableWord);
+        unset($tableWord);
 
         // Figure B: Full threats table
         $values['TABLE_THREATS_FULL'] = '';
 
         // Figure C: Interviews table
-        $values['TABLE_INTERVIEW'] = '';
+        $interviews = $this->interviewService->getList(1, 0, null, null, ['anr' => $anr->id]);
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable(['align' => 'center']);
+
+        $table->addRow(400);
+
+        $table->addCell(2000, $styleHeaderCell)->addText("Date", $styleHeaderFont);
+        $table->addCell(2000, $styleHeaderCell)->addText("Service / Personnes", $styleHeaderFont);
+        $table->addCell(2000, $styleHeaderCell)->addText("Contenu", $styleHeaderFont);
+
+        // Fill in each row
+        foreach ($interviews as $interview) {
+            $table->addRow(400);
+
+            $table->addCell(3000, $styleHeaderCell)->addText($interview['date']);
+            $table->addCell(5000, $styleHeaderCell)->addText($interview['service']);
+            $table->addCell(7000, $styleHeaderCell)->addText($interview['content']);
+        }
+
+        $values['TABLE_INTERVIEW'] = $this->getWordXmlFromWordObject($tableWord);
+        unset($tableWord);
 
         return $values;
     }
