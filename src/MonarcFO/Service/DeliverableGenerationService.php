@@ -94,13 +94,16 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected function buildValues($anr, $modelCategory) {
         switch ($modelCategory) {
             case 1: return $this->buildContextValidationValues($anr);
+            case 2: return $this->buildContextModelingValues($anr);
+            case 3: return $this->buildRiskAssessmentValues($anr);
+            default: return [];
         }
     }
 
     protected function buildContextValidationValues($anr) {
         // Values read from database
         $values = [
-            'COMPANY' => 'N/A',
+            'COMPANY' => $this->getCompanyName($anr),
             'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml($anr->contextAnaRisk),
             'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml($anr->contextGestRisk),
             'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml($anr->synthThreat),
@@ -333,6 +336,37 @@ class DeliverableGenerationService extends AbstractServiceFactory
         unset($tableWord);
 
         return $values;
+    }
+
+    protected function buildContextModelingValues($anr) {
+        // Models are incremental, so use values from level-1 model
+        $values = $this->buildContextValidationValues($anr);
+        $values['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml($anr->synthAct);
+        // IMPACTS_APPRECIATION
+
+
+        return $values;
+    }
+
+    protected function buildRiskAssessmentValues($anr) {
+        // Models are incremental, so use values from level-2 model
+        $values = $this->buildContextModelingValues($anr);
+
+        // SUMMARY_EVAL_RISK
+
+        // DISTRIB_EVAL_RISK
+
+        // GRAPH_EVAL_RISK
+
+        // RISKS_RECO_FULL
+
+        // TABLE_AUDIT_INSTANCES
+
+        return $values;
+    }
+
+    protected function getCompanyName($anr) {
+        return 'N/A';
     }
 
     protected function generateWordXmlFromHtml($input) {
