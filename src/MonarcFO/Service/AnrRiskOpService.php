@@ -27,7 +27,22 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         $instances = [];
         if ($instance) {
-            $instances[] = $instanceTable->getEntity($instance['id']);
+            $instanceEntity = $instanceTable->getEntity($instance['id']);
+            $instances[] = $instanceEntity;
+
+            // Get children instances
+            $instanceTable->initTree($instanceEntity);
+            $temp = isset($instanceEntity->parameters['children']) ? $instanceEntity->parameters['children'] : [];
+            while( ! empty($temp) ){
+                $sub = array_shift($temp);
+                $instances[] = $sub;
+
+                if(!empty($sub->parameters['children'])){
+                    foreach($sub->parameters['children'] as $subsub){
+                        array_unshift($temp, $subsub);
+                    }
+                }
+            }
         } else {
             $instances = $instanceTable->getEntityByFields(['anr' => $anrId]);
         }
