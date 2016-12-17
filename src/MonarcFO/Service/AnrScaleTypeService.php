@@ -14,6 +14,8 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
 
     protected $anrTable;
     protected $scaleTable;
+    protected $instanceTable;
+    protected $instanceConsequenceService;
     protected $types = [
         1 => 'C',
         2 => 'I',
@@ -56,5 +58,60 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         }
 
         return $scales;
+    }
+
+    /**
+     * Create
+     *
+     * @param $data
+     * @param bool $last
+     * @return mixed
+     */
+    public function create($data, $last = true) {
+
+        $anrId = $data['anr'];
+
+        if (!isset($data['isSys'])) {
+            $data['isSys'] = 0;
+        }
+        if (!isset($data['isHidden'])) {
+            $data['isSys'] = 0;
+        }
+        if (!isset($data['type'])) {
+            $data['type'] = 9;
+        }
+
+        //$entity = $this->get('entity');
+        $class = $this->get('entity');
+        $entity = new $class();
+        $entity->setDbAdapter($this->get('table')->getDb());
+
+        $entity->exchangeArray($data);
+
+        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $this->setDependencies($entity, $dependencies);
+
+        $id = $this->get('table')->save($entity);
+
+        //retrieve all instances for current anr
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('instanceTable');
+        $instances = $instanceTable->getEntityByFields(['anr' => $anrId]);
+
+        foreach ($instances as $instance) {
+
+            //create instances consequences
+            $dataConsequences = [
+                'anr' => $anrId,
+                'instance' => $instance->id,
+                'object' => $instance->object->id,
+                'scaleImpactType' => $id,
+            ];
+            /** @var InstanceConsequenceService $instanceConsequenceService */
+            $instanceConsequenceService = $this->get('instanceConsequenceService');
+            $instanceConsequenceService->create($dataConsequences);
+        }
+
+        return $id;
     }
 }
