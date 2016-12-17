@@ -137,7 +137,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         // More filters
         if (isset($params['thresholds']) && $params['thresholds'] > 0) {
-            $query->andWhere('((threat.c > 0 OR threat.i > 0 OR threat.d > 0) AND GREATEST(threat.c,threat.i,threat.d) < :min)')
+            $query->andWhere('((ir.riskC > 0 OR ir.riskI > 0 OR ir.riskD > 0) AND GREATEST(ir.riskC,ir.riskI,ir.riskD) >= :min)')
                 ->setParameter(':min',$params['thresholds']);
         }
 
