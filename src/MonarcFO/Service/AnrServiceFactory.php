@@ -60,6 +60,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'themeCliTable' => 'MonarcFO\Model\Table\ThemeTable',
         'userCliTable' => 'MonarcFO\Model\Table\UserTable',
         'userAnrCliTable' => 'MonarcFO\Model\Table\UserAnrTable',
+        'userRoleTable' => 'MonarcFO\Model\Table\UserRoleTable',
         'vulnerabilityCliTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
         'questionCliTable' => 'MonarcFO\Model\Table\QuestionTable',
         'questionChoiceCliTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',

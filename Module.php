@@ -297,8 +297,12 @@ class Module
         $userRoles = $userRoleService->getList(1, 25, null, $connectedUser['id']);
 
         $roles = [];
+        $isSuperAdmin = false;
         foreach($userRoles as $userRole) {
             $roles[] = $userRole['role'];
+            if ($userRole['role'] == 'superadminfo') {
+                $isSuperAdmin = true;
+            }
         }
 
         if (empty($roles)) {
@@ -319,7 +323,7 @@ class Module
                         break; // pas besoin d'aller plus loin
                     }else{
                         $lk = current($sm->get('MonarcFO\Model\Table\UserAnrTable')->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser['id']]));
-                        if(empty($lk)){
+                        if(empty($lk) && !$isSuperAdmin){
                             // On doit tester si c'est un snapshot, dans ce cas, on autorise l'accès mais en READ-ONLY
                             if($e->getRequest()->getMethod() != 'GET'){
                                 break; // même si c'est un snapshot, on n'autorise que du GET
@@ -334,7 +338,7 @@ class Module
                             }
                             $isGranted = true;
                             break;
-                        }elseif($lk->get('rwd') == 0 && $e->getRequest()->getMethod() != 'GET'){
+                        }elseif(($isSuperAdmin || $lk->get('rwd') == 0) && $e->getRequest()->getMethod() != 'GET'){
                             break; // les droits ne sont pas bon
                         }else{
                             $isGranted = true;

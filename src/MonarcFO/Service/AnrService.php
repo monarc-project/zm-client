@@ -68,6 +68,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $themeCliTable;
     protected $userCliTable;
     protected $userAnrCliTable;
+    protected $userRoleTable;
     protected $vulnerabilityCliTable;
     protected $questionCliTable;
     protected $questionChoiceCliTable;
@@ -84,10 +85,28 @@ class AnrService extends \MonarcCore\Service\AbstractService
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
-        $anrs = $this->get('userAnrCliTable')->getEntityByFields(['user'=>$userArray['id']]);
+        $userRoles = $this->userRoleTable->getEntityByFields(['user'=>$userArray['id']]);
+        $isSuperAdmin = false;
+
+        foreach ($userRoles as $role) {
+            if ($role->role == 'superadminfo') {
+                $isSuperAdmin = true;
+                break;
+            }
+        }
+
         $filterAnd['id'] = [];
-        foreach($anrs as $a){
-            $filterAnd['id'][$a->get('anr')->get('id')] = $a->get('anr')->get('id');
+
+        if (!$isSuperAdmin) {
+            $anrs = $this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id']]);
+            foreach ($anrs as $a) {
+                $filterAnd['id'][$a->get('anr')->get('id')] = $a->get('anr')->get('id');
+            }
+        } else {
+            $anrs = $this->anrCliTable->fetchAllObject();
+            foreach ($anrs as $a) {
+                $filterAnd['id'][$a->id] = $a->id;
+            }
         }
 
         /** @var SnapshotTable $snapshotCliTable */
@@ -156,11 +175,25 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }else{
             $userCliTable = $this->get('userCliTable');
             $userArray = $userCliTable->getConnectedUser();
-            $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user'=>$userArray['id'], 'anr'=>$anr['id']]));
-            if(empty($lk)){
-                throw new \Exception('Restricted ANR', 412);
-            }else{
-                $anr['rwd'] = $lk->get('rwd');
+            $userRoles = $this->userRoleTable->getEntityByFields(['user'=>$userArray['id']]);
+            $isSuperAdmin = false;
+
+            foreach ($userRoles as $role) {
+                if ($role->role == 'superadminfo') {
+                    $isSuperAdmin = true;
+                    break;
+                }
+            }
+
+            if (!$isSuperAdmin) {
+                $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id'], 'anr' => $anr['id']]));
+                if (empty($lk)) {
+                    throw new \Exception('Restricted ANR', 412);
+                } else {
+                    $anr['rwd'] = $lk->get('rwd');
+                }
+            } else {
+                $anr['rwd'] = 1;
             }
         }
         return $anr;

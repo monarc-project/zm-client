@@ -63,6 +63,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     }
                 }
             }
+
             $query->andWhere('i.id IN (:ids)')
                 ->setParameter(':ids',$instanceIds);
         }else{
