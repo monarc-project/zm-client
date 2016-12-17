@@ -2,6 +2,7 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Model\Entity\AnrSuperClass;
+use MonarcFO\Model\Entity\User;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ModelTable;
 use MonarcFO\Model\Table\SnapshotTable;
@@ -124,6 +125,16 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $this->parseFrontendFilter($filter, $this->filterColumns),
             $filterAnd
         );
+
+        $user = $userCliTable->get($userArray['id']);
+        if (isset($user['currentAnr'])) {
+            foreach ($anrs as &$anr) {
+                if ($anr['id'] == $user['currentAnr']->id) {
+                    $anr['isCurrentAnr'] = 1;
+                    break;
+                }
+            }
+        }
 
         return $anrs;
     }
@@ -732,6 +743,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $this->get('questionChoiceCliTable')->save($newQuestionChoice, ($i == count($questionChoices)));
             $i++;
         }
+
+        // Set as user's current ANR
+        /** @var UserTable $userCliTable */
+        $userCliTable = $this->get('userCliTable');
+        $currentUser = $userCliTable->getConnectedUser();
+        /** @var User $user */
+        $user = $userCliTable->getEntity($currentUser['id']);
+        $user->set('currentAnr', $anrCliTable->getEntity($id));
+        $userCliTable->save($user);
 
         return $id;
     }

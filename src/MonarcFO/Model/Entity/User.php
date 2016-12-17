@@ -115,6 +115,17 @@ class User extends AbstractEntity
      */
     protected $language;
 
+    /**
+     * @var \MonarcFO\Model\Entity\Anr
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="current_anr_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $currentAnr;
+
+
     public function getInputFilter($partial = false){
 
         if (!$this->inputFilter) {
