@@ -2,10 +2,12 @@
 namespace MonarcFO\Service;
 
 use \Doctrine\ORM\Query\Expr\Join;
+use MonarcCore\Service\RolfRiskService;
 use \MonarcFO\Model\Entity\InstanceRisk;
 use \MonarcFO\Model\Entity\Object;
 use \MonarcFO\Model\Entity\Asset;
 use \MonarcFO\Model\Entity\InstanceRiskOp;
+use MonarcFO\Model\Table\RolfRiskTable;
 
 /**
  * Anr RiskOp Service
@@ -20,6 +22,12 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
     protected $instanceRiskOpService;
     protected $instanceTable;
+    /** @var  RolfRiskTable */
+    protected $rolfRiskTable;
+    /** @var  RolfRiskService */
+    protected $rolfRiskService;
+    protected $objectTable;
+    protected $anrTable;
 
 	public function getRisksOp($anrId, $instance = null, $params = []) {
         /** @var InstanceTable $instanceTable */
@@ -139,5 +147,49 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         }
 
         return $riskOps;
+    }
+
+
+    public function createSpecificRiskOp($data) {
+        $data['specific'] = 1;
+
+        $instance = $this->instanceTable->getEntity($data['instance']);
+        $data['instance'] = $instance;
+        $data['object'] = $this->objectTable->getEntity($instance->object->id);
+
+        if ($data['source'] == 2) {
+            // Create a new risk
+            $anr = $this->anrTable->getEntity($data['anr']);
+
+            $label = $data['label'];
+            $desc = $data['description'];
+            unset($data['label']);
+            unset($data['description']);
+
+            $riskData = [
+                'anr' => $anr,
+                'code' => $data['code'],
+                'label'.$anr->language => $label,
+                'description'.$anr->language => $desc,
+            ];
+            $data['risk'] = $this->rolfRiskService->create($riskData, true);
+        }
+
+        // Install an existing risk
+        $sourceRiskId = $data['risk'];
+        $risk = $this->rolfRiskTable->getEntity($sourceRiskId);
+
+        $data['rolfRisk'] = $risk;
+        $data['riskCacheCode'] = $risk->code;
+        $data['riskCacheLabel1'] = $risk->label1;
+        $data['riskCacheLabel2'] = $risk->label2;
+        $data['riskCacheLabel3'] = $risk->label3;
+        $data['riskCacheLabel4'] = $risk->label4;
+        $data['riskCacheDescription1'] = $risk->description1;
+        $data['riskCacheDescription2'] = $risk->description2;
+        $data['riskCacheDescription3'] = $risk->description3;
+        $data['riskCacheDescription4'] = $risk->description4;
+
+        $this->create($data, true);
     }
 }

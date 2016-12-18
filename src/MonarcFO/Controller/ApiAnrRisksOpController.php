@@ -37,10 +37,25 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
             ]);
         }
 	}
-	public function create($data){
-        $this->methodNotAllowed();
-	}
-	public function delete($id){
+
+    public function create($data) {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+        $data['anr'] = $anrId;
+
+        $id = $this->getService()->createSpecificRiskOp($data);
+
+        return new JsonModel(
+            array(
+                'status' => 'ok',
+                'id' => $id,
+            )
+        );
+    }
+
+    public function delete($id){
 		$this->methodNotAllowed($id);
 	}
 	public function deleteList($data){
