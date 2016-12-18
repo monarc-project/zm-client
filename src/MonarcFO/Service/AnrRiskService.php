@@ -77,7 +77,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             ->leftJoin('ir.amv', 'amv')
             ->innerJoin('ir.threat', 'threat')
             ->innerJoin('ir.vulnerability', 'vulnerability')
-            ->innerJoin('ir.asset', 'asset')
+            ->leftJoin('ir.asset', 'asset')
             ->innerJoin('i.object', 'o')
             ->leftJoin('amv.measure1', 'measure1')
             ->leftJoin('amv.measure2', 'measure2')
