@@ -226,6 +226,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     'vulnDescription4' => $r['vulnerability_description4'],
                     'vulnerabilityRate' => $r['ir_vulnerabilityRate'],
                     'kindOfMeasure' => $r['ir_kindOfMeasure'],
+                    'specific' => $r['ir_specific'],
                     'reductionAmount' => $r['ir_reductionAmount'],
                     'c_impact' => $r['i_c'],
                     'c_risk' => $r['ir_riskC'],
