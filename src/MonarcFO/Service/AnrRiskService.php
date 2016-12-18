@@ -19,6 +19,8 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     protected $anrTable;
     protected $instanceTable;
     protected $instanceRiskTable;
+    protected $threatTable;
+    protected $vulnerabilityTable;
     
     public function getRisks($anrId, $instanceId = null,$params = []){
         $anr = $this->get('anrTable')->getEntity($anrId); // on check que l'ANR existe
@@ -266,5 +268,44 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             }
         }
         return array_values($return);
+    }
+
+    /**
+     * Create
+     *
+     * @param $data
+     * @param bool $last
+     * @return mixed
+     */
+    public function create($data, $last = true) {
+        $data['specific'] = 1;
+
+        $class = $this->get('entity');
+        $entity = new $class();
+        $entity->setLanguage($this->getLanguage());
+        $entity->setDbAdapter($this->get('table')->getDb());
+
+        if (isset($data['vulnerability'])) {
+            $vuln = $this->vulnerabilityTable->getEntity($data['vulnerability']);
+            $data['vulnerability'] = $vuln;
+        }
+        if (isset($data['threat'])) {
+            $threat = $this->threatTable->getEntity($data['threat']);
+            $data['threat'] = $threat;
+        }
+        if (isset($data['instance'])) {
+            $instance = $this->instanceTable->getEntity($data['instance']);
+            $data['instance'] = $instance;
+        }
+
+        $entity->exchangeArray($data);
+
+        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $this->setDependencies($entity, $dependencies);
+
+        /** @var AnrTable $table */
+        $table = $this->get('table');
+
+        return $table->save($entity, $last);
     }
 }
