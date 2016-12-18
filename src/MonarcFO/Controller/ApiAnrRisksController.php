@@ -53,9 +53,6 @@ class ApiAnrRisksController extends ApiAnrAbstractController
             ]);
         }
 	}
-	public function delete($id){
-		$this->methodNotAllowed($id);
-	}
 	public function deleteList($data){
 		$this->methodNotAllowed();
 	}
