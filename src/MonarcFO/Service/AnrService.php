@@ -127,12 +127,16 @@ class AnrService extends \MonarcCore\Service\AbstractService
         );
 
         $user = $userCliTable->get($userArray['id']);
-        if (isset($user['currentAnr'])) {
-            foreach ($anrs as &$anr) {
-                if ($anr['id'] == $user['currentAnr']->id) {
-                    $anr['isCurrentAnr'] = 1;
-                    break;
-                }
+        foreach ($anrs as &$anr) {
+            if (isset($user['currentAnr']) && $anr['id'] == $user['currentAnr']->id) {
+                $anr['isCurrentAnr'] = 1;
+            }
+
+            $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id'], 'anr' => $anr['id']]));
+            if (empty($lk)) {
+                $anr['rwd'] = -1;
+            } else {
+                $anr['rwd'] = $lk->get('rwd');
             }
         }
 
@@ -183,30 +187,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $anr['isSnapshot'] = 1;
             $anr['rwd'] = 0;
             $anr['snapshotParent'] = $anrSnapshot->get('anrReference')->get('id');
-        }else{
+        }else {
             $userCliTable = $this->get('userCliTable');
             $userArray = $userCliTable->getConnectedUser();
-            $userRoles = $this->userRoleTable->getEntityByFields(['user'=>$userArray['id']]);
-            $isSuperAdmin = false;
 
-            foreach ($userRoles as $role) {
-                if ($role->role == 'superadminfo') {
-                    $isSuperAdmin = true;
-                    break;
-                }
-            }
-
-            if (!$isSuperAdmin) {
-                $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id'], 'anr' => $anr['id']]));
-                if (empty($lk)) {
-                    throw new \Exception('Restricted ANR', 412);
-                } else {
-                    $anr['rwd'] = $lk->get('rwd');
-                }
+            $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id'], 'anr' => $anr['id']]));
+            if (empty($lk)) {
+                throw new \Exception('Restricted ANR', 412);
             } else {
-                $anr['rwd'] = 1;
+                $anr['rwd'] = $lk->get('rwd');
             }
         }
+
         return $anr;
     }
 
