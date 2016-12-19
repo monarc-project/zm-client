@@ -56,7 +56,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         }
         $instancesIds = [];
         foreach ($instances as $i) {
-            if($i->get('asset')->get('type') == Asset::ASSET_PRIMARY){
+            if($i->get('asset')->get('type') == Asset::TYPE_PRIMARY){
                 $instancesIds[] = $i->id;
             }
         }
