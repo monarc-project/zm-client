@@ -672,10 +672,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newInstanceRisk = new \MonarcFO\Model\Entity\InstanceRisk($instanceRisk);
             $newInstanceRisk->set('id',null);
             $newInstanceRisk->setAnr($newAnr);
-            $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
-            $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->id]);
-            $newInstanceRisk->setThreat($threatsNewIds[$instanceRisk->threat->id]);
-            $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->vulnerability->id]);
+            if ($instanceRisk->amv) {
+                $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
+            }
+            if ($instanceRisk->asset) {
+                $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->id]);
+            }
+            if ($instanceRisk->threat) {
+                $newInstanceRisk->setThreat($threatsNewIds[$instanceRisk->threat->id]);
+            }
+            if ($instanceRisk->vulnerability) {
+                $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->vulnerability->id]);
+            }
             $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
             $this->get('instanceRiskCliTable')->save($newInstanceRisk, $last);
             $i++;
