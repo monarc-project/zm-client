@@ -4,6 +4,7 @@ namespace MonarcFO\Service;
 use \Doctrine\ORM\Query\Expr\Join;
 use \MonarcFO\Model\Entity\InstanceRisk;
 use \MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Table\InstanceRiskTable;
 
 /**
  * Anr Risk Service
@@ -18,6 +19,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
     protected $anrTable;
     protected $instanceTable;
+    /** @var  InstanceRiskTable */
     protected $instanceRiskTable;
     protected $threatTable;
     protected $vulnerabilityTable;
@@ -286,6 +288,12 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true) {
         $data['specific'] = 1;
+
+        // Check that we don't already have a risk with this vuln/threat/instance combo
+        $entity = $this->instanceRiskTable->getEntityByFields(['anr' => $data['anr'], 'vulnerability' => $data['vulnerability'], 'threat' => $data['threat'], 'instance' => $data['instance']]);
+        if ($entity) {
+            throw new \Exception("This risk already exists in this instance", 412);
+        }
 
         $class = $this->get('entity');
         $entity = new $class();
