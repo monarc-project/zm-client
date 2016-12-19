@@ -31,6 +31,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $recommandationHistoricEntity;
     protected $anrService;
     protected $anrInstanceService;
+    protected $instanceTable;
 
     /**
      * Get List
@@ -119,7 +120,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                             if (is_object($instanceRisk->vulnerability)) {
                                 $instanceRisk->vulnerability = $instanceRisk->vulnerability->getJsonArray();
                             }
-                            $recommandations[$key]['risks'][] = $instanceRisk->getJsonArray();
+                            $riskData = $instanceRisk->getJsonArray();
+                            $riskData['instance'] = $this->instanceTable->getEntity($riskData['instance'])->getJsonArray();
+                            $recommandations[$key]['risks'][] = $riskData;
                             $nbRisks++;
                         }
                     }

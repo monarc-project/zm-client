@@ -17,5 +17,6 @@ class AnrRecommandationRiskServiceFactory extends AbstractServiceFactory
         'recommandationHistoricEntity'=> 'MonarcFO\Model\Entity\RecommandationHistoric',
         'anrService' => 'MonarcFO\Service\AnrService',
         'anrInstanceService' => 'MonarcFO\Service\AnrInstanceService',
+        'instanceTable' => '\MonarcFO\Model\Table\InstanceTable',
     );
 }
