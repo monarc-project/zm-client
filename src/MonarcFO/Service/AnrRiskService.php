@@ -51,7 +51,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         if(empty($instance)){
             // On prend toutes les instances, on est sur l'anr
-        }elseif($instance->get('asset') && $instance->get('asset')->get('type') == \MonarcCore\Model\Entity\AssetSuperClass::ASSET_PRIMARY){
+        }elseif($instance->get('asset') && $instance->get('asset')->get('type') == \MonarcCore\Model\Entity\AssetSuperClass::TYPE_PRIMARY){
             $instanceIds = [];
             $instanceIds[$instance->get('id')] = $instance->get('id');
             $this->get('instanceTable')->initTree($instance);
