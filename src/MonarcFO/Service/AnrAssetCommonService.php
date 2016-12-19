@@ -65,16 +65,16 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
 			$asset = $this->get('table')->getRepository()->createQueryBuilder('a');
 			$fctWhere = 'where';
 			if($model->get('isGeneric') || !$model->get('isRegulator')){
-				$assets = $assets->where('a.mode = :mode')
+				$asset = $asset->where('a.mode = :mode')
 					->setParameter(':mode',0); // generic
 				$fctWhere = 'andWhere';
 			}
 			if(!$model->get('isGeneric')){
-				$assets = $assets->innerJoin('a.models', 'm')
+				$asset = $asset->innerJoin('a.models', 'm')
 					->$fctWhere('m.id = :mid')
 					->setParameter(':mid',$anr->get('model'));
 			}
-			$assets = $assets->setFirstResult(0)->setMaxResults(1)
+			$asset = $asset->setFirstResult(0)->setMaxResults(1)
 				->getQuery()->getSingleResult();
 			if($asset){
 				$return = $asset->getJsonArray([
