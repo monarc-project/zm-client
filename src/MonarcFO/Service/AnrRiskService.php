@@ -5,6 +5,7 @@ use \Doctrine\ORM\Query\Expr\Join;
 use \MonarcFO\Model\Entity\InstanceRisk;
 use \MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\InstanceRiskTable;
+use MonarcFO\Model\Table\InstanceTable;
 
 /**
  * Anr Risk Service
@@ -287,6 +288,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
      * @return mixed
      */
     public function create($data, $last = true) {
+
         $data['specific'] = 1;
 
         // Check that we don't already have a risk with this vuln/threat/instance combo
@@ -299,6 +301,12 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
         $entity->setDbAdapter($this->get('table')->getDb());
+
+        //retrieve asset
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('instanceTable');
+        $instance = $instanceTable->getEntity($data['instance']);
+        $data['asset'] = $instance->asset;
 
         if (isset($data['vulnerability'])) {
             $vuln = $this->vulnerabilityTable->getEntity($data['vulnerability']);
