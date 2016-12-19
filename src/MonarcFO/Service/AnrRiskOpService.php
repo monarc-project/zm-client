@@ -7,6 +7,7 @@ use \MonarcFO\Model\Entity\InstanceRisk;
 use \MonarcFO\Model\Entity\Object;
 use \MonarcFO\Model\Entity\Asset;
 use \MonarcFO\Model\Entity\InstanceRiskOp;
+use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\RolfRiskTable;
 
 /**
@@ -143,6 +144,8 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 'targetedF' => $instanceRiskOp->targetedF,
                 'targetedP' => $instanceRiskOp->targetedP,
                 'cacheTargetedRisk' => $instanceRiskOp->cacheTargetedRisk,
+
+                'specific' => $instanceRiskOp->specific,
             ];
         }
 
@@ -173,6 +176,14 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 'description'.$anr->language => $desc,
             ];
             $data['risk'] = $this->rolfRiskService->create($riskData, true);
+        } else {
+            // Check if we don't already have it
+            /** @var InstanceRiskOpTable $table */
+            $table = $this->get('table');
+            if ($table->getEntityByFields(['anr' => $data['anr'], 'instance' => $data['instance']->id, 'rolfRisk' => $data['risk']])) {
+                throw new \Exception("This risk already exists in this instance", 412);
+            }
+
         }
 
         // Install an existing risk
