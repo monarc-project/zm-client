@@ -684,7 +684,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
             if ($instanceRisk->vulnerability) {
                 $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->vulnerability->id]);
             }
-            $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
+            if ($instanceRisk->instance) {
+                $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
+            }
             $this->get('instanceRiskCliTable')->save($newInstanceRisk, $last);
             $i++;
         }
