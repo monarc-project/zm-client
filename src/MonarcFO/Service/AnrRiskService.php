@@ -191,7 +191,13 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $globalRisks = $return = [];
 
         foreach($result as $r){
-            if(!isset($globalRisks[$r['i_id']][$r['threat_id']][$r['vulnerability_id']])){
+            if(isset($globalRisks[$r['o_id']][$r['threat_id']][$r['vulnerability_id']]) &&
+                isset($return[$globalRisks[$r['o_id']][$r['threat_id']][$r['vulnerability_id']]]) &&
+                $return[$globalRisks[$r['o_id']][$r['threat_id']][$r['vulnerability_id']]]['max_risk'] < $r['ir_cacheMaxRisk']){
+                unset($return[$globalRisks[$r['o_id']][$r['threat_id']][$r['vulnerability_id']]]);
+                unset($globalRisks[$r['o_id']][$r['threat_id']][$r['vulnerability_id']]);
+            }
+            if(!isset($globalRisks[$r['o_id']][$r['threat_id']][$r['vulnerability_id']])){
                 $return[$r['ir_id']] = [
                     'id' => $r['ir_id'],
                     'instance' => $r['i_id'],
@@ -264,7 +270,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     ],
                 ];
                 if($r['scope'] == Object::SCOPE_GLOBAL){
-                    $globalRisks[$r['i_id']][$r['threat_id']][$r['vulnerability_id']] = 1;
+                    $globalRisks[$r['o_id']][$r['threat_id']][$r['vulnerability_id']] = $r['ir_id'];
                 }
             }
         }
