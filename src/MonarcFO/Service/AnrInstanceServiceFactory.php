@@ -26,6 +26,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceRiskService' => 'MonarcFO\Service\AnrInstanceRiskService',
         'instanceRiskOpService' => 'MonarcFO\Service\AnrInstanceRiskOpService',
         'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
+        'translateService' => 'MonarcCore\Service\TranslateService',
         
         // Useless (Deprecated)
         'assetTable' => 'MonarcFO\Model\Table\AssetTable',
