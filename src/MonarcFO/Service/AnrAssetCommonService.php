@@ -59,13 +59,13 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
     public function getAsset($anrId, $assetId){
     	$anr = $this->get('anrTable')->getEntity($anrId);
 		if($anr){
-			$asset = $this->get('table')->getRepository()->createQueryBuilder('a');
 			$model = $this->get('coreServiceAsset')->get('modelTable')->getEntity($anr->get('model'));
 
 			$asset = $this->get('table')->getRepository()->createQueryBuilder('a');
-			$fctWhere = 'where';
+            $asset = $asset->where('a.id = :assetId')->setParameter(':assetId', $assetId);
+			$fctWhere = 'andWhere';
 			if($model->get('isGeneric') || !$model->get('isRegulator')){
-				$asset = $asset->where('a.mode = :mode')
+				$asset = $asset->andWhere('a.mode = :mode')
 					->setParameter(':mode',0); // generic
 				$fctWhere = 'andWhere';
 			}
