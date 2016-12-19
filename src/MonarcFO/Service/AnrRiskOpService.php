@@ -165,7 +165,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             $anr = $this->anrTable->getEntity($data['anr']);
 
             $label = $data['label'];
-            $desc = $data['description'];
+            $desc = (isset($data['description'])) ? $data['description'] : '';
             unset($data['label']);
             unset($data['description']);
 
@@ -201,6 +201,6 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         $data['riskCacheDescription3'] = $risk->description3;
         $data['riskCacheDescription4'] = $risk->description4;
 
-        $this->create($data, true);
+        return $this->create($data, true);
     }
 }
