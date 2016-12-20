@@ -16,13 +16,14 @@ class InstanceConsequenceTable extends AbstractEntityTable   {
             ->where('t.anr = :anrid')
             ->setParameter(':anrid',$anrId)
             ->andWhere($qb->expr()->orX(
-                $qb->expr()->eq('t.c', -1),
-                $qb->expr()->eq('t.i', -1),
-                $qb->expr()->eq('t.d', -1),
-                $qb->expr()->eq('i.c', -1),
-                $qb->expr()->eq('i.i', -1),
-                $qb->expr()->eq('i.d', -1)
+                $qb->expr()->neq('t.c', -1),
+                $qb->expr()->neq('t.i', -1),
+                $qb->expr()->neq('t.d', -1),
+                $qb->expr()->neq('i.c', -1),
+                $qb->expr()->neq('i.i', -1),
+                $qb->expr()->neq('i.d', -1)
             ))->getQuery()->getSingleScalarResult();
+
         return $res > 0;
     }
 }

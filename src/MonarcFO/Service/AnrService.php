@@ -256,12 +256,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
 
-        /** @var UserAnrTable $userAnrCliTable */
-        $userAnrCliTable = $this->get('userAnrCliTable');
-        $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anr->id, 'user' => $userArray['id']]);
+        if ($source == Object::SOURCE_CLIENT) {
+            /** @var UserAnrTable $userAnrCliTable */
+            $userAnrCliTable = $this->get('userAnrCliTable');
+            $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anr->id, 'user' => $userArray['id']]);
 
-        if (count($userAnr) == 0) {
-            throw new \Exception('You are not authorized to duplicate this analysis', 412);
+            if (count($userAnr) == 0) {
+                throw new \Exception('You are not authorized to duplicate this analysis', 412);
+            }
         }
 
         //duplicate anr
