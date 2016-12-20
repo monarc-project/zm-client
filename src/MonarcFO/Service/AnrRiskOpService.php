@@ -30,6 +30,16 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $objectTable;
     protected $anrTable;
 
+    protected function findInFields($obj, $search, $fields = []) {
+        foreach ($fields as $field) {
+            if (stripos((is_object($obj) ? $obj->{$field} : $obj[$field]), $search) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 	public function getRisksOp($anrId, $instance = null, $params = []) {
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
