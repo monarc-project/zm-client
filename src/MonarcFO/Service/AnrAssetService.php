@@ -36,10 +36,23 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     	// on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];
         // On aura la possibilité d'avoir plusieurs fichiers (même pwd: si un fichier ne match pas, on renvoie un warning)
-        $data = $this->decrypt($data,$key);
-
+        if(empty($data['file'])){
+            throw new \Exception('File missing', 412);
+        }
+        $ids = [];
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
-        return $this->importFromArray($data,$anr);
+        foreach($data['file'] as $f){
+            if(isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])){
+                $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])),$key)),true);
+                if($file !== false && ($id = $this->get('objectExportService')->importFromArray($file,$anr)) !== false){
+                    $ids[] = $id;
+                }else{
+                    $ids[] = 'The file "'.$f['name'].'" can\'t be imported';
+                }
+            }
+        }
+
+        return $ids;
     }
 
     public function importFromArray($data,$anr,&$objectsCache = array()){
