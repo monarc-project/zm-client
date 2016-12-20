@@ -14,9 +14,10 @@ class InstanceRiskTable extends AbstractEntityTable   {
             ->where('t.anr = :anrid')
             ->setParameter(':anrid',$anrId)
             ->andWhere($qb->expr()->orX(
-                $qb->expr()->eq('t.threatRate', -1),
-                $qb->expr()->eq('t.vulnerabilityRate', -1)
+                $qb->expr()->neq('t.threatRate', -1),
+                $qb->expr()->neq('t.vulnerabilityRate', -1)
             ))->getQuery()->getSingleScalarResult();
+
         return $res > 0;
     }
 }

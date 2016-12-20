@@ -12,21 +12,21 @@ class InstanceRiskOpTable extends \MonarcCore\Model\Table\InstanceRiskOpTable   
             ->where('t.anr = :anrid')
             ->setParameter(':anrid',$anrId)
             ->andWhere($qb->expr()->orX(
-                $qb->expr()->eq('t.brutProb', -1),
-                $qb->expr()->eq('t.brutR', -1),
-                $qb->expr()->eq('t.brutO', -1),
-                $qb->expr()->eq('t.brutL', -1),
-                $qb->expr()->eq('t.brutF', -1),
-                $qb->expr()->eq('t.netProb', -1),
-                $qb->expr()->eq('t.netR', -1),
-                $qb->expr()->eq('t.netO', -1),
-                $qb->expr()->eq('t.netL', -1),
-                $qb->expr()->eq('t.netF', -1),
-                $qb->expr()->eq('t.targetedProb', -1),
-                $qb->expr()->eq('t.targetedR', -1),
-                $qb->expr()->eq('t.targetedO', -1),
-                $qb->expr()->eq('t.targetedL', -1),
-                $qb->expr()->eq('t.targetedF', -1)
+                $qb->expr()->neq('t.brutProb', -1),
+                $qb->expr()->neq('t.brutR', -1),
+                $qb->expr()->neq('t.brutO', -1),
+                $qb->expr()->neq('t.brutL', -1),
+                $qb->expr()->neq('t.brutF', -1),
+                $qb->expr()->neq('t.netProb', -1),
+                $qb->expr()->neq('t.netR', -1),
+                $qb->expr()->neq('t.netO', -1),
+                $qb->expr()->neq('t.netL', -1),
+                $qb->expr()->neq('t.netF', -1),
+                $qb->expr()->neq('t.targetedProb', -1),
+                $qb->expr()->neq('t.targetedR', -1),
+                $qb->expr()->neq('t.targetedO', -1),
+                $qb->expr()->neq('t.targetedL', -1),
+                $qb->expr()->neq('t.targetedF', -1)
             ))->getQuery()->getSingleScalarResult();
         return $res > 0;
     }
