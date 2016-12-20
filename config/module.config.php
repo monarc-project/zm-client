@@ -705,6 +705,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrInstancesRisksOp'               => '\MonarcFO\Controller\ApiAnrInstancesRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsCategories'              => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsExport'                  => '\MonarcFO\Controller\ApiAnrObjectsExportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrObjectsImport'                  => '\MonarcFO\Controller\ApiAnrObjectsImportControllerFactory',
             '\MonarcFO\Controller\ApiAnrDeliverable'                    => '\MonarcFO\Controller\ApiAnrDeliverableControllerFactory',
             '\MonarcFO\Controller\ApiAnrExport'                         => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
         ),
