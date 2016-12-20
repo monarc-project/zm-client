@@ -43,9 +43,9 @@ class RolfTag extends \MonarcCore\Model\Entity\RolfTagSuperclass
     }
 
     /**
-     * @var \MonarFO\Model\Entity\RolfRisk
+     * @var \MonarcFO\Model\Entity\RolfRisk
      *
-     * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\RolfRisk", mappedBy="tags", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RolfRisk", mappedBy="tags", cascade={"persist"})
      */
     protected $risks;
 }

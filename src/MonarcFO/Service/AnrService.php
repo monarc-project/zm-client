@@ -2,6 +2,7 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Model\Entity\AnrSuperClass;
+use MonarcFO\Model\Entity\RolfTag;
 use MonarcFO\Model\Entity\User;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ModelTable;
@@ -451,6 +452,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newRolfTag = new \MonarcFO\Model\Entity\RolfTag($rolfTag);
             $newRolfTag->set('id',null);
             $newRolfTag->setAnr($newAnr);
+            $newRolfTag->set('risks', []);
             $this->get('rolfTagCliTable')->save($newRolfTag, $last);
             $rolfTagsNewIds[$rolfTag->id] = $newRolfTag;
             $i++;
@@ -478,6 +480,22 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $this->get('rolfRiskCliTable')->save($newRolfRisk, $last);
             $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             $i++;
+        }
+
+
+        //duplicate rolf risk/tags association
+        /** @var RolfTag $rolfTag */
+        foreach ($rolfTags as $rolfTag) {
+            $tag = $rolfTagsNewIds[$rolfTag->id];
+            $risks = $rolfTag->get('risks');
+            $newRisks = [];
+
+            foreach ($risks as $risk) {
+                $newRisks[] = $rolfRisksNewIds[$risk->id];
+            }
+
+            $tag->set('risks', $newRisks);
+            $this->get('rolfTagCliTable')->save($tag, $last);
         }
 
         //duplicate objects categories
