@@ -117,13 +117,28 @@ return array(
                 ),
             ),
 
-
             'monarc_api_guides' => array(
-                'type' => 'literal',
+                'type' => 'segment',
                 'options' => array(
-                    'route' => '/api/guides',
+                    'route' => '/api/guides[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
                     'defaults' => array(
                         'controller' => 'MonarcFO\Controller\ApiGuides',
+                    ),
+                ),
+            ),
+
+            'monarc_api_guides_items' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/guides-items[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiGuidesItems',
                     ),
                 ),
             ),
@@ -648,6 +663,7 @@ return array(
             '\MonarcFO\Controller\ApiAdminUsersRights'                  => '\MonarcFO\Controller\ApiAdminUsersRightsControllerFactory',
             '\MonarcFO\Controller\ApiAnr'                               => '\MonarcFO\Controller\ApiAnrControllerFactory',
             '\MonarcFO\Controller\ApiGuides'                            => '\MonarcFO\Controller\ApiGuidesControllerFactory',
+            '\MonarcFO\Controller\ApiGuidesItems'                       => '\MonarcFO\Controller\ApiGuidesItemsControllerFactory',
             '\MonarcFO\Controller\ApiSnapshot'                          => '\MonarcFO\Controller\ApiSnapshotControllerFactory',
             '\MonarcFO\Controller\ApiSnapshotRestore'                   => '\MonarcFO\Controller\ApiSnapshotRestoreControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                            => '\MonarcFO\Controller\ApiConfigControllerFactory',
@@ -783,6 +799,7 @@ return array(
             'monarc_api_global_client_anr/deliverable',
             'monarc_api_duplicate_client_anr',
             'monarc_api_guides',
+            'monarc_api_guides_items',
             'monarc_api_models',
             'monarc_api_scales',
             'monarc_api_scales_comments',
@@ -814,6 +831,7 @@ return array(
             'monarc_api_anr_objects',
             'monarc_api_client_anr_export',
             'monarc_api_guides',
+            'monarc_api_guides_items',
             'monarc_api_anr_objects_parents',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
