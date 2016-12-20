@@ -7,6 +7,8 @@ use MonarcFO\Model\Entity\User;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ModelTable;
 use MonarcFO\Model\Table\SnapshotTable;
+use MonarcFO\Model\Table\UserAnrTable;
+use MonarcFO\Model\Table\UserRoleTable;
 use MonarcFO\Service\AbstractService;
 use MonarcFO\Model\Entity\Asset;
 use MonarcFO\Model\Entity\Object;
@@ -85,6 +87,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
         $userRoles = $this->userRoleTable->getEntityByFields(['user'=>$userArray['id']]);
@@ -232,7 +235,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null,$data=[], $isSnapshot = false) {
+    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false) {
 
         if (is_integer($anr)) {
             /** @var AnrTable $anrTable */
@@ -247,6 +250,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $idModel = $anr->get('model');
         }else{
             $idModel = $model->get('id');
+        }
+
+        /** @var UserTable $userCliTable */
+        $userCliTable = $this->get('userCliTable');
+        $userArray = $userCliTable->getConnectedUser();
+
+        /** @var UserAnrTable $userAnrCliTable */
+        $userAnrCliTable = $this->get('userAnrCliTable');
+        $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anr->id, 'user' => $userArray['id']]);
+
+        if (count($userAnr) == 0) {
+            throw new \Exception('You are not authorized to duplicate this analysis', 412);
         }
 
         //duplicate anr
@@ -520,7 +535,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         $objectsCategoriesNewIds = [];
-        $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+        $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id], ['parent' => 'ASC']);
         foreach($objectsCategories as $objectCategory) {
             if (in_array($objectCategory->id, $categoriesIds)) {
                 $newObjectCategory = new \MonarcFO\Model\Entity\ObjectCategory($objectCategory);
@@ -614,7 +629,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $i = 1;
         $instancesNewIds = [];
         $instanceTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceTable') : $this->get('instanceCliTable');
-        $instances = $instanceTable->getEntityByFields(['anr' => $anr->id]);
+        $instances = $instanceTable->getEntityByFields(['anr' => $anr->id], ['parent' => 'ASC']);
         foreach($instances as $instance) {
             $last = ($i == count($instances)) ? true : false;
             $newInstance = new \MonarcFO\Model\Entity\Instance($instance);
