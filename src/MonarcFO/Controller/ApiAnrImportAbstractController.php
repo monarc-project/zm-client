@@ -14,6 +14,12 @@ abstract class ApiAnrImportAbstractController extends \MonarcCore\Controller\Abs
         	throw new \Exception('Anr id missing', 412);
         }
 
+        $files = $this->params()->fromFiles('file');
+        if(empty($files)){
+            throw new \Exception('File missing', 412);
+        }
+        $data['file'] = $files;
+
         $id = $service->importFromFile($anrId,$data);
 
         return new JsonModel(
