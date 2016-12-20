@@ -26,7 +26,11 @@ class ApiAnrObjectsImportController extends ApiAnrAbstractController
         	throw new \Exception('Anr id missing', 412);
         }
 
-        $mode = $this->params()->from
+        $files = $this->params()->fromFiles('file');
+        if(empty($files)){
+            throw new \Exception('File missing', 412);
+        }
+        $data['file'] = $files;
 
         $id = $this->getService()->importFromFile($anrId,$data);
 
