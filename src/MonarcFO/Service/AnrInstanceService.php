@@ -13,11 +13,25 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         // on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];
         $mode = empty($data['mode'])?'merge':$data['mode'];
+        $idParent = empty($data['idparent'])?null:$data['idparent'];
         // On aura la possibilité d'avoir plusieurs fichiers (même pwd: si un fichier ne match pas, on renvoie un warning)
-        $data = $this->decrypt($data,$key);
-
+        if(empty($data['file'])){
+            throw new \Exception('File missing', 412);
+        }
+        $ids = $errors = [];
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
-        return $this->importFromArray($data,$anr,null, $mode);
+        foreach($data['file'] as $f){
+            if(isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])){
+                $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])),$key)),true);
+                if($file !== false && ($id = $this->importFromArray($file,$anr,$idParent,$mode)) !== false){
+                    $ids[] = $id;
+                }else{
+                    $errors[] = 'The file "'.$f['name'].'" can\'t be imported';
+                }
+            }
+        }
+
+        return [$ids,$errors];
     }
 
     public function importFromArray($data,$anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = array()){
@@ -48,6 +62,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 $sharedData['objects'] = [];
             }
             $idObject = $this->get('objectExportService')->importFromArray($data['object'],$anr, $modeImport, $sharedData);
+            if(!$idObject){
+                return false;
+            }
 
             // Instance
             $class = $this->get('table')->getClass();

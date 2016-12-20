@@ -17,7 +17,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         if(empty($data['file'])){
             throw new \Exception('File missing', 412);
         }
-        $ids = [];
+        $ids = $errors = [];
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
         foreach($data['file'] as $f){
             if(isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])){
@@ -25,11 +25,11 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
                 if($file !== false && ($id = $this->get('objectExportService')->importFromArray($file,$anr,$mode)) !== false){
                     $ids[] = $id;
                 }else{
-                    $ids[] = 'The file "'.$f['name'].'" can\'t be imported';
+                    $errors[] = 'The file "'.$f['name'].'" can\'t be imported';
                 }
             }
         }
 
-        return $ids;
+        return [$ids,$errors];
     }
 }

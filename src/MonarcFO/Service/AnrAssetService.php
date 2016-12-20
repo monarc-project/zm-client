@@ -39,7 +39,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
         if(empty($data['file'])){
             throw new \Exception('File missing', 412);
         }
-        $ids = [];
+        $ids = $errors = [];
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
         foreach($data['file'] as $f){
             if(isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])){
@@ -47,20 +47,19 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                 if($file !== false && ($id = $this->get('objectExportService')->importFromArray($file,$anr)) !== false){
                     $ids[] = $id;
                 }else{
-                    $ids[] = 'The file "'.$f['name'].'" can\'t be imported';
+                    $errors[] = 'The file "'.$f['name'].'" can\'t be imported';
                 }
             }
         }
 
-        return $ids;
+        return [$ids,$errors];
     }
 
     public function importFromArray($data,$anr,&$objectsCache = array()){
         if(isset($data['type']) && $data['type'] == 'asset' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()){
-            $asset = $this->get('table')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['asset']['code']]);
-            if($asset){
-                $asset = current($asset);
+            $asset = current($this->get('table')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['asset']['code']]));
+            if(!empty($asset)){
                 $idAsset = $asset->get('id');
             }else{
                 $asset = $this->get('entity');
@@ -161,8 +160,8 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $this->get('amvTable')->save($amv);
                     }
                 }
-                return $idAsset;
             }
+            return $idAsset;
         }
         return false;
     }

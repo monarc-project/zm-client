@@ -562,6 +562,17 @@ return array(
                             ),
                         ),
                     ),
+                    'instance_import' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'instances/import',
+                            'constraints' => array(
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesImport',
+                            ),
+                        ),
+                    ),
                     'instance_risk' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -703,11 +714,14 @@ return array(
             '\MonarcFO\Controller\ApiAnrInstances'                      => '\MonarcFO\Controller\ApiAnrInstancesControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesRisks'                 => '\MonarcFO\Controller\ApiAnrInstancesRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesRisksOp'               => '\MonarcFO\Controller\ApiAnrInstancesRisksOpControllerFactory',
+            '\MonarcFO\Controller\ApiAnrInstancesImport'                => '\MonarcFO\Controller\ApiAnrInstancesImportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrInstancesExport'                => '\MonarcFO\Controller\ApiAnrInstancesExportControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsCategories'              => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsExport'                  => '\MonarcFO\Controller\ApiAnrObjectsExportControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsImport'                  => '\MonarcFO\Controller\ApiAnrObjectsImportControllerFactory',
             '\MonarcFO\Controller\ApiAnrDeliverable'                    => '\MonarcFO\Controller\ApiAnrDeliverableControllerFactory',
             '\MonarcFO\Controller\ApiAnrExport'                         => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
+            
         ),
     ),
 
@@ -767,6 +781,7 @@ return array(
             'monarc_api_global_client_anr/instance_risk',
             'monarc_api_global_client_anr/instance_risk_op',
             'monarc_api_global_client_anr/instance_export',
+            'monarc_api_global_client_anr/instance_import',
             'monarc_api_anr_instances_consequences',
             'monarc_api_global_client_anr/interviews',
             'monarc_api_global_client_anr/library',
@@ -825,6 +840,7 @@ return array(
             'monarc_api_global_client_anr/instance_risk',
             'monarc_api_global_client_anr/instance_risk_op',
             'monarc_api_global_client_anr/instance_export',
+            'monarc_api_global_client_anr/instance_import',
             'monarc_api_anr_instances_consequences',
             'monarc_api_global_client_anr/interviews',
             'monarc_api_global_client_anr/library',

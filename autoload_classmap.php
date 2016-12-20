@@ -31,6 +31,8 @@ return array(
     'MonarcFO\Controller\ApiAnrInstanceExportControllerFactory'               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstanceExportControllerFactory.php',
     'MonarcFO\Controller\ApiAnrInstancesController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesController.php',
     'MonarcFO\Controller\ApiAnrInstancesControllerFactory'                    => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrInstancesImportController'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesImportController.php',
+    'MonarcFO\Controller\ApiAnrInstancesImportControllerFactory'              => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesImportControllerFactory.php',
     'MonarcFO\Controller\ApiAnrInstancesRisksController'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesRisksController.php',
     'MonarcFO\Controller\ApiAnrInstancesRisksControllerFactory'               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesRisksControllerFactory.php',
     'MonarcFO\Controller\ApiAnrInstancesRisksOpController'                    => __DIR__ . '/src/MonarcFO/Controller/ApiAnrInstancesRisksOpController.php',

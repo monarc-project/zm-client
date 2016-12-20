@@ -20,12 +20,13 @@ abstract class ApiAnrImportAbstractController extends \MonarcCore\Controller\Abs
         }
         $data['file'] = $files;
 
-        $id = $service->importFromFile($anrId,$data);
+        list($ids,$errors) = $service->importFromFile($anrId,$data);
 
         return new JsonModel(
             array(
                 'status' => 'ok',
                 'id' => $id,
+                'errors' => $errors,
             )
         );
     }
