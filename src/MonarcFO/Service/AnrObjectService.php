@@ -38,6 +38,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
     public function getCommonObjects($anrId){
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
         $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, ['name'.$anr->get('language')=>'ASC'], [], [], $anr->get('model'), null);
+        $objectObjectService = $this->get('selfCoreService')->get('objectObjectService');
         $fields = ['id','mode','scope','name'.$anr->get('language'),'label'.$anr->get('language'),'disponibility','position'];
         $fields = array_combine($fields, $fields);
         foreach($objects as $k => $o){
@@ -50,6 +51,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
                 $objects[$k]['category'] = $o['category']->getJsonArray(['id','root','parent','label'.$anr->get('language'),'position']);
             }
             $objects[$k]['asset'] = $o['asset']->getJsonArray(['id','label'.$anr->get('language'),'description'.$anr->get('language'),'mode','type','status']);
+            $objects[$k]['children'] = $objectObjectService->getRecursiveChildren($objects[$k]['id'], null);
         }
         return $objects;
     }
