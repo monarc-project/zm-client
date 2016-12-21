@@ -5,6 +5,7 @@ use MonarcCore\Model\Entity\AnrSuperClass;
 use MonarcFO\Model\Entity\RolfTag;
 use MonarcFO\Model\Entity\User;
 use MonarcFO\Model\Table\AnrTable;
+use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\ModelTable;
 use MonarcFO\Model\Table\SnapshotTable;
 use MonarcFO\Model\Table\UserAnrTable;
@@ -499,7 +500,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $i++;
         }
 
-
         //duplicate rolf risk/tags association
         /** @var RolfTag $rolfTag */
         foreach ($rolfTags as $rolfTag) {
@@ -629,7 +629,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         //duplicate instances
         $i = 1;
+        $nbInstanceWithParent = 0;
         $instancesNewIds = [];
+        /** @var InstanceTable $instanceTable */
         $instanceTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceTable') : $this->get('instanceCliTable');
         $instances = $instanceTable->getEntityByFields(['anr' => $anr->id], ['parent' => 'ASC']);
         foreach($instances as $instance) {
@@ -639,15 +641,28 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newInstance->setAnr($newAnr);
             $newInstance->setAsset($assetsNewIds[$instance->asset->id]);
             $newInstance->setObject($objectsNewIds[$instance->object->id]);
-            if ($instance->root) {
-                $newInstance->setRoot($instancesNewIds[$instance->root->id]);
+            if ($instance->root || $instance->parent) {
+                $nbInstanceWithParent++;
             }
-            if ($instance->parent) {
-                $newInstance->setParent($instancesNewIds[$instance->parent->id]);
-            }
+            $newInstance->setRoot(null);
+            $newInstance->setParent(null);
             $this->get('instanceCliTable')->save($newInstance, $last);
             $instancesNewIds[$instance->id] = $newInstance;
             $i++;
+        }
+        $i = 1;
+        foreach($instances as $instance) {
+            if ($instance->root || $instance->parent) {
+                $last = ($i == $nbInstanceWithParent) ? true : false;
+                $newInstance = $instancesNewIds[$instance->id];
+                if ($instance->root) {
+                    $newInstance->setRoot($instancesNewIds[$instance->root->id]);
+                }
+                if ($instance->parent) {
+                    $newInstance->setParent($instancesNewIds[$instance->parent->id]);
+                }
+                $this->get('instanceCliTable')->save($newInstance, $last);
+            }
         }
 
         //duplicate scales
