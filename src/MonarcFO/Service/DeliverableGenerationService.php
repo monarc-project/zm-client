@@ -68,6 +68,10 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $this->language = $lang;
     }
 
+    public function getDeliveryModels() {
+        return $this->deliveryModelService->getList(1, 0, null, null, null);
+    }
+
     public function generateDeliverableWithValues($anrId, $modelId, $values) {
         // Find the model to use
         $model = $this->deliveryModelService->getEntity($modelId);
@@ -79,6 +83,11 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $anr = $this->anrTable->getEntity($anrId);
         if (!$anr) {
             throw new \Exception("Anr `id` not found");
+        }
+
+        // Word-filter the input values
+        foreach ($values as $key => $val) {
+            $values[$key] = _WT($val);
         }
 
         $values = array_merge($values, $this->buildValues($anr, $model['category']));
