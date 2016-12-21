@@ -237,6 +237,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @throws \Exception
      */
     public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false) {
+        ini_set('max_execution_time', 1000); // 10min
 
         if (is_integer($anr)) {
             /** @var AnrTable $anrTable */
