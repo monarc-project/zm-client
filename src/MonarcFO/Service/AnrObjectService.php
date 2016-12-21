@@ -59,7 +59,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
             throw new \Exception('Anr id missing', 412);
         }
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
-        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, ['name'.$anr->get('language')=>'ASC'], [], ['id'=>$id], $anr->get('model'), null));
+        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name'.$anr->get('language'), [], ['id'=>$id], $anr->get('model'), null));
         if(!empty($object)){
             return $this->get('selfCoreService')->getCompleteEntity($id);
         }else{
@@ -73,7 +73,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
             throw new \Exception('Anr id missing', 412);
         }
         $anr = $this->get('anrTable')->getEntity($data['anr']); // on a une erreur si inconnue
-        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, ['name'.$anr->get('language')=>'ASC'], [], ['id'=>$id], $anr->get('model'), null));
+        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name'.$anr->get('language'), [], ['id'=>$id], $anr->get('model'), null));
         if(!empty($object)){
             // Export
             $json = $this->get('selfCoreService')->get('objectExportService')->generateExportArray($id);
