@@ -367,6 +367,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         // GRAPH_EVAL_RISK
 
+        $values['RISKS_RECO'] = $this->generateRisksPlan($anr, false);
         $values['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
 
         // TABLE_AUDIT_INSTANCES
