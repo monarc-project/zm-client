@@ -7,6 +7,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
         'deliveryModelService'  => '\MonarcCore\Service\DeliveriesModelsService',
+        'clientTable'           => '\MonarcFO\Model\Table\ClientTable',
         'anrTable'              => '\MonarcFO\Model\Table\AnrTable',
         'scaleService'          => '\MonarcFO\Service\AnrScaleService',
         'scaleTypeService'      => '\MonarcFO\Service\AnrScaleTypeService',

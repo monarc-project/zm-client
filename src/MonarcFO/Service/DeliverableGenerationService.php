@@ -5,6 +5,7 @@ use MonarcCore\Service\DeliveriesModelsService;
 use MonarcCore\Service\QuestionChoiceService;
 use MonarcCore\Service\QuestionService;
 use MonarcFO\Model\Table\AnrTable;
+use MonarcFO\Model\Table\ClientTable;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\Writer\Word2007;
@@ -19,9 +20,11 @@ class DeliverableGenerationService extends AbstractServiceFactory
 {
     use \MonarcCore\Model\GetAndSet;
 
-    /** @var  DeliveriesModelsService */
+    /** @var DeliveriesModelsService */
     protected $deliveryModelService;
-    /** @var  AnrTable */
+    /** @var ClientTable */
+    protected $clientTable;
+    /** @var AnrTable */
     protected $anrTable;
     /** @var AnrScaleService */
     protected $scaleService;
@@ -111,7 +114,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected function buildContextValidationValues($anr) {
         // Values read from database
         $values = [
-            'COMPANY' => $this->getCompanyName($anr),
+            'COMPANY' => $this->getCompanyName(),
             'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml($anr->contextAnaRisk),
             'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml($anr->contextGestRisk),
             'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml($anr->synthThreat),
@@ -550,8 +553,9 @@ class DeliverableGenerationService extends AbstractServiceFactory
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
-    protected function getCompanyName($anr) {
-        return 'N/A';
+    protected function getCompanyName() {
+        $client = current($this->clientTable->fetchAll());
+        return $client['name'];
     }
 
     protected function generateWordXmlFromHtml($input) {
