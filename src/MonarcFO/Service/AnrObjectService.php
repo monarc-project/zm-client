@@ -37,8 +37,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
 
     public function getCommonObjects($anrId){
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
-        $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, ['name'.$anr->get('language')=>'ASC'], [], [], $anr->get('model'), null);
-        $objectObjectService = $this->get('selfCoreService')->get('objectObjectService');
+        $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, 'name'.$anr->get('language'), null, null, $anr->get('model'), null);
         $fields = ['id','mode','scope','name'.$anr->get('language'),'label'.$anr->get('language'),'disponibility','position'];
         $fields = array_combine($fields, $fields);
         foreach($objects as $k => $o){
