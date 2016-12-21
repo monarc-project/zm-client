@@ -14,5 +14,9 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'questionService'       => '\MonarcFO\Service\AnrQuestionService',
         'questionChoiceService' => '\MonarcFO\Service\AnrQuestionChoiceService',
         'interviewService'      => '\MonarcFO\Service\AnrInterviewService',
+        'threatService'         => '\MonarcFO\Service\AnrThreatService',
+        'instanceService'       => '\MonarcFO\Service\AnrInstanceService',
+        'recommandationService' => '\MonarcFO\Service\AnrRecommandationService',
+        'recommandationRiskService' => '\MonarcFO\Service\AnrRecommandationRiskService',
     );
 }

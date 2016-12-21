@@ -35,6 +35,14 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected $questionChoiceService;
     /** @var AnrInterviewService */
     protected $interviewService;
+    /** @var AnrThreatService */
+    protected $threatService;
+    /** @var AnrInstanceService */
+    protected $instanceService;
+    /** @var AnrRecommandationService */
+    protected $recommandationService;
+    /** @var AnrRecommandationRiskService */
+    protected $recommandationRiskService;
 
     /**
      * Construct
@@ -124,7 +132,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $table->addRow(400);
         $table->addCell(2000, $styleHeaderCell)->addText(' ', $styleHeaderFont);
         foreach ($impactsTypes as $impactType) {
-            $table->addCell(2000, $styleHeaderCell)->addText($impactType['label' . $anr->language], $styleHeaderFont);
+            $table->addCell(2000, $styleHeaderCell)->addText(_WT($impactType['label' . $anr->language]), $styleHeaderFont);
         }
 
         // Fill in each row
@@ -143,14 +151,14 @@ class DeliverableGenerationService extends AbstractServiceFactory
                     }
                 }
 
-                $table->addCell(2000, $styleHeaderCell)->addText($commentText);
+                $table->addCell(2000, $styleHeaderCell)->addText(_WT($commentText));
             }
         }
 
         $values['SCALE_IMPACT'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
-        // Generate threat table
+        // Generate threat scale table
         $threatsScale = current(current($this->scaleService->getList(1, 0, null, null, ['anr' => $anr->id, 'type' => 2])));
         $threatsComments = $this->scaleCommentService->getList(1, 0, null, null, ['anr' => $anr->id, 'scale' => $threatsScale['id']]);
 
@@ -173,7 +181,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 }
             }
 
-            $table->addCell(5000, $styleHeaderCell)->addText($commentText);
+            $table->addCell(5000, $styleHeaderCell)->addText(_WT($commentText));
         }
 
         $values['SCALE_THREAT'] = $this->getWordXmlFromWordObject($tableWord);
@@ -202,7 +210,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 }
             }
 
-            $table->addCell(5000, $styleHeaderCell)->addText($commentText);
+            $table->addCell(5000, $styleHeaderCell)->addText(_WT($commentText));
         }
 
         $values['SCALE_VULN'] = $this->getWordXmlFromWordObject($tableWord);
@@ -260,7 +268,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         unset($tableWord);
 
         // Table which represents "particular attention" threats
-        $values['TABLE_THREATS'] = '';
+        $values['TABLE_THREATS'] = $this->generateThreatsTable($anr, false);
 
         // Figure A: Trends (Q/A)
         $questions = $this->questionService->getList(1, 0, null, null, ['anr' => $anr->id]);
@@ -273,7 +281,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         foreach ($questions as $question) {
             $table->addRow(400);
 
-            $table->addCell(3000, $styleHeaderCell)->addText($question['label' . $anr->language]);
+            $table->addCell(3000, $styleHeaderCell)->addText(_WT($question['label' . $anr->language]));
 
             if ($question['type'] == 1) {
                 // Simple text
@@ -301,14 +309,14 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 }
             }
 
-            $table->addCell(5000, $styleHeaderCell)->addText($response, ['alignment' => 'start'], ['align' => 'start']);
+            $table->addCell(5000, $styleHeaderCell)->addText(_WT($response), ['alignment' => 'start'], ['align' => 'start']);
         }
 
         $values['TABLE_EVAL_TEND'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
         // Figure B: Full threats table
-        $values['TABLE_THREATS_FULL'] = '';
+        $values['TABLE_THREATS_FULL'] = $this->generateThreatsTable($anr, true);
 
         // Figure C: Interviews table
         $interviews = $this->interviewService->getList(1, 0, null, null, ['anr' => $anr->id]);
@@ -327,9 +335,9 @@ class DeliverableGenerationService extends AbstractServiceFactory
         foreach ($interviews as $interview) {
             $table->addRow(400);
 
-            $table->addCell(3000, $styleHeaderCell)->addText($interview['date']);
-            $table->addCell(5000, $styleHeaderCell)->addText($interview['service']);
-            $table->addCell(7000, $styleHeaderCell)->addText($interview['content']);
+            $table->addCell(3000, $styleHeaderCell)->addText(_WT($interview['date']));
+            $table->addCell(5000, $styleHeaderCell)->addText(_WT($interview['service']));
+            $table->addCell(7000, $styleHeaderCell)->addText(_WT($interview['content']));
         }
 
         $values['TABLE_INTERVIEW'] = $this->getWordXmlFromWordObject($tableWord);
@@ -341,9 +349,9 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected function buildContextModelingValues($anr) {
         // Models are incremental, so use values from level-1 model
         $values = $this->buildContextValidationValues($anr);
-        $values['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml($anr->synthAct);
-        // IMPACTS_APPRECIATION
 
+        $values['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml($anr->synthAct);
+        $values['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation($anr);
 
         return $values;
     }
@@ -352,17 +360,193 @@ class DeliverableGenerationService extends AbstractServiceFactory
         // Models are incremental, so use values from level-2 model
         $values = $this->buildContextModelingValues($anr);
 
-        // SUMMARY_EVAL_RISK
+        // Champ HTML sur le dernier livrable
+        // $values['SUMMARY_EVAL_RISK'] = $this->generateWordXmlFromHtml($summaryEvalRisk);
 
-        // DISTRIB_EVAL_RISK
+        // $values['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution());
 
         // GRAPH_EVAL_RISK
 
-        // RISKS_RECO_FULL
+        $values['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
 
         // TABLE_AUDIT_INSTANCES
 
         return $values;
+    }
+
+    protected function getRisksDistribution() {
+        // getCounterRisks
+    }
+
+    protected function generateRisksPlan($anr, $full = false) {
+        $recos = $this->recommandationService->getList(1, 0, null, null, ['anr' => $anr->id]);
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB');
+        $table = $section->addTable($styleTable);
+
+        $styleHeaderCell = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10);
+        $styleHeaderFont = array('bold' => true, 'size' => 10);
+
+        $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
+        $styleContentCellCenter = array('align' => 'center', 'valign' => 'center', 'size' => 10);
+        $styleContentFont = array('bold' => false, 'size' => 10);
+        $styleContentParag = array('align' => 'left', 'size' => 10);
+        $styleContentParagCenter = array('align' => 'center', 'size' => 10);
+        $alignCenter = ['Alignment' => 'center'];
+        $styleContentFontRed = array('bold' => true, 'color' => 'FF0000', 'size' => 10);
+
+        $table->addRow(400);
+        $table->addCell(4500, $styleHeaderCell)->addText('Mesures prises', $styleHeaderFont, $alignCenter);
+        $table->addCell(2000, $styleHeaderCell)->addText('Actif', $styleHeaderFont, $alignCenter);
+        $table->addCell(4500, $styleHeaderCell)->addText('Recommandation', $styleHeaderFont, $alignCenter);
+        $table->addCell(500, $styleHeaderCell)->addText('Imp.', $styleHeaderFont, $alignCenter);
+
+        $cpte_elem = 0;
+        $max_elem = 5;
+
+        $cellRowSpanStart = ['vMerge' => 'restart', 'valign' => 'top', 'align' => 'left', 'size' => 10];
+        $cellRowSpanContinue = ['vMerge' => 'continue', 'size' => 10];
+
+        foreach ($recos as $reco) {
+            if ($cpte_elem < $max_elem || $full) {
+                $cpte_elem++;
+                $risks = $this->recommandationRiskService->getList(1, 0, null, null, ['anr' => $anr->id, 'recommandation' => $reco['id']]);
+
+                if (!empty($risks)) {
+                    $first = true;
+                    foreach ($risks as $risk) {
+                        $table->addRow(400);
+
+                        if ($first) {
+                            $cellfusion = $cellRowSpanStart;
+                            $first = false;
+                        } else {
+                            $cellfusion = $cellRowSpanContinue;
+                        }
+
+                        $table->addCell(4500, $styleContentCell)->addText(_WT($risk['commentAfter']), $styleContentFont, ['Alignment' => 'left']);
+                        $table->addCell(2000, $styleContentCell)->addText(_WT($risk['instance']->{'name' . $anr->language}), $styleContentFont, ['Alignment' => 'left']);
+
+                        $contentreco = "[" . $reco['code'] . "] " . _WT($reco['description']);
+                        $table->addCell(4500, $cellfusion)->addText($contentreco, $styleContentFont, ['Alignment' => 'left']);
+
+                        switch ($reco['importance']) {
+                            case 0: $contentreco = ""; break;
+                            case 1: $contentreco = "o"; break;
+                            case 2: $contentreco = "oo"; break;
+                            case 3: $contentreco = "ooo"; break;
+                        }
+
+                        $table->addCell(800, $cellfusion)->addText(_WT($contentreco), $styleContentFontRed);
+                    }
+                }
+            }
+
+            if ($cpte_elem > $max_elem && !$full) {
+                break;
+            }
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
+    }
+
+    protected function generateImpactsAppreciation($anr) {
+        // TODO: C'est moche, optimiser
+        $all_instances = $this->instanceService->getList(1, 0, null, null, ['anr' => $anr->id]);
+        $instances = array_filter($all_instances, function ($in) {
+            return (($in['c'] > -1 && $in['ch'] == 0) || ($in['i'] > -1 && $in['ih'] == 0) || ($in['d'] > -1 && $in['dh'] == 0));
+        });
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB');
+        $table = $section->addTable($styleTable);
+
+        $styleHeaderCell = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10);
+        $styleHeaderFont = array('bold' => true, 'size' => 10);
+
+        $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
+        $styleContentCellCenter = array('align' => 'center', 'valign' => 'center', 'size' => 10);
+        $styleContentFont = array('bold' => false, 'size' => 10);
+        $styleContentParag = array('align' => 'left', 'size' => 10);
+        $styleContentParagCenter = array('align' => 'center', 'size' => 10);
+        $alignCenter = ['Alignment' => 'center'];
+
+        $table->addRow(400);
+        $table->addCell(8000, $styleHeaderCell)->addText('Label', $styleHeaderFont, $alignCenter);
+        $table->addCell(800, $styleHeaderCell)->addText("C", $styleHeaderFont, $alignCenter);
+        $table->addCell(800, $styleHeaderCell)->addText("I", $styleHeaderFont, $alignCenter);
+        $table->addCell(800, $styleHeaderCell)->addText("D", $styleHeaderFont, $alignCenter);
+
+        foreach ($instances as $i) {
+            $table->addRow(400);
+            $table->addCell(8000, $styleContentCell)->addText($i['name' . $anr->language], $styleContentFont, ['Alignment' => 'left']);
+            $table->addCell(800, $styleContentCell)->addText($i['c'], $styleContentFont, $alignCenter);
+            $table->addCell(800, $styleContentCell)->addText($i['i'], $styleContentFont, $alignCenter);
+            $table->addCell(800, $styleContentCell)->addText($i['d'], $styleContentFont, $alignCenter);
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
+    }
+
+    protected function generateThreatsTable($anr, $fullGen = false) {
+        $threats = $this->threatService->getList(1, 0, null, null, ['anr' => $anr->id]);
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB');
+        $table = $section->addTable($styleTable);
+
+        $styleHeaderCell = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10);
+        $styleHeaderFont = array('bold' => true, 'size' => 10);
+
+        $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
+        $styleContentCellCenter = array('align' => 'center', 'valign' => 'center', 'size' => 10);
+        $styleContentFont = array('bold' => false, 'size' => 10);
+        $styleContentParag = array('align' => 'left', 'size' => 10);
+        $styleContentParagCenter = array('align' => 'center', 'size' => 10);
+
+        $table->addRow(400);
+        $table->addCell(1000, $styleHeaderCell)->addText('Code', $styleHeaderFont, array('Alignment' => 'center'));
+        $table->addCell(2500, $styleHeaderCell)->addText('Menace', $styleHeaderFont, array('Alignment' => 'center'));
+        $table->addCell(700, $styleHeaderCell)->addText('CID', $styleHeaderFont, array('Alignment' => 'center'));
+        $table->addCell(1000, $styleHeaderCell)->addText('Tend.', $styleHeaderFont, array('Alignment' => 'center'));
+        $table->addCell(1500, $styleHeaderCell)->addText('Prob.', $styleHeaderFont, array('Alignment' => 'center'));
+        $table->addCell(2500, $styleHeaderCell)->addText('Commentaire', $styleHeaderFont, array('Alignment' => 'center'));
+
+        foreach ($threats as $threat) {
+            if (($threat['trend'] > 0 && $threat['trend'] != 2) || $fullGen) { // All but normal
+                $table->addRow(400);
+                $table->addCell(1000, $styleContentCellCenter)->addText(_WT($threat['code']), $styleContentFont, array('Alignment' => 'left'));
+                $table->addCell(2500, $styleContentCell)->addText(_WT($threat['label'.$anr->language]), $styleContentFont, array('Alignment' => 'left'));
+
+                // CID
+                $cid = '';
+                if ($threat['c']) $cid .= 'C';
+                if ($threat['i']) $cid .= 'I';
+                if ($threat['d']) $cid .= 'D';
+                $table->addCell(700, $styleContentCellCenter)->addText($cid, $styleContentFont, array('Alignment' => 'center'));
+
+                // Trend
+                $trend = '';
+                switch ($threat['trend']) {
+                    case 1: $trend = '-'; break;
+                    case 2: $trend = 'n'; break;
+                    case 3: $trend = '+'; break;
+                    case 4: $trend = '++'; break;
+                }
+                $table->addCell(1000, $styleContentCellCenter)->addText($trend, $styleContentFont, array('Alignment' => 'center'));
+
+                // Pre-Q
+                $qual = $threat['qualification'] >= 0 ? $threat['qualification'] : '';
+                $table->addCell(1500, $styleContentCellCenter)->addText($qual, $styleContentFont, array('Alignment' => 'center'));
+                $table->addCell(2500, $styleContentCellCenter)->addText(_WT($threat['comment']));
+            }
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
     }
 
     protected function getCompanyName($anr) {
@@ -410,4 +594,8 @@ class DeliverableGenerationService extends AbstractServiceFactory
             return "";
         }
     }
+}
+
+function _WT($input) {
+    return str_replace(['&quot;', '&amp;lt', '&amp;gt', '&amp;'], ['"', '_lt_', '_gt_', '_amp_'], htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8'));
 }
