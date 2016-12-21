@@ -51,10 +51,23 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
                 $objects[$k]['category'] = $o['category']->getJsonArray(['id','root','parent','label'.$anr->get('language'),'position']);
             }
             $objects[$k]['asset'] = $o['asset']->getJsonArray(['id','label'.$anr->get('language'),'description'.$anr->get('language'),'mode','type','status']);
-            $objects[$k]['children'] = $objectObjectService->getRecursiveChildren($objects[$k]['id'], null);
         }
         return $objects;
     }
+
+    public function getCommonEntity($anrId, $id){
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+        $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
+        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, ['name'.$anr->get('language')=>'ASC'], [], ['id'=>$id], $anr->get('model'), null));
+        if(!empty($object)){
+            return $this->get('selfCoreService')->getCompleteEntity($id);
+        }else{
+            throw new \Exception('Object not found',412);
+        }
+    }
+
 
     public function importFromCommon($id,$data){
         if(empty($data['anr'])){

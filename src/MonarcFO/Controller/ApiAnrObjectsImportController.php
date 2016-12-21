@@ -43,4 +43,25 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
 
         return new JsonModel(array('status' => 'ok', 'id' => $newid));
     }
+
+    /**
+     * Get
+     *
+     * @param mixed $id
+     * @return JsonModel
+     */
+    public function get($id)
+    {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+
+        $object = $this->getService()->getCommonEntity($anrId,$id);
+
+        $this->formatDependencies($object, ['asset', 'category', 'rolfTag']);
+        unset($object['anrs']);
+
+        return new JsonModel($object);
+    }
 }
