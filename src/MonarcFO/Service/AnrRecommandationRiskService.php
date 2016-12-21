@@ -21,7 +21,7 @@ use MonarcFO\Service\AbstractService;
  */
 class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 {
-    protected $dependencies = ['anr', 'recommandation', 'asset', 'threat', 'vulnerability', 'instanceRisk', 'instanceRiskOp'];
+    protected $dependencies = ['anr', 'recommandation', 'asset', 'threat', 'vulnerability', 'instance', 'instanceRisk', 'instanceRiskOp'];
     protected $anrTable;
     protected $recommandationTable;
     protected $recommandationHistoricTable;
