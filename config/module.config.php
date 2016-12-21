@@ -324,8 +324,9 @@ return array(
                     'objects_import' => array(
                         'type' => 'segment',
                         'options' => array(
-                            'route' => 'objects/import',
+                            'route' => 'objects/import[/:id]',
                             'constraints' => array(
+                                'id' => '[0-9]+',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrObjectsImport',
