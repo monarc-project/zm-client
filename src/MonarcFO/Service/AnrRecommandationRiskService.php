@@ -7,6 +7,7 @@ use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\InstanceRiskTable;
+use MonarcFO\Model\Table\ObjectTable;
 use MonarcFO\Model\Table\RecommandationHistoricTable;
 use MonarcFO\Model\Table\RecommandationMeasureTable;
 use MonarcFO\Model\Table\RecommandationRiskTable;
@@ -32,6 +33,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $anrService;
     protected $anrInstanceService;
     protected $instanceTable;
+    /** @var ObjectTable */
+    protected $objectTable;
 
     /**
      * Get List
@@ -72,7 +75,31 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $recosRisks[$key]['measures'] = $measures;
         }
 
-        return $recosRisks;
+        // Filter out duplicate global objects
+        $knownGlobObjId = [];
+        $objectCache = [];
+
+        return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
+            $instance = $this->instanceTable->getEntity($in['instance']);
+            $objId = $instance->object->id;
+
+            if (!in_array($objId, $knownGlobObjId)) {
+                if (!isset($objectCache[$objId])) {
+                    $object = $this->objectTable->getEntity($objId);
+                    $objectCache[$objId] = $object;
+                } else {
+                    $object = $objectCache[$objId];
+                }
+
+                if ($object->scope == 2) {
+                    $knownGlobObjId[] = $objId;
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        });
     }
 
     /**
