@@ -54,6 +54,19 @@ return array(
                 ),
             ),
 
+            'monarc_api_models' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/models[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiModels',
+                    ),
+                ),
+            ),
+
             'monarc_api_duplicate_client_anr' => array(
                 'type' => 'literal',
                 'options' => array(
@@ -679,6 +692,7 @@ return array(
             '\MonarcFO\Controller\ApiSnapshot'                          => '\MonarcFO\Controller\ApiSnapshotControllerFactory',
             '\MonarcFO\Controller\ApiSnapshotRestore'                   => '\MonarcFO\Controller\ApiSnapshotRestoreControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                            => '\MonarcFO\Controller\ApiConfigControllerFactory',
+            '\MonarcFO\Controller\ApiModels'                            => '\MonarcFO\Controller\ApiModelsControllerFactory',
             '\MonarcFO\Controller\ApiDuplicateAnr'                      => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword'                      => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
             '\MonarcFO\Controller\ApiUserProfile'                       => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
