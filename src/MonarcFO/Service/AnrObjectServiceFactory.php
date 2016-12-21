@@ -20,8 +20,9 @@ class AnrObjectServiceFactory extends AbstractServiceFactory
         'modelTable'=> '\MonarcCore\Model\Table\ModelTable',
         'objectObjectTable'=> '\MonarcFO\Model\Table\ObjectObjectTable',
         'rolfTagTable'=> '\MonarcFO\Model\Table\RolfTagTable',
-        //'modelService'=> 'MonarcFO\Service\ModelService',
+        'modelService'=> 'MonarcCore\Service\ModelService',
         'objectObjectService'=> 'MonarcFO\Service\ObjectObjectService',
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',
+        'selfCoreService' => 'MonarcCore\Service\ObjectService',
     );
 }

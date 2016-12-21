@@ -9,6 +9,8 @@ namespace MonarcFO\Service;
  */
 class AnrObjectService extends \MonarcCore\Service\ObjectService
 {
+    protected $selfCoreService;
+
     public function importFromFile($anrId,$data){
         // on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];
@@ -31,5 +33,24 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         }
 
         return [$ids,$errors];
+    }
+
+    public function getCommonObjects($anrId){
+        $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
+        $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, ['name'.$anr->get('language')=>'ASC'], [], [], $anr->get('model'), null);
+        $fields = ['id','mode','scope','name'.$anr->get('language'),'label'.$anr->get('language'),'disponibility','position'];
+        $fields = array_combine($fields, $fields);
+        foreach($objects as $k => $o){
+            foreach($o as $k2 => $v2){
+                if(!isset($fields[$k2])){
+                    unset($objects[$k][$k2]);
+                }
+            }
+            if($o['category']){
+                $objects[$k]['category'] = $o['category']->getJsonArray(['id','root','parent','label'.$anr->get('language'),'position']);
+            }
+            $objects[$k]['asset'] = $o['asset']->getJsonArray(['id','label'.$anr->get('language'),'description'.$anr->get('language'),'mode','type','status']);
+        }
+        return $objects;
     }
 }
