@@ -108,7 +108,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 
         $counters = $distrib = $temp = [];
         foreach($result as $r){
-            if (!isset($r['asset']) || !isset($r['threat']) || !isset($r['vulnerability'])) {
+            if (!isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
             }
 
