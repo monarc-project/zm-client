@@ -19,5 +19,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'instanceService'       => '\MonarcFO\Service\AnrInstanceService',
         'recommandationService' => '\MonarcFO\Service\AnrRecommandationService',
         'recommandationRiskService' => '\MonarcFO\Service\AnrRecommandationRiskService',
+        'cartoRiskService'      => '\MonarcFO\Service\AnrCartoRiskService',
+        'instanceRiskTable'     => '\MonarcFO\Model\Table\InstanceRiskTable',
     );
 }

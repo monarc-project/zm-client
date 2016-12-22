@@ -6,6 +6,7 @@ use MonarcCore\Service\QuestionChoiceService;
 use MonarcCore\Service\QuestionService;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ClientTable;
+use MonarcFO\Model\Table\InstanceTable;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\Writer\Word2007;
@@ -46,6 +47,10 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected $recommandationService;
     /** @var AnrRecommandationRiskService */
     protected $recommandationRiskService;
+    /** @var AnrCartoRiskService */
+    protected $cartoRiskService;
+    /** @var InstanceRiskTable */
+    protected $instanceRiskTable;
 
     /**
      * Construct
@@ -372,23 +377,109 @@ class DeliverableGenerationService extends AbstractServiceFactory
         // Models are incremental, so use values from level-2 model
         $values = $this->buildContextModelingValues($anr);
 
-        // Champ HTML sur le dernier livrable
-        // $values['SUMMARY_EVAL_RISK'] = $this->generateWordXmlFromHtml($summaryEvalRisk);
+        // This field comes from the frontend at deliverable generation time, so it is already in $values
+        if (isset($values['SUMMARY_EVAL_RISK'])) {
+            $values['SUMMARY_EVAL_RISK'] = $this->generateWordXmlFromHtml($values['SUMMARY_EVAL_RISK']);
+        } else {
+            $values['SUMMARY_EVAL_RISK'] = '';
+        }
 
-        // $values['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution());
+        $values['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
 
         // GRAPH_EVAL_RISK
 
         $values['RISKS_RECO'] = $this->generateRisksPlan($anr, false);
         $values['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
-
-        // TABLE_AUDIT_INSTANCES
+        $values['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
 
         return $values;
     }
 
-    protected function getRisksDistribution() {
-        // getCounterRisks
+    protected function generateTableAudit($anr) {
+        $query = $this->instanceRiskTable->getRepository()->createQueryBuilder('ir');
+        $result = $query->select([
+            'i.id', 'i.name'.$anr->language.' as name', 'IDENTITY(i.root)', 'IDENTITY(i.object)',
+            'm.id as mid', 'm.label'.$anr->language.' as mlabel',
+            'v.id as vid', 'v.label'.$anr->language.' as vlabel',
+            'ir.comment',
+        ])->where('ir.anr = :anrid')
+            ->setParameter(':anrid', $anr->id)
+            ->innerJoin('ir.instance',      'i')
+            ->innerJoin('ir.threat',        'm')
+            ->innerJoin('ir.vulnerability', 'v')
+            ->getQuery()->getResult();
+
+
+        $mem_risks = [];
+        foreach($result as $r) {
+            if (!isset($mem_risks[$r['id']])) {
+                $mem_risks[$r['id']] = [];
+                $mem_risks[$r['id']]['ctx'] = $r['name'];
+                $mem_risks[$r['id']]['risks'] = [];
+            }
+
+            $mem_risks[$r['id']]['risks'][] = [
+                'm' => $r['mlabel'],
+                'v' => $r['vlabel'],
+                'comment' => $r['comment']
+            ];
+        }
+
+        if (!empty($mem_risks)) {
+            $tableWord = new PhpWord();
+            $section = $tableWord->addSection();
+            $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB'];
+            $table = $section->addTable($styleTable);
+            $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+            $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
+            $styleHeaderFont = ['bold' => true, 'size' => 10];
+            $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+            $styleContentFont = ['bold' => false, 'size' => 10];
+            $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+
+            $table->addRow(400);
+            $table->addCell(3000, $styleHeaderCell)->addText(_WT('Menace'), $styleHeader2Font, ['Alignment' => 'center']);
+            $table->addCell(3000, $styleHeaderCell)->addText(_WT('Vulnerabilité'), $styleHeader2Font, ['Alignment' => 'center']);
+            $table->addCell(6000, $styleHeaderCell)->addText(_WT('Constatation'), $styleHeader2Font, ['Alignment' => 'center']);
+
+            foreach ($mem_risks as $id_inst => $data) {
+                $table->addRow(400);
+                $table->addCell(12000, $cellColSpan)->addText(_WT($data['ctx']), $styleContentFont, ['Alignment' => 'left']);
+
+                if (!empty($data['risks'])) {
+                    foreach ($data['risks'] as $r) {
+                        $table->addRow(400);
+                        $table->addCell(3000, $styleContentCell)->addText(_WT($r['m']), $styleContentFont, ['Alignment' => 'left']);
+                        $table->addCell(3000, $styleContentCell)->addText(_WT($r['v']), $styleContentFont, ['Alignment' => 'left']);
+                        $table->addCell(6000, $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, ['Alignment' => 'left']);
+                    }
+                }
+            }
+
+            return $this->getWordXmlFromWordObject($tableWord);
+        } else {
+            return '';
+        }
+    }
+
+    protected function getRisksDistribution($anr) {
+        $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
+        list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
+        $colors = array('orange', 'green', 'alerte');
+        $sum = 0;
+
+        foreach ($colors as $c) {
+            if (!isset($distrib[$c])) {
+                $distrib[$c] = 0;
+            }
+            $sum += $distrib[$c];
+        }
+
+        $intro = sprintf("Il y a %d risques", $sum);
+        return $intro . '<br/><ul>' .
+            '<li>' . sprintf('%d risques critiques', $distrib['alerte']) . '</li>' .
+            '<li>' . sprintf('%d risques moyens', $distrib['orange']) . '</li>' .
+            '<li>' . sprintf('%d risques faibles', $distrib['green']) . '</li></ul>';
     }
 
     protected function generateRisksPlan($anr, $full = false) {

@@ -54,7 +54,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         }
     }
 
-    private function buildListScalesAndHeaders($anrId){
+    public function buildListScalesAndHeaders($anrId){
         if(!$this->anr || $this->anr->get('id') != $anrId){
             $this->anr = $this->get('anrTable')->getEntity($anrId);
         }
@@ -90,7 +90,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         }
     }
 
-    private function getCountersRisks($mode = 'raw'){
+    public function getCountersRisks($mode = 'raw'){
         // On croise avec les données des risques
         $changeField = $mode == 'raw' ? 'ir.cacheMaxRisk' : 'ir.cacheTargetedRisk';
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
