@@ -22,29 +22,24 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
     }
     public function create($data)
     {
-        return $this->methodNotAllowed();
-    }
-
-    public function getList()
-    {
         $anrId = (int) $this->params()->fromRoute('anrid');
         if(empty($anrId)){
             throw new \Exception('Anr id missing', 412);
         }
 
-        $modelId = $this->params()->fromQuery('model');
+        $modelId = $data['model'];
         if(empty($anrId)){
             throw new \Exception('Model id missing', 412);
         }
 
         $params = [
-            'VERSION' => $this->params()->fromQuery('version'),
-            'STATE' => $this->params()->fromQuery('status'),
-            'CLASSIFICATION' => $this->params()->fromQuery('classification'),
-            'DOCUMENT' => $this->params()->fromQuery('documentName'),
+            'VERSION' => $data['version'],
+            'STATE' => $data['status'],
+            'CLASSIFICATION' => $data['classification'],
+            'DOCUMENT' => $data['docname'],
             'DATE' => date('d/m/Y, H:i'),
-            'CLIENT' => $this->params()->fromQuery('clientManager'),
-            'SMILE' => $this->params()->fromQuery('securityConsultant')
+            'CLIENT' => $data['managers'],
+            'SMILE' => $data['consultants']
         ];
 
         // Generate the DOCX file
@@ -65,6 +60,11 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
         } else {
             throw new \Exception("Generated file not found: " . $filePath);
         }
+    }
+
+    public function getList()
+    {
+        return new JsonModel($this->getService()->getDeliveryModels());
     }
 
     /**
