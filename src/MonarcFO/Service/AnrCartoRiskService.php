@@ -152,6 +152,10 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         foreach($temp as $id_biblio => $risks){
             foreach($risks as $amv => $contexts){
                 foreach($contexts as $idx => $context){
+                    if ($context['impact'] < 0) {
+                        continue;
+                    }
+
                     if(! isset($counters[$context['impact']][$context['right']]) ){
                         $counters[$context['impact']][$context['right']] = 0;
                     }
@@ -173,8 +177,8 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     */
     private function getColor($val){
         if($val == -1 || is_null($val)) return '';
-        if($val <= $this->anr->get('seuilRolf1')) return 0;
-        if($val <= $this->anr->get('seuilRolf2')) return 1;
+        if($val <= $this->anr->get('seuil1')) return 0;
+        if($val <= $this->anr->get('seuil2')) return 1;
         return 2;
     }
 }
