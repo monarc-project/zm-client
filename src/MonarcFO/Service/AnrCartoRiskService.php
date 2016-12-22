@@ -95,8 +95,8 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         $changeField = $mode == 'raw' ? 'ir.cacheMaxRisk' : 'ir.cacheTargetedRisk';
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-                'ir.id', 'IDENTITY(ir.asset)', 'IDENTITY(ir.threat)', 'IDENTITY(ir.vulnerability)', $changeField.' as maximus',
-                'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object)',
+                'ir.id', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField.' as maximus',
+                'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
                 'm.c as mc', 'm.i as mi', 'm.d as md',
                 'o.scope',
             ])->where('ir.anr = :anrid')
@@ -108,13 +108,13 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 
         $counters = $distrib = $temp = [];
         foreach($result as $r){
-            if (!isset($r['asset']) || !isset($r['threat']) || !isset($r['vulnerabiltity'])) {
+            if (!isset($r['asset']) || !isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
             }
 
             //on détermine le contexte de travail
             //A. Quel est l'impact MAX au regard du masque CID de la menace
-            $imax = $c = $i = $d = 0;
+            $c = $i = $d = 0;
             if($r['mc']) $c = $r['ic'];
             if($r['mi']) $i = $r['ii'];
             if($r['md']) $d = $r['id'];
