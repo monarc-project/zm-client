@@ -195,7 +195,13 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        return array_values($recommandations);
+
+        $output = array_values($recommandations);
+        usort($output, function ($a, $b) {
+            return $a['position'] - $b['position'];
+        });
+
+        return $output;
     }
 
     /**
