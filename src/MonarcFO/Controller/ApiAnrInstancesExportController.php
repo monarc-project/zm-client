@@ -7,10 +7,10 @@ use Zend\View\Model\JsonModel;
 /**
  * Api ANR Instances Export Controller
  *
- * Class ApiAnrInstanceExportController
+ * Class ApiAnrInstancesExportController
  * @package MonarcFO\Controller
  */
-class ApiAnrInstanceExportController extends ApiAnrAbstractController
+class ApiAnrInstancesExportController extends ApiAnrAbstractController
 {
     /**
      * Create
