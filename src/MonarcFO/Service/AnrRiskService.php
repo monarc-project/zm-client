@@ -24,6 +24,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskTable;
     protected $threatTable;
     protected $vulnerabilityTable;
+    protected $translateService;
     
     public function getRisks($anrId, $instanceId = null,$params = []){
         $anr = $this->get('anrTable')->getEntity($anrId); // on check que l'ANR existe
@@ -31,7 +32,59 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     }
 
     public function getCsvRisks($anrId, $instanceId = null,$params){
+        $risks = $this->getRisks($anrId, $instanceId, $params);
 
+        $lang = $this->getLanguage();
+
+        $translate = $this->get('translateService');
+
+        $instancesCache = [];
+
+        $output = '';
+        if (count($risks) > 0) {
+            $fields = [
+                'instanceName'.$lang => $translate->translate('Instance', $lang),
+                'c_impact' => $translate->translate('Impact C', $lang),
+                'i_impact' => $translate->translate('Impact I', $lang),
+                'd_impact' => $translate->translate('Impact D', $lang),
+                'threatLabel'.$lang => $translate->translate('Threat', $lang),
+                'threatCode' => $translate->translate('Threat code', $lang),
+                'threatRate' => $translate->translate('Prob.', $lang),
+                'vulnLabel'.$lang => $translate->translate('Vulnerability', $lang),
+                'vulnCode' => $translate->translate('Vulnerability code', $lang),
+                'vulnerabilityRate' => $translate->translate('Qualif.', $lang),
+                'c_risk' => $translate->translate('Current risk C', $lang),
+                'i_risk' => $translate->translate('Current risk I', $lang),
+                'd_risk' => $translate->translate('Current risk D', $lang),
+                'target_risk' => $translate->translate('Target risk', $lang),
+            ];
+
+            // Fill in the header
+            $output .= implode(',', array_values($fields)) . "\n";
+
+            // Fill in the lines then
+            foreach ($risks as $risk) {
+                $array_values = [];
+
+                if (isset($instancesCache[$risk['instance']])) {
+                    $instance = $instancesCache[$risk['instance']];
+                } else {
+                    $instance = $this->instanceTable->get($risk['instance']);
+                    $instancesCache[$risk['instance']] = $instance;
+                }
+
+                $risk['instanceName'.$lang] = $instance['name'.$lang];
+
+                foreach($fields as $k => $v){
+                    $array_values[] = $risk[$k];
+                }
+                $output .= '"';
+                $output .= implode('","', str_replace('"', '\"', $array_values));
+                $output .= "\"\r\n";
+            }
+        }
+
+        return $output;
     }
 
     protected function getInstancesRisks($anrId, $instanceId = null, $params = []){
@@ -215,6 +268,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     'assetDescription3' => $r['asset_description3'],
                     'assetDescription4' => $r['asset_description4'],
                     'threat' => $r['threat_id'],
+                    'threatCode' => $r['threat_code'],
                     'threatLabel1' => $r['threat_label1'],
                     'threatLabel2' => $r['threat_label2'],
                     'threatLabel3' => $r['threat_label3'],
@@ -225,6 +279,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     'threatDescription4' => $r['threat_description4'],
                     'threatRate' => $r['ir_threatRate'],
                     'vulnerability' => $r['vulnerability_id'],
+                    'vulnCode' => $r['vulnerability_code'],
                     'vulnLabel1' => $r['vulnerability_label1'],
                     'vulnLabel2' => $r['vulnerability_label2'],
                     'vulnLabel3' => $r['vulnerability_label3'],
