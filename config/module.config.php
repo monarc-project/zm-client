@@ -54,6 +54,19 @@ return array(
                 ),
             ),
 
+            'monarc_api_client' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/client[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiClients',
+                    ),
+                ),
+            ),
+
             'monarc_api_models' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -692,6 +705,7 @@ return array(
             '\MonarcFO\Controller\ApiSnapshot'                          => '\MonarcFO\Controller\ApiSnapshotControllerFactory',
             '\MonarcFO\Controller\ApiSnapshotRestore'                   => '\MonarcFO\Controller\ApiSnapshotRestoreControllerFactory',
             '\MonarcFO\Controller\ApiConfig'                            => '\MonarcFO\Controller\ApiConfigControllerFactory',
+            '\MonarcFO\Controller\ApiClients'                           => '\MonarcFO\Controller\ApiClientsControllerFactory',
             '\MonarcFO\Controller\ApiModels'                            => '\MonarcFO\Controller\ApiModelsControllerFactory',
             '\MonarcFO\Controller\ApiDuplicateAnr'                      => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword'                      => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
@@ -832,6 +846,7 @@ return array(
             'monarc_api_guides',
             'monarc_api_guides_items',
             'monarc_api_models',
+            'monarc_api_client',
             'monarc_api_scales',
             'monarc_api_scales_comments',
             'monarc_api_scales_types',

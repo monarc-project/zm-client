@@ -7,39 +7,27 @@ use MonarcCore\Service\AbstractService;
 
 class ClientService extends AbstractService
 {
-    protected $clientTable;
-    protected $clientEntity;
     protected $countryTable;
     protected $countryEntity;
     protected $cityTable;
     protected $cityEntity;
-    protected $serverEntity;
-    protected $serverTable;
     protected $forbiddenFields = ['model_id'];
 
     public function getTotalCount()
     {
-        /** @var ClientTable $clientTable */
-        $clientTable = $this->get('clientTable');
-        return $clientTable->count();
+        return $this->table->count();
     }
 
     public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        /** @var ClientTable $clientTable */
-        $clientTable = $this->get('clientTable');
-
-        return $clientTable->countFiltered($page, $limit, $this->parseFrontendOrder($order),
+        return $this->table->countFiltered($page, $limit, $this->parseFrontendOrder($order),
             $this->parseFrontendFilter($filter, array('name', 'address', 'postalcode', 'phone', 'email',
                 'contact_fullname', 'contact_email', 'contact_phone')));
     }
 
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        /** @var ClientTable $clientTable */
-        $clientTable = $this->get('clientTable');
-
-        return $clientTable->fetchAllFiltered(
+        return $this->table->fetchAllFiltered(
             array('id', 'name', 'proxy_alias', 'address', 'postalcode', 'phone', 'fax', 'email', 'contactFullname',
                 'employees_number', 'contact_email', 'contact_phone', 'model_id'),
             $page,
@@ -52,7 +40,7 @@ class ClientService extends AbstractService
 
     public function getEntity($id)
     {
-        $client = $this->get('clientTable')->get($id);
+        $client = $this->table->get($id);
 
         if(!empty($client['country_id'])){
             $country = $this->get('countryTable')->get($client['country_id']);
@@ -74,13 +62,10 @@ class ClientService extends AbstractService
      */
     public function create($data, $last = true)
     {
-        /** @var ClientTable $clientTable */
-        $clientTable = $this->get('clientTable');
-
         $entity = $this->get('clientEntity');
         $entity->exchangeArray($data);
 
-        $clientTable->save($entity);
+        $this->table->save($entity);
     }
 
     public function update($id, $data) {
@@ -89,7 +74,7 @@ class ClientService extends AbstractService
         $this->filterPatchFields($data);
 
         /** @var ClientTable $clientTable */
-        $clientTable = $this->get('clientTable');
+        $clientTable = $this->table;
 
         /** @var Client $entity */
         $entity = $clientTable->getEntity($id);
@@ -111,7 +96,7 @@ class ClientService extends AbstractService
     public function delete($id)
     {
         /** @var ClientTable $clientTable */
-        $clientTable = $this->get('clientTable');
+        $clientTable = $this->table;
 
         $entity = $clientTable->getEntity($id);
 
@@ -126,23 +111,5 @@ class ClientService extends AbstractService
             }
         }
         return $var;
-    }
-
-    protected function getListValues($fieldsValues, $serverTable) {
-        $listValues = '';
-        foreach ($fieldsValues as $key => $value) {
-            if ($key != '' && !is_null($value)) {
-                if ($listValues != '') $listValues .= ', ';
-
-                if (is_numeric($value)) {
-                    $listValues .= "`$key` = ".$serverTable->getDb()->quote($value, \PDO::PARAM_INT);
-                }
-                else {
-                    $listValues .= "`$key` = ".$serverTable->getDb()->quote($value, \PDO::PARAM_STR);
-                }
-            }
-        }
-
-        return $listValues;
     }
 }

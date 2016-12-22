@@ -93,6 +93,8 @@ return array(
     'MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory'                => __DIR__ . '/src/MonarcFO/Controller/ApiAnrTreatmentPlanControllerFactory.php',
     'MonarcFO\Controller\ApiAnrVulnerabilitiesController'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrVulnerabilitiesController.php',
     'MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory'              => __DIR__ . '/src/MonarcFO/Controller/ApiAnrVulnerabilitiesControllerFactory.php',
+    'MonarcFO\Controller\ApiClientsController'                                => __DIR__ . '/src/MonarcFO/Controller/ApiClientsController.php',
+    'MonarcFO\Controller\ApiClientsControllerFactory'                         => __DIR__ . '/src/MonarcFO/Controller/ApiClientsControllerFactory.php',
     'MonarcFO\Controller\ApiConfigController'                                 => __DIR__ . '/src/MonarcFO/Controller/ApiConfigController.php',
     'MonarcFO\Controller\ApiConfigControllerFactory'                          => __DIR__ . '/src/MonarcFO/Controller/ApiConfigControllerFactory.php',
     'MonarcFO\Controller\ApiDuplicateAnrController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrController.php',
