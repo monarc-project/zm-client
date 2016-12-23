@@ -331,7 +331,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         // Fill in each row
         foreach ($questions as $question) {
             $table->addRow(400);
-            $table->addCell(11000, $styleHeaderCell)->addText(_WT($question['label' . $anr->language]), $styleHeaderFont, ['Alignment' => 'left']);
+            $table->addCell(11000, $styleHeaderCell)->addText(_WT($question['label' . $anr->language]), $styleHeaderFont, ['Alignment' => 'left', 'align' => 'start']);
             $table->addRow(800);
 
             if ($question['type'] == 1) {
@@ -360,7 +360,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 }
             }
 
-            $table->addCell(11000, $styleContentCell)->addText(_WT($response), $styleContentFont, ['Alignment' => 'left']);
+            $table->addCell(11000, $styleContentCell)->addText(_WT($response), $styleContentFont, ['Alignment' => 'left', 'align' => 'start']);
         }
 
         $values['TABLE_EVAL_TEND'] = $this->getWordXmlFromWordObject($tableWord);
