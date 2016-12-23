@@ -737,9 +737,14 @@ class DeliverableGenerationService extends AbstractServiceFactory
         // Portion Copyright © Netlor SAS - 2015
         // Process trix caveats
         $input = str_replace(
+            ['<br>', '<div>', '</div>'],
+            ['<br/>', '', ''],
+            $input
+        );
+        /*$input = str_replace(
             ['<br>', '<div>', '</div>', '<blockquote>', '</blockquote>'],
             ['</p><p>', '<p>', '</p>', '<blockquote><p>', '</p></blockquote>'],
-            $input);
+            $input);*/
 
         //die("errors: " . $input);
 
