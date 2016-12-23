@@ -148,8 +148,8 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $section = $tableWord->addSection();
         $table = $section->addTable();
 
-        $styleHeaderCell = array('valign' => 'center', 'BorderSize' => 6, 'BorderColor' => '999999');
-        $styleHeaderFont = array('bold' => true);
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
 
         $table->addRow(400);
         $table->addCell(2000, $styleHeaderCell)->addText(' ', $styleHeaderFont);
@@ -359,17 +359,17 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $table->addRow(400);
 
-        $table->addCell(2000, $styleHeaderCell)->addText("Date", $styleHeaderFont);
-        $table->addCell(2000, $styleHeaderCell)->addText("Service / Personnes", $styleHeaderFont);
-        $table->addCell(2000, $styleHeaderCell)->addText("Contenu", $styleHeaderFont);
+        $table->addCell(6000, $styleHeaderCell)->addText("Date", $styleHeaderFont);
+        $table->addCell(10000, $styleHeaderCell)->addText("Service / Personnes", $styleHeaderFont);
+        $table->addCell(14000, $styleHeaderCell)->addText("Contenu", $styleHeaderFont);
 
         // Fill in each row
         foreach ($interviews as $interview) {
             $table->addRow(400);
 
-            $table->addCell(3000, $styleHeaderCell)->addText(_WT($interview['date']));
-            $table->addCell(5000, $styleHeaderCell)->addText(_WT($interview['service']));
-            $table->addCell(7000, $styleHeaderCell)->addText(_WT($interview['content']));
+            $table->addCell(6000, $styleHeaderCell)->addText(_WT($interview['date']));
+            $table->addCell(10000, $styleHeaderCell)->addText(_WT($interview['service']));
+            $table->addCell(14000, $styleHeaderCell)->addText(_WT($interview['content']));
         }
 
         $values['TABLE_INTERVIEW'] = $this->getWordXmlFromWordObject($tableWord);
