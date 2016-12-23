@@ -154,12 +154,20 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $impactsTypes = $this->scaleTypeService->getList(1, 0, null, null, ['anr' => $anr->id]);
         $impactsComments = $this->scaleCommentService->getList(1, 0, null, null, ['anr' => $anr->id, 'scale' => $impactsScale['id']]);
 
+        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'align' => 'center'];
+
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable();
 
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
+
+        $styleContentCell = ['align' => 'left', 'size' => 10];
+        $styleContentCellCenter = ['align' => 'center', 'size' => 10];
+        $styleContentFont = ['bold' => false, 'size' => 10];
+        $styleContentParag = ['align' => 'left', 'size' => 10];
+        $styleContentParagCenter = ['align' => 'center', 'size' => 10];
 
         $table->addRow(400);
         $table->addCell(2000, $styleHeaderCell)->addText(' ', $styleHeaderFont);
@@ -183,7 +191,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                     }
                 }
 
-                $table->addCell(2000, $styleHeaderCell)->addText(_WT($commentText));
+                $table->addCell(2000, $styleContentCell)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
             }
         }
 
@@ -196,13 +204,17 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable(['align' => 'center']);
+        $table = $section->addTable($styleTable);
+
+        $table->addRow(400);
+        $table->addCell(80, $styleHeaderCell)->addText(_WT('Niveau'), $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(8000, $styleHeaderCell)->addText(_WT('Commentaire'), $styleHeaderFont, ['Alignment' => 'center']);
 
         // Fill in each row
         for ($row = $threatsScale['min']; $row <= $threatsScale['max']; ++$row) {
             $table->addRow(400);
 
-            $table->addCell(500, $styleHeaderCell)->addText($row);
+            $table->addCell(80, $styleContentCell)->addText($row, $styleContentFont, ['Alignment' => 'center']);
 
             // Find the appropriate comment
             $commentText = '';
@@ -213,7 +225,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 }
             }
 
-            $table->addCell(5000, $styleHeaderCell)->addText(_WT($commentText));
+            $table->addCell(5000, $styleContentCell)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
         }
 
         $values['SCALE_THREAT'] = $this->getWordXmlFromWordObject($tableWord);
@@ -225,13 +237,18 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable(['align' => 'center']);
+        $table = $section->addTable($styleTable);
+
+        $table->addRow(400);
+        $table->addCell(80, $styleHeaderCell)->addText(_WT('Niveau'), $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(8000, $styleHeaderCell)->addText(_WT('Commentaire'), $styleHeaderFont, ['Alignment' => 'center']);
+
 
         // Fill in each row
         for ($row = $vulnsScale['min']; $row <= $vulnsScale['max']; ++$row) {
             $table->addRow(400);
 
-            $table->addCell(500, $styleHeaderCell)->addText($row);
+            $table->addCell(80, $styleContentCell)->addText($row, $styleContentFont, ['Alignment' => 'center']);
 
             // Find the appropriate comment
             $commentText = '';
@@ -242,7 +259,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 }
             }
 
-            $table->addCell(5000, $styleHeaderCell)->addText(_WT($commentText));
+            $table->addCell(5000, $styleContentCell)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
         }
 
         $values['SCALE_VULN'] = $this->getWordXmlFromWordObject($tableWord);
@@ -310,14 +327,6 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $section = $tableWord->addSection();
         $table = $section->addTable(['borderSize' => 0, 'borderColor' => 'FFFFFF']);
 
-        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-        $styleHeaderFont = ['bold' => true, 'size' => 10];
-
-        $styleContentCell = ['align' => 'left', 'size' => 10];
-        $styleContentCellCenter = ['align' => 'center', 'size' => 10];
-        $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentParag = ['align' => 'left', 'size' => 10];
-        $styleContentParagCenter = ['align' => 'center', 'size' => 10];
 
         // Fill in each row
         foreach ($questions as $question) {
@@ -365,7 +374,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable(['align' => 'center']);
+        $table = $section->addTable($styleTable);
 
         $table->addRow(400);
 
@@ -377,9 +386,9 @@ class DeliverableGenerationService extends AbstractServiceFactory
         foreach ($interviews as $interview) {
             $table->addRow(400);
 
-            $table->addCell(6000, $styleHeaderCell)->addText(_WT($interview['date']));
-            $table->addCell(10000, $styleHeaderCell)->addText(_WT($interview['service']));
-            $table->addCell(14000, $styleHeaderCell)->addText(_WT($interview['content']));
+            $table->addCell(6000, $styleContentCell)->addText(_WT($interview['date']), $styleContentFont, ['Alignment' => 'left']);
+            $table->addCell(10000, $styleContentCell)->addText(_WT($interview['service']), $styleContentFont, ['Alignment' => 'left']);
+            $table->addCell(14000, $styleContentCell)->addText(_WT($interview['content']), $styleContentFont, ['Alignment' => 'left']);
         }
 
         $values['TABLE_INTERVIEW'] = $this->getWordXmlFromWordObject($tableWord);
@@ -666,7 +675,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB');
+        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB', 'align' => 'center');
         $table = $section->addTable($styleTable);
 
         $styleHeaderCell = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10);
