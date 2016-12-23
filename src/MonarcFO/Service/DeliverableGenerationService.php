@@ -92,7 +92,12 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         // Word-filter the input values
         foreach ($values as $key => $val) {
-            $values[$key] = _WT($val);
+            if ($key != "SUMMARY_EVAL_RISK") {
+                $values[$key] = _WT($val);
+            } else {
+                // This field comes from the frontend at deliverable generation time, so it is already in $values
+                $values[$key] = $this->generateWordXmlFromHtml($val);
+            }
         }
 
         $values = array_merge($values, $this->buildValues($anr, $model['category']));
@@ -377,13 +382,6 @@ class DeliverableGenerationService extends AbstractServiceFactory
         // Models are incremental, so use values from level-2 model
         $values = $this->buildContextModelingValues($anr);
 
-        // This field comes from the frontend at deliverable generation time, so it is already in $values
-        if (isset($values['SUMMARY_EVAL_RISK'])) {
-            $values['SUMMARY_EVAL_RISK'] = $this->generateWordXmlFromHtml($values['SUMMARY_EVAL_RISK']);
-        } else {
-            $values['SUMMARY_EVAL_RISK'] = '';
-        }
-
         $values['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
 
         // GRAPH_EVAL_RISK
@@ -465,7 +463,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected function getRisksDistribution($anr) {
         $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
         list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
-        $colors = array('orange', 'green', 'alerte');
+        $colors = array(0, 1, 2);
         $sum = 0;
 
         foreach ($colors as $c) {
@@ -475,11 +473,11 @@ class DeliverableGenerationService extends AbstractServiceFactory
             $sum += $distrib[$c];
         }
 
-        $intro = sprintf("Il y a %d risques", $sum);
+        $intro = sprintf("La liste des risques traités est fournie en fichier annexe. Il répertorie %d risque(s) dont :", $sum);
         return $intro . '<br/><ul>' .
-            '<li>' . sprintf('%d risques critiques', $distrib['alerte']) . '</li>' .
-            '<li>' . sprintf('%d risques moyens', $distrib['orange']) . '</li>' .
-            '<li>' . sprintf('%d risques faibles', $distrib['green']) . '</li></ul>';
+            '<li>' . sprintf('%d risques critiques', $distrib[2]) . '</li>' .
+            '<li>' . sprintf('%d risques moyens', $distrib[1]) . '</li>' .
+            '<li>' . sprintf('%d risques faibles', $distrib[0]) . '</li></ul>';
     }
 
     protected function generateRisksPlan($anr, $full = false) {
