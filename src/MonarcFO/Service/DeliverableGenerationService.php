@@ -101,6 +101,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         }
 
         $values = array_merge($values, $this->buildValues($anr, $model['category']));
+        $values['TYPE'] = $this->getModelType($model['category']);
         return $this->generateDeliverableWithValuesAndModel($model['path' . $anr->language], $values);
     }
 
@@ -119,6 +120,15 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $word->saveAs($pathTmp);
 
         return $pathTmp;
+    }
+
+    protected function getModelType($modelCategory) {
+        switch ($modelCategory) {
+            case 1: return 'Validation du contexte';
+            case 2: return 'Validation du modèle';
+            case 3: return 'Rapport final';
+            default: return 'N/A';
+        }
     }
 
     protected function buildValues($anr, $modelCategory) {

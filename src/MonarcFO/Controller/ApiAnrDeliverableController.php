@@ -34,7 +34,7 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 
         $params = [
             'VERSION' => $data['version'],
-            'STATE' => $data['status'],
+            'STATE' => $data['status'] == 0 ? 'Brouillon' : 'Final',
             'CLASSIFICATION' => $data['classification'],
             'DOCUMENT' => $data['docname'],
             'DATE' => date('d/m/Y, H:i'),
