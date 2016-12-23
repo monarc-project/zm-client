@@ -442,7 +442,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $styleHeaderCellVal[1] = ['bgcolor' => 'FFBC1C', 'size' => 10, 'valign' => 'center'];
         $styleHeaderCellVal[2] = ['bgcolor' => 'FD661F', 'size' => 10, 'valign' => 'center'];
 
-        $labels = ['Risque(s) faible(s) négligeables', 'Risque(s) moyen(s) à traiter partiellement', 'Risque(s) critique(s) à traiter en priorité'];
+        $labels = ['Risques faibles', 'Risques moyens', 'Risques critiques'];
 
         $allWordXml = '';
 
@@ -553,9 +553,9 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $intro = sprintf("La liste des risques traités est fournie en fichier annexe. Il répertorie %d risque(s) dont :", $sum);
         return $intro . '<br/><ul>' .
-            '<li>' . sprintf('%d risques critiques', $distrib[2]) . '</li>' .
-            '<li>' . sprintf('%d risques moyens', $distrib[1]) . '</li>' .
-            '<li>' . sprintf('%d risques faibles', $distrib[0]) . '</li></ul>';
+            '<li>' . sprintf('%d risque(s) critique(s) à traiter en priorité', $distrib[2]) . '</li>' .
+            '<li>' . sprintf('%d risque(s) moyen(s) à traiter partiellement', $distrib[1]) . '</li>' .
+            '<li>' . sprintf('%d risque(s) faible(s) négligeables', $distrib[0]) . '</li></ul>';
     }
 
     protected function generateRisksPlan($anr, $full = false) {
@@ -598,7 +598,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                     $first = true;
                     foreach ($risks as $risk) {
                         if ($risk['kindOfMeasure'] == 5) continue;
-                        
+
                         $table->addRow(400);
 
                         if ($first) {
