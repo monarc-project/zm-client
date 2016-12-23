@@ -518,7 +518,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
             $table->addRow(400);
             $table->addCell(3000, $styleHeaderCell)->addText(_WT('Menace'), $styleHeader2Font, ['Alignment' => 'center']);
             $table->addCell(3000, $styleHeaderCell)->addText(_WT('Vulnerabilité'), $styleHeader2Font, ['Alignment' => 'center']);
-            $table->addCell(6000, $styleHeaderCell)->addText(_WT('Constatation'), $styleHeader2Font, ['Alignment' => 'center']);
+            $table->addCell(6000, $styleHeaderCell)->addText(_WT('Mesure en place'), $styleHeader2Font, ['Alignment' => 'center']);
 
             foreach ($mem_risks as $id_inst => $data) {
                 $table->addRow(400);
