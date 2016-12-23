@@ -161,10 +161,10 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable();
+        $table = $section->addTable($styleTable);
 
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10, 'alignment' => 'center'];
 
         $styleContentCell = ['align' => 'left', 'size' => 10];
         $styleContentCellCenter = ['align' => 'center', 'size' => 10];
@@ -172,19 +172,52 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $styleContentParag = ['align' => 'left', 'size' => 10];
         $styleContentParagCenter = ['align' => 'center', 'size' => 10];
 
-        $table->addRow(400);
-        $table->addCell(2000, $styleHeaderCell)->addText(' ', $styleHeaderFont);
-        foreach ($impactsTypes as $impactType) {
-            $table->addCell(2000, $styleHeaderCell)->addText(_WT($impactType['label' . $anr->language]), $styleHeaderFont);
-        }
+        $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
+        $cellRowContinue = ['vMerge' => 'continue', 'bgcolor' => 'DFDFDF'];
+        $cellColSpan = ['gridSpan' => 3, 'bgcolor' => 'DFDFDF', 'size' => 10, 'valign' => 'center', 'align' => 'center', 'Alignment' => 'center'];
+        $cellHCentered = ['alignment' => 'center'];
+        $cellVCentered = ['valign' => 'center'];
 
+        $table->addRow();
+
+        $table->addCell(500, $cellRowSpan)->addText('Niv.', $styleHeaderFont);
+        $table->addCell(9000, $cellColSpan)->addText('Impact', $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(9000, $cellRowSpan)->addText('Conséquences', $styleHeaderFont, ['Alignment' => 'center']);
+
+        // Manually add C/I/D impacts columns
+        $table->addRow();
+        $table->addCell(null, $cellRowContinue);
+        $table->addCell(3000, $styleHeaderCell)->addText('C', null, $styleHeaderFont);
+        $table->addCell(3000, $styleHeaderCell)->addText('I', null, $styleHeaderFont);
+        $table->addCell(3000, $styleHeaderCell)->addText('D', null, $styleHeaderFont);
+        $table->addCell(null, $cellRowContinue);
+/*
+
+        foreach ($impactsTypes as $impactType) {
+            if ($impactType['type'] > 3) {
+                $table->addCell(2000, $styleHeaderCell)->addText(_WT($impactType['label' . $anr->language]), $styleHeaderFont);
+            }
+        }
+*/
         // Fill in each row
         for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
+            $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'top', 'bgcolor' => 'FFFFFF'];
+            $cellRowContinue = ['vMerge' => 'continue'];
+
             $table->addRow(400);
 
-            $table->addCell(2000, $styleHeaderCell)->addText($row);
+            $table->addCell(500, $cellRowSpan)->addText($row, $styleContentFont, ['Alignment' => 'center']);
+
+            $impactsTypePerType = [];
 
             foreach ($impactsTypes as $impactType) {
+                $impactsTypePerType[$impactType['type_id']] = $impactType;
+            }
+
+            // Put C/I/D first
+            for ($i = 1; $i <= 3; ++$i) {
+                $impactType = $impactsTypePerType[$i];
+
                 // Find the appropriate comment
                 $commentText = '';
                 foreach ($impactsComments as $comment) {
@@ -194,7 +227,34 @@ class DeliverableGenerationService extends AbstractServiceFactory
                     }
                 }
 
-                $table->addCell(2000, $styleContentCell)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
+                $table->addCell(3000, $cellRowSpan)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
+            }
+
+            // Then ROLFP as rows
+            $first = true;
+            for ($i = 4; $i <= 8; ++$i) {
+                $impactType = $impactsTypePerType[$i];
+
+                if ($first) {
+                    $first = false;
+                } else {
+                    $table->addRow();
+                    $table->addCell(100, $cellRowContinue);
+                    $table->addCell(100, $cellRowContinue);
+                    $table->addCell(100, $cellRowContinue);
+                    $table->addCell(100, $cellRowContinue);
+                }
+
+                // Find the appropriate comment
+                $commentText = '';
+                foreach ($impactsComments as $comment) {
+                    if ($comment['scaleImpactType']->id == $impactType['id'] && $comment['val'] == $row) {
+                        $commentText = $comment['comment' . $anr->language];
+                        break;
+                    }
+                }
+
+                $table->addCell(3000, $styleContentCell)->addText(_WT($impactType['type'] . ' : ' . $commentText), $styleContentCell, ['Alignment' => 'left']);
             }
         }
 

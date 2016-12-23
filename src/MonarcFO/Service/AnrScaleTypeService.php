@@ -54,6 +54,7 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         foreach ($scales as $key => $scale) {
             if(isset($scale['type'])){
                 $scales[$key]['type'] = $types[$scale['type']];
+                $scales[$key]['type_id'] = $scale['type'];
             }
         }
 
