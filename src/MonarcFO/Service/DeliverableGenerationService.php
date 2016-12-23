@@ -4,6 +4,7 @@ use MonarcCore\Service\AbstractServiceFactory;
 use MonarcCore\Service\DeliveriesModelsService;
 use MonarcCore\Service\QuestionChoiceService;
 use MonarcCore\Service\QuestionService;
+use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ClientTable;
 use MonarcFO\Model\Table\InstanceTable;
@@ -596,6 +597,8 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 if (!empty($risks)) {
                     $first = true;
                     foreach ($risks as $risk) {
+                        if ($risk['kindOfMeasure'] == 5) continue;
+                        
                         $table->addRow(400);
 
                         if ($first) {
