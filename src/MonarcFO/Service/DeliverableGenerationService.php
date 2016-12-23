@@ -292,18 +292,28 @@ class DeliverableGenerationService extends AbstractServiceFactory
         // Table which represents "particular attention" threats
         $values['TABLE_THREATS'] = $this->generateThreatsTable($anr, false);
 
-        // Figure A: Trends (Q/A)
+        // Figure A: Trends (Questions / Answers)
         $questions = $this->questionService->getList(1, 0, null, null, ['anr' => $anr->id]);
         $questionsChoices = $this->questionChoiceService->getList(1, 0, null, null, ['anr' => $anr->id]);
+
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable(['align' => 'center']);
+        $table = $section->addTable(['borderSize' => 0, 'borderColor' => 'FFFFFF']);
+
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+
+        $styleContentCell = ['align' => 'left', 'size' => 10];
+        $styleContentCellCenter = ['align' => 'center', 'size' => 10];
+        $styleContentFont = ['bold' => false, 'size' => 10];
+        $styleContentParag = ['align' => 'left', 'size' => 10];
+        $styleContentParagCenter = ['align' => 'center', 'size' => 10];
 
         // Fill in each row
         foreach ($questions as $question) {
             $table->addRow(400);
-
-            $table->addCell(3000, $styleHeaderCell)->addText(_WT($question['label' . $anr->language]));
+            $table->addCell(11000, $styleHeaderCell)->addText(_WT($question['label' . $anr->language]), $styleHeaderFont, ['Alignment' => 'left']);
+            $table->addRow(800);
 
             if ($question['type'] == 1) {
                 // Simple text
@@ -331,7 +341,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 }
             }
 
-            $table->addCell(5000, $styleHeaderCell)->addText(_WT($response), ['alignment' => 'start'], ['align' => 'start']);
+            $table->addCell(11000, $styleContentCell)->addText(_WT($response), $styleContentFont, ['Alignment' => 'left']);
         }
 
         $values['TABLE_EVAL_TEND'] = $this->getWordXmlFromWordObject($tableWord);
