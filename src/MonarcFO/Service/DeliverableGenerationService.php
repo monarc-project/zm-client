@@ -52,6 +52,8 @@ class DeliverableGenerationService extends AbstractServiceFactory
     protected $cartoRiskService;
     /** @var InstanceRiskTable */
     protected $instanceRiskTable;
+    /** @var InstanceRiskOpTable */
+    protected $instanceRiskOpTable;
 
     /**
      * Construct
@@ -597,7 +599,14 @@ class DeliverableGenerationService extends AbstractServiceFactory
                 if (!empty($risks)) {
                     $first = true;
                     foreach ($risks as $risk) {
-                        if ($risk['kindOfMeasure'] == 5) continue;
+                        if ($risk['instanceRisk']) {
+                            $instanceRisk = $this->instanceRiskTable->get($risk['instanceRisk']->id);
+                            if ($instanceRisk['kindOfMeasure'] == 5) continue;
+                        } else if ($risk['instanceRiskOp']) {
+                            $instanceRiskOp = $this->instanceRiskOpTable->get($risk['instanceRiskOp']->id);
+                            if ($instanceRiskOp['kindOfMeasure'] == 5) continue;
+                        }
+
 
                         $table->addRow(400);
 
