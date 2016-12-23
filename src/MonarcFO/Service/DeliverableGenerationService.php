@@ -384,13 +384,61 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         $values['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
 
-        // GRAPH_EVAL_RISK
+        $values['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
         $values['RISKS_RECO'] = $this->generateRisksPlan($anr, false);
         $values['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
         $values['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
 
         return $values;
+    }
+
+    protected function generateRisksGraph($anr) {
+        $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
+        list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
+
+        $maxValue = max($distrib);
+
+        $styleTable = ['borderSize' => '0', 'borderColor' => 'FFFFFF'];
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleValueFont = [];
+        $styleValueFont[0] = ['bold' => true, 'size' => 10, 'color' => '000000'];
+        $styleValueFont[1] = ['bold' => true, 'size' => 10, 'color' => '000000'];
+        $styleValueFont[2] = ['bold' => true, 'size' => 10, 'color' => 'FFFFFF'];
+
+        $styleHeaderCellVal = [];
+        $styleHeaderCellVal[0] = ['bgcolor' => 'D6F107', 'size' => 10, 'valign' => 'center'];
+        $styleHeaderCellVal[1] = ['bgcolor' => 'FFBC1C', 'size' => 10, 'valign' => 'center'];
+        $styleHeaderCellVal[2] = ['bgcolor' => 'FD661F', 'size' => 10, 'valign' => 'center'];
+
+        $labels = ['Risques faibles', 'Risques moyens', 'Risques critiques'];
+
+        $allWordXml = '';
+
+        for ($row = 0; $row < 3; ++$row) {
+            $tableWord = new PhpWord();
+            $section = $tableWord->addSection();
+            $table = $section->addTable($styleTable);
+
+            $table->addRow(200);
+            $table->addCell(3200, $styleHeaderCell)->addText(_WT($labels[$row]), $styleHeaderFont, ['Alignment' => 'center']);
+
+            if ($maxValue > 0 && isset($distrib[$row])) {
+                $percentage = $distrib[$row] * 100 / $maxValue;
+            } else {
+                $percentage = 0;
+            }
+
+            if ($percentage > 0) {
+                $table->addCell(intval($percentage * 30), $styleHeaderCellVal[$row])->addText($distrib[$row], $styleValueFont[$row], ['Alignment' => 'end']);
+            }
+
+            $allWordXml .= $this->getWordXmlFromWordObject($tableWord);
+            unset($tableWord);
+        }
+
+        return $allWordXml;
     }
 
     protected function generateTableAudit($anr) {
@@ -685,8 +733,10 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $docXml = $part->write();
         $matches = array();
 
-        if ($useBody) {
+        if ($useBody === true) {
             $regex = '/<w:body>(.*)<w:sectPr>/is';
+        } else if ($useBody === 'graph') {
+            return $docXml;
         } else {
             $regex = '/<w:r>(.*)<\/w:r>/is';
         }
