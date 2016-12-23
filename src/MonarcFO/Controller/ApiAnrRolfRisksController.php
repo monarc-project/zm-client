@@ -54,7 +54,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($page, $limit, $order, $filter),
+            'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $category, $tag, $anr),
             $this->name => $rolfRisks
         ));
     }
