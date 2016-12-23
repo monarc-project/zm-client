@@ -441,7 +441,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $styleHeaderCellVal[1] = ['bgcolor' => 'FFBC1C', 'size' => 10, 'valign' => 'center'];
         $styleHeaderCellVal[2] = ['bgcolor' => 'FD661F', 'size' => 10, 'valign' => 'center'];
 
-        $labels = ['Risques faibles', 'Risques moyens', 'Risques critiques'];
+        $labels = ['Risque(s) faible(s) négligeables', 'Risque(s) moyen(s) à traiter partiellement', 'Risque(s) critique(s) à traiter en priorité'];
 
         $allWordXml = '';
 
