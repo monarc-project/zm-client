@@ -2,6 +2,7 @@
 namespace MonarcFO\Service;
 
 use MonarcFO\Model\Entity\Anr;
+use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\SnapshotTable;
 use MonarcFO\Service\AbstractService;
@@ -130,7 +131,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
 
         $anrSnapshot = current($snapshotTable->getEntityByFields(['anrReference' => $anrId, 'id' => $id]));
 
-        $newAnrId = $anrService->duplicateAnr($anrSnapshot->get('anr')->get('id')); // on duplique l'anr liée au snapshot
+        $newAnrId = $anrService->duplicateAnr($anrSnapshot->get('anr')->get('id'), Object::SOURCE_CLIENT, null, [], false, true); // on duplique l'anr liée au snapshot
 
         $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
         $i = 1;

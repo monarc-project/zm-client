@@ -236,7 +236,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false) {
+    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false, $isSnapshotCloning = false) {
         ini_set('max_execution_time', 0);
 
         if (is_integer($anr)) {
@@ -258,7 +258,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
 
-        if ($source == Object::SOURCE_CLIENT) {
+        if ($source == Object::SOURCE_CLIENT && !$isSnapshotCloning) {
             /** @var UserAnrTable $userAnrCliTable */
             $userAnrCliTable = $this->get('userAnrCliTable');
             $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anr->id, 'user' => $userArray['id']]);
@@ -503,7 +503,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         //duplicate rolf risk/tags association
         /** @var RolfTag $rolfTag */
-        foreach ($rolfTags as $rolfTag) {
+        /*foreach ($rolfTags as $rolfTag) {
             $tag = $rolfTagsNewIds[$rolfTag->id];
             $risks = $rolfTag->get('risks');
             $newRisks = [];
@@ -514,7 +514,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $tag->set('risks', $newRisks);
             $this->get('rolfTagCliTable')->save($tag, $last);
-        }
+        }*/
 
         //duplicate objects categories
         $objects = ($source == Object::SOURCE_COMMON) ? $this->get('objectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
