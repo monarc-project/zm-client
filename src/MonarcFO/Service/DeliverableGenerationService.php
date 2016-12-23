@@ -577,7 +577,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
         $styleContentFontRed = array('bold' => true, 'color' => 'FF0000', 'size' => 10);
 
         $table->addRow(400);
-        $table->addCell(4500, $styleHeaderCell)->addText('Mesures prises', $styleHeaderFont, $alignCenter);
+        $table->addCell(4500, $styleHeaderCell)->addText('Mesures en place', $styleHeaderFont, $alignCenter);
         $table->addCell(2000, $styleHeaderCell)->addText('Actif', $styleHeaderFont, $alignCenter);
         $table->addCell(4500, $styleHeaderCell)->addText('Recommandation', $styleHeaderFont, $alignCenter);
         $table->addCell(500, $styleHeaderCell)->addText('Imp.', $styleHeaderFont, $alignCenter);
