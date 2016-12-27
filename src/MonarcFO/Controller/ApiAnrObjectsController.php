@@ -78,21 +78,6 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
     }
 
     /**
-     * Delete
-     *
-     * @param mixed $id
-     * @return JsonModel
-     */
-    public function delete($id)
-    {
-        if($this->getService()->delete($id)){
-            return new JsonModel(array('status' => 'ok'));
-        }else{
-            return new JsonModel(array('status' => 'ok')); // Todo: peux être retourner un message d'erreur
-        }
-    }
-
-    /**
      * Create
      *
      * @param mixed $data
