@@ -9,6 +9,7 @@ class AnrRecommandationMeasureServiceFactory extends AbstractServiceFactory
         'entity'=> 'MonarcFO\Model\Entity\RecommandationMeasure',
         'table'=> 'MonarcFO\Model\Table\RecommandationMeasureTable',
         'anrTable'=> 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'recommandationTable'=> 'MonarcFO\Model\Table\RecommandationTable',
         'measureTable'=> 'MonarcFO\Model\Table\MeasureTable',
     );

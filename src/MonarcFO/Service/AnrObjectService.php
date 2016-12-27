@@ -10,6 +10,7 @@ namespace MonarcFO\Service;
 class AnrObjectService extends \MonarcCore\Service\ObjectService
 {
     protected $selfCoreService;
+    protected $userAnrTable;
 
     public function importFromFile($anrId,$data){
         // on a bien un pwd (ou vide)

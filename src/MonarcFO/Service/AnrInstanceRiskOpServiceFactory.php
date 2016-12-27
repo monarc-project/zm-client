@@ -10,6 +10,7 @@ class AnrInstanceRiskOpServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\InstanceRiskOpTable',
         'entity' => 'MonarcFO\Model\Entity\InstanceRiskOp',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         //'modelTable' => 'MonarcFO\Model\Table\ModelTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
         'objectTable' => 'MonarcFO\Model\Table\ObjectTable',

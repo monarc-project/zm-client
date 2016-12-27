@@ -13,6 +13,7 @@ class AnrRecommandationMeasureService extends \MonarcCore\Service\AbstractServic
 {
     protected $dependencies = ['anr', 'recommandation', 'measure'];
     protected $anrTable;
+    protected $userAnrTable;
     protected $recommandationTable;
     protected $measureTable;
 

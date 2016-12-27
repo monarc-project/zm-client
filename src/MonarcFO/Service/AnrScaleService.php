@@ -13,6 +13,7 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
 	protected $filterColumns = array( );
 
     protected $anrTable;
+    protected $userAnrTable;
     protected $AnrCheckStartedService;
     protected $scaleImpactTypeService;
 

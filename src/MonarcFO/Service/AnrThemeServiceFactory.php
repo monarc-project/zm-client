@@ -9,5 +9,6 @@ class AnrThemeServiceFactory extends AbstractServiceFactory
         'entity'=> 'MonarcFO\Model\Entity\Theme',
         'table'=> 'MonarcFO\Model\Table\ThemeTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     );
 }

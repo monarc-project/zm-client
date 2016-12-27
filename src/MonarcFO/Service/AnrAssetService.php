@@ -10,6 +10,7 @@ namespace MonarcFO\Service;
 class AnrAssetService extends \MonarcCore\Service\AbstractService
 {
 	protected $anrTable;
+	protected $userAnrTable;
 
     protected $amvTable;
     protected $amvEntity;

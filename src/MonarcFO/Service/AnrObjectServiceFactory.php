@@ -13,6 +13,7 @@ class AnrObjectServiceFactory extends AbstractServiceFactory
         'assetTable'=> '\MonarcFO\Model\Table\AssetTable',
         'assetService' => 'MonarcFO\Service\AnrAssetService',
         'anrTable'=> '\MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'anrObjectCategoryTable'=> '\MonarcFO\Model\Table\AnrObjectCategoryTable',
         'amvTable'=> '\MonarcFO\Model\Table\AmvTable',
         'categoryTable'=> '\MonarcFO\Model\Table\ObjectCategoryTable',

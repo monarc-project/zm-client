@@ -9,6 +9,7 @@ class AnrScaleCommentServiceFactory extends AbstractServiceFactory
         'entity'=> 'MonarcFO\Model\Entity\ScaleComment',
         'table'=> 'MonarcFO\Model\Table\ScaleCommentTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',
         'scaleImpactTypeTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
     );

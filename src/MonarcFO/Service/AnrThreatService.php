@@ -17,6 +17,7 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
     ];
     protected $dependencies = ['anr', 'theme'];
     protected $anrTable;
+    protected $userAnrTable;
     protected $themeTable;
     protected $instanceRiskTable;
 

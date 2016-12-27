@@ -15,6 +15,7 @@ class AnrMeasureService extends \MonarcCore\Service\AbstractService
     );
 
     protected $anrTable;
+    protected $userAnrTable;
     protected $dependencies = ['anr'];
 
     /**

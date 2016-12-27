@@ -9,5 +9,6 @@ class AnrRolfTagServiceFactory extends AbstractServiceFactory
         'entity'=> 'MonarcFO\Model\Entity\RolfTag',
         'table'=> 'MonarcFO\Model\Table\RolfTagTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     );
 }

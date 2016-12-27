@@ -13,6 +13,7 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'scale'];
 
     protected $anrTable;
+    protected $userAnrTable;
     protected $scaleTable;
     protected $instanceTable;
     protected $instanceConsequenceService;

@@ -15,6 +15,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     protected $filterColumns = ['code', 'description'];
     protected $dependencies = ['anr'];
     protected $anrTable;
+    protected $userAnrTable;
 
     /**
      * Get List

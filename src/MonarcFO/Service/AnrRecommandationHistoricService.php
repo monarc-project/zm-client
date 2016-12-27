@@ -21,4 +21,6 @@ class AnrRecommandationHistoricService extends \MonarcCore\Service\AbstractServi
 {
     protected $dependencies = ['anr'];
 
+    protected $userAnrTable;
+
 }

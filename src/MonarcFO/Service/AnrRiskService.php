@@ -19,6 +19,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'scale'];
 
     protected $anrTable;
+    protected $userAnrTable;
     protected $instanceTable;
     /** @var  InstanceRiskTable */
     protected $instanceRiskTable;

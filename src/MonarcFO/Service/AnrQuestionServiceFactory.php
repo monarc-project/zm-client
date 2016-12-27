@@ -11,6 +11,7 @@ class AnrQuestionServiceFactory extends AbstractServiceFactory
         'entity' => 'MonarcFO\Model\Entity\Question',
         'choiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     );
 
     public function createService(ServiceLocatorInterface $serviceLocator){

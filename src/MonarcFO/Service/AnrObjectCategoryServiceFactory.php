@@ -9,6 +9,7 @@ class AnrObjectCategoryServiceFactory extends AbstractServiceFactory
     protected $ressources = array(
         'table'=> '\MonarcFO\Model\Table\ObjectCategoryTable',
         'entity'=> '\MonarcFO\Model\Entity\ObjectCategory',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'anrObjectCategoryTable'=> '\MonarcFO\Model\Table\AnrObjectCategoryTable',
         'objectTable' => '\MonarcFO\Model\Table\ObjectTable',
         'rootTable' => 'MonarcFO\Model\Table\ObjectCategoryTable',

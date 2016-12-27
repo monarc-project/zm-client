@@ -15,6 +15,7 @@ class AnrRolfRiskService extends \MonarcCore\Service\RolfRiskService
     protected $dependencies = ['anr', 'categor[ies](y)', 'tag[s]()'];
 
     protected $anrTable;
+    protected $userAnrTable;
     protected $categoryTable;
     protected $tagTable;
 }

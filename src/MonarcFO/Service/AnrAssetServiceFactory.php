@@ -9,6 +9,7 @@ class AnrAssetServiceFactory extends AbstractServiceFactory
         'entity' => 'MonarcFO\Model\Entity\Asset',
         'table' => 'MonarcFO\Model\Table\AssetTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
 
         'amvTable' => 'MonarcFO\Model\Table\AmvTable',
 		'amvEntity' => 'MonarcFO\Model\Entity\Amv',

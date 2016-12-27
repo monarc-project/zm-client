@@ -13,6 +13,7 @@ use \MonarcCore\Model\Entity\Object;
 class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 {
     protected $anrTable;
+    protected $userAnrTable;
     protected $instanceTable;
     protected $instanceRiskTable;
     protected $instanceConsequenceTable;

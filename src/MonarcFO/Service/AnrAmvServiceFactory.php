@@ -9,6 +9,7 @@ class AnrAmvServiceFactory extends AbstractServiceFactory
         'entity'=> 'MonarcFO\Model\Entity\Amv',
         'table'=> 'MonarcFO\Model\Table\AmvTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'assetTable' => 'MonarcFO\Model\Table\AssetTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
         'vulnerabilityTable' => 'MonarcFO\Model\Table\VulnerabilityTable',

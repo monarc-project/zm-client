@@ -13,5 +13,6 @@ use Zend\View\Model\JsonModel;
 class AnrInterviewService extends AbstractService
 {
     protected $anrTable;
+    protected $userAnrTable;
     protected $dependencies = ['anr'];
 }

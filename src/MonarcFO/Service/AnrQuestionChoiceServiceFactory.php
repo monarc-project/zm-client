@@ -10,6 +10,7 @@ class AnrQuestionChoiceServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\QuestionChoiceTable',
         'entity' => 'MonarcFO\Model\Entity\QuestionChoice',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
     );
 

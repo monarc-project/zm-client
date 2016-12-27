@@ -9,5 +9,6 @@ class AnrInterviewServiceFactory extends AbstractServiceFactory
         'table'=> '\MonarcFO\Model\Table\InterviewTable',
         'entity'=> '\MonarcFO\Model\Entity\Interview',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     );
 }

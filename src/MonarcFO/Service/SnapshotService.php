@@ -18,6 +18,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'anrReference'];
     protected $filterColumns = [];
     protected $anrTable;
+    protected $userAnrTable;
     protected $anrService;
 
     /**

@@ -9,6 +9,8 @@ namespace MonarcFO\Service;
  */
 class AnrInstanceService extends \MonarcCore\Service\InstanceService
 {
+    protected $userAnrTable;
+
     public function importFromFile($anrId,$data){
         // on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];

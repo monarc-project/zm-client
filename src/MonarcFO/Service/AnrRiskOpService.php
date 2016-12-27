@@ -29,6 +29,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $rolfRiskService;
     protected $objectTable;
     protected $anrTable;
+    protected $userAnrTable;
 
     protected function findInFields($obj, $search, $fields = []) {
         foreach ($fields as $field) {

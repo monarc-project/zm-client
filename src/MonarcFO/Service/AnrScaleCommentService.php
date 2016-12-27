@@ -12,6 +12,7 @@ class AnrScaleCommentService extends \MonarcCore\Service\AbstractService
 	protected $filterColumns = array();
 
     protected $anrTable;
+    protected $userAnrTable;
     protected $scaleTable;
     protected $scaleImpactTypeTable;
     protected $dependencies = ['anr', 'scale', 'scaleImpactType'];

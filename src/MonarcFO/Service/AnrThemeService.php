@@ -14,4 +14,5 @@ class AnrThemeService extends \MonarcCore\Service\AbstractService
     ];
     protected $dependencies = ['anr'];
     protected $anrTable;
+    protected $userAnrTable;
 }

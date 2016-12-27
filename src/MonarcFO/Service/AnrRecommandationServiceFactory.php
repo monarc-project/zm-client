@@ -9,5 +9,6 @@ class AnrRecommandationServiceFactory extends AbstractServiceFactory
         'entity' => 'MonarcFO\Model\Entity\Recommandation',
         'table' => 'MonarcFO\Model\Table\RecommandationTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     );
 }
