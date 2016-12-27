@@ -13,5 +13,4 @@ use Zend\View\Model\JsonModel;
 class ApiAnrInstancesRisksController extends ApiAnrAbstractController
 {
     protected $name = 'instances-risks';
-
 }
