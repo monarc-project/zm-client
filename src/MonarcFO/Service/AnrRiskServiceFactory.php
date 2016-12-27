@@ -13,5 +13,6 @@ class AnrRiskServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'vulnerabilityTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
+        'translateService' => 'MonarcCore\Service\TranslateService'
     );
 }

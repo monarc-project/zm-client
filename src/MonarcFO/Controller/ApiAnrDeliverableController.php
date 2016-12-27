@@ -34,12 +34,13 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 
         $params = [
             'VERSION' => $data['version'],
-            'STATE' => $data['status'],
+            'STATE' => $data['status'] == 0 ? 'Brouillon' : 'Final',
             'CLASSIFICATION' => $data['classification'],
             'DOCUMENT' => $data['docname'],
             'DATE' => date('d/m/Y, H:i'),
             'CLIENT' => $data['managers'],
-            'SMILE' => $data['consultants']
+            'SMILE' => $data['consultants'],
+            'SUMMARY_EVAL_RISK' => isset($data['summaryEvalRisk']) ? $data['summaryEvalRisk'] : '',
         ];
 
         // Generate the DOCX file

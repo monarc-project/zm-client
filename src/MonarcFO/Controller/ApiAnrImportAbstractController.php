@@ -25,7 +25,7 @@ abstract class ApiAnrImportAbstractController extends \MonarcCore\Controller\Abs
         return new JsonModel(
             array(
                 'status' => 'ok',
-                'id' => $id,
+                'id' => $ids,
                 'errors' => $errors,
             )
         );

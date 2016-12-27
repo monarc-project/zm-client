@@ -95,8 +95,8 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         $changeField = $mode == 'raw' ? 'ir.cacheMaxRisk' : 'ir.cacheTargetedRisk';
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-                'ir.id', 'IDENTITY(ir.asset)', 'IDENTITY(ir.threat)', 'IDENTITY(ir.vulnerability)', $changeField.' as maximus',
-                'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object)',
+                'ir.id', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField.' as maximus',
+                'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
                 'm.c as mc', 'm.i as mi', 'm.d as md',
                 'o.scope',
             ])->where('ir.anr = :anrid')
@@ -108,13 +108,13 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 
         $counters = $distrib = $temp = [];
         foreach($result as $r){
-            if (!isset($r['asset']) || !isset($r['threat']) || !isset($r['vulnerabiltity'])) {
+            if (!isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
             }
 
             //on détermine le contexte de travail
             //A. Quel est l'impact MAX au regard du masque CID de la menace
-            $imax = $c = $i = $d = 0;
+            $c = $i = $d = 0;
             if($r['mc']) $c = $r['ic'];
             if($r['mi']) $i = $r['ii'];
             if($r['md']) $d = $r['id'];
@@ -152,6 +152,10 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         foreach($temp as $id_biblio => $risks){
             foreach($risks as $amv => $contexts){
                 foreach($contexts as $idx => $context){
+                    if ($context['impact'] < 0) {
+                        continue;
+                    }
+
                     if(! isset($counters[$context['impact']][$context['right']]) ){
                         $counters[$context['impact']][$context['right']] = 0;
                     }
@@ -173,8 +177,8 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     */
     private function getColor($val){
         if($val == -1 || is_null($val)) return '';
-        if($val <= $this->anr->get('seuilRolf1')) return 0;
-        if($val <= $this->anr->get('seuilRolf2')) return 1;
+        if($val <= $this->anr->get('seuil1')) return 0;
+        if($val <= $this->anr->get('seuil2')) return 1;
         return 2;
     }
 }
