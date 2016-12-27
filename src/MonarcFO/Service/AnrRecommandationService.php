@@ -102,4 +102,40 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
             }
         }
     }
+
+
+    /**
+     * Patch
+     *
+     * @param $id
+     * @param $data
+     * @return mixed
+     * @throws \Exception
+     */
+    public function patch($id, $data){
+
+        if ($data['duedate']) {
+            $data['duedate'] = new \DateTime($data['duedate']);
+        }
+
+        parent::patch($id, $data);
+    }
+
+
+    /**
+     * Update
+     *
+     * @param $id
+     * @param $data
+     * @return mixed
+     * @throws \Exception
+     */
+    public function update($id,$data){
+
+        if ($data['duedate']) {
+            $data['duedate'] = new \DateTime($data['duedate']);
+        }
+
+        parent::update($id, $data);
+    }
 }
