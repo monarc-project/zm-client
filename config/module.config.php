@@ -636,7 +636,6 @@ return array(
                             ),
                         ),
                     ),
-
                     'snapshot' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -649,7 +648,6 @@ return array(
                             ),
                         ),
                     ),
-
                     'snapshot_restore' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -662,13 +660,21 @@ return array(
                             ),
                         ),
                     ),
-
                     'deliverable' => array(
                         'type' => 'segment',
                         'options' => array(
                             'route' => 'deliverable',
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrDeliverable',
+                            ),
+                        ),
+                    ),
+                    'objects_objects' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'objects-objects[/:id]',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsObjects',
                             ),
                         ),
                     ),
@@ -714,6 +720,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrAmvs'                           => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures'                       => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjects'                        => '\MonarcFO\Controller\ApiAnrObjectsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrObjectsObjects'                 => '\MonarcFO\Controller\ApiAnrObjectsObjectsControllerFactory',
             '\MonarcFO\Controller\ApiAnrObject'                         => '\MonarcFO\Controller\ApiAnrObjectControllerFactory',
             '\MonarcFO\Controller\ApiAnrQuestions'                      => '\MonarcFO\Controller\ApiAnrQuestionsControllerFactory',
             '\MonarcFO\Controller\ApiAnrQuestionsChoices'               => '\MonarcFO\Controller\ApiAnrQuestionsChoicesControllerFactory',
@@ -817,6 +824,7 @@ return array(
             'monarc_api_global_client_anr/library_category',
             'monarc_api_anr_objects',
             'monarc_api_anr_objects_parents',
+            'monarc_api_anr_objects_objects',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/risks',
@@ -830,6 +838,7 @@ return array(
             'monarc_api_global_client_anr/measures',
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/objects_parents',
+            'monarc_api_global_client_anr/objects_objects',
             'monarc_api_global_client_anr/objects_export',
             'monarc_api_global_client_anr/objects_import',
             'monarc_api_global_client_anr/rolf_categories',
@@ -876,6 +885,7 @@ return array(
             'monarc_api_global_client_anr/library',
             'monarc_api_global_client_anr/library_category',
             'monarc_api_anr_objects',
+            'monarc_api_anr_objects_objects',
             'monarc_api_client_anr_export',
             'monarc_api_guides',
             'monarc_api_guides_items',
@@ -892,6 +902,7 @@ return array(
             'monarc_api_global_client_anr/measures',
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/objects_parents',
+            'monarc_api_global_client_anr/objects_objects',
             'monarc_api_global_client_anr/objects_export',
             'monarc_api_global_client_anr/objects_import',
             'monarc_api_global_client_anr/rolf_categories',

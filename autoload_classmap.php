@@ -49,6 +49,8 @@ return array(
     'MonarcFO\Controller\ApiAnrObjectControllerFactory'                       => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectControllerFactory.php',
     'MonarcFO\Controller\ApiAnrObjectsCategoriesController'                   => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsCategoriesController.php',
     'MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory'            => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsCategoriesControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrObjectsObjectsController'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsObjectsController.php',
+    'MonarcFO\Controller\ApiAnrObjectsObjectsControllerFactory'               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsObjectsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrObjectsController'                             => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsController.php',
     'MonarcFO\Controller\ApiAnrObjectsControllerFactory'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrObjectsExportController'                       => __DIR__ . '/src/MonarcFO/Controller/ApiAnrObjectsExportController.php',

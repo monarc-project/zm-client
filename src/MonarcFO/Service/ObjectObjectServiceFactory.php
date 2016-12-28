@@ -12,6 +12,8 @@ class ObjectObjectServiceFactory extends AbstractServiceFactory
         'anrTable'=> '\MonarcFO\Model\Table\AnrTable',
         'instanceTable'=> '\MonarcFO\Model\Table\InstanceTable',
         'objectTable'=> '\MonarcFO\Model\Table\ObjectTable',
+        'childTable'=> '\MonarcFO\Model\Table\ObjectTable',
+        'fatherTable'=> '\MonarcFO\Model\Table\ObjectTable',
     );
 
     public function createService(ServiceLocatorInterface $serviceLocator){
