@@ -420,6 +420,11 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     public function deleteFromAnr($id, $anrId = null) {
 
         $entity = $this->get('table')->getEntity($id);
+
+        if (!$entity->specific){
+            throw new \Exception('You can not delete a not specific risk', 412);
+        }
+
         if ($entity->anr->id != $anrId){
             throw new \Exception('Anr id error', 412);
         }
