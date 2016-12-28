@@ -16,7 +16,7 @@ use MonarcFO\Model\Table\InstanceTable;
 class AnrRiskService extends \MonarcCore\Service\AbstractService
 {
     protected $filterColumns = [];
-    protected $dependencies = ['anr', 'scale'];
+    protected $dependencies = ['anr', 'vulnerability', 'threat', 'instance', 'asset'];
 
     protected $anrTable;
     protected $userAnrTable;
@@ -362,29 +362,111 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
         $instance = $instanceTable->getEntity($data['instance']);
-        $data['asset'] = $instance->asset;
-
-        if (isset($data['vulnerability'])) {
-            $vuln = $this->vulnerabilityTable->getEntity($data['vulnerability']);
-            $data['vulnerability'] = $vuln;
-        }
-        if (isset($data['threat'])) {
-            $threat = $this->threatTable->getEntity($data['threat']);
-            $data['threat'] = $threat;
-        }
-        if (isset($data['instance'])) {
-            $instance = $this->instanceTable->getEntity($data['instance']);
-            $data['instance'] = $instance;
-        }
+        $data['asset'] = $instance->asset->id;
 
         $entity->exchangeArray($data);
 
         $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
+
         /** @var AnrTable $table */
         $table = $this->get('table');
+        $id =  $table->save($entity, $last);
 
-        return $table->save($entity, $last);
+        //if global object, save risk of all instance of global object for this anr
+        if($entity->instance->object->scope == Object::SCOPE_GLOBAL){
+            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id]);
+            $i = 1;
+            foreach ($brothers as $brother){
+                $last = ($i == count($brothers)) ? true : false;
+                $newRisk = clone $entity;
+                $newRisk->instance = $brother;
+                $table->save($newRisk, $last);
+                $i++;
+            }
+        }
+
+        return $id;
+    }
+
+
+    /**
+     * Delete
+     *
+     * @param $instanceId
+     * @param $anrId
+     */
+    public function deleteInstanceRisks($instanceId, $anrId){
+        $risks = $this->getInstanceRisks($instanceId, $anrId);
+        $table = $this->get('table');
+        $nb = count($risks);
+        $i = 1;
+        foreach($risks as $r){
+            $table->delete($r->id,($i == $nb));
+            $i++;
+        }
+    }
+
+
+    /**
+     * Delete From Anr
+     *
+     * @param $id
+     * @param null $anrId
+     * @return mixed
+     * @throws \Exception
+     */
+    public function deleteFromAnr($id, $anrId = null) {
+
+        $entity = $this->get('table')->getEntity($id);
+        if ($entity->anr->id != $anrId){
+            throw new \Exception('Anr id error', 412);
+        }
+
+        $connectedUser = $this->get('table')->getConnectedUser();
+
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $this->get('userAnrTable');
+        $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser['id'], 'anr' => $anrId]);
+        $rwd = 0;
+        foreach($rights as $right) {
+            if ($right->rwd == 1) {
+                $rwd = 1;
+            }
+        }
+
+        if (!$rwd) {
+            throw new \Exception('You are not authorized to do this action', 412);
+        }
+
+        //if object is global, delete all risks link to brothers instances
+        if ($entity->instance->object->scope == Object::SCOPE_GLOBAL){
+            //retrieve brothers
+            /** @var InstanceTable $instanceTable */
+            $instanceTable = $this->get('instanceTable');
+            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id]);
+
+            //retrieve instances with same risk
+            $instancesRisks = $this->get('table')->getEntityByFields([
+                'anr' => $entity->anr->id,
+                'asset' => $entity->asset->id,
+                'threat' => $entity->threat->id,
+                'vulnerability' => $entity->vulnerability->id,
+            ]);
+
+            foreach($instancesRisks as $instanceRisk) {
+                foreach($brothers as $brother){
+                    if ($brother->id == $instanceRisk->instance->id) {
+                        if ($instanceRisk->id != $id) {
+                            $this->get('table')->delete($instanceRisk->id);
+                        }
+                    }
+
+                }
+            }
+        }
+
+        return $this->get('table')->delete($id);
     }
 }
