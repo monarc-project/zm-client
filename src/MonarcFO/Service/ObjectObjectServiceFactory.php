@@ -10,6 +10,7 @@ class ObjectObjectServiceFactory extends AbstractServiceFactory
         'table'=>  '\MonarcFO\Model\Table\ObjectObjectTable',
         'entity'=> '\MonarcFO\Model\Entity\ObjectObject',
         'anrTable'=> '\MonarcFO\Model\Table\AnrTable',
+        'userAnrTable'=> '\MonarcFO\Model\Table\UserAnrTable',
         'instanceTable'=> '\MonarcFO\Model\Table\InstanceTable',
         'objectTable'=> '\MonarcFO\Model\Table\ObjectTable',
         'childTable'=> '\MonarcFO\Model\Table\ObjectTable',
