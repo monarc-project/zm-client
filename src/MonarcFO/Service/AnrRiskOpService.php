@@ -214,4 +214,24 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         return $this->create($data, true);
     }
+
+
+    /**
+     * Delete From Anr
+     *
+     * @param $id
+     * @param null $anrId
+     * @return mixed
+     * @throws \Exception
+     */
+    public function deleteFromAnr($id, $anrId = null) {
+
+        $entity = $this->get('table')->getEntity($id);
+
+        if (!$entity->specific){
+            throw new \Exception('You can not delete a not specific risk', 412);
+        }
+
+        return parent::deleteFromAnr($id, $anrId);
+    }
 }

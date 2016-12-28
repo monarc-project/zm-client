@@ -6,6 +6,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRisksOpController extends ApiAnrAbstractController
 {
 	protected $name = 'oprisks';
+
     public function get($id){
         $anrId = (int) $this->params()->fromRoute('anrid');
         $params = $this->parseParams();
@@ -55,9 +56,6 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
         );
     }
 
-    public function delete($id){
-		$this->methodNotAllowed($id);
-	}
 	public function deleteList($data){
 		$this->methodNotAllowed();
 	}

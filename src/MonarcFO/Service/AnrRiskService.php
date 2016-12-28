@@ -408,7 +408,6 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         }
     }
 
-
     /**
      * Delete From Anr
      *
