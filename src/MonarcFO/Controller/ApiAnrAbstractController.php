@@ -154,4 +154,21 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
             return new JsonModel(array('status' => 'ko')); // Todo: peux être retourner un message d'erreur
         }
     }
+
+    /**
+     * Delete list
+     *
+     * @param mixed $data
+     * @return JsonModel
+     */
+    public function deleteList($data)
+    {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+
+        if($this->getService()->deleteListFromAnr($data, $anrId)){
+            return new JsonModel(array('status' => 'ok'));
+        }else{
+            return new JsonModel(array('status' => 'ko')); // Todo: peux être retourner un message d'erreur
+        }
+    }
 }
