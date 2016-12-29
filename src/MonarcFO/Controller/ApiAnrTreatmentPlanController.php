@@ -90,7 +90,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
 
         /** @var AnrRecommandationRiskService $service */
         $service = $this->getService();
-        $entities = $service->initPosition($anrId);
+        $service->initPosition($anrId);
 
         return new JsonModel(array('status' => 'ok'));
     }
