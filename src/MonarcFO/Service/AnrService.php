@@ -2,6 +2,11 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Model\Entity\AnrSuperClass;
+use MonarcFO\Model\Entity\Interview;
+use MonarcFO\Model\Entity\Recommandation;
+use MonarcFO\Model\Entity\RecommandationHistoric;
+use MonarcFO\Model\Entity\RecommandationMeasure;
+use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Entity\RolfTag;
 use MonarcFO\Model\Entity\User;
 use MonarcFO\Model\Table\AnrTable;
@@ -58,10 +63,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $instanceConsequenceCliTable;
     protected $instanceRiskCliTable;
     protected $instanceRiskOpCliTable;
+    protected $interviewCliTable;
     protected $measureCliTable;
     protected $objectCliTable;
     protected $objectCategoryCliTable;
     protected $objectObjectCliTable;
+    protected $recommandationCliTable;
+    protected $recommandationHistoricCliTable;
+    protected $recommandationMeasureCliTable;
+    protected $recommandationRiskCliTable;
     protected $rolfCategoryCliTable;
     protected $rolfRiskCliTable;
     protected $rolfTagCliTable;
@@ -718,6 +728,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $i = 1;
         $instanceRiskTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceRiskTable') : $this->get('instanceRiskCliTable');
         $instancesRisks = $instanceRiskTable->getEntityByFields(['anr' => $anr->id]);
+        $instancesRisksNewIds = [];
         foreach($instancesRisks as $instanceRisk) {
             $last = ($i == count($instancesRisks)) ? true : false;
             $newInstanceRisk = new \MonarcFO\Model\Entity\InstanceRisk($instanceRisk);
@@ -739,6 +750,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
             }
             $this->get('instanceRiskCliTable')->save($newInstanceRisk, $last);
+            $instancesRisksNewIds[$instanceRisk->id] = $newInstanceRisk;
             $i++;
         }
 
@@ -746,6 +758,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $i = 1;
         $instanceRiskOpTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceRiskOpTable') : $this->get('instanceRiskOpCliTable');
         $instancesRisksOp = $instanceRiskOpTable->getEntityByFields(['anr' => $anr->id]);
+        $instancesRisksOpNewIds = [];
         foreach($instancesRisksOp as $instanceRiskOp) {
             $last = ($i == count($instancesRisksOp)) ? true : false;
             $newInstanceRiskOp = new \MonarcFO\Model\Entity\InstanceRiskOp($instanceRiskOp);
@@ -755,6 +768,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->id]);
             $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
             $this->get('instanceRiskOpCliTable')->save($newInstanceRiskOp, $last);
+            $instancesRisksOpNewIds[$instanceRisk->id] = $newInstanceRisk;
             $i++;
         }
 
@@ -796,6 +810,84 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $this->get('questionChoiceCliTable')->save($newQuestionChoice, ($i == count($questionChoices)));
             $i++;
         }
+
+        if ($isSnapshot) {
+            //duplicate interviews
+            $i = 1;
+            $interviews = $this->get('interviewCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach($interviews as $interview) {
+                $last = ($i == count($interviews)) ? true : false;
+                $newInterview = new Interview($interview);
+                $newInterview->set('id',null);
+                $newInterview->setAnr($newAnr);
+                $this->get('interviewCliTable')->save($newInterview, $last);
+                $i++;
+            }
+
+            //duplicate recommandations
+            $i = 1;
+            $recommandationsNewIds = [];
+            $recommandations = $this->get('recommandationCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach($recommandations as $recommandation) {
+                $last = ($i == count($recommandations)) ? true : false;
+                $newRecommandation = new Recommandation($recommandation);
+                $newRecommandation->set('id',null);
+                $newRecommandation->setAnr($newAnr);
+                $this->get('recommandationCliTable')->save($newRecommandation, $last);
+                $recommandationsNewIds[$recommandation->id] = $newRecommandation;
+                $i++;
+            }
+
+            //duplicate recommandations historics
+            $i = 1;
+            $recommandationsHistorics = $this->get('recommandationHistoricCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach($recommandationsHistorics as $recommandationHistoric) {
+                $last = ($i == count($recommandationsHistorics)) ? true : false;
+                $newRecommandationHistoric = new RecommandationHistoric($recommandationHistoric);
+                $newRecommandationHistoric->set('id',null);
+                $newRecommandationHistoric->setAnr($newAnr);
+                $this->get('recommandationHistoricCliTable')->save($newRecommandationHistoric, $last);
+                $i++;
+            }
+
+            //duplicate recommandations measures
+            $i = 1;
+            $recommandationsMeasures = $this->get('recommandationMeasureCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach($recommandationsMeasures as $recommandationMeasure) {
+                $last = ($i == count($recommandationsMeasures)) ? true : false;
+                $newRecommandationMeasure = new RecommandationMeasure($recommandationMeasure);
+                $newRecommandationMeasure->set('id',null);
+                $newRecommandationMeasure->setAnr($newAnr);
+                $newRecommandationMeasure->set('measure',$measuresNewIds[$newRecommandationMeasure->get('measure')->get('id')]);
+                $this->get('recommandationMeasureCliTable')->save($newRecommandationMeasure, $last);
+                $i++;
+            }
+
+            //duplicate recommandations risks
+            $i = 1;
+            $recommandationsRisks = $this->get('recommandationRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach($recommandationsRisks as $recommandationRisk) {
+                $last = ($i == count($recommandationsRisks)) ? true : false;
+                $newRecommandationRisk = new RecommandationRisk($recommandationRisk);
+                $newRecommandationRisk->set('id',null);
+                $newRecommandationRisk->setAnr($newAnr);
+                $newRecommandationRisk->set('recommandation',$recommandationsNewIds[$newRecommandationRisk->get('recommandation')->get('id')]);
+                if ($newRecommandationRisk->get('instanceRisk')) {
+                    $newRecommandationRisk->set('instanceRisk', $instancesRisksNewIds[$newRecommandationRisk->get('instanceRisk')->get('id')]);
+                }
+                if ($newRecommandationRisk->get('instanceRiskOp')) {
+                    $newRecommandationRisk->set('instanceRiskOp', $instancesRisksOpNewIds[$newRecommandationRisk->get('instanceRiskOp')->get('id')]);
+                }
+                $newRecommandationRisk->set('instance',$instancesNewIds[$newRecommandationRisk->get('instance')->get('id')]);
+                $newRecommandationRisk->set('objectGlobal',$objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('id')]);
+                $newRecommandationRisk->set('asset',$assetsNewIds[$newRecommandationRisk->get('asset')->get('id')]);
+                $newRecommandationRisk->set('threat',$threatsNewIds[$newRecommandationRisk->get('threat')->get('id')]);
+                $newRecommandationRisk->set('vulnerability',$vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->get('id')]);
+                $this->get('recommandationRiskCliTable')->save($newRecommandationRisk, $last);
+                $i++;
+            }
+        }
+
 
         // Set as user's current ANR
         /** @var UserTable $userCliTable */
