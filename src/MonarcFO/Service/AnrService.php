@@ -2,6 +2,7 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Model\Entity\AnrSuperClass;
+use MonarcFO\Model\Entity\Interview;
 use MonarcFO\Model\Entity\RolfTag;
 use MonarcFO\Model\Entity\User;
 use MonarcFO\Model\Table\AnrTable;
@@ -58,6 +59,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $instanceConsequenceCliTable;
     protected $instanceRiskCliTable;
     protected $instanceRiskOpCliTable;
+    protected $interviewCliTable;
     protected $measureCliTable;
     protected $objectCliTable;
     protected $objectCategoryCliTable;
@@ -302,6 +304,21 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $userAnr->setAnr($newAnr);
             $userAnr->setRwd(1);
             $this->get('userAnrCliTable')->save($userAnr);
+        }
+
+
+        if ($isSnapshot) {
+            //duplicate interviews
+            $i = 1;
+            $interviews = $this->get('interviewCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach($interviews as $interview) {
+                $last = ($i == count($interviews)) ? true : false;
+                $newInterview = new Interview($interview);
+                $newInterview->set('id',null);
+                $newInterview->setAnr($newAnr);
+                $this->get('interviewCliTable')->save($newInterview, $last);
+                $i++;
+            }
         }
 
         //duplicate themes

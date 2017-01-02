@@ -45,6 +45,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'instanceConsequenceCliTable' => 'MonarcFO\Model\Table\InstanceConsequenceTable',
         'instanceRiskCliTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'instanceRiskOpCliTable' => 'MonarcFO\Model\Table\InstanceRiskOpTable',
+        'interviewCliTable' => 'MonarcFO\Model\Table\InterviewTable',
         'measureCliTable' => 'MonarcFO\Model\Table\MeasureTable',
         'objectCliTable' => 'MonarcFO\Model\Table\ObjectTable',
         'objectCategoryCliTable' => 'MonarcFO\Model\Table\ObjectCategoryTable',
