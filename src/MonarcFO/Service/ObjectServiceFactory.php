@@ -14,6 +14,7 @@ class ObjectServiceFactory extends AbstractServiceFactory
 
         'amvTable'=> '\MonarcFO\Model\Table\AmvTable',
         'anrTable'=> '\MonarcFO\Model\Table\AnrTable',
+        'userAnrTable'=> '\MonarcFO\Model\Table\UserAnrTable',
         'anrObjectCategoryTable'=> '\MonarcFO\Model\Table\AnrObjectCategoryTable',
         'assetTable'=> '\MonarcFO\Model\Table\AssetTable',
         'categoryTable'=> '\MonarcFO\Model\Table\ObjectCategoryTable',
