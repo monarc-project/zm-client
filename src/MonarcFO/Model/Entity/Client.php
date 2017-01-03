@@ -261,7 +261,7 @@ class Client extends AbstractEntity
             $validators = array();
             if (!$partial) {
                 $validators[] = array(
-                    'name' => '\MonarcBO\Validator\UniqueClientProxyAlias',
+                    'name' => '\MonarcFO\Validator\UniqueClientProxyAlias',
                     'options' => array(
                         'adapter' => $this->getDbAdapter(),
                         'id' => $this->get('id'),
