@@ -13,7 +13,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
     public function importFromFile($anrId,$data){
         // on a bien un pwd (ou vide)
-        $key = empty($data['password']) || $data['password'] == 'null'?'':$data['password'];
+        $key = empty($data['password'])?'':$data['password'];
         $mode = empty($data['mode'])?'merge':$data['mode'];
         $idParent = empty($data['idparent'])?null:$data['idparent'];
         // On aura la possibilité d'avoir plusieurs fichiers (même pwd: si un fichier ne match pas, on renvoie un warning)
