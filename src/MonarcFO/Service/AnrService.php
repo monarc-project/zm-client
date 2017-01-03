@@ -943,9 +943,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         if (empty($data['id'])) {
             throw new \Exception('Anr to export is required',412);
         }
-        if (empty($data['password'])) {
-            $data['password'] = '';
-        }
+        $key = empty($data['password']) || $data['password'] == 'null'?'':$data['password'];
         $filename = "";
 
         $with_eval = isset($data['assessments']) && $data['assessments'];
@@ -953,7 +951,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $return = $this->generateExportArray($data['id'],$filename,$with_eval);
         $data['filename'] = $filename;
 
-        return base64_encode($this->encrypt(json_encode($return),$data['password']));
+        return base64_encode($this->encrypt(json_encode($return),$key));
     }
 
     public function generateExportArray($id, &$filename = "", $with_eval = false){

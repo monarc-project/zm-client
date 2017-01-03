@@ -35,7 +35,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
 
     public function importFromFile($anrId,$data){
     	// on a bien un pwd (ou vide)
-        $key = empty($data['password'])?'':$data['password'];
+        $key = empty($data['password']) || $data['password'] == 'null'?'':$data['password'];
         // On aura la possibilité d'avoir plusieurs fichiers (même pwd: si un fichier ne match pas, on renvoie un warning)
         if(empty($data['file'])){
             throw new \Exception('File missing', 412);
