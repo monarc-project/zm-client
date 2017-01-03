@@ -432,6 +432,29 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $newVulnerabilityRate = $risk->get('vulnerabilityRate') - $risk->get('reductionAmount');
             $risk->vulnerabilityRate = ($newVulnerabilityRate >= 0) ? $newVulnerabilityRate : 0;
 
+            $risk->riskC = $this->getRiskC($risk->get('instance')->get('c'), $risk->threatRate, $risk->vulnerabilityRate);
+            $risk->riskI = $this->getRiskI($risk->get('instance')->get('i'), $risk->threatRate, $risk->vulnerabilityRate);
+            $risk->riskD = $this->getRiskD($risk->get('instance')->get('d'), $risk->threatRate, $risk->vulnerabilityRate);
+
+            $risks = [];
+            $impacts = [];
+            if ($risk->threat->c) {
+                $risks[] = $risk->riskC;
+                $impacts[] = $risk->get('instance')->get('c');
+            }
+            if ($risk->threat->i) {
+                $risks[] = $risk->riskI;
+                $impacts[] = $risk->get('instance')->get('i');
+            }
+            if ($risk->threat->d) {
+                $risks[] = $risk->riskD;
+                $impacts[] = $risk->get('instance')->get('d');
+            }
+
+            $risk->cacheMaxRisk = (count($risks)) ? max($risks) : -1;
+            $risk->cacheTargetedRisk = $this->getTargetRisk($impacts, $risk->threatRate, $risk->vulnerabilityRate, $instanceRisk->reductionAmount);
+
+
             //set reduction amount to 0
             $risk->reductionAmount = 0;
 
