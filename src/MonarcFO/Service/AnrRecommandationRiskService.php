@@ -157,7 +157,13 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     //retrieve instance risk op associated
                     if ($recommandationRisk->instanceRiskOp) {
                         if ($recommandationRisk->instanceRiskOp->kindOfMeasure != InstanceRiskOp::KIND_NOT_TREATED) {
-                            $recommandations[$key]['risksop'][] = $recommandationRisk->instanceRiskOp->getJsonArray();
+                            $data = $recommandationRisk->instanceRiskOp->getJsonArray();
+                            $instance = $recommandationRisk->instanceRiskOp->instance->getJsonArray();
+                            unset($instance['__initializer__']);
+                            unset($instance['__cloner__']);
+                            unset($instance['__isInitialized__']);
+                            $data['instance'] = $instance;
+                            $recommandations[$key]['risksop'][] = $data;
                             $nbRisks++;
                         }
                     }
