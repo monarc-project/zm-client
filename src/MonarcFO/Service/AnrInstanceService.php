@@ -86,6 +86,11 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             $obj = $this->get('objectExportService')->get('table')->getEntity($idObject);
             if($obj){
                 $toExchange['asset'] = $obj->get('asset')->get('id');
+                if($modeImport == 'duplicate'){
+                    for($i=1;$i<=4;$i++){
+                        $toExchange['name'.$i] = $obj->get('name'.$i);
+                    }
+                }
             }
             $toExchange['parent'] = $idParent;
             $toExchange['root'] = null;
