@@ -87,7 +87,11 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         }
         else{
             $now = time();
-            $dueDate = strtotime($dueDate);
+            if($dueDate instanceof \DateTime){
+                $dueDate = $dueDate->getTimestamp();
+            }else{
+                $dueDate = strtotime($dueDate);
+            }
             $diff = $dueDate - $now;
 
             if($diff < 0){
