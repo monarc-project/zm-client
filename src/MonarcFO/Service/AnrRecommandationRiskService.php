@@ -131,6 +131,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         foreach($recommandations as $key => $recommandation) {
             $recommandations[$key] = $recommandation->getJsonArray();
+            $dueDate = $recommandations[$key]['duedate'];
+            $recommandations[$key]['duedate'] = (empty($dueDate) || $dueDate == '0000-00-00')?'':date('d-m-Y',($dueDate instanceof \DateTime?$dueDate->getTimestamp():strtotime($duedate)));
             unset($recommandations[$key]['__initializer__']);
             unset($recommandations[$key]['__cloner__']);
             unset($recommandations[$key]['__isInitialized__']);
@@ -177,9 +179,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                         foreach($global as $glob) {
                             if ($glob['objectId'] == $recommandationRisk->objectGlobal->id) {
                                 if ($glob['maxRisk'] < $recommandationRisk->instanceRisk->cacheMaxRisk) {
-                                    $risksToUnset[] = $glob['riskId'];
+                                    $risksToUnset[$glob['riskId']] = $glob['riskId'];
                                 } else {
-                                    $risksToUnset[] = $recommandationRisk->instanceRisk->id;
+                                    $risksToUnset[$recommandationRisk->instanceRisk->id] = $recommandationRisk->instanceRisk->id;
                                 }
                             }
                         }
@@ -195,7 +197,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
             if (isset($recommandations[$key]['risks'])) {
                 foreach ($recommandations[$key]['risks'] as $k => $risk) {
-                    if (in_array($risk['id'], $risksToUnset)) {
+                    if (isset($risksToUnset[$risk['id']])) {
                         unset($recommandations[$key]['risks'][$k]);
                     }
                 }

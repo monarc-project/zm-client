@@ -120,7 +120,11 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     public function patch($id, $data){
 
         if ($data['duedate']) {
-            $data['duedate'] = new \DateTime($data['duedate']);
+            try{
+                $data['duedate'] = new \DateTime($data['duedate']);
+            }catch(\Exception $e){
+                throw new \Exception('Invalid date format', 412);
+            }
         }
 
         parent::patch($id, $data);
@@ -138,7 +142,11 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     public function update($id,$data){
 
         if ($data['duedate']) {
-            $data['duedate'] = new \DateTime($data['duedate']);
+            try{
+                $data['duedate'] = new \DateTime($data['duedate']);
+            }catch(\Exception $e){
+                throw new \Exception('Invalid date format', 412);
+            }
         }
 
         parent::update($id, $data);
