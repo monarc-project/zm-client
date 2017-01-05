@@ -33,13 +33,6 @@ class Client extends AbstractEntity
     /**
      * @var integer
      *
-     * @ORM\Column(name="server_id", type="integer", nullable=true)
-     */
-    protected $server_id;
-
-    /**
-     * @var integer
-     *
      * @ORM\Column(name="logo_id", type="integer", nullable=true)
      */
     protected $logo_id;
@@ -261,7 +254,7 @@ class Client extends AbstractEntity
             $validators = array();
             if (!$partial) {
                 $validators[] = array(
-                    'name' => '\MonarcBO\Validator\UniqueClientProxyAlias',
+                    'name' => '\MonarcFO\Validator\UniqueClientProxyAlias',
                     'options' => array(
                         'adapter' => $this->getDbAdapter(),
                         'id' => $this->get('id'),

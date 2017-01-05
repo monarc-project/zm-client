@@ -175,6 +175,9 @@ class Module
                 '\MonarcFO\Service\ObjectExportService' => '\MonarcFO\Service\ObjectExportServiceFactory',
                 '\MonarcFO\Service\AssetExportService' => '\MonarcFO\Service\AssetExportServiceFactory',
                 '\MonarcFO\Service\DeliverableGenerationService' => '\MonarcFO\Service\DeliverableGenerationServiceFactory',
+
+                //validators
+                '\MonarcFO\Validator\UniqueClientProxyAlias' => '\MonarcFO\Validator\UniqueClientProxyAlias',
             ),
         );
     }

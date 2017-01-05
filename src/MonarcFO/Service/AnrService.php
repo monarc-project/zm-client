@@ -88,6 +88,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $questionCliTable;
     protected $questionChoiceCliTable;
 
+    protected $instanceService;
+
     /**
      * Get List
      *
@@ -976,8 +978,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
         );
 
         $instanceService = $this->get('instanceService');
-        $table = $this->get('instanceTable');
-        $instances = $table->getEntityByFields(['anr' => $entity->get('id')]);
+        $table = $this->get('instanceCliTable');
+        $instances = $table->getEntityByFields(['anr' => $entity->get('id'), 'parent' => null]);
         $f = '';
         $with_scale = false;
         foreach($instances as $i){
@@ -987,7 +989,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         if($with_eval){
             // scales
             $return['scales'] = array();
-            $scaleTable = $this->get('scaleTable');
+            $scaleTable = $this->get('scaleCliTable');
             $scales = $scaleTable->getEntityByFields(['anr' => $entity->get('id')]);
             $scalesArray = array(
                 'min'=>'min',

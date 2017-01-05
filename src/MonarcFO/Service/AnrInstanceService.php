@@ -26,7 +26,11 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             if(isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])){
                 $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])),$key)),true);
                 if($file !== false && ($id = $this->importFromArray($file,$anr,$idParent,$mode)) !== false){
-                    $ids[] = $id;
+                    if(is_array($id)){
+                        $ids = array_merge($ids,$id);
+                    }else{
+                        $ids[] = $id;
+                    }
                 }else{
                     $errors[] = 'The file "'.$f['name'].'" can\'t be imported';
                 }
@@ -75,15 +79,21 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             $instance->setLanguage($this->getLanguage());
             $toExchange = $data['instance'];
             unset($toExchange['id']);
+            unset($toExchange['position']);
             $toExchange['anr'] = $anr->get('id');
             $toExchange['object'] = $idObject;
             $toExchange['asset'] = null;
             $obj = $this->get('objectExportService')->get('table')->getEntity($idObject);
             if($obj){
                 $toExchange['asset'] = $obj->get('asset')->get('id');
+                if($modeImport == 'duplicate'){
+                    for($i=1;$i<=4;$i++){
+                        $toExchange['name'.$i] = $obj->get('name'.$i);
+                    }
+                }
             }
             $toExchange['parent'] = $idParent;
-            $toExchange['root'] = null;
+            //$toExchange['root'] = null;
             $toExchange['implicitPosition'] = 2;
             $instance->exchangeArray($toExchange);
             $this->setDependencies($instance,['anr', 'object', 'asset', 'parent']);
@@ -177,7 +187,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 foreach($data['threats'] as $t){
                     $tCodes[$t['code']] = $t['code'];
                 }
-                $existingRisks = $this->get('threatTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$tCodes]);
+                $existingRisks = $this->get('instanceRiskService')->get('threatTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$tCodes]);
                 foreach($existingRisks as $t){
                     $sharedData['ithreats'][$t->get('code')] = $t->get('id');
                 }
@@ -186,7 +196,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 foreach($data['vuls'] as $v){
                     $vCodes[$v['code']] = $v['code'];
                 }
-                $existingRisks = $this->get('vulnerabilityTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$vCodes]);
+                $existingRisks = $this->get('instanceRiskService')->get('vulnerabilityTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$vCodes]);
                 foreach($existingRisks as $t){
                     $sharedData['ivuls'][$t->get('code')] = $t->get('id');
                 }
@@ -200,7 +210,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $toExchange = $data['threats'][$risk['threat']];
                             unset($toExchange['id']);
                             $toExchange['anr'] = $anr->get('id');
-                            $class = $this->get('threatTable')->getClass();
+                            $class = $this->get('instanceRiskService')->get('threatTable')->getClass();
                             $threat = new $class();
                             $threat->setDbAdapter($this->get('instanceConsequenceTable')->getDb());
                             $threat->setLanguage($this->getLanguage());
@@ -213,13 +223,13 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $toExchange = $data['vuls'][$risk['vulnerability']];
                             unset($toExchange['id']);
                             $toExchange['anr'] = $anr->get('id');
-                            $class = $this->get('vulnerabilityTable')->getClass();
+                            $class = $this->get('instanceRiskService')->get('vulnerabilityTable')->getClass();
                             $vul = new $class();
-                            $vul->setDbAdapter($this->get('vulnerabilityTable')->getDb());
+                            $vul->setDbAdapter($this->get('instanceRiskService')->get('vulnerabilityTable')->getDb());
                             $vul->setLanguage($this->getLanguage());
                             $vul->exchangeArray($toExchange);
                             $this->setDependencies($vul,['anr']);
-                            $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']] = $this->get('vulnerabilityTable')->save($vul);
+                            $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']] = $this->get('instanceRiskService')->get('vulnerabilityTable')->save($vul);
                         }
 
                         $toExchange = $risk;
@@ -230,16 +240,16 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $toExchange['amv'] = null;
                         $toExchange['threat'] = $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
                         $toExchange['vulnerability'] = $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
-                        $class = $this->get('instanceRiskTable')->getClass();
+                        $class = $this->get('instanceRiskService')->get('table')->getClass();
                         $r = new $class();
-                        $r->setDbAdapter($this->get('instanceRiskTable')->getDb());
+                        $r->setDbAdapter($this->get('instanceRiskService')->get('table')->getDb());
                         $r->setLanguage($this->getLanguage());
                         $r->exchangeArray($toExchange);
                         $this->setDependencies($r,['anr','amv','instance','asset','threat','vulnerability']);
-                        $idRisk = $this->get('instanceRiskTable')->save($r);
+                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
                         $r->set('id',$idRisk);
                     }else{
-                        $r = current($this->get('instanceRiskTable')->getEntityByFields([
+                        $r = current($this->get('instanceRiskService')->get('table')->getEntityByFields([
                             'anr' => $anr->get('id'),
                             'instance' => $instanceId,
                             'asset' => $obj?$obj->get('asset')->get('id'):null,
@@ -264,8 +274,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         ));
                         // la valeur -1 pour le reduction_amount n'a pas de sens, c'est 0 le minimum. Le -1 fausse les calculs
                         // cas particulier, faudrait pas mettre nimp dans cette colonne si on part d'une scale 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
-                        $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $localrisk->get('vulnerabilityRate')) : 0 );
-                        $idRisk = $this->get('instanceRiskTable')->save($r);
+                        $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate')) : 0 );
+                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
 
                         // Recommandations
                         if(!empty($data['recos'][$r->get('id')])){
@@ -320,16 +330,16 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                             $toExchange = $data['measures'][$mid];
                                             unset($toExchange['id']);
                                             $toExchange['anr'] = $anr->get('id');
-                                            $measure = current($this->get('measureTable')->getEntityByFields(['anr' => $anr->get('id'),'code' => $data['measures'][$mid]['code']]));
+                                            $measure = current($this->get('amvService')->get('measureTable')->getEntityByFields(['anr' => $anr->get('id'),'code' => $data['measures'][$mid]['code']]));
                                             if(empty($measure)){
-                                                $class = $this->get('measureTable')->getClass();
+                                                $class = $this->get('amvService')->get('measureTable')->getClass();
                                                 $measure = new $class();
-                                                $measure->setDbAdapter($this->get('measureTable')->getDb());
+                                                $measure->setDbAdapter($this->get('amvService')->get('measureTable')->getDb());
                                                 $measure->setLanguage($this->getLanguage());
                                             }
                                             $measure->exchangeArray($toExchange);
                                             $this->setDependencies($measure,['anr']);
-                                            $sharedData['measures'][$mid] = $this->get('measureTable')->save($measure);
+                                            $sharedData['measures'][$mid] = $this->get('amvService')->get('measureTable')->save($measure);
                                         }
 
                                         if(isset($sharedData['measures'][$mid])){
@@ -422,6 +432,23 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
             }
             return $instanceId;
+        }elseif(isset($data['type']) && $data['type'] == 'anr' &&
+            array_key_exists('version', $data) && $data['version'] == $this->getVersion()){
+            $first = true;
+            $instanceIds = [];
+            foreach($data['instances'] as $inst){
+                if($first){
+                    if($data['with_eval'] && isset($data['scales'])){
+                        $inst['with_eval'] = $data['with_eval'];
+                        $inst['scales'] = $data['scales'];
+                    }
+                    $first = false;
+                }
+                if(($instanceId = $this->importFromArray($inst,$anr, $idParent, $modeImport, $include_eval, $sharedData)) !== false){
+                    $instanceIds[] = $instanceId;
+                }
+            }
+            return $instanceIds;
         }
         return false;
     }

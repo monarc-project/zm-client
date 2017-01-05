@@ -64,6 +64,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
+        $data['implicitPosition'] = 2; // end
         $entity->exchangeArray($data);
 
         $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
@@ -87,7 +88,11 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         }
         else{
             $now = time();
-            $dueDate = strtotime($dueDate);
+            if($dueDate instanceof \DateTime){
+                $dueDate = $dueDate->getTimestamp();
+            }else{
+                $dueDate = strtotime($dueDate);
+            }
             $diff = $dueDate - $now;
 
             if($diff < 0){
@@ -115,7 +120,11 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     public function patch($id, $data){
 
         if ($data['duedate']) {
-            $data['duedate'] = new \DateTime($data['duedate']);
+            try{
+                $data['duedate'] = new \DateTime($data['duedate']);
+            }catch(\Exception $e){
+                throw new \Exception('Invalid date format', 412);
+            }
         }
 
         parent::patch($id, $data);
@@ -133,7 +142,11 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     public function update($id,$data){
 
         if ($data['duedate']) {
-            $data['duedate'] = new \DateTime($data['duedate']);
+            try{
+                $data['duedate'] = new \DateTime($data['duedate']);
+            }catch(\Exception $e){
+                throw new \Exception('Invalid date format', 412);
+            }
         }
 
         parent::update($id, $data);

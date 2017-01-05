@@ -69,5 +69,8 @@ class AnrServiceFactory extends AbstractServiceFactory
         'vulnerabilityCliTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
         'questionCliTable' => 'MonarcFO\Model\Table\QuestionTable',
         'questionChoiceCliTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
+
+        // export
+        'instanceService' => '\MonarcFO\Service\AnrInstanceService',
     );
 }
