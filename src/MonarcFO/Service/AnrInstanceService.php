@@ -93,7 +93,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
             }
             $toExchange['parent'] = $idParent;
-            $toExchange['root'] = null;
+            //$toExchange['root'] = null;
             $toExchange['implicitPosition'] = 2;
             $instance->exchangeArray($toExchange);
             $this->setDependencies($instance,['anr', 'object', 'asset', 'parent']);
@@ -274,7 +274,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         ));
                         // la valeur -1 pour le reduction_amount n'a pas de sens, c'est 0 le minimum. Le -1 fausse les calculs
                         // cas particulier, faudrait pas mettre nimp dans cette colonne si on part d'une scale 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
-                        $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $localrisk->get('vulnerabilityRate')) : 0 );
+                        $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate')) : 0 );
                         $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
 
                         // Recommandations
