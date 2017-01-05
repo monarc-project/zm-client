@@ -80,27 +80,31 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $knownGlobObjId = [];
         $objectCache = [];
 
-        return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
-            $instance = $this->instanceTable->getEntity($in['instance']);
-            $objId = $instance->object->id;
+        if(isset($filterAnd['recommandation'])){
+            return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
+                $instance = $this->instanceTable->getEntity($in['instance']);
+                $objId = $instance->object->id;
 
-            if (!in_array($objId, $knownGlobObjId)) {
-                if (!isset($objectCache[$objId])) {
-                    $object = $this->objectTable->getEntity($objId);
-                    $objectCache[$objId] = $object;
+                if (!in_array($objId, $knownGlobObjId)) {
+                    if (!isset($objectCache[$objId])) {
+                        $object = $this->objectTable->getEntity($objId);
+                        $objectCache[$objId] = $object;
+                    } else {
+                        $object = $objectCache[$objId];
+                    }
+
+                    if ($object->scope == 2) { // SCOPE_GLOBAL
+                        $knownGlobObjId[] = $objId;
+                    }
+
+                    return true;
                 } else {
-                    $object = $objectCache[$objId];
+                    return false;
                 }
-
-                if ($object->scope == 2) {
-                    $knownGlobObjId[] = $objId;
-                }
-
-                return true;
-            } else {
-                return false;
-            }
-        });
+            });
+        }else{
+            return $recosRisks;
+        }
     }
 
     /**

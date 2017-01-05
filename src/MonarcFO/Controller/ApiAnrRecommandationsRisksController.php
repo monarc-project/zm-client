@@ -64,7 +64,7 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
+            'count' => count($entities),
             $this->name => $entities
         ));
     }
