@@ -1002,4 +1002,20 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
         return $return;
     }
+
+    /**
+     * Delete
+     *
+     * @param $id
+     */
+    public function delete($id) {
+        $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference'=>$id]);
+        foreach($snapshots as $s){
+            if(!empty($s)){
+                $this->get('table')->delete($s->get('anr')->get('id'),false);
+            }
+        }
+
+        return $this->get('table')->delete($id);
+    }
 }
