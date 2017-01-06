@@ -624,6 +624,18 @@ return array(
                             ),
                         ),
                     ),
+                    'instance_consequences' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'instances-consequences[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesConsequences',
+                            ),
+                        ),
+                    ),
                     'objects_categories' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -767,7 +779,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrObjectsImport'                  => '\MonarcFO\Controller\ApiAnrObjectsImportControllerFactory',
             '\MonarcFO\Controller\ApiAnrDeliverable'                    => '\MonarcFO\Controller\ApiAnrDeliverableControllerFactory',
             '\MonarcFO\Controller\ApiAnrExport'                         => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
-            
+            '\MonarcFO\Controller\ApiAnrInstancesConsequences'          => '\MonarcFO\Controller\ApiAnrInstancesConsequencesControllerFactory',
         ),
     ),
 
@@ -838,6 +850,7 @@ return array(
             'monarc_api_global_client_anr/instance_risk_op',
             'monarc_api_global_client_anr/instance_export',
             'monarc_api_global_client_anr/instance_import',
+            'monarc_api_global_client_anr/instance_consequences',
             'monarc_api_anr_instances_consequences',
             'monarc_api_global_client_anr/interviews',
             'monarc_api_global_client_anr/library',
