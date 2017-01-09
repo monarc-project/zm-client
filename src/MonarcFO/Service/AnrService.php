@@ -1028,4 +1028,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         return $this->get('table')->delete($id);
     }
+
+
+    public function verifyLanguage($modelId, $language) {
+
+    }
 }

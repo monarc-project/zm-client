@@ -713,6 +713,18 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_model_verify_language' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/model-verify-language/:id',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiModelVerifyLanguage',
+                    ),
+                ),
+            ),
         ),
     ),
 
@@ -780,6 +792,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrDeliverable'                    => '\MonarcFO\Controller\ApiAnrDeliverableControllerFactory',
             '\MonarcFO\Controller\ApiAnrExport'                         => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesConsequences'          => '\MonarcFO\Controller\ApiAnrInstancesConsequencesControllerFactory',
+            '\MonarcFO\Controller\ApiModelVerifyLanguage'               => '\MonarcFO\Controller\ApiModelVerifyLanguageControllerFactory',
         ),
     ),
 
@@ -906,6 +919,7 @@ return array(
             'monarc_api_anr_treatment_plan',
             'monarc_api_anr_client_objects_categories',
             'monarc_api_user_password',
+            'monarc_api_model_verify_language',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_global_client_anr/scales',
             'monarc_api_global_client_anr/scales_types',

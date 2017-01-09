@@ -142,7 +142,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             ->andWhere('ir.cacheMaxRisk >= -1 '); // seuil
 
         if (isset($params['kindOfMeasure'])) {
-            $query->andWhere('ir.kindOfMeasure == :kom')
+            $query->andWhere('ir.kindOfMeasure = :kom')
                 ->setParameter(':kom',$params['kindOfMeasure']);
         }
         if(!empty($params['keywords'])){
