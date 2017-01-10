@@ -1030,7 +1030,70 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
 
-    public function verifyLanguage($modelId, $language) {
+    public function verifyLanguage($modelId, $lang) {
 
+        $success = true;
+
+        //model
+        $model = $this->get('modelTable')->getEntity($modelId);
+        if (empty($model->label1)) {
+            $success = false;
+        }
+
+        //themes, measures, rolf categories, rolf tags, rolf risks
+        $array = [
+            'theme' => 'label',
+            'measure' => 'description',
+            'rolfCategory' => 'label',
+            'rolfRisk' => 'label',
+            'rolfTag' => 'label',
+        ];
+        foreach($array as  $key => $value) {
+            $entities = $this->get($key . 'Table')->fetchAllObject();
+            foreach ($entities as $entity) {
+                if (empty($entity->get($value . $lang))) {
+                    $success = false;
+                }
+            }
+        }
+
+        //assets, threats and vulnerabilities
+        $array = ['asset', 'threat', 'vulnerability'];
+        foreach ($array as $value) {
+            $entities1 = [];
+            if (!$model->isRegulator) {
+                $entities1 = $this->get($value . 'Table')->getEntityByFields(['mode' => Asset::MODE_GENERIC]);
+            }
+            $entities2 = [];
+            if (!$model->isGeneric) {
+                $entities2 = $this->get($value . 'Table')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
+            }
+            $entities = $entities1 + $entities2;
+            foreach ($entities as $entity) {
+                if (empty($entity->get('label' . $lang))) {
+                    $success = false;
+                } else {
+                    ${$value}[$entity->get('id')] = $entity->get('id');
+                }
+            }
+        }
+
+        //amvs
+        $entities = $this->get('amvTable')->fetchAllObject();
+        foreach ($entities as $key => $entity) {
+            if (
+                (!isset($asset[$entity->asset->id])) &&
+                (!isset($threat[$entity->threat->id])) &&
+                (!isset($vulnerability[$entity->vulnerability->id]))
+            ) {
+                if (empty($entity->get('label' . $lang))) {
+                    $success = false;
+                }
+            }
+        }
+
+        //to be continued ...
+
+        return ['response' => $success];
     }
 }

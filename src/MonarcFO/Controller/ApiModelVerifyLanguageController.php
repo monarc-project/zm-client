@@ -21,7 +21,9 @@ class ApiModelVerifyLanguageController extends \MonarcCore\Controller\AbstractCo
     {
         $language = $this->params()->fromQuery('language');
 
-        $this->getService()->verifyLanguage($id, $language);
+        $result = $this->getService()->verifyLanguage($id, $language);
+
+        return new JsonModel($result);
     }
 
     public function create($data)
