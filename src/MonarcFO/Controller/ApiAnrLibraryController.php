@@ -27,6 +27,7 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
         $fields = ['id', 'label1', 'label2', 'label3', 'label4', 'position', 'objects', 'child'];
         $objectsCategories = $this->recursiveArray($objectsCategories, null, 0, $fields);
 
+        /*
         usort($objectsCategories, function ($a, $b) { return $this->sortCategories($a, $b); });
         foreach ($objectsCategories as &$cat) {
             if (isset($cat['child']) && is_array($cat['child'])) {
@@ -35,6 +36,7 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
                 });
             }
         }
+        */
 
         return new JsonModel(array(
             $this->name => $objectsCategories
