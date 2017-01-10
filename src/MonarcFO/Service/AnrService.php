@@ -1029,7 +1029,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
         return $this->get('table')->delete($id);
     }
 
-
+    /**
+     * Verify language
+     *
+     * @param $modelId
+     * @param $lang
+     * @return array
+     */
     public function verifyLanguage($modelId, $lang) {
 
         $success = true;
@@ -1040,59 +1046,104 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $success = false;
         }
 
-        //themes, measures, rolf categories, rolf tags, rolf risks
+        //themes, measures, rolf categories, rolf tags, rolf risks, object categories, questions and questions choices
         $array = [
             'theme' => 'label',
             'measure' => 'description',
             'rolfCategory' => 'label',
             'rolfRisk' => 'label',
             'rolfTag' => 'label',
+            'objectCategory' => 'label',
+            'question' => 'label',
+            'questionChoice' => 'label',
         ];
         foreach($array as  $key => $value) {
-            $entities = $this->get($key . 'Table')->fetchAllObject();
-            foreach ($entities as $entity) {
-                if (empty($entity->get($value . $lang))) {
+            if ($success) {
+                $entities = $this->get($key . 'Table')->fetchAllObject();
+                foreach ($entities as $entity) {
+                    if (empty($entity->get($value . $lang))) {
+                        $success = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        //instances
+        if ($success) {
+            $instances = $this->get('instanceTable')->getEntityByFields(['anr' => $model->get('anr')->get('id')]);
+            foreach ($instances as $instance) {
+                if (empty($instance->get('name' . $lang))) {
                     $success = false;
+                    break;
+                }
+                if (empty($instance->get('label' . $lang))) {
+                    $success = false;
+                    break;
+                }
+            }
+        }
+
+        //scales impact types
+        if ($success) {
+            $scalesImpactsTypes = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $model->get('anr')->get('id')]);
+            foreach ($scalesImpactsTypes as $scaleImpactType) {
+                if (empty($scaleImpactType->get('label' . $lang))) {
+                    $success = false;
+                    break;
                 }
             }
         }
 
         //assets, threats and vulnerabilities
-        $array = ['asset', 'threat', 'vulnerability'];
-        foreach ($array as $value) {
-            $entities1 = [];
-            if (!$model->isRegulator) {
-                $entities1 = $this->get($value . 'Table')->getEntityByFields(['mode' => Asset::MODE_GENERIC]);
-            }
-            $entities2 = [];
-            if (!$model->isGeneric) {
-                $entities2 = $this->get($value . 'Table')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
-            }
-            $entities = $entities1 + $entities2;
-            foreach ($entities as $entity) {
-                if (empty($entity->get('label' . $lang))) {
-                    $success = false;
-                } else {
-                    ${$value}[$entity->get('id')] = $entity->get('id');
+        if ($success) {
+            $array = ['asset', 'threat', 'vulnerability'];
+            foreach ($array as $value) {
+                $entities1 = [];
+                if (!$model->isRegulator) {
+                    $entities1 = $this->get($value . 'Table')->getEntityByFields(['mode' => Asset::MODE_GENERIC]);
+                }
+                $entities2 = [];
+                if (!$model->isGeneric) {
+                    $entities2 = $this->get($value . 'Table')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
+                }
+                $entities = $entities1 + $entities2;
+                foreach ($entities as $entity) {
+                    if (empty($entity->get('label' . $lang))) {
+                        $success = false;
+                        break;
+                    } else {
+                        ${$value}[$entity->get('id')] = $entity->get('id');
+                    }
                 }
             }
         }
 
-        //amvs
-        $entities = $this->get('amvTable')->fetchAllObject();
-        foreach ($entities as $key => $entity) {
-            if (
-                (!isset($asset[$entity->asset->id])) &&
-                (!isset($threat[$entity->threat->id])) &&
-                (!isset($vulnerability[$entity->vulnerability->id]))
-            ) {
-                if (empty($entity->get('label' . $lang))) {
+        //objects
+        if ($success) {
+            $objects = $this->get('objectTable')->fetchAllObject();
+            foreach ($objects as $key => $object) {
+                $existInAnr = false;
+                foreach ($object->anrs as $anrObject) {
+                    if ($anrObject->id == $model->get('anr')->get('id')) {
+                        $existInAnr = true;
+                    }
+                }
+                if (!$existInAnr) {
+                    unset($objects[$key]);
+                }
+            }
+            foreach ($objects as $object) {
+                if (empty($object->get('label' . $lang))) {
                     $success = false;
+                    break;
+                }
+                if (empty($object->get('name' . $lang))) {
+                    $success = false;
+                    break;
                 }
             }
         }
-
-        //to be continued ...
 
         return ['response' => $success];
     }
