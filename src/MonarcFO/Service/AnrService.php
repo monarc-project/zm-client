@@ -216,6 +216,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        $this->setUserCurrentAnr($id);
+
         return $anr;
     }
 
@@ -891,15 +893,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
             }
 
-
-            // Set as user's current ANR
-            /** @var UserTable $userCliTable */
-            $userCliTable = $this->get('userCliTable');
-            $currentUser = $userCliTable->getConnectedUser();
-            /** @var User $user */
-            $user = $userCliTable->getEntity($currentUser['id']);
-            $user->set('currentAnr', $anrCliTable->getEntity($id));
-            $userCliTable->save($user);
+            $this->setUserCurrentAnr($id);
 
         } catch (\Exception $e){
 
@@ -911,6 +905,25 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         return $id;
+    }
+
+    /**
+     * Set User Current Anr
+     *
+     * @param $anrId
+     */
+    public function setUserCurrentAnr($anrId) {
+        /** @var AnrTable $anrCliTable */
+        $anrCliTable = $this->get('anrCliTable');
+
+        /** @var UserTable $userCliTable */
+        $userCliTable = $this->get('userCliTable');
+        $currentUser = $userCliTable->getConnectedUser();
+
+        /** @var User $user */
+        $user = $userCliTable->getEntity($currentUser['id']);
+        $user->set('currentAnr', $anrCliTable->getEntity($anrId));
+        $userCliTable->save($user);
     }
 
     /**
