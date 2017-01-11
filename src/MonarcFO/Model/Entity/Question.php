@@ -30,6 +30,14 @@ class Question extends \MonarcCore\Model\Entity\QuestionSuperclass
     protected $response;
 
     /**
+     * @var smallint
+     *
+     * @ORM\Column(name="mode", type="smallint", options={"default":0})
+     */
+    protected $mode = 0;
+
+
+    /**
      * @return Anr
      */
     public function getAnr()
@@ -64,4 +72,8 @@ class Question extends \MonarcCore\Model\Entity\QuestionSuperclass
         $this->response = $response;
         return $this;
     }
+
+    protected $parameters = array(
+        'implicitPosition' => ['field'=>'anr']
+    );
 }
