@@ -26,7 +26,7 @@ class ApiAnrObjectsDuplicationController extends ApiAnrAbstractController
     public function create($data)
     {
         if (isset($data['id'])) {
-            $id = $this->getService()->duplicate($data);
+            $id = $this->getService()->duplicate($data, AbstractEntity::FRONT_OFFICE);
 
             return new JsonModel(
                 array(
