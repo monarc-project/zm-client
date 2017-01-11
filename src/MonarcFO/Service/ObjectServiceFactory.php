@@ -19,6 +19,7 @@ class ObjectServiceFactory extends AbstractServiceFactory
         'assetTable'=> '\MonarcFO\Model\Table\AssetTable',
         'categoryTable'=> '\MonarcFO\Model\Table\ObjectCategoryTable',
         'instanceTable'=> '\MonarcFO\Model\Table\InstanceTable',
+        'instanceRiskOpTable'=> '\MonarcFO\Model\Table\InstanceRiskOpTable',
         'objectObjectTable'=> '\MonarcFO\Model\Table\ObjectObjectTable',
         'rolfTagTable'=> '\MonarcFO\Model\Table\RolfTagTable',
 

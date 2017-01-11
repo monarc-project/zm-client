@@ -82,15 +82,25 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
     public function generateDeliverableWithValues($anrId, $modelId, $values) {
         // Find the model to use
-        $model = $this->deliveryModelService->getEntity($modelId);
+        $model = $this->deliveryModelService->get("table")->getEntity($modelId);
         if (!$model) {
             throw new \Exception("Model `id` not found");
         }
+
 
         // Load the ANR
         $anr = $this->anrTable->getEntity($anrId);
         if (!$anr) {
             throw new \Exception("Anr `id` not found");
+        }
+
+        if( ! file_exists($model->get('path' . $anr->language))){
+            if(!file_exists('./data/monarc/models')){
+                $oldumask = umask(0);
+                mkdir('./data/monarc/models', 0775, true);
+                umask($oldumask);
+            }
+            file_put_contents($model->get('path' . $anr->language) , $model->get('content'. $anr->language));
         }
 
         // Word-filter the input values
@@ -103,9 +113,9 @@ class DeliverableGenerationService extends AbstractServiceFactory
             }
         }
 
-        $values = array_merge($values, $this->buildValues($anr, $model['category']));
-        $values['TYPE'] = $this->getModelType($model['category']);
-        return $this->generateDeliverableWithValuesAndModel($model['path' . $anr->language], $values);
+        $values = array_merge($values, $this->buildValues($anr, $model->get('category')));
+        $values['TYPE'] = $this->getModelType($model->get('category'));
+        return $this->generateDeliverableWithValuesAndModel($model->get('path' . $anr->language), $values);
     }
 
     protected function generateDeliverableWithValuesAndModel($modelPath, $values) {
@@ -399,11 +409,11 @@ class DeliverableGenerationService extends AbstractServiceFactory
             } else {
                 // Choice, either simple or multiple
                 if ($question['multichoice']) {
-                    $responseIds = json_decode($question['response']);
+                    $responseIds = json_decode($question['response'], true);
                     $responses = [];
 
                     foreach ($questionsChoices as $choice) {
-                        if (array_search($choice['id'], $responseIds) !== false) {
+                        if (!is_null($responseIds) && array_search($choice['id'], $responseIds) !== false) {
                             $responses[] = '- ' . $choice['label' . $anr->language];
                         }
                     }
