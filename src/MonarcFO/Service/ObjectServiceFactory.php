@@ -25,6 +25,7 @@ class ObjectServiceFactory extends AbstractServiceFactory
 
         'assetService' => 'MonarcFO\Service\AssetService',
         'objectObjectService'=> 'MonarcFO\Service\ObjectObjectService',
+        'instanceRiskOpService'=> 'MonarcFO\Service\AnrInstanceRiskOpService',
     );
 
     public function createService(ServiceLocatorInterface $serviceLocator){
