@@ -773,7 +773,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->id]);
                 $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
                 $this->get('instanceRiskOpCliTable')->save($newInstanceRiskOp, $last);
-                $instancesRisksOpNewIds[$instanceRisk->id] = $newInstanceRisk;
+                $instancesRisksOpNewIds[$instanceRiskOp->id] = $newInstanceRiskOp;
                 $i++;
             }
 
