@@ -116,6 +116,42 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     }
 
     /**
+     * Delete From Anr
+     *
+     * @param $id
+     * @param null $anrId
+     * @return mixed
+     * @throws \Exception
+     */
+    public function deleteFromAnr($id, $anrId = null) {
+
+        if (!is_null($anrId)) {
+            $entity = $this->get('table')->getEntity($id);
+            if ($entity->anrReference->id != $anrId){
+                throw new \Exception('Anr id error', 412);
+            }
+
+            $connectedUser = $this->get('table')->getConnectedUser();
+
+            /** @var UserAnrTable $userAnrTable */
+            $userAnrTable = $this->get('userAnrTable');
+            $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser['id'], 'anr' => $anrId]);
+            $rwd = 0;
+            foreach($rights as $right) {
+                if ($right->rwd == 1) {
+                    $rwd = 1;
+                }
+            }
+
+            if (!$rwd) {
+                throw new \Exception('You are not authorized to do this action', 412);
+            }
+        }
+
+        return $this->delete($id);
+    }
+
+    /**
      * Restore
      *
      * @param $anrId
