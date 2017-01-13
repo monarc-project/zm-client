@@ -403,6 +403,7 @@ class DeliverableGenerationService extends AbstractServiceFactory
 
         // Fill in each row
         foreach ($questions as $question) {
+            $response = null;
             if ($question['type'] == 1) {
                 // Simple text
                 $response = $question['response'];
