@@ -85,6 +85,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->deliveryModelService->getList(1, 0, null, null, null);
     }
 
+    public function getLastDelivery($anrId) {
+        /** @var DeliveryTable $table */
+        $table = $this->get('table');
+        $deliveries = $table->getEntityByFields(['anr' => $anrId]);
+        $lastDelivery = [];
+        foreach ($deliveries as $delivery) {
+            $lastDelivery = $delivery->getJsonArray();
+        }
+
+        return $lastDelivery;
+    }
+
     public function generateDeliverableWithValues($anrId, $modelId, $values, $data) {
         // Find the model to use
         $model = $this->deliveryModelService->get("table")->getEntity($modelId);

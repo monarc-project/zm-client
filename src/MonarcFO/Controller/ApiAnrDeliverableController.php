@@ -66,7 +66,16 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 
     public function getList()
     {
-        return new JsonModel($this->getService()->getDeliveryModels());
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+
+        $result = [
+            'models' => $this->getService()->getDeliveryModels(),
+            'delivery' => $this->getService()->getLastDelivery($anrId),
+        ];
+        return new JsonModel($result);
     }
 
     /**
