@@ -25,5 +25,7 @@ class AnrObjectServiceFactory extends AbstractServiceFactory
         'objectObjectService'=> 'MonarcFO\Service\ObjectObjectService',
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',
         'selfCoreService' => 'MonarcCore\Service\ObjectService',
+        'instanceRiskOpTable' => '\MonarcFO\Model\Table\InstanceRiskOpTable',
+        'instanceRiskOpService' => 'MonarcFO\Service\AnrInstanceRiskOpService',
     );
 }
