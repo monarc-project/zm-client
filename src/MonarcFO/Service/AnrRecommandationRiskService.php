@@ -74,6 +74,20 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
 
             $recosRisks[$key]['measures'] = $measures;
+
+            if(!empty($recoRisk['recommandation'])){
+                if(empty($recoRisk['recommandation']->duedate) || $recoRisk['recommandation']->duedate == '0000-00-00'){
+                }
+                else{
+                    if($recoRisk['recommandation']->duedate instanceof \DateTime){
+                        $recoRisk['recommandation']->duedate = $recoRisk['recommandation']->duedate->getTimestamp();
+                    }else{
+                        $recoRisk['recommandation']->duedate = strtotime($recoRisk['recommandation']->duedate);
+                    }
+                    $recoRisk['recommandation']->duedate = date('d-m-Y',$recoRisk['recommandation']->duedate);
+                }
+                $recosRisks[$key]['recommandation'] = $recoRisk['recommandation'];
+            }
         }
 
         // Filter out duplicate global objects
