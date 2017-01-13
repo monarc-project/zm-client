@@ -7,6 +7,7 @@ use MonarcCore\Service\QuestionService;
 use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ClientTable;
+use MonarcFO\Model\Table\DeliveryTable;
 use MonarcFO\Model\Table\InstanceTable;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -18,9 +19,13 @@ use PhpOffice\PhpWord\Writer\Word2007;
  * Class AnrAssetService
  * @package MonarcFO\Service
  */
-class DeliverableGenerationService extends AbstractServiceFactory
+class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 {
     use \MonarcCore\Model\GetAndSet;
+
+    protected $table;
+    protected $entity;
+    protected $dependencies = ['anr'];
 
     /** @var DeliveriesModelsService */
     protected $deliveryModelService;
@@ -80,19 +85,48 @@ class DeliverableGenerationService extends AbstractServiceFactory
         return $this->deliveryModelService->getList(1, 0, null, null, null);
     }
 
-    public function generateDeliverableWithValues($anrId, $modelId, $values) {
+    public function getLastDelivery($anrId) {
+        /** @var DeliveryTable $table */
+        $table = $this->get('table');
+        $deliveries = $table->getEntityByFields(['anr' => $anrId]);
+        $lastDelivery = [];
+        foreach ($deliveries as $delivery) {
+            $lastDelivery = $delivery->getJsonArray();
+        }
+
+        return $lastDelivery;
+    }
+
+    public function generateDeliverableWithValues($anrId, $modelId, $values, $data) {
         // Find the model to use
         $model = $this->deliveryModelService->get("table")->getEntity($modelId);
         if (!$model) {
             throw new \Exception("Model `id` not found");
         }
 
-
         // Load the ANR
         $anr = $this->anrTable->getEntity($anrId);
         if (!$anr) {
             throw new \Exception("Anr `id` not found");
         }
+
+        $class = $this->get('entity');
+        $delivery = new $class();
+        $delivery->setLanguage($this->getLanguage());
+        $delivery->setDbAdapter($this->get('table')->getDb());
+
+        $data['respCustomer'] = $data['consultants'];
+        $data['respSmile'] = $data['managers'];
+        $data['name'] = $data['docname'];
+
+        $delivery->exchangeArray($data);
+
+        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $this->setDependencies($delivery, $dependencies);
+
+        /** @var DeliveryTable $table */
+        $table = $this->get('table');
+        $table->save($delivery);
 
         if( ! file_exists($model->get('path' . $anr->language))){
             if(!file_exists('./data/monarc/models')){

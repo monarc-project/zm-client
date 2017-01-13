@@ -6,6 +6,8 @@ use MonarcCore\Service\AbstractServiceFactory;
 class DeliverableGenerationServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
+        'entity'                => 'MonarcFO\Model\Entity\Delivery',
+        'table'                 => 'MonarcFO\Model\Table\DeliveryTable',
         'deliveryModelService'  => '\MonarcCore\Service\DeliveriesModelsService',
         'clientTable'           => '\MonarcFO\Model\Table\ClientTable',
         'anrTable'              => '\MonarcFO\Model\Table\AnrTable',
