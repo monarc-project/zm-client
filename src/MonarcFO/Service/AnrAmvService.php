@@ -166,7 +166,9 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
 
         foreach ($this->dependencies as $dependency) {
             if (!isset($data[$dependency])) {
-                $data[$dependency] = $entity->$dependency->id;
+                if ($entity->$dependency) {
+                    $data[$dependency] = $entity->$dependency->id;
+                }
             }
         }
 
