@@ -119,7 +119,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      */
     public function patch($id, $data){
 
-        if ($data['duedate']) {
+        if (!empty($data['duedate'])) {
             try{
                 $data['duedate'] = new \DateTime($data['duedate']);
             }catch(\Exception $e){
@@ -141,7 +141,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      */
     public function update($id,$data){
 
-        if ($data['duedate']) {
+        if (!empty($data['duedate'])) {
             try{
                 $data['duedate'] = new \DateTime($data['duedate']);
             }catch(\Exception $e){
