@@ -307,7 +307,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $anrCliTable = $this->get('anrCliTable');
             $id = $anrCliTable->save($newAnr);
 
-            if (!$isSnapshot) { // inutile si c'est un snapshot
+            if (!$isSnapshot && !$isSnapshotCloning) { // inutile si c'est un snapshot & dans la cas d'un restore (SnapshotService::restore)
                 //add user to anr
                 $userCliTable = $this->get('userCliTable');
                 $userArray = $userCliTable->getConnectedUser();

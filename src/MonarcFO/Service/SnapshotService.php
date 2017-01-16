@@ -179,6 +179,17 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
             $i++;
         }
 
+        // reprendre les acces
+        $userAnrCliTable = $anrService->get('userAnrCliTable');
+        $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anrId]);
+        $i = 1;
+        foreach($userAnr as $u){
+            $u->set('anr',$newAnrId);
+            $this->setDependencies($u,['anr','user']);
+            $userAnrCliTable->save($u,count($userAnr) >= $i);
+            $i++;
+        }
+
         $anrTable->delete($anrId); // on supprime l'ancienne anr
 
         /** @var Anr $newAnrSnapshot */
