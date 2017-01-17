@@ -73,10 +73,11 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
 
             if(!empty($data['amvs']) && !empty($idAsset)){
                 foreach($data['amvs'] as $amvArray){
-                    $amv = $this->get('amvEntity');
-                    $amv->set('asset',$idAsset);
-                    $amv->set('anr',$anr->get('id'));
-                    $amv->set('status',$amvArray['status']);
+                    $amvData = [
+                        'asset' => $idAsset,
+                        'anr' => $anr->get('id'),
+                        'status' => $amvArray['status'],
+                    ];
                     if(isset($data['threats'][$amvArray['threat']])){ // Threats
                         if(is_array($data['threats'][$amvArray['threat']])){
                             $threat = $this->get('threatTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['threats'][$amvArray['threat']]['code']]);
@@ -107,7 +108,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $objectsCache['threats'][$amvArray['threat']] = $data['threats'][$amvArray['threat']] = $this->get('threatTable')->save($threat);
                             }
                         }
-                        $amv->set('threat',$data['threats'][$amvArray['threat']]);
+                        $amvData['threat'] = $data['threats'][$amvArray['threat']];
                     }
 
                     if(isset($data['vuls'][$amvArray['vulnerability']])){ // Vulnerabilities
@@ -125,7 +126,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $objectsCache['vuls'][$amvArray['vulnerability']] = $data['vuls'][$amvArray['vulnerability']] = $this->get('vulnerabilityTable')->save($vul);
                             }
                         }
-                        $amv->set('vulnerability',$data['vuls'][$amvArray['vulnerability']]);
+                        $amvData['vulnerability'] = $data['vuls'][$amvArray['vulnerability']];
                     }
 
                     for($i=1;$i<=3;$i++){
@@ -144,20 +145,22 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                     $objectsCache['measures'][$amvArray['measure'.$i]] = $data['measures'][$amvArray['measure'.$i]] = $this->get('measureTable')->save($measure);
                                 }
                             }
-                            $amv->set('measure'.$i,$data['measures'][$amvArray['measure'.$i]]);
+                            $amvData['measure'.$i] = $data['measures'][$amvArray['measure'.$i]];
                         }else{
-                            $amv->set('measure'.$i,null);
+                            $amvData['measure'.$i] = null;
                         }
                     }
 
                     $amvTest = $this->get('amvTable')->getEntityByFields([
                         'anr'=>$anr->get('id'),
-                        'asset'=>$amv->get('asset'),
-                        'threat'=>$amv->get('threat'),
-                        'vulnerability'=>$amv->get('vulnerability'),
+                        'asset'=>$amvData['asset'],
+                        'threat'=>$amvData['threat'],
+                        'vulnerability'=>$amvData['vulnerability'],
                     ]);
                     if(!$amvTest){ // on test que cet AMV sur cette ANR n'existe pas
-                        $this->setDependencies($amv,['anr', 'asset', 'threat', 'vulnerability', 'measure[1]()', 'measure[2]()', 'measure[3]()']);
+                        $amv = $this->get('amvEntity');
+                        $amv->exchangeArray($amvData,true);
+                        $this->setDependencies($amv,['anr', 'asset', 'threat', 'vulnerability', 'measure1', 'measure2', 'measure3']);
                         $this->get('amvTable')->save($amv);
                     }
                 }
