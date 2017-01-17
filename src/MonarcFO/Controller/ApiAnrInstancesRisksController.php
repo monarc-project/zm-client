@@ -12,6 +12,7 @@ use Zend\View\Model\JsonModel;
  */
 class ApiAnrInstancesRisksController extends ApiAnrAbstractController
 {
+    protected $dependencies = ['anr','amv', 'asset', 'threat', 'vulnerability', 'instance'];
     protected $name = 'instances-risks';
 
     /**
@@ -30,8 +31,16 @@ class ApiAnrInstancesRisksController extends ApiAnrAbstractController
         }
         $data['anr'] = $anrId;
 
-        $this->getService()->updateFromRiskTable($id, $data);
+        $id = $this->getService()->updateFromRiskTable($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        $entity = $this->getService()->getEntity($id);
+
+        if (count($this->dependencies)) {
+            foreach($this->dependencies as $d){
+                unset($entity[$d]);
+            }
+        }
+
+        return new JsonModel($entity);
     }
 }
