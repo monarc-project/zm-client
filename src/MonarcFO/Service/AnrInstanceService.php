@@ -22,8 +22,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         }
         $ids = $errors = [];
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
-        foreach($data['file'] as $f){
+        foreach($data['file'] as $keyfile => $f){
             if(isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])){
+
                 $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])),$key)),true);
                 if($file !== false && ($id = $this->importFromArray($file,$anr,$idParent,$mode)) !== false){
                     if(is_array($id)){
@@ -35,7 +36,11 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $errors[] = 'The file "'.$f['name'].'" can\'t be imported';
                 }
             }
+
+            unset($data['file'][$keyfile]);
         }
+
+        unset($data);
 
         return [$ids,$errors];
     }
@@ -59,6 +64,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $temp[$sc->get('type')]['min'] = $sc->get('min');
                     $temp[$sc->get('type')]['max'] = $sc->get('max');
                 }
+                unset($scales);
                 $sharedData['scales']['dest'] = $temp;
                 $sharedData['scales']['orig'] = $data['scales'];
             }
@@ -121,6 +127,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                         ));
                     }
                 }
+                unset($instance);
 
                 if(!empty($data['consequences'])){
                     if(empty($local_scale_impact)){
