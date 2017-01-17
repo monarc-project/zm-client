@@ -323,13 +323,13 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         ];
 
         foreach($result as $r){
-            if(isset($globalRisks[$r['oid']][$r['threat']][$r['vulnerability']]) &&
-                isset($return[$globalRisks[$r['id']][$r['threat']][$r['vulnerability']]]) &&
-                $return[$globalRisks[$r['oid']][$r['threat']][$r['vulnerability']]]['max_risk'] < $r['max_risk']){
-                unset($return[$globalRisks[$r['id']][$r['threat']][$r['vulnerability']]]);
-                unset($globalRisks[$r['oid']][$r['threat']][$r['vulnerability']]);
+            if(isset($globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]) &&
+                isset($return[$globalRisks[$r['id']][$r['threatid']][$r['vulnerabilityid']]]) &&
+                $return[$globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]]['max_risk'] < $r['max_risk']){
+                unset($return[$globalRisks[$r['id']][$r['threatid']][$r['vulnerabilityid']]]);
+                unset($globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]);
             }
-            if(!isset($globalRisks[$r['id']][$r['threat']][$r['vulnerability']])){
+            if(!isset($globalRisks[$r['id']][$r['threatid']][$r['vulnerabilityid']])){
                 $return[$r['id']] = $r;
                 $return[$r['id']]['t'] = !((!$r['ir_kindOfMeasure']) || ($r['ir_kindOfMeasure'] == InstanceRisk::KIND_NOT_TREATED));
                 unset($return[$r['id']]['ir_kindOfMeasure']);
@@ -365,7 +365,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     $return[$r['id']]['measure3_code'], $return[$r['id']]['measure3_description1'], $return[$r['id']]['measure3_description2'], $return[$r['id']]['measure3_description3'], $return[$r['id']]['measure3_description4']
                 );
                 if($r['scope'] == Object::SCOPE_GLOBAL){
-                    $globalRisks[$r['oid']][$r['threat']][$r['vulnerability']] = $r['id'];
+                    $globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']] = $r['id'];
                 }
             }
         }
