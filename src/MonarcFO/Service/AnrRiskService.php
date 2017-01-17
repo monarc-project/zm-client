@@ -150,22 +150,22 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             'ir.cacheTargetedRisk as target_risk',
             'ir.cacheMaxRisk as max_risk',
             'ir.comment as comment',
-            'ir.kindOfMeasure',
-            'measure1.code',
-            'measure1.description1',
-            'measure1.description2',
-            'measure1.description3',
-            'measure1.description4',
-            'measure2.code',
-            'measure2.description1',
-            'measure2.description2',
-            'measure2.description3',
-            'measure2.description4',
-            'measure3.code',
-            'measure3.description1',
-            'measure3.description2',
-            'measure3.description3',
-            'measure3.description4',
+            'ir.kindOfMeasure as ir_kindOfMeasure',
+            'measure1.code as measure1_code',
+            'measure1.description1 as measure1_description1',
+            'measure1.description2 as measure1_description2',
+            'measure1.description3 as measure1_description3',
+            'measure1.description4 as measure1_description4',
+            'measure2.code as measure2_code',
+            'measure2.description1 as measure2_description1',
+            'measure2.description2 as measure2_description2',
+            'measure2.description3 as measure2_description3',
+            'measure2.description4 as measure2_description4',
+            'measure3.code as measure3_code',
+            'measure3.description1 as measure3_description1',
+            'measure3.description2 as measure3_description2',
+            'measure3.description3 as measure3_description3',
+            'measure3.description4 as measure3_description4',
             'o.scope as scope',
         ];
 
@@ -324,12 +324,12 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         foreach($result as $r){
             if(isset($globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]) &&
-                isset($return[$globalRisks[$r['id']][$r['threatid']][$r['vulnerabilityid']]]) &&
+                isset($return[$globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]]) &&
                 $return[$globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]]['max_risk'] < $r['max_risk']){
-                unset($return[$globalRisks[$r['id']][$r['threatid']][$r['vulnerabilityid']]]);
+                unset($return[$globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]]);
                 unset($globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]);
             }
-            if(!isset($globalRisks[$r['id']][$r['threatid']][$r['vulnerabilityid']])){
+            if(!isset($globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']])){
                 $return[$r['id']] = $r;
                 $return[$r['id']]['t'] = !((!$r['ir_kindOfMeasure']) || ($r['ir_kindOfMeasure'] == InstanceRisk::KIND_NOT_TREATED));
                 unset($return[$r['id']]['ir_kindOfMeasure']);
