@@ -89,6 +89,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     }
 
     protected function getInstancesRisks($anrId, $instanceId = null, $params = []){
+
         $order = isset($params['order']) ? $params['order'] : 'maxRisk';
         $dir = isset($params['order_direction']) ? $params['order_direction'] : 'desc';
 
@@ -313,6 +314,24 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             ->addOrderBy('vulnerability.code','ASC');
         $result = $query->getQuery()->getScalarResult();
 
+        unset($order);
+        unset($dir);
+        unset($instance);
+        unset($arraySelect);
+        unset($temp);
+        unset($params);
+        unset($instanceId);
+        unset($instanceIds);
+        unset($this);
+        unset($query);
+        unset($anrId);
+        unset($sub);
+        unset($subsub);
+        unset($filters);
+        unset($orFilter);
+        unset($f);
+        unset($k);
+
         $globalRisks = $return = [];
         $changes = [
             'instanceid',
@@ -322,7 +341,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             'vulnerabilityid',
         ];
 
-        foreach($result as $r){
+        foreach($result as $key => $r){
             if(isset($globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]) &&
                 isset($return[$globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]]) &&
                 $return[$globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']]]['max_risk'] < $r['max_risk']){
@@ -368,7 +387,13 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                     $globalRisks[$r['oid']][$r['threatid']][$r['vulnerabilityid']] = $r['id'];
                 }
             }
+
+            unset($return[$key]);
+            unset($r);
         }
+
+        unset($result);
+
         return array_values($return);
     }
 
