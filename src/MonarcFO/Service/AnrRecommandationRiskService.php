@@ -356,7 +356,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $recommandationTable = $this->get('recommandationTable');
         $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], ['importance' => 'DESC']);
 
-        $position = 0;
+        $position = 1;
         $i = 1;
         foreach ($recommandations as $recommandation) {
             $last = ($i == count($recommandations)) ? true : false;
