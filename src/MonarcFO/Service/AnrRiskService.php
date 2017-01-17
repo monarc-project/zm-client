@@ -258,6 +258,24 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             ->addOrderBy('vulnerability.code','ASC');
         $result = $query->getQuery()->getScalarResult();
 
+        unset($order);
+        unset($dir);
+        unset($instance);
+        unset($arraySelect);
+        unset($temp);
+        unset($params);
+        unset($instanceId);
+        unset($instanceIds);
+        unset($this);
+        unset($query);
+        unset($anrId);
+        unset($sub);
+        unset($subsub);
+        unset($filters);
+        unset($orFilter);
+        unset($f);
+        unset($k);
+
         $globalRisks = $return = [];
         $changes = [
             'instanceid',
@@ -292,6 +310,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             }
         }
         unset($globalRisks);
+	unset($result);
         return array_values($return);
     }
 
