@@ -27,7 +27,6 @@ class ApiAnrRisksController extends ApiAnrAbstractController
             header('Content-Type: text/csv');
             die($this->getService()->getCsvRisks($anrId, ['id' => $id], $params));
         } else {
-            $risks = $this->getService()->getRisks($anrId, ['id' => $id], $params);
             return new JsonModel([
                 'count' => $this->getService()->getRisks($anrId, ['id' => $id], $params, true),
                 $this->name => $this->getService()->getRisks($anrId, ['id' => $id], $params),
