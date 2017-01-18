@@ -57,6 +57,8 @@ class UserRoleService extends AbstractService
 
     public function getByUserToken($token) {
 
+        $deb = microtime(true);
+
         if ($token instanceof GenericHeader) {
             $token = $token->getFieldValue();
         }
@@ -79,10 +81,10 @@ class UserRoleService extends AbstractService
 
             $anrs = [];
             foreach($userAnrs as $userAnr) {
-                $array = [];
-                $array['anr'] = $userAnr->anr->id;
-                $array['rwd'] = $userAnr->rwd;
-                $anrs[] = $array;
+                $anrs[] = [
+                    'anr' => $userAnr->anr->id,
+                    'rwd' => $userAnr->rwd
+                ];
             }
 
             return [

@@ -101,13 +101,17 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
 
+        /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
-        $userRoles = $this->userRoleTable->getEntityByFields(['user'=>$userArray['id']]);
-        $isSuperAdmin = false;
 
-        foreach ($userRoles as $role) {
-            if ($role->role == 'superadminfo') {
+        /** @var UserRoleTable $userRoleTable */
+        $userRoleTable = $this->get('userRoleTable');
+        $userRoles = $userRoleTable->getEntityByFields(['user'=>$userArray['id']]);
+
+        $isSuperAdmin = false;
+        foreach ($userRoles as $userRole) {
+            if ($userRole->role == 'superadminfo') {
                 $isSuperAdmin = true;
                 break;
             }
@@ -123,13 +127,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
         } else {
             $anrs = $this->anrCliTable->fetchAllObject();
             foreach ($anrs as $a) {
-                $filterAnd['id'][$a->id] = $a->id;
+                $filterAnd['id'][$a->get('id')] = $a->get('id');
             }
         }
 
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
-        $snapshots = $snapshotCliTable->getEntityByFields(['anr'=>$filterAnd['id']]);
+        $snapshots = $snapshotCliTable->getEntityByFields(['anr' => $filterAnd['id']]);
         foreach($snapshots as $snapshot) {
             unset($filterAnd['id'][$snapshot->get('anr')->get('id')]);
         }
@@ -145,16 +149,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         $user = $userCliTable->get($userArray['id']);
         foreach ($anrs as &$anr) {
-            if (isset($user['currentAnr']) && $anr['id'] == $user['currentAnr']->id) {
+            if (isset($user['currentAnr']) && $anr['id'] == $user['currentAnr']->get('id')) {
                 $anr['isCurrentAnr'] = 1;
             }
 
             $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id'], 'anr' => $anr['id']]));
-            if (empty($lk)) {
-                $anr['rwd'] = -1;
-            } else {
-                $anr['rwd'] = $lk->get('rwd');
-            }
+            $anr['rwd'] = (empty($lk)) ? -1 : $lk->get('rwd');
         }
 
         return $anrs;
@@ -188,9 +188,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * Get Entity
      *
      * @param $id
-     * @return array
+     * @return mixed
+     * @throws \Exception
      */
     public function getEntity($id){
+
         $anr = $this->get('table')->get($id);
 
         //retrieve snapshot
@@ -204,7 +206,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $anr['isSnapshot'] = 1;
             $anr['rwd'] = 0;
             $anr['snapshotParent'] = $anrSnapshot->get('anrReference')->get('id');
-        }else {
+        } else {
             $userCliTable = $this->get('userCliTable');
             $userArray = $userCliTable->getConnectedUser();
 

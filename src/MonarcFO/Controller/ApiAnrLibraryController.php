@@ -3,6 +3,7 @@
 namespace MonarcFO\Controller;
 
 use MonarcCore\Model\Entity\AbstractEntity;
+use MonarcFO\Service\AnrObjectService;
 use Zend\View\Model\JsonModel;
 
 class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
@@ -18,7 +19,7 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
         	throw new \Exception('Anr id missing', 412);
         }
 
-        /** @var ObjectService $service */
+        /** @var AnrObjectService $service */
         $service = $this->getService();
         $objectsCategories = $service->getCategoriesLibraryByAnr($anrId);
 
