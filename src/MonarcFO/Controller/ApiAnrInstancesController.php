@@ -3,6 +3,7 @@
 namespace MonarcFO\Controller;
 
 use MonarcFO\Model\Entity\Instance;
+use MonarcFO\Service\AnrInstanceService;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -45,7 +46,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     {
         $anrId = (int) $this->params()->fromRoute('anrid');
 
-        /** @var InstanceService $service */
+        /** @var AnrInstanceService $service */
         $service = $this->getService();
         $service->updateInstance($anrId, $id, $data);
 
