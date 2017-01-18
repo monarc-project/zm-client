@@ -356,11 +356,11 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         if($entity->instance->object->scope == Object::SCOPE_GLOBAL){
             $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id]);
             $i = 1;
+            $nbBrothers = count($brothers);
             foreach ($brothers as $brother){
-                $last = ($i == count($brothers)) ? true : false;
                 $newRisk = clone $entity;
                 $newRisk->instance = $brother;
-                $table->save($newRisk, $last);
+                $table->save($newRisk, ($i == $nbBrothers));
                 $i++;
             }
         }
@@ -378,8 +378,8 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     public function deleteInstanceRisks($instanceId, $anrId){
         $risks = $this->getInstanceRisks($instanceId, $anrId);
         $table = $this->get('table');
-        $nb = count($risks);
         $i = 1;
+        $nb = count($risks);
         foreach($risks as $r){
             $table->delete($r->id,($i == $nb));
             $i++;

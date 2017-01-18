@@ -173,6 +173,8 @@ class UserService extends AbstractService
         $id = $table->save($user);
 
         if (isset($data['role'])) {
+            $i = 1;
+            $nbRoles = count($data['role']);
             foreach($data['role'] as $role) {
                 $dataUserRole = [
                     'user' => $id,
@@ -180,7 +182,8 @@ class UserService extends AbstractService
                 ];
                 /** @var UserRoleService $userRoleService */
                 $userRoleService = $this->get('userRoleService');
-                $userRoleService->create($dataUserRole);
+                $userRoleService->create($dataUserRole, ($i == $nbRoles));
+                $i++;
             }
         }
 

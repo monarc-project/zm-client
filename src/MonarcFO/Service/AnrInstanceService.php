@@ -119,12 +119,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     }else{
                         $instance->set($t.'h',0);
                         $instance->set($t, $this->approximate(
-                                            $instance->get($t),
-                                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'],
-                                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max']
-                                        ));
+                            $instance->get($t),
+                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
+                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'],
+                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
+                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max']
+                        ));
                     }
                 }
                 unset($instance);
@@ -160,12 +160,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         // maintenant on peut alimenter le tableau de conséquences comme si ça venait d'un formulaire
                         foreach($ts as $t){
                             $conseq[$t] = $conseq['isHidden'] ? -1 : $this->approximate(
-                                                                                    $conseq[$t],
-                                                                                    $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                                                                                    $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'],
-                                                                                    $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                                                                                    $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max']
-                                                                                );
+                                $conseq[$t],
+                                $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
+                                $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'],
+                                $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
+                                $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max']
+                            );
                         }
                         $toExchange = $conseq;
                         unset($toExchange['id']);

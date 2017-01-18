@@ -40,8 +40,11 @@ class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
 
         // Remove existing choices
         $questions = $table->fetchAllFiltered(['id'], 1, 0, null, null, ['question' => $data['questionId']]);
+        $i = 1;
+        $nbQuestions = count($questions);
         foreach ($questions as $q) {
-            $table->delete($q['id']);
+            $table->delete($q['id'], ($i == $nbQuestions));
+            $i++;
         }
 
         /** @var QuestionTable $questionTable */

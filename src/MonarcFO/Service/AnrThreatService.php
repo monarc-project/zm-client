@@ -69,16 +69,16 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
             }
             $instancesRisks = $instanceRiskTable->getEntityByFields($filter);
 
-            $nb = 1;
+            $i = 1;
+            $nbInstancesRisks = count($instancesRisks);
             foreach($instancesRisks as $instanceRisk) {
-                $last = (count($instancesRisks) == $nb) ? true : false;
                 $instanceRisk->threatRate = $data['qualification'];
                 if ((isset($data['forceQualification'])) && $data['forceQualification'] == 1) {
                     $instanceRisk->mh = 1;
                 }
-                $instanceRiskTable->save($instanceRisk, $last);
+                $instanceRiskTable->save($instanceRisk, ($i == $nbInstancesRisks));
 
-                $nb++;
+                $i++;
             }
         }
     }
