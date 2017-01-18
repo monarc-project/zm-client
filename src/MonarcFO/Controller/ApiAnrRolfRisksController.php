@@ -41,7 +41,6 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
             $rolfCategories = $rolfRisk['categories']->getSnapshot();
             $rolfRisks[$key]['categories'] = array();
             foreach($rolfCategories as $rolfCategory){
-
                 $rolfRisks[$key]['categories'][] = $rolfCategory->getJsonArray();
             }
 

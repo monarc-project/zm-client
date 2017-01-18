@@ -20,8 +20,8 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
 
+        /** @var AnrService $service */
         $service = $this->getService();
-
         $entities = $service->getList($page, $limit, $order, $filter);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {

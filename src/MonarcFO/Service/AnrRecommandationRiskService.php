@@ -356,14 +356,11 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $recommandationTable = $this->get('recommandationTable');
         $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], ['importance' => 'DESC']);
 
-        $position = 1;
         $i = 1;
+        $nbRecommandations = count($recommandations);
         foreach ($recommandations as $recommandation) {
-            $last = ($i == count($recommandations)) ? true : false;
-            $recommandation->position = $position;
-            $recommandationTable->save($recommandation, $last);
-
-            $position++;
+            $recommandation->position = $i;
+            $recommandationTable->save($recommandation, ($i == $nbRecommandations));
             $i++;
         }
     }
@@ -527,9 +524,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             ]);
 
             $i = 1;
+            $nbBrothersRecommandationsRisks = count($brothersRecommandationsRisks);
             foreach($brothersRecommandationsRisks as $brotherRecommandationRisk) {
-                $last = ($i == count($brothersRecommandationsRisks)) ? true : false;
-                $table->delete($brotherRecommandationRisk->get('id'), $last);
+                $table->delete($brotherRecommandationRisk->get('id'), ($i == $nbBrothersRecommandationsRisks));
                 $i++;
             }
         } else {

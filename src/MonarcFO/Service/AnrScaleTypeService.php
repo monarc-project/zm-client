@@ -99,9 +99,9 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
         $instances = $instanceTable->getEntityByFields(['anr' => $anrId]);
-
+        $i = 1;
+        $nbInstances = count($instances);
         foreach ($instances as $instance) {
-
             //create instances consequences
             $dataConsequences = [
                 'anr' => $anrId,
@@ -111,7 +111,8 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
             ];
             /** @var InstanceConsequenceService $instanceConsequenceService */
             $instanceConsequenceService = $this->get('instanceConsequenceService');
-            $instanceConsequenceService->create($dataConsequences);
+            $instanceConsequenceService->create($dataConsequences, ($i == $nbInstances));
+            $i++;
         }
 
         return $id;

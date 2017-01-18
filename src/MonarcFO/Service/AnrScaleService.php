@@ -171,10 +171,13 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
                         'implicitPosition' => 2, 'label1' => $langs[$outLang[1]]['P'], 'label2' => $langs[$outLang[2]]['P'], 'label3' => $langs[$outLang[3]]['P'], 'label4' => $langs[$outLang[4]]['P'],
                     ]
                 ];
+                $i = 1;
+                $nbScaleImpactTypes = count($scaleImpactTypes);
                 foreach ($scaleImpactTypes as $scaleImpactType) {
                     /** @var ScaleImpactTypeService $scaleImpactTypeService */
                     $scaleImpactTypeService = $this->get('scaleImpactTypeService');
-                    $scaleImpactTypeService->create($scaleImpactType);
+                    $scaleImpactTypeService->create($scaleImpactType, ($i == $nbScaleImpactTypes));
+                    $i++;
                 }
             }
 
