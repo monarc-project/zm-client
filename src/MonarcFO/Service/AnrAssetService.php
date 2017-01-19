@@ -63,9 +63,11 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
             if(!empty($asset)){
                 $idAsset = $asset->get('id');
             }else{
-                $asset = $this->get('entity');
+                $c = $this->get('table')->getClass();
+                $asset = new $c();
+                $asset->setDbAdapter($this->get('table')->getDb());
+                $asset->setLanguage($this->getLanguage());
                 $asset->exchangeArray($data['asset']);
-                $asset->set('id',null);
                 $asset->set('anr',$anr->get('id'));
                 $this->setDependencies($asset,['anr']);
                 $idAsset = $this->get('table')->save($asset);
@@ -94,7 +96,10 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $threat->set('anr',$anr->get('id'));
                                 if(!empty($themeArray) && isset($data['themes'][$themeArray['id']])){ // Themes
                                     if(is_array($data['themes'][$themeArray['id']])){
-                                        $theme = $this->get('themeEntity');
+                                        $c = $this->get('themeTable')->getClass();
+                                        $theme = new $c();
+                                        $theme->setDbAdapter($this->get('themeTable')->getDb());
+                                        $theme->setLanguage($this->getLanguage());
                                         $data['themes'][$themeArray['id']]['id'] = null;
                                         $theme->exchangeArray($data['themes'][$themeArray['id']]);
                                         $theme->set('anr',$anr->get('id'));
@@ -118,7 +123,10 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $vul = current($vul);
                                 $data['vuls'][$amvArray['vulnerability']] = $vul->get('id');
                             }else{
-                                $vul = $this->get('vulnerabilityEntity');
+                                $c = $this->get('vulnerabilityTable')->getClass();
+                                $vul = new $c();
+                                $vul->setDbAdapter($this->get('vulnerabilityTable')->getDb());
+                                $vul->setLanguage($this->getLanguage());
                                 $data['vuls'][$amvArray['vulnerability']]['id'] = null;
                                 $vul->exchangeArray($data['vuls'][$amvArray['vulnerability']]);
                                 $vul->set('anr',$anr->get('id'));
@@ -137,7 +145,10 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                     $measure = current($measure);
                                     $data['measures'][$amvArray['measure'.$i]] = $measure->get('id');
                                 }else{
-                                    $measure = $this->get('measureEntity');
+                                    $c = $this->get('measureTable')->getClass();
+                                    $measure = new $c();
+                                    $measure->setDbAdapter($this->get('measureTable')->getDb());
+                                    $measure->setLanguage($this->getLanguage());
                                     $data['measures'][$amvArray['measure'.$i]]['id'] = null;
                                     $measure->exchangeArray($data['measures'][$amvArray['measure'.$i]]);
                                     $measure->set('anr',$anr->get('id'));
@@ -158,7 +169,10 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         'vulnerability'=>$amvData['vulnerability'],
                     ]);
                     if(!$amvTest){ // on test que cet AMV sur cette ANR n'existe pas
-                        $amv = $this->get('amvEntity');
+                        $c = $this->get('amvTable')->getClass();
+                        $amv = new $c();
+                        $amv->setDbAdapter($this->get('amvTable')->getDb());
+                        $amv->setLanguage($this->getLanguage());
                         $amv->exchangeArray($amvData,true);
                         $this->setDependencies($amv,['anr', 'asset', 'threat', 'vulnerability', 'measure1', 'measure2', 'measure3']);
                         $this->get('amvTable')->save($amv);
