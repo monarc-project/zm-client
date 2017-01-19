@@ -172,6 +172,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $queryParams = [
             ':anrid' => $anrId,
         ];
+        $typeParams = [];
 
         // Find instance(s) id
         if(empty($instance)){
@@ -193,6 +194,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
             $sql .= " AND i.id IN (:ids) ";
             $queryParams[':ids'] = $instanceIds;
+            $typeParams[':ids'] = \Doctrine\DBAL\Connection::PARAM_INT_ARRAY;
         }else{
             $sql .= " AND i.id = :id ";
             $queryParams[':id'] = $instance->get('id');
@@ -283,21 +285,20 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         if($count){
             $res = $this->get('instanceRiskTable')->getDb()->getEntityManager()->getConnection()
-                ->executeQuery($sql,$queryParams)
+                ->executeQuery($sql,$queryParams,$typeParams)
                 ->fetchAll();
             return count($res);
         }else{
             // LIMIT
-            $limitParams = [];
             if(!empty($params['limit']) && !empty($params['page']) && $params['limit'] > 0){
                 $sql .= " LIMIT :l1, :l2 ";
                 $queryParams[':l1'] = intval(($params['page'] - 1) * $params['limit']);
                 $queryParams[':l2'] = intval($params['limit']);
-                $limitParams[':l1'] = \PDO::PARAM_INT;
-                $limitParams[':l2'] = \PDO::PARAM_INT;
+                $typeParams[':l1'] = \PDO::PARAM_INT;
+                $typeParams[':l2'] = \PDO::PARAM_INT;
             }
             return $this->get('instanceRiskTable')->getDb()->getEntityManager()->getConnection()
-                ->executeQuery($sql,$queryParams,$limitParams)
+                ->executeQuery($sql,$queryParams,$typeParams)
                 ->fetchAll();
         }
     }
