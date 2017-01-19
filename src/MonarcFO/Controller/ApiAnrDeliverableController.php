@@ -73,7 +73,7 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 
         $result = [
             'models' => $this->getService()->getDeliveryModels(),
-            'delivery' => $this->getService()->getLastDelivery($anrId),
+            'delivery' => $this->getService()->getLastDeliveries($anrId),
         ];
         return new JsonModel($result);
     }
