@@ -16,9 +16,10 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     protected $dependencies = ['asset', 'threat', 'vulnerability', 'measure1', 'measure2', 'measure3'];
 
     /**
-     * Get list
+     * Get List
      *
      * @return JsonModel
+     * @throws \Exception
      */
     public function getList()
     {
@@ -29,10 +30,17 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         $status = $this->params()->fromQuery('status');
         $asset = $this->params()->fromQuery('asset');
         $amvid = $this->params()->fromQuery('amvid');
+
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+
+        $filterAnd = ['anr' => $anrId];
+
         if (is_null($status)) {
             $status = 1;
         }
-        $filterAnd = [];
 
         if ($status != 'all') {
             $filterAnd['status'] = (int) $status;
