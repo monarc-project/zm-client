@@ -235,14 +235,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table->addCell(3000, $styleHeaderCell)->addText('I', null, $styleHeaderFont);
         $table->addCell(3000, $styleHeaderCell)->addText('D', null, $styleHeaderFont);
         $table->addCell(null, $cellRowContinue);
-/*
 
-        foreach ($impactsTypes as $impactType) {
-            if ($impactType['type'] > 3) {
-                $table->addCell(2000, $styleHeaderCell)->addText(_WT($impactType['label' . $anr->language]), $styleHeaderFont);
-            }
-        }
-*/
         // Fill in each row
         for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
             $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'top', 'bgcolor' => 'FFFFFF'];
@@ -274,10 +267,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(3000, $cellRowSpan)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
             }
 
-            // Then ROLFP as rows
+            // Then ROLFP and custom columns as rows
             $first = true;
-            for ($i = 4; $i <= 8; ++$i) {
-                $impactType = $impactsTypePerType[$i];
+            foreach ($impactsTypes as $impactType) {
+                if ($impactType['type_id'] < 4 || $impactType['isHidden']) continue;
 
                 if ($first) {
                     $first = false;
@@ -298,7 +291,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     }
                 }
 
-                $table->addCell(3000, $styleContentCell)->addText(_WT($impactType['type'] . ' : ' . $commentText), $styleContentCell, ['Alignment' => 'left']);
+                $typeLabel = substr($impactType['label' . $anr->language], 0, 1);
+
+                $table->addCell(3000, $styleContentCell)->addText(_WT($typeLabel . ' : ' . $commentText), $styleContentCell, ['Alignment' => 'left']);
             }
         }
 
