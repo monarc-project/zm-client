@@ -1,5 +1,8 @@
 <?php
 namespace MonarcFO\Service;
+use MonarcFO\Model\Entity\InstanceRisk;
+use MonarcFO\Model\Table\InstanceTable;
+use MonarcFO\Model\Table\ObjectTable;
 
 /**
  * Anr Asset Service
@@ -13,6 +16,9 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
     protected $assetTable;
     protected $threatTable;
+    protected $objectTable;
+    protected $instanceTable;
+    protected $instanceRiskTable;
     protected $vulnerabilityTable;
     protected $measureTable;
 
@@ -178,5 +184,58 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         $this->setDependencies($entity, $dependencies);
 
         return $this->get('table')->save($entity);
+    }
+
+    /**
+     * Create
+     *
+     * @param $data
+     * @param bool $last
+     * @return mixed
+     */
+    public function create($data, $last = true) {
+
+        //$entity = $this->get('entity');
+        $class = $this->get('entity');
+        $entity = new $class();
+        $entity->setLanguage($this->getLanguage());
+        $entity->setDbAdapter($this->get('table')->getDb());
+        $entity->exchangeArray($data);
+
+        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $this->setDependencies($entity, $dependencies);
+
+        /** @var AnrTable $table */
+        $table = $this->get('table');
+        $id =  $table->save($entity, $last);
+
+        //create instances risks
+        /** @var ObjectTable $objectTable */
+        $objectTable = $this->get('objectTable');
+        $objects = $objectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => $entity->get('asset')->get('id')]);
+        foreach ($objects as $object) {
+            /** @var InstanceTable $instanceTable */
+            $instanceTable = $this->get('instanceTable');
+            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => $object->get('id')]);
+            $i = 1;
+            $nbInstances = count($instances);
+            foreach($instances as $instance) {
+                $instanceRisk = new InstanceRisk();
+
+                $instanceRisk->setLanguage($this->getLanguage());
+                $instanceRisk->setDbAdapter($this->get('table')->getDb());
+                $instanceRisk->set('anr', $this->get('anrTable')->getEntity($data['anr']));
+                $instanceRisk->set('amv', $entity);
+                $instanceRisk->set('asset', $entity->asset);
+                $instanceRisk->set('instance', $instance);
+                $instanceRisk->set('threat', $entity->threat);
+                $instanceRisk->set('vulnerability', $entity->vulnerability);
+                
+                $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
+                $i++;
+            }
+        }
+
+        return $id;
     }
 }
