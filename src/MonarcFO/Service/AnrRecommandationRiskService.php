@@ -270,7 +270,10 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $id = $this->createRecommandationRisk($data, $riskOp);
 
             if ($riskOp->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
-                $brothers = $instanceRiskOpTable->getEntityByFields(['anr' => $riskOp->anr->id, 'rolfRisk' => $riskOp->rolfRisk->id]);
+                $brothers = $instanceRiskOpTable->getEntityByFields([
+                    'anr' => $riskOp->anr->id,
+                    'instance' => $riskOp->instance->id
+                ]);
                 foreach($brothers as $brother) {
                     if ($riskOp->id != $brother->id) {
                         $this->createRecommandationRisk($data, $brother);
@@ -288,7 +291,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             if ($risk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
                 $brothers = $instanceRiskTable->getEntityByFields([
                     'anr' => $risk->anr->id,
-                    'amv' => $risk->amv->id,
                     'instance' => $risk->instance->id
                 ]);
                 foreach($brothers as $brother) {
