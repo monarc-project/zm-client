@@ -88,7 +88,10 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $data['threats'][$amvArray['threat']] = $threat->get('id');
                                 // TODO: que fait-on si le theme est différent ?
                             }else{
-                                $threat = $this->get('threatEntity');
+                                $c = $this->get('threatTable')->getClass();
+                                $threat = new $c();
+                                $threat->setDbAdapter($this->get('threatTable')->getDb());
+                                $threat->setLanguage($this->getLanguage());
                                 $data['threats'][$amvArray['threat']]['id'] = null;
                                 $themeArray = $data['threats'][$amvArray['threat']]['theme'];
                                 unset($data['threats'][$amvArray['threat']]['theme']);
