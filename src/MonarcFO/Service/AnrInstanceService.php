@@ -108,7 +108,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
             $this->get('instanceRiskService')->createInstanceRisks($instanceId, $anr->get('id'), $obj);
             $this->get('instanceRiskOpService')->createInstanceRisksOp($instanceId, $anr->get('id'), $obj);
-            $this->createInstanceConsequences($instanceId, $anr->get('id'), $obj);
 
             // Gestion des conséquences
             if($include_eval){
@@ -183,10 +182,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $this->setDependencies($consequence,['anr', 'object', 'instance', 'scaleImpactType']);
                         $this->get('instanceConsequenceTable')->save($consequence);
                     }
-
-                    // on met finalement à jour les risques en cascade
-                    $this->updateRisks($anr->get('id'), $instanceId);
                 }
+            }else{
+                // on génère celles par défaut
+                $this->createInstanceConsequences($instanceId, $anr->get('id'), $obj);
             }
 
             if(!empty($data['risks'])){
@@ -370,6 +369,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         }
                     }
                 }
+                // on met finalement à jour les risques en cascade
+                $this->updateRisks($anr->get('id'), $instanceId);
             }
 
             if(!empty($data['riskop'])){
