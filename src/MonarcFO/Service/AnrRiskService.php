@@ -138,6 +138,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                 'CONCAT(m2.code, \' - \', m2.description'.$l.') as measure2',
                 'CONCAT(m3.code, \' - \', m3.description'.$l.') as measure3',
                 'o.scope as scope',
+                'ir.kind_of_measure as kind_of_measure',
                 'IF(ir.kind_of_measure IS NULL OR ir.kind_of_measure = '.InstanceRisk::KIND_NOT_TREATED.', false, true) as t',
             ];
         }
