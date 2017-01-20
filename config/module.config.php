@@ -675,7 +675,10 @@ return array(
                     'deliverable' => array(
                         'type' => 'segment',
                         'options' => array(
-                            'route' => 'deliverable',
+                            'route' => 'deliverable[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrDeliverable',
                             ),

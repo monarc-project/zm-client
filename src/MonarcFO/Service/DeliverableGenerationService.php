@@ -85,21 +85,36 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->deliveryModelService->getList(1, 0, null, null, null);
     }
 
-    public function getLastDeliveries($anrId) {
+    public function getLastDeliveries($anrId, $typeDoc = null) {
         /** @var DeliveryTable $table */
         $table = $this->get('table');
-        $deliveries = $table->getEntityByFields(['anr' => $anrId]);
-        $lastDelivery = [];
-        foreach ($deliveries as $delivery) {
-            $lastDelivery[$delivery->get('typedoc')] = $delivery->getJsonArray();
-        }
 
-        return array_values($lastDelivery);
+        if(!empty($typeDoc)){
+            $deliveries = $table->getEntityByFields(['anr' => $anrId, 'typedoc'=>$typeDoc],['createdAt'=>'DESC']);
+            $lastDelivery = nul;
+            foreach ($deliveries as $delivery) {
+                $lastDelivery = $delivery->getJsonArray();
+                break;
+            }
+            return $lastDelivery;
+        }else{
+            $deliveries = $table->getEntityByFields(['anr' => $anrId],['createdAt'=>'DESC']);
+            $lastDelivery = [];
+            foreach ($deliveries as $delivery) {
+                if(empty($lastDelivery[$delivery->get('typedoc')])){
+                    $lastDelivery[$delivery->get('typedoc')] = $delivery->getJsonArray();
+                }
+                if(count($lastDelivery) == 3){
+                    break;
+                }
+            }
+            return array_values($lastDelivery);
+        }
     }
 
-    public function generateDeliverableWithValues($anrId, $modelId, $values, $data) {
+    public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data) {
         // Find the model to use
-        $model = $this->deliveryModelService->get("table")->getEntity($modelId);
+        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['typedoc'=>$typeDoc]));
         if (!$model) {
             throw new \Exception("Model `id` not found");
         }

@@ -16,10 +16,6 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 {
     protected $name = 'deliverable';
 
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
     public function create($data)
     {
         $anrId = (int) $this->params()->fromRoute('anrid');
@@ -28,9 +24,9 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
         }
         $data['anr'] = $anrId;
 
-        $modelId = $data['model'];
-        if(empty($anrId)){
-            throw new \Exception('Model id missing', 412);
+        $typeDoc = $data['typedoc'];
+        if(empty($typeDoc)){
+            throw new \Exception('Document type missing', 412);
         }
 
         $params = [
@@ -45,7 +41,7 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
         ];
 
         // Generate the DOCX file
-        $filePath = $this->getService()->generateDeliverableWithValues($anrId, $modelId, $params, $data);
+        $filePath = $this->getService()->generateDeliverableWithValues($anrId, $typeDoc, $params, $data);
 
         if (file_exists($filePath)) {
             $response = $this->getResponse();
@@ -62,6 +58,19 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
         } else {
             throw new \Exception("Generated file not found: " . $filePath);
         }
+    }
+
+    public function get($id)
+    {
+        $anrId = (int) $this->params()->fromRoute('anrid');
+        if(empty($anrId)){
+            throw new \Exception('Anr id missing', 412);
+        }
+
+        $result = [
+            'delivery' => $this->getService()->getLastDeliveries($anrId,$id),
+        ];
+        return new JsonModel($result);
     }
 
     public function getList()
