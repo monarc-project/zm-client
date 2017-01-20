@@ -25,8 +25,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         foreach($data['file'] as $keyfile => $f){
             if(isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])){
 
+                $sharedData = [];
                 $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])),$key)),true);
-                if($file !== false && ($id = $this->importFromArray($file,$anr,$idParent,$mode)) !== false){
+                if($file !== false && ($id = $this->importFromArray($file,$anr,$idParent,$mode,false,$sharedData)) !== false){
                     if(is_array($id)){
                         $ids = array_merge($ids,$id);
                     }else{
