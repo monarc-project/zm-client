@@ -25,6 +25,7 @@ class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
      *
      * @param mixed $data
      * @return JsonModel
+     * @throws \Exception
      */
     public function replaceList($data) {
         $anrId = (int) $this->params()->fromRoute('anrid');
@@ -32,44 +33,7 @@ class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
             throw new \Exception('Anr id missing', 412);
         }
 
-        /** @var QuestionChoiceService $service */
-        $service = $this->getService();
-
-        /** @var QuestionChoiceTable $table */
-        $table = $service->get('table');
-
-        // Remove existing choices
-        $questions = $table->fetchAllFiltered(['id'], 1, 0, null, null, ['question' => $data['questionId']]);
-        $i = 1;
-        $nbQuestions = count($questions);
-        foreach ($questions as $q) {
-            $table->delete($q['id'], ($i == $nbQuestions));
-            $i++;
-        }
-
-        /** @var QuestionTable $questionTable */
-        $questionTable = $service->get('questionTable');
-        $question = $questionTable->getEntity($data['questionId']);
-
-        /** @var AnrTable $anrTable */
-        $anrTable = $service->get('anrTable');
-        $anr = $anrTable->getEntity($anrId);
-
-        // Add new choices
-        $pos = 1;
-        foreach ($data['choice'] as $c) {
-            $c['position'] = $pos;
-            unset($c['question']);
-
-            /** @var QuestionChoice $choiceEntity */
-            $choiceEntity = new QuestionChoice();
-            $choiceEntity->setQuestion($question);
-            $choiceEntity->setAnr($anr);
-            $choiceEntity->squeezeAutoPositionning(true);
-            $choiceEntity->exchangeArray($c);
-            $table->save($choiceEntity);
-            ++$pos;
-        }
+        $this->getService()->replaceList($data, $anrId);
 
         return new JsonModel(['status' => 'ok']);
     }
