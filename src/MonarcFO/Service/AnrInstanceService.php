@@ -439,7 +439,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 foreach($data['children'] as $child){
                     $this->importFromArray($child, $anr, $instanceId, $modeImport, $include_eval, $sharedData);//et ainsi de suite ...
                 }
+                $this->updateChildrenImpacts($instanceId);
             }
+
             return $instanceId;
         }elseif(isset($data['type']) && $data['type'] == 'anr' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()){
