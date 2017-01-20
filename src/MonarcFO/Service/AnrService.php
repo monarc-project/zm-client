@@ -772,7 +772,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInstanceRiskOp->setAnr($newAnr);
                 $newInstanceRiskOp->setInstance($instancesNewIds[$instanceRiskOp->instance->id]);
                 $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->id]);
-                $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
+                if ($instanceRiskOp->rolfRisk) {
+                    $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
+                }
                 $this->get('instanceRiskOpCliTable')->save($newInstanceRiskOp, ($i == $nbInstancesRisksOp));
                 $instancesRisksOpNewIds[$instanceRiskOp->id] = $newInstanceRiskOp;
                 $i++;
@@ -891,9 +893,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }else{
                     $newRecommandationRisk->set('objectGlobal',null);
                 }
-                $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->get('id')]);
-                $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->get('id')]);
-                $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->get('id')]);
+                if($newRecommandationRisk->get('asset')) {
+                    $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->get('id')]);
+                }
+                if($newRecommandationRisk->get('threat')) {
+                    $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->get('id')]);
+                }
+                if($newRecommandationRisk->get('vulnerability')) {
+                    $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->get('id')]);
+                }
                 $this->get('recommandationRiskCliTable')->save($newRecommandationRisk, ($i == $nbRecommandationsRisks));
                 $i++;
             }
