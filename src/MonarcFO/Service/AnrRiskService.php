@@ -344,7 +344,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         //if global object, save risk of all instance of global object for this anr
         if($entity->instance->object->scope == Object::SCOPE_GLOBAL){
-            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id]);
+            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id, 'id'=>['op'=>'!=','value'=>$instance->id]]);
             $i = 1;
             $nbBrothers = count($brothers);
             foreach ($brothers as $brother){
