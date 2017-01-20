@@ -481,7 +481,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
 
             $risk->cacheMaxRisk = (count($risks)) ? max($risks) : -1;
-            $risk->cacheTargetedRisk = $this->getTargetRisk($impacts, $risk->threatRate, $risk->vulnerabilityRate, $instanceRisk->reductionAmount);
+            $risk->cacheTargetedRisk = $this->getTargetRisk($impacts, $risk->threatRate, $risk->vulnerabilityRate, $risk->reductionAmount);
 
 
             //set reduction amount to 0
