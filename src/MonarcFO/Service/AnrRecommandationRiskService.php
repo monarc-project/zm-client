@@ -412,7 +412,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 }
             }
 
-            $instanceRisk = ;
+            $instanceRisk = $recoRisk->instanceRisk;;
             $instanceRisk->comment = $cacheCommentAfter;
             $instanceRisk->commentAfter = '';
 
