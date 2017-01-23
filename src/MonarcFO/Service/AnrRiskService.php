@@ -286,8 +286,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         if($count){
             $res = $this->get('instanceRiskTable')->getDb()->getEntityManager()->getConnection()
-                ->executeQuery($sql,$queryParams,$typeParams)
-                ->fetchAll();
+                ->fetchAll($sql,$queryParams,$typeParams);
             return count($res);
         }else{
             // LIMIT
@@ -299,8 +298,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                 $typeParams[':l2'] = \PDO::PARAM_INT;
             }
             return $this->get('instanceRiskTable')->getDb()->getEntityManager()->getConnection()
-                ->executeQuery($sql,$queryParams,$typeParams)
-                ->fetchAll();
+                ->fetchAll($sql,$queryParams,$typeParams);
         }
     }
 
