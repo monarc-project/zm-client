@@ -23,6 +23,9 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     protected $measureTable;
     protected $measureEntity;
     protected $assetTable; // for setDependencies
+    protected $instanceRiskTable;
+    protected $objectTable;
+    protected $instanceTable;
 
 
 	protected $filterColumns = [
@@ -73,7 +76,15 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                 $idAsset = $this->get('table')->save($asset);
             }
 
+            $localAmv = [];
             if(!empty($data['amvs']) && !empty($idAsset)){
+                $localThemes = [];
+                $themes = $this->get('themeTable')->getEntityByFields(['anr'=>$anr->get('id')]);
+                foreach($themes as $t){
+                    $localThemes[$t->get('label'.$this->getLanguage())] = $t->get('id');
+                }
+                unset($themes);
+
                 foreach($data['amvs'] as $amvArray){
                     $amvData = [
                         'asset' => $idAsset,
@@ -82,36 +93,51 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                     ];
                     if(isset($data['threats'][$amvArray['threat']])){ // Threats
                         if(is_array($data['threats'][$amvArray['threat']])){
+                            // Theme
+                            $idTheme = null;
+                            if(!empty($data['threats'][$amvArray['threat']]['theme']) && !empty($data['themes'][$data['threats'][$amvArray['threat']]['theme']])){
+                                $t = $data['themes'][$data['threats'][$amvArray['threat']]['theme']];
+                                if(isset($localThemes[$t['label'.$this->getLanguage()]])){
+                                    $idTheme = $data['themes'][$data['threats'][$amvArray['threat']]['theme']]['newid'] = $localThemes[$t['label'.$this->getLanguage()]];
+                                }elseif(!empty($data['themes'][$data['threats'][$amvArray['threat']]['theme']]['newid'])){
+                                    $idTheme = $localThemes[$t['label'.$this->getLanguage()]] = $data['themes'][$data['threats'][$amvArray['threat']]['theme']]['newid'];
+                                }else{
+                                    $c = $this->get('themeTable')->getClass();
+                                    $theme = new $c();
+                                    $theme->setDbAdapter($this->get('themeTable')->getDb());
+                                    $theme->setLanguage($this->getLanguage());
+                                    $t['id'] = null;
+                                    $theme->exchangeArray($t);
+                                    $theme->set('anr',$anr->get('id'));
+                                    $this->setDependencies($theme,['anr']);
+                                    $idTheme = $this->get('themeTable')->save($theme);
+                                    $localThemes[$t['label'.$this->getLanguage()]] = $data['themes'][$data['threats'][$amvArray['threat']]['theme']]['newid'] = $idTheme;
+                                }
+                            }
+
                             $threat = $this->get('threatTable')->getEntityByFields(['anr'=>$anr->get('id'),'code'=>$data['threats'][$amvArray['threat']]['code']]);
                             if($threat){
                                 $threat = current($threat);
                                 $data['threats'][$amvArray['threat']] = $threat->get('id');
-                                // TODO: que fait-on si le theme est différent ?
+
+                                // Update du theme
+                                $theme = $threat->get('theme');
+                                $oldTheme = empty($theme)?null:$theme->get('id');
+                                if($oldTheme != $idTheme){
+                                    $threat->set('theme',$idTheme);
+                                    $this->setDependencies($threat,['anr', 'theme']);
+                                    $this->get('threatTable')->save($threat);
+                                }
                             }else{
                                 $c = $this->get('threatTable')->getClass();
                                 $threat = new $c();
                                 $threat->setDbAdapter($this->get('threatTable')->getDb());
                                 $threat->setLanguage($this->getLanguage());
                                 $data['threats'][$amvArray['threat']]['id'] = null;
-                                $themeArray = $data['threats'][$amvArray['threat']]['theme'];
-                                unset($data['threats'][$amvArray['threat']]['theme']);
+
+                                $data['threats'][$amvArray['threat']]['theme'] = $idTheme;
                                 $threat->exchangeArray($data['threats'][$amvArray['threat']]);
                                 $threat->set('anr',$anr->get('id'));
-                                if(!empty($themeArray) && isset($data['themes'][$themeArray['id']])){ // Themes
-                                    if(is_array($data['themes'][$themeArray['id']])){
-                                        $c = $this->get('themeTable')->getClass();
-                                        $theme = new $c();
-                                        $theme->setDbAdapter($this->get('themeTable')->getDb());
-                                        $theme->setLanguage($this->getLanguage());
-                                        $data['themes'][$themeArray['id']]['id'] = null;
-                                        $theme->exchangeArray($data['themes'][$themeArray['id']]);
-                                        $theme->set('anr',$anr->get('id'));
-                                        $this->setDependencies($theme,['anr']);
-                                        $idTheme = $this->get('themeTable')->save($theme);
-                                        $data['themes'][$themeArray['id']] = $idTheme;
-                                    }
-                                    $threat->set('theme',$data['themes'][$themeArray['id']]);
-                                }
                                 $this->setDependencies($threat,['anr', 'theme']);
                                 $objectsCache['threats'][$amvArray['threat']] = $data['threats'][$amvArray['threat']] = $this->get('threatTable')->save($threat);
                             }
@@ -165,23 +191,79 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         }
                     }
 
-                    $amvTest = $this->get('amvTable')->getEntityByFields([
+                    $amvTest = current($this->get('amvTable')->getEntityByFields([
                         'anr'=>$anr->get('id'),
                         'asset'=>$amvData['asset'],
                         'threat'=>$amvData['threat'],
                         'vulnerability'=>$amvData['vulnerability'],
-                    ]);
-                    if(!$amvTest){ // on test que cet AMV sur cette ANR n'existe pas
+                    ]));
+                    if(empty($amvTest)){ // on test que cet AMV sur cette ANR n'existe pas
                         $c = $this->get('amvTable')->getClass();
                         $amv = new $c();
                         $amv->setDbAdapter($this->get('amvTable')->getDb());
                         $amv->setLanguage($this->getLanguage());
                         $amv->exchangeArray($amvData,true);
                         $this->setDependencies($amv,['anr', 'asset', 'threat', 'vulnerability', 'measure1', 'measure2', 'measure3']);
-                        $this->get('amvTable')->save($amv);
+                        $idAmv = $this->get('amvTable')->save($amv);
+                        $localAmv[] = $idAmv;
+
+                        // On met à jour les instances
+                        $objectTable = $this->get('objectTable');
+                        $objects = $objectTable->getEntityByFields(['anr' => $anr->get('id'), 'asset' => $idAsset]);
+                        foreach ($objects as $object) {
+                            /** @var InstanceTable $instanceTable */
+                            $instanceTable = $this->get('instanceTable');
+                            $instances = $instanceTable->getEntityByFields(['anr' => $anr->get('id'), 'object' => $object->get('id')]);
+                            $i = 1;
+                            $nbInstances = count($instances);
+                            foreach($instances as $instance) {
+                                $c = $this->get('instanceRiskTable')->getClass();
+                                $instanceRisk = new $c();
+                                $instanceRisk->setLanguage($this->getLanguage());
+                                $instanceRisk->setDbAdapter($this->get('instanceRiskTable')->getDb());
+                                $instanceRisk->set('anr', $anr->get('id'));
+                                $instanceRisk->set('amv', $idAmv);
+                                $instanceRisk->set('asset', $amvData['asset']);
+                                $instanceRisk->set('instance', $instance);
+                                $instanceRisk->set('threat', $amvData['threat']);
+                                $instanceRisk->set('vulnerability', $amvData['vulnerability']);
+                                $this->setDependencies($instanceRisk,['anr', 'amv', 'asset', 'threat', 'vulnerability']);
+                                
+                                $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
+                                $i++;
+                            }
+                        }
+                    }else{
+                        $localAmv[] = $amvTest->get('id');
                     }
                 }
             }
+
+            /*
+            On teste si des liens AMVs différents étaient présents, si oui
+            on passe les risques liés en spécifiques et on supprime les liens AMVs
+            */
+            if(empty($localAmv)){
+                $risks = $this->get('instanceRiskTable')->getEntityByFields(['amv' => ['op'=>'IS NOT', 'value' => null]]);
+            }else{
+                $risks = $this->get('instanceRiskTable')->getEntityByFields(['amv' => ['op'=>'NOT IN', 'value' => $localAmv]]);
+            }
+            if(!empty($risks)){
+                $amvs = [];
+                foreach($risks as $a){
+                    $amv = $a->get('amv');
+                    if(!empty($amv)){
+                        $amvs[$amv->getId()] = $amv->getId();
+                        $a->set('amv',null);
+                        $a->set('specific',1);
+                        $this->get('instanceRiskTable')->save($a);
+                    }
+                }
+                if(!empty($amvs)){
+                    $this->get('amvTable')->deleteList($amvs);
+                }
+            }
+
             return $idAsset;
         }
         return false;

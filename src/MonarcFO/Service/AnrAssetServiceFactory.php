@@ -22,5 +22,8 @@ class AnrAssetServiceFactory extends AbstractServiceFactory
 		'measureTable' => 'MonarcFO\Model\Table\MeasureTable',
 		'measureEntity' => 'MonarcFO\Model\Entity\Measure',
 		'assetTable' => 'MonarcFO\Model\Table\AssetTable',
+		'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
+		'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
+		'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
     );
 }
