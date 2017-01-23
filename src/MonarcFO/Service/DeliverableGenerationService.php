@@ -91,7 +91,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         if(!empty($typeDoc)){
             $deliveries = $table->getEntityByFields(['anr' => $anrId, 'typedoc'=>$typeDoc],['createdAt'=>'DESC']);
-            $lastDelivery = nul;
+            $lastDelivery = null;
             foreach ($deliveries as $delivery) {
                 $lastDelivery = $delivery->getJsonArray();
                 break;
@@ -114,7 +114,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
     public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data) {
         // Find the model to use
-        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['typedoc'=>$typeDoc]));
+        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category'=>$typeDoc]));
         if (!$model) {
             throw new \Exception("Model `id` not found");
         }
