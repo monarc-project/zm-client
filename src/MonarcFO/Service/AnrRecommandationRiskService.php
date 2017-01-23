@@ -7,6 +7,7 @@ use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\InstanceRiskTable;
+use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\ObjectTable;
 use MonarcFO\Model\Table\RecommandationHistoricTable;
 use MonarcFO\Model\Table\RecommandationMeasureTable;
@@ -382,7 +383,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
         $recoRisk = $table->getEntity($recoRiskId);
-
         if (is_null($recoRisk->instanceRisk)) {
             throw new \Exception('Not possible to validate operational risk', 412);
         }
@@ -403,7 +403,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $cacheCommentAfter = '';
             /** @var RecommandationHistoricTable $recoHistoTable */
             $recoHistoTable = $this->get('recommandationHistoricTable');
-            $riskRecoHistos = $recoHistoTable->getEntityByFields(['instanceRisk' => $recoRisk->get('instanceRisk')->get('id')]);
+            $riskRecoHistos = $recoHistoTable->getEntityByFields([
+                'instanceRisk' => $recoRisk->get('instanceRisk')->get('id')
+            ]);
             foreach ($riskRecoHistos as $riskRecoHisto) {
                 if (strlen($cacheCommentAfter) && strlen($riskRecoHisto->get('cacheCommentAfter'))) {
                     $cacheCommentAfter .= '<br>' . $riskRecoHisto->get('cacheCommentAfter');
@@ -412,7 +414,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 }
             }
 
-            $instanceRisk = $recoRisk->instanceRisk;;
+            //update instance risk
+            $instanceRisk = $recoRisk->get('instanceRisk');
             $instanceRisk->comment = $cacheCommentAfter;
             $instanceRisk->commentAfter = '';
 
@@ -420,27 +423,27 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $newVulnerabilityRate = $instanceRisk->get('vulnerabilityRate') - $instanceRisk->get('reductionAmount');
             $instanceRisk->vulnerabilityRate = ($newVulnerabilityRate >= 0) ? $newVulnerabilityRate : 0;
 
-            $instanceRisk->riskC = $this->getRiskC($instanceRisk->get('instance')->get('c'), $instanceRisk->threatRate, $instanceRisk->vulnerabilityRate);
-            $instanceRisk->riskI = $this->getRiskI($instanceRisk->get('instance')->get('i'), $instanceRisk->threatRate, $instanceRisk->vulnerabilityRate);
-            $instanceRisk->riskD = $this->getRiskD($instanceRisk->get('instance')->get('d'), $instanceRisk->threatRate, $instanceRisk->vulnerabilityRate);
+            $instanceRisk->riskC = $this->getRiskC($instanceRisk->get('instance')->get('c'), $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'));
+            $instanceRisk->riskI = $this->getRiskI($instanceRisk->get('instance')->get('i'), $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'));
+            $instanceRisk->riskD = $this->getRiskD($instanceRisk->get('instance')->get('d'), $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'));
 
             $risks = [];
             $impacts = [];
             if ($instanceRisk->threat->c) {
-                $risks[] = $instanceRisk->riskC;
+                $risks[] = $instanceRisk->get('riskC');
                 $impacts[] = $instanceRisk->get('instance')->get('c');
             }
             if ($instanceRisk->threat->i) {
-                $risks[] = $instanceRisk->riskI;
+                $risks[] = $instanceRisk->get('riskI');
                 $impacts[] = $instanceRisk->get('instance')->get('i');
             }
             if ($instanceRisk->threat->d) {
-                $risks[] = $instanceRisk->riskD;
+                $risks[] = $instanceRisk->get('riskD');
                 $impacts[] = $instanceRisk->get('instance')->get('d');
             }
 
             $instanceRisk->cacheMaxRisk = (count($risks)) ? max($risks) : -1;
-            $instanceRisk->cacheTargetedRisk = $this->getTargetRisk($impacts, $instanceRisk->threatRate, $instanceRisk->vulnerabilityRate, $instanceRisk->reductionAmount);
+            $instanceRisk->cacheTargetedRisk = $this->getTargetRisk($impacts, $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'), $instanceRisk->get('reductionAmount'));
 
             //set reduction amount to 0
             $instanceRisk->reductionAmount = 0;
@@ -451,10 +454,49 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             /** @var InstanceRiskTable $instanceRiskOpTable */
             $instanceRiskTable = $this->get('instanceRiskTable');
             $instanceRiskTable->save($instanceRisk);
+
+            //impact on brothers
+            if ($recoRisk->objectGlobal) {
+
+                /** @var InstanceTable $instanceTable */
+                $instanceTable = $this->get('instanceTable');
+                $brothersInstances = $instanceTable->getEntityByFields([
+                    'anr' => $recoRisk->get('anr')->get('id'),
+                    'object' => $recoRisk->get('objectGlobal')->get('id'),
+                ]);
+                foreach($brothersInstances as $brotherInstance) {
+
+                    $brothersInstancesRisks = $table->getEntityByFields([
+                        'anr' => $recoRisk->get('anr')->get('id'),
+                        'instance' => $brotherInstance->get('id'),
+                        'asset' => $instanceRisk->get('asset')->get('id'),
+                        'threat' => $instanceRisk->get('threat')->get('id'),
+                        'vulnerability' => $instanceRisk->get('vulnerability')->get('id'),
+                    ]);
+
+                    $i = 1;
+                    $nbBrothersInstancesRisks = count($brothersInstancesRisks);
+                    foreach ($brothersInstancesRisks as $brotherInstanceRisk) {
+                        $brotherInstanceRisk->comment = $instanceRisk->comment;
+                        $brotherInstanceRisk->commentAfter = $instanceRisk->commentAfter;
+                        $brotherInstanceRisk->vulnerabilityRate = $instanceRisk->vulnerabilityRate;
+                        $brotherInstanceRisk->riskC = $instanceRisk->riskC;
+                        $brotherInstanceRisk->riskI = $instanceRisk->riskI;
+                        $brotherInstanceRisk->riskD = $instanceRisk->riskD;
+                        $brotherInstanceRisk->cacheMaxRisk = $instanceRisk->cacheMaxRisk;
+                        $brotherInstanceRisk->cacheTargetedRisk = $instanceRisk->cacheTargetedRisk;
+                        $brotherInstanceRisk->reductionAmount = $instanceRisk->reductionAmount;
+                        $brotherInstanceRisk->kindOfMeasure = $instanceRisk->kindOfMeasure;
+
+                        $instanceRiskTable->save($instanceRisk, ($i == $nbBrothersInstancesRisks));
+                        $i++;
+                    }
+                }
+            }
         }
 
         //save recommandation
-        $reco = $recoRisk->recommandation;
+        $reco = $recoRisk->get('recommandation');
         $reco->counterTreated = $reco->get('counterTreated') + 1;
 
         //if is final, clean comment, duedate and responsable
