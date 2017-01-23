@@ -556,7 +556,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             'riskMaxRiskBefore'     => $instanceRisk->get('cacheMaxRisk'),
             'riskMaxRiskAfter'      => ($final) ? $instanceRisk->get('cacheTargetedRisk') : $instanceRisk->get('cacheMaxRisk'),
             'riskColorBefore'       => ($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : '',
-            'cacheCommentAfter'     => $recoRisk->get('commentAfter'),
+            'cacheCommentAfter'     => $instanceRisk->get('commentAfter'),
             'riskColorAfter'        => ($final)
                 ? ((($instanceRisk->get('cacheTargetedRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheTargetedRisk')) : ''))
                 : (($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : ''),
