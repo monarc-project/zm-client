@@ -125,15 +125,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             throw new \Exception("Anr `id` not found");
         }
 
-        $class = $this->get('entity');
-        $delivery = new $class();
-        $delivery->setLanguage($this->getLanguage());
-        $delivery->setDbAdapter($this->get('table')->getDb());
+        $delivery = $this->get('entity');
 
         $data['respCustomer'] = $data['consultants'];
         $data['respSmile'] = $data['managers'];
         $data['name'] = $data['docname'];
 
+        unset($data['id']);
         $delivery->exchangeArray($data);
 
         $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
