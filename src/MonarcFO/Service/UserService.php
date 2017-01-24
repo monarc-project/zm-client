@@ -33,8 +33,8 @@ class UserService extends AbstractService
      * @param null $filter
      * @return bool|mixed
      */
-    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null) {
-
+    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
         /** @var UserTable $table */
         $table = $this->get('table');
 
@@ -51,10 +51,11 @@ class UserService extends AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
         /** @var UserTable $table */
         $table = $this->get('table');
-        $users =  $table->fetchAllFiltered(
+        $users = $table->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
             $limit,
@@ -66,7 +67,7 @@ class UserService extends AbstractService
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
         $usersRoles = $userRoleTable->fetchAllObject();
-        foreach($users as $key => $user) {
+        foreach ($users as $key => $user) {
             foreach ($usersRoles as $userRole) {
                 if ($user['id'] == $userRole->user->id) {
                     $users[$key]['roles'][] = $userRole->role;
@@ -77,7 +78,7 @@ class UserService extends AbstractService
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
         $usersAnrs = $userAnrTable->fetchAllObject();
-        foreach($users as $key => $user) {
+        foreach ($users as $key => $user) {
             foreach ($usersAnrs as $userAnr) {
                 if ($user['id'] == $userAnr->user->id) {
                     $anr = [
@@ -102,13 +103,14 @@ class UserService extends AbstractService
      * @param $id
      * @return bool
      */
-    public function getCompleteUser($id) {
+    public function getCompleteUser($id)
+    {
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $snapshots = $snapshotCliTable->fetchAll();
 
         $anrsSnapshots = [0];
-        foreach($snapshots as $snapshot) {
+        foreach ($snapshots as $snapshot) {
             $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
         }
 
@@ -123,9 +125,9 @@ class UserService extends AbstractService
             $user['role'][] = $userRole->role;
         }
 
-        $anrs = $this->get('anrTable')->getEntityByFields(['id'=>['op'=>'NOT IN','value'=>$anrsSnapshots]]);
+        $anrs = $this->get('anrTable')->getEntityByFields(['id' => ['op' => 'NOT IN', 'value' => $anrsSnapshots]]);
         $user['anrs'] = [];
-        foreach($anrs as $a){
+        foreach ($anrs as $a) {
             $user['anrs'][$a->get('id')] = [
                 'id' => $a->get('id'),
                 'label1' => $a->get('label1'),
@@ -138,9 +140,9 @@ class UserService extends AbstractService
 
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
-        $usersAnrs = $userAnrTable->getEntityByFields(['user'=>$user['id']]);
+        $usersAnrs = $userAnrTable->getEntityByFields(['user' => $user['id']]);
         foreach ($usersAnrs as $userAnr) {
-            if(isset($user['anrs'][$userAnr->get('anr')->get('id')])){
+            if (isset($user['anrs'][$userAnr->get('anr')->get('id')])) {
                 $user['anrs'][$userAnr->get('anr')->get('id')]['rwd'] = $userAnr->get('rwd');
             }
         }
@@ -162,7 +164,7 @@ class UserService extends AbstractService
         $user = $this->get('entity');
         $data['status'] = 1;
 
-        if(empty($data['language'])){
+        if (empty($data['language'])) {
             $data['language'] = $this->getLanguage();
         }
 
@@ -175,7 +177,7 @@ class UserService extends AbstractService
         if (isset($data['role'])) {
             $i = 1;
             $nbRoles = count($data['role']);
-            foreach($data['role'] as $role) {
+            foreach ($data['role'] as $role) {
                 $dataUserRole = [
                     'user' => $id,
                     'role' => $role,
@@ -193,11 +195,11 @@ class UserService extends AbstractService
             $snapshots = $snapshotCliTable->fetchAll();
 
             $anrsSnapshots = [0];
-            foreach($snapshots as $snapshot) {
+            foreach ($snapshots as $snapshot) {
                 $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
             }
-            foreach($data['anrs'] as $anr) {
-                if(!isset($anrsSnapshots[$anr['id']])){
+            foreach ($data['anrs'] as $anr) {
+                if (!isset($anrsSnapshots[$anr['id']])) {
                     $dataAnr = [
                         'user' => $id,
                         'anr' => $anr['id'],
@@ -220,7 +222,8 @@ class UserService extends AbstractService
      * @param $data
      * @return mixed
      */
-    public function update($id,$data){
+    public function update($id, $data)
+    {
 
         $this->verifyAuthorizedAction($id, $data);
 
@@ -248,7 +251,8 @@ class UserService extends AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function patch($id, $data){
+    public function patch($id, $data)
+    {
 
         if (isset($data['password'])) {
             $this->validatePassword($data);
@@ -277,7 +281,8 @@ class UserService extends AbstractService
      * @param $id
      * @return mixed
      */
-    public function delete($id) {
+    public function delete($id)
+    {
 
         $this->verifyAuthorizedAction($id, null);
 
@@ -291,13 +296,14 @@ class UserService extends AbstractService
      * @param $data
      * @throws \Exception
      */
-    public function verifyAuthorizedAction($id, $data) {
+    public function verifyAuthorizedAction($id, $data)
+    {
 
         /** @var UserRoleTable $userRoleTable */
         $isAdmin = false;
         $userRoleTable = $this->get('userRoleTable');
         $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
-        foreach($userRoles as $userRole) {
+        foreach ($userRoles as $userRole) {
             if ($userRole->role == \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO) {
                 $isAdmin = true;
             }
@@ -310,7 +316,7 @@ class UserService extends AbstractService
 
             $nbActivateAdminUser = 0;
             $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO]);
-            foreach($adminUsersRoles as $adminUsersRole) {
+            foreach ($adminUsersRoles as $adminUsersRole) {
                 $user = $userTable->getEntity($adminUsersRole->user->id);
                 if (($user->status) && (is_null($user->dateEnd))) {
                     $nbActivateAdminUser++;
@@ -340,7 +346,8 @@ class UserService extends AbstractService
      * @param $id
      * @param $data
      */
-    public function updateUserRole($id, $data) {
+    public function updateUserRole($id, $data)
+    {
 
 
         if (isset($data['role'])) {
@@ -349,7 +356,7 @@ class UserService extends AbstractService
             $userRoleTable = $this->get('userRoleTable');
             $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
             $userRolesArray = [];
-            foreach($userRoles as $userRole) {
+            foreach ($userRoles as $userRole) {
                 if (!in_array($userRole->role, $data['role'])) {
                     //delete role
                     $userRoleTable->delete($userRole->id);
@@ -358,7 +365,7 @@ class UserService extends AbstractService
                 }
             }
 
-            foreach($data['role'] as $role) {
+            foreach ($data['role'] as $role) {
                 if (!in_array($role, $userRolesArray)) {
                     //add role
                     $dataUserRole = [
@@ -375,11 +382,12 @@ class UserService extends AbstractService
 
     /**
      * Update User Anr
-     * 
+     *
      * @param $id
      * @param $data
      */
-    public function updateUserAnr($id, $data) {
+    public function updateUserAnr($id, $data)
+    {
 
         if (isset($data['anrs'])) {
 
@@ -387,7 +395,7 @@ class UserService extends AbstractService
             $userAnrTable = $this->get('userAnrTable');
             $userAnrs = $userAnrTable->getEntityByFields(['user' => $id]);
             $currentUserAnrs = [];
-            foreach($userAnrs as $userAnr) {
+            foreach ($userAnrs as $userAnr) {
                 $currentUserAnrs[$userAnr->anr->id] = [
                     'id' => $userAnr->id,
                     'rwd' => $userAnr->rwd
@@ -395,7 +403,7 @@ class UserService extends AbstractService
             }
 
             $futureUserAnrs = [];
-            foreach($data['anrs'] as $userAnr) {
+            foreach ($data['anrs'] as $userAnr) {
                 $futureUserAnrs[$userAnr['id']] = intval($userAnr['rwd']);
             }
 
@@ -405,25 +413,25 @@ class UserService extends AbstractService
             /** @var SnapshotTable $snapshotCliTable */
             $snapshotCliTable = $this->get('snapshotCliTable');
             $snapshots = $snapshotCliTable->fetchAll();
-            foreach($snapshots as $snapshot) {
+            foreach ($snapshots as $snapshot) {
                 unset($futureUserAnrs[$snapshot['anr']->id]);
             }
 
             //create or update
-            foreach($futureUserAnrs as $key => $futureUserAnr) {
+            foreach ($futureUserAnrs as $key => $futureUserAnr) {
                 if (!isset($currentUserAnrs[$key])) {
                     $userAnrService->create([
                         'user' => $id,
                         'anr' => $key,
                         'rwd' => $futureUserAnr,
                     ]);
-                } else  if ($currentUserAnrs[$key]['rwd'] != $futureUserAnrs[$key]) {
+                } else if ($currentUserAnrs[$key]['rwd'] != $futureUserAnrs[$key]) {
                     $userAnrService->patch($currentUserAnrs[$key]['id'], ['rwd' => $futureUserAnrs[$key]]);
                 }
             }
 
             //delete
-            foreach($currentUserAnrs as $key => $currentUserAnr) {
+            foreach ($currentUserAnrs as $key => $currentUserAnr) {
                 if (!isset($futureUserAnrs[$key])) {
                     $userAnrService->delete($currentUserAnr['id']);
                 }
@@ -437,12 +445,12 @@ class UserService extends AbstractService
      * @param $data
      * @throws \Exception
      */
-    protected function validatePassword($data) {
-
+    protected function validatePassword($data)
+    {
         $password = $data['password'];
 
         $passwordValidator = new PasswordStrength();
-        if (! $passwordValidator->isValid($password)) {
+        if (!$passwordValidator->isValid($password)) {
             $errors = [];
             foreach ($passwordValidator->getMessages() as $messageId => $message) {
                 $errors[] = $message;

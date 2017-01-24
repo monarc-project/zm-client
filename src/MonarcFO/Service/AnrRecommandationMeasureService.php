@@ -16,5 +16,4 @@ class AnrRecommandationMeasureService extends \MonarcCore\Service\AbstractServic
     protected $userAnrTable;
     protected $recommandationTable;
     protected $measureTable;
-
 }

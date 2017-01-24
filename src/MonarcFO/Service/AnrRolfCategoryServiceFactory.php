@@ -11,12 +11,9 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrRolfCategoryServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = array(
-        'entity'=> 'MonarcFO\Model\Entity\RolfCategory',
-        'table'=> 'MonarcFO\Model\Table\RolfCategoryTable',
+        'entity' => 'MonarcFO\Model\Entity\RolfCategory',
+        'table' => 'MonarcFO\Model\Table\RolfCategoryTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     );

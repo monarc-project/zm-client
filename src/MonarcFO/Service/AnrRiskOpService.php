@@ -20,12 +20,9 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 {
     protected $filterColumns = [];
     protected $dependencies = ['anr', 'scale'];
-
     protected $instanceRiskOpService;
     protected $instanceTable;
-    /** @var  RolfRiskTable */
     protected $rolfRiskTable;
-    /** @var  RolfRiskService */
     protected $rolfRiskService;
     protected $objectTable;
     protected $anrTable;
@@ -39,7 +36,8 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
      * @param array $fields
      * @return bool
      */
-    protected function findInFields($obj, $search, $fields = []) {
+    protected function findInFields($obj, $search, $fields = [])
+    {
         foreach ($fields as $field) {
             if (stripos((is_object($obj) ? $obj->{$field} : $obj[$field]), $search) !== false) {
                 return true;
@@ -57,7 +55,8 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
      * @param array $params
      * @return array
      */
-	public function getRisksOp($anrId, $instance = null, $params = []) {
+    public function getRisksOp($anrId, $instance = null, $params = [])
+    {
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
 
@@ -69,12 +68,12 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             // Get children instances
             $instanceTable->initTree($instanceEntity);
             $temp = isset($instanceEntity->parameters['children']) ? $instanceEntity->parameters['children'] : [];
-            while( ! empty($temp) ){
+            while (!empty($temp)) {
                 $sub = array_shift($temp);
                 $instances[] = $sub;
 
-                if(!empty($sub->parameters['children'])){
-                    foreach($sub->parameters['children'] as $subsub){
+                if (!empty($sub->parameters['children'])) {
+                    foreach ($sub->parameters['children'] as $subsub) {
                         array_unshift($temp, $subsub);
                     }
                 }
@@ -85,7 +84,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         $instancesIds = [];
         $instancesInfos = [];
         foreach ($instances as $i) {
-            if($i->get('asset')->get('type') == Asset::TYPE_PRIMARY){
+            if ($i->get('asset')->get('type') == Asset::TYPE_PRIMARY) {
                 $instancesIds[] = $i->id;
                 $instancesInfos[$i->id] = [
                     'id' => $i->id,
@@ -106,13 +105,13 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         //order by net risk
         $tmpInstancesRisksOp = [];
         $tmpInstancesMaxRisksOp = [];
-        foreach($instancesRisksOp as $instancesRiskOp) {
+        foreach ($instancesRisksOp as $instancesRiskOp) {
             $tmpInstancesRisksOp[$instancesRiskOp->id] = $instancesRiskOp;
             $tmpInstancesMaxRisksOp[$instancesRiskOp->id] = $instancesRiskOp->cacheNetRisk;
         }
         arsort($tmpInstancesMaxRisksOp);
         $instancesRisksOp = [];
-        foreach($tmpInstancesMaxRisksOp as $id => $tmpInstancesMaxRiskOp) {
+        foreach ($tmpInstancesMaxRisksOp as $id => $tmpInstancesMaxRiskOp) {
             $instancesRisksOp[] = $tmpInstancesRisksOp[$id];
         }
 
@@ -135,7 +134,8 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
             if (isset($params['keywords']) && !empty($params['keywords'])) {
                 if (!$this->findInFields($instanceRiskOp, $params['keywords'], ['riskCacheLabel1', 'riskCacheLabel2', 'riskCacheLabel3', 'riskCacheLabel4',
-                    'riskCacheDescription1', 'riskCacheDescription2', 'riskCacheDescription3', 'riskCacheDescription4', 'comment'])) {
+                    'riskCacheDescription1', 'riskCacheDescription2', 'riskCacheDescription3', 'riskCacheDescription4', 'comment'])
+                ) {
                     continue;
                 }
             }
@@ -196,7 +196,8 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function createSpecificRiskOp($data) {
+    public function createSpecificRiskOp($data)
+    {
         $data['specific'] = 1;
 
         $instance = $this->instanceTable->getEntity($data['instance']);
@@ -215,8 +216,8 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             $riskData = [
                 'anr' => $anr,
                 'code' => $data['code'],
-                'label'.$anr->language => $label,
-                'description'.$anr->language => $desc,
+                'label' . $anr->language => $label,
+                'description' . $anr->language => $desc,
             ];
             $data['risk'] = $this->rolfRiskService->create($riskData, true);
         } else {
@@ -255,11 +256,11 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function deleteFromAnr($id, $anrId = null) {
-
+    public function deleteFromAnr($id, $anrId = null)
+    {
         $entity = $this->get('table')->getEntity($id);
 
-        if (!$entity->specific){
+        if (!$entity->specific) {
             throw new \Exception('You can not delete a not specific risk', 412);
         }
 

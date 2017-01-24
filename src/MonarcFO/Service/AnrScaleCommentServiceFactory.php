@@ -9,12 +9,9 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrScaleCommentServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = [
-        'entity'=> 'MonarcFO\Model\Entity\ScaleComment',
-        'table'=> 'MonarcFO\Model\Table\ScaleCommentTable',
+        'entity' => 'MonarcFO\Model\Entity\ScaleComment',
+        'table' => 'MonarcFO\Model\Table\ScaleCommentTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',

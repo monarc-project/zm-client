@@ -1,5 +1,6 @@
 <?php
 namespace MonarcFO\Service;
+
 use MonarcFO\Model\Entity\Scale;
 
 /**
@@ -10,7 +11,7 @@ use MonarcFO\Model\Entity\Scale;
  */
 class AnrScaleService extends \MonarcCore\Service\AbstractService
 {
-	protected $filterColumns = [];
+    protected $filterColumns = [];
     protected $anrTable;
     protected $userAnrTable;
     protected $AnrCheckStartedService;
@@ -23,6 +24,8 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
     ];
 
     /**
+     * Get Types
+     *
      * @return array
      */
     public function getTypes()
@@ -39,8 +42,9 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
-        $anrId = isset($filterAnd['anr'])?$filterAnd['anr']:null;
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
+        $anrId = isset($filterAnd['anr']) ? $filterAnd['anr'] : null;
 
         $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
 
@@ -50,7 +54,7 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
             $scales[$key]['type'] = $types[$scale['type']];
         }
 
-        return [$scales,$this->get('AnrCheckStartedService')->canChange($anrId)];
+        return [$scales, $this->get('AnrCheckStartedService')->canChange($anrId)];
     }
 
     /**
@@ -61,9 +65,10 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function create($data, $last = true) {
-        $anrId = isset($filterAnd['anr'])?$filterAnd['anr']:null;
-        if($this->get('AnrCheckStartedService')->canChange($anrId)){
+    public function create($data, $last = true)
+    {
+        $anrId = isset($filterAnd['anr']) ? $filterAnd['anr'] : null;
+        if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             //scale
             $class = $this->get('entity');
             $entity = new $class();
@@ -71,7 +76,7 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
             $entity->exchangeArray($data);
             $entity->setId(null);
 
-            $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+            $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
             $this->setDependencies($entity, $dependencies);
 
             $scaleId = $this->get('table')->save($entity);
@@ -180,7 +185,7 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
             }
 
             return $scaleId;
-        }else{
+        } else {
             throw new \Exception('Scale is not editable', 412);
         }
     }
@@ -192,15 +197,15 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @throws \Exception
      */
-    public function patch($id,$data)
+    public function patch($id, $data)
     {
         $anrId = isset($data['anr']) ? $data['anr'] : null;
-        if($this->get('AnrCheckStartedService')->canChange($anrId)){
+        if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             //security
             $this->filterPatchFields($data);
 
             parent::patch($id, $data);
-        }else{
+        } else {
             throw new \Exception('Scale is not editable', 412);
         }
     }
@@ -213,14 +218,14 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function update($id,$data)
+    public function update($id, $data)
     {
         $anrId = isset($data['anr']) ? $data['anr'] : null;
-        if($this->get('AnrCheckStartedService')->canChange($anrId)){
+        if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             $result = parent::patch($id, $data);
 
             return $result;
-        }else{
+        } else {
             throw new \Exception('Scale is not editable', 412);
         }
     }

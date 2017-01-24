@@ -30,8 +30,8 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
-
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
         /** @var SnapshotTable $table */
         $table = $this->get('table');
         return $table->fetchAllFiltered(
@@ -50,8 +50,8 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @return mixed
      */
-    public function create($data, $last = true) {
-
+    public function create($data, $last = true)
+    {
         $data['anrReference'] = $data['anr'];
         unset($data['anr']);
 
@@ -76,9 +76,9 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @return mixed
      */
-    public function patch($id, $data){
-
-        foreach($data as $key => $value) {
+    public function patch($id, $data)
+    {
+        foreach ($data as $key => $value) {
             if ($key != 'comment') {
                 unset($data[$key]);
             }
@@ -94,7 +94,8 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @return mixed
      */
-    public function update($id, $data) {
+    public function update($id, $data)
+    {
         return $this->patch($id, $data);
     }
 
@@ -103,8 +104,8 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      *
      * @param $id
      */
-    public function delete($id) {
-
+    public function delete($id)
+    {
         /** @var SnapshotTable $snapshotTable */
         $snapshotTable = $this->get('table');
         $snapshot = $snapshotTable->getEntity($id);
@@ -123,11 +124,11 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function deleteFromAnr($id, $anrId = null) {
-
+    public function deleteFromAnr($id, $anrId = null)
+    {
         if (!is_null($anrId)) {
             $entity = $this->get('table')->getEntity($id);
-            if ($entity->anrReference->id != $anrId){
+            if ($entity->anrReference->id != $anrId) {
                 throw new \Exception('Anr id error', 412);
             }
 
@@ -137,7 +138,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
             $userAnrTable = $this->get('userAnrTable');
             $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser['id'], 'anr' => $anrId]);
             $rwd = 0;
-            foreach($rights as $right) {
+            foreach ($rights as $right) {
                 if ($right->rwd == 1) {
                     $rwd = 1;
                 }
@@ -157,7 +158,8 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      * @param $anrId
      * @return mixed
      */
-    public function restore($anrId, $id) {
+    public function restore($anrId, $id)
+    {
         //switch anr and anrReference
         /** @var SnapshotTable $snapshotTable */
         $snapshotTable = $this->get('table');
@@ -172,10 +174,10 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
 
         $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
         $i = 1;
-        foreach($anrSnapshots as $s){
-            $s->set('anrReference',$newAnrId); // et on définie la nouvelle référence pour tous les snapshots
-            $this->setDependencies($s,$this->dependencies);
-            $snapshotTable->save($s,count($anrSnapshots) >= $i);
+        foreach ($anrSnapshots as $s) {
+            $s->set('anrReference', $newAnrId); // et on définie la nouvelle référence pour tous les snapshots
+            $this->setDependencies($s, $this->dependencies);
+            $snapshotTable->save($s, count($anrSnapshots) >= $i);
             $i++;
         }
 
@@ -183,10 +185,10 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
         $userAnrCliTable = $anrService->get('userAnrCliTable');
         $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anrId]);
         $i = 1;
-        foreach($userAnr as $u){
-            $u->set('anr',$newAnrId);
-            $this->setDependencies($u,['anr','user']);
-            $userAnrCliTable->save($u,count($userAnr) >= $i);
+        foreach ($userAnr as $u) {
+            $u->set('anr', $newAnrId);
+            $this->setDependencies($u, ['anr', 'user']);
+            $userAnrCliTable->save($u, count($userAnr) >= $i);
             $i++;
         }
 

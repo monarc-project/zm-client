@@ -12,26 +12,23 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class AnrObjectServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = array(
-        'table'=> '\MonarcFO\Model\Table\ObjectTable',
-        'entity'=> '\MonarcFO\Model\Entity\Object',
+        'table' => '\MonarcFO\Model\Table\ObjectTable',
+        'entity' => '\MonarcFO\Model\Entity\Object',
         'anrObjectCategoryEntity' => 'MonarcFO\Model\Entity\AnrObjectCategory',
-        'assetTable'=> '\MonarcFO\Model\Table\AssetTable',
+        'assetTable' => '\MonarcFO\Model\Table\AssetTable',
         'assetService' => 'MonarcFO\Service\AnrAssetService',
-        'anrTable'=> '\MonarcFO\Model\Table\AnrTable',
+        'anrTable' => '\MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
-        'anrObjectCategoryTable'=> '\MonarcFO\Model\Table\AnrObjectCategoryTable',
-        'amvTable'=> '\MonarcFO\Model\Table\AmvTable',
-        'categoryTable'=> '\MonarcFO\Model\Table\ObjectCategoryTable',
-        'instanceTable'=> '\MonarcFO\Model\Table\InstanceTable',
-        'modelTable'=> '\MonarcCore\Model\Table\ModelTable',
-        'objectObjectTable'=> '\MonarcFO\Model\Table\ObjectObjectTable',
-        'rolfTagTable'=> '\MonarcFO\Model\Table\RolfTagTable',
-        'modelService'=> 'MonarcCore\Service\ModelService',
-        'objectObjectService'=> 'MonarcFO\Service\ObjectObjectService',
+        'anrObjectCategoryTable' => '\MonarcFO\Model\Table\AnrObjectCategoryTable',
+        'amvTable' => '\MonarcFO\Model\Table\AmvTable',
+        'categoryTable' => '\MonarcFO\Model\Table\ObjectCategoryTable',
+        'instanceTable' => '\MonarcFO\Model\Table\InstanceTable',
+        'modelTable' => '\MonarcCore\Model\Table\ModelTable',
+        'objectObjectTable' => '\MonarcFO\Model\Table\ObjectObjectTable',
+        'rolfTagTable' => '\MonarcFO\Model\Table\RolfTagTable',
+        'modelService' => 'MonarcCore\Service\ModelService',
+        'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',
         'selfCoreService' => 'MonarcCore\Service\ObjectService',
         'instanceRiskOpTable' => '\MonarcFO\Model\Table\InstanceRiskOpTable',

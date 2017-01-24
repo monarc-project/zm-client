@@ -9,7 +9,7 @@ namespace MonarcFO\Service;
  */
 class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
 {
-	protected $filterColumns = [];
+    protected $filterColumns = [];
     protected $dependencies = ['anr', 'scale'];
     protected $anrTable;
     protected $userAnrTable;
@@ -45,14 +45,15 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
 
         $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
 
         $types = $this->getTypes();
 
         foreach ($scales as $key => $scale) {
-            if(isset($scale['type'])){
+            if (isset($scale['type'])) {
                 $scales[$key]['type'] = $types[$scale['type']];
                 $scales[$key]['type_id'] = $scale['type'];
             }
@@ -68,7 +69,8 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
      * @param bool $last
      * @return mixed
      */
-    public function create($data, $last = true) {
+    public function create($data, $last = true)
+    {
 
         $anrId = $data['anr'];
 
@@ -89,7 +91,7 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
 
         $entity->exchangeArray($data);
 
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
         $id = $this->get('table')->save($entity);

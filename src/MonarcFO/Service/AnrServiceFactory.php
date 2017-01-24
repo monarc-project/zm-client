@@ -11,18 +11,15 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = array(
 
-        'entity'=> 'MonarcFO\Model\Entity\Anr',
-        'table'=> 'MonarcFO\Model\Table\AnrTable',
+        'entity' => 'MonarcFO\Model\Entity\Anr',
+        'table' => 'MonarcFO\Model\Table\AnrTable',
 
         //core
-        'anrTable'     => 'MonarcCore\Model\Table\AnrTable',
-        'amvTable'  => 'MonarcCore\Model\Table\AmvTable',
-        'anrObjectCategoryTable'   => 'MonarcCore\Model\Table\AnrObjectCategoryTable',
+        'anrTable' => 'MonarcCore\Model\Table\AnrTable',
+        'amvTable' => 'MonarcCore\Model\Table\AmvTable',
+        'anrObjectCategoryTable' => 'MonarcCore\Model\Table\AnrObjectCategoryTable',
         'assetTable' => 'MonarcCore\Model\Table\AssetTable',
         'instanceTable' => 'MonarcCore\Model\Table\InstanceTable',
         'instanceConsequenceTable' => 'MonarcCore\Model\Table\InstanceConsequenceTable',
@@ -30,9 +27,9 @@ class AnrServiceFactory extends AbstractServiceFactory
         'instanceRiskOpTable' => 'MonarcCore\Model\Table\InstanceRiskOpTable',
         'measureTable' => 'MonarcCore\Model\Table\MeasureTable',
         'modelTable' => 'MonarcCore\Model\Table\ModelTable',
-        'objectTable'   => 'MonarcCore\Model\Table\ObjectTable',
-        'objectCategoryTable'   => 'MonarcCore\Model\Table\ObjectCategoryTable',
-        'objectObjectTable'   => 'MonarcCore\Model\Table\ObjectObjectTable',
+        'objectTable' => 'MonarcCore\Model\Table\ObjectTable',
+        'objectCategoryTable' => 'MonarcCore\Model\Table\ObjectCategoryTable',
+        'objectObjectTable' => 'MonarcCore\Model\Table\ObjectObjectTable',
         'rolfCategoryTable' => 'MonarcCore\Model\Table\RolfCategoryTable',
         'rolfRiskTable' => 'MonarcCore\Model\Table\RolfRiskTable',
         'rolfTagTable' => 'MonarcCore\Model\Table\RolfTagTable',

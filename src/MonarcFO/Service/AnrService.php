@@ -99,7 +99,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
 
         /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
@@ -107,7 +108,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
-        $userRoles = $userRoleTable->getEntityByFields(['user'=>$userArray['id']]);
+        $userRoles = $userRoleTable->getEntityByFields(['user' => $userArray['id']]);
 
         $isSuperAdmin = false;
         foreach ($userRoles as $userRole) {
@@ -134,7 +135,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $snapshots = $snapshotCliTable->getEntityByFields(['anr' => $filterAnd['id']]);
-        foreach($snapshots as $snapshot) {
+        foreach ($snapshots as $snapshot) {
             unset($filterAnd['id'][$snapshot->get('anr')->get('id')]);
         }
 
@@ -166,7 +167,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return int
      */
-    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null) {
+    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
 
         return count($this->getList($page, $limit, $order, $filter, $filterAnd));
     }
@@ -175,7 +177,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * Get Anrs
      * @return array|bool
      */
-    public function getAnrs() {
+    public function getAnrs()
+    {
 
         /** @var \MonarcFO\Model\Table\AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');
@@ -191,7 +194,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function getEntity($id){
+    public function getEntity($id)
+    {
 
         $anr = $this->get('table')->get($id);
 
@@ -202,7 +206,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         $anr['isSnapshot'] = 0;
         $anr['snapshotParent'] = null;
-        if(!empty($anrSnapshot)){ // On est sur un snapshot
+        if (!empty($anrSnapshot)) { // On est sur un snapshot
             $anr['isSnapshot'] = 1;
             $anr['rwd'] = 0;
             $anr['snapshotParent'] = $anrSnapshot->get('anrReference')->get('id');
@@ -230,18 +234,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function createFromModelToClient($data) {
+    public function createFromModelToClient($data)
+    {
 
         //retrieve model information
         /** @var ModelTable $modelTable */
         $modelTable = $this->get('modelTable');
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
-        if($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE){ // disabled or deleted
+        if ($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE) { // disabled or deleted
             throw new \Exception('Model not found', 412);
         }
 
-        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model,$data);
+        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model, $data);
     }
 
     /**
@@ -253,7 +258,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false, $isSnapshotCloning = false) {
+    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false, $isSnapshotCloning = false)
+    {
         ini_set('max_execution_time', 0);
 
         if (is_integer($anr)) {
@@ -265,9 +271,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
         if (!$anr instanceof AnrSuperClass) {
             throw new \Exception('Anr missing', 412);
         }
-        if(empty($model)){
+        if (empty($model)) {
             $idModel = $anr->get('model');
-        }else{
+        } else {
             $idModel = $model->get('id');
         }
 
@@ -888,18 +894,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $newRecommandationRisk->set('instanceRiskOp', $instancesRisksOpNewIds[$newRecommandationRisk->get('instanceRiskOp')->get('id')]);
                 }
                 $newRecommandationRisk->set('instance', $instancesNewIds[$newRecommandationRisk->get('instance')->get('id')]);
-                if($newRecommandationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('id')])){
+                if ($newRecommandationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('id')])) {
                     $newRecommandationRisk->set('objectGlobal', $objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('id')]);
-                }else{
-                    $newRecommandationRisk->set('objectGlobal',null);
+                } else {
+                    $newRecommandationRisk->set('objectGlobal', null);
                 }
-                if($newRecommandationRisk->get('asset')) {
+                if ($newRecommandationRisk->get('asset')) {
                     $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->get('id')]);
                 }
-                if($newRecommandationRisk->get('threat')) {
+                if ($newRecommandationRisk->get('threat')) {
                     $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->get('id')]);
                 }
-                if($newRecommandationRisk->get('vulnerability')) {
+                if ($newRecommandationRisk->get('vulnerability')) {
                     $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->get('id')]);
                 }
                 $this->get('recommandationRiskCliTable')->save($newRecommandationRisk, ($i == $nbRecommandationsRisks));
@@ -908,7 +914,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $this->setUserCurrentAnr($id);
 
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
 
             if (is_integer($id)) {
                 $anrCliTable->delete($id);
@@ -925,7 +931,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      *
      * @param $anrId
      */
-    public function setUserCurrentAnr($anrId) {
+    public function setUserCurrentAnr($anrId)
+    {
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');
 
@@ -946,7 +953,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @param $categoriesIds
      * @return array
      */
-    public function getParentsCategoryIds($category, &$categoriesIds) {
+    public function getParentsCategoryIds($category, &$categoriesIds)
+    {
 
         if ($category->parent) {
             $categoriesIds[] = $category->parent->id;
@@ -964,7 +972,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @param array $classes
      * @return mixed
      */
-    public function getColor($anr, $value, $classes = ['green', 'orange', 'alerte']){
+    public function getColor($anr, $value, $classes = ['green', 'orange', 'alerte'])
+    {
 
         if ($value <= $anr->get('seuil1')) {
             return $classes[0];
@@ -982,9 +991,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return string
      * @throws \Exception
      */
-    public function exportAnr(&$data){
+    public function exportAnr(&$data)
+    {
         if (empty($data['id'])) {
-            throw new \Exception('Anr to export is required',412);
+            throw new \Exception('Anr to export is required', 412);
         }
         if (empty($data['password'])) {
             $data['password'] = '';
@@ -993,10 +1003,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         $with_eval = isset($data['assessments']) && $data['assessments'];
 
-        $return = $this->generateExportArray($data['id'],$filename,$with_eval);
+        $return = $this->generateExportArray($data['id'], $filename, $with_eval);
         $data['filename'] = $filename;
 
-        return base64_encode($this->encrypt(json_encode($return),$data['password']));
+        return base64_encode($this->encrypt(json_encode($return), $data['password']));
     }
 
     /**
@@ -1008,9 +1018,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return array
      * @throws \Exception
      */
-    public function generateExportArray($id, &$filename = "", $with_eval = false){
+    public function generateExportArray($id, &$filename = "", $with_eval = false)
+    {
         if (empty($id)) {
-            throw new \Exception('Anr to export is required',412);
+            throw new \Exception('Anr to export is required', 412);
         }
         $entity = $this->get('table')->getEntity($id);
 
@@ -1018,7 +1029,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             throw new \Exception('Entity `id` not found.');
         }
 
-        $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $entity->get('label'.$this->getLanguage()));
+        $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $entity->get('label' . $this->getLanguage()));
 
         $return = array(
             'type' => 'anr',
@@ -1032,19 +1043,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $instances = $table->getEntityByFields(['anr' => $entity->get('id'), 'parent' => null]);
         $f = '';
         $with_scale = false;
-        foreach($instances as $i){
-            $return['instances'][$i->id] = $instanceService->generateExportArray($i->id,$f,$with_eval,$with_scale);
+        foreach ($instances as $i) {
+            $return['instances'][$i->id] = $instanceService->generateExportArray($i->id, $f, $with_eval, $with_scale);
         }
 
-        if($with_eval){
+        if ($with_eval) {
             // scales
             $return['scales'] = array();
             $scaleTable = $this->get('scaleCliTable');
             $scales = $scaleTable->getEntityByFields(['anr' => $entity->get('id')]);
             $scalesArray = array(
-                'min'=>'min',
-                'max'=>'max',
-                'type'=>'type',
+                'min' => 'min',
+                'max' => 'max',
+                'type' => 'type',
             );
             foreach ($scales as $s) {
                 $return['scales'][$s->type] = $s->getJsonArray($scalesArray);
@@ -1058,11 +1069,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
      *
      * @param $id
      */
-    public function delete($id) {
-        $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference'=>$id]);
-        foreach($snapshots as $s){
-            if(!empty($s)){
-                $this->get('table')->delete($s->get('anr')->get('id'),false);
+    public function delete($id)
+    {
+        $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
+        foreach ($snapshots as $s) {
+            if (!empty($s)) {
+                $this->get('table')->delete($s->get('anr')->get('id'), false);
             }
         }
 
@@ -1075,17 +1087,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @param $modelId
      * @return array
      */
-    public function verifyLanguage($modelId) {
+    public function verifyLanguage($modelId)
+    {
 
-        $languages = [1,2,3,4];
+        $languages = [1, 2, 3, 4];
         $success = [];
-        foreach($languages as $lang) {
+        foreach ($languages as $lang) {
             $success[$lang] = true;
         }
 
         //model
         $model = $this->get('modelTable')->getEntity($modelId);
-        foreach($languages as $lang) {
+        foreach ($languages as $lang) {
             if (empty($model->get('label' . $lang))) {
                 $success[$lang] = false;
             }
@@ -1102,10 +1115,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
             'question' => 'label',
             'questionChoice' => 'label',
         ];
-        foreach($array as  $key => $value) {
+        foreach ($array as $key => $value) {
             $entities = $this->get($key . 'Table')->fetchAllObject();
             foreach ($entities as $entity) {
-                foreach($languages as $lang) {
+                foreach ($languages as $lang) {
                     if (empty($entity->get($value . $lang))) {
                         $success[$lang] = false;
                     }
@@ -1137,7 +1150,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
             }
         } else {
-            foreach($languages as $lang) {
+            foreach ($languages as $lang) {
                 $success[$lang] = false;
             }
         }
@@ -1190,7 +1203,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
             }
         } else {
-            foreach($languages as $lang) {
+            foreach ($languages as $lang) {
                 $success[$lang] = false;
             }
         }

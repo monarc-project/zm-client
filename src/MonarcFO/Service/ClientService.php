@@ -73,11 +73,11 @@ class ClientService extends AbstractService
     {
         $client = $this->table->get($id);
 
-        if(!empty($client['country_id'])){
+        if (!empty($client['country_id'])) {
             $country = $this->get('countryTable')->get($client['country_id']);
             $client['country'] = $country;
         }
-        if(!empty($client['city_id'])){
+        if (!empty($client['city_id'])) {
             $city = $this->get('cityTable')->get($client['city_id']);
             $client['city'] = $city;
         }
@@ -106,7 +106,8 @@ class ClientService extends AbstractService
      * @param $data
      * @return bool
      */
-    public function update($id, $data) {
+    public function update($id, $data)
+    {
 
         //security
         $this->filterPatchFields($data);
@@ -123,7 +124,7 @@ class ClientService extends AbstractService
         }
 
         if ($entity != null) {
-            $entity->exchangeArray($data,true);
+            $entity->exchangeArray($data, true);
             $clientTable->save($entity);
             return true;
         } else {
@@ -149,10 +150,11 @@ class ClientService extends AbstractService
      *
      * @return array
      */
-    public function getJsonData() {
+    public function getJsonData()
+    {
         $var = get_object_vars($this);
         foreach ($var as &$value) {
-            if (is_object($value) && method_exists($value,'getJsonData')) {
+            if (is_object($value) && method_exists($value, 'getJsonData')) {
                 $value = $value->getJsonData();
             }
         }

@@ -5,17 +5,17 @@ use MonarcCore\Service\AbstractServiceFactory;
 
 /**
  * User Service Factory
- * 
+ *
  * Class UserServiceFactory
  * @package MonarcFO\Service
  */
 class UserServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
-        'table'=> '\MonarcFO\Model\Table\UserTable',
-        'userAnrTable'=> '\MonarcFO\Model\Table\UserAnrTable',
-        'userRoleTable'=> '\MonarcFO\Model\Table\UserRoleTable',
-        'entity'=> '\MonarcFO\Model\Entity\User',
+        'table' => '\MonarcFO\Model\Table\UserTable',
+        'userAnrTable' => '\MonarcFO\Model\Table\UserAnrTable',
+        'userRoleTable' => '\MonarcFO\Model\Table\UserRoleTable',
+        'entity' => '\MonarcFO\Model\Entity\User',
         'userAnrService' => 'MonarcFO\Service\UserAnrService',
         'userRoleService' => 'MonarcFO\Service\UserRoleService',
         'anrTable' => '\MonarcFO\Model\Table\AnrTable',

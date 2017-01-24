@@ -26,9 +26,9 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
-
-        $recos =  $this->get('table')->fetchAllFiltered(
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
+        $recos = $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
             $limit,
@@ -37,9 +37,9 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
             $filterAnd
         );
 
-        foreach($recos as $key => $reco) {
+        foreach ($recos as $key => $reco) {
             $recos[$key]['timerColor'] = $this->getDueDateColor($reco['duedate']);
-            $recos[$key]['counterTreated'] = ($reco['counterTreated'] == 0) ? 'COMING' : '_SMILE_IN_PROGRESS (<span>'.$reco['counterTreated'].'</span>)';
+            $recos[$key]['counterTreated'] = ($reco['counterTreated'] == 0) ? 'COMING' : '_SMILE_IN_PROGRESS (<span>' . $reco['counterTreated'] . '</span>)';
         }
 
         return $recos;
@@ -52,7 +52,8 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      * @param bool $last
      * @return mixed
      */
-    public function create($data, $last = true) {
+    public function create($data, $last = true)
+    {
 
         //$entity = $this->get('entity');
         $class = $this->get('entity');
@@ -61,13 +62,13 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         $entity->setDbAdapter($this->get('table')->getDb());
         $entity->anr = $data['anr'];
 
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
         $data['implicitPosition'] = 2; // end
         $entity->exchangeArray($data);
 
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
         /** @var AnrTable $table */
@@ -82,28 +83,26 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      * @param $dueDate
      * @return string
      */
-    protected function getDueDateColor($dueDate){
-        if(empty($dueDate) || $dueDate == '0000-00-00'){
+    protected function getDueDateColor($dueDate)
+    {
+        if (empty($dueDate) || $dueDate == '0000-00-00') {
             return 'no-date';
-        }
-        else{
+        } else {
             $now = time();
-            if($dueDate instanceof \DateTime){
+            if ($dueDate instanceof \DateTime) {
                 $dueDate = $dueDate->getTimestamp();
-            }else{
+            } else {
                 $dueDate = strtotime($dueDate);
             }
             $diff = $dueDate - $now;
 
-            if($diff < 0){
+            if ($diff < 0) {
                 return "alert";
-            }
-            else{
+            } else {
                 $days = round($diff / 60 / 60 / 24);
-                if($days <= 15){//arbitraire, on avait évoqué 15 jours par tél pendant la réunion liée au cahier des charges
+                if ($days <= 15) {//arbitraire, on avait évoqué 15 jours par tél pendant la réunion liée au cahier des charges
                     return "warning";
-                }
-                else return "large";
+                } else return "large";
             }
         }
     }
@@ -117,12 +116,12 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function patch($id, $data){
-
+    public function patch($id, $data)
+    {
         if (!empty($data['duedate'])) {
-            try{
+            try {
                 $data['duedate'] = new \DateTime($data['duedate']);
-            }catch(\Exception $e){
+            } catch (\Exception $e) {
                 throw new \Exception('Invalid date format', 412);
             }
         }
@@ -139,12 +138,12 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function update($id,$data){
-
+    public function update($id, $data)
+    {
         if (!empty($data['duedate'])) {
-            try{
+            try {
                 $data['duedate'] = new \DateTime($data['duedate']);
-            }catch(\Exception $e){
+            } catch (\Exception $e) {
                 throw new \Exception('Invalid date format', 412);
             }
         }

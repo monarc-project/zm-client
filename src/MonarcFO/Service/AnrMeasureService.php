@@ -9,14 +9,13 @@ namespace MonarcFO\Service;
  */
 class AnrMeasureService extends \MonarcCore\Service\AbstractService
 {
-	protected $filterColumns = array(
-        'description1', 'description2', 'description3', 'description4',
-        'code', 'status'
-    );
-
     protected $anrTable;
     protected $userAnrTable;
     protected $dependencies = ['anr'];
+    protected $filterColumns = array(
+        'description1', 'description2', 'description3', 'description4',
+        'code', 'status'
+    );
 
     /**
      * Get List
@@ -27,7 +26,8 @@ class AnrMeasureService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
         // Do a soft limit, as we need to manually parse the codes to order them.
         $data = $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),

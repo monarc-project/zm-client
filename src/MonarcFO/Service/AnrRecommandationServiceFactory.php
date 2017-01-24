@@ -11,9 +11,6 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrRecommandationServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = array(
         'entity' => 'MonarcFO\Model\Entity\Recommandation',
         'table' => 'MonarcFO\Model\Table\RecommandationTable',

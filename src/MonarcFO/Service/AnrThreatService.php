@@ -1,5 +1,6 @@
 <?php
 namespace MonarcFO\Service;
+
 use MonarcFO\Model\Table\InstanceRiskTable;
 
 /**
@@ -10,7 +11,7 @@ use MonarcFO\Model\Table\InstanceRiskTable;
  */
 class AnrThreatService extends \MonarcCore\Service\AbstractService
 {
-	protected $filterColumns = [
+    protected $filterColumns = [
         'label1', 'label2', 'label3', 'label4',
         'description1', 'description2', 'description3', 'description4',
         'code',
@@ -28,8 +29,8 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @return mixed
      */
-    public function update($id, $data){
-
+    public function update($id, $data)
+    {
         $this->manageQualification($id, $data);
 
         return parent::update($id, $data);
@@ -42,8 +43,8 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @return mixed
      */
-    public function patch($id, $data){
-
+    public function patch($id, $data)
+    {
         $this->manageQualification($id, $data);
 
         return parent::patch($id, $data);
@@ -55,8 +56,8 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
      * @param $id
      * @param $data
      */
-    public function manageQualification ($id, $data) {
-
+    public function manageQualification($id, $data)
+    {
         if (isset($data['qualification'])) {
             /** @var InstanceRiskTable $instanceRiskTable */
             $instanceRiskTable = $this->get('instanceRiskTable');
@@ -71,7 +72,7 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
 
             $i = 1;
             $nbInstancesRisks = count($instancesRisks);
-            foreach($instancesRisks as $instanceRisk) {
+            foreach ($instancesRisks as $instanceRisk) {
                 $instanceRisk->threatRate = $data['qualification'];
                 if ((isset($data['forceQualification'])) && $data['forceQualification'] == 1) {
                     $instanceRisk->mh = 1;

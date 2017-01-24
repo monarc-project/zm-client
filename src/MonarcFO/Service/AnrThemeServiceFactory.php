@@ -11,12 +11,9 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrThemeServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = array(
-        'entity'=> 'MonarcFO\Model\Entity\Theme',
-        'table'=> 'MonarcFO\Model\Table\ThemeTable',
+        'entity' => 'MonarcFO\Model\Entity\Theme',
+        'table' => 'MonarcFO\Model\Table\ThemeTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     );

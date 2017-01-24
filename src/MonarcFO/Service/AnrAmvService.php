@@ -1,5 +1,6 @@
 <?php
 namespace MonarcFO\Service;
+
 use MonarcFO\Model\Entity\InstanceRisk;
 use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\ObjectTable;
@@ -21,10 +22,8 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskTable;
     protected $vulnerabilityTable;
     protected $measureTable;
-
-	protected $filterColumns = ['status'];
+    protected $filterColumns = ['status'];
     protected $dependencies = ['anr', 'asset', 'threat', 'vulnerability', 'measure[1]()', 'measure[2]()', 'measure[3]()'];
-
 
     /**
      * Get List
@@ -35,7 +34,8 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
      * @param null $filter
      * @return mixed
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null){
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
         $filterJoin = array(
             array(
                 'as' => 'a',
@@ -119,13 +119,13 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function update($id,$data){
-
+    public function update($id, $data)
+    {
         $entity = $this->get('table')->getEntity($id);
         if (!$entity) {
             throw new \Exception('Entity does not exist', 412);
         }
-        if($entity->get('anr')->get('id') != $data['anr']){
+        if ($entity->get('anr')->get('id') != $data['anr']) {
             throw new \Exception('Anr id error', 412);
         }
 
@@ -142,7 +142,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
 
         $entity->exchangeArray($data);
 
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
         return $this->get('table')->save($entity);
@@ -156,13 +156,13 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function patch($id, $data){
-
+    public function patch($id, $data)
+    {
         $entity = $this->get('table')->getEntity($id);
         if (!$entity) {
             throw new \Exception('Entity does not exist', 412);
         }
-        if($entity->get('anr')->get('id') != $data['anr']){
+        if ($entity->get('anr')->get('id') != $data['anr']) {
             throw new \Exception('Anr id error', 412);
         }
 
@@ -180,7 +180,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
 
         $entity->exchangeArray($data, true);
 
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
         return $this->get('table')->save($entity);
@@ -193,21 +193,20 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
      * @param bool $last
      * @return mixed
      */
-    public function create($data, $last = true) {
-
-        //$entity = $this->get('entity');
+    public function create($data, $last = true)
+    {
         $class = $this->get('entity');
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
         $entity->setDbAdapter($this->get('table')->getDb());
         $entity->exchangeArray($data);
 
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
         /** @var AnrTable $table */
         $table = $this->get('table');
-        $id =  $table->save($entity, $last);
+        $id = $table->save($entity, $last);
 
         //create instances risks
         /** @var ObjectTable $objectTable */
@@ -219,7 +218,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
             $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => $object->get('id')]);
             $i = 1;
             $nbInstances = count($instances);
-            foreach($instances as $instance) {
+            foreach ($instances as $instance) {
                 $instanceRisk = new InstanceRisk();
 
                 $instanceRisk->setLanguage($this->getLanguage());
@@ -230,7 +229,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
                 $instanceRisk->set('instance', $instance);
                 $instanceRisk->set('threat', $entity->threat);
                 $instanceRisk->set('vulnerability', $entity->vulnerability);
-                
+
                 $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
                 $i++;
             }

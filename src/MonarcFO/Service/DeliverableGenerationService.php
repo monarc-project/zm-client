@@ -1,5 +1,6 @@
 <?php
 namespace MonarcFO\Service;
+
 use MonarcCore\Service\AbstractServiceFactory;
 use MonarcCore\Service\DeliveriesModelsService;
 use MonarcCore\Service\QuestionChoiceService;
@@ -68,9 +69,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      */
     public function __construct($serviceFactory = null)
     {
-        if (is_array($serviceFactory)){
-            foreach($serviceFactory as $k => $v){
-                $this->set($k,$v);
+        if (is_array($serviceFactory)) {
+            foreach ($serviceFactory as $k => $v) {
+                $this->set($k, $v);
             }
         } else {
             $this->serviceFactory = $serviceFactory;
@@ -82,7 +83,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      *
      * @param mixed $lang
      */
-    public function setLanguage($lang) {
+    public function setLanguage($lang)
+    {
         $this->language = $lang;
     }
 
@@ -91,7 +93,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      *
      * @return mixed
      */
-    public function getDeliveryModels() {
+    public function getDeliveryModels()
+    {
         return $this->deliveryModelService->getList(1, 0, null, null, null);
     }
 
@@ -102,26 +105,27 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      * @param null $typeDoc
      * @return array
      */
-    public function getLastDeliveries($anrId, $typeDoc = null) {
+    public function getLastDeliveries($anrId, $typeDoc = null)
+    {
         /** @var DeliveryTable $table */
         $table = $this->get('table');
 
-        if(!empty($typeDoc)){
-            $deliveries = $table->getEntityByFields(['anr' => $anrId, 'typedoc'=>$typeDoc],['createdAt'=>'DESC']);
+        if (!empty($typeDoc)) {
+            $deliveries = $table->getEntityByFields(['anr' => $anrId, 'typedoc' => $typeDoc], ['createdAt' => 'DESC']);
             $lastDelivery = null;
             foreach ($deliveries as $delivery) {
                 $lastDelivery = $delivery->getJsonArray();
                 break;
             }
             return $lastDelivery;
-        }else{
-            $deliveries = $table->getEntityByFields(['anr' => $anrId],['createdAt'=>'DESC']);
+        } else {
+            $deliveries = $table->getEntityByFields(['anr' => $anrId], ['createdAt' => 'DESC']);
             $lastDelivery = [];
             foreach ($deliveries as $delivery) {
-                if(empty($lastDelivery[$delivery->get('typedoc')])){
+                if (empty($lastDelivery[$delivery->get('typedoc')])) {
                     $lastDelivery[$delivery->get('typedoc')] = $delivery->getJsonArray();
                 }
-                if(count($lastDelivery) == 3){
+                if (count($lastDelivery) == 3) {
                     break;
                 }
             }
@@ -139,9 +143,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      * @return string
      * @throws \Exception
      */
-    public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data) {
+    public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data)
+    {
         // Find the model to use
-        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category'=>$typeDoc]));
+        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category' => $typeDoc]));
         if (!$model) {
             throw new \Exception("Model `id` not found");
         }
@@ -161,20 +166,20 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         unset($data['id']);
         $delivery->exchangeArray($data);
 
-        $dependencies =  (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($delivery, $dependencies);
 
         /** @var DeliveryTable $table */
         $table = $this->get('table');
         $table->save($delivery);
 
-        if( ! file_exists($model->get('path' . $anr->language))){
-            if(!file_exists('./data/monarc/models')){
+        if (!file_exists($model->get('path' . $anr->language))) {
+            if (!file_exists('./data/monarc/models')) {
                 $oldumask = umask(0);
                 mkdir('./data/monarc/models', 0775, true);
                 umask($oldumask);
             }
-            file_put_contents($model->get('path' . $anr->language) , $model->get('content'. $anr->language));
+            file_put_contents($model->get('path' . $anr->language), $model->get('content' . $anr->language));
         }
 
         // Word-filter the input values
@@ -192,7 +197,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->generateDeliverableWithValuesAndModel($model->get('path' . $anr->language), $values);
     }
 
-    protected function generateDeliverableWithValuesAndModel($modelPath, $values) {
+    protected function generateDeliverableWithValuesAndModel($modelPath, $values)
+    {
         if (!file_exists($modelPath)) {
             throw new \Exception("Model path not found: " . $modelPath);
         }
@@ -209,25 +215,36 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $pathTmp;
     }
 
-    protected function getModelType($modelCategory) {
+    protected function getModelType($modelCategory)
+    {
         switch ($modelCategory) {
-            case 1: return 'Validation du contexte';
-            case 2: return 'Validation du modèle';
-            case 3: return 'Rapport final';
-            default: return 'N/A';
+            case 1:
+                return 'Validation du contexte';
+            case 2:
+                return 'Validation du modèle';
+            case 3:
+                return 'Rapport final';
+            default:
+                return 'N/A';
         }
     }
 
-    protected function buildValues($anr, $modelCategory) {
+    protected function buildValues($anr, $modelCategory)
+    {
         switch ($modelCategory) {
-            case 1: return $this->buildContextValidationValues($anr);
-            case 2: return $this->buildContextModelingValues($anr);
-            case 3: return $this->buildRiskAssessmentValues($anr);
-            default: return [];
+            case 1:
+                return $this->buildContextValidationValues($anr);
+            case 2:
+                return $this->buildContextModelingValues($anr);
+            case 3:
+                return $this->buildRiskAssessmentValues($anr);
+            default:
+                return [];
         }
     }
 
-    protected function buildContextValidationValues($anr) {
+    protected function buildContextValidationValues($anr)
+    {
         // Values read from database
         $values = [
             'COMPANY' => $this->getCompanyName(),
@@ -500,7 +517,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
 
             // no display question, if reply is empty
-            if(!empty($response)){
+            if (!empty($response)) {
                 $table->addRow(400);
                 $table->addCell(11000, $styleHeaderCell)->addText(_WT($question['label' . $anr->language]), $styleHeaderFont, ['Alignment' => 'left', 'align' => 'start']);
                 $table->addRow(800);
@@ -542,7 +559,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
-    protected function buildContextModelingValues($anr) {
+    protected function buildContextModelingValues($anr)
+    {
         // Models are incremental, so use values from level-1 model
         $values = $this->buildContextValidationValues($anr);
 
@@ -552,7 +570,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
-    protected function buildRiskAssessmentValues($anr) {
+    protected function buildRiskAssessmentValues($anr)
+    {
         // Models are incremental, so use values from level-2 model
         $values = $this->buildContextModelingValues($anr);
 
@@ -567,7 +586,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
-    protected function generateRisksGraph($anr) {
+    protected function generateRisksGraph($anr)
+    {
         $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
         list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
 
@@ -615,23 +635,24 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $allWordXml;
     }
 
-    protected function generateTableAudit($anr) {
+    protected function generateTableAudit($anr)
+    {
         $query = $this->instanceRiskTable->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-            'i.id', 'i.name'.$anr->language.' as name', 'IDENTITY(i.root)', 'IDENTITY(i.object)',
-            'm.id as mid', 'm.label'.$anr->language.' as mlabel',
-            'v.id as vid', 'v.label'.$anr->language.' as vlabel',
+            'i.id', 'i.name' . $anr->language . ' as name', 'IDENTITY(i.root)', 'IDENTITY(i.object)',
+            'm.id as mid', 'm.label' . $anr->language . ' as mlabel',
+            'v.id as vid', 'v.label' . $anr->language . ' as vlabel',
             'ir.comment',
         ])->where('ir.anr = :anrid')
             ->setParameter(':anrid', $anr->id)
-            ->innerJoin('ir.instance',      'i')
-            ->innerJoin('ir.threat',        'm')
+            ->innerJoin('ir.instance', 'i')
+            ->innerJoin('ir.threat', 'm')
             ->innerJoin('ir.vulnerability', 'v')
             ->getQuery()->getResult();
 
 
         $mem_risks = [];
-        foreach($result as $r) {
+        foreach ($result as $r) {
             if (!isset($mem_risks[$r['id']])) {
                 $mem_risks[$r['id']] = [];
                 $mem_risks[$r['id']]['ctx'] = $r['name'];
@@ -682,7 +703,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
-    protected function getRisksDistribution($anr) {
+    protected function getRisksDistribution($anr)
+    {
         $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
         list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
         $colors = array(0, 1, 2);
@@ -702,7 +724,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             '<li>' . sprintf('%d risque(s) faible(s) négligeables', $distrib[0]) . '</li></ul>';
     }
 
-    protected function generateRisksPlan($anr, $full = false) {
+    protected function generateRisksPlan($anr, $full = false)
+    {
         $recos = $this->recommandationService->getList(1, 0, null, null, ['anr' => $anr->id]);
 
         $tableWord = new PhpWord();
@@ -766,10 +789,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         $table->addCell(4500, $cellfusion)->addText($contentreco, $styleContentFont, ['Alignment' => 'left']);
 
                         switch ($reco['importance']) {
-                            case 0: $contentreco = ""; break;
-                            case 1: $contentreco = "o"; break;
-                            case 2: $contentreco = "oo"; break;
-                            case 3: $contentreco = "ooo"; break;
+                            case 0:
+                                $contentreco = "";
+                                break;
+                            case 1:
+                                $contentreco = "o";
+                                break;
+                            case 2:
+                                $contentreco = "oo";
+                                break;
+                            case 3:
+                                $contentreco = "ooo";
+                                break;
                         }
 
                         $table->addCell(800, $cellfusion)->addText(_WT($contentreco), $styleContentFontRed);
@@ -785,7 +816,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
-    protected function generateImpactsAppreciation($anr) {
+    protected function generateImpactsAppreciation($anr)
+    {
         // TODO: C'est moche, optimiser
         $all_instances = $this->instanceService->getList(1, 0, null, null, ['anr' => $anr->id]);
         $instances = array_filter($all_instances, function ($in) {
@@ -824,7 +856,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
-    protected function generateThreatsTable($anr, $fullGen = false) {
+    protected function generateThreatsTable($anr, $fullGen = false)
+    {
         $threats = $this->threatService->getList(1, 0, null, null, ['anr' => $anr->id]);
 
         $tableWord = new PhpWord();
@@ -853,7 +886,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             if (($threat['trend'] > 0 && $threat['trend'] != 2) || $fullGen) { // All but normal
                 $table->addRow(400);
                 $table->addCell(1000, $styleContentCellCenter)->addText(_WT($threat['code']), $styleContentFont, array('Alignment' => 'left'));
-                $table->addCell(2500, $styleContentCell)->addText(_WT($threat['label'.$anr->language]), $styleContentFont, array('Alignment' => 'left'));
+                $table->addCell(2500, $styleContentCell)->addText(_WT($threat['label' . $anr->language]), $styleContentFont, array('Alignment' => 'left'));
 
                 // CID
                 $cid = '';
@@ -865,10 +898,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 // Trend
                 $trend = '';
                 switch ($threat['trend']) {
-                    case 1: $trend = '-'; break;
-                    case 2: $trend = 'n'; break;
-                    case 3: $trend = '+'; break;
-                    case 4: $trend = '++'; break;
+                    case 1:
+                        $trend = '-';
+                        break;
+                    case 2:
+                        $trend = 'n';
+                        break;
+                    case 3:
+                        $trend = '+';
+                        break;
+                    case 4:
+                        $trend = '++';
+                        break;
                 }
                 $table->addCell(1000, $styleContentCellCenter)->addText($trend, $styleContentFont, array('Alignment' => 'center'));
 
@@ -882,12 +923,14 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
-    protected function getCompanyName() {
+    protected function getCompanyName()
+    {
         $client = current($this->clientTable->fetchAll());
         return $client['name'];
     }
 
-    protected function generateWordXmlFromHtml($input) {
+    protected function generateWordXmlFromHtml($input)
+    {
         // Portion Copyright © Netlor SAS - 2015
         // Process trix caveats
         $input = str_replace(
@@ -906,15 +949,16 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
         \PhpOffice\PhpWord\Shared\Html::addHtml($section, $input);
-        return(
-            str_replace(
-                ['w:val="'],
-                ['w:val="1'],
-                $this->getWordXmlFromWordObject($phpWord, true))
+        return (
+        str_replace(
+            ['w:val="'],
+            ['w:val="1'],
+            $this->getWordXmlFromWordObject($phpWord, true))
         );
     }
 
-    protected function getWordXmlFromWordObject($phpWord, $useBody = true) {
+    protected function getWordXmlFromWordObject($phpWord, $useBody = true)
+    {
         // Portion Copyright © Netlor SAS - 2015
         $part = new \PhpOffice\PhpWord\Writer\Word2007\Part\Document();
         $part->setParentWriter(new Word2007($phpWord));
@@ -937,6 +981,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 }
 
-function _WT($input) {
+function _WT($input)
+{
     return str_replace(['&quot;', '&amp;lt', '&amp;gt', '&amp;'], ['"', '_lt_', '_gt_', '_amp_'], htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8'));
 }

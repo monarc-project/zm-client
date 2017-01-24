@@ -8,9 +8,6 @@ namespace MonarcFO\Service;
  */
 class AnrScaleServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = array(
         'table' => 'MonarcFO\Model\Table\ScaleTable',
         'entity' => 'MonarcFO\Model\Entity\Scale',

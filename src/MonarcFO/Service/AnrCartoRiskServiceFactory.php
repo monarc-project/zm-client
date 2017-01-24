@@ -11,17 +11,14 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrCartoRiskServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
     protected $ressources = array(
-        'entity'=> 'MonarcFO\Model\Entity\Scale',
-        'table'=> 'MonarcFO\Model\Table\ScaleTable',
+        'entity' => 'MonarcFO\Model\Entity\Scale',
+        'table' => 'MonarcFO\Model\Table\ScaleTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
-		'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
-		'instanceConsequenceTable' => 'MonarcFO\Model\Table\InstanceConsequenceTable',
-		'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
+        'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
+        'instanceConsequenceTable' => 'MonarcFO\Model\Table\InstanceConsequenceTable',
+        'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
     );
 }

@@ -16,7 +16,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
      * @var array
      */
     protected $ressources = array(
-    	// Tables & Entities
+        // Tables & Entities
         'table' => 'MonarcFO\Model\Table\InstanceTable',
         'entity' => 'MonarcFO\Model\Entity\Instance',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -37,7 +37,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceRiskOpService' => 'MonarcFO\Service\AnrInstanceRiskOpService',
         'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
         'translateService' => 'MonarcCore\Service\TranslateService',
-        
+
         // Useless (Deprecated)
         'assetTable' => 'MonarcFO\Model\Table\AssetTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
@@ -45,6 +45,6 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
 
         // Export (Services)
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',
-        'amvService' =>  'MonarcFO\Service\AmvService',
+        'amvService' => 'MonarcFO\Service\AmvService',
     );
 }

@@ -37,9 +37,9 @@ class UserRoleService extends AbstractService
         $userRoleTable = $this->get('userRoleTable');
 
         return $userRoleTable->getRepository()->createQueryBuilder('t')
-            ->select(array('t.id','t.role'))
+            ->select(array('t.id', 't.role'))
             ->where('t.user = :id')
-            ->setParameter(':id',$filter)
+            ->setParameter(':id', $filter)
             ->getQuery()->getResult();
     }
 
@@ -66,9 +66,9 @@ class UserRoleService extends AbstractService
         $userRoleTable = $this->get('userRoleTable');
 
         return $userRoleTable->getRepository()->createQueryBuilder('t')
-            ->select(array('t.id','t.role'))
+            ->select(array('t.id', 't.role'))
             ->where('t.user = :id')
-            ->setParameter(':id',$userId)
+            ->setParameter(':id', $userId)
             ->getQuery()->getResult();
     }
 
@@ -79,7 +79,8 @@ class UserRoleService extends AbstractService
      * @return array
      * @throws \Exception
      */
-    public function getByUserToken($token) {
+    public function getByUserToken($token)
+    {
 
         if ($token instanceof GenericHeader) {
             $token = $token->getFieldValue();
@@ -102,7 +103,7 @@ class UserRoleService extends AbstractService
             $userAnrs = $userAnrCliTable->getEntityByFields(['user' => $userId]);
 
             $anrs = [];
-            foreach($userAnrs as $userAnr) {
+            foreach ($userAnrs as $userAnr) {
                 $anrs[] = [
                     'anr' => $userAnr->anr->id,
                     'rwd' => $userAnr->rwd
