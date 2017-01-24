@@ -250,53 +250,45 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 'recommandation' => $data['recommandation'],
                 'instanceRiskOp' => $data['risk']
             ]);
+            /** @var InstanceRiskOpTable $instanceRiskOpTable */
+            $tableUsed = $this->get('instanceRiskOpTable');
         } else {
             $exist = $table->getEntityByFields([
                 'anr' => $data['anr'],
                 'recommandation' => $data['recommandation'],
                 'instanceRisk' => $data['risk']
             ]);
+            /** @var InstanceRiskTable $instanceRiskTable */
+            $tableUsed = $this->get('instanceRiskTable');
         }
         if (count($exist)) {
             throw new \Exception('Risk already link to this recommendation', 412);
         }
 
-        if ($data['op']) {
+        $gRisk = $tableUsed->getEntity($data['risk']);
+        $id = $this->createRecommandationRisk($data, $gRisk);
+        if ($gRisk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL && !$data['op']) {
 
-            /** @var InstanceRiskOpTable $instanceRiskOpTable */
-            $instanceRiskOpTable = $this->get('instanceRiskOpTable');
-            $riskOp = $instanceRiskOpTable->getEntity($data['risk']);
-
-            $id = $this->createRecommandationRisk($data, $riskOp);
-
-            if ($riskOp->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
-                $brothers = $instanceRiskOpTable->getEntityByFields([
-                    'anr' => $riskOp->anr->id,
-                    'instance' => $riskOp->instance->id
-                ]);
-                foreach($brothers as $brother) {
-                    if ($riskOp->id != $brother->id) {
-                        $this->createRecommandationRisk($data, $brother);
-                    }
-                }
+            $instances = $this->get('instanceTable')->getEntityByFields([
+                'anr' => $gRisk->anr->id,
+                'object' => $gRisk->getInstance()->getObject()->get('id'),
+                'id' => ['op'=>'!=','value'=>$gRisk->getInstance()->get('id')],
+            ]);
+            $instanceIds = [];
+            foreach($instances as $i){
+                $instanceIds[$i->get('id')] = $i->get('id');
             }
-        } else {
 
-            /** @var InstanceRiskTable $instanceRiskTable */
-            $instanceRiskTable = $this->get('instanceRiskTable');
-            $risk = $instanceRiskTable->getEntity($data['risk']);
-
-            $id = $this->createRecommandationRisk($data, $risk);
-
-            if ($risk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
-                $brothers = $instanceRiskTable->getEntityByFields([
-                    'anr' => $risk->anr->id,
-                    'instance' => $risk->instance->id
+            if(!empty($instanceIds)){
+                $brothers = $tableUsed->getEntityByFields([
+                    'anr' => $gRisk->anr->id,
+                    'instance' => $instanceIds,
+                    'asset' => $gRisk->getAsset()->get('id'),
+                    'threat' => $gRisk->getThreat()->get('id'),
+                    'vulnerability' => $gRisk->getVulnerability()->get('id'),
                 ]);
                 foreach($brothers as $brother) {
-                    if ($risk->id != $brother->id) {
-                        $this->createRecommandationRisk($data, $brother);
-                    }
+                    $this->createRecommandationRisk($data, $brother);
                 }
             }
         }
