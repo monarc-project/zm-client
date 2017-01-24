@@ -1,13 +1,10 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcCore\Service\AbstractService;
 use MonarcCore\Validator\PasswordStrength;
-use MonarcFO\Model\Entity\UserRole;
 use MonarcFO\Model\Table\UserAnrTable;
 use MonarcFO\Model\Table\UserRoleTable;
 use MonarcFO\Model\Table\UserTable;
-use Zend\View\Model\JsonModel;
 
 /**
  * User Service
@@ -15,7 +12,7 @@ use Zend\View\Model\JsonModel;
  * Class UserService
  * @package MonarcCore\Service
  */
-class UserService extends AbstractService
+class UserService extends \MonarcCore\Service\UserService
 {
     protected $userAnrTable;
     protected $userRoleTable;
@@ -24,23 +21,6 @@ class UserService extends AbstractService
     protected $anrTable;
     protected $snapshotCliTable;
 
-    /**
-     * Get Filtered Count
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return bool|mixed
-     */
-    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
-    {
-        /** @var UserTable $table */
-        $table = $this->get('table');
-
-        return $table->countFiltered($page, $limit, $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, array('firstname', 'lastname', 'email')));
-    }
 
     /**
      * Get List
@@ -348,8 +328,6 @@ class UserService extends AbstractService
      */
     public function updateUserRole($id, $data)
     {
-
-
         if (isset($data['role'])) {
 
             /** @var UserRoleTable $userRoleTable */
@@ -388,7 +366,6 @@ class UserService extends AbstractService
      */
     public function updateUserAnr($id, $data)
     {
-
         if (isset($data['anrs'])) {
 
             /** @var UserAnrTable $userAnrTable */
@@ -436,27 +413,6 @@ class UserService extends AbstractService
                     $userAnrService->delete($currentUserAnr['id']);
                 }
             }
-        }
-    }
-
-    /**
-     * Validate password
-     *
-     * @param $data
-     * @throws \Exception
-     */
-    protected function validatePassword($data)
-    {
-        $password = $data['password'];
-
-        $passwordValidator = new PasswordStrength();
-        if (!$passwordValidator->isValid($password)) {
-            $errors = [];
-            foreach ($passwordValidator->getMessages() as $messageId => $message) {
-                $errors[] = $message;
-            }
-
-            throw new \Exception("Password must " . implode($errors, ', ') . ".", 412);
         }
     }
 }
