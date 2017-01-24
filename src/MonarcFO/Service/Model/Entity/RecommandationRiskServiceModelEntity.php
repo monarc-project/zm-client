@@ -5,7 +5,7 @@ use MonarcCore\Service\Model\Entity\AbstractServiceModelEntity;
 
 class RecommandationRiskServiceModelEntity extends AbstractServiceModelEntity
 {
-	protected $ressources = [
-    	'setDbAdapter' => '\MonarcCli\Model\Db',
+    protected $ressources = [
+        'setDbAdapter' => '\MonarcCli\Model\Db',
     ];
 }

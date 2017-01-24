@@ -21,13 +21,14 @@ class UserAnrService extends AbstractService
      *
      * @return array
      */
-    public function getMatrix() {
+    public function getMatrix()
+    {
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
         $usersAnrs = $userAnrTable->fetchAllObject();
 
         $rights = [];
-        foreach($usersAnrs as $userAnr) {
+        foreach ($usersAnrs as $userAnr) {
             $rights[] = [
                 'id' => $userAnr->id,
                 'userId' => $userAnr->user->id,
@@ -55,13 +56,14 @@ class UserAnrService extends AbstractService
      * @return mixed
      * @throws \Exception
      */
-    public function create($data, $last = true) {
+    public function create($data, $last = true)
+    {
 
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
         $userAnr = $userAnrTable->getEntityByFields(['user' => $data['user'], 'anr' => $data['anr']]);
 
-        if(count($userAnr)) {
+        if (count($userAnr)) {
             throw new \Exception('This right already exist', 412);
         }
 
@@ -75,7 +77,8 @@ class UserAnrService extends AbstractService
      * @return array
      * @throws \Exception
      */
-    public function getEntity($id){
+    public function getEntity($id)
+    {
 
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
@@ -103,7 +106,8 @@ class UserAnrService extends AbstractService
      * @param $data
      * @throws \Exception
      */
-    public function patch($id, $data){
+    public function patch($id, $data)
+    {
 
         //verify not create a doublon
         /** @var UserAnrTable $userAnrTable */
