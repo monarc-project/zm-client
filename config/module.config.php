@@ -935,5 +935,6 @@ return array(
             'monarc_api_global_client_anr/treatment_plan',
             'monarc_api_global_client_anr/objects_categories',
         ),
-    )
+    ),
+    'activeLanguages' => array('fr'),
 );
