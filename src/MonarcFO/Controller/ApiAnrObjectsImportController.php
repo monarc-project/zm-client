@@ -13,9 +13,11 @@ use Zend\View\Model\JsonModel;
 class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
 {
     protected $name = 'objects';
-    public function getList(){
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+
+    public function getList()
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $objects = $this->getService()->getCommonObjects($anrId);
@@ -34,8 +36,8 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
      */
     public function patch($id, $data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
@@ -52,12 +54,12 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
      */
     public function get($id)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 
-        $object = $this->getService()->getCommonEntity($anrId,$id);
+        $object = $this->getService()->getCommonEntity($anrId, $id);
 
         $this->formatDependencies($object, ['asset', 'category', 'rolfTag']);
         unset($object['anrs']);

@@ -18,14 +18,14 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 
     public function create($data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
         $typeDoc = $data['typedoc'];
-        if(empty($typeDoc)){
+        if (empty($typeDoc)) {
             throw new \Exception('Document type missing', 412);
         }
 
@@ -62,21 +62,21 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
 
     public function get($id)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 
         $result = [
-            'delivery' => $this->getService()->getLastDeliveries($anrId,$id),
+            'delivery' => $this->getService()->getLastDeliveries($anrId, $id),
         ];
         return new JsonModel($result);
     }
 
     public function getList()
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 

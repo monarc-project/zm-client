@@ -29,17 +29,17 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-        $asset = (int) $this->params()->fromQuery('asset');
-        $category = (int) $this->params()->fromQuery('category');
+        $asset = (int)$this->params()->fromQuery('asset');
+        $category = (int)$this->params()->fromQuery('category');
         $lock = $this->params()->fromQuery('lock');
-        $anr = (int) $this->params()->fromRoute('anrid');
+        $anr = (int)$this->params()->fromRoute('anrid');
 
         /** @var ObjectService $service */
         $service = $this->getService();
-        $objects =  $service->getListSpecific($page, $limit, $order, $filter, $asset, $category, null, $anr, $lock);
+        $objects = $service->getListSpecific($page, $limit, $order, $filter, $asset, $category, null, $anr, $lock);
 
         if ($lock == 'true') {
-            foreach($objects as $key => $object){
+            foreach ($objects as $key => $object) {
                 $this->formatDependencies($objects[$key], $this->dependencies);
             }
         }
@@ -58,7 +58,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
      */
     public function get($id)
     {
-        $anr = (int) $this->params()->fromRoute('anrid');
+        $anr = (int)$this->params()->fromRoute('anrid');
 
         /** @var ObjectService $service */
         $service = $this->getService();
@@ -69,7 +69,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
         }
 
         $anrs = [];
-        foreach($object['anrs'] as $key => $anr) {
+        foreach ($object['anrs'] as $key => $anr) {
             $anrs[] = $anr->getJsonArray();
         }
         $object['anrs'] = $anrs;
@@ -86,8 +86,8 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
      */
     public function create($data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
@@ -115,8 +115,8 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
      */
     public function update($id, $data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
@@ -138,8 +138,8 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
      */
     public function patch($id, $data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;

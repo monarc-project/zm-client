@@ -53,8 +53,8 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
      */
     public function create($data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;

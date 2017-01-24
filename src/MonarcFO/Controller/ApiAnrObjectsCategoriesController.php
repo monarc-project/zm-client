@@ -25,7 +25,7 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
-        if(empty($order)){
+        if (empty($order)) {
             $order = "position";
         }
         $filter = $this->params()->fromQuery('filter');
@@ -34,14 +34,14 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
         /** @var ObjectCategoryService $service */
         $service = $this->getService();
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $filterAnd = ['anr' => $anrId];
         $catid = (int)$this->params()->fromQuery('catid');
-        $parentId = (int) $this->params()->fromQuery('parentId');
-        if(!empty($catid)){
+        $parentId = (int)$this->params()->fromQuery('parentId');
+        if (!empty($catid)) {
             $filterAnd['id'] = [
                 'op' => 'NOT IN',
                 'value' => [$catid],
@@ -49,12 +49,12 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
             if ($parentId > 0) {
                 $filterAnd['id']['value'][] = $parentId;
                 $filterAnd['parent'] = $parentId;
-            }else{
+            } else {
                 $filterAnd['parent'] = null;
             }
-        }elseif ($parentId > 0) {
+        } elseif ($parentId > 0) {
             $filterAnd['parent'] = $parentId;
-        }elseif(!$lock){
+        } elseif (!$lock) {
             $filterAnd['parent'] = null;
         }
 
@@ -69,12 +69,13 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $this->getService()->getFilteredCount($page, $limit, $order, $filter,$filterAnd),
+            'count' => $this->getService()->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $recursiveArray
         ));
     }
 
-    public function getCleanFields($items, $fields) {
+    public function getCleanFields($items, $fields)
+    {
         $output = [];
         foreach ($items as $item) {
             $item_output = [];
@@ -98,9 +99,9 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
      */
     public function create($data)
     {
-    	$anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 

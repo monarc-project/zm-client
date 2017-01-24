@@ -47,7 +47,8 @@ class ApiAnrObjectController extends ApiAnrAbstractController
         $this->methodNotAllowed();
     }
 
-    public function parentsAction(){
+    public function parentsAction()
+    {
         $matcher = $this->getEvent()->getRouteMatch();
         return new JsonModel($this->getService()->getParents($matcher->getParam('anrid'), $matcher->getParam('id')));
     }

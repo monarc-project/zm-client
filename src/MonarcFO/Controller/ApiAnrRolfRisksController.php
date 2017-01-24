@@ -35,19 +35,19 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         $service = $this->getService();
 
         $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $category, $tag, $anr);
-        foreach($rolfRisks as $key => $rolfRisk){
+        foreach ($rolfRisks as $key => $rolfRisk) {
 
             $rolfRisk['categories']->initialize();
             $rolfCategories = $rolfRisk['categories']->getSnapshot();
             $rolfRisks[$key]['categories'] = array();
-            foreach($rolfCategories as $rolfCategory){
+            foreach ($rolfCategories as $rolfCategory) {
                 $rolfRisks[$key]['categories'][] = $rolfCategory->getJsonArray();
             }
 
             $rolfRisk['tags']->initialize();
             $rolfTags = $rolfRisk['tags']->getSnapshot();
             $rolfRisks[$key]['tags'] = array();
-            foreach($rolfTags as $rolfTag){
+            foreach ($rolfTags as $rolfTag) {
                 $rolfRisks[$key]['tags'][] = $rolfTag->getJsonArray();
             }
         }

@@ -20,13 +20,13 @@ class ApiSnapshotRestoreController extends ApiAnrAbstractController
 
     public function create($data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 
-        $id = (int) $this->params()->fromRoute('id');
-        if(empty($id)){
+        $id = (int)$this->params()->fromRoute('id');
+        if (empty($id)) {
             throw new \Exception('Snapshot id missing', 412);
         }
 

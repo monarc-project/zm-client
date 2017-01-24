@@ -74,6 +74,6 @@ class Question extends \MonarcCore\Model\Entity\QuestionSuperclass
     }
 
     protected $parameters = array(
-        'implicitPosition' => ['field'=>'anr']
+        'implicitPosition' => ['field' => 'anr']
     );
 }

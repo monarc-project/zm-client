@@ -237,7 +237,8 @@ class Client extends AbstractEntity
         $this->country = $country;
     }
 
-    public function getInputFilter($partial = false){
+    public function getInputFilter($partial = false)
+    {
 
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
@@ -272,6 +273,6 @@ class Client extends AbstractEntity
         }
         return $this->inputFilter;
     }
-    
+
 }
 

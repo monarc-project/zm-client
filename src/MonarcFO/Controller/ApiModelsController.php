@@ -1,6 +1,7 @@
 <?php
 
 namespace MonarcFO\Controller;
+
 use MonarcCore\Controller\AbstractController;
 use MonarcCore\Service\ModelService;
 use Zend\View\Model\JsonModel;
@@ -28,10 +29,10 @@ class ApiModelsController extends AbstractController
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
         $isGeneric = $this->params()->fromQuery('isGeneric');
-        $status = strval($this->params()->fromQuery('status',\MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE));
+        $status = strval($this->params()->fromQuery('status', \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE));
 
         $service = $this->getService();
-        switch($status){
+        switch ($status) {
             case strval(\MonarcCore\Model\Entity\AbstractEntity::STATUS_INACTIVE):
                 $filterAnd = ['status' => \MonarcCore\Model\Entity\AbstractEntity::STATUS_INACTIVE];
                 break;
@@ -40,10 +41,10 @@ class ApiModelsController extends AbstractController
                 $filterAnd = ['status' => \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE];
                 break;
             case 'all':
-                $filterAnd = ['status' => ['op'=> 'IN', 'value' => [\MonarcCore\Model\Entity\AbstractEntity::STATUS_INACTIVE,\MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE]]];
+                $filterAnd = ['status' => ['op' => 'IN', 'value' => [\MonarcCore\Model\Entity\AbstractEntity::STATUS_INACTIVE, \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE]]];
                 break;
         }
-        
+
 
         if (!is_null($isGeneric)) {
             $filterAnd['isGeneric'] = $isGeneric;
@@ -57,7 +58,7 @@ class ApiModelsController extends AbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($page, $limit, $order, $filter,$filterAnd),
+            'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities
         ));
     }

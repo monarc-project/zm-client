@@ -1,16 +1,19 @@
 <?php
 namespace MonarcFO\Model\Table;
 
-class InstanceRiskOpTable extends \MonarcCore\Model\Table\InstanceRiskOpTable   {
-    public function __construct(\MonarcCore\Model\Db $dbService) {
+class InstanceRiskOpTable extends \MonarcCore\Model\Table\InstanceRiskOpTable
+{
+    public function __construct(\MonarcCore\Model\Db $dbService)
+    {
         parent::__construct($dbService, '\MonarcFO\Model\Entity\InstanceRiskOp');
     }
 
-    public function started($anrId){
+    public function started($anrId)
+    {
         $qb = $this->getRepository()->createQueryBuilder('t');
         $res = $qb->select('COUNT(t.id)')
             ->where('t.anr = :anrid')
-            ->setParameter(':anrid',$anrId)
+            ->setParameter(':anrid', $anrId)
             ->andWhere($qb->expr()->orX(
                 $qb->expr()->neq('t.brutProb', -1),
                 $qb->expr()->neq('t.brutR', -1),

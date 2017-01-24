@@ -138,7 +138,8 @@ class AnrObjectCategory extends AbstractEntity
         ]
     ];
 
-    public function getInputFilter($partial = false){
+    public function getInputFilter($partial = false)
+    {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
         }

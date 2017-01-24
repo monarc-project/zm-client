@@ -25,7 +25,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
      */
     public function getList()
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
         /** @var InstanceService $service */
         $service = $this->getService();
@@ -44,7 +44,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
      */
     public function update($id, $data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
         /** @var AnrInstanceService $service */
         $service = $this->getService();
@@ -62,7 +62,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
      */
     public function patch($id, $data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
         /** @var InstanceService $service */
         $service = $this->getService();
@@ -74,7 +74,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
 
     public function get($id)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
         /** @var InstanceService $service */
         $service = $this->getService();
@@ -96,7 +96,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
      */
     public function create($data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
         //verification required
         $required = ['object', 'parent', 'position'];
@@ -110,9 +110,9 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
             throw new \Exception(implode(', ', $missing), 412);
         }
 
-        $data['c'] = isset($data['c'])?$data['c']:'-1';
-        $data['i'] = isset($data['i'])?$data['i']:'-1';
-        $data['d'] = isset($data['d'])?$data['d']:'-1';
+        $data['c'] = isset($data['c']) ? $data['c'] : '-1';
+        $data['i'] = isset($data['i']) ? $data['i'] : '-1';
+        $data['d'] = isset($data['d']) ? $data['d'] : '-1';
 
         /** @var InstanceService $service */
         $service = $this->getService();

@@ -8,7 +8,8 @@ class ApiAdminUsersRolesController extends \MonarcCore\Controller\AbstractContro
 {
     protected $name = 'roles';
 
-    public function getList() {
+    public function getList()
+    {
 
         $request = $this->getRequest();
         $token = $request->getHeader('token');

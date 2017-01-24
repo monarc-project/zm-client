@@ -27,9 +27,10 @@ class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
      * @return JsonModel
      * @throws \Exception
      */
-    public function replaceList($data) {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+    public function replaceList($data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 

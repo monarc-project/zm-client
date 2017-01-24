@@ -38,7 +38,7 @@ class ApiAnrLibraryCategoryController extends \MonarcCore\Controller\AbstractCon
      */
     public function patch($id, $data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
         $data['anr'] = $anrId;
 

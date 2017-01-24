@@ -12,7 +12,7 @@ use Zend\View\Model\JsonModel;
  */
 class ApiAnrInstancesRisksController extends ApiAnrAbstractController
 {
-    protected $dependencies = ['anr','amv', 'asset', 'threat', 'vulnerability', 'instance'];
+    protected $dependencies = ['anr', 'amv', 'asset', 'threat', 'vulnerability', 'instance'];
     protected $name = 'instances-risks';
 
     /**
@@ -25,8 +25,8 @@ class ApiAnrInstancesRisksController extends ApiAnrAbstractController
      */
     public function update($id, $data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
@@ -36,7 +36,7 @@ class ApiAnrInstancesRisksController extends ApiAnrAbstractController
         $entity = $this->getService()->getEntity($id);
 
         if (count($this->dependencies)) {
-            foreach($this->dependencies as $d){
+            foreach ($this->dependencies as $d) {
                 unset($entity[$d]);
             }
         }

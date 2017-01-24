@@ -1,14 +1,16 @@
 <?php
 
 namespace MonarcFO\Controller;
+
 use Zend\View\Model\JsonModel;
 
 class ApiAnrRisksOpController extends ApiAnrAbstractController
 {
-	protected $name = 'oprisks';
+    protected $name = 'oprisks';
 
-    public function get($id){
-        $anrId = (int) $this->params()->fromRoute('anrid');
+    public function get($id)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
         $params = $this->parseParams();
 
         if ($this->params()->fromQuery('csv', false)) {
@@ -21,10 +23,11 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
                 $this->name => array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit'])
             ]);
         }
-	}
+    }
 
-	public function getList(){
-        $anrId = (int) $this->params()->fromRoute('anrid');
+    public function getList()
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
         $params = $this->parseParams();
 
         if ($this->params()->fromQuery('csv', false)) {
@@ -37,11 +40,12 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
                 $this->name => array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit'])
             ]);
         }
-	}
+    }
 
-    public function create($data) {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+    public function create($data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
@@ -56,17 +60,23 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
         );
     }
 
-	public function deleteList($data){
-		$this->methodNotAllowed();
-	}
-	public function update($id, $data){
-		$this->methodNotAllowed();
-	}
-	public function patch($id, $data){
-		$this->methodNotAllowed();
-	}
+    public function deleteList($data)
+    {
+        $this->methodNotAllowed();
+    }
 
-	protected function parseParams() {
+    public function update($id, $data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function patch($id, $data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    protected function parseParams()
+    {
         $keywords = $this->params()->fromQuery("keywords");
         $kindOfMeasure = $this->params()->fromQuery("kindOfMeasure");
         $order = $this->params()->fromQuery("order", "maxRisk");

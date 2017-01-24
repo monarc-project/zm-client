@@ -153,7 +153,8 @@ class RecommandationMeasure extends AbstractEntity
     }
 
 
-    public function getInputFilter($partial = true){
+    public function getInputFilter($partial = true)
+    {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
 

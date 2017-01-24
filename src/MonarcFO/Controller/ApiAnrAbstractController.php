@@ -19,9 +19,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         $filter = $this->params()->fromQuery('filter');
         $status = $this->params()->fromQuery('status');
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];
@@ -56,12 +56,12 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     {
         $entity = $this->getService()->getEntity($id);
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
-        if(!$entity['anr'] || $entity['anr']->get('id') != $anrId){
-        	throw new \Exception('Anr ids diffence', 412);
+        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
+            throw new \Exception('Anr ids diffence', 412);
         }
 
         if (count($this->dependencies)) {
@@ -80,9 +80,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function create($data)
     {
-    	$anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -106,9 +106,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function update($id, $data)
     {
-    	$anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -127,9 +127,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function patch($id, $data)
     {
-    	$anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -146,11 +146,11 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function delete($id)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
-        if($this->getService()->deleteFromAnr($id, $anrId)){
+        if ($this->getService()->deleteFromAnr($id, $anrId)) {
             return new JsonModel(array('status' => 'ok'));
-        }else{
+        } else {
             return new JsonModel(array('status' => 'ko')); // Todo: peux être retourner un message d'erreur
         }
     }
@@ -163,11 +163,11 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function deleteList($data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
-        if($this->getService()->deleteListFromAnr($data, $anrId)){
+        if ($this->getService()->deleteListFromAnr($data, $anrId)) {
             return new JsonModel(array('status' => 'ok'));
-        }else{
+        } else {
             return new JsonModel(array('status' => 'ko')); // Todo: peux être retourner un message d'erreur
         }
     }

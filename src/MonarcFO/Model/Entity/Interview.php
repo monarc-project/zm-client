@@ -245,7 +245,8 @@ class Interview extends AbstractEntity
         return $this;
     }
 
-    public function getInputFilter($partial = false){
+    public function getInputFilter($partial = false)
+    {
 
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);

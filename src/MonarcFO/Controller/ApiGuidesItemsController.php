@@ -24,7 +24,7 @@ class ApiGuidesItemsController extends AbstractController
         $filter = $this->params()->fromQuery('filter');
         $guide = $this->params()->fromQuery('guide');
         if (!is_null($guide)) {
-            $filterAnd = ['guide' => (int) $guide];
+            $filterAnd = ['guide' => (int)$guide];
         } else {
             $filterAnd = [];
         }

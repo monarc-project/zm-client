@@ -16,10 +16,11 @@ class ApiAnrRisksController extends ApiAnrAbstractController
 
     protected $dependencies = [];
 
-    public function get($id){
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+    public function get($id)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $params = $this->parseParams();
 
@@ -32,12 +33,13 @@ class ApiAnrRisksController extends ApiAnrAbstractController
                 $this->name => $this->getService()->getRisks($anrId, ['id' => $id], $params),
             ]);
         }
-	}
+    }
 
-	public function getList(){
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+    public function getList()
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $params = $this->parseParams();
 
@@ -50,19 +52,26 @@ class ApiAnrRisksController extends ApiAnrAbstractController
                 $this->name => $this->getService()->getRisks($anrId, null, $params),
             ]);
         }
-	}
-	public function deleteList($data){
-		$this->methodNotAllowed();
-	}
-	public function update($id, $data){
-		$this->methodNotAllowed();
-	}
-	public function patch($id, $data){
-		$this->methodNotAllowed();
-	}
+    }
 
-	protected function parseParams() {
-        $keywords = trim($this->params()->fromQuery("keywords",''));
+    public function deleteList($data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function update($id, $data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function patch($id, $data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    protected function parseParams()
+    {
+        $keywords = trim($this->params()->fromQuery("keywords", ''));
         $kindOfMeasure = $this->params()->fromQuery("kindOfMeasure");
         $order = $this->params()->fromQuery("order", "maxRisk");
         $order_direction = $this->params()->fromQuery("order_direction", "desc");

@@ -23,8 +23,8 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
      */
     public function getList()
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 
@@ -51,8 +51,8 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
      */
     public function get($id)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 
@@ -83,8 +83,8 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
      */
     public function deleteList($data)
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 

@@ -15,13 +15,14 @@ class ApiAnrCartoRisksController extends ApiAnrAbstractController
     protected $name = 'carto';
     protected $dependencies = [];
 
-    public function getList(){
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+    public function getList()
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
-        $type = $this->params()->fromRoute('type','all'); // real / targeted / all
-        switch($type){
+        $type = $this->params()->fromRoute('type', 'all'); // real / targeted / all
+        switch ($type) {
             case 'real':
                 return new JsonModel([
                     'status' => 'ok',
@@ -51,22 +52,33 @@ class ApiAnrCartoRisksController extends ApiAnrAbstractController
         }
     }
 
-    public function get($id){
+    public function get($id)
+    {
         $this->methodNotAllowed();
     }
-    public function create($data){
+
+    public function create($data)
+    {
         $this->methodNotAllowed();
     }
-    public function delete($id){
+
+    public function delete($id)
+    {
         $this->methodNotAllowed();
     }
-    public function deleteList($data){
+
+    public function deleteList($data)
+    {
         $this->methodNotAllowed();
     }
-    public function update($id, $data){
+
+    public function update($id, $data)
+    {
         $this->methodNotAllowed();
     }
-    public function patch($id, $data){
+
+    public function patch($id, $data)
+    {
         $this->methodNotAllowed();
     }
 }

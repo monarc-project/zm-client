@@ -23,9 +23,9 @@ class ApiSnapshotController extends ApiAnrAbstractController
         $filter = $this->params()->fromQuery('filter');
         $status = $this->params()->fromQuery('status');
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anrReference' => $anrId];

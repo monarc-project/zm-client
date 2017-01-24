@@ -15,8 +15,8 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
     public function getList()
     {
         $anrId = $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
 
         /** @var AnrObjectService $service */
@@ -48,8 +48,8 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
     public function create($data)
     {
         $anrId = $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -82,8 +82,8 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
     public function delete($id)
     {
         $anrId = $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
 
         /** @var ObjectService $service */

@@ -22,17 +22,17 @@ class ApiAnrInstancesExportController extends ApiAnrAbstractController
     public function create($data)
     {
         if (empty($data['id'])) {
-            throw new \Exception('Instance to export is required',412);
+            throw new \Exception('Instance to export is required', 412);
         }
-    	$entity = $this->getService()->getEntity($data['id']);
+        $entity = $this->getService()->getEntity($data['id']);
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
 
-        if($entity['anr']->get('id') != $anrId){
-        	throw new \Exception('Anr ids differents', 412);
+        if ($entity['anr']->get('id') != $anrId) {
+            throw new \Exception('Anr ids differents', 412);
         }
 
         $output = $this->getService()->export($data);
@@ -43,7 +43,7 @@ class ApiAnrInstancesExportController extends ApiAnrAbstractController
         $headers = $response->getHeaders();
         $headers->clearHeaders()
             ->addHeaderLine('Content-Type', 'text/plain; charset=utf-8')
-            ->addHeaderLine('Content-Disposition', 'attachment; filename="' . (empty($data['filename'])?$data['id']:$data['filename']) . '.bin"');
+            ->addHeaderLine('Content-Disposition', 'attachment; filename="' . (empty($data['filename']) ? $data['id'] : $data['filename']) . '.bin"');
 
         return $this->response;
     }

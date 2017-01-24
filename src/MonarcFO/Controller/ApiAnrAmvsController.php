@@ -31,8 +31,8 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         $asset = $this->params()->fromQuery('asset');
         $amvid = $this->params()->fromQuery('amvid');
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new \Exception('Anr id missing', 412);
         }
 
@@ -43,13 +43,13 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         }
 
         if ($status != 'all') {
-            $filterAnd['status'] = (int) $status;
+            $filterAnd['status'] = (int)$status;
         }
         if ($asset > 0) {
-            $filterAnd['asset'] = (int) $asset;
+            $filterAnd['asset'] = (int)$asset;
         }
 
-        if(!empty($amvid)){
+        if (!empty($amvid)) {
             $filterAnd['id'] = [
                 'op' => '!=',
                 'value' => (int)$amvid,

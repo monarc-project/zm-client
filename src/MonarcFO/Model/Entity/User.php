@@ -126,7 +126,8 @@ class User extends AbstractEntity
     protected $currentAnr;
 
 
-    public function getInputFilter($partial = false){
+    public function getInputFilter($partial = false)
+    {
 
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
@@ -204,12 +205,15 @@ class User extends AbstractEntity
         return $this->inputFilter;
     }
 
-    public function setUserSalt($userSalt){
+    public function setUserSalt($userSalt)
+    {
         $this->parameters['userSalt'] = $userSalt;
         return $this;
     }
-    public function getUserSalt(){
-        return isset($this->parameters['userSalt'])?$this->parameters['userSalt']:'';
+
+    public function getUserSalt()
+    {
+        return isset($this->parameters['userSalt']) ? $this->parameters['userSalt'] : '';
     }
 }
 

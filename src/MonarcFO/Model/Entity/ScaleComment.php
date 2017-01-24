@@ -190,24 +190,26 @@ class ScaleComment extends AbstractEntity
      *
      * @return array
      */
-    public function getValValues() {
+    public function getValValues()
+    {
 
         $values = [-1];
 
-        for($i = $this->getScale()->min; $i <= $this->getScale()->max; $i++) {
+        for ($i = $this->getScale()->min; $i <= $this->getScale()->max; $i++) {
             $values[] = $i;
         }
 
         return $values;
     }
 
-    public function getInputFilter($partial = false){
+    public function getInputFilter($partial = false)
+    {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
 
             $texts = ['comment1', 'comment2', 'comment3', 'comment4'];
 
-            foreach($texts as $text) {
+            foreach ($texts as $text) {
                 $this->inputFilter->add(array(
                     'name' => $text,
                     'required' => false,

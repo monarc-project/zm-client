@@ -15,7 +15,8 @@ class ApiAnrInstancesRisksOpController extends ApiAnrAbstractController
     protected $name = 'instances-oprisks';
 
 
-    public function update($id, $data){
+    public function update($id, $data)
+    {
         $risk = $this->getService()->update($id, $data);
         unset($risk['anr']);
         unset($risk['instance']);

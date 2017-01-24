@@ -23,7 +23,7 @@ class ApiAnrInstancesConsequencesController extends ApiAnrAbstractController
      */
     public function patch($id, $data)
     {
-        $data['anr'] = (int) $this->params()->fromRoute('anrid');
+        $data['anr'] = (int)$this->params()->fromRoute('anrid');
 
         $this->getService()->patchConsequence($id, $data);
 

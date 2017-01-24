@@ -28,13 +28,13 @@ class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractControl
 
         //verify token
         if (!empty($data['token']) && empty($data['password'])) {
-            $result =  $service->verifyToken($data['token']);
+            $result = $service->verifyToken($data['token']);
 
             return new JsonModel(array('status' => $result));
         }
 
         //change password not logged
-        if (!empty($data['token']) && !empty($data['password']) && !empty($data['confirm'])){
+        if (!empty($data['token']) && !empty($data['password']) && !empty($data['confirm'])) {
             if ($data['password'] == $data['confirm']) {
                 $service->newPasswordByToken($data['token'], $data['password']);
             } else {

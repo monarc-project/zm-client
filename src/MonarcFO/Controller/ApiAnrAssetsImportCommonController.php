@@ -5,14 +5,15 @@ use Zend\View\Model\JsonModel;
 
 class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
 {
-	protected $name = "assets";
+    protected $name = "assets";
 
-	public function getList(){
+    public function getList()
+    {
         $service = $this->getService();
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
 
         $entities = $service->getListAssets($anrId);
@@ -23,28 +24,30 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
         ));
     }
 
-    public function get($id){
-    	$service = $this->getService();
+    public function get($id)
+    {
+        $service = $this->getService();
 
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
 
-        $entitie = $service->getAsset($anrId,$id);
+        $entitie = $service->getAsset($anrId, $id);
 
         return new JsonModel($entitie);
     }
 
-    public function create($data){
-    	$anrId = (int) $this->params()->fromRoute('anrid');
-        if(empty($anrId)){
-        	throw new \Exception('Anr id missing', 412);
+    public function create($data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
         }
-        if(empty($data['asset'])){
-        	throw new \Exception('Asset id missing', 412);
+        if (empty($data['asset'])) {
+            throw new \Exception('Asset id missing', 412);
         }
-    	$id = $this->getService()->importAsset($anrId,$data['asset']);
+        $id = $this->getService()->importAsset($anrId, $data['asset']);
 
         return new JsonModel(
             array(
