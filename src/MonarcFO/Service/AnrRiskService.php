@@ -116,8 +116,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
      */
     protected function getInstancesRisks($anrId, $instanceId = null, $params = [], $count = false)
     {
-        $order = isset($params['order']) ? $params['order'] : 'maxRisk';
-        $dir = isset($params['order_direction']) ? $params['order_direction'] : 'desc';
+        $params['order'] = isset($params['order']) ? $params['order'] : 'maxRisk';
 
         if (!empty($instanceId)) {
             $instance = $this->get('instanceTable')->getEntity($instanceId);
@@ -230,8 +229,13 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         // FILTER: kind_of_measure ==
         if (isset($params['kindOfMeasure'])) {
-            $sql .= " AND ir.kind_of_measure = :kom ";
-            $queryParams[':kom'] = $params['kindOfMeasure'];
+            if($params['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+                $sql .= " AND (ir.kind_of_measure IS NULL OR ir.kind_of_measure = :kom) ";
+                $queryParams[':kom'] = \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED;
+            }else{
+                $sql .= " AND ir.kind_of_measure = :kom ";
+                $queryParams[':kom'] = $params['kindOfMeasure'];
+            }
         }
         // FILTER: Keywords
         if (!empty($params['keywords'])) {
