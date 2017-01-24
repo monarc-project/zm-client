@@ -3,8 +3,17 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Client Service Factory
+ *
+ * Class ClientServiceFactory
+ * @package MonarcFO\Service
+ */
 class ClientServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'table'=> '\MonarcFO\Model\Table\ClientTable',
         'entity'=> '\MonarcFO\Model\Entity\Client',

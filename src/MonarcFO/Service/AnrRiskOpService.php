@@ -31,6 +31,14 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $anrTable;
     protected $userAnrTable;
 
+    /**
+     * Find In Fields
+     *
+     * @param $obj
+     * @param $search
+     * @param array $fields
+     * @return bool
+     */
     protected function findInFields($obj, $search, $fields = []) {
         foreach ($fields as $field) {
             if (stripos((is_object($obj) ? $obj->{$field} : $obj[$field]), $search) !== false) {
@@ -41,6 +49,14 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         return false;
     }
 
+    /**
+     * Get Risks Op
+     *
+     * @param $anrId
+     * @param null $instance
+     * @param array $params
+     * @return array
+     */
 	public function getRisksOp($anrId, $instance = null, $params = []) {
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
@@ -173,7 +189,13 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         return $riskOps;
     }
 
-
+    /**
+     * Create Specific Risk Op
+     *
+     * @param $data
+     * @return mixed
+     * @throws \Exception
+     */
     public function createSpecificRiskOp($data) {
         $data['specific'] = 1;
 
@@ -224,7 +246,6 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         return $this->create($data, true);
     }
-
 
     /**
      * Delete From Anr

@@ -4,8 +4,17 @@ namespace MonarcFO\Service;
 use \MonarcCore\Service\AbstractServiceFactory;
 use \Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Anr Instance Service Factory
+ *
+ * Class AnrInstanceServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrInstanceServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
     	// Tables & Entities
         'table' => 'MonarcFO\Model\Table\InstanceTable',

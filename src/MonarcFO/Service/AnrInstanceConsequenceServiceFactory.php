@@ -4,6 +4,12 @@ namespace MonarcFO\Service;
 use \MonarcCore\Service\AbstractServiceFactory;
 use \Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Anr Instance Consequence Service Factory
+ *
+ * Class AnrInstanceConsequenceServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
@@ -16,6 +22,12 @@ class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
         'scaleImpactTypeTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\InstanceConsequenceService";

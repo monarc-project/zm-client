@@ -4,6 +4,12 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Object Service Factory
+ *
+ * Class ObjectServiceFactory
+ * @package MonarcFO\Service
+ */
 class ObjectServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
@@ -28,6 +34,12 @@ class ObjectServiceFactory extends AbstractServiceFactory
         'instanceRiskOpService'=> 'MonarcFO\Service\AnrInstanceRiskOpService',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\ObjectService";

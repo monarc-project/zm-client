@@ -11,6 +11,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 {
     protected $userAnrTable;
 
+    /**
+     * Import From File
+     *
+     * @param $anrId
+     * @param $data
+     * @return array
+     * @throws \Exception
+     */
     public function importFromFile($anrId,$data){
         // on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];
@@ -46,6 +54,17 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         return [$ids,$errors];
     }
 
+    /**
+     * Import From Array
+     *
+     * @param $data
+     * @param $anr
+     * @param null $idParent
+     * @param string $modeImport
+     * @param bool $include_eval
+     * @param array $sharedData
+     * @return array|bool
+     */
     public function importFromArray($data,$anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = array()){
         if(isset($data['type']) && $data['type'] == 'instance' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()){
@@ -464,6 +483,16 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         return false;
     }
 
+    /**
+     * Approximate
+     *
+     * @param $x
+     * @param $minorig
+     * @param $maxorig
+     * @param $mindest
+     * @param $maxdest
+     * @return int|mixed
+     */
     protected function approximate($x, $minorig, $maxorig, $mindest, $maxdest){
         if($x == $maxorig) return $maxdest;
         else if($x == -1) return -1;

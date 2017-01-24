@@ -4,6 +4,12 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Password Service Factory
+ *
+ * Class PasswordServiceFactory
+ * @package MonarcFO\Service
+ */
 class PasswordServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
@@ -14,6 +20,12 @@ class PasswordServiceFactory extends AbstractServiceFactory
         'mailService'=> 'MonarcFO\Service\MailService'
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\PasswordService";

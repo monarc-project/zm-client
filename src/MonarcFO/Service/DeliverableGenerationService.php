@@ -77,14 +77,31 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Set Language
+     *
+     * @param mixed $lang
+     */
     public function setLanguage($lang) {
         $this->language = $lang;
     }
 
+    /**
+     * Get Delivery Models
+     *
+     * @return mixed
+     */
     public function getDeliveryModels() {
         return $this->deliveryModelService->getList(1, 0, null, null, null);
     }
 
+    /**
+     * Get Last Deliveries
+     *
+     * @param $anrId
+     * @param null $typeDoc
+     * @return array
+     */
     public function getLastDeliveries($anrId, $typeDoc = null) {
         /** @var DeliveryTable $table */
         $table = $this->get('table');
@@ -112,6 +129,16 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Generate Deliverable With Values
+     *
+     * @param $anrId
+     * @param $typeDoc
+     * @param $values
+     * @param $data
+     * @return string
+     * @throws \Exception
+     */
     public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data) {
         // Find the model to use
         $model = current($this->deliveryModelService->get("table")->getEntityByFields(['typedoc'=>$typeDoc]));

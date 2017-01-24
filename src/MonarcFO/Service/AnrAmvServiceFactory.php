@@ -3,8 +3,17 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Anr Amv Service Factory
+ *
+ * Class AnrAmvServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrAmvServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'entity'=> 'MonarcFO\Model\Entity\Amv',
         'table'=> 'MonarcFO\Model\Table\AmvTable',

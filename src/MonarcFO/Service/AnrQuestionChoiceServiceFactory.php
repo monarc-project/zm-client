@@ -4,6 +4,12 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Anr Question Choice Service Factory
+ *
+ * Class AnrQuestionChoiceServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrQuestionChoiceServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
@@ -14,6 +20,12 @@ class AnrQuestionChoiceServiceFactory extends AbstractServiceFactory
         'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\QuestionChoiceService";

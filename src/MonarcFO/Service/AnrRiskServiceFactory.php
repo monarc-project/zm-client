@@ -1,10 +1,15 @@
 <?php
 namespace MonarcFO\Service;
 
-use Zend\ServiceManager\ServiceLocatorInterface;
-
+/**
+ * Class AnrRiskServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrRiskServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'table' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'entity' => 'MonarcFO\Model\Entity\InstanceRisk',

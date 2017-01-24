@@ -4,6 +4,12 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Object Object Service Factory
+ *
+ * Class ObjectObjectServiceFactory
+ * @package MonarcFO\Service
+ */
 class ObjectObjectServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
@@ -17,6 +23,12 @@ class ObjectObjectServiceFactory extends AbstractServiceFactory
         'fatherTable'=> '\MonarcFO\Model\Table\ObjectTable',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\ObjectObjectService";

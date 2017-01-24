@@ -223,7 +223,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
         }
 
-
         $output = array_values($recommandations);
         usort($output, function ($a, $b) {
             return $a['position'] - $b['position'];

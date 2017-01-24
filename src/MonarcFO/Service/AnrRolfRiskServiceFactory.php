@@ -3,8 +3,17 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Anr ROlf Risk Service Factory
+ *
+ * Class AnrRolfRiskServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrRolfRiskServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'entity'=> 'MonarcFO\Model\Entity\RolfRisk',
         'table'=> 'MonarcFO\Model\Table\RolfRiskTable',

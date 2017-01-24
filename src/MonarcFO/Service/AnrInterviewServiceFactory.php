@@ -3,6 +3,12 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Anr Interview Service Factory
+ *
+ * Class AnrInterviewServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrInterviewServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(

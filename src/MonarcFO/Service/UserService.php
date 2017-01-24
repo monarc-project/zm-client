@@ -431,8 +431,6 @@ class UserService extends AbstractService
         }
     }
 
-
-
     /**
      * Validate password
      *
@@ -453,5 +451,4 @@ class UserService extends AbstractService
             throw new \Exception("Password must " . implode($errors, ', ') . ".", 412);
         }
     }
-
 }

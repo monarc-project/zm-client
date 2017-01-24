@@ -9,14 +9,12 @@ namespace MonarcFO\Service;
  */
 class AnrScaleCommentService extends \MonarcCore\Service\AbstractService
 {
-	protected $filterColumns = array();
-
+	protected $filterColumns = [];
     protected $anrTable;
     protected $userAnrTable;
     protected $scaleTable;
     protected $scaleImpactTypeTable;
     protected $dependencies = ['anr', 'scale', 'scaleImpactType'];
-
 
     /**
      * Create
@@ -27,7 +25,6 @@ class AnrScaleCommentService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true) {
 
-        //$entity = $this->get('entity');
         $class = $this->get('entity');
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());

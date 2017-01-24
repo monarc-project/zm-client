@@ -12,6 +12,14 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
     protected $selfCoreService;
     protected $userAnrTable;
 
+    /**
+     * Import From File
+     *
+     * @param $anrId
+     * @param $data
+     * @return array
+     * @throws \Exception
+     */
     public function importFromFile($anrId,$data){
         // on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];
@@ -36,6 +44,12 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         return [$ids,$errors];
     }
 
+    /**
+     * Get Common Objects
+     *
+     * @param $anrId
+     * @return mixed
+     */
     public function getCommonObjects($anrId){
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
         $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, 'name'.$anr->get('language'), null, null, $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE);
@@ -55,6 +69,14 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         return $objects;
     }
 
+    /**
+     * Get Common Entity
+     *
+     * @param $anrId
+     * @param $id
+     * @return mixed
+     * @throws \Exception
+     */
     public function getCommonEntity($anrId, $id){
         if(empty($anrId)){
             throw new \Exception('Anr id missing', 412);
@@ -68,7 +90,14 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         }
     }
 
-
+    /**
+     * Import From Common
+     *
+     * @param $id
+     * @param $data
+     * @return mixed
+     * @throws \Exception
+     */
     public function importFromCommon($id,$data){
         if(empty($data['anr'])){
             throw new \Exception('Anr id missing', 412);

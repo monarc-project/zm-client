@@ -4,8 +4,17 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Asset Service Factory
+ *
+ * Class AssetServiceFactory
+ * @package MonarcFO\Service
+ */
 class AssetServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'table'=> 'MonarcFO\Model\Table\AssetTable',
         'entity'=> 'MonarcFO\Model\Entity\Asset',
@@ -14,6 +23,12 @@ class AssetServiceFactory extends AbstractServiceFactory
         'amvService' => 'MonarcFO\Service\AmvService',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\AssetService";

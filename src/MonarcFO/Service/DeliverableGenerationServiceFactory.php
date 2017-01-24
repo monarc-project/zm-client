@@ -3,6 +3,12 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Deliverable Generation Service Factory
+ *
+ * Class DeliverableGenerationServiceFactory
+ * @package MonarcFO\Service
+ */
 class DeliverableGenerationServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(

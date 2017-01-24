@@ -3,6 +3,12 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * User Role Service Factory
+ *
+ * Class UserRoleServiceFactory
+ * @package MonarcFO\Service
+ */
 class UserRoleServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(

@@ -11,7 +11,6 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
 {
 	protected $filterColumns = [];
     protected $dependencies = ['anr', 'scale'];
-
     protected $anrTable;
     protected $userAnrTable;
     protected $scaleTable;

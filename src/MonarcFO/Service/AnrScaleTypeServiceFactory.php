@@ -1,8 +1,12 @@
 <?php
 namespace MonarcFO\Service;
 
-use Zend\ServiceManager\ServiceLocatorInterface;
-
+/**
+ * Anr Scale Type Service Factory
+ *
+ * Class AnrScaleTypeServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrScaleTypeServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
 {
     protected $ressources = array(

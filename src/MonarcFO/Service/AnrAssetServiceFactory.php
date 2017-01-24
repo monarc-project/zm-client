@@ -3,6 +3,12 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Anr Asset Service Factory
+ *
+ * Class AnrAssetServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrAssetServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(

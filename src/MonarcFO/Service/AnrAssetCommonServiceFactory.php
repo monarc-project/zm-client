@@ -3,8 +3,17 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Anr Asset Common Service Factory
+ *
+ * Class AnrAssetCommonServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrAssetCommonServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'entity' => 'MonarcCore\Model\Entity\Asset',
         'table' => 'MonarcCore\Model\Table\AssetTable',

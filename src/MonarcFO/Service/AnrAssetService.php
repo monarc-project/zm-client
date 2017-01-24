@@ -27,7 +27,9 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     protected $objectTable;
     protected $instanceTable;
 
-
+    /**
+     * @var array
+     */
 	protected $filterColumns = [
         'label1', 'label2', 'label3', 'label4',
         'description1', 'description2', 'description3', 'description4',
@@ -36,6 +38,14 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
 
     protected $dependencies = ['anr'];
 
+    /**
+     * Import From File
+     *
+     * @param $anrId
+     * @param $data
+     * @return array
+     * @throws \Exception
+     */
     public function importFromFile($anrId,$data){
     	// on a bien un pwd (ou vide)
         $key = empty($data['password'])?'':$data['password'];
@@ -59,6 +69,14 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
         return [$ids,$errors];
     }
 
+    /**
+     * Import From Array
+     *
+     * @param $data
+     * @param $anr
+     * @param array $objectsCache
+     * @return bool
+     */
     public function importFromArray($data,$anr,&$objectsCache = array()){
         if(isset($data['type']) && $data['type'] == 'asset' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()){

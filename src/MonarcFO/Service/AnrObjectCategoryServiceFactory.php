@@ -4,8 +4,17 @@ namespace MonarcFO\Service;
 use \MonarcCore\Service\AbstractServiceFactory;
 use \Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Anr Object Category Service Factory
+ *
+ * Class AnrObjectCategoryServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrObjectCategoryServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'table'=> '\MonarcFO\Model\Table\ObjectCategoryTable',
         'entity'=> '\MonarcFO\Model\Entity\ObjectCategory',
@@ -17,6 +26,12 @@ class AnrObjectCategoryServiceFactory extends AbstractServiceFactory
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\ObjectCategoryService";

@@ -26,12 +26,29 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     protected $threatTable;
     protected $vulnerabilityTable;
     protected $translateService;
-    
+
+    /**
+     * Get Risks
+     *
+     * @param $anrId
+     * @param null $instanceId
+     * @param array $params
+     * @param bool $count
+     * @return int
+     */
     public function getRisks($anrId, $instanceId = null,$params = [], $count = false){
         $anr = $this->get('anrTable')->getEntity($anrId); // on check que l'ANR existe
         return $this->getInstancesRisks($anr->get('id'),$instanceId,$params,$count);
     }
 
+    /**
+     * Get Csv Risks
+     *
+     * @param $anrId
+     * @param null $instanceId
+     * @param $params
+     * @return string
+     */
     public function getCsvRisks($anrId, $instanceId = null,$params){
         $risks = $this->getRisks($anrId, $instanceId, $params);
 
@@ -88,6 +105,16 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         return $output;
     }
 
+    /**
+     * Get Instances Risks
+     *
+     * @param $anrId
+     * @param null $instanceId
+     * @param array $params
+     * @param bool $count
+     * @return int
+     * @throws \Exception
+     */
     protected function getInstancesRisks($anrId, $instanceId = null, $params = [], $count = false){
         $order = isset($params['order']) ? $params['order'] : 'maxRisk';
         $dir = isset($params['order_direction']) ? $params['order_direction'] : 'desc';
@@ -310,6 +337,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @param bool $last
      * @return mixed
+     * @throws \Exception
      */
     public function create($data, $last = true) {
 

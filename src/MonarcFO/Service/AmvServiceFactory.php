@@ -4,8 +4,17 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Amv Service Factory
+ *
+ * Class AmvServiceFactory
+ * @package MonarcFO\Service
+ */
 class AmvServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'table' => 'MonarcFO\Model\Table\AmvTable',
         'entity' => 'MonarcFO\Model\Entity\Amv',
@@ -17,6 +26,12 @@ class AmvServiceFactory extends AbstractServiceFactory
         'vulnerabilityTable' => '\MonarcFO\Model\Table\VulnerabilityTable',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\AmvService";

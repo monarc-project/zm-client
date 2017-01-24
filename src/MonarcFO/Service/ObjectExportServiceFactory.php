@@ -4,6 +4,12 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Object Export Service Factory
+ *
+ * Class ObjectExportServiceFactory
+ * @package MonarcFO\Service
+ */
 class ObjectExportServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = array(
@@ -18,6 +24,12 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
         'rolfRiskTable' => '\MonarcFO\Model\Table\RolfRiskTable',
     );
 
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return bool
+     */
     public function createService(ServiceLocatorInterface $serviceLocator){
 
         $class = "\\MonarcCore\\Service\\ObjectExportService";

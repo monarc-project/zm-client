@@ -956,8 +956,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
         return $categoriesIds;
     }
 
-
-
     /**
      * Get Color
      *
@@ -977,6 +975,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Export Anr
+     *
+     * @param $data
+     * @return string
+     * @throws \Exception
+     */
     public function exportAnr(&$data){
         if (empty($data['id'])) {
             throw new \Exception('Anr to export is required',412);
@@ -994,6 +999,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
         return base64_encode($this->encrypt(json_encode($return),$data['password']));
     }
 
+    /**
+     * Generate Export Array
+     *
+     * @param $id
+     * @param string $filename
+     * @param bool $with_eval
+     * @return array
+     * @throws \Exception
+     */
     public function generateExportArray($id, &$filename = "", $with_eval = false){
         if (empty($id)) {
             throw new \Exception('Anr to export is required',412);

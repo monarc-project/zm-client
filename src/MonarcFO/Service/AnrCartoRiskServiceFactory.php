@@ -3,8 +3,17 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Anr Carto Risk Service Factory
+ *
+ * Class AnrCartoRiskServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrCartoRiskServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'entity'=> 'MonarcFO\Model\Entity\Scale',
         'table'=> 'MonarcFO\Model\Table\ScaleTable',

@@ -6,6 +6,12 @@ use MonarcCore\Service\AbstractService;
 use MonarcFO\Model\Table\UserAnrTable;
 use Zend\Http\Header\GenericHeader;
 
+/**
+ * User Role Service
+ *
+ * Class UserRoleService
+ * @package MonarcFO\Service
+ */
 class UserRoleService extends AbstractService
 {
     protected $userAnrCliTable;
@@ -13,7 +19,6 @@ class UserRoleService extends AbstractService
     protected $userRoleTable;
     protected $userTokenTable;
     protected $userRoleEntity;
-
     protected $dependencies = ['user'];
 
     /**
@@ -38,11 +43,23 @@ class UserRoleService extends AbstractService
             ->getQuery()->getResult();
     }
 
+    /**
+     * Get Entity
+     *
+     * @param $id
+     * @return mixed
+     */
     public function getEntity($id)
     {
         return $this->get('userRoleTable')->get($id);
     }
 
+    /**
+     * Get By User Id
+     *
+     * @param $userId
+     * @return array
+     */
     public function getByUserId($userId)
     {
         /** @var UserRoleTable $userRoleTable */
@@ -55,9 +72,14 @@ class UserRoleService extends AbstractService
             ->getQuery()->getResult();
     }
 
+    /**
+     * Get By User Token
+     *
+     * @param $token
+     * @return array
+     * @throws \Exception
+     */
     public function getByUserToken($token) {
-
-        $deb = microtime(true);
 
         if ($token instanceof GenericHeader) {
             $token = $token->getFieldValue();
@@ -95,5 +117,4 @@ class UserRoleService extends AbstractService
             throw new \Exception('No user');
         }
     }
-
 }

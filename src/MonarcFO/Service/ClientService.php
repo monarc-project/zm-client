@@ -5,6 +5,12 @@ use MonarcFO\Model\Entity\Client;
 use MonarcFO\Model\Table\ClientTable;
 use MonarcCore\Service\AbstractService;
 
+/**
+ * Client Service
+ *
+ * Class ClientService
+ * @package MonarcFO\Service
+ */
 class ClientService extends AbstractService
 {
     protected $countryTable;
@@ -13,11 +19,26 @@ class ClientService extends AbstractService
     protected $cityEntity;
     protected $forbiddenFields = ['model_id'];
 
+    /**
+     * Get Total Count
+     *
+     * @return mixed
+     */
     public function getTotalCount()
     {
         return $this->table->count();
     }
 
+    /**
+     * Get Filtered Count
+     *
+     * @param int $page
+     * @param int $limit
+     * @param null $order
+     * @param null $filter
+     * @param null $filterAnd
+     * @return mixed
+     */
     public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         return $this->table->countFiltered($page, $limit, $this->parseFrontendOrder($order),
@@ -25,6 +46,16 @@ class ClientService extends AbstractService
                 'contact_fullname', 'contact_email', 'contact_phone')));
     }
 
+    /**
+     * Get List
+     *
+     * @param int $page
+     * @param int $limit
+     * @param null $order
+     * @param null $filter
+     * @param null $filterAnd
+     * @return mixed
+     */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         return $this->table->fetchAllFiltered(
@@ -68,6 +99,13 @@ class ClientService extends AbstractService
         $this->table->save($entity);
     }
 
+    /**
+     * Update
+     *
+     * @param $id
+     * @param $data
+     * @return bool
+     */
     public function update($id, $data) {
 
         //security
@@ -93,16 +131,24 @@ class ClientService extends AbstractService
         }
     }
 
+    /**
+     * Delete
+     *
+     * @param $id
+     */
     public function delete($id)
     {
         /** @var ClientTable $clientTable */
         $clientTable = $this->table;
 
-        $entity = $clientTable->getEntity($id);
-
         $clientTable->delete($id);
     }
 
+    /**
+     * Het Json Data
+     *
+     * @return array
+     */
     public function getJsonData() {
         $var = get_object_vars($this);
         foreach ($var as &$value) {

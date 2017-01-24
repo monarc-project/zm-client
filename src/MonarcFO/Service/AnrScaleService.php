@@ -10,15 +10,12 @@ use MonarcFO\Model\Entity\Scale;
  */
 class AnrScaleService extends \MonarcCore\Service\AbstractService
 {
-	protected $filterColumns = array( );
-
+	protected $filterColumns = [];
     protected $anrTable;
     protected $userAnrTable;
     protected $AnrCheckStartedService;
     protected $scaleImpactTypeService;
-
     protected $dependencies = ['anr'];
-
     protected $types = [
         Scale::TYPE_IMPACT => 'impact',
         Scale::TYPE_THREAT => 'threat',
@@ -62,6 +59,7 @@ class AnrScaleService extends \MonarcCore\Service\AbstractService
      * @param $data
      * @param bool $last
      * @return mixed
+     * @throws \Exception
      */
     public function create($data, $last = true) {
         $anrId = isset($filterAnd['anr'])?$filterAnd['anr']:null;

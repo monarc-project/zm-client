@@ -17,6 +17,13 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
 	protected $coreServiceAsset;
 	protected $cliServiceAsset;
 
+    /**
+     * Get List Assets
+     *
+     * @param $anrId
+     * @return array
+     * @throws \Exception
+     */
 	public function getListAssets($anrId){
 		$anr = $this->get('anrTable')->getEntity($anrId);
 		if($anr){
@@ -56,6 +63,14 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
 		}
     }
 
+    /**
+     * Get Asset
+     *
+     * @param $anrId
+     * @param $assetId
+     * @return mixed
+     * @throws \Exception
+     */
     public function getAsset($anrId, $assetId){
     	$anr = $this->get('anrTable')->getEntity($anrId);
 		if($anr){

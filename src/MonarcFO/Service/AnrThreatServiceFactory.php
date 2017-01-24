@@ -3,8 +3,15 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Class AnrThreatServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrThreatServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'entity'=> 'MonarcFO\Model\Entity\Threat',
         'table'=> 'MonarcFO\Model\Table\ThreatTable',

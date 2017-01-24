@@ -4,13 +4,23 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractService;
 use MonarcFO\Model\Table\UserAnrTable;
 
+/**
+ * User ANr Service
+ *
+ * Class UserAnrService
+ * @package MonarcFO\Service
+ */
 class UserAnrService extends AbstractService
 {
     protected $anrTable;
     protected $userTable;
-
     protected $dependencies = ['anr', 'user'];
 
+    /**
+     * Get Matrix
+     *
+     * @return array
+     */
     public function getMatrix() {
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
@@ -86,6 +96,13 @@ class UserAnrService extends AbstractService
         ];
     }
 
+    /**
+     * Patch
+     *
+     * @param $id
+     * @param $data
+     * @throws \Exception
+     */
     public function patch($id, $data){
 
         //verify not create a doublon

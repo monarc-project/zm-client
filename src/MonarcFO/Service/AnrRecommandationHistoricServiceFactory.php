@@ -3,8 +3,17 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
 
+/**
+ * Anr REcommandation Historic Service Factory
+ *
+ * Class AnrRecommandationHistoricServiceFactory
+ * @package MonarcFO\Service
+ */
 class AnrRecommandationHistoricServiceFactory extends AbstractServiceFactory
 {
+    /**
+     * @var array
+     */
     protected $ressources = array(
         'entity'=> 'MonarcFO\Model\Entity\RecommandationHistoric',
         'table'=> 'MonarcFO\Model\Table\RecommandationHistoricTable',

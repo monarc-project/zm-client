@@ -27,6 +27,12 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     private $listScales = null;
     private $headers = null;
 
+    /**
+     * Get Carto Real
+     *
+     * @param $anrId
+     * @return array
+     */
     public function getCartoReal($anrId){
         $this->buildListScalesAndHeaders($anrId);
 
