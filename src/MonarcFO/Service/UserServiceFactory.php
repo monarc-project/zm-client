@@ -11,7 +11,7 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class UserServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'table' => '\MonarcFO\Model\Table\UserTable',
         'userAnrTable' => '\MonarcFO\Model\Table\UserAnrTable',
         'userRoleTable' => '\MonarcFO\Model\Table\UserRoleTable',
@@ -20,5 +20,5 @@ class UserServiceFactory extends AbstractServiceFactory
         'userRoleService' => 'MonarcFO\Service\UserRoleService',
         'anrTable' => '\MonarcFO\Model\Table\AnrTable',
         'snapshotCliTable' => '\MonarcFO\Model\Table\SnapshotTable',
-    );
+    ];
 }

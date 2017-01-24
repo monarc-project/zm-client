@@ -23,6 +23,7 @@ class UserAnrService extends AbstractService
      */
     public function getMatrix()
     {
+        //retieve matrix of rights (users and anrs)
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
         $usersAnrs = $userAnrTable->fetchAllObject();
@@ -58,11 +59,10 @@ class UserAnrService extends AbstractService
      */
     public function create($data, $last = true)
     {
-
+        //verify if this right not already exist
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
         $userAnr = $userAnrTable->getEntityByFields(['user' => $data['user'], 'anr' => $data['anr']]);
-
         if (count($userAnr)) {
             throw new \Exception('This right already exist', 412);
         }
@@ -79,7 +79,6 @@ class UserAnrService extends AbstractService
      */
     public function getEntity($id)
     {
-
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
         $userAnr = $userAnrTable->get($id);
@@ -108,8 +107,7 @@ class UserAnrService extends AbstractService
      */
     public function patch($id, $data)
     {
-
-        //verify not create a doublon
+        //verify if right already exist to not create a doublon
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
         $userAnr = $userAnrTable->get($id);

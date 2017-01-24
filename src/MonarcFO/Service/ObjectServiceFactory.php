@@ -14,7 +14,7 @@ class ObjectServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\ObjectService";
 
-    protected $ressources = array(
+    protected $ressources = [
         'table' => '\MonarcFO\Model\Table\ObjectTable',
         'entity' => '\MonarcFO\Model\Entity\Object',
         'anrObjectCategoryEntity' => 'MonarcFO\Model\Entity\AnrObjectCategory',
@@ -31,5 +31,5 @@ class ObjectServiceFactory extends AbstractServiceFactory
         'assetService' => 'MonarcFO\Service\AssetService',
         'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
         'instanceRiskOpService' => 'MonarcFO\Service\AnrInstanceRiskOpService',
-    );
+    ];
 }

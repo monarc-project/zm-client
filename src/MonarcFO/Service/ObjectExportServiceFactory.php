@@ -14,7 +14,7 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\ObjectExportService";
 
-    protected $ressources = array(
+    protected $ressources = [
         'table' => '\MonarcFO\Model\Table\ObjectTable',
         'entity' => '\MonarcFO\Model\Entity\Object',
         'assetExportService' => 'MonarcFO\Service\AssetExportService',
@@ -24,5 +24,5 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
         'anrObjectCategoryTable' => '\MonarcFO\Model\Table\AnrObjectCategoryTable',
         'rolfTagTable' => '\MonarcFO\Model\Table\RolfTagTable',
         'rolfRiskTable' => '\MonarcFO\Model\Table\RolfRiskTable',
-    );
+    ];
 }
