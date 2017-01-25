@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -14,7 +13,13 @@ class ApiAnrInstancesRisksOpController extends ApiAnrAbstractController
 {
     protected $name = 'instances-oprisks';
 
-
+    /**
+     * Update
+     *
+     * @param mixed $id
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function update($id, $data)
     {
         $risk = $this->getService()->update($id, $data);

@@ -1,12 +1,23 @@
 <?php
-
 namespace MonarcFO\Service\Model;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Db Cli Factory
+ *
+ * Class DbCliFactory
+ * @package MonarcFO\Service\Model
+ */
 class DbCliFactory implements FactoryInterface
 {
+    /**
+     * Create Service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return \MonarcCore\Model\Db
+     */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         try {

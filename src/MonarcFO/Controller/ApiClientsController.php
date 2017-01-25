@@ -24,7 +24,7 @@ class ApiClientsController extends AbstractController
 
         $service->create($data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     public function update($id, $data)
@@ -40,7 +40,7 @@ class ApiClientsController extends AbstractController
 
         $service->update($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 }
 

@@ -11,7 +11,7 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrAssetServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Asset',
         'table' => 'MonarcFO\Model\Table\AssetTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -30,5 +30,5 @@ class AnrAssetServiceFactory extends AbstractServiceFactory
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
-    );
+    ];
 }

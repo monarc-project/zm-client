@@ -48,6 +48,6 @@ class ApiAnrRecommandationsRisksValidateController extends ApiAnrAbstractControl
         $service = $this->getService();
         $service->validateFor($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 }

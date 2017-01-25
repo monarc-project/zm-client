@@ -14,7 +14,7 @@ class AmvServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\AmvService";
 
-    protected $ressources = array(
+    protected $ressources = [
         'table' => 'MonarcFO\Model\Table\AmvTable',
         'entity' => 'MonarcFO\Model\Entity\Amv',
         'anrTable' => '\MonarcFO\Model\Table\AnrTable',
@@ -23,5 +23,5 @@ class AmvServiceFactory extends AbstractServiceFactory
         'measureTable' => '\MonarcFO\Model\Table\MeasureTable',
         'threatTable' => '\MonarcFO\Model\Table\ThreatTable',
         'vulnerabilityTable' => '\MonarcFO\Model\Table\VulnerabilityTable',
-    );
+    ];
 }

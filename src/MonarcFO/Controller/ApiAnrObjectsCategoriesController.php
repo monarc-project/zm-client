@@ -68,10 +68,10 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
             $recursiveArray = $this->recursiveArray($objectCategories, null, 0, $fields);
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $this->getService()->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $recursiveArray
-        ));
+        ]);
     }
 
     public function getCleanFields($items, $fields)
@@ -93,9 +93,9 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
 
     /**
      * Create
-     *
      * @param mixed $data
      * @return JsonModel
+     * @throws \Exception
      */
     public function create($data)
     {
@@ -107,11 +107,9 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
 
         $obj = $this->getService()->create($data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'categ' => $obj,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'categ' => $obj,
+        ]);
     }
 }

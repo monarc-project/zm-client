@@ -1,10 +1,24 @@
 <?php
 namespace MonarcFO\Controller;
 
+use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
-abstract class ApiAnrImportAbstractController extends \MonarcCore\Controller\AbstractController
+/**
+ * Api Anr Import Abstract Controller
+ *
+ * Class ApiAnrImportAbstractController
+ * @package MonarcFO\Controller
+ */
+abstract class ApiAnrImportAbstractController extends AbstractController
 {
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function create($data)
     {
         $service = $this->getService();
@@ -22,13 +36,11 @@ abstract class ApiAnrImportAbstractController extends \MonarcCore\Controller\Abs
 
         list($ids, $errors) = $service->importFromFile($anrId, $data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $ids,
-                'errors' => $errors,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $ids,
+            'errors' => $errors,
+        ]);
     }
 
     public function getList()

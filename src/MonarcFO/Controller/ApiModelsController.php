@@ -57,10 +57,10 @@ class ApiModelsController extends AbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities
-        ));
+        ]);
     }
 
 

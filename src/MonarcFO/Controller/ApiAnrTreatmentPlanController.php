@@ -37,9 +37,9 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             $this->name => $entities
-        ));
+        ]);
     }
 
     /**
@@ -92,7 +92,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
         $service = $this->getService();
         $service->initPosition($anrId);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
 

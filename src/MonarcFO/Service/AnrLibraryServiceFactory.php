@@ -14,11 +14,11 @@ class AnrLibraryServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\AnrObjectService";
 
-    protected $ressources = array(
+    protected $ressources = [
         'table' => 'MonarcFO\Model\Table\ObjectTable',
         'entity' => 'MonarcFO\Model\Entity\Object',
         'objectObjectTable' => 'MonarcFO\Model\Table\ObjectObjectTable',
         'objectService' => 'MonarcFO\Service\ObjectService',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
-    );
+    ];
 }

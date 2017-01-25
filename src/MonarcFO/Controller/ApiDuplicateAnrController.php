@@ -20,12 +20,10 @@ class ApiDuplicateAnrController extends \MonarcCore\Controller\AbstractControlle
 
         $id = $service->duplicateAnr(intval($data['anr']), Object::SOURCE_CLIENT, null, $data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 }
 

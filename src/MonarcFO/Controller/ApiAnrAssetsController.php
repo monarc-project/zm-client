@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -14,4 +13,3 @@ class ApiAnrAssetsController extends ApiAnrAbstractController
 {
     protected $name = 'assets';
 }
-

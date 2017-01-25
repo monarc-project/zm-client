@@ -11,7 +11,7 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrCartoRiskServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Scale',
         'table' => 'MonarcFO\Model\Table\ScaleTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -20,5 +20,5 @@ class AnrCartoRiskServiceFactory extends AbstractServiceFactory
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'instanceConsequenceTable' => 'MonarcFO\Model\Table\InstanceConsequenceTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
-    );
+    ];
 }

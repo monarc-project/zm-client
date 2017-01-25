@@ -34,12 +34,10 @@ class ApiSnapshotRestoreController extends ApiAnrAbstractController
         $service = $this->getService();
         $newId = $service->restore($anrId, $id);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $newId,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $newId,
+        ]);
     }
 
     public function delete($id)

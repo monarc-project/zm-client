@@ -39,22 +39,22 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
             $rolfRisk['categories']->initialize();
             $rolfCategories = $rolfRisk['categories']->getSnapshot();
-            $rolfRisks[$key]['categories'] = array();
+            $rolfRisks[$key]['categories'] = [];
             foreach ($rolfCategories as $rolfCategory) {
                 $rolfRisks[$key]['categories'][] = $rolfCategory->getJsonArray();
             }
 
             $rolfRisk['tags']->initialize();
             $rolfTags = $rolfRisk['tags']->getSnapshot();
-            $rolfRisks[$key]['tags'] = array();
+            $rolfRisks[$key]['tags'] = [];
             foreach ($rolfTags as $rolfTag) {
                 $rolfRisks[$key]['tags'][] = $rolfTag->getJsonArray();
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $category, $tag, $anr),
             $this->name => $rolfRisks
-        ));
+        ]);
     }
 }

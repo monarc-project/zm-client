@@ -28,12 +28,10 @@ class ApiAnrObjectsDuplicationController extends ApiAnrAbstractController
         if (isset($data['id'])) {
             $id = $this->getService()->duplicate($data, AbstractEntity::FRONT_OFFICE);
 
-            return new JsonModel(
-                array(
-                    'status' => 'ok',
-                    'id' => $id,
-                )
-            );
+            return new JsonModel([
+                'status' => 'ok',
+                'id' => $id,
+            ]);
         } else {
             throw new \Exception('Object to duplicate is required');
         }

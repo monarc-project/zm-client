@@ -11,7 +11,7 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrCheckStartedServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Anr',
         'table' => 'MonarcFO\Model\Table\AnrTable',
         'modelTable' => 'MonarcCore\Model\Table\ModelTable',
@@ -19,5 +19,5 @@ class AnrCheckStartedServiceFactory extends AbstractServiceFactory
         'instanceConsequenceTable' => 'MonarcFO\Model\Table\InstanceConsequenceTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
         'instanceRiskOpTable' => 'MonarcFO\Model\Table\InstanceRiskOpTable',
-    );
+    ];
 }

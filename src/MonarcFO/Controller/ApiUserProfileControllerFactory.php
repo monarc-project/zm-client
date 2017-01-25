@@ -4,8 +4,8 @@ namespace MonarcFO\Controller;
 
 class ApiUserProfileControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
 {
-    protected $serviceName = array(
+    protected $serviceName = [
         'service' => '\MonarcCore\Service\UserProfileService',
         'connectedUser' => '\MonarcCore\Service\ConnectedUserService',
-    );
+    ];
 }

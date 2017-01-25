@@ -1,9 +1,7 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-use MonarcCore\Model\Entity\AbstractEntity;
-use MonarcCore\Service\DeliveriesModelsService;
+use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -12,10 +10,17 @@ use Zend\View\Model\JsonModel;
  * Class ApiAnrDeliverableController
  * @package MonarcFO\Controller
  */
-class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractController
+class ApiAnrDeliverableController extends AbstractController
 {
     protected $name = 'deliverable';
 
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return \Zend\Stdlib\ResponseInterface
+     * @throws \Exception
+     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -60,6 +65,13 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
         }
     }
 
+    /**
+     * Get
+     *
+     * @param mixed $id
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -73,6 +85,12 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
         return new JsonModel($result);
     }
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -132,6 +150,4 @@ class ApiAnrDeliverableController extends \MonarcCore\Controller\AbstractControl
     {
         return $this->methodNotAllowed();
     }
-
-
 }

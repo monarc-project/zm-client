@@ -21,10 +21,10 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
             throw new \Exception('Anr id missing', 412);
         }
         $objects = $this->getService()->getCommonObjects($anrId);
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => count($objects),
             $this->name => $objects,
-        ));
+        ]);
     }
 
     /**
@@ -33,6 +33,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
      * @param mixed $id
      * @param mixed $data
      * @return JsonModel
+     * @throws \Exception
      */
     public function patch($id, $data)
     {
@@ -43,7 +44,10 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
         $data['anr'] = $anrId;
         $newid = $this->getService()->importFromCommon($id, $data);
 
-        return new JsonModel(array('status' => 'ok', 'id' => $newid));
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $newid
+        ]);
     }
 
     /**

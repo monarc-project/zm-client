@@ -72,7 +72,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
      * @param array $objectsCache
      * @return bool
      */
-    public function importFromArray($data, $anr, &$objectsCache = array())
+    public function importFromArray($data, $anr, &$objectsCache = [])
     {
         if (isset($data['type']) && $data['type'] == 'asset' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()

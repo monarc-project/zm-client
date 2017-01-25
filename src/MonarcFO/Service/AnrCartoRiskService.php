@@ -43,6 +43,12 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         ];
     }
 
+    /**
+     * Get Carto Targeted
+     *
+     * @param $anrId
+     * @return array|null
+     */
     public function getCartoTargeted($anrId)
     {
         $this->buildListScalesAndHeaders($anrId);
@@ -60,6 +66,11 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Build List Scales And Headers
+     *
+     * @param $anrId
+     */
     public function buildListScalesAndHeaders($anrId)
     {
         if (!$this->anr || $this->anr->get('id') != $anrId) {
@@ -97,6 +108,12 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Get Counters Risks
+     *
+     * @param string $mode
+     * @return array
+     */
     public function getCountersRisks($mode = 'raw')
     {
         // On croise avec les données des risques
@@ -183,6 +200,12 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     /*
     Provient de l'ancienne version, on ne remonte que les valeurs '' / 0 / 1 / 2, les couleurs seront traitées par le FE
     */
+    /**
+     * Get Color
+     *
+     * @param $val
+     * @return int|string
+     */
     private function getColor($val)
     {
         if ($val == -1 || is_null($val)) return '';

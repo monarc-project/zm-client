@@ -63,10 +63,10 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => count($entities),
             $this->name => $entities
-        ));
+        ]);
     }
 
     public function update($id, $data)

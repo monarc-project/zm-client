@@ -52,12 +52,10 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
 
         $id = $this->getService()->createSpecificRiskOp($data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 
     public function deleteList($data)

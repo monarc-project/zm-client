@@ -36,35 +36,35 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        $filterJoin = array(
-            array(
+        $filterJoin = [
+            [
                 'as' => 'a',
                 'rel' => 'asset',
-            ),
-            array(
+            ],
+            [
                 'as' => 'th',
                 'rel' => 'threat',
-            ),
-            array(
+            ],
+            [
                 'as' => 'v',
                 'rel' => 'vulnerability',
-            ),
-        );
-        $filterLeft = array(
-            array(
+            ],
+        ];
+        $filterLeft = [
+            [
                 'as' => 'm1',
                 'rel' => 'measure1',
-            ),
-            array(
+            ],
+            [
                 'as' => 'm2',
                 'rel' => 'measure2',
-            ),
-            array(
+            ],
+            [
                 'as' => 'm3',
                 'rel' => 'measure3',
-            ),
-        );
-        $filtersCol = array();
+            ],
+        ];
+        $filtersCol = [];
         $filtersCol[] = 'a.code';
         $filtersCol[] = 'a.label1';
         $filtersCol[] = 'a.label2';

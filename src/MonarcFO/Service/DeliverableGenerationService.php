@@ -1057,7 +1057,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $part = new \PhpOffice\PhpWord\Writer\Word2007\Part\Document();
         $part->setParentWriter(new Word2007($phpWord));
         $docXml = $part->write();
-        $matches = array();
+        $matches = [];
 
         if ($useBody === true) {
             $regex = '/<w:body>(.*)<w:sectPr>/is';

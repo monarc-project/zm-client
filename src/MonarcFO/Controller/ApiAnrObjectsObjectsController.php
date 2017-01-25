@@ -36,7 +36,7 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
             $service->moveObject($id, $data['move']);
         }
 
-        return new JsonModel(array("status" => "ok"));
+        return new JsonModel(['status' => 'ok']);
     }
 
     public function patch($id, $data)
@@ -61,11 +61,9 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
 
         $id = $this->getService()->create($data, true, AbstractEntity::FRONT_OFFICE);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 }

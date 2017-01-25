@@ -3,10 +3,22 @@ namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Anr Assets Import common Controller
+ *
+ * Class ApiAnrAssetsImportCommonController
+ * @package MonarcFO\Controller
+ */
 class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
 {
     protected $name = "assets";
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function getList()
     {
         $service = $this->getService();
@@ -18,12 +30,19 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
 
         $entities = $service->getListAssets($anrId);
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => count($entities),
             $this->name => $entities
-        ));
+        ]);
     }
 
+    /**
+     * Get
+     *
+     * @param mixed $id
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function get($id)
     {
         $service = $this->getService();
@@ -38,6 +57,13 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
         return new JsonModel($entitie);
     }
 
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -49,12 +75,9 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
         }
         $id = $this->getService()->importAsset($anrId, $data['asset']);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 }
-

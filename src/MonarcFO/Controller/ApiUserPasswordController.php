@@ -38,7 +38,7 @@ class ApiUserPasswordController extends AbstractController
             throw  new \Exception('Password must be the same', 422);
         }
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     public function patch($token, $data)

@@ -12,10 +12,7 @@ use \Zend\ServiceManager\ServiceLocatorInterface;
  */
 class AnrInstanceServiceFactory extends AbstractServiceFactory
 {
-    /**
-     * @var array
-     */
-    protected $ressources = array(
+    protected $ressources = [
         // Tables & Entities
         'table' => 'MonarcFO\Model\Table\InstanceTable',
         'entity' => 'MonarcFO\Model\Entity\Instance',
@@ -46,5 +43,5 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         // Export (Services)
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',
         'amvService' => 'MonarcFO\Service\AmvService',
-    );
+    ];
 }

@@ -11,16 +11,12 @@ use MonarcCore\Controller\AbstractController;
  */
 class ApiAnrExportController extends AbstractController
 {
-    public function get($id)
-    {
-        $this->methodNotAllowed();
-    }
-
-    public function getList()
-    {
-        $this->methodNotAllowed();
-    }
-
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return \Zend\Stdlib\ResponseInterface
+     */
     public function create($data)
     {
         $output = $this->getService()->exportAnr($data);
@@ -34,6 +30,16 @@ class ApiAnrExportController extends AbstractController
             ->addHeaderLine('Content-Disposition', 'attachment; filename="' . (empty($data['filename']) ? $data['id'] : $data['filename']) . '.bin"');
 
         return $this->response;
+    }
+
+    public function get($id)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function getList()
+    {
+        $this->methodNotAllowed();
     }
 
     public function delete($id)

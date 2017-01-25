@@ -2,7 +2,6 @@
 namespace MonarcFO\Service;
 
 use \MonarcCore\Service\AbstractServiceFactory;
-use \Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Anr Instance Consequence Service Factory
@@ -14,7 +13,7 @@ class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\InstanceConsequenceService";
 
-    protected $ressources = array(
+    protected $ressources = [
         'table' => 'MonarcFO\Model\Table\InstanceConsequenceTable',
         'entity' => 'MonarcFO\Model\Entity\InstanceConsequence',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -22,5 +21,5 @@ class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
         'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',
         'scaleImpactTypeTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
-    );
+    ];
 }
