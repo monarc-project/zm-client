@@ -1,8 +1,6 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-use MonarcFO\Service\AnrRecommandationRiskService;
 use Zend\View\Model\JsonModel;
 
 /**

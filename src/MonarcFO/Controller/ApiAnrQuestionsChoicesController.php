@@ -1,13 +1,6 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-use MonarcCore\Model\Entity\AbstractEntity;
-use MonarcCore\Service\QuestionChoiceService;
-use MonarcFO\Model\Entity\QuestionChoice;
-use MonarcFO\Model\Table\AnrTable;
-use MonarcFO\Model\Table\QuestionChoiceTable;
-use MonarcFO\Model\Table\QuestionTable;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -38,5 +31,4 @@ class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
 
         return new JsonModel(['status' => 'ok']);
     }
-
 }

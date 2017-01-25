@@ -1,9 +1,15 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-class ApiConfigControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
+use MonarcCore\Controller\AbstractControllerFactory;
+
+/**
+ * Api Config Controlelr Factory
+ *
+ * Class ApiConfigControllerFactory
+ * @package MonarcFO\Controller
+ */
+class ApiConfigControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = 'MonarcCore\Service\ConfigService';
 }
-

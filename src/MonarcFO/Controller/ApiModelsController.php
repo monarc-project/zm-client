@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Controller\AbstractController;
@@ -63,7 +62,6 @@ class ApiModelsController extends AbstractController
         ]);
     }
 
-
     /**
      * Get
      *
@@ -79,4 +77,3 @@ class ApiModelsController extends AbstractController
         return new JsonModel($entity);
     }
 }
-

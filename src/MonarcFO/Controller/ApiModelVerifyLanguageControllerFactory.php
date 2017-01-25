@@ -1,8 +1,15 @@
 <?php
 namespace MonarcFO\Controller;
 
-class ApiModelVerifyLanguageControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
+use MonarcCore\Controller\AbstractControllerFactory;
+
+/**
+ * Api Verify Language Controller Factory
+ *
+ * Class ApiModelVerifyLanguageControllerFactory
+ * @package MonarcFO\Controller
+ */
+class ApiModelVerifyLanguageControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = '\MonarcFO\Service\AnrService';
 }
-

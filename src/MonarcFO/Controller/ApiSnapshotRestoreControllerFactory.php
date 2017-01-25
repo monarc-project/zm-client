@@ -1,8 +1,15 @@
 <?php
 namespace MonarcFO\Controller;
 
-class ApiSnapshotRestoreControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
+use MonarcCore\Controller\AbstractControllerFactory;
+
+/**
+ * Api Snapshots Restore Controller Factory
+ *
+ * Class ApiSnapshotRestoreControllerFactory
+ * @package MonarcFO\Controller
+ */
+class ApiSnapshotRestoreControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = '\MonarcFO\Service\SnapshotService';
 }
-

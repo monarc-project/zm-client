@@ -3,6 +3,12 @@ namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Snapshot Controller
+ *
+ * Class ApiSnapshotController
+ * @package MonarcFO\Controller
+ */
 class ApiSnapshotController extends ApiAnrAbstractController
 {
     protected $name = 'snapshots';
@@ -49,4 +55,3 @@ class ApiSnapshotController extends ApiAnrAbstractController
         ]);
     }
 }
-

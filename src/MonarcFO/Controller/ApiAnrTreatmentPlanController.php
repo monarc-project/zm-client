@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcFO\Service\AnrRecommandationRiskService;
@@ -94,7 +93,6 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
 
         return new JsonModel(['status' => 'ok']);
     }
-
 
     public function update($id, $data)
     {

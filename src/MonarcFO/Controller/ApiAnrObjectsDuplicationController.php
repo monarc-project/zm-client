@@ -1,11 +1,7 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use MonarcCore\Model\Entity\Object;
-use MonarcCore\Service\ObjectObjectService;
-use MonarcCore\Service\ObjectService;
 use Zend\View\Model\JsonModel;
 
 /**

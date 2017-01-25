@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -14,5 +13,4 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
 {
     protected $name = 'recommandations';
     protected $dependencies = ['anr'];
-
 }

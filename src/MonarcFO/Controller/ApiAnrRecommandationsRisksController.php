@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcFO\Service\AnrRecommandationRiskService;

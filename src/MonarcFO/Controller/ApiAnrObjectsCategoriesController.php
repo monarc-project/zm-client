@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -16,9 +15,10 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
     protected $dependencies = ['parent', 'root', 'anr'];
 
     /**
-     * Get list
+     * Get List
      *
      * @return JsonModel
+     * @throws \Exception
      */
     public function getList()
     {
@@ -74,6 +74,13 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
         ]);
     }
 
+    /**
+     * Get Clean Fields
+     *
+     * @param $items
+     * @param $fields
+     * @return array
+     */
     public function getCleanFields($items, $fields)
     {
         $output = [];

@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Model\Entity\AbstractEntity;

@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -14,6 +13,12 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
 {
     protected $name = 'objects';
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -55,6 +60,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
      *
      * @param mixed $id
      * @return JsonModel
+     * @throws \Exception
      */
     public function get($id)
     {

@@ -1,8 +1,15 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-class ApiUserProfileControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
+use MonarcCore\Controller\AbstractControllerFactory;
+
+/**
+ * Api User Profile Controller Factory
+ *
+ * Class ApiUserProfileControllerFactory
+ * @package MonarcFO\Controller
+ */
+class ApiUserProfileControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = [
         'service' => '\MonarcCore\Service\UserProfileService',

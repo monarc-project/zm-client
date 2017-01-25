@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -16,6 +15,13 @@ class ApiAnrRisksController extends ApiAnrAbstractController
 
     protected $dependencies = [];
 
+    /**
+     * Get
+     *
+     * @param mixed $id
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -35,6 +41,12 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         }
     }
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -54,21 +66,11 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         }
     }
 
-    public function deleteList($data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    public function update($id, $data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    public function patch($id, $data)
-    {
-        $this->methodNotAllowed();
-    }
-
+    /**
+     * Parse Params
+     *
+     * @return array
+     */
     protected function parseParams()
     {
         $keywords = trim($this->params()->fromQuery("keywords", ''));
@@ -88,5 +90,20 @@ class ApiAnrRisksController extends ApiAnrAbstractController
             'page' => $page,
             'limit' => $limit
         ];
+    }
+
+    public function deleteList($data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function update($id, $data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function patch($id, $data)
+    {
+        $this->methodNotAllowed();
     }
 }
