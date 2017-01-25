@@ -14,9 +14,9 @@ class AssetExportServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\AssetExportService";
 
-    protected $ressources = array(
+    protected $ressources = [
         'table' => 'MonarcFO\Model\Table\AssetTable',
         'entity' => 'MonarcFO\Model\Entity\Asset',
         'amvService' => 'MonarcFO\Service\AmvService', // Ça devrait le faire
-    );
+    ];
 }

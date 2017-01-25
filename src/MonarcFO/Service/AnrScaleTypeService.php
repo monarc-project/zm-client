@@ -47,11 +47,9 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-
-        $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
-
         $types = $this->getTypes();
 
+        $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
         foreach ($scales as $key => $scale) {
             if (isset($scale['type'])) {
                 $scales[$key]['type'] = $types[$scale['type']];
@@ -71,9 +69,6 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true)
     {
-
-        $anrId = $data['anr'];
-
         if (!isset($data['isSys'])) {
             $data['isSys'] = 0;
         }
@@ -83,6 +78,8 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         if (!isset($data['type'])) {
             $data['type'] = 9;
         }
+
+        $anrId = $data['anr'];
 
         //$entity = $this->get('entity');
         $class = $this->get('entity');

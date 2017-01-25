@@ -11,10 +11,10 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrRecommandationServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Recommandation',
         'table' => 'MonarcFO\Model\Table\RecommandationTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
-    );
+    ];
 }

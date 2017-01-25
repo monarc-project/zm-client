@@ -101,15 +101,17 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-
+        //retrieve connected user
         /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
 
+        //retrieve roles for connected user
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
         $userRoles = $userRoleTable->getEntityByFields(['user' => $userArray['id']]);
 
+        //verify if connected user is admin
         $isSuperAdmin = false;
         foreach ($userRoles as $userRole) {
             if ($userRole->role == 'superadminfo') {
@@ -118,8 +120,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        //retrieve connected user anrs
         $filterAnd['id'] = [];
-
         if (!$isSuperAdmin) {
             $anrs = $this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id']]);
             foreach ($anrs as $a) {
@@ -132,6 +134,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        //remove snapshots of connected user anrs
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $snapshots = $snapshotCliTable->getEntityByFields(['anr' => $filterAnd['id']]);
@@ -139,6 +142,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             unset($filterAnd['id'][$snapshot->get('anr')->get('id')]);
         }
 
+        //retrieve anrs information
         $anrs = $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
@@ -150,6 +154,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         $user = $userCliTable->get($userArray['id']);
         foreach ($anrs as &$anr) {
+            //verify if this is the last current user's anr
             if (isset($user['currentAnr']) && $anr['id'] == $user['currentAnr']->get('id')) {
                 $anr['isCurrentAnr'] = 1;
             }
@@ -169,7 +174,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-
         return count($this->getList($page, $limit, $order, $filter, $filterAnd));
     }
 
@@ -179,12 +183,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function getAnrs()
     {
-
-        /** @var \MonarcFO\Model\Table\AnrTable $anrCliTable */
-        $anrCliTable = $this->get('anrCliTable');
-        $anrs = $anrCliTable->fetchAll();
-
-        return $anrs;
+        return $this->get('anrCliTable')->fetchAll();
     }
 
     /**
@@ -196,7 +195,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function getEntity($id)
     {
-
         $anr = $this->get('table')->get($id);
 
         //retrieve snapshot
@@ -236,7 +234,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function createFromModelToClient($data)
     {
-
         //retrieve model information
         /** @var ModelTable $modelTable */
         $modelTable = $this->get('modelTable');
@@ -292,7 +289,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         try {
-
             //duplicate anr
             $newAnr = new \MonarcFO\Model\Entity\Anr($anr);
             $newAnr->setId(null);
@@ -933,15 +929,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function setUserCurrentAnr($anrId)
     {
-        /** @var AnrTable $anrCliTable */
-        $anrCliTable = $this->get('anrCliTable');
-
+        //retrieve connected user
         /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
         $currentUser = $userCliTable->getConnectedUser();
 
+        //retrieve connected user information
         /** @var User $user */
         $user = $userCliTable->getEntity($currentUser['id']);
+
+        //record last anr to user
+        /** @var AnrTable $anrCliTable */
+        $anrCliTable = $this->get('anrCliTable');
         $user->set('currentAnr', $anrCliTable->getEntity($anrId));
         $userCliTable->save($user);
     }
@@ -955,13 +954,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function getParentsCategoryIds($category, &$categoriesIds)
     {
-
         if ($category->parent) {
             $categoriesIds[] = $category->parent->id;
             $this->getParentsCategoryIds($category->parent, $categoriesIds);
-        }
 
-        return $categoriesIds;
+            return $categoriesIds;
+        } else {
+            return [];
+        }
     }
 
     /**
@@ -974,7 +974,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function getColor($anr, $value, $classes = ['green', 'orange', 'alerte'])
     {
-
         if ($value <= $anr->get('seuil1')) {
             return $classes[0];
         } else if ($value <= $anr->get('seuil2')) {
@@ -1031,12 +1030,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $entity->get('label' . $this->getLanguage()));
 
-        $return = array(
+        $return = [
             'type' => 'anr',
             'version' => $this->getVersion(),
-            'instances' => array(),
+            'instances' => [],
             'with_eval' => $with_eval,
-        );
+        ];
 
         $instanceService = $this->get('instanceService');
         $table = $this->get('instanceCliTable');
@@ -1049,14 +1048,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         if ($with_eval) {
             // scales
-            $return['scales'] = array();
+            $return['scales'] = [];
             $scaleTable = $this->get('scaleCliTable');
             $scales = $scaleTable->getEntityByFields(['anr' => $entity->get('id')]);
-            $scalesArray = array(
+            $scalesArray = [
                 'min' => 'min',
                 'max' => 'max',
                 'type' => 'type',
-            );
+            ];
             foreach ($scales as $s) {
                 $return['scales'][$s->type] = $s->getJsonArray($scalesArray);
             }
@@ -1071,6 +1070,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function delete($id)
     {
+        //retrieve and delete snapshots associated to anr
         $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
         foreach ($snapshots as $s) {
             if (!empty($s)) {
@@ -1089,7 +1089,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function verifyLanguage($modelId)
     {
-
         $languages = [1, 2, 3, 4];
         $success = [];
         foreach ($languages as $lang) {

@@ -229,10 +229,10 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         // FILTER: kind_of_measure ==
         if (isset($params['kindOfMeasure'])) {
-            if($params['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+            if ($params['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
                 $sql .= " AND (ir.kind_of_measure IS NULL OR ir.kind_of_measure = :kom) ";
                 $queryParams[':kom'] = \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED;
-            }else{
+            } else {
                 $sql .= " AND ir.kind_of_measure = :kom ";
                 $queryParams[':kom'] = $params['kindOfMeasure'];
             }
@@ -343,7 +343,6 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true)
     {
-
         $data['specific'] = 1;
 
         // Check that we don't already have a risk with this vuln/threat/instance combo
@@ -368,7 +367,6 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
-
         /** @var AnrTable $table */
         $table = $this->get('table');
         $id = $table->save($entity, $last);
@@ -388,7 +386,6 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         return $id;
     }
-
 
     /**
      * Delete
@@ -418,7 +415,6 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
      */
     public function deleteFromAnr($id, $anrId = null)
     {
-
         $entity = $this->get('table')->getEntity($id);
 
         if (!$entity->specific) {

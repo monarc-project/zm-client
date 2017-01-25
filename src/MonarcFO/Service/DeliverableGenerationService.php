@@ -110,6 +110,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         /** @var DeliveryTable $table */
         $table = $this->get('table');
 
+        //if typedoc is specify, retrieve only last delivery of typedoc else, retrieve last delivery for each typedoc
         if (!empty($typeDoc)) {
             $deliveries = $table->getEntityByFields(['anr' => $anrId, 'typedoc' => $typeDoc], ['createdAt' => 'DESC']);
             $lastDelivery = null;
@@ -197,24 +198,38 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->generateDeliverableWithValuesAndModel($model->get('path' . $anr->language), $values);
     }
 
+    /**
+     * Generate Deliverable With Values And Model
+     *
+     * @param $modelPath
+     * @param $values
+     * @return string
+     * @throws \Exception
+     */
     protected function generateDeliverableWithValuesAndModel($modelPath, $values)
     {
+        //verify template exist
         if (!file_exists($modelPath)) {
             throw new \Exception("Model path not found: " . $modelPath);
         }
 
+        //create word
         $word = new TemplateProcessor($modelPath);
-
         foreach ($values as $key => $value) {
             $word->setValue($key, $value);
         }
-
         $pathTmp = "/tmp/" . uniqid("", true) . "_" . microtime(true) . ".docx";
         $word->saveAs($pathTmp);
 
         return $pathTmp;
     }
 
+    /**
+     * Get Model Type
+     *
+     * @param $modelCategory
+     * @return string
+     */
     protected function getModelType($modelCategory)
     {
         switch ($modelCategory) {
@@ -229,6 +244,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Build Values
+     *
+     * @param $anr
+     * @param $modelCategory
+     * @return array
+     */
     protected function buildValues($anr, $modelCategory)
     {
         switch ($modelCategory) {
@@ -243,6 +265,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Build Context Validation Values
+     *
+     * @param $anr
+     * @return array
+     */
     protected function buildContextValidationValues($anr)
     {
         // Values read from database
@@ -559,6 +587,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
+    /**
+     * Build Context Modeling Values
+     *
+     * @param $anr
+     * @return array
+     */
     protected function buildContextModelingValues($anr)
     {
         // Models are incremental, so use values from level-1 model
@@ -570,15 +604,19 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
+    /**
+     * Build Risk Assessment Values
+     *
+     * @param $anr
+     * @return array
+     */
     protected function buildRiskAssessmentValues($anr)
     {
         // Models are incremental, so use values from level-2 model
         $values = $this->buildContextModelingValues($anr);
 
         $values['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
-
         $values['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
-
         $values['RISKS_RECO'] = $this->generateRisksPlan($anr, false);
         $values['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
         $values['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
@@ -586,6 +624,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
+    /**
+     * Generate Risks Graph
+     *
+     * @param $anr
+     * @return string
+     */
     protected function generateRisksGraph($anr)
     {
         $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
@@ -635,6 +679,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $allWordXml;
     }
 
+    /**
+     * Generate Table Audit
+     *
+     * @param $anr
+     * @return mixed|string
+     */
     protected function generateTableAudit($anr)
     {
         $query = $this->instanceRiskTable->getRepository()->createQueryBuilder('ir');
@@ -703,6 +753,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Get Risks Distribution
+     *
+     * @param $anr
+     * @return string
+     */
     protected function getRisksDistribution($anr)
     {
         $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
@@ -724,6 +780,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             '<li>' . sprintf('%d risque(s) faible(s) négligeables', $distrib[0]) . '</li></ul>';
     }
 
+    /**
+     * Generate Risks Plan
+     *
+     * @param $anr
+     * @param bool $full
+     * @return mixed|string
+     */
     protected function generateRisksPlan($anr, $full = false)
     {
         $recos = $this->recommandationService->getList(1, 0, null, null, ['anr' => $anr->id]);
@@ -816,6 +879,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
+    /**
+     * Generate Impacts Appreciation
+     *
+     * @param $anr
+     * @return mixed|string
+     */
     protected function generateImpactsAppreciation($anr)
     {
         // TODO: C'est moche, optimiser
@@ -856,6 +925,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
+    /**
+     * Generate Threats Table
+     *
+     * @param $anr
+     * @param bool $fullGen
+     * @return mixed|string
+     */
     protected function generateThreatsTable($anr, $fullGen = false)
     {
         $threats = $this->threatService->getList(1, 0, null, null, ['anr' => $anr->id]);
@@ -923,12 +999,23 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
+    /**
+     * Get Company Name
+     *
+     * @return mixed
+     */
     protected function getCompanyName()
     {
         $client = current($this->clientTable->fetchAll());
         return $client['name'];
     }
 
+    /**
+     * Generate Word Xml Front Html
+     *
+     * @param $input
+     * @return mixed
+     */
     protected function generateWordXmlFromHtml($input)
     {
         // Portion Copyright © Netlor SAS - 2015
@@ -957,6 +1044,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         );
     }
 
+    /**
+     * Get Word Xml From Word Object
+     *
+     * @param $phpWord
+     * @param bool $useBody
+     * @return mixed|string
+     */
     protected function getWordXmlFromWordObject($phpWord, $useBody = true)
     {
         // Portion Copyright © Netlor SAS - 2015

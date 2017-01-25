@@ -9,7 +9,7 @@ namespace MonarcFO\Service;
  */
 class AnrScaleTypeServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'table' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
         'entity' => 'MonarcFO\Model\Entity\ScaleImpactType',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -17,5 +17,5 @@ class AnrScaleTypeServiceFactory extends \MonarcCore\Service\AbstractServiceFact
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
         'instanceConsequenceService' => 'MonarcFO\Service\AnrInstanceConsequenceService'
-    );
+    ];
 }

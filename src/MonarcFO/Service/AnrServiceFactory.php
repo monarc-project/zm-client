@@ -11,8 +11,7 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
-
+    protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Anr',
         'table' => 'MonarcFO\Model\Table\AnrTable',
 
@@ -78,5 +77,5 @@ class AnrServiceFactory extends AbstractServiceFactory
 
         // export
         'instanceService' => '\MonarcFO\Service\AnrInstanceService',
-    );
+    ];
 }
