@@ -1,8 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\ThemeSuperclass;
 
 /**
  * Theme
@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class Theme extends \MonarcCore\Model\Entity\ThemeSuperclass
+class Theme extends ThemeSuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr

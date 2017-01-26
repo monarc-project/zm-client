@@ -1,21 +1,17 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
-use MonarcCore\Model\Entity\AbstractEntity;
 use MonarcCore\Model\Entity\UserTokenSuperClass;
-use Zend\InputFilter\InputFilterInterface;
-
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * User Token
  *
- * @ORM\Table(name="user_tokens")
+ * @ORM\Table(name="user_tokens", indexes={
+ *      @ORM\Index(name="user_id", columns={"user_id"})
+ * })
  * @ORM\Entity
  */
 class UserToken extends UserTokenSuperClass
 {
-
 }
-

@@ -1,7 +1,6 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Service\AbstractService;
 
 /**

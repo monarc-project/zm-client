@@ -1,8 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\ObjectSuperClass;
 
 /**
  * Object
@@ -15,7 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class Object extends \MonarcCore\Model\Entity\ObjectSuperClass
+class Object extends ObjectSuperClass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr

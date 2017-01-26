@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -48,4 +47,3 @@ class ScaleComment extends ScaleCommentSuperClass
     protected $scaleImpactType;
 
 }
-

@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -146,4 +145,3 @@ class AnrObjectCategory extends AbstractEntity
         return $this->inputFilter;
     }
 }
-

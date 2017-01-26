@@ -36,4 +36,3 @@ class ScaleImpactType extends ScaleImpactTypeSuperClass
      */
     protected $scale;
 }
-

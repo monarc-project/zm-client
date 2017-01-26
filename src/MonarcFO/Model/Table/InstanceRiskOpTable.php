@@ -1,13 +1,25 @@
 <?php
 namespace MonarcFO\Model\Table;
 
+/**
+ * Class InstanceRiskOpTable
+ * @package MonarcFO\Model\Table
+ */
 class InstanceRiskOpTable extends \MonarcCore\Model\Table\InstanceRiskOpTable
 {
+    /**
+     * InstanceRiskOpTable constructor.
+     * @param \MonarcCore\Model\Db $dbService
+     */
     public function __construct(\MonarcCore\Model\Db $dbService)
     {
         parent::__construct($dbService, '\MonarcFO\Model\Entity\InstanceRiskOp');
     }
 
+    /**
+     * @param $anrId
+     * @return bool
+     */
     public function started($anrId)
     {
         $qb = $this->getRepository()->createQueryBuilder('t');

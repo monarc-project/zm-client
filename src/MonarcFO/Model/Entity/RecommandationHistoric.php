@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -274,4 +273,3 @@ class RecommandationHistoric extends AbstractEntity
         return $this;
     }
 }
-

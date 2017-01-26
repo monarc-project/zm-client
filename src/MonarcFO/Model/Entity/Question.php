@@ -1,8 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\QuestionSuperclass;
 
 /**
  * Question
@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="questions")
  * @ORM\Entity
  */
-class Question extends \MonarcCore\Model\Entity\QuestionSuperclass
+class Question extends QuestionSuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -73,7 +73,10 @@ class Question extends \MonarcCore\Model\Entity\QuestionSuperclass
         return $this;
     }
 
-    protected $parameters = array(
+    /**
+     * @var array
+     */
+    protected $parameters = [
         'implicitPosition' => ['field' => 'anr']
-    );
+    ];
 }

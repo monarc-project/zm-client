@@ -2,16 +2,17 @@
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\RolfCategorySuperclass;
 
 /**
- * Thme
+ * Rolf Category
  *
  * @ORM\Table(name="rolf_categories", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"})
  * })
  * @ORM\Entity
  */
-class RolfCategory extends \MonarcCore\Model\Entity\RolfCategorySuperclass
+class RolfCategory extends RolfCategorySuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr

@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -327,48 +326,49 @@ class RecommandationRisk extends AbstractEntity
         return $this;
     }
 
+    /**
+     * @param bool $partial
+     * @return mixed
+     */
     public function getInputFilter($partial = true)
     {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'anr',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'recommandation',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'risk',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'op',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-                'validators' => array(
-                    array(
+                'validators' => [
+                    [
                         'name' => 'InArray',
-                        'options' => array(
+                        'options' => [
                             'haystack' => [0, 1],
-                        ),
+                        ],
                         'default' => 0,
-                    ),
-                ),
-            ));
-
+                    ],
+                ],
+            ]);
         }
 
         return $this->inputFilter;
     }
-
 }
-

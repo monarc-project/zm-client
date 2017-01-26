@@ -1,15 +1,12 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcCore\Service\AbstractServiceFactory;
 use MonarcCore\Service\DeliveriesModelsService;
 use MonarcCore\Service\QuestionChoiceService;
 use MonarcCore\Service\QuestionService;
-use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ClientTable;
 use MonarcFO\Model\Table\DeliveryTable;
-use MonarcFO\Model\Table\InstanceTable;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\Writer\Word2007;

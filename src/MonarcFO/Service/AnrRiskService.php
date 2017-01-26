@@ -1,9 +1,8 @@
 <?php
 namespace MonarcFO\Service;
 
-use \MonarcFO\Model\Entity\InstanceRisk;
-use \MonarcFO\Model\Entity\Object;
-use MonarcFO\Model\Table\InstanceRiskTable;
+use MonarcFO\Model\Entity\InstanceRisk;
+use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\InstanceTable;
 
 /**

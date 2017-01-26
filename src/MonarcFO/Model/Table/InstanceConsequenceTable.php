@@ -3,14 +3,25 @@ namespace MonarcFO\Model\Table;
 
 use MonarcCore\Model\Table\AbstractEntityTable;
 
+/**
+ * Class InstanceConsequenceTable
+ * @package MonarcFO\Model\Table
+ */
 class InstanceConsequenceTable extends AbstractEntityTable
 {
+    /**
+     * InstanceConsequenceTable constructor.
+     * @param \MonarcCore\Model\Db $dbService
+     */
     public function __construct(\MonarcCore\Model\Db $dbService)
     {
         parent::__construct($dbService, '\MonarcFO\Model\Entity\InstanceConsequence');
     }
 
-
+    /**
+     * @param $anrId
+     * @return bool
+     */
     public function started($anrId)
     {
         $qb = $this->getRepository()->createQueryBuilder('t');

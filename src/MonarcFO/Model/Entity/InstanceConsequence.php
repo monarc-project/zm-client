@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -58,4 +57,3 @@ class InstanceConsequence extends InstanceConsequenceSuperClass
      */
     protected $scaleImpactType;
 }
-

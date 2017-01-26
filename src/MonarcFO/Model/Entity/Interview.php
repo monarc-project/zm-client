@@ -1,10 +1,7 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use Zend\InputFilter\InputFilterInterface;
-
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -245,34 +242,36 @@ class Interview extends AbstractEntity
         return $this;
     }
 
+    /**
+     * @param bool $partial
+     * @return mixed
+     */
     public function getInputFilter($partial = false)
     {
-
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'date',
                 'required' => true,
                 'allow_empty' => false,
-                'filters' => array(),
-            ));
+                'filters' => [],
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'service',
                 'required' => true,
                 'allow_empty' => false,
-                'filters' => array(),
-            ));
+                'filters' => [],
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'content',
                 'required' => true,
                 'allow_empty' => false,
-                'filters' => array(),
-            ));
+                'filters' => [],
+            ]);
         }
         return $this->inputFilter;
     }
 }
-

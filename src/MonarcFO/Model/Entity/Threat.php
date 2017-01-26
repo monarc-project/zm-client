@@ -1,8 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\ThreatSuperClass;
 
 /**
  * Threat
@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class Threat extends \MonarcCore\Model\Entity\ThreatSuperClass
+class Threat extends ThreatSuperClass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -60,6 +60,4 @@ class Threat extends \MonarcCore\Model\Entity\ThreatSuperClass
     {
         return $this->theme;
     }
-
 }
-

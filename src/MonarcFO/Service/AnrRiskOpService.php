@@ -1,14 +1,9 @@
 <?php
 namespace MonarcFO\Service;
 
-use \Doctrine\ORM\Query\Expr\Join;
-use MonarcCore\Service\RolfRiskService;
-use \MonarcFO\Model\Entity\InstanceRisk;
-use \MonarcFO\Model\Entity\Object;
-use \MonarcFO\Model\Entity\Asset;
-use \MonarcFO\Model\Entity\InstanceRiskOp;
+use MonarcFO\Model\Entity\Asset;
+use MonarcFO\Model\Entity\InstanceRiskOp;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
-use MonarcFO\Model\Table\RolfRiskTable;
 
 /**
  * Anr RiskOp Service

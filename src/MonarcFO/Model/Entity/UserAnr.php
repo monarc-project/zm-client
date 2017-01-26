@@ -1,10 +1,7 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use Zend\InputFilter\InputFilterInterface;
-
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -135,33 +132,31 @@ class UserAnr extends AbstractEntity
 
     public function getInputFilter($partial = false)
     {
-
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'user',
                 'required' => true,
                 'allow_empty' => false,
-                'filters' => array(
-                    array(
+                'filters' => [
+                    [
                         'name' => 'Digits',
-                    ),
-                ),
-            ));
+                    ],
+                ],
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'anr',
                 'required' => true,
                 'allow_empty' => false,
-                'filters' => array(
-                    array(
+                'filters' => [
+                    [
                         'name' => 'Digits',
-                    ),
-                ),
-            ));
+                    ],
+                ],
+            ]);
         }
         return $this->inputFilter;
     }
 }
-

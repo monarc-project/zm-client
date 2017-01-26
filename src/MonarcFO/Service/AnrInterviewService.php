@@ -2,7 +2,6 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractService;
-use Zend\View\Model\JsonModel;
 
 /**
  * Anr Interview Service

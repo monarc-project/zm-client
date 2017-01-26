@@ -2,7 +2,6 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractServiceFactory;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Anr Question Service Factory

@@ -1,8 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\MeasureSuperClass;
 
 /**
  * Measure
@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class Measure extends \MonarcCore\Model\Entity\MeasureSuperClass
+class Measure extends MeasureSuperClass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -41,7 +41,4 @@ class Measure extends \MonarcCore\Model\Entity\MeasureSuperClass
         $this->anr = $anr;
         return $this;
     }
-
-
 }
-
