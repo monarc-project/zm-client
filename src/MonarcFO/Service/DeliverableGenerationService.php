@@ -222,15 +222,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             foreach ($values['img'] as $key => $value) {
                 $word->setImg($key, $value['path'], $value['options']);
             }
+        }
+
+        $pathTmp = "data/" . uniqid("", true) . "_" . microtime(true) . ".docx";
+        $word->saveAs($pathTmp);
+
+        if(!empty($values['img'])){
             foreach ($values['img'] as $key => $value) {
                 if(file_exists($value['path'])){
                     unlink($value['path']);
                 }
             }
         }
-
-        $pathTmp = "/tmp/" . uniqid("", true) . "_" . microtime(true) . ".docx";
-        $word->saveAs($pathTmp);
 
         return $pathTmp;
     }
