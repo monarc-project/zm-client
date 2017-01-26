@@ -1,14 +1,25 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Service\UserService;
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Admin Users Controller
+ *
+ * Class ApiAdminUsersController
+ * @package MonarcFO\Controller
+ */
 class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'users';
 
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function create($data)
     {
         /** @var UserService $service */
@@ -21,9 +32,16 @@ class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
 
         $service->create($data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
+    /**
+     * Update
+     *
+     * @param mixed $id
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function update($id, $data)
     {
         /** @var UserService $service */
@@ -42,7 +60,7 @@ class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
 
         $service->update($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**

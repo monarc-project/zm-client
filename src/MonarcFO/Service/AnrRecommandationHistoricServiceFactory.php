@@ -11,9 +11,9 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrRecommandationHistoricServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\RecommandationHistoric',
         'table' => 'MonarcFO\Model\Table\RecommandationHistoricTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
-    );
+    ];
 }

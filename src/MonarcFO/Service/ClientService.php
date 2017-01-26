@@ -41,9 +41,15 @@ class ClientService extends AbstractService
      */
     public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        return $this->table->countFiltered($page, $limit, $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, array('name', 'address', 'postalcode', 'phone', 'email',
-                'contact_fullname', 'contact_email', 'contact_phone')));
+        return $this->table->countFiltered(
+            $page,
+            $limit,
+            $this->parseFrontendOrder($order),
+            $this->parseFrontendFilter(
+                $filter,
+                ['name', 'address', 'postalcode', 'phone', 'email', 'contact_fullname', 'contact_email', 'contact_phone']
+            )
+        );
     }
 
     /**
@@ -59,16 +65,24 @@ class ClientService extends AbstractService
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         return $this->table->fetchAllFiltered(
-            array('id', 'name', 'proxy_alias', 'address', 'postalcode', 'phone', 'fax', 'email', 'contactFullname',
-                'employees_number', 'contact_email', 'contact_phone', 'model_id'),
+            ['id', 'name', 'proxy_alias', 'address', 'postalcode', 'phone', 'fax', 'email', 'contactFullname',
+                'employees_number', 'contact_email', 'contact_phone', 'model_id'],
             $page,
             $limit,
             $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, array('name', 'address', 'postalcode', 'phone', 'email',
-                'contactFullname', 'contact_email', 'contact_phone'))
+            $this->parseFrontendFilter(
+                $filter,
+                ['name', 'address', 'postalcode', 'phone', 'email', 'contactFullname', 'contact_email', 'contact_phone']
+            )
         );
     }
 
+    /**
+     * Get Entity
+     *
+     * @param $id
+     * @return mixed
+     */
     public function getEntity($id)
     {
         $client = $this->table->get($id);
@@ -96,7 +110,7 @@ class ClientService extends AbstractService
         $entity = $this->get('clientEntity');
         $entity->exchangeArray($data);
 
-        $this->table->save($entity);
+        $this->table->save($entity, $last);
     }
 
     /**
@@ -108,7 +122,6 @@ class ClientService extends AbstractService
      */
     public function update($id, $data)
     {
-
         //security
         $this->filterPatchFields($data);
 
@@ -146,7 +159,7 @@ class ClientService extends AbstractService
     }
 
     /**
-     * Het Json Data
+     * Get Json Data
      *
      * @return array
      */

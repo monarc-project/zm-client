@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -49,10 +48,10 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities
-        ));
+        ]);
     }
 
     /**
@@ -111,12 +110,10 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
 
         $id = $this->getService()->create($data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 
     /**
@@ -142,7 +139,7 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
 
         $this->getService()->update($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
@@ -168,6 +165,6 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
 
         $this->getService()->patch($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 }

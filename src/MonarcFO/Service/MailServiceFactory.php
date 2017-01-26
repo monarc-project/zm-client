@@ -14,5 +14,5 @@ class MailServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\MailService";
 
-    protected $ressources = array();
+    protected $ressources = [];
 }

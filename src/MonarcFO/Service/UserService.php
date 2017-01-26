@@ -21,7 +21,6 @@ class UserService extends \MonarcCore\Service\UserService
     protected $anrTable;
     protected $snapshotCliTable;
 
-
     /**
      * Get List
      *
@@ -33,6 +32,7 @@ class UserService extends \MonarcCore\Service\UserService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
+        //retrieve user's list
         /** @var UserTable $table */
         $table = $this->get('table');
         $users = $table->fetchAllFiltered(
@@ -44,6 +44,7 @@ class UserService extends \MonarcCore\Service\UserService
             $filterAnd
         );
 
+        //retrieve role for each users
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
         $usersRoles = $userRoleTable->fetchAllObject();
@@ -55,6 +56,7 @@ class UserService extends \MonarcCore\Service\UserService
             }
         }
 
+        //retrieve anr access for each users
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
         $usersAnrs = $userAnrTable->fetchAllObject();
@@ -85,19 +87,12 @@ class UserService extends \MonarcCore\Service\UserService
      */
     public function getCompleteUser($id)
     {
-        /** @var SnapshotTable $snapshotCliTable */
-        $snapshotCliTable = $this->get('snapshotCliTable');
-        $snapshots = $snapshotCliTable->fetchAll();
-
-        $anrsSnapshots = [0];
-        foreach ($snapshots as $snapshot) {
-            $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
-        }
-
+        //retrieve user information
         /** @var UserTable $table */
         $table = $this->get('table');
         $user = $table->get($id);
 
+        //retrieve user roles
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
         $usersRoles = $userRoleTable->getEntityByFields(['user' => $id]);
@@ -105,6 +100,14 @@ class UserService extends \MonarcCore\Service\UserService
             $user['role'][] = $userRole->role;
         }
 
+        //retrieve anr that are not snapshots
+        /** @var SnapshotTable $snapshotCliTable */
+        $snapshotCliTable = $this->get('snapshotCliTable');
+        $snapshots = $snapshotCliTable->fetchAll();
+        $anrsSnapshots = [0];
+        foreach ($snapshots as $snapshot) {
+            $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
+        }
         $anrs = $this->get('anrTable')->getEntityByFields(['id' => ['op' => 'NOT IN', 'value' => $anrsSnapshots]]);
         $user['anrs'] = [];
         foreach ($anrs as $a) {
@@ -118,6 +121,7 @@ class UserService extends \MonarcCore\Service\UserService
             ];
         }
 
+        //retrieve user access
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
         $usersAnrs = $userAnrTable->getEntityByFields(['user' => $user['id']]);
@@ -141,19 +145,18 @@ class UserService extends \MonarcCore\Service\UserService
      */
     public function create($data, $last = true)
     {
+        //create user
         $user = $this->get('entity');
         $data['status'] = 1;
-
         if (empty($data['language'])) {
             $data['language'] = $this->getLanguage();
         }
-
         $user->exchangeArray($data);
-
         /** @var UserTable $table */
         $table = $this->get('table');
         $id = $table->save($user);
 
+        //associate role to user
         if (isset($data['role'])) {
             $i = 1;
             $nbRoles = count($data['role']);
@@ -169,6 +172,7 @@ class UserService extends \MonarcCore\Service\UserService
             }
         }
 
+        //give anr access to user
         if (isset($data['anrs'])) {
             /** @var SnapshotTable $snapshotCliTable */
             $snapshotCliTable = $this->get('snapshotCliTable');
@@ -204,7 +208,6 @@ class UserService extends \MonarcCore\Service\UserService
      */
     public function update($id, $data)
     {
-
         $this->verifyAuthorizedAction($id, $data);
 
         $this->updateUserRole($id, $data);
@@ -233,7 +236,6 @@ class UserService extends \MonarcCore\Service\UserService
      */
     public function patch($id, $data)
     {
-
         if (isset($data['password'])) {
             $this->validatePassword($data);
         }
@@ -263,7 +265,6 @@ class UserService extends \MonarcCore\Service\UserService
      */
     public function delete($id)
     {
-
         $this->verifyAuthorizedAction($id, null);
 
         return parent::delete($id);
@@ -278,7 +279,7 @@ class UserService extends \MonarcCore\Service\UserService
      */
     public function verifyAuthorizedAction($id, $data)
     {
-
+        //retrieve user status (admin or not)
         /** @var UserRoleTable $userRoleTable */
         $isAdmin = false;
         $userRoleTable = $this->get('userRoleTable');
@@ -294,6 +295,7 @@ class UserService extends \MonarcCore\Service\UserService
             $userTable = $this->get('table');
             $user = $userTable->getEntity($id);
 
+            //retrieve number of admin users
             $nbActivateAdminUser = 0;
             $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO]);
             foreach ($adminUsersRoles as $adminUsersRole) {
@@ -303,6 +305,7 @@ class UserService extends \MonarcCore\Service\UserService
                 }
             }
 
+            //verify if status, dateEnd and role can be change or user be desactivated
             if (
                 (($user->status) && (isset($data['status'])) && (!$data['status'])) //change status 1 -> 0
                 ||
@@ -330,22 +333,22 @@ class UserService extends \MonarcCore\Service\UserService
     {
         if (isset($data['role'])) {
 
+            //delete old roles
             /** @var UserRoleTable $userRoleTable */
             $userRoleTable = $this->get('userRoleTable');
             $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
             $userRolesArray = [];
             foreach ($userRoles as $userRole) {
                 if (!in_array($userRole->role, $data['role'])) {
-                    //delete role
                     $userRoleTable->delete($userRole->id);
                 } else {
                     $userRolesArray[] = $userRole->role;
                 }
             }
 
+            //add new roles
             foreach ($data['role'] as $role) {
                 if (!in_array($role, $userRolesArray)) {
-                    //add role
                     $dataUserRole = [
                         'user' => $id,
                         'role' => $role,
@@ -368,6 +371,7 @@ class UserService extends \MonarcCore\Service\UserService
     {
         if (isset($data['anrs'])) {
 
+            //retieve current user anrs
             /** @var UserAnrTable $userAnrTable */
             $userAnrTable = $this->get('userAnrTable');
             $userAnrs = $userAnrTable->getEntityByFields(['user' => $id]);
@@ -379,14 +383,11 @@ class UserService extends \MonarcCore\Service\UserService
                 ];
             }
 
+            //retrieve new anrs for user that are not snapshots
             $futureUserAnrs = [];
             foreach ($data['anrs'] as $userAnr) {
                 $futureUserAnrs[$userAnr['id']] = intval($userAnr['rwd']);
             }
-
-            /** @var UserAnrService $userAnrService */
-            $userAnrService = $this->get('userAnrService');
-
             /** @var SnapshotTable $snapshotCliTable */
             $snapshotCliTable = $this->get('snapshotCliTable');
             $snapshots = $snapshotCliTable->fetchAll();
@@ -394,7 +395,9 @@ class UserService extends \MonarcCore\Service\UserService
                 unset($futureUserAnrs[$snapshot['anr']->id]);
             }
 
-            //create or update
+            //add new anr access to user
+            /** @var UserAnrService $userAnrService */
+            $userAnrService = $this->get('userAnrService');
             foreach ($futureUserAnrs as $key => $futureUserAnr) {
                 if (!isset($currentUserAnrs[$key])) {
                     $userAnrService->create([
@@ -407,7 +410,7 @@ class UserService extends \MonarcCore\Service\UserService
                 }
             }
 
-            //delete
+            //delete old anrs access to user
             foreach ($currentUserAnrs as $key => $currentUserAnr) {
                 if (!isset($futureUserAnrs[$key])) {
                     $userAnrService->delete($currentUserAnr['id']);

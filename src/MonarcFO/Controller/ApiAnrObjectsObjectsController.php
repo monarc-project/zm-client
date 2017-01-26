@@ -1,11 +1,8 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use MonarcCore\Model\Entity\Object;
 use MonarcCore\Service\ObjectObjectService;
-use MonarcCore\Service\ObjectService;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -16,16 +13,13 @@ use Zend\View\Model\JsonModel;
  */
 class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
 {
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function getList()
-    {
-        return $this->methodNotAllowed();
-    }
-
+    /**
+     * Update
+     *
+     * @param mixed $id
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function update($id, $data)
     {
         // This works a little different that regular PUT calls - here we just expect a parameter "move" with the
@@ -36,12 +30,7 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
             $service->moveObject($id, $data['move']);
         }
 
-        return new JsonModel(array("status" => "ok"));
-    }
-
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
@@ -61,11 +50,24 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
 
         $id = $this->getService()->create($data, true, AbstractEntity::FRONT_OFFICE);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
+    }
+
+    public function get($id)
+    {
+        return $this->methodNotAllowed();
+    }
+
+    public function getList()
+    {
+        return $this->methodNotAllowed();
+    }
+
+    public function patch($id, $data)
+    {
+        return $this->methodNotAllowed();
     }
 }

@@ -12,7 +12,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class AnrObjectServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'table' => '\MonarcFO\Model\Table\ObjectTable',
         'entity' => '\MonarcFO\Model\Entity\Object',
         'anrObjectCategoryEntity' => 'MonarcFO\Model\Entity\AnrObjectCategory',
@@ -33,5 +33,5 @@ class AnrObjectServiceFactory extends AbstractServiceFactory
         'selfCoreService' => 'MonarcCore\Service\ObjectService',
         'instanceRiskOpTable' => '\MonarcFO\Model\Table\InstanceRiskOpTable',
         'instanceRiskOpService' => 'MonarcFO\Service\AnrInstanceRiskOpService',
-    );
+    ];
 }

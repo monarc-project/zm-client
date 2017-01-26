@@ -1,27 +1,17 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api User Password Controller
+ *
+ * Class ApiUserPasswordController
+ * @package MonarcFO\Controller
+ */
 class ApiUserPasswordController extends AbstractController
 {
-    public function create($data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function getList()
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
     /**
      * Update
      *
@@ -38,7 +28,7 @@ class ApiUserPasswordController extends AbstractController
             throw  new \Exception('Password must be the same', 422);
         }
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     public function patch($token, $data)
@@ -50,5 +40,19 @@ class ApiUserPasswordController extends AbstractController
     {
         return $this->methodNotAllowed();
     }
-}
 
+    public function create($data)
+    {
+        return $this->methodNotAllowed();
+    }
+
+    public function getList()
+    {
+        return $this->methodNotAllowed();
+    }
+
+    public function get($id)
+    {
+        return $this->methodNotAllowed();
+    }
+}

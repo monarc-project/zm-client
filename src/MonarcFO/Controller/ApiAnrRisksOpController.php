@@ -1,13 +1,24 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Anr Risks Op Controller
+ *
+ * Class ApiAnrRisksOpController
+ * @package MonarcFO\Controller
+ */
 class ApiAnrRisksOpController extends ApiAnrAbstractController
 {
     protected $name = 'oprisks';
 
+    /**
+     * Get
+     *
+     * @param mixed $id
+     * @return JsonModel
+     */
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -25,6 +36,11 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
         }
     }
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     */
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -42,6 +58,13 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
         }
     }
 
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -52,29 +75,17 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
 
         $id = $this->getService()->createSpecificRiskOp($data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 
-    public function deleteList($data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    public function update($id, $data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    public function patch($id, $data)
-    {
-        $this->methodNotAllowed();
-    }
-
+    /**
+     * Parse Params
+     *
+     * @return array
+     */
     protected function parseParams()
     {
         $keywords = $this->params()->fromQuery("keywords");
@@ -95,5 +106,19 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
             'limit' => $limit
         ];
     }
-}
 
+    public function deleteList($data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function update($id, $data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function patch($id, $data)
+    {
+        $this->methodNotAllowed();
+    }
+}

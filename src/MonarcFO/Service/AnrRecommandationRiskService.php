@@ -23,7 +23,6 @@ use MonarcFO\Service\AbstractService;
  */
 class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 {
-    protected $dependencies = ['anr', 'recommandation', 'asset', 'threat', 'vulnerability', 'instance', 'instanceRisk', 'instanceRiskOp'];
     protected $anrTable;
     protected $userAnrTable;
     protected $recommandationTable;
@@ -36,6 +35,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $anrInstanceService;
     protected $instanceTable;
     protected $objectTable;
+    protected $dependencies = [
+        'anr', 'recommandation', 'asset', 'threat', 'vulnerability', 'instance', 'instanceRisk', 'instanceRiskOp'
+    ];
 
     /**
      * Get List
@@ -128,7 +130,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function getTreatmentPlan($anrId, $id = false)
     {
-
         //retrieve recommandations risks
         /** @var RecommandationTable $table */
         $table = $this->get('table');
@@ -240,7 +241,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true)
     {
-
         //verify not already exist
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
@@ -305,7 +305,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function createRecommandationRisk($data, $risk)
     {
-
         $class = $this->get('entity');
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
@@ -346,7 +345,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function initPosition($anrId)
     {
-
         //retrieve recommandations
         /** @var RecommandationTable $recommandationTable */
         $recommandationTable = $this->get('recommandationTable');
@@ -366,14 +364,10 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      *
      * @param $recoRiskId
      * @param $data
-     * @param null $vulA
-     * @param null $commentA
-     * @param null $maxriskA
      * @throws \Exception
      */
-    public function validateFor($recoRiskId, $data, $vulA = null, $commentA = null, $maxriskA = null)
+    public function validateFor($recoRiskId, $data)
     {
-
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
         $recoRisk = $table->getEntity($recoRiskId);
@@ -459,7 +453,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     'object' => $recoRisk->get('objectGlobal')->get('id'),
                 ]);
                 foreach ($brothersInstances as $brotherInstance) {
-
                     $brothersInstancesRisks = $table->getEntityByFields([
                         'anr' => $recoRisk->get('anr')->get('id'),
                         'instance' => $brotherInstance->get('id'),
@@ -514,7 +507,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function createRecoHistoric($data, $recoRisk, $final)
     {
-
         $reco = $recoRisk->recommandation;
         $instanceRisk = $recoRisk->instanceRisk;
         $anr = $recoRisk->anr;
@@ -570,15 +562,19 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $recoHistoTable->save($recoHisto);
     }
 
+    /**
+     * Detach
+     *
+     * @param $recommandationRisk
+     * @param bool $final
+     */
     public function detach($recommandationRisk, $final = true)
     {
-
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
 
         //global
         if ($recommandationRisk->objectGlobal) {
-
             $brothersRecommandationsRisks = $table->getEntityByFields([
                 'recommandation' => $recommandationRisk->get('recommandation')->get('id'),
                 'objectGlobal' => $recommandationRisk->get('objectGlobal')->get('id'),
@@ -608,7 +604,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function updatePosition($recommandation, $final = true)
     {
-
         /** @var RecommandationTable $recommandationTable */
         $recommandationTable = $this->get('recommandationTable');
 
@@ -621,7 +616,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
     }
 
-
     /**
      * Delete
      *
@@ -629,14 +623,11 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function delete($id)
     {
-
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
         $recommandationRisk = $table->getEntity($id);
 
         if ($recommandationRisk->instanceRisk) {
-
-
             /** @var InstanceRiskTable $instanceRiskTable */
             $instanceRiskTable = $this->get('instanceRiskTable');
             $risk = $instanceRiskTable->getEntity($recommandationRisk->instanceRisk->id);

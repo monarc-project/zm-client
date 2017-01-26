@@ -1,15 +1,26 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcFO\Service\ClientService;
 use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Clients Controller
+ *
+ * Class ApiClientsController
+ * @package MonarcFO\Controller
+ */
 class ApiClientsController extends AbstractController
 {
     protected $name = 'clients';
 
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function create($data)
     {
         /** @var ClientService $service */
@@ -24,9 +35,16 @@ class ApiClientsController extends AbstractController
 
         $service->create($data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
+    /**
+     * Update
+     *
+     * @param mixed $id
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function update($id, $data)
     {
         /** @var ClientService $service */
@@ -40,7 +58,6 @@ class ApiClientsController extends AbstractController
 
         $service->update($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 }
-

@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcFO\Service\AnrRecommandationRiskService;
@@ -13,21 +12,6 @@ use Zend\View\Model\JsonModel;
  */
 class ApiAnrRecommandationsRisksValidateController extends ApiAnrAbstractController
 {
-    public function create($data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    public function getList()
-    {
-        $this->methodNotAllowed();
-    }
-
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
     /**
      * Patch
      *
@@ -48,6 +32,21 @@ class ApiAnrRecommandationsRisksValidateController extends ApiAnrAbstractControl
         $service = $this->getService();
         $service->validateFor($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
+    }
+
+    public function create($data)
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function getList()
+    {
+        $this->methodNotAllowed();
+    }
+
+    public function update($id, $data)
+    {
+        return $this->methodNotAllowed();
     }
 }

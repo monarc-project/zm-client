@@ -27,6 +27,7 @@ return array(
     'InstancesUpdatePositions'                                                => __DIR__ . '/migrations/db/20170106105028_instances_update_positions.php',
     'QuestionAddMode'                                                         => __DIR__ . '/migrations/db/20170111131545_question_add_mode.php',
     'InstanceRisksOpForeignKeys'                                              => __DIR__ . '/migrations/db/20170113132351_instance_risks_op_foreign_keys.php',
+    'DeliveriesVersion'                                                       => __DIR__ . '/migrations/db/20170113161631_deliveries_version.php',
     'AdminUserInit'                                                           => __DIR__ . '/migrations/seeds/AdminUserInit.php',
     'MonarcFO\Module'                                                         => __DIR__ . '/Module.php',
     'MonarcFO\Controller\ApiAdminPasswordsController'                         => __DIR__ . '/src/MonarcFO/Controller/ApiAdminPasswordsController.php',

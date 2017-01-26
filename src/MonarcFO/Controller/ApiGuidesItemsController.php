@@ -4,12 +4,17 @@ namespace MonarcFO\Controller;
 use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Guides Items Controller
+ *
+ * Class ApiGuidesItemsController
+ * @package MonarcFO\Controller
+ */
 class ApiGuidesItemsController extends AbstractController
 {
     protected $name = 'guides-items';
 
     protected $dependencies = [];
-
 
     /**
      * Get list
@@ -38,11 +43,9 @@ class ApiGuidesItemsController extends AbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities
-        ));
+        ]);
     }
-
 }
-

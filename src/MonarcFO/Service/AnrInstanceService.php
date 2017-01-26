@@ -66,7 +66,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      * @param array $sharedData
      * @return array|bool
      */
-    public function importFromArray($data, $anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = array())
+    public function importFromArray($data, $anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = [])
     {
         if (isset($data['type']) && $data['type'] == 'instance' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()
@@ -453,7 +453,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $r->setLanguage($this->getLanguage());
                     $r->exchangeArray($toExchange);
                     $this->setDependencies($r, ['anr', 'instance', 'object', 'rolfRisk']);
-                    $idRisk = $this->get('instanceRiskOpService')->get('table')->save($r);
+                    $this->get('instanceRiskOpService')->get('table')->save($r);
                 }
             }
 

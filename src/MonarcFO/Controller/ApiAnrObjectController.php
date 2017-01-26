@@ -1,10 +1,6 @@
 <?php
-
 namespace MonarcFO\Controller;
-
-use MonarcCore\Model\Entity\AbstractEntity;
-use MonarcCore\Model\Entity\Object;
-use MonarcCore\Service\ObjectService;
+;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -16,6 +12,17 @@ use Zend\View\Model\JsonModel;
 class ApiAnrObjectController extends ApiAnrAbstractController
 {
     protected $name = 'object';
+
+    /**
+     * Parents Action
+     *
+     * @return JsonModel
+     */
+    public function parentsAction()
+    {
+        $matcher = $this->getEvent()->getRouteMatch();
+        return new JsonModel($this->getService()->getParents($matcher->getParam('anrid'), $matcher->getParam('id')));
+    }
 
     public function getList()
     {
@@ -45,11 +52,5 @@ class ApiAnrObjectController extends ApiAnrAbstractController
     public function patch($id, $data)
     {
         $this->methodNotAllowed();
-    }
-
-    public function parentsAction()
-    {
-        $matcher = $this->getEvent()->getRouteMatch();
-        return new JsonModel($this->getService()->getParents($matcher->getParam('anrid'), $matcher->getParam('id')));
     }
 }

@@ -1,7 +1,15 @@
 <?php
 namespace MonarcFO\Controller;
 
-class ApiAnrLibraryCategoryControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
+use MonarcCore\Controller\AbstractControllerFactory;
+
+/**
+ * Api Anr Library Controller Factory
+ *
+ * Class ApiAnrLibraryCategoryControllerFactory
+ * @package MonarcFO\Controller
+ */
+class ApiAnrLibraryCategoryControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = '\MonarcFO\Service\ObjectCategoryService';
 }

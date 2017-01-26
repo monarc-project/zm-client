@@ -7,7 +7,7 @@ namespace MonarcFO\Service;
  */
 class AnrRiskServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'table' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'entity' => 'MonarcFO\Model\Entity\InstanceRisk',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -17,5 +17,5 @@ class AnrRiskServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
         'vulnerabilityTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
         'translateService' => 'MonarcCore\Service\TranslateService'
-    );
+    ];
 }

@@ -1,8 +1,7 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-use MonarcCore\Model\Entity\AbstractEntity;
+use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -11,7 +10,7 @@ use Zend\View\Model\JsonModel;
  * Class ApiConfigController
  * @package MonarcFO\Controller
  */
-class ApiConfigController extends \MonarcCore\Controller\AbstractController
+class ApiConfigController extends AbstractController
 {
     /**
      * Get list
@@ -48,4 +47,3 @@ class ApiConfigController extends \MonarcCore\Controller\AbstractController
         return $this->methodNotAllowed();
     }
 }
-

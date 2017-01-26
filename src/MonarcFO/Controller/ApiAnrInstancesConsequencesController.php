@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -27,6 +26,6 @@ class ApiAnrInstancesConsequencesController extends ApiAnrAbstractController
 
         $this->getService()->patchConsequence($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 }

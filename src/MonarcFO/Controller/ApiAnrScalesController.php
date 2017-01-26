@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -15,6 +14,12 @@ class ApiAnrScalesController extends ApiAnrAbstractController
     protected $name = 'scales';
     protected $dependencies = [];
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function getList()
     {
         $page = $this->params()->fromQuery('page');
@@ -37,10 +42,10 @@ class ApiAnrScalesController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities,
             'canChange' => $canChange,
-        ));
+        ]);
     }
 }

@@ -4,20 +4,23 @@ namespace MonarcFO\Controller;
 use MonarcFO\Service\SnapshotService;
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Snapshot Restore Controller
+ *
+ * Class ApiSnapshotRestoreController
+ * @package MonarcFO\Controller
+ */
 class ApiSnapshotRestoreController extends ApiAnrAbstractController
 {
     protected $name = 'snapshots';
 
-    public function getList()
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -34,12 +37,20 @@ class ApiSnapshotRestoreController extends ApiAnrAbstractController
         $service = $this->getService();
         $newId = $service->restore($anrId, $id);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $newId,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $newId,
+        ]);
+    }
+
+    public function getList()
+    {
+        return $this->methodNotAllowed();
+    }
+
+    public function get($id)
+    {
+        return $this->methodNotAllowed();
     }
 
     public function delete($id)
@@ -62,4 +73,3 @@ class ApiSnapshotRestoreController extends ApiAnrAbstractController
         return $this->methodNotAllowed();
     }
 }
-

@@ -4,6 +4,13 @@ namespace MonarcFO\Controller;
 use MonarcCore\Service\PasswordService;
 use Zend\View\Model\JsonModel;
 
+
+/**
+ * Api Adin Passwords Controller
+ *
+ * Class ApiAdminPasswordsController
+ * @package MonarcFO\Controller
+ */
 class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractController
 {
     /**
@@ -30,7 +37,7 @@ class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractControl
         if (!empty($data['token']) && empty($data['password'])) {
             $result = $service->verifyToken($data['token']);
 
-            return new JsonModel(array('status' => $result));
+            return new JsonModel(['status' => $result]);
         }
 
         //change password not logged
@@ -42,7 +49,7 @@ class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractControl
             }
         }
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     public function getList()

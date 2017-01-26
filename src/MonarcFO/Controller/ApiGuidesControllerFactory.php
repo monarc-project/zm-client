@@ -1,8 +1,15 @@
 <?php
 namespace MonarcFO\Controller;
 
-class ApiGuidesControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
+use MonarcCore\Controller\AbstractControllerFactory;
+
+/**
+ * Api Guides Controller Factory
+ *
+ * Class ApiGuidesControllerFactory
+ * @package MonarcFO\Controller
+ */
+class ApiGuidesControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = '\MonarcCore\Service\GuideService';
 }
-

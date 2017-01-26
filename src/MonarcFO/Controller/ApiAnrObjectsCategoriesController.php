@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -16,9 +15,10 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
     protected $dependencies = ['parent', 'root', 'anr'];
 
     /**
-     * Get list
+     * Get List
      *
      * @return JsonModel
+     * @throws \Exception
      */
     public function getList()
     {
@@ -68,12 +68,19 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
             $recursiveArray = $this->recursiveArray($objectCategories, null, 0, $fields);
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $this->getService()->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $recursiveArray
-        ));
+        ]);
     }
 
+    /**
+     * Get Clean Fields
+     *
+     * @param $items
+     * @param $fields
+     * @return array
+     */
     public function getCleanFields($items, $fields)
     {
         $output = [];
@@ -93,9 +100,9 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
 
     /**
      * Create
-     *
      * @param mixed $data
      * @return JsonModel
+     * @throws \Exception
      */
     public function create($data)
     {
@@ -107,11 +114,9 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
 
         $obj = $this->getService()->create($data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'categ' => $obj,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'categ' => $obj,
+        ]);
     }
 }

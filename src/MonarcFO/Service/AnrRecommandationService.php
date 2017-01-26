@@ -54,8 +54,6 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true)
     {
-
-        //$entity = $this->get('entity');
         $class = $this->get('entity');
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
@@ -100,13 +98,12 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
                 return "alert";
             } else {
                 $days = round($diff / 60 / 60 / 24);
-                if ($days <= 15) {//arbitraire, on avait évoqué 15 jours par tél pendant la réunion liée au cahier des charges
+                if ($days <= 15) {//arbitrary 15 days
                     return "warning";
                 } else return "large";
             }
         }
     }
-
 
     /**
      * Patch
@@ -128,7 +125,6 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
 
         parent::patch($id, $data);
     }
-
 
     /**
      * Update

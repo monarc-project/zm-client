@@ -11,7 +11,7 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class DeliverableGenerationServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Delivery',
         'table' => 'MonarcFO\Model\Table\DeliveryTable',
         'deliveryModelService' => '\MonarcCore\Service\DeliveriesModelsService',
@@ -30,5 +30,5 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'cartoRiskService' => '\MonarcFO\Service\AnrCartoRiskService',
         'instanceRiskTable' => '\MonarcFO\Model\Table\InstanceRiskTable',
         'instanceRiskOpTable' => '\MonarcFO\Model\Table\InstanceRiskOpTable',
-    );
+    ];
 }

@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
@@ -15,6 +14,12 @@ class ApiAnrCartoRisksController extends ApiAnrAbstractController
     protected $name = 'carto';
     protected $dependencies = [];
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');

@@ -3,6 +3,12 @@ namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Anr Abstract Controller
+ *
+ * Class ApiAnrAbstractController
+ * @package MonarcFO\Controller
+ */
 abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractController
 {
     /**
@@ -39,10 +45,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities
-        ));
+        ]);
     }
 
     /**
@@ -88,12 +94,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
 
         $id = $this->getService()->create($data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 
     /**
@@ -114,7 +118,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
 
         $this->getService()->update($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
@@ -135,7 +139,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
 
         $this->getService()->patch($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
@@ -149,9 +153,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         $anrId = (int)$this->params()->fromRoute('anrid');
 
         if ($this->getService()->deleteFromAnr($id, $anrId)) {
-            return new JsonModel(array('status' => 'ok'));
+            return new JsonModel(['status' => 'ok']);
         } else {
-            return new JsonModel(array('status' => 'ko')); // Todo: peux être retourner un message d'erreur
+            return new JsonModel(['status' => 'ok']); // Todo : may be add error message
         }
     }
 
@@ -166,9 +170,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         $anrId = (int)$this->params()->fromRoute('anrid');
 
         if ($this->getService()->deleteListFromAnr($data, $anrId)) {
-            return new JsonModel(array('status' => 'ok'));
+            return new JsonModel(['status' => 'ok']);
         } else {
-            return new JsonModel(array('status' => 'ko')); // Todo: peux être retourner un message d'erreur
+            return new JsonModel(['status' => 'ok']); // Todo: may be add error message
         }
     }
 }

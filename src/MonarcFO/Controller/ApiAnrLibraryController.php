@@ -1,17 +1,29 @@
 <?php
-
 namespace MonarcFO\Controller;
 
+use MonarcCore\Controller\AbstractController;
 use MonarcCore\Model\Entity\AbstractEntity;
 use MonarcFO\Service\AnrObjectService;
 use Zend\View\Model\JsonModel;
 
-class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
+/**
+ * Api Anr Library Controller
+ *
+ * Class ApiAnrLibraryController
+ * @package MonarcFO\Controller
+ */
+class ApiAnrLibraryController extends AbstractController
 {
     protected $name = 'categories';
 
     protected $dependencies = ['anr', 'parent'];
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function getList()
     {
         $anrId = $this->params()->fromRoute('anrid');
@@ -28,14 +40,9 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
         $fields = ['id', 'label1', 'label2', 'label3', 'label4', 'position', 'objects', 'child'];
         $objectsCategories = $this->recursiveArray($objectsCategories, null, 0, $fields);
 
-        return new JsonModel(array(
+        return new JsonModel([
             $this->name => $objectsCategories
-        ));
-    }
-
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
+        ]);
     }
 
     /**
@@ -61,24 +68,19 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
         $service = $this->getService();
         $id = $service->attachObjectToAnr($data['objectId'], $anrId, null, null, AbstractEntity::FRONT_OFFICE);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
+    /**
+     * Delete
+     *
+     * @param mixed $id
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function delete($id)
     {
         $anrId = $this->params()->fromRoute('anrid');
@@ -90,11 +92,23 @@ class ApiAnrLibraryController extends \MonarcCore\Controller\AbstractController
         $service = $this->getService();
         $service->detachObjectToAnr($id, $anrId);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok'
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok'
+        ]);
+    }
 
+    public function get($id)
+    {
+        return $this->methodNotAllowed();
+    }
+
+    public function update($id, $data)
+    {
+        return $this->methodNotAllowed();
+    }
+
+    public function patch($id, $data)
+    {
+        return $this->methodNotAllowed();
     }
 }

@@ -11,7 +11,7 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class UserRoleServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = array(
+    protected $ressources = [
         'table' => '\MonarcFO\Model\Table\UserRoleTable',
         'entity' => '\MonarcFO\Model\Entity\UserRole',
         'userAnrCliTable' => '\MonarcFO\Model\Table\UserAnrTable',
@@ -19,5 +19,5 @@ class UserRoleServiceFactory extends AbstractServiceFactory
         'userRoleTable' => '\MonarcCore\Model\Table\UserRoleTable',
         'userRoleEntity' => '\MonarcCore\Model\Entity\UserRole',
         'userTokenTable' => '\MonarcCore\Model\Table\UserTokenTable',
-    );
+    ];
 }

@@ -37,7 +37,7 @@ class UserRoleService extends AbstractService
         $userRoleTable = $this->get('userRoleTable');
 
         return $userRoleTable->getRepository()->createQueryBuilder('t')
-            ->select(array('t.id', 't.role'))
+            ->select(['t.id', 't.role'])
             ->where('t.user = :id')
             ->setParameter(':id', $filter)
             ->getQuery()->getResult();
@@ -66,7 +66,7 @@ class UserRoleService extends AbstractService
         $userRoleTable = $this->get('userRoleTable');
 
         return $userRoleTable->getRepository()->createQueryBuilder('t')
-            ->select(array('t.id', 't.role'))
+            ->select(['t.id', 't.role'])
             ->where('t.user = :id')
             ->setParameter(':id', $userId)
             ->getQuery()->getResult();
@@ -81,28 +81,27 @@ class UserRoleService extends AbstractService
      */
     public function getByUserToken($token)
     {
-
         if ($token instanceof GenericHeader) {
             $token = $token->getFieldValue();
         }
 
+        //retrieve users for this token
         $userTokenTable = $this->get('userTokenTable');
-
         $userToken = $userTokenTable->getRepository()->createQueryBuilder('t')
-            ->select(array('t.id', 'IDENTITY(t.user) as userId', 't.token', 't.dateEnd'))
+            ->select(['t.id', 'IDENTITY(t.user) as userId', 't.token', 't.dateEnd'])
             ->where('t.token = :token')
             ->setParameter(':token', $token)
             ->getQuery()
             ->getResult();
 
         if (count($userToken)) {
-            $userId = $userToken[0]['userId'];
 
+            //retrieve user access
+            $userId = $userToken[0]['userId'];
+            $anrs = [];
             /** @var UserAnrTable $userAnrCliTable */
             $userAnrCliTable = $this->get('userAnrCliTable');
             $userAnrs = $userAnrCliTable->getEntityByFields(['user' => $userId]);
-
-            $anrs = [];
             foreach ($userAnrs as $userAnr) {
                 $anrs[] = [
                     'anr' => $userAnr->anr->id,

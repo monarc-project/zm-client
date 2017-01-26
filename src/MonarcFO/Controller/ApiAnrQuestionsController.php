@@ -1,8 +1,6 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-use MonarcCore\Model\Entity\AbstractEntity;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -16,5 +14,4 @@ class ApiAnrQuestionsController extends ApiAnrAbstractController
     protected $name = 'questions';
 
     protected $dependencies = ['anr'];
-
 }

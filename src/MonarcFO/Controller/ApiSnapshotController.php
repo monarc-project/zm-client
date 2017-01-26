@@ -3,6 +3,12 @@ namespace MonarcFO\Controller;
 
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Snapshot Controller
+ *
+ * Class ApiSnapshotController
+ * @package MonarcFO\Controller
+ */
 class ApiSnapshotController extends ApiAnrAbstractController
 {
     protected $name = 'snapshots';
@@ -43,10 +49,9 @@ class ApiSnapshotController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
             $this->name => $entities
-        ));
+        ]);
     }
 }
-

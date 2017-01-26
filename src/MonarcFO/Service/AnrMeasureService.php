@@ -12,10 +12,10 @@ class AnrMeasureService extends \MonarcCore\Service\AbstractService
     protected $anrTable;
     protected $userAnrTable;
     protected $dependencies = ['anr'];
-    protected $filterColumns = array(
+    protected $filterColumns = [
         'description1', 'description2', 'description3', 'description4',
         'code', 'status'
-    );
+    ];
 
     /**
      * Get List

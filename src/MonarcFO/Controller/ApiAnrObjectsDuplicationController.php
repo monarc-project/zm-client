@@ -1,11 +1,7 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use MonarcCore\Model\Entity\Object;
-use MonarcCore\Service\ObjectObjectService;
-use MonarcCore\Service\ObjectService;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -28,12 +24,10 @@ class ApiAnrObjectsDuplicationController extends ApiAnrAbstractController
         if (isset($data['id'])) {
             $id = $this->getService()->duplicate($data, AbstractEntity::FRONT_OFFICE);
 
-            return new JsonModel(
-                array(
-                    'status' => 'ok',
-                    'id' => $id,
-                )
-            );
+            return new JsonModel([
+                'status' => 'ok',
+                'id' => $id,
+            ]);
         } else {
             throw new \Exception('Object to duplicate is required');
         }

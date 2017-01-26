@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcFO\Service\AnrRecommandationRiskService;
@@ -63,10 +62,10 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => count($entities),
             $this->name => $entities
-        ));
+        ]);
     }
 
     public function update($id, $data)

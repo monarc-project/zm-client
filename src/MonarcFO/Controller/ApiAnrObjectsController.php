@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Model\Entity\AbstractEntity;
@@ -44,10 +43,10 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => $service->getFilteredCount($page, $limit, $order, $filter, $asset, $category, null, $anr),
             $this->name => $objects
-        ));
+        ]);
     }
 
     /**
@@ -96,12 +95,10 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
         $service = $this->getService();
         $id = $service->create($data, true, AbstractEntity::FRONT_OFFICE);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 
 
@@ -125,7 +122,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
         $service = $this->getService();
         $service->update($id, $data, AbstractEntity::FRONT_OFFICE);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
@@ -148,6 +145,6 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
         $service = $this->getService();
         $service->patch($id, $data, AbstractEntity::FRONT_OFFICE);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 }

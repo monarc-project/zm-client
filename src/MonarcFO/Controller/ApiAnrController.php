@@ -4,6 +4,12 @@ namespace MonarcFO\Controller;
 use MonarcFO\Service\AnrService;
 use Zend\View\Model\JsonModel;
 
+/**
+ * Api Anr Controller
+ *
+ * Class ApiAnrController
+ * @package MonarcFO\Controller
+ */
 class ApiAnrController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'anrs';
@@ -29,12 +35,19 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
             }
         }
 
-        return new JsonModel(array(
+        return new JsonModel([
             'count' => count($entities),
             $this->name => $entities
-        ));
+        ]);
     }
 
+    /**
+     * Create
+     *
+     * @param mixed $data
+     * @return JsonModel
+     * @throws \Exception
+     */
     public function create($data)
     {
         /** @var AnrService $service */
@@ -46,12 +59,9 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
 
         $id = $service->createFromModelToClient($data);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 }
-

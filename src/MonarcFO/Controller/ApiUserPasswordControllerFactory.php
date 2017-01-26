@@ -1,8 +1,15 @@
 <?php
 namespace MonarcFO\Controller;
 
-class ApiUserPasswordControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory
+use MonarcCore\Controller\AbstractControllerFactory;
+
+/**
+ * Api User Password Controler Factory
+ *
+ * Class ApiUserPasswordControllerFactory
+ * @package MonarcFO\Controller
+ */
+class ApiUserPasswordControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = '\MonarcFO\Service\PasswordService';
 }
-

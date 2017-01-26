@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Controller;
 
 use MonarcFO\Model\Entity\Instance;
@@ -30,9 +29,9 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         /** @var InstanceService $service */
         $service = $this->getService();
         $instances = $service->findByAnr($anrId);
-        return new JsonModel(array(
+        return new JsonModel([
             $this->name => $instances
-        ));
+        ]);
     }
 
     /**
@@ -50,7 +49,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $service = $this->getService();
         $service->updateInstance($anrId, $id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
@@ -68,10 +67,15 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $service = $this->getService();
         $service->patchInstance($anrId, $id, $data, [], false);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 
-
+    /**
+     * Get
+     *
+     * @param mixed $id
+     * @return JsonModel
+     */
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -118,11 +122,9 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $service = $this->getService();
         $id = $service->instantiateObjectToAnr($anrId, $data, true, true, Instance::MODE_CREA_ROOT);
 
-        return new JsonModel(
-            array(
-                'status' => 'ok',
-                'id' => $id,
-            )
-        );
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
     }
 }

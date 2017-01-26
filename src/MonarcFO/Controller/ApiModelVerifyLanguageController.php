@@ -1,16 +1,17 @@
 <?php
 namespace MonarcFO\Controller;
 
-use MonarcFO\Service\AnrService;
+use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
-class ApiModelVerifyLanguageController extends \MonarcCore\Controller\AbstractController
+/**
+ * Api Model Verify Language Controller
+ *
+ * Class ApiModelVerifyLanguageController
+ * @package MonarcFO\Controller
+ */
+class ApiModelVerifyLanguageController extends AbstractController
 {
-    public function getList()
-    {
-        return $this->methodNotAllowed();
-    }
-
     /**
      * Get
      *
@@ -22,6 +23,11 @@ class ApiModelVerifyLanguageController extends \MonarcCore\Controller\AbstractCo
         $result = $this->getService()->verifyLanguage($id);
 
         return new JsonModel($result);
+    }
+
+    public function getList()
+    {
+        return $this->methodNotAllowed();
     }
 
     public function create($data)
@@ -44,4 +50,3 @@ class ApiModelVerifyLanguageController extends \MonarcCore\Controller\AbstractCo
         return $this->methodNotAllowed();
     }
 }
-

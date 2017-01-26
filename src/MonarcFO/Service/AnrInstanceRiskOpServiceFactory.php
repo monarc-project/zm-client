@@ -2,7 +2,6 @@
 namespace MonarcFO\Service;
 
 use \MonarcCore\Service\AbstractServiceFactory;
-use \Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Anr Instance Risk Op Service Factory
@@ -14,7 +13,7 @@ class AnrInstanceRiskOpServiceFactory extends AbstractServiceFactory
 {
     protected $class = "\\MonarcCore\\Service\\InstanceRiskOpService";
 
-    protected $ressources = array(
+    protected $ressources = [
         'table' => 'MonarcFO\Model\Table\InstanceRiskOpTable',
         'entity' => 'MonarcFO\Model\Entity\InstanceRiskOp',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -24,5 +23,5 @@ class AnrInstanceRiskOpServiceFactory extends AbstractServiceFactory
         'rolfRiskTable' => 'MonarcFO\Model\Table\RolfRiskTable',
         'rolfTagTable' => 'MonarcFO\Model\Table\RolfTagTable',
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',
-    );
+    ];
 }

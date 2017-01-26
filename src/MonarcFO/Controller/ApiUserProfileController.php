@@ -1,14 +1,23 @@
 <?php
-
 namespace MonarcFO\Controller;
 
-use MonarcCore\Model\Entity\AbstractEntity;
+use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
-class ApiUserProfileController extends \MonarcCore\Controller\AbstractController
+/**
+ * Api User Profile Controller
+ *
+ * Class ApiUserProfileController
+ * @package MonarcFO\Controller
+ */
+class ApiUserProfileController extends AbstractController
 {
     protected $connectedUser;
 
+    /**
+     * ApiUserProfileController constructor.
+     * @param \MonarcCore\Service\AbstractServiceFactory $services
+     */
     public function __construct($services)
     {
         if (!empty($services['service'])) {
@@ -19,6 +28,11 @@ class ApiUserProfileController extends \MonarcCore\Controller\AbstractController
         }
     }
 
+    /**
+     * Get List
+     *
+     * @return JsonModel
+     */
     public function getList()
     {
         $user = $this->connectedUser->getConnectedUser();
@@ -26,11 +40,23 @@ class ApiUserProfileController extends \MonarcCore\Controller\AbstractController
         return new JsonModel($user);
     }
 
+    /**
+     * Patch List
+     *
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function patchList($data)
     {
         return new JsonModel($this->getService()->update($this->connectedUser->getConnectedUser(), $data));
     }
 
+    /**
+     * Replace List
+     *
+     * @param mixed $data
+     * @return JsonModel
+     */
     public function replaceList($data)
     {
         return new JsonModel($this->getService()->update($this->connectedUser->getConnectedUser(), $data));
