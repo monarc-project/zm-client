@@ -181,7 +181,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
 
         // Word-filter the input values
-        foreach ($values as $key => $val) {
+        foreach ($values['txt'] as $key => $val) {
             if ($key != "SUMMARY_EVAL_RISK") {
                 $values[$key] = _WT($val);
             } else {
@@ -190,8 +190,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        $values = array_merge($values, $this->buildValues($anr, $model->get('category')));
-        $values['TYPE'] = $this->getModelType($model->get('category'));
+        $values = array_merge_recursive($values, $this->buildValues($anr, $model->get('category')));
+        $values['txt']['TYPE'] = $this->getModelType($model->get('category'));
         return $this->generateDeliverableWithValuesAndModel($model->get('path' . $anr->language), $values);
     }
 
@@ -212,9 +212,23 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //create word
         $word = new TemplateProcessor($modelPath);
-        foreach ($values as $key => $value) {
-            $word->setValue($key, $value);
+
+        if(!empty($values['txt'])){
+            foreach ($values['txt'] as $key => $value) {
+                $word->setValue($key, $value);
+            }
         }
+        if(!empty($values['img']) && method_exists($word,'setImg')){
+            foreach ($values['img'] as $key => $value) {
+                $word->setImg($key, $value['path'], $value['options']);
+            }
+            foreach ($values['img'] as $key => $value) {
+                if(file_exists($value['path'])){
+                    unlink($value['path']);
+                }
+            }
+        }
+
         $pathTmp = "/tmp/" . uniqid("", true) . "_" . microtime(true) . ".docx";
         $word->saveAs($pathTmp);
 
@@ -252,9 +266,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     {
         switch ($modelCategory) {
             case 1:
-                return $this->buildContextValidationValues($anr);
+                return ['txt' => $this->buildContextValidationValues($anr), 'img' => []];
             case 2:
-                return $this->buildContextModelingValues($anr);
+                return ['txt' => $this->buildContextModelingValues($anr), 'img' => []];
             case 3:
                 return $this->buildRiskAssessmentValues($anr);
             default:
@@ -584,12 +598,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
-    /**
-     * Build Context Modeling Values
-     *
-     * @param $anr
-     * @return array
-     */
     protected function buildContextModelingValues($anr)
     {
         // Models are incremental, so use values from level-1 model
@@ -610,13 +618,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     protected function buildRiskAssessmentValues($anr)
     {
         // Models are incremental, so use values from level-2 model
-        $values = $this->buildContextModelingValues($anr);
+        $values['txt'] = $this->buildContextModelingValues($anr);
 
-        $values['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
-        $values['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
-        $values['RISKS_RECO'] = $this->generateRisksPlan($anr, false);
-        $values['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
-        $values['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
+        $values['txt']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
+
+        $values['img']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
+
+        $values['txt']['RISKS_RECO'] = $this->generateRisksPlan($anr, false);
+        $values['txt']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
+        $values['txt']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
 
         return $values;
     }
@@ -632,48 +642,80 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $this->cartoRiskService->buildListScalesAndHeaders($anr->id);
         list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
 
-        $maxValue = max($distrib);
+        if(is_array($distrib) && count($distrib)>0){
+            $gridmax = ceil(max($distrib)/10) * 10;
 
-        $styleTable = ['borderSize' => '0', 'borderColor' => 'FFFFFF'];
-        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-        $styleHeaderFont = ['bold' => true, 'size' => 10];
-        $styleValueFont = [];
-        $styleValueFont[0] = ['bold' => true, 'size' => 10, 'color' => '000000'];
-        $styleValueFont[1] = ['bold' => true, 'size' => 10, 'color' => '000000'];
-        $styleValueFont[2] = ['bold' => true, 'size' => 10, 'color' => 'FFFFFF'];
+            $canvas = new \Imagick();
+            $canvas->newImage(400, 200, "white");
+            $canvas->setImageFormat("png");
+            $draw = new \ImagickDraw();
 
-        $styleHeaderCellVal = [];
-        $styleHeaderCellVal[0] = ['bgcolor' => 'D6F107', 'size' => 10, 'valign' => 'center'];
-        $styleHeaderCellVal[1] = ['bgcolor' => 'FFBC1C', 'size' => 10, 'valign' => 'center'];
-        $styleHeaderCellVal[2] = ['bgcolor' => 'FD661F', 'size' => 10, 'valign' => 'center'];
+            $draw->setFontSize(10);
+            $draw->setStrokeAntialias(true);
+            // $draw->setStrokeColor('black');
 
-        $labels = ['Risques faibles', 'Risques moyens', 'Risques critiques'];
+            //Axes principaux
+            $draw->line(20, 190, 380, 190);
+            $draw->line(20, 10, 20, 190);
+            //petites poignées
+            $draw->line(18, 10, 20, 10);
+            $draw->line(18, 55, 20, 55);
+            $draw->line(18, 100, 20, 100);
+            $draw->line(18, 145, 20, 145);
 
-        $allWordXml = '';
+            //valeurs intermédiaire
+            $draw->annotation(2, 13, $gridmax);
+            $draw->annotation(2, 58, ceil($gridmax - (1 * ($gridmax / 4) ) ));
+            $draw->annotation(2, 103, ceil($gridmax - (2 * ($gridmax / 4) ) ));
+            $draw->annotation(2, 148, ceil($gridmax - (3 * ($gridmax / 4) ) ));
 
-        for ($row = 0; $row < 3; ++$row) {
-            $tableWord = new PhpWord();
-            $section = $tableWord->addSection();
-            $table = $section->addTable($styleTable);
+            //grille
+            $draw->setStrokeColor('#DEDEDE');
+            $draw->line(21, 10, 380, 10);
+            $draw->line(21, 55, 380, 55);
+            $draw->line(21, 100, 380, 100);
+            $draw->line(21, 145, 380, 145);
 
-            $table->addRow(200);
-            $table->addCell(3200, $styleHeaderCell)->addText(_WT($labels[$row]), $styleHeaderFont, ['Alignment' => 'center']);
-
-            if ($maxValue > 0 && isset($distrib[$row])) {
-                $percentage = $distrib[$row] * 100 / $maxValue;
-            } else {
-                $percentage = 0;
+            for($i = 40 ; $i <= 400 ; $i+= 20){
+                $draw->line($i, 10, $i, 189);
             }
 
-            if ($percentage > 0) {
-                $table->addCell(intval($percentage * 30), $styleHeaderCellVal[$row])->addText($distrib[$row], $styleValueFont[$row], ['Alignment' => 'end']);
+            if(isset($distrib[2]) && $distrib[2]>0){
+                $draw->setFillColor("#FD661F");
+                $draw->setStrokeColor("transparent");
+                $draw->rectangle(29, 200 - (10 + (($distrib[2] * 180)/$gridmax)) , 137, 189);
             }
 
-            $allWordXml .= $this->getWordXmlFromWordObject($tableWord);
-            unset($tableWord);
+            if(isset($distrib[1]) && $distrib[1]>0){
+                $draw->setFillColor("#FFBC1C");
+                $draw->setStrokeColor("transparent");
+                $draw->rectangle(146, 200 - (10 + (($distrib[1] * 180)/$gridmax)) , 254, 189);
+            }
+
+            if(isset($distrib[0]) && $distrib[0]>0){
+                $draw->setFillColor("#D6F107");
+                $draw->setStrokeColor("transparent");
+                $draw->rectangle(263, 200 - (10 + (($distrib[0] * 180)/$gridmax)) , 371, 189);
+            }
+
+            $canvas->drawImage($draw);
+            $path = "data/".uniqid("", true)."_riskgraph.png";
+            $canvas->writeImage($path);
+
+            $return = [
+                'path' => $path,
+                'options' => ['width' => 400, 'height' => 200],
+            ];
+
+            unset($canvas);
+            unset($imgWord);
+
+            return $return;
+        }
+        else{
+            return "";
         }
 
-        return $allWordXml;
     }
 
     /**

@@ -35,14 +35,17 @@ class ApiAnrDeliverableController extends AbstractController
         }
 
         $params = [
-            'VERSION' => $data['version'],
-            'STATE' => $data['status'] == 0 ? 'Brouillon' : 'Final',
-            'CLASSIFICATION' => $data['classification'],
-            'DOCUMENT' => $data['docname'],
-            'DATE' => date('d/m/Y, H:i'),
-            'CLIENT' => $data['managers'],
-            'SMILE' => $data['consultants'],
-            'SUMMARY_EVAL_RISK' => isset($data['summaryEvalRisk']) ? $data['summaryEvalRisk'] : '',
+            'txt' => [
+                'VERSION' => $data['version'],
+                'STATE' => $data['status'] == 0 ? 'Brouillon' : 'Final',
+                'CLASSIFICATION' => $data['classification'],
+                'DOCUMENT' => $data['docname'],
+                'DATE' => date('d/m/Y, H:i'),
+                'CLIENT' => $data['managers'],
+                'SMILE' => $data['consultants'],
+                'SUMMARY_EVAL_RISK' => isset($data['summaryEvalRisk']) ? $data['summaryEvalRisk'] : '',
+            ],
+            'img' => [],
         ];
 
         // Generate the DOCX file
