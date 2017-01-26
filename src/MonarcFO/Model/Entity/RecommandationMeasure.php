@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -152,33 +151,34 @@ class RecommandationMeasure extends AbstractEntity
         return $this;
     }
 
-
+    /**
+     * @param bool $partial
+     * @return mixed
+     */
     public function getInputFilter($partial = true)
     {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'anr',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'recommandation',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'measure',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-            ));
+            ]);
         }
 
         return $this->inputFilter;
     }
-
 }
-

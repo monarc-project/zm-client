@@ -1,8 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\AnrSuperClass;
 
 /**
  * Anr
@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="anrs")
  * @ORM\Entity
  */
-class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
+class Anr extends AnrSuperClass
 {
     /**
      * @var integer
@@ -57,6 +57,4 @@ class Anr extends \MonarcCore\Model\Entity\AnrSuperClass
         $this->language = $language;
         return $this;
     }
-
-
 }

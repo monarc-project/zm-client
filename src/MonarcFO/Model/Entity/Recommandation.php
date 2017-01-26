@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -173,54 +172,56 @@ class Recommandation extends AbstractEntity
         return $this;
     }
 
+    /**
+     * @param bool $partial
+     * @return mixed
+     */
     public function getInputFilter($partial = true)
     {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'importance',
                 'required' => (!$partial) ? true : false,
                 'allow_empty' => false,
-                'validators' => array(
-                    array(
+                'validators' => [
+                    [
                         'name' => 'InArray',
-                        'options' => array(
+                        'options' => [
                             'haystack' => [1, 2, 3],
-                        ),
+                        ],
                         'default' => 0,
-                    ),
-                ),
-            ));
+                    ],
+                ],
+            ]);
 
             $validatorsCode = [];
             if (!$partial) {
-                $validatorsCode = array(
-                    array(
+                $validatorsCode = [
+                    [
                         'name' => '\MonarcCore\Validator\UniqueCode',
-                        'options' => array(
+                        'options' => [
                             'entity' => $this
-                        ),
-                    ),
-                );
+                        ],
+                    ],
+                ];
             }
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'code',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-                'filters' => array(),
+                'filters' => [],
                 'validators' => $validatorsCode
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'anr',
                 'required' => ($partial) ? false : true,
                 'allow_empty' => false,
-            ));
-
+            ]);
         }
 
         return $this->inputFilter;
     }
 }
-

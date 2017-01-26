@@ -1,17 +1,19 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Zend\InputFilter\InputFilter;
+use MonarcCore\Model\Entity\AssetSuperClass;
 
 /**
  * Asset
  *
- * @ORM\Table(name="assets")
+ * @ORM\Table(name="assets", indexes={
+ *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
+ *      @ORM\Index(name="anr_id2", columns={"anr_id"})
+ * })
  * @ORM\Entity
  */
-class Asset extends \MonarcCore\Model\Entity\AssetSuperClass
+class Asset extends AssetSuperClass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr

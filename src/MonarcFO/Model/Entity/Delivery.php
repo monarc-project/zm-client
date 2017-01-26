@@ -5,7 +5,7 @@ use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\AbstractEntity;
 
 /**
- * Thme
+ * Delivery
  *
  * @ORM\Table(name="deliveries", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"})

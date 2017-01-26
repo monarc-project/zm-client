@@ -1,11 +1,11 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\QuestionChoiceSuperclass;
 
 /**
- * Question's choices
+ * Question Choice
  *
  * @ORM\Table(name="questions_choices", indexes={
  *      @ORM\Index(name="question_id", columns={"question_id"}),
@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class QuestionChoice extends \MonarcCore\Model\Entity\QuestionChoiceSuperclass
+class QuestionChoice extends QuestionChoiceSuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Question
@@ -71,4 +71,3 @@ class QuestionChoice extends \MonarcCore\Model\Entity\QuestionChoiceSuperclass
         return $this;
     }
 }
-

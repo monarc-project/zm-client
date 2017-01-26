@@ -2,6 +2,7 @@
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\InstanceSuperClass;
 
 /**
  * Instance
@@ -15,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class Instance extends \MonarcCore\Model\Entity\InstanceSuperClass
+class Instance extends InstanceSuperClass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -69,4 +70,3 @@ class Instance extends \MonarcCore\Model\Entity\InstanceSuperClass
 
     protected $ascendance;
 }
-

@@ -1,10 +1,7 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use Zend\InputFilter\InputFilterInterface;
-
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -125,82 +122,84 @@ class User extends AbstractEntity
      */
     protected $currentAnr;
 
-
+    /**
+     * @param bool $partial
+     * @return mixed
+     */
     public function getInputFilter($partial = false)
     {
-
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'firstname',
                 'required' => ($partial) ? false : true,
-                'filters' => array(
-                    array('name' => 'StringTrim',),
-                ),
-                'validators' => array(),
-            ));
-            $this->inputFilter->add(array(
+                'filters' => [
+                    ['name' => 'StringTrim',],
+                ],
+                'validators' => [],
+            ]);
+            $this->inputFilter->add([
                 'name' => 'lastname',
                 'required' => ($partial) ? false : true,
-                'filters' => array(
-                    array('name' => 'StringTrim',),
-                ),
-                'validators' => array(),
-            ));
+                'filters' => [
+                    ['name' => 'StringTrim',],
+                ],
+                'validators' => [],
+            ]);
 
-            $validators = array(
-                array('name' => 'EmailAddress'),
-            );
+            $validators = [
+                ['name' => 'EmailAddress'],
+            ];
             if (!$partial) {
-                $validators[] = array(
+                $validators[] = [
                     'name' => '\MonarcCore\Validator\UniqueEmail',
-                    'options' => array(
+                    'options' => [
                         'adapter' => $this->getDbAdapter(),
                         'id' => $this->get('id'),
-                    ),
-                );
+                    ],
+                ];
             }
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'email',
                 'required' => ($partial) ? false : true,
-                'filters' => array(
-                    array('name' => 'StringTrim',),
-                ),
+                'filters' => [
+                    ['name' => 'StringTrim',],
+                ],
                 'validators' => $validators
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'role',
                 'required' => false,
-            ));
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'password',
                 'allowEmpty' => true,
                 'continueIfEmpty' => true,
                 'required' => false,
-                'filters' => array(
-                    array(
+                'filters' => [
+                    [
                         'name' => '\MonarcCore\Filter\Password',
-                        'options' => array(
+                        'options' => [
                             'salt' => $this->getUserSalt(),
-                        ),
-                    ),
-                ),
-                'validators' => array(),
-            ));
+                        ],
+                    ],
+                ],
+                'validators' => [],
+            ]);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'language',
                 'allowEmpty' => true,
                 'continueIfEmpty' => true,
                 'required' => false,
-                'filters' => array(
-                    array('name' => 'ToInt',),
-                ),
-                'validators' => array(),
-            ));
+                'filters' => [
+                    ['name' => 'ToInt',],
+                ],
+                'validators' => [],
+            ]);
         }
         return $this->inputFilter;
     }
@@ -216,4 +215,3 @@ class User extends AbstractEntity
         return isset($this->parameters['userSalt']) ? $this->parameters['userSalt'] : '';
     }
 }
-

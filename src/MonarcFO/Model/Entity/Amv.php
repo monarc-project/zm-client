@@ -1,8 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\AmvSuperclass;
 
 /**
  * Amv
@@ -18,7 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class Amv extends \MonarcCore\Model\Entity\AmvSuperclass
+class Amv extends AmvSuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -90,4 +90,3 @@ class Amv extends \MonarcCore\Model\Entity\AmvSuperclass
      */
     protected $measure3;
 }
-

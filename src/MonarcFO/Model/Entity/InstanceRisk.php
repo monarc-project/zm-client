@@ -1,12 +1,11 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\InstanceRiskSuperClass;
 
 /**
- * InstanceRisk
+ * Instance Risk
  *
  * @ORM\Table(name="instances_risks", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
@@ -18,7 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class InstanceRisk extends \MonarcCore\Model\Entity\InstanceRiskSuperClass
+class InstanceRisk extends InstanceRiskSuperClass
 {
 
     /**

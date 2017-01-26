@@ -1,18 +1,18 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\RolfTagSuperclass;
 
 /**
- * Thme
+ * Rolf Tag
  *
  * @ORM\Table(name="rolf_tags", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"})
  * })
  * @ORM\Entity
  */
-class RolfTag extends \MonarcCore\Model\Entity\RolfTagSuperclass
+class RolfTag extends RolfTagSuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -49,4 +49,3 @@ class RolfTag extends \MonarcCore\Model\Entity\RolfTagSuperclass
      */
     protected $risks;
 }
-

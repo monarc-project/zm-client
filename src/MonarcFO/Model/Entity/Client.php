@@ -1,5 +1,4 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -7,7 +6,7 @@ use MonarcCore\Model\Entity\AbstractEntity;
 use MonarcCore\Model\Entity\Country;
 
 /**
- * Clients
+ * Client
  *
  * @ORM\Table(name="clients")
  * @ORM\Entity
@@ -237,42 +236,47 @@ class Client extends AbstractEntity
         $this->country = $country;
     }
 
+    /**
+     * @param bool $partial
+     * @return mixed
+     */
     public function getInputFilter($partial = false)
     {
-
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
 
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'name',
                 'required' => ($partial) ? false : true,
-                'filters' => array(
-                    array('name' => 'StringTrim',),
-                ),
-                'validators' => array(),
-            ));
+                'filters' => [
+                    [
+                        'name' => 'StringTrim',
+                    ],
+                ],
+                'validators' => [],
+            ]);
 
-            $validators = array();
+            $validators = [];
             if (!$partial) {
-                $validators[] = array(
+                $validators[] = [
                     'name' => '\MonarcFO\Validator\UniqueClientProxyAlias',
-                    'options' => array(
+                    'options' => [
                         'adapter' => $this->getDbAdapter(),
                         'id' => $this->get('id'),
-                    ),
-                );
+                    ],
+                ];
             }
-            $this->inputFilter->add(array(
+            $this->inputFilter->add([
                 'name' => 'proxyAlias',
                 'required' => ($partial) ? false : true,
-                'filters' => array(
-                    array('name' => 'StringTrim',),
-                ),
+                'filters' => [
+                    [
+                        'name' => 'StringTrim',
+                    ],
+                ],
                 'validators' => $validators
-            ));
+            ]);
         }
         return $this->inputFilter;
     }
-
 }
-

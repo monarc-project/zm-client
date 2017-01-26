@@ -1,7 +1,6 @@
 <?php
 namespace MonarcFO\Service;
 
-use MonarcCore\Validator\PasswordStrength;
 use MonarcFO\Model\Table\UserAnrTable;
 use MonarcFO\Model\Table\UserRoleTable;
 use MonarcFO\Model\Table\UserTable;

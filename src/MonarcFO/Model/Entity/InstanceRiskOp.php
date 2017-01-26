@@ -1,9 +1,8 @@
 <?php
-
 namespace MonarcFO\Model\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use MonarcCore\Model\Entity\InstanceRiskOpSuperClass;
 
 /**
  * Instance Risk Op
@@ -16,7 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
  * })
  * @ORM\Entity
  */
-class InstanceRiskOp extends \MonarcCore\Model\Entity\InstanceRiskOpSuperClass
+class InstanceRiskOp extends InstanceRiskOpSuperClass
 {
 
     /**
@@ -58,5 +57,4 @@ class InstanceRiskOp extends \MonarcCore\Model\Entity\InstanceRiskOpSuperClass
      * })
      */
     protected $rolfRisk;
-
 }
