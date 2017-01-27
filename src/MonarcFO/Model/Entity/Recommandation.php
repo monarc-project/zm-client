@@ -55,9 +55,9 @@ class Recommandation extends AbstractEntity
     /**
      * @var smallint
      *
-     * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":1})
+     * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":1}, nullable=true)
      */
-    protected $position = 1;
+    protected $position = null;
 
     /**
      * @var string
@@ -130,11 +130,11 @@ class Recommandation extends AbstractEntity
     protected $updatedAt;
 
 
-    protected $parameters = [
-        'implicitPosition' => [
-            'field' => 'anr'
-        ]
-    ];
+    // protected $parameters = [
+    //     'implicitPosition' => [
+    //         'field' => 'anr'
+    //     ]
+    // ];
 
     /**
      * @return int

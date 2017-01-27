@@ -291,6 +291,19 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        $reco = $this->get('recommandationTable')->getEntity($data['recommandation']);
+        $pos = $reco->get('position');
+        if(empty($pos) && ($gRisk->get('kindOfMeasure') != null && $gRisk->get('kindOfMeasure') != InstanceRisk::KIND_NOT_TREATED)){
+            // On ajoute cette recommandation au début de la pile
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']);
+            foreach($recos as $r){
+                $r->set('position',$r->get('position')+1);
+                $this->get('recommandationTable')->save($r,false);
+            }
+            $reco->set('position',1);
+            $this->get('recommandationTable')->save($reco);
+        }
+
         return $id;
     }
 
@@ -346,7 +359,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         //retrieve recommandations
         /** @var RecommandationTable $recommandationTable */
         $recommandationTable = $this->get('recommandationTable');
-        $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], ['importance' => 'DESC']);
+        $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId, 'position' => ['op' => 'IS NOT', 'value'=>null]], ['importance' => 'DESC']);
 
         $i = 1;
         $nbRecommandations = count($recommandations);
@@ -379,6 +392,11 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         //repositioning recommendation in hierarchy
         $this->detach($recoRisk, $final);
+
+        /*
+        si c'est le dernier lien de la reco => position = null 
+        mais cela doit être géré dans le détach ?
+        */
 
         //automatically record in history before modify recommendation and risk valuesc
         $this->createRecoHistoric($data, $recoRisk, $final);
@@ -570,6 +588,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     {
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
+        $idAnr = $recommandationRisk->anr->id;
+        $idReco = $recommandationRisk->recommandation->id;
+        $id = $recommandationRisk->id;
 
         //global
         if ($recommandationRisk->objectGlobal) {
@@ -591,26 +612,17 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $table->delete($recommandationRisk->id);
         }
 
-        $this->updatePosition($recommandationRisk->recommandation, $final);
-    }
-
-    /**
-     * Update Position
-     *
-     * @param $recommandation
-     * @param bool $final
-     */
-    public function updatePosition($recommandation, $final = true)
-    {
-        /** @var RecommandationTable $recommandationTable */
-        $recommandationTable = $this->get('recommandationTable');
-
-        if (!$final && $recommandation->get('position') == 0) {
-            $recommandation->position = 1;
-            $recommandationTable->save($recommandation);
-        } else if ($final && $recommandation->get('position') > 0) {
-            $recommandation->position = 0;
-            $recommandationTable->save($recommandation);
+        // Update brother's recommandation position if necessary
+        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
+        if(empty($bros)){ // is last recorisk
+            $reco = $this->get('recommandationTable')->getEntity($idReco);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
+            foreach($recos as $r){
+                $r->set('position',$r->get('position')-1);
+                $this->get('recommandationTable')->save($r,false);
+            }
+            $reco->set('position',null);
+            $this->get('recommandationTable')->save($reco);
         }
     }
 
@@ -624,6 +636,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
         $recommandationRisk = $table->getEntity($id);
+
+        $idAnr = $recommandationRisk->anr->id;
+        $idReco = $recommandationRisk->recommandation->id;
 
         if ($recommandationRisk->instanceRisk) {
             /** @var InstanceRiskTable $instanceRiskTable */
@@ -672,5 +687,19 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 $this->get('table')->delete($id);
             }
         }
+
+        // Update brother's recommandation position if necessary
+        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
+        if(empty($bros)){ // is last recorisk
+            $reco = $this->get('recommandationTable')->getEntity($idReco);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
+            foreach($recos as $r){
+                $r->set('position',$r->get('position')-1);
+                $this->get('recommandationTable')->save($r,false);
+            }
+            $reco->set('position',null);
+            $this->get('recommandationTable')->save($reco);
+        }
+
     }
 }

@@ -62,7 +62,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
-        $data['implicitPosition'] = 2; // end
+        $data['position'] = null;
         $entity->exchangeArray($data);
 
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];

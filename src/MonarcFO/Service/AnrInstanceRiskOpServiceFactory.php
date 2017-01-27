@@ -23,5 +23,6 @@ class AnrInstanceRiskOpServiceFactory extends AbstractServiceFactory
         'rolfRiskTable' => 'MonarcFO\Model\Table\RolfRiskTable',
         'rolfTagTable' => 'MonarcFO\Model\Table\RolfTagTable',
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',
+        'recommandationTable' => 'MonarcFO\Model\Table\RecommandationTable',
     ];
 }
