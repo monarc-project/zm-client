@@ -14,7 +14,9 @@ class UserServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => '\MonarcFO\Model\Table\UserTable',
         'userAnrTable' => '\MonarcFO\Model\Table\UserAnrTable',
+        'userRoleEntity' => '\MonarcFO\Model\Entity\UserRole',
         'userRoleTable' => '\MonarcFO\Model\Table\UserRoleTable',
+        'roleTable' => '\MonarcFO\Model\Table\UserRoleTable',
         'entity' => '\MonarcFO\Model\Entity\User',
         'userAnrService' => 'MonarcFO\Service\UserAnrService',
         'userRoleService' => 'MonarcFO\Service\UserRoleService',
