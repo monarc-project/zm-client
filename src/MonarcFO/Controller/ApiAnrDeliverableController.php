@@ -49,9 +49,11 @@ class ApiAnrDeliverableController extends AbstractController
                 'DATE' => date('d/m/Y, H:i'),
                 'CLIENT' => $data['managers'],
                 'SMILE' => $data['consultants'],
-                'SUMMARY_EVAL_RISK' => isset($data['summaryEvalRisk']) ? $data['summaryEvalRisk'] : '',
             ],
             'img' => [],
+            'html' => [
+                'SUMMARY_EVAL_RISK' => isset($data['summaryEvalRisk']) ? $data['summaryEvalRisk'] : '',
+            ],
         ];
 
         // Generate the DOCX file
