@@ -292,6 +292,7 @@ class UserService extends \MonarcCore\Service\UserService
         foreach ($userRoles as $userRole) {
             if ($userRole->role == \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO) {
                 $isAdmin = true;
+                break;
             }
         }
 
@@ -302,10 +303,9 @@ class UserService extends \MonarcCore\Service\UserService
 
             //retrieve number of admin users
             $nbActivateAdminUser = 0;
-            $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO]);
+            $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => \MonarcFO\Model\Entity\UserRole::SUPER_ADMIN_FO, 'user'=>['op'=>'!=','value'=>$id]]);
             foreach ($adminUsersRoles as $adminUsersRole) {
-                $user = $userTable->getEntity($adminUsersRole->user->id);
-                if (($user->status) && (is_null($user->dateEnd))) {
+                if (($adminUsersRole->user->status) && (is_null($adminUsersRole->user->dateEnd))) {
                     $nbActivateAdminUser++;
                 }
             }
@@ -316,7 +316,7 @@ class UserService extends \MonarcCore\Service\UserService
                 ||
                 ((is_null($user->dateEnd)) && (isset($data['dateEnd']))) //change dateEnd null -> date
                 ||
-                ((isset($data['superadminfo'])) && (!$data['superadminfo'])) //delete superadminfo role
+                ((isset($data['role'])) && (!in_array('superadminfo', $data['superadminfo']))) //delete superadminfo role
                 ||
                 (is_null($data)) //delete superadminfo role
             ) {
