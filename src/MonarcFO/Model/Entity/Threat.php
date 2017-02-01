@@ -8,7 +8,8 @@ use MonarcCore\Model\Entity\ThreatSuperClass;
  * Threat
  *
  * @ORM\Table(name="threats", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
+ *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
+ *      @ORM\Index(name="anr_id2", columns={"anr_id"}),
  *      @ORM\Index(name="theme_id", columns={"theme_id"})
  * })
  * @ORM\Entity
@@ -34,30 +35,4 @@ class Threat extends ThreatSuperClass
      * })
      */
     protected $theme;
-
-    /**
-     * @return Anr
-     */
-    public function getAnr()
-    {
-        return $this->anr;
-    }
-
-    /**
-     * @param Anr $anr
-     * @return Threat
-     */
-    public function setAnr($anr)
-    {
-        $this->anr = $anr;
-        return $this;
-    }
-
-    /**
-     * @return Theme
-     */
-    public function getTheme()
-    {
-        return $this->theme;
-    }
 }
