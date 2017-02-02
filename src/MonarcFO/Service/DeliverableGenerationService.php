@@ -63,6 +63,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskTable;
     /** @var InstanceRiskOpTable */
     protected $instanceRiskOpTable;
+    protected $translateService;
 
     /**
      * Construct
@@ -664,48 +665,71 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             // $draw->setStrokeColor('black');
 
             //Axes principaux
-            $draw->line(20, 190, 380, 190);
-            $draw->line(20, 10, 20, 190);
+            $draw->line(20, 185, 380, 185);
+            $draw->line(20, 5, 20, 185);
             //petites poignées
-            $draw->line(18, 10, 20, 10);
-            $draw->line(18, 55, 20, 55);
-            $draw->line(18, 100, 20, 100);
-            $draw->line(18, 145, 20, 145);
+            $draw->line(18, 5, 20, 5);
+            $draw->line(18, 50, 20, 50);
+            $draw->line(18, 95, 20, 95);
+            $draw->line(18, 140, 20, 140);
 
             //valeurs intermédiaire
-            $draw->annotation(2, 13, $gridmax);
-            $draw->annotation(2, 58, ceil($gridmax - (1 * ($gridmax / 4) ) ));
-            $draw->annotation(2, 103, ceil($gridmax - (2 * ($gridmax / 4) ) ));
-            $draw->annotation(2, 148, ceil($gridmax - (3 * ($gridmax / 4) ) ));
+            $draw->annotation(2, 8, $gridmax);
+            $draw->annotation(2, 53, ceil($gridmax - (1 * ($gridmax / 4) ) ));
+            $draw->annotation(2, 98, ceil($gridmax - (2 * ($gridmax / 4) ) ));
+            $draw->annotation(2, 143, ceil($gridmax - (3 * ($gridmax / 4) ) ));
 
             //grille
             $draw->setStrokeColor('#DEDEDE');
-            $draw->line(21, 10, 380, 10);
-            $draw->line(21, 55, 380, 55);
-            $draw->line(21, 100, 380, 100);
-            $draw->line(21, 145, 380, 145);
+            $draw->line(21, 5, 380, 5);
+            $draw->line(21, 50, 380, 50);
+            $draw->line(21, 95, 380, 95);
+            $draw->line(21, 140, 380, 140);
 
             for($i = 40 ; $i <= 400 ; $i+= 20){
-                $draw->line($i, 10, $i, 189);
+                $draw->line($i, 5, $i, 184);
+            }
+
+            $langs = $this->get('listLanguages');
+            $l = null;
+            foreach($langs as $k => $v){
+                if($v['index'] == $anr->get('language')){
+                    $l = $k;
+                    break;
+                }
+            }
+            if(empty($l)){
+                foreach($langs as $k => $v){
+                    if($v['index'] == $this->getDefaultLanguage()){
+                        $l = $k;
+                        break;
+                    }
+                }
             }
 
             if(isset($distrib[2]) && $distrib[2]>0){
                 $draw->setFillColor("#FD661F");
                 $draw->setStrokeColor("transparent");
-                $draw->rectangle(29, 200 - (10 + (($distrib[2] * 180)/$gridmax)) , 137, 189);
+                $draw->rectangle(29, 195 - (10 + (($distrib[2] * 180)/$gridmax)) , 137, 184);
             }
+            $draw->setFillColor('#000000');
+            $draw->annotation ( 34 , 195 , $this->get('translateService')->translate('Risques forts',$l) );
 
             if(isset($distrib[1]) && $distrib[1]>0){
                 $draw->setFillColor("#FFBC1C");
                 $draw->setStrokeColor("transparent");
-                $draw->rectangle(146, 200 - (10 + (($distrib[1] * 180)/$gridmax)) , 254, 189);
+                $draw->rectangle(146, 195 - (10 + (($distrib[1] * 180)/$gridmax)) , 254, 184);
             }
+            $draw->setFillColor('#000000');
+            $draw->annotation ( 151 , 195 , $this->get('translateService')->translate('Risques moyens',$l) );
 
             if(isset($distrib[0]) && $distrib[0]>0){
                 $draw->setFillColor("#D6F107");
                 $draw->setStrokeColor("transparent");
-                $draw->rectangle(263, 200 - (10 + (($distrib[0] * 180)/$gridmax)) , 371, 189);
+                $draw->rectangle(263, 195 - (10 + (($distrib[0] * 180)/$gridmax)) , 371, 184);
             }
+            $draw->setFillColor('#000000');
+            $draw->annotation ( 268 , 195 , $this->get('translateService')->translate('Risques négligeables',$l) );
 
             $canvas->drawImage($draw);
             $path = "data/".uniqid("", true)."_riskgraph.png";

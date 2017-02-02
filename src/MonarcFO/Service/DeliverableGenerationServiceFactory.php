@@ -36,5 +36,6 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'cartoRiskService' => '\MonarcFO\Service\AnrCartoRiskService',
         'instanceRiskTable' => '\MonarcFO\Model\Table\InstanceRiskTable',
         'instanceRiskOpTable' => '\MonarcFO\Model\Table\InstanceRiskOpTable',
+        'translateService' => 'MonarcCore\Service\TranslateService',
     ];
 }
