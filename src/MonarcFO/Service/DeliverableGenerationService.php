@@ -65,7 +65,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskOpTable;
     protected $translateService;
 
-    protected $currentLangAnr;
     protected $currentLangAnrIndex;
 
     /**
@@ -96,25 +95,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     public function anrTranslate($text){
-        if(empty($this->currentLangAnr)){
-            $langs = $this->get('listLanguages');
-            $l = null;
-            foreach($langs as $k => $v){
-                if($v['index'] == $this->currentLangAnrIndex){
-                    $this->currentLangAnr = $k;
-                    break;
-                }
-            }
-            if(empty($this->currentLangAnr)){
-                foreach($langs as $k => $v){
-                    if($v['index'] == $this->getDefaultLanguage()){
-                        $$this->currentLangAnr = $k;
-                        break;
-                    }
-                }
-            }
-        }
-        return $this->get('translateService')->translate($text,$this->currentLangAnr);
+        return $this->get('translateService')->translate($text,$this->currentLangAnrIndex);
     }
 
     /**
@@ -213,7 +194,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
 
         $this->currentLangAnrIndex = $anr->language;
-        $this->currentLangAnr = null;
 
         $values = array_merge_recursive($values, $this->buildValues($anr, $model->get('category')));
         $values['txt']['TYPE'] = $this->getModelType($model->get('category'));
@@ -359,7 +339,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowSpan)->addText($this->anrTranslate('Niv.'), $styleHeaderFont);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.40), $cellColSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, ['Alignment' => 'center']);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.60), $cellRowSpan)->addText($this->anrTranslate('Conséquences'), $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.60), $cellRowSpan)->addText($this->anrTranslate('Consequences'), $styleHeaderFont, ['Alignment' => 'center']);
 
         // Manually add C/I/D impacts columns
         $table->addRow();
@@ -443,7 +423,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addRow(400,['tblHeader'=>true]);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Niveau')), $styleHeaderFont, ['Alignment' => 'center']);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(17.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Commentaire')), $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(17.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Comment')), $styleHeaderFont, ['Alignment' => 'center']);
 
         // Fill in each row
         for ($row = $threatsScale['min']; $row <= $threatsScale['max']; ++$row) {
@@ -476,7 +456,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addRow(400,['tblHeader'=>true]);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Niveau')), $styleHeaderFont, ['Alignment' => 'center']);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(17.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Commentaire')), $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(17.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Comment')), $styleHeaderFont, ['Alignment' => 'center']);
 
 
         // Fill in each row
@@ -618,8 +598,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table->addRow(400,['tblHeader'=>true]);
 
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleHeaderCell)->addText($this->anrTranslate("Date"), $styleHeaderFont);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate("Service / Personnes"), $styleHeaderFont);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate("Contenu"), $styleHeaderFont);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate("Department / People"), $styleHeaderFont);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate("Contents"), $styleHeaderFont);
 
         // Fill in each row
         foreach ($interviews as $interview) {
@@ -725,7 +705,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $draw->rectangle(29, 195 - (10 + (($distrib[2] * 180)/$gridmax)) , 137, 184);
             }
             $draw->setFillColor('#000000');
-            $draw->annotation ( 34 , 195 , $this->anrTranslate('Risques forts') );
+            $draw->annotation ( 34 , 195 , ucfirst($this->anrTranslate('risques élevés')) );
 
             if(isset($distrib[1]) && $distrib[1]>0){
                 $draw->setFillColor("#FFBC1C");
@@ -733,7 +713,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $draw->rectangle(146, 195 - (10 + (($distrib[1] * 180)/$gridmax)) , 254, 184);
             }
             $draw->setFillColor('#000000');
-            $draw->annotation ( 151 , 195 , $this->anrTranslate('Risques moyens') );
+            $draw->annotation ( 151 , 195 , ucfirst($this->anrTranslate('medium risks')) );
 
             if(isset($distrib[0]) && $distrib[0]>0){
                 $draw->setFillColor("#D6F107");
@@ -741,7 +721,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $draw->rectangle(263, 195 - (10 + (($distrib[0] * 180)/$gridmax)) , 371, 184);
             }
             $draw->setFillColor('#000000');
-            $draw->annotation ( 268 , 195 , $this->anrTranslate('Risques négligeables') );
+            $draw->annotation ( 268 , 195 , ucfirst($this->anrTranslate('low risks')) );
 
             $canvas->drawImage($draw);
             $path = "data/".uniqid("", true)."_riskgraph.png";
@@ -821,9 +801,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
 
             $table->addRow(400,['tblHeader'=>true]);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Menace')), $styleHeader2Font, ['Alignment' => 'center']);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Vulnérabilité')), $styleHeader2Font, ['Alignment' => 'center']);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Mesure en place')), $styleHeader2Font, ['Alignment' => 'center']);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Threat')), $styleHeader2Font, ['Alignment' => 'center']);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Vulnerability')), $styleHeader2Font, ['Alignment' => 'center']);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Measures set')), $styleHeader2Font, ['Alignment' => 'center']);
 
             foreach ($mem_risks as $id_inst => $data) {
                 $table->addRow(400);
@@ -900,9 +880,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentFontRed = array('bold' => true, 'color' => 'FF0000', 'size' => 10);
 
         $table->addRow(400,['tblHeader'=>true]);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Mesures en place'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.50), $styleHeaderCell)->addText($this->anrTranslate('Actif'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Recommandation'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Measures set'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.50), $styleHeaderCell)->addText($this->anrTranslate('Instance'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Recommendation'), $styleHeaderFont, $alignCenter);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.50), $styleHeaderCell)->addText($this->anrTranslate('Imp.'), $styleHeaderFont, $alignCenter);
 
         $cpte_elem = 0;
@@ -1044,11 +1024,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addRow(400,['tblHeader'=>true]);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleHeaderCell)->addText($this->anrTranslate('Code'), $styleHeaderFont, array('Alignment' => 'center'));
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.85), $styleHeaderCell)->addText($this->anrTranslate('Menace'), $styleHeaderFont, array('Alignment' => 'center'));
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.85), $styleHeaderCell)->addText($this->anrTranslate('Threat'), $styleHeaderFont, array('Alignment' => 'center'));
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.50), $styleHeaderCell)->addText($this->anrTranslate('CID'), $styleHeaderFont, array('Alignment' => 'center'));
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.70), $styleHeaderCell)->addText($this->anrTranslate('Tend.'), $styleHeaderFont, array('Alignment' => 'center'));
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.60), $styleHeaderCell)->addText($this->anrTranslate('Prob.'), $styleHeaderFont, array('Alignment' => 'center'));
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.60), $styleHeaderCell)->addText($this->anrTranslate('Commentaire'), $styleHeaderFont, array('Alignment' => 'center'));
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.60), $styleHeaderCell)->addText($this->anrTranslate('Comment'), $styleHeaderFont, array('Alignment' => 'center'));
 
         foreach ($threats as $threat) {
             if (($threat['trend'] > 0 && $threat['trend'] != 2) || $fullGen) { // All but normal
