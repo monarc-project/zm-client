@@ -316,7 +316,7 @@ class UserService extends \MonarcCore\Service\UserService
                 ||
                 ((is_null($user->dateEnd)) && (isset($data['dateEnd']))) //change dateEnd null -> date
                 ||
-                ((isset($data['role'])) && (!in_array('superadminfo', $data['superadminfo']))) //delete superadminfo role
+                ((isset($data['role'])) && (!in_array('superadminfo', $data['role']))) //delete superadminfo role
                 ||
                 (is_null($data)) //delete superadminfo role
             ) {
