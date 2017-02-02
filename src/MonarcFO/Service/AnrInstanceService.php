@@ -27,6 +27,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      */
     public function importFromFile($anrId, $data)
     {
+        ini_set('max_execution_time', 0);
+
         // on a bien un pwd (ou vide)
         $key = empty($data['password']) ? '' : $data['password'];
         $mode = empty($data['mode']) ? 'merge' : $data['mode'];
