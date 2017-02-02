@@ -337,7 +337,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addRow(400);
 
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowSpan)->addText($this->anrTranslate('Niv.'), $styleHeaderFont);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowSpan)->addText($this->anrTranslate('Lvl.'), $styleHeaderFont);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.40), $cellColSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, ['Alignment' => 'center']);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.60), $cellRowSpan)->addText($this->anrTranslate('Consequences'), $styleHeaderFont, ['Alignment' => 'center']);
 
@@ -422,7 +422,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table = $section->addTable($styleTable);
 
         $table->addRow(400,['tblHeader'=>true]);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Niveau')), $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Level')), $styleHeaderFont, ['Alignment' => 'center']);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(17.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Comment')), $styleHeaderFont, ['Alignment' => 'center']);
 
         // Fill in each row
@@ -455,7 +455,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table = $section->addTable($styleTable);
 
         $table->addRow(400,['tblHeader'=>true]);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Niveau')), $styleHeaderFont, ['Alignment' => 'center']);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Level')), $styleHeaderFont, ['Alignment' => 'center']);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(17.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Comment')), $styleHeaderFont, ['Alignment' => 'center']);
 
 
@@ -705,7 +705,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $draw->rectangle(29, 195 - (10 + (($distrib[2] * 180)/$gridmax)) , 137, 184);
             }
             $draw->setFillColor('#000000');
-            $draw->annotation ( 34 , 195 , ucfirst($this->anrTranslate('risques élevés')) );
+            $draw->annotation ( 34 , 195 , ucfirst($this->anrTranslate('high risks')) );
 
             if(isset($distrib[1]) && $distrib[1]>0){
                 $draw->setFillColor("#FFBC1C");
@@ -845,11 +845,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $sum += $distrib[$c];
         }
 
-        $intro = sprintf($this->anrTranslate("La liste des risques traités est fournie en fichier annexe. Il répertorie %d risque(s) dont :"), $sum);
+        $intro = sprintf($this->anrTranslate("The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"), $sum);
         return $intro . '<br/><ul>' .
-            '<li>' . sprintf($this->anrTranslate('%d risque(s) critique(s) à traiter en priorité'), $distrib[2]) . '</li>' .
-            '<li>' . sprintf($this->anrTranslate('%d risque(s) moyen(s) à traiter partiellement'), $distrib[1]) . '</li>' .
-            '<li>' . sprintf($this->anrTranslate('%d risque(s) faible(s) négligeables'), $distrib[0]) . '</li></ul>';
+            '<li>' . sprintf($this->anrTranslate('%d critical risk(s) to be treated as priority'), $distrib[2]) . '</li>' .
+            '<li>' . sprintf($this->anrTranslate('%d medium risk(s) to be partially treated'), $distrib[1]) . '</li>' .
+            '<li>' . sprintf($this->anrTranslate('%d low risk(s) negligible'), $distrib[0]) . '</li></ul>';
     }
 
     /**
