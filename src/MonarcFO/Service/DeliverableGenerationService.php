@@ -186,16 +186,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             file_put_contents($model->get('path' . $anr->language), $model->get('content' . $anr->language));
         }
 
-        // Word-filter the input values
-        foreach ($values['txt'] as $key => $val) {
-            if ($key != "SUMMARY_EVAL_RISK") {
-                $values[$key] = _WT($val);
-            } else {
-                // This field comes from the frontend at deliverable generation time, so it is already in $values
-                $values[$key] = $this->generateWordXmlFromHtml($val);
-            }
-        }
-
         $values = array_merge_recursive($values, $this->buildValues($anr, $model->get('category')));
         $values['txt']['TYPE'] = $this->getModelType($model->get('category'));
         return $this->generateDeliverableWithValuesAndModel($model->get('path' . $anr->language), $values);
@@ -227,6 +217,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if(!empty($values['img']) && method_exists($word,'setImg')){
             foreach ($values['img'] as $key => $value) {
                 $word->setImg($key, $value['path'], $value['options']);
+            }
+        }
+        if(!empty($values['html']) && method_exists($word,'setHtml')){
+            foreach ($values['html'] as $key => $value) {
+                $word->setHtml($key, $value);
             }
         }
 
@@ -275,9 +270,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     {
         switch ($modelCategory) {
             case 1:
-                return ['txt' => $this->buildContextValidationValues($anr), 'img' => []];
+                return $this->buildContextValidationValues($anr);
             case 2:
-                return ['txt' => $this->buildContextModelingValues($anr), 'img' => []];
+                return $this->buildContextModelingValues($anr);
             case 3:
                 return $this->buildRiskAssessmentValues($anr);
             default:
@@ -295,10 +290,14 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     {
         // Values read from database
         $values = [
-            'COMPANY' => $this->getCompanyName(),
-            'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml($anr->contextAnaRisk),
-            'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml($anr->contextGestRisk),
-            'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml($anr->synthThreat),
+            'txt' => [
+                'COMPANY' => $this->getCompanyName(),
+            ],
+            'html' => [
+                'CONTEXT_ANA_RISK' => $anr->contextAnaRisk,
+                'CONTEXT_GEST_RISK' => $anr->contextGestRisk,
+                'SYNTH_EVAL_THREAT' => $anr->synthThreat,
+            ],
         ];
 
         // Generate impacts table
@@ -402,7 +401,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        $values['SCALE_IMPACT'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['txt']['SCALE_IMPACT'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
         // Generate threat scale table
@@ -435,7 +434,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(5000, $styleContentCell)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
         }
 
-        $values['SCALE_THREAT'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['txt']['SCALE_THREAT'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
         // Generate vuln table
@@ -469,7 +468,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(5000, $styleContentCell)->addText(_WT($commentText), $styleContentFont, ['Alignment' => 'left']);
         }
 
-        $values['SCALE_VULN'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['txt']['SCALE_VULN'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
         // Generate risks table
@@ -520,11 +519,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        $values['TABLE_RISKS'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['txt']['TABLE_RISKS'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
         // Table which represents "particular attention" threats
-        $values['TABLE_THREATS'] = $this->generateThreatsTable($anr, false);
+        $values['txt']['TABLE_THREATS'] = $this->generateThreatsTable($anr, false);
 
         // Figure A: Trends (Questions / Answers)
         $questions = $this->questionService->getList(1, 0, null, null, ['anr' => $anr->id]);
@@ -573,11 +572,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        $values['TABLE_EVAL_TEND'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['txt']['TABLE_EVAL_TEND'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
         // Figure B: Full threats table
-        $values['TABLE_THREATS_FULL'] = $this->generateThreatsTable($anr, true);
+        $values['txt']['TABLE_THREATS_FULL'] = $this->generateThreatsTable($anr, true);
 
         // Figure C: Interviews table
         $interviews = $this->interviewService->getList(1, 0, null, null, ['anr' => $anr->id]);
@@ -601,7 +600,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(14000, $styleContentCell)->addText(_WT($interview['content']), $styleContentFont, ['Alignment' => 'left']);
         }
 
-        $values['TABLE_INTERVIEW'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['txt']['TABLE_INTERVIEW'] = $this->getWordXmlFromWordObject($tableWord);
         unset($tableWord);
 
         return $values;
@@ -612,8 +611,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         // Models are incremental, so use values from level-1 model
         $values = $this->buildContextValidationValues($anr);
 
-        $values['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml($anr->synthAct);
-        $values['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation($anr);
+        $values['html']['SYNTH_ACTIF'] = $anr->synthAct;
+        $values['txt']['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation($anr);
 
         return $values;
     }
@@ -627,9 +626,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     protected function buildRiskAssessmentValues($anr)
     {
         // Models are incremental, so use values from level-2 model
-        $values['txt'] = $this->buildContextModelingValues($anr);
+        $values = [];
+        $values = array_merge($values,$this->buildContextModelingValues($anr));
 
-        $values['txt']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
+        $values['html']['DISTRIB_EVAL_RISK'] = $this->getRisksDistribution($anr);
 
         $values['img']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
@@ -1125,5 +1125,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
 function _WT($input)
 {
+    // Html::addHtml do that
     return str_replace(['&quot;', '&amp;lt', '&amp;gt', '&amp;'], ['"', '_lt_', '_gt_', '_amp_'], htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8'));
 }

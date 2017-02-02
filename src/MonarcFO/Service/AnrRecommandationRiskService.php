@@ -96,24 +96,18 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // Filter out duplicate global objects
-        $knownGlobObjId = [];
-        $objectCache = [];
+        $knownGlobObjId = $objectCache = [];
 
         if (isset($filterAnd['recommandation'])) {
             return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
                 $instance = $this->instanceTable->getEntity($in['instance']);
                 $objId = $instance->object->id;
 
-                if (!in_array($objId, $knownGlobObjId)) {
-                    if (!isset($objectCache[$objId])) {
-                        $object = $this->objectTable->getEntity($objId);
-                        $objectCache[$objId] = $object;
-                    } else {
-                        $object = $objectCache[$objId];
-                    }
+                if (!isset($knownGlobObjId[$objId][$in['threat']->id][$in['vulnerability']->id])) {
+                    $objectCache[$objId] = $instance->object;
 
-                    if ($object->scope == 2) { // SCOPE_GLOBAL
-                        $knownGlobObjId[] = $objId;
+                    if ($instance->object->scope == 2) { // SCOPE_GLOBAL
+                        $knownGlobObjId[$objId][$in['threat']->id][$in['vulnerability']->id] = $objId;
                     }
 
                     return true;
