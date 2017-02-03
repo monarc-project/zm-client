@@ -24,26 +24,35 @@ class AdminUserInit extends AbstractSeed
             $salt = $localConf['monarc']['salt'];
         }
 
+        //create client
+        $dataClient = [
+            'creator' => 'System',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+        $clientTable = $this->table('clients');
+        $clientTable->insert($dataClient)
+            ->save();
+
+        //create first user
         $firstname = 'Admin';
         $lastname = 'Admin';
         $email = 'username@domain.com';
         $password = 'Password123&';
-
-        $data = array(
+        $dataUser = [
             'status' => 1,
             'firstname' => $firstname,
             'lastname' => $lastname,
             'email' => $email,
-            'password' => password_hash($salt.$password,PASSWORD_BCRYPT),
+            'password' => password_hash($salt . $password, PASSWORD_BCRYPT),
             'language' => 1,
             'creator' => 'System',
             'created_at' => date('Y-m-d H:i:s'),
-        );
+        ];
+        $userTable = $this->table('users');
+        $userTable->insert($dataUser)
+            ->save();
 
-        $posts = $this->table('users');
-        $posts->insert($data)
-              ->save();
-
+        //create user roles
         $pathFo = __DIR__."/../../config/module.config.php";
         if(file_exists($pathFo)){
             $confFo = include $pathFo;
