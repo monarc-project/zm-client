@@ -128,6 +128,8 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        $this->updateRecoPosition($id, $data);
+
         parent::patch($id, $data);
     }
 
@@ -149,6 +151,90 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        $this->updateRecoPosition($id, $data);
+
         parent::update($id, $data);
+    }
+
+    public function updateRecoPosition($id, &$data){
+        if(!empty($data['implicitPosition'])){
+            $entity = $this->get('table')->getEntity($id);
+            if($entity->get('position') > 0){
+                switch ($data['implicitPosition']) {
+                    case \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_START:
+                        $data['position'] = 1;
+                        $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
+                            ->select()
+                            ->where('bro.anr = :anrid')
+                            ->setParameter(':anrid', $entity->get('anr')->get('id'))
+                            ->andWhere('bro.id != :id')
+                            ->setParameter(':id', $entity->get('id'))
+                            ->andWhere('bro.position <= :pos')
+                            ->setParameter(':pos', $entity->get('position'))
+                            ->andWhere('bro.position IS NOT NULL')
+                            ->getQuery()
+                            ->getResult();
+                        foreach($bros as $b){
+                            $b->set('position',$b->get('position')+1);
+                            $this->get('table')->save($b,false);
+                        }
+                        break;
+                    case \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_END:
+                        $pos = $this->get('table')->getRepository()->createQueryBuilder('bro')
+                            ->select('MAX(bro.position)')
+                            ->where('bro.anr = :anrid')
+                            ->setParameter(':anrid', $entity->get('anr')->get('id'))
+                            ->andWhere('bro.position IS NOT NULL')
+                            ->getQuery()->getSingleScalarResult();
+                        $data['position'] = $pos;
+                        $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
+                            ->select()
+                            ->where('bro.anr = :anrid')
+                            ->setParameter(':anrid', $entity->get('anr')->get('id'))
+                            ->andWhere('bro.id != :id')
+                            ->setParameter(':id', $entity->get('id'))
+                            ->andWhere('bro.position >= :pos')
+                            ->setParameter(':pos', $entity->get('position'))
+                            ->andWhere('bro.position IS NOT NULL')
+                            ->getQuery()
+                            ->getResult();
+                        foreach($bros as $b){
+                            $b->set('position',$b->get('position')-1);
+                            $this->get('table')->save($b,false);
+                        }
+                        break;
+                    case \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_AFTER:
+                        if(!empty($data['previous'])){
+                            $prev = $this->get('table')->getEntity($data['previous']);
+                            if($prev && $prev->get('position') > 0 && $prev->get('anr')->get('id') == $entity->get('anr')->get('id')){
+                                $data['position'] = $prev->get('position')+($entity->get('position') > $prev->get('position')?1:0);
+                                $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
+                                    ->select()
+                                    ->where('bro.anr = :anrid')
+                                    ->setParameter(':anrid', $entity->get('anr')->get('id'))
+                                    ->andWhere('bro.id != :id')
+                                    ->setParameter(':id', $entity->get('id'))
+                                    ->andWhere('bro.position '.($entity->get('position')>$data['position']?'>':'<').'= :pos1')
+                                    ->setParameter(':pos1', $data['position'])
+                                    ->andWhere('bro.position '.($entity->get('position')>$data['position']?'<':'>').' :pos2')
+                                    ->setParameter(':pos2', $entity->get('position'))
+                                    ->andWhere('bro.position IS NOT NULL')
+                                    ->getQuery()
+                                    ->getResult();
+                                $val = $entity->get('position') > $data['position'] ? 1 : -1;
+                                foreach($bros as $b){
+                                    $b->set('position',$b->get('position')+$val);
+                                    $this->get('table')->save($b,false);
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        unset($data['implicitPosition']);
+        unset($data['previous']);
     }
 }
