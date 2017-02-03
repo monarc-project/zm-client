@@ -133,16 +133,6 @@ return array(
                 ),
             ),
 
-            'monarc_api_client_anr_export' => array(
-                'type' => 'segment',
-                'options' => array(
-                    'route' => '/api/client-anr-export',
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnrExport',
-                    ),
-                ),
-            ),
-
             'monarc_api_guides' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -179,6 +169,16 @@ return array(
                 ),
                 'may_terminate' => false,
                 'child_routes' => array(
+                    'export' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'export',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrExport',
+                            ),
+                        ),
+                    ),
+
                     'assets' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -1006,7 +1006,7 @@ return array(
             'monarc_api_anr_objects',
             'monarc_api_anr_objects_objects',
             'monarc_api_anr_objects_duplication',
-            'monarc_api_client_anr_export',
+            'monarc_api_global_client_anr/export',
             'monarc_api_guides',
             'monarc_api_guides_items',
             'monarc_api_anr_objects_parents',

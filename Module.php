@@ -192,12 +192,9 @@ class Module
         foreach($roles as $role) {
             if ($e->getViewModel()->rbac->isGranted($role, $route)) {
                 $id = (int)$e->getRouteMatch()->getParam('id');
-                if(strpos($route, 'monarc_api_global_client_anr/') === 0 || ($route == 'monarc_api_client_anr_export') || ($route == 'monarc_api_client_anr' && !empty($id))){
+                if(strpos($route, 'monarc_api_global_client_anr/') === 0 || ($route == 'monarc_api_client_anr' && !empty($id))){
                     if($route == 'monarc_api_client_anr') {
                         $anrid = $id;
-                    }else if($route == 'monarc_api_client_anr_export'){
-                        $anrid = json_decode($e->getRequest()->getContent());
-                        $anrid = $anrid->id;
                     }else{
                         $anrid = (int)$e->getRouteMatch()->getParam('anrid');
                     }
@@ -207,7 +204,7 @@ class Module
                         $lk = current($sm->get('MonarcFO\Model\Table\UserAnrTable')->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser['id']]));
                         if(empty($lk)){
                             // On doit tester si c'est un snapshot, dans ce cas, on autorise l'accès mais en READ-ONLY
-                            if($e->getRequest()->getMethod() != 'GET'){
+                            if($e->getRequest()->getMethod() != 'GET' && !$this->authorizedPost($route,$e->getRequest()->getMethod())){
                                 break; // même si c'est un snapshot, on n'autorise que du GET
                             }
                             $snap = current($sm->get('MonarcFO\Model\Table\SnapshotTable')->getEntityByFields(['anr'=>$anrid]));
@@ -221,6 +218,9 @@ class Module
                             $isGranted = true;
                             break;
                         }elseif($lk->get('rwd') == 0 && $e->getRequest()->getMethod() != 'GET'){
+                            if($this->authorizedPost($route,$e->getRequest()->getMethod())){ // on autorise les POST pour les export
+                                $isGranted = true;
+                            }
                             break; // les droits ne sont pas bon
                         }else{
                             $isGranted = true;
@@ -242,5 +242,10 @@ class Module
         }
 
     }
-
+    private function authorizedPost($route, $method){
+        return $method == 'POST' &&
+                ($route == 'monarc_api_global_client_anr/export' || // export ANR
+                $route == 'monarc_api_global_client_anr/instance_export' || // export Instance
+                $route == 'monarc_api_global_client_anr/objects_export'); // export  Object
+    }
 }

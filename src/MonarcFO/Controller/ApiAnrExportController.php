@@ -7,15 +7,13 @@
 
 namespace MonarcFO\Controller;
 
-use MonarcCore\Controller\AbstractController;
-
 /**
  * Api Anr Export Controller
  *
  * Class ApiAnrExportController
  * @package MonarcFO\Controller
  */
-class ApiAnrExportController extends AbstractController
+class ApiAnrExportController extends ApiAnrAbstractController
 {
     /**
      * Create
@@ -25,6 +23,15 @@ class ApiAnrExportController extends AbstractController
      */
     public function create($data)
     {
+        if (empty($data['id'])) {
+            throw new \Exception('Anr to export is required', 412);
+        }
+
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \Exception('Anr id missing', 412);
+        }
+
         $output = $this->getService()->exportAnr($data);
 
         $response = $this->getResponse();
