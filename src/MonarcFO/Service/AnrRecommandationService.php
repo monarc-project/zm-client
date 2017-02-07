@@ -126,6 +126,8 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
             } catch (\Exception $e) {
                 throw new \Exception('Invalid date format', 412);
             }
+        }elseif(isset($data['duedate'])){
+            $data['duedate'] = null;
         }
 
         $this->updateRecoPosition($id, $data);
@@ -149,6 +151,8 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
             } catch (\Exception $e) {
                 throw new \Exception('Invalid date format', 412);
             }
+        }elseif(isset($data['duedate'])){
+            $data['duedate'] = null;
         }
 
         $this->updateRecoPosition($id, $data);
