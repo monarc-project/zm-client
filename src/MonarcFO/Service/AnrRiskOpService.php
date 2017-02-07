@@ -128,7 +128,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             if (isset($params['thresholds'])) {
                 $min = $params['thresholds'];
 
-                if ($instanceRiskOp->cacheNetRisk < $min) {
+                if ($instanceRiskOp->cacheNetRisk <= $min) {
                     continue;
                 }
             }
