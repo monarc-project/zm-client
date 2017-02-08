@@ -27,8 +27,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      */
     public function importFromFile($anrId, $data)
     {
-        ini_set('max_execution_time', 0);
-
         // on a bien un pwd (ou vide)
         $key = empty($data['password']) ? '' : $data['password'];
         $mode = empty($data['mode']) ? 'merge' : $data['mode'];
@@ -76,6 +74,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      */
     public function importFromArray($data, $anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = [])
     {
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit',-1);
         if (isset($data['type']) && $data['type'] == 'instance' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()
         ) {
