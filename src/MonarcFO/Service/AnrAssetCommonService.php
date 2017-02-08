@@ -135,8 +135,8 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
                                 'description' . $anr->get('language') => $amv->get('measure' . $i)->get('description' . $anr->get('language')),
                             ];
                         }
-                        $return['amvs'][] = $amvArray;
                     }
+                    $return['amvs'][] = $amvArray;
                 }
                 return $return;
             } else {
