@@ -97,7 +97,6 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 ];
             }
         }
-
         //retrieve risks instances
         /** @var InstanceRiskOpService $instanceRiskServiceOp */
         $instanceRiskOpService = $this->get('instanceRiskOpService');
@@ -125,7 +124,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 }
             }
 
-            if (isset($params['thresholds'])) {
+            if (isset($params['thresholds']) && $instanceRiskOp->cacheNetRisk != -1 && $params['thresholds'] != -1) {
                 $min = $params['thresholds'];
 
                 if ($instanceRiskOp->cacheNetRisk <= $min) {
