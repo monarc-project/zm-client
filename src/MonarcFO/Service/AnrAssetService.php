@@ -265,9 +265,9 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
             on passe les risques liés en spécifiques et on supprime les liens AMVs
             */
             if (empty($localAmv)) {
-                $risks = $this->get('instanceRiskTable')->getEntityByFields(['amv' => ['op' => 'IS NOT', 'value' => null]]);
+                $risks = $this->get('instanceRiskTable')->getEntityByFields(['asset'=>$idAsset, 'anr'=>$anr->get('id'), 'amv' => ['op' => 'IS NOT', 'value' => null]]);
             } else {
-                $risks = $this->get('instanceRiskTable')->getEntityByFields(['amv' => ['op' => 'NOT IN', 'value' => $localAmv]]);
+                $risks = $this->get('instanceRiskTable')->getEntityByFields(['asset'=>$idAsset, 'anr'=>$anr->get('id'), 'amv' => ['op' => 'NOT IN', 'value' => $localAmv]]);
             }
             if (!empty($risks)) {
                 $amvs = [];
