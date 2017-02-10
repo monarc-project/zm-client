@@ -310,7 +310,7 @@ class UserService extends \MonarcCore\Service\UserService
                 }
             }
 
-            //verify if status, dateEnd and role can be change or user be desactivated
+            //verify if status, dateEnd and role can be changed or user be deactivated
             if (
                 (($user->status) && (isset($data['status'])) && (!$data['status'])) //change status 1 -> 0
                 ||
@@ -320,9 +320,9 @@ class UserService extends \MonarcCore\Service\UserService
                 ||
                 (is_null($data)) //delete superadminfo role
             ) {
-                //verify if is not the last superadminfo and verify date_end
+                //verify if this is not the last superadminfo and verify date_end
                 if ($nbActivateAdminUser <= 1) {
-                    throw new \Exception('You can not desactivate, delete or change role of the last admin', 412);
+                    throw new \Exception('You can not deactivate, delete or change role of the last admin', 412);
                 }
             }
         }
