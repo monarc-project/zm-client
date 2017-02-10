@@ -356,17 +356,32 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function initPosition($anrId)
     {
-        //retrieve recommandations
-        /** @var RecommandationTable $recommandationTable */
-        $recommandationTable = $this->get('recommandationTable');
-        $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId, 'position' => ['op' => 'IS NOT', 'value'=>null]], ['importance' => 'DESC']);
+        $recoRisks = $this->get('table')->getEntityByFields([
+            'anr' => $anrId,
+        ]);
+        $idReco = [];
+        foreach($recoRisks as $rr){
+            if ($rr->instanceRisk && $rr->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
+                $idReco[$rr->recommandation->id] = $rr->recommandation->id;
+            }
+            if ($rr->instanceRiskOp && $rr->instanceRiskOp->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
+                $idReco[$rr->recommandation->id] = $rr->recommandation->id;
+            }
+        }
 
-        $i = 1;
-        $nbRecommandations = count($recommandations);
-        foreach ($recommandations as $recommandation) {
-            $recommandation->position = $i;
-            $recommandationTable->save($recommandation, ($i == $nbRecommandations));
-            $i++;
+        if(!empty($idReco)){
+            //retrieve recommandations
+            /** @var RecommandationTable $recommandationTable */
+            $recommandationTable = $this->get('recommandationTable');
+            $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId, 'id' => $idReco], ['importance' => 'DESC', 'code'=>'ASC']);
+
+            $i = 1;
+            $nbRecommandations = count($recommandations);
+            foreach ($recommandations as $recommandation) {
+                $recommandation->position = $i;
+                $recommandationTable->save($recommandation, ($i == $nbRecommandations));
+                $i++;
+            }
         }
     }
 
