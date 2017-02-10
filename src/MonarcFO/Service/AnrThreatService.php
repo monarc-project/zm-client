@@ -7,6 +7,7 @@
 
 namespace MonarcFO\Service;
 
+use MonarcCore\Service\InstanceRiskService;
 use MonarcFO\Model\Table\InstanceRiskTable;
 
 /**
@@ -22,6 +23,7 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
     protected $themeTable;
     protected $instanceRiskTable;
+    protected $instanceRiskService;
     protected $filterColumns = [
         'label1', 'label2', 'label3', 'label4',
         'description1', 'description2', 'description3', 'description4',
@@ -87,7 +89,14 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
                 if ((isset($data['forceQualification'])) && $data['forceQualification'] == 1) {
                     $instanceRisk->mh = 1;
                 }
+
                 $instanceRiskTable->save($instanceRisk, ($i == $nbInstancesRisks));
+
+                /** @var InstanceRiskService $instanceRiskService */
+                $instanceRiskService = $this->get('instanceRiskService');
+                $instanceRiskService->updateRisks($instanceRisk->id);
+                $instanceRiskService->updateRecoRisks($instanceRisk);
+
                 $i++;
             }
         }

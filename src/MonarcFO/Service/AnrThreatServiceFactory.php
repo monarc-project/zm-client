@@ -22,5 +22,6 @@ class AnrThreatServiceFactory extends AbstractServiceFactory
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'themeTable' => 'MonarcFO\Model\Table\ThemeTable',
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
+        'instanceRiskService' => '\MonarcFO\Service\AnrInstanceRiskService',
     ];
 }
