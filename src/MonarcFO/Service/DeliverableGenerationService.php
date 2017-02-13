@@ -914,10 +914,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     foreach ($risks as $risk) {
                         if ($risk['instanceRisk']) {
                             $sharedInstanceRisk = $this->instanceRiskTable->get($risk['instanceRisk']->id);
-                            if ($sharedInstanceRisk['kindOfMeasure'] == 5) continue;
+                            if ($sharedInstanceRisk['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED || is_null($sharedInstanceRisk['kindOfMeasure']) || $sharedInstanceRisk['kindOfMeasure'] <= 0) continue;
                         } else if ($risk['instanceRiskOp']) {
                             $sharedInstanceRisk = $this->instanceRiskOpTable->get($risk['instanceRiskOp']->id);
-                            if ($sharedInstanceRisk['kindOfMeasure'] == 5) continue;
+                            if ($sharedInstanceRisk['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED || is_null($sharedInstanceRisk['kindOfMeasure']) || $sharedInstanceRisk['kindOfMeasure'] <= 0) continue;
                         }
 
 
