@@ -297,28 +297,40 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     if (!empty($r) && $include_eval) {
                         $r->set('threatRate', $this->approximate(
                             $risk['threatRate'],
-                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'],
-                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max']
+                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max'],
+                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max']
                         ));
                         $r->set('vulnerabilityRate', $this->approximate(
                             $risk['vulnerabilityRate'],
-                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'],
-                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max']
+                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['min'],
+                            $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['max'],
+                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['min'],
+                            $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['max']
                         ));
+                        $r->set('kindOfMeasure',$risk['kindOfMeasure']);
+                        $r->set('comment',$risk['comment']);
+                        $r->set('commentAfter',$risk['commentAfter']);
+
                         // la valeur -1 pour le reduction_amount n'a pas de sens, c'est 0 le minimum. Le -1 fausse les calculs
                         // cas particulier, faudrait pas mettre nimp dans cette colonne si on part d'une scale 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
                         $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate')) : 0);
                         $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
 
                         // Recommandations
-                        if (!empty($data['recos'][$r->get('id')])) {
-                            foreach ($data['recos'][$r->get('id')] as $reco) {
+                        if (!empty($data['recos'][$risk['id']])) {
+                            foreach ($data['recos'][$risk['id']] as $reco) {
                                 // La recommandation
                                 if (isset($sharedData['recos'][$reco['id']])) { // Cette recommandation a déjà été gérée dans cet import
+                                    if($risk['kindOfMeasure'] != \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+                                        $aReco = $this->get('recommandationTable')->getEntity($sharedData['recos'][$reco['id']]);
+                                        if($aReco->get('position') <= 0 || is_null($aReco->get('position'))){
+                                            $pos = count($this->get('recommandationTable')->getEntityByFields(['anr'=>$anr->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']))+1;
+                                            $aReco->set('position',$pos);
+                                            $this->get('recommandationTable')->save($aReco);
+                                        }
+                                    }
                                 } else { // sinon, on teste sa présence
                                     $toExchange = $reco;
                                     unset($toExchange['id']);
@@ -329,11 +341,17 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
                                         $class = $this->get('recommandationTable')->getClass();
                                         $aReco = new $class();
-                                        $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
-                                        $aReco->setLanguage($this->getLanguage());
-                                        $toExchange['implicitPosition'] = 2;
+                                        if($risk['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+                                            $toExchange['position'] = null;
+                                        }else{
+                                            $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr'=>$anr->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']))+1;
+                                        }
+                                    }elseif(($aReco->get('position') <= 0 || is_null($aReco->get('position'))) && $risk['kindOfMeasure'] != \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+                                        $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr'=>$anr->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']))+1;
                                     }
-                                    $aReco->exchangeArray($toExchange);
+                                    $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
+                                    $aReco->setLanguage($this->getLanguage());
+                                    $aReco->exchangeArray($toExchange,$aReco->get('id')>0);
                                     $this->setDependencies($aReco, ['anr']);
                                     $sharedData['recos'][$reco['id']] = $this->get('recommandationTable')->save($aReco);
                                 }
@@ -353,6 +371,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     'threat' => $r->get('threat')->get('id'),
                                     'vulnerability' => $r->get('vulnerability')->get('id'),
                                     'commentAfter' => $reco['commentAfter'],
+                                    'op' => 0,
+                                    'risk' => $idRisk,
                                 ];
                                 $rr->exchangeArray($toExchange);
                                 $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
@@ -403,26 +423,30 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 $this->updateRisks($anr->get('id'), $instanceId);
             }
 
-            if (!empty($data['riskop'])) {
+            if (!empty($data['risksop'])) {
                 $toApproximate = [
-                    'netProb',
-                    'targetedProb',
-                    'netR',
-                    'netO',
-                    'netL',
-                    'netF',
-                    'targetedR',
-                    'targetedO',
-                    'targetedL',
-                    'targetedF',
+                    \MonarcCore\Model\Entity\Scale::TYPE_THREAT => [
+                        'netProb',
+                        'targetedProb',
+                    ],
+                    \MonarcCore\Model\Entity\Scale::TYPE_IMPACT => [
+                        'netR',
+                        'netO',
+                        'netL',
+                        'netF',
+                        'targetedR',
+                        'targetedO',
+                        'targetedL',
+                        'targetedF',
+                    ],
                 ];
                 $toInit = [];
                 if ($anr->get('showRolfBrut')) {
-                    $toApproximate[] = 'brutProb';
-                    $toApproximate[] = 'brutR';
-                    $toApproximate[] = 'brutO';
-                    $toApproximate[] = 'brutL';
-                    $toApproximate[] = 'brutF';
+                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_THREAT][] = 'brutProb';
+                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutR';
+                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutO';
+                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutL';
+                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutF';
                 } else {
                     $toInit = [
                         'brutProb',
@@ -432,36 +456,149 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         'brutF',
                     ];
                 }
-                foreach ($data['riskop'] as $ro) {
+                foreach ($data['risksop'] as $ro) {
                     // faut penser à actualiser l'anr_id, l'instance_id, l'object_id. Le risk_id quant à lui n'est pas repris dans l'export, on s'en moque donc
-                    $toExchange = $ro;
-                    unset($toExchange['id']);
-                    $toExchange['anr'] = $anr->get('id');
-                    $toExchange['instance'] = $instanceId;
-                    $toExchange['object'] = $idObject;
-                    $toExchange['rolfRisk'] = null;
-                    // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
-                    if ($include_eval) { // pas d'impact des subscales, on prend les échelles nominales
-                        foreach ($toInit as $i) {
-                            $toExchange[$i] = -1;
+                    if($ro['specific']){
+                        $class = $this->get('instanceRiskOpService')->get('table')->getClass();
+                        $r = new $class();
+                        $ro['rolfRisk'] = null;
+                    }elseif(!empty($sharedData['rolfRisks'][$ro['rolfRisk']])){ 
+                        $r = current($this->get('instanceRiskOpService')->get('table')->getEntityByFields([
+                            'anr' => $anr->get('id'),
+                            'instance' => $instanceId,
+                            'object' => $idObject,
+                            'rolfRisk' => $sharedData['rolfRisks'][$ro['rolfRisk']],
+                        ]));
+                        $ro['rolfRisk'] = $sharedData['rolfRisks'][$ro['rolfRisk']];
+                    }
+                    if(!empty($r)){
+                        $toExchange = $ro;
+                        unset($toExchange['id']);
+                        $toExchange['anr'] = $anr->get('id');
+                        $toExchange['instance'] = $instanceId;
+                        $toExchange['object'] = $idObject;
+                        // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
+                        if ($include_eval) { // pas d'impact des subscales, on prend les échelles nominales
+                            foreach ($toInit as $i) {
+                                $toExchange[$i] = -1;
+                            }
+                            foreach ($toApproximate as $type => $list) {
+                                foreach($list as $i){
+                                    $toExchange[$i] = $this->approximate(
+                                        $toExchange[$i],
+                                        $sharedData['scales']['orig'][$type]['min'],
+                                        $sharedData['scales']['orig'][$type]['max'],
+                                        $sharedData['scales']['dest'][$type]['min'],
+                                        $sharedData['scales']['dest'][$type]['max']
+                                    );
+                                }
+                            }
                         }
-                        foreach ($toApproximate as $i) {
-                            $toExchange[$i] = $this->approximate(
-                                $toExchange[$i],
-                                $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                                $sharedData['scales']['orig'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'],
-                                $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'],
-                                $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max']
-                            );
+                        $r->setDbAdapter($this->get('instanceRiskOpService')->get('table')->getDb());
+                        $r->setLanguage($this->getLanguage());
+                        $r->exchangeArray($toExchange);
+                        $this->setDependencies($r, ['anr', 'instance', 'object', 'rolfRisk']);
+                        $idRiskOp = $this->get('instanceRiskOpService')->get('table')->save($r);
+                    }
+                    // Recommandations
+                    if ($include_eval && !empty($data['recosop'][$ro['id']]) && !empty($idRiskOp)) {
+                        foreach ($data['recosop'][$ro['id']] as $reco) {
+                            // La recommandation
+                            if (isset($sharedData['recos'][$reco['id']])) { // Cette recommandation a déjà été gérée dans cet import
+                                if($ro['kindOfMeasure'] != \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+                                    $aReco = $this->get('recommandationTable')->getEntity($sharedData['recos'][$reco['id']]);
+                                    if($aReco->get('position') <= 0 || is_null($aReco->get('position'))){
+                                        $pos = count($this->get('recommandationTable')->getEntityByFields(['anr'=>$anr->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']))+1;
+                                        $aReco->set('position',$pos);
+                                        $this->get('recommandationTable')->save($aReco);
+                                    }
+                                }
+                            } else { // sinon, on teste sa présence
+                                $toExchange = $reco;
+                                unset($toExchange['id']);
+                                unset($toExchange['commentAfter']); // data du link
+                                $toExchange['anr'] = $anr->get('id');
+                                // on test l'unicité du code
+                                $aReco = current($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $reco['code']]));
+                                if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
+                                    $class = $this->get('recommandationTable')->getClass();
+                                    $aReco = new $class();
+                                    if($ro['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+                                        $toExchange['position'] = null;
+                                    }else{
+                                        $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr'=>$anr->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']))+1;
+                                    }
+                                }elseif(($aReco->get('position') <= 0 || is_null($aReco->get('position'))) && $ro['kindOfMeasure'] != \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED){
+                                    $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr'=>$anr->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']))+1;
+                                }
+                                $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
+                                $aReco->setLanguage($this->getLanguage());
+                                $aReco->exchangeArray($toExchange,$aReco->get('id')>0);
+                                $this->setDependencies($aReco, ['anr']);
+                                $sharedData['recos'][$reco['id']] = $this->get('recommandationTable')->save($aReco);
+                            }
+
+                            // Le lien recommandation <-> risk
+                            $class = $this->get('recommandationRiskTable')->getClass();
+                            $rr = new $class();
+                            $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
+                            $rr->setLanguage($this->getLanguage());
+                            $toExchange = [
+                                'anr' => $anr->get('id'),
+                                'recommandation' => $sharedData['recos'][$reco['id']],
+                                'instanceRiskOp' => $idRiskOp,
+                                'instance' => $instanceId,
+                                'objectGlobal' => (($obj && $obj->get('scope') == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL) ? $obj->get('id') : null),
+                                'asset' => null,
+                                'threat' => null,
+                                'vulnerability' => null,
+                                'commentAfter' => $reco['commentAfter'],
+                                'op' => 1,
+                                'risk' => $idRiskOp,
+                            ];
+                            $rr->exchangeArray($toExchange);
+                            $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRiskOp', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                            $this->get('recommandationRiskTable')->save($rr);
+
+                            // Recommandation <-> Measures
+                            if (!empty($data['recolinks'][$reco['id']])) {
+                                foreach ($data['recolinks'][$reco['id']] as $mid) {
+                                    if (isset($sharedData['measures'][$mid])) { // Cette measure a déjà été gérée dans cet import
+                                    } elseif ($data['measures'][$mid]) {
+                                        // on teste sa présence
+                                        $toExchange = $data['measures'][$mid];
+                                        unset($toExchange['id']);
+                                        $toExchange['anr'] = $anr->get('id');
+                                        $measure = current($this->get('amvService')->get('measureTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['measures'][$mid]['code']]));
+                                        if (empty($measure)) {
+                                            $class = $this->get('amvService')->get('measureTable')->getClass();
+                                            $measure = new $class();
+                                            $measure->setDbAdapter($this->get('amvService')->get('measureTable')->getDb());
+                                            $measure->setLanguage($this->getLanguage());
+                                        }
+                                        $measure->exchangeArray($toExchange);
+                                        $this->setDependencies($measure, ['anr']);
+                                        $sharedData['measures'][$mid] = $this->get('amvService')->get('measureTable')->save($measure);
+                                    }
+
+                                    if (isset($sharedData['measures'][$mid])) {
+                                        // On crée le lien
+                                        $class = $this->get('recommandationMeasureTable')->getClass();
+                                        $lk = new $class();
+                                        $lk->setDbAdapter($this->get('recommandationMeasureTable')->getDb());
+                                        $lk->setLanguage($this->getLanguage());
+                                        $lk->exchangeArray([
+                                            'anr' => $anr->get('id'),
+                                            'recommandation' => $sharedData['recos'][$reco['id']],
+                                            'measure' => $sharedData['measures'][$mid],
+                                        ]);
+                                        $this->setDependencies($lk, ['anr', 'recommandation', 'measure']);
+                                        $this->get('recommandationMeasureTable')->save($lk);
+                                    }
+                                }
+                            }
                         }
                     }
-                    $class = $this->get('instanceRiskOpService')->get('table')->getClass();
-                    $r = new $class();
-                    $r->setDbAdapter($this->get('instanceRiskOpService')->get('table')->getDb());
-                    $r->setLanguage($this->getLanguage());
-                    $r->exchangeArray($toExchange);
-                    $this->setDependencies($r, ['anr', 'instance', 'object', 'rolfRisk']);
-                    $this->get('instanceRiskOpService')->get('table')->save($r);
                 }
             }
 
@@ -470,6 +607,35 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $this->importFromArray($child, $anr, $instanceId, $modeImport, $include_eval, $sharedData);//et ainsi de suite ...
                 }
                 $this->updateChildrenImpacts($instanceId);
+            }
+
+            // Duplicate from AnrRecommandationRiskService::initPosition()
+            $recoRisks = $this->get('recommandationRiskTable')->getEntityByFields([
+                'anr' => $anr->id,
+            ]);
+            $idReco = [];
+            foreach($recoRisks as $rr){
+                if ($rr->instanceRisk && $rr->instanceRisk->kindOfMeasure != \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                    $idReco[$rr->recommandation->id] = $rr->recommandation->id;
+                }
+                if ($rr->instanceRiskOp && $rr->instanceRiskOp->kindOfMeasure != \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED) {
+                    $idReco[$rr->recommandation->id] = $rr->recommandation->id;
+                }
+            }
+
+            if(!empty($idReco)){
+                //retrieve recommandations
+                /** @var RecommandationTable $recommandationTable */
+                $recommandationTable = $this->get('recommandationTable');
+                $recommandations = $recommandationTable->getEntityByFields(['anr' => $anr->id, 'id' => $idReco], ['importance' => 'DESC', 'code'=>'ASC']);
+
+                $i = 1;
+                $nbRecommandations = count($recommandations);
+                foreach ($recommandations as $recommandation) {
+                    $recommandation->position = $i;
+                    $recommandationTable->save($recommandation, ($i == $nbRecommandations));
+                    $i++;
+                }
             }
 
             return $instanceId;
