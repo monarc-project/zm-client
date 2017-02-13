@@ -768,11 +768,24 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
 
         $mem_risks = $globalObject = [];
+        $instanceTable = $this->get('instanceService')->get('table');
         foreach ($result as $r) {
             if(!isset($globalObject[$r['oid']][$r['mid']][$r['vid']])){
                 if (!isset($mem_risks[$r['oid']])) {
                     $mem_risks[$r['oid']] = [];
                     $mem_risks[$r['oid']]['ctx'] = $r['name'];
+                    if($r['scope'] == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL){
+                        $mem_risks[$r['oid']]['ctx'] .= " (".$this->anrTranslate('Global').")";
+                    }else{
+                        $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
+                        $asc = $instanceTable->getAscendance($instance);
+
+                        $path = $anr->get('label'.$this->currentLangAnrIndex);
+                        foreach ($asc as $a) {
+                            $path .= ' > '.$a['name'.$this->currentLangAnrIndex];
+                        }
+                        $mem_risks[$r['oid']]['ctx'] = $path;
+                    }
                     $mem_risks[$r['oid']]['risks'] = [];
                 }
 
