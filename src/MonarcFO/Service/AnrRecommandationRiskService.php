@@ -190,12 +190,22 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     //delete risk of global with risk value is not the higher
                     if ($recommandationRisk->objectGlobal) {
                         foreach ($global as $glob) {
-                            if ($glob['objectId'] == $recommandationRisk->objectGlobal->id) {
+                            if (
+                                ($glob['objectId'] == $recommandationRisk->objectGlobal->id)
+                                &&
+                                ($glob['assetId'] == $recommandationRisk->asset->id)
+                                &&
+                                ($glob['threatId'] == $recommandationRisk->threat->id)
+                                &&
+                                ($glob['vulnerabilityId'] == $recommandationRisk->vulnerability->id)
+                            ) {
                                 if ($glob['maxRisk'] < $recommandationRisk->instanceRisk->cacheMaxRisk) {
-                                    $risksToUnset[$glob['riskId']] = $glob['riskId'];
+                                    $value = $glob['riskId'];
                                 } else {
-                                    $risksToUnset[$recommandationRisk->instanceRisk->id] = $recommandationRisk->instanceRisk->id;
+                                    $value = $recommandationRisk->instanceRisk->id;
                                 }
+
+                                $risksToUnset[$value] = $value;
                             }
                         }
 
@@ -203,6 +213,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                             'objectId' => $recommandationRisk->objectGlobal->id,
                             'maxRisk' => $recommandationRisk->instanceRisk->cacheMaxRisk,
                             'riskId' => $recommandationRisk->instanceRisk->id,
+                            'assetId' => $recommandationRisk->asset->id,
+                            'threatId' => $recommandationRisk->threat->id,
+                            'vulnerabilityId' => $recommandationRisk->vulnerability->id,
                         ];
                     }
                 }
@@ -212,6 +225,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 foreach ($recommandations[$key]['risks'] as $k => $risk) {
                     if (isset($risksToUnset[$risk['id']])) {
                         unset($recommandations[$key]['risks'][$k]);
+                        $nbRisks--;
                     }
                 }
             }
@@ -225,6 +239,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         usort($output, function ($a, $b) {
             return $a['position'] - $b['position'];
         });
+
 
         return $output;
     }
@@ -293,14 +308,14 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         $reco = $this->get('recommandationTable')->getEntity($data['recommandation']);
         $pos = $reco->get('position');
-        if(empty($pos) && ($gRisk->get('kindOfMeasure') != null && $gRisk->get('kindOfMeasure') != InstanceRisk::KIND_NOT_TREATED)){
+        if (empty($pos) && ($gRisk->get('kindOfMeasure') != null && $gRisk->get('kindOfMeasure') != InstanceRisk::KIND_NOT_TREATED)) {
             // On ajoute cette recommandation au début de la pile
-            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => 'IS NOT', 'value'=>null]],['position'=>'ASC']);
-            foreach($recos as $r){
-                $r->set('position',$r->get('position')+1);
-                $this->get('recommandationTable')->save($r,false);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr' => $reco->get('anr')->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC']);
+            foreach ($recos as $r) {
+                $r->set('position', $r->get('position') + 1);
+                $this->get('recommandationTable')->save($r, false);
             }
-            $reco->set('position',1);
+            $reco->set('position', 1);
             $this->get('recommandationTable')->save($reco);
         }
 
@@ -360,7 +375,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             'anr' => $anrId,
         ]);
         $idReco = [];
-        foreach($recoRisks as $rr){
+        foreach ($recoRisks as $rr) {
             if ($rr->instanceRisk && $rr->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
                 $idReco[$rr->recommandation->id] = $rr->recommandation->id;
             }
@@ -369,11 +384,11 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        if(!empty($idReco)){
+        if (!empty($idReco)) {
             //retrieve recommandations
             /** @var RecommandationTable $recommandationTable */
             $recommandationTable = $this->get('recommandationTable');
-            $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId, 'id' => $idReco], ['importance' => 'DESC', 'code'=>'ASC']);
+            $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId, 'id' => $idReco], ['importance' => 'DESC', 'code' => 'ASC']);
 
             $i = 1;
             $nbRecommandations = count($recommandations);
@@ -628,15 +643,15 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // Update brother's recommandation position if necessary
-        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
-        if(empty($bros)){ // is last recorisk
+        $bros = current($table->getEntityByFields(['anr' => $idAnr, 'recommandation' => $idReco, 'id' => ['op' => '!=', 'value' => $id]]));
+        if (empty($bros)) { // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
-            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
-            foreach($recos as $r){
-                $r->set('position',$r->get('position')-1);
-                $this->get('recommandationTable')->save($r,false);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr' => $reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value' => $reco->get('position')]], ['position' => 'ASC']);
+            foreach ($recos as $r) {
+                $r->set('position', $r->get('position') - 1);
+                $this->get('recommandationTable')->save($r, false);
             }
-            $reco->set('position',null);
+            $reco->set('position', null);
             $this->get('recommandationTable')->save($reco);
         }
     }
@@ -704,15 +719,15 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // Update brother's recommandation position if necessary
-        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
-        if(empty($bros) && $reco->get('position') > 0){ // is last recorisk
+        $bros = current($table->getEntityByFields(['anr' => $idAnr, 'recommandation' => $idReco, 'id' => ['op' => '!=', 'value' => $id]]));
+        if (empty($bros) && $reco->get('position') > 0) { // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
-            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
-            foreach($recos as $r){
-                $r->set('position',$r->get('position')-1);
-                $this->get('recommandationTable')->save($r,false);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr' => $reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value' => $reco->get('position')]], ['position' => 'ASC']);
+            foreach ($recos as $r) {
+                $r->set('position', $r->get('position') - 1);
+                $this->get('recommandationTable')->save($r, false);
             }
-            $reco->set('position',null);
+            $reco->set('position', null);
             $this->get('recommandationTable')->save($reco);
         }
 
