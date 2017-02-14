@@ -771,33 +771,38 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $instanceTable = $this->get('instanceService')->get('table');
         foreach ($result as $r) {
             if(!isset($globalObject[$r['oid']][$r['mid']][$r['vid']])){
-                if (!isset($mem_risks[$r['oid']])) {
-                    $mem_risks[$r['oid']] = [];
-                    $mem_risks[$r['oid']]['ctx'] = $r['name'];
-                    if($r['scope'] == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL){
-                        $mem_risks[$r['oid']]['ctx'] .= " (".$this->anrTranslate('Global').")";
-                    }else{
+                $key = null;
+                if($r['scope'] == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL){
+                    $key = "o-".$r['oid'];
+                    if (!isset($mem_risks[$key])) {
+                        $mem_risks[$key] = [
+                            'ctx' => $r['name']." (".$this->anrTranslate('Global').")",
+                            'risks' => [],
+                        ];
+                    }
+                    $globalObject[$r['oid']][$r['mid']][$r['vid']] = $r['oid'];
+                }else{
+                    $key = "i-".$r['id'];
+                    if (!isset($mem_risks[$key])) {
                         $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
-                        $asc = $instanceTable->getAscendance($instance);
+                        $asc = array_reverse($instanceTable->getAscendance($instance));
 
                         $path = $anr->get('label'.$this->currentLangAnrIndex);
                         foreach ($asc as $a) {
                             $path .= ' > '.$a['name'.$this->currentLangAnrIndex];
                         }
-                        $mem_risks[$r['oid']]['ctx'] = $path;
+                        $mem_risks[$key] = [
+                            'ctx' => $path,
+                            'risks' => [],
+                        ];
                     }
-                    $mem_risks[$r['oid']]['risks'] = [];
                 }
 
-                $mem_risks[$r['oid']]['risks'][] = [
+                $mem_risks[$key]['risks'][] = [
                     'm' => $r['mlabel'],
                     'v' => $r['vlabel'],
                     'comment' => $r['comment']
                 ];
-
-                if($r['scope'] == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL){
-                    $globalObject[$r['oid']][$r['mid']][$r['vid']] = $r['oid'];
-                }
             }
         }
 
