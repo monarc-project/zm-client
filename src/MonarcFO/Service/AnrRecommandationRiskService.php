@@ -643,15 +643,15 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // Update brother's recommandation position if necessary
-        $bros = current($table->getEntityByFields(['anr' => $idAnr, 'recommandation' => $idReco, 'id' => ['op' => '!=', 'value' => $id]]));
-        if (empty($bros)) { // is last recorisk
+        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
+        if(empty($bros)){ // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
-            $recos = $this->get('recommandationTable')->getEntityByFields(['anr' => $reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value' => $reco->get('position')]], ['position' => 'ASC']);
-            foreach ($recos as $r) {
-                $r->set('position', $r->get('position') - 1);
-                $this->get('recommandationTable')->save($r, false);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
+            foreach($recos as $r){
+                $r->set('position',$r->get('position')-1);
+                $this->get('recommandationTable')->save($r,false);
             }
-            $reco->set('position', null);
+            $reco->set('position',null);
             $this->get('recommandationTable')->save($reco);
         }
     }
@@ -669,6 +669,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         $idAnr = $recommandationRisk->anr->id;
         $idReco = $recommandationRisk->recommandation->id;
+        $pos = $recommandationRisk->recommandation->position;
 
         if ($recommandationRisk->instanceRisk) {
             /** @var InstanceRiskTable $instanceRiskTable */
@@ -719,15 +720,15 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // Update brother's recommandation position if necessary
-        $bros = current($table->getEntityByFields(['anr' => $idAnr, 'recommandation' => $idReco, 'id' => ['op' => '!=', 'value' => $id]]));
-        if (empty($bros) && $reco->get('position') > 0) { // is last recorisk
+        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
+        if(empty($bros) && $pos > 0){ // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
-            $recos = $this->get('recommandationTable')->getEntityByFields(['anr' => $reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value' => $reco->get('position')]], ['position' => 'ASC']);
-            foreach ($recos as $r) {
-                $r->set('position', $r->get('position') - 1);
-                $this->get('recommandationTable')->save($r, false);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
+            foreach($recos as $r){
+                $r->set('position',$r->get('position')-1);
+                $this->get('recommandationTable')->save($r,false);
             }
-            $reco->set('position', null);
+            $reco->set('position',null);
             $this->get('recommandationTable')->save($reco);
         }
 
