@@ -182,7 +182,10 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
                 WHERE       anr_id = :anrid
                 AND         cache_max_risk >= -1
                 ORDER BY    cache_max_risk DESC) AS ir
-            INNER JOIN  instances i
+            INNER JOIN  (
+                SELECT      id, c, i, d, (c+i+d) as nb, object_id, name".$l."
+                FROM        instances
+                ORDER BY    nb DESC) AS i
             ON          ir.instance_id = i.id
             LEFT JOIN   amvs AS a
             ON          ir.amv_id = a.id
