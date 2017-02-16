@@ -420,14 +420,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $riskRecommandations = $table->getEntityByFields(['instanceRisk' => $recoRisk->instanceRisk->id]);
         $final = (count($riskRecommandations) == 1) ? true : false;
 
-        //repositioning recommendation in hierarchy
-        $this->detach($recoRisk, $final);
-
-        /*
-        si c'est le dernier lien de la reco => position = null 
-        mais cela doit être géré dans le détach ?
-        */
-
         //automatically record in history before modify recommendation and risk valuesc
         $this->createRecoHistoric($data, $recoRisk, $final);
 
@@ -527,6 +519,14 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 }
             }
         }
+
+        //repositioning recommendation in hierarchy
+        $this->detach($recoRisk, $final);
+
+        /*
+        si c'est le dernier lien de la reco => position = null
+        mais cela doit être géré dans le détach ?
+        */
 
         //save recommandation
         $reco = $recoRisk->get('recommandation');
