@@ -126,7 +126,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         $changeField = $mode == 'raw' ? 'ir.cacheMaxRisk' : 'ir.cacheTargetedRisk';
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-            'ir.id', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
+            'ir.id as myid', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
             'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
             'm.c as mc', 'm.i as mi', 'm.d as md',
             'o.scope',
@@ -164,17 +164,17 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 
             //on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
             if ($r['scope'] == Object::SCOPE_GLOBAL) {
-                if (!isset($temp[$r['object']][$r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability']][0])) { // dans ce cas pas grand chose à faire on doit stocker le context local
-                    $temp[$r['object']][$r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability']][0] = $context;
+                if (!isset($temp[$r['object']][$context['amv']][0])) { // dans ce cas pas grand chose à faire on doit stocker le context local
+                    $temp[$r['object']][$context['amv']][0] = $context;
                 } else { // dans ce cas on doit comparer la valeur max qu'on a. Si c'est plus haut alors on remplace par le contexte courant
-                    $cur = $temp[$r['object']][$r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability']][0];
-                    if ($r['maximus'] > $cur['max']) {//on doit remplacer $cur
-                        unset($temp[$r['object']][$r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability']][0]);
-                        $temp[$r['object']][$r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability']][0] = $context;
+                    $cur = $temp[$r['object']][$context['amv']][0];
+                    if ($context['max'] > $cur['max']) {//on doit remplacer $cur
+                        unset($temp[$r['object']][$context['amv']][0]);
+                        $temp[$r['object']][$context['amv']][0] = $context;
                     } // sinon rien à faire
                 }
             } else { // pour les locaux, l'amv peut exister plusieurs fois sur le même biblio, du coup pour bien les compter plusieurs fois on rajoute
-                $temp[$r['object']][$r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability']][$r['id']] = $context;
+                $temp[$r['object']][$context['amv']][$r['myid']] = $context;
             }
         }
 
