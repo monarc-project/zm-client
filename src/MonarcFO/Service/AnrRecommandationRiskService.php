@@ -420,14 +420,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $riskRecommandations = $table->getEntityByFields(['instanceRisk' => $recoRisk->instanceRisk->id]);
         $final = (count($riskRecommandations) == 1) ? true : false;
 
-        //repositioning recommendation in hierarchy
-        $this->detach($recoRisk, $final);
-
-        /*
-        si c'est le dernier lien de la reco => position = null 
-        mais cela doit être géré dans le détach ?
-        */
-
         //automatically record in history before modify recommendation and risk valuesc
         $this->createRecoHistoric($data, $recoRisk, $final);
 
@@ -442,7 +434,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             ]);
             foreach ($riskRecoHistos as $riskRecoHisto) {
                 if (strlen($cacheCommentAfter) && strlen($riskRecoHisto->get('cacheCommentAfter'))) {
-                    $cacheCommentAfter .= '<br>' . $riskRecoHisto->get('cacheCommentAfter');
+                    $cacheCommentAfter .= ' > ' . $riskRecoHisto->get('cacheCommentAfter');
                 } else if (strlen($cacheCommentAfter) == 0) {
                     $cacheCommentAfter = $riskRecoHisto->get('cacheCommentAfter');
                 }
@@ -528,6 +520,14 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        //repositioning recommendation in hierarchy
+        $this->detach($recoRisk, $final);
+
+        /*
+        si c'est le dernier lien de la reco => position = null
+        mais cela doit être géré dans le détach ?
+        */
+
         //save recommandation
         $reco = $recoRisk->get('recommandation');
         $reco->counterTreated = $reco->get('counterTreated') + 1;
@@ -589,7 +589,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             'riskMaxRiskBefore' => $instanceRisk->get('cacheMaxRisk'),
             'riskMaxRiskAfter' => ($final) ? $instanceRisk->get('cacheTargetedRisk') : $instanceRisk->get('cacheMaxRisk'),
             'riskColorBefore' => ($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : '',
-            'cacheCommentAfter' => $instanceRisk->get('commentAfter'),
+            'cacheCommentAfter' => $recoRisk->get('commentAfter'),
             'riskColorAfter' => ($final)
                 ? ((($instanceRisk->get('cacheTargetedRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheTargetedRisk')) : ''))
                 : (($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : ''),
@@ -621,6 +621,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $idAnr = $recommandationRisk->anr->id;
         $idReco = $recommandationRisk->recommandation->id;
         $id = $recommandationRisk->id;
+
 
         //global
         if ($recommandationRisk->objectGlobal) {
