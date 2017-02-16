@@ -989,6 +989,8 @@ return array(
             'monarc_api_models',
             'monarc_api_client',
             'monarc_api_user_profile',
+            'monarc_api_anr_carto_risks',
+            'monarc_api_global_client_anr/carto_risks',
         ),
         // Utilisateur : Accès RWD par analyse
         'userfo' => array(
