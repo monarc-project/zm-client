@@ -215,7 +215,11 @@ class UserService extends \MonarcCore\Service\UserService
     {
         $this->verifyAuthorizedAction($id, $data);
 
-        $this->updateUserRole($id, $data);
+        $user = $this->get('table')->getEntity($id);
+        
+        if (isset($data['role'])) {
+            $this->manageRoles($user, $data);
+        }
 
         $this->updateUserAnr($id, $data);
 
@@ -245,9 +249,13 @@ class UserService extends \MonarcCore\Service\UserService
             $this->validatePassword($data);
         }
 
-        $this->verifyAuthorizedAction($id, $data);
+        $user = $this->get('table')->getEntity($id);
 
-        $this->updateUserRole($id, $data);
+        if (isset($data['role'])) {
+            $this->manageRoles($user, $data);
+        }
+
+        $this->verifyAuthorizedAction($id, $data);
 
         $this->updateUserAnr($id, $data);
 
@@ -323,44 +331,6 @@ class UserService extends \MonarcCore\Service\UserService
                 //verify if this is not the last superadminfo and verify date_end
                 if ($nbActivateAdminUser <= 1) {
                     throw new \Exception('You can not deactivate, delete or change role of the last admin', 412);
-                }
-            }
-        }
-    }
-
-    /**
-     * Update User Role
-     *
-     * @param $id
-     * @param $data
-     */
-    public function updateUserRole($id, $data)
-    {
-        if (isset($data['role'])) {
-
-            //delete old roles
-            /** @var UserRoleTable $userRoleTable */
-            $userRoleTable = $this->get('userRoleTable');
-            $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
-            $userRolesArray = [];
-            foreach ($userRoles as $userRole) {
-                if (!in_array($userRole->role, $data['role'])) {
-                    $userRoleTable->delete($userRole->id);
-                } else {
-                    $userRolesArray[] = $userRole->role;
-                }
-            }
-
-            //add new roles
-            foreach ($data['role'] as $role) {
-                if (!in_array($role, $userRolesArray)) {
-                    $dataUserRole = [
-                        'user' => $id,
-                        'role' => $role,
-                    ];
-                    /** @var UserRoleService $userRoleService */
-                    $userRoleService = $this->get('userRoleService');
-                    $userRoleService->create($dataUserRole);
                 }
             }
         }
