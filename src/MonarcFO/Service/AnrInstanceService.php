@@ -151,7 +151,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             $instanceId = $this->get('table')->save($instance);
 
             $this->get('instanceRiskService')->createInstanceRisks($instanceId, $anr->get('id'), $obj);
-            $this->get('instanceRiskOpService')->createInstanceRisksOp($instanceId, $anr->get('id'), $obj);
+            //$this->get('instanceRiskOpService')->createInstanceRisksOp($instanceId, $anr->get('id'), $obj);
 
             // Gestion des conséquences
             if ($include_eval) {
@@ -474,48 +474,38 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
                 foreach ($data['risksop'] as $ro) {
                     // faut penser à actualiser l'anr_id, l'instance_id, l'object_id. Le risk_id quant à lui n'est pas repris dans l'export, on s'en moque donc
-                    if($ro['specific']){
-                        $class = $this->get('instanceRiskOpService')->get('table')->getClass();
-                        $r = new $class();
-                        $ro['rolfRisk'] = null;
-                    }elseif(!empty($sharedData['rolfRisks'][$ro['rolfRisk']])){ 
-                        $r = current($this->get('instanceRiskOpService')->get('table')->getEntityByFields([
-                            'anr' => $anr->get('id'),
-                            'instance' => $instanceId,
-                            'object' => $idObject,
-                            'rolfRisk' => $sharedData['rolfRisks'][$ro['rolfRisk']],
-                        ]));
-                        $ro['rolfRisk'] = $sharedData['rolfRisks'][$ro['rolfRisk']];
-                    }
-                    if(!empty($r)){
-                        $toExchange = $ro;
-                        unset($toExchange['id']);
-                        $toExchange['anr'] = $anr->get('id');
-                        $toExchange['instance'] = $instanceId;
-                        $toExchange['object'] = $idObject;
-                        // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
-                        if ($include_eval) { // pas d'impact des subscales, on prend les échelles nominales
-                            foreach ($toInit as $i) {
-                                $toExchange[$i] = -1;
-                            }
-                            foreach ($toApproximate as $type => $list) {
-                                foreach($list as $i){
-                                    $toExchange[$i] = $this->approximate(
-                                        $toExchange[$i],
-                                        $sharedData['scales']['orig'][$type]['min'],
-                                        $sharedData['scales']['orig'][$type]['max'],
-                                        $sharedData['scales']['dest'][$type]['min'],
-                                        $sharedData['scales']['dest'][$type]['max']
-                                    );
-                                }
+                    $class = $this->get('instanceRiskOpService')->get('table')->getClass();
+                    $r = new $class();
+                    $ro['rolfRisk'] = null;
+
+                    $toExchange = $ro;
+                    unset($toExchange['id']);
+                    $toExchange['anr'] = $anr->get('id');
+                    $toExchange['instance'] = $instanceId;
+                    $toExchange['object'] = $idObject;
+                    // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
+                    if ($include_eval) { // pas d'impact des subscales, on prend les échelles nominales
+                        foreach ($toInit as $i) {
+                            $toExchange[$i] = -1;
+                        }
+                        foreach ($toApproximate as $type => $list) {
+                            foreach($list as $i){
+                                $toExchange[$i] = $this->approximate(
+                                    $toExchange[$i],
+                                    $sharedData['scales']['orig'][$type]['min'],
+                                    $sharedData['scales']['orig'][$type]['max'],
+                                    $sharedData['scales']['dest'][$type]['min'],
+                                    $sharedData['scales']['dest'][$type]['max']
+                                );
                             }
                         }
-                        $r->setDbAdapter($this->get('instanceRiskOpService')->get('table')->getDb());
-                        $r->setLanguage($this->getLanguage());
-                        $r->exchangeArray($toExchange);
-                        $this->setDependencies($r, ['anr', 'instance', 'object', 'rolfRisk']);
-                        $idRiskOp = $this->get('instanceRiskOpService')->get('table')->save($r);
                     }
+                    $r->setDbAdapter($this->get('instanceRiskOpService')->get('table')->getDb());
+                    $r->setLanguage($this->getLanguage());
+                    $r->exchangeArray($toExchange);
+                    $this->setDependencies($r, ['anr', 'instance', 'object', 'rolfRisk']);
+                    $idRiskOp = $this->get('instanceRiskOpService')->get('table')->save($r);
+
                     // Recommandations
                     if ($include_eval && !empty($data['recosop'][$ro['id']]) && !empty($idRiskOp)) {
                         foreach ($data['recosop'][$ro['id']] as $reco) {
