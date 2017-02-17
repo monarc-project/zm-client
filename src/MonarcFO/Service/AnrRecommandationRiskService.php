@@ -442,6 +442,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
             //update instance risk
             $instanceRisk = $recoRisk->get('instanceRisk');
+
             $instanceRisk->comment = $cacheCommentAfter;
             $instanceRisk->commentAfter = '';
 
@@ -491,7 +492,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     'object' => $recoRisk->get('objectGlobal')->get('id'),
                 ]);
                 foreach ($brothersInstances as $brotherInstance) {
-                    $brothersInstancesRisks = $table->getEntityByFields([
+
+                    $brothersInstancesRisks = $instanceRiskTable->getEntityByFields([
                         'anr' => $recoRisk->get('anr')->get('id'),
                         'instance' => $brotherInstance->get('id'),
                         'asset' => $instanceRisk->get('asset')->get('id'),
@@ -519,7 +521,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 }
             }
         }
-
         //repositioning recommendation in hierarchy
         $this->detach($recoRisk, $final);
 
