@@ -42,7 +42,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
                 $sharedData = [];
                 $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
-                if ($file !== false && ($id = $this->importFromArray($file, $anr, $idParent, $mode, false, $sharedData)) !== false) {
+                if ($file !== false && ($id = $this->importFromArray($file, $anr, $idParent, $mode, false, $sharedData,true)) !== false) {
                     if (is_array($id)) {
                         $ids = array_merge($ids, $id);
                     } else {
@@ -72,13 +72,21 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      * @param array $sharedData
      * @return array|bool
      */
-    public function importFromArray($data, $anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = [])
+    public function importFromArray($data, $anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = [], $isRoot = false)
     {
         ini_set('max_execution_time', 0);
         ini_set('memory_limit',-1);
         if (isset($data['type']) && $data['type'] == 'instance' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()
         ) {
+            if($isRoot && !empty($idParent)){ // On teste avant tout que l'on peux importer le fichier dans cette instance (level != LEVEL_INTER)
+                $parent = $this->get('table')->getEntity($idParent);
+                if($parent->get('level') == \MonarcCore\Model\Entity\InstanceSuperClass::LEVEL_INTER || $parent->get('anr')->get('id') != $anr->get('id')){
+                    // On en profite pour vérifier qu'on n'importe pas le fichier dans une instance qui n'appartient pas à l'anr passé en param
+                    return false;
+                }
+            }
+
 
             // on s'occupe de l'évaluation
             // le $data['scales'] n'est présent que sur la première instance, il ne l'est plus après
@@ -98,6 +106,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 unset($scales);
                 $sharedData['scales']['dest'] = $temp;
                 $sharedData['scales']['orig'] = $data['scales'];
+            }elseif($data['with_eval']){
+                $include_eval = true;
             }
 
             // On importe l'objet
@@ -131,7 +141,11 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             }
             $toExchange['parent'] = $idParent;
             //$toExchange['root'] = null;
-            $toExchange['implicitPosition'] = 2;
+            $toExchange['implicitPosition'] = \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_END;
+            if($isRoot){ // On force en level "ROOT" lorsque c'est le 1er niveau de l'import. Pour les autres, on laisse les levels définis de l'export
+                $toExchange['level'] = \MonarcCore\Model\Entity\InstanceSuperClass::LEVEL_ROOT;
+            }
+
             $instance->exchangeArray($toExchange);
             $this->setDependencies($instance, ['anr', 'object', 'asset', 'parent']);
             $instanceId = $this->get('table')->save($instance);
@@ -157,7 +171,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         ));
                     }
                 }
-                unset($instance);
 
                 if (!empty($data['consequences'])) {
                     if (empty($local_scale_impact)) {
@@ -213,10 +226,13 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $this->get('instanceConsequenceTable')->save($consequence);
                     }
                 }
+
+
             } else {
                 // on génère celles par défaut
                 $this->createInstanceConsequences($instanceId, $anr->get('id'), $obj);
             }
+            $this->refreshImpactsInherited($anr->get('id'), $idParent, $instance);
 
             if (!empty($data['risks'])) {
                 // On charge les "threats" existants
@@ -649,10 +665,11 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     if ($data['with_eval'] && isset($data['scales'])) {
                         $inst['with_eval'] = $data['with_eval'];
                         $inst['scales'] = $data['scales'];
+                        $include_eval = true;
                     }
                     $first = false;
                 }
-                if (($instanceId = $this->importFromArray($inst, $anr, $idParent, $modeImport, $include_eval, $sharedData)) !== false) {
+                if (($instanceId = $this->importFromArray($inst, $anr, $idParent, $modeImport, $include_eval, $sharedData,$isRoot)) !== false) {
                     $instanceIds[] = $instanceId;
                 }
             }
