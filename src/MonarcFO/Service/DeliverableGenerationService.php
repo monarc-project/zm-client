@@ -646,6 +646,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $values['txt']['RISKS_RECO'] = $this->generateRisksPlan($anr, false);
         $values['txt']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr, true);
         $values['txt']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
+        $values['txt']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
 
         return $values;
     }
@@ -839,6 +840,76 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
             return $this->getWordXmlFromWordObject($tableWord);
         } else {
+            return '';
+        }
+    }
+
+    public function generateTableAuditOp($anr){
+
+        $query = $this->instanceRiskOpTable->getRepository()->createQueryBuilder('ir');
+        $result = $query->select([
+                'ir.riskCacheLabel' . $anr->language . ' AS label', 'ir.comment AS comment',
+                'i.id', 'i.name' . $anr->language . ' as name', 'IDENTITY(i.root)'
+            ])->where('ir.anr = :anrid')
+            ->setParameter(':anrid', $anr->id)
+            ->innerJoin('ir.instance', 'i')
+            ->innerJoin('i.asset', 'a')
+            ->andWhere('a.type = :type')
+            ->setParameter(':type',\MonarcCore\Model\Entity\AssetSuperClass::TYPE_PRIMARY)
+            ->orderBy('ir.cacheNetRisk', 'DESC')
+            ->getQuery()->getResult();
+        $lst = [];
+        $instanceTable = $this->get('instanceService')->get('table');
+        foreach($result as $r){
+            if(!isset($lst[$r['id']])){
+                $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
+                $asc = array_reverse($instanceTable->getAscendance($instance));
+
+                $path = $anr->get('label'.$this->currentLangAnrIndex);
+                foreach ($asc as $a) {
+                    $path .= ' > '.$a['name'.$this->currentLangAnrIndex];
+                }
+                $lst[$r['id']] = [
+                    'path' => $path,
+                    'risks' => [],
+                ];
+            }
+            $lst[$r['id']]['risks'][] = [
+                'label' => $r['label'],
+                'comment' => $r['comment'],
+            ];
+        }
+        if(!empty($lst)){
+            $tableWord = new PhpWord();
+            $section = $tableWord->addSection();
+            $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB'];
+            $table = $section->addTable($styleTable);
+            $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+            $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
+            $styleHeaderFont = ['bold' => true, 'size' => 10];
+            $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+            $styleContentFont = ['bold' => false, 'size' => 10];
+            $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+
+            $table->addRow(400,['tblHeader'=>true]);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleHeaderCell)->addText(_WT($this->anrTranslate('Risk description')), $styleHeader2Font, ['Alignment' => 'center']);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleHeaderCell)->addText(_WT($this->anrTranslate('Measures set')), $styleHeader2Font, ['Alignment' => 'center']);
+
+            foreach ($lst as $data) {
+                $table->addRow(400);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(19.00), $cellColSpan)->addText(_WT($data['path']), $styleContentFont, ['Alignment' => 'left']);
+
+                if (!empty($data['risks'])) {
+                    foreach ($data['risks'] as $r) {
+                        $table->addRow(400);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleContentCell)->addText(_WT($r['label']), $styleContentFont, ['Alignment' => 'left']);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, ['Alignment' => 'left']);
+                    }
+                }
+            }
+
+            return $this->getWordXmlFromWordObject($tableWord);
+        }else{
             return '';
         }
     }
