@@ -64,14 +64,17 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         $instances = [];
         if ($instance) {
             $instanceEntity = $instanceTable->getEntity($instance['id']);
-            $instances[] = $instanceEntity;
+            $instances[] = $instanceEntity->id;
 
             // Get children instances
             $instanceTable->initTree($instanceEntity);
             $temp = isset($instanceEntity->parameters['children']) ? $instanceEntity->parameters['children'] : [];
             while (!empty($temp)) {
                 $sub = array_shift($temp);
-                $instances[] = $sub;
+                $instances[] = $sub->id;
+                if($sub->get('asset')->get('type') == Asset::TYPE_PRIMARY){
+
+                }
 
                 if (!empty($sub->parameters['children'])) {
                     foreach ($sub->parameters['children'] as $subsub) {
@@ -79,114 +82,96 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                     }
                 }
             }
-        } else {
-            $instances = $instanceTable->getEntityByFields(['anr' => $anrId]);
-        }
-        $instancesIds = [];
-        $instancesInfos = [];
-        foreach ($instances as $i) {
-            if ($i->get('asset')->get('type') == Asset::TYPE_PRIMARY) {
-                $instancesIds[] = $i->id;
-                $instancesInfos[$i->id] = [
-                    'id' => $i->id,
-                    'scope' => $i->object->scope,
-                    'name1' => $i->name1,
-                    'name2' => $i->name2,
-                    'name3' => $i->name3,
-                    'name4' => $i->name4
-                ];
-            }
-        }
-        //retrieve risks instances
-        /** @var InstanceRiskOpService $instanceRiskServiceOp */
-        $instanceRiskOpService = $this->get('instanceRiskOpService');
-        $instancesRisksOp = $instanceRiskOpService->getInstancesRisksOp($instancesIds, $anrId);
-
-        //order by net risk
-        $tmpInstancesRisksOp = [];
-        $tmpInstancesMaxRisksOp = [];
-        foreach ($instancesRisksOp as $instancesRiskOp) {
-            $tmpInstancesRisksOp[$instancesRiskOp->id] = $instancesRiskOp;
-            $tmpInstancesMaxRisksOp[$instancesRiskOp->id] = $instancesRiskOp->cacheNetRisk;
-        }
-        arsort($tmpInstancesMaxRisksOp);
-        $instancesRisksOp = [];
-        foreach ($tmpInstancesMaxRisksOp as $id => $tmpInstancesMaxRiskOp) {
-            $instancesRisksOp[] = $tmpInstancesRisksOp[$id];
         }
 
-        $riskOps = [];
-        foreach ($instancesRisksOp as $instanceRiskOp) {
-            // Process filters
-            if (isset($params['kindOfMeasure'])) {
-                if ($instanceRiskOp->kindOfMeasure != $params['kindOfMeasure']) {
-                    continue;
-                }
+        $sql = "SELECT      ir.id as id, ir.risk_cache_label1 as label1, ir.risk_cache_label2 as label2, ir.risk_cache_label3 as label3,
+                            ir.risk_cache_label4 as label4, ir.risk_cache_description1 as description1, ir.risk_cache_description2 as description2,
+                            ir.risk_cache_description3 as description3, ir.risk_cache_description4 as description4, ir.net_prob as netProb, ir.net_r as netR,
+                            ir.net_o as netO, ir.net_l as netL, ir.net_f as netF, ir.net_p as netP, ir.cache_net_risk as cacheNetRisk, ir.brut_prob as brutProb,
+                            ir.brut_r as brutR, ir.brut_o as brutO, ir.brut_l as brutL, ir.brut_f as brutF, ir.brut_p as brutP,
+                            ir.cache_brut_risk as cacheBrutRisk, ir.kind_of_measure as kindOfMeasure, ir.`comment`, ir.`specific`,
+                            ir.targeted_prob as targetedProb, ir.targeted_r as targetedR, ir.targeted_o as targetedO, ir.targeted_l as targetedL,
+                            ir.targeted_f as targetedF, ir.targeted_p as targetedP, ir.cache_targeted_risk as cacheTargetedRisk,
+                            IF(ir.kind_of_measure IS NULL OR ir.kind_of_measure = " .  \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED . ", false, true) as t,
+                            i.id as iid, i.name1, i.name2, i.name3, i.name4,
+                            o.scope
+                FROM        instances_risks_op as ir
+                INNER JOIN  instances as i
+                ON          i.id = ir.instance_id
+                INNER JOIN  assets as a
+                ON          a.id = i.asset_id
+                INNER JOIN  objects as o
+                ON          i.object_id = o.id
+                WHERE       ir.anr_id = :anrid
+                AND         a.type = :type ";
+        $queryParams = [
+            ':anrid' => $anrId,
+            ':type' => Asset::TYPE_PRIMARY,
+        ];
+        $typeParams = [];
+        if(!empty($instances)){
+            $sql .= " AND i.id IN (:ids) ";
+            $queryParams[':ids'] = $instances;
+            $typeParams[':ids'] = \Doctrine\DBAL\Connection::PARAM_INT_ARRAY;
+        }
+
+        // FILTER: kind_of_measure ==
+        if (isset($params['kindOfMeasure'])) {
+            if ($params['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED) {
+                $sql .= " AND (ir.kind_of_measure IS NULL OR ir.kind_of_measure = :kom) ";
+                $queryParams[':kom'] = \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED;
+            } else {
+                $sql .= " AND ir.kind_of_measure = :kom ";
+                $queryParams[':kom'] = $params['kindOfMeasure'];
             }
-
-            if (isset($params['thresholds']) && $instanceRiskOp->cacheNetRisk != -1 && $params['thresholds'] != -1) {
-                $min = $params['thresholds'];
-
-                if ($instanceRiskOp->cacheNetRisk <= $min) {
-                    continue;
-                }
-            }
-
-            if (isset($params['keywords']) && !empty($params['keywords'])) {
-                if (!$this->findInFields($instanceRiskOp, $params['keywords'], ['riskCacheLabel1', 'riskCacheLabel2', 'riskCacheLabel3', 'riskCacheLabel4',
-                    'riskCacheDescription1', 'riskCacheDescription2', 'riskCacheDescription3', 'riskCacheDescription4', 'comment'])
-                ) {
-                    continue;
-                }
-            }
-
-            // Add risk
-            $riskOps[] = [
-                'id' => $instanceRiskOp->id,
-                'instanceInfos' => isset($instancesInfos[$instanceRiskOp->instance->id]) ? $instancesInfos[$instanceRiskOp->instance->id] : [],
-                'label1' => $instanceRiskOp->riskCacheLabel1,
-                'label2' => $instanceRiskOp->riskCacheLabel2,
-                'label3' => $instanceRiskOp->riskCacheLabel3,
-                'label4' => $instanceRiskOp->riskCacheLabel4,
-
-                'description1' => $instanceRiskOp->riskCacheDescription1,
-                'description2' => $instanceRiskOp->riskCacheDescription2,
-                'description3' => $instanceRiskOp->riskCacheDescription3,
-                'description4' => $instanceRiskOp->riskCacheDescription4,
-
-                'netProb' => $instanceRiskOp->netProb,
-                'netR' => $instanceRiskOp->netR,
-                'netO' => $instanceRiskOp->netO,
-                'netL' => $instanceRiskOp->netL,
-                'netF' => $instanceRiskOp->netF,
-                'netP' => $instanceRiskOp->netP,
-                'cacheNetRisk' => $instanceRiskOp->cacheNetRisk,
-
-                'brutProb' => $instanceRiskOp->brutProb,
-                'brutR' => $instanceRiskOp->brutR,
-                'brutO' => $instanceRiskOp->brutO,
-                'brutL' => $instanceRiskOp->brutL,
-                'brutF' => $instanceRiskOp->brutF,
-                'brutP' => $instanceRiskOp->brutP,
-                'cacheBrutRisk' => $instanceRiskOp->cacheBrutRisk,
-
-                'kindOfMeasure' => $instanceRiskOp->kindOfMeasure,
-                'comment' => $instanceRiskOp->comment,
-                't' => (($instanceRiskOp->kindOfMeasure == InstanceRiskOp::KIND_NOT_TREATED) || (!$instanceRiskOp->kindOfMeasure)) ? false : true,
-
-                'targetedProb' => $instanceRiskOp->targetedProb,
-                'targetedR' => $instanceRiskOp->targetedR,
-                'targetedO' => $instanceRiskOp->targetedO,
-                'targetedL' => $instanceRiskOp->targetedL,
-                'targetedF' => $instanceRiskOp->targetedF,
-                'targetedP' => $instanceRiskOp->targetedP,
-                'cacheTargetedRisk' => $instanceRiskOp->cacheTargetedRisk,
-
-                'specific' => $instanceRiskOp->specific,
+        }
+        // FILTER: Keywords
+        if (!empty($params['keywords'])) {
+            $fields = ['riskCacheLabel1', 'riskCacheLabel2', 'riskCacheLabel3', 'riskCacheLabel4', 'riskCacheDescription1', 'riskCacheDescription2', 'riskCacheDescription3', 'riskCacheDescription4', 'comment'];
+            $filters = [
+                'i.label1',
+                'i.label2',
+                'i.label3',
+                'i.label4',
+                'ir.risk_cache_label1',
+                'ir.risk_cache_label2',
+                'ir.risk_cache_label3',
+                'ir.risk_cache_label4',
+                'ir.risk_cache_description1',
+                'ir.risk_cache_description2',
+                'ir.risk_cache_description3',
+                'ir.risk_cache_description4',
+                'ir.comment',
             ];
+            $orFilter = [];
+            foreach ($filters as $f) {
+                $k = str_replace('.', '', $f);
+                $orFilter[] = $f . " LIKE :" . $k;
+                $queryParams[":$k"] = '%' . $params['keywords'] . '%';
+            }
+            $sql .= " AND (" . implode(' OR ', $orFilter) . ") ";
+        }
+        // FILTER: cache_max_risk (min)
+        if (isset($params['thresholds']) && $instanceRiskOp->cacheNetRisk != -1 && $params['thresholds'] != -1) {
+            $sql .= " AND ir.cache_net_risk > :min ";
+            $queryParams[':min'] = $params['thresholds'];
         }
 
-        return $riskOps;
+        $sql .= ' ORDER BY ir.cache_net_risk DESC';
+        $res = $this->get('table')->getDb()->getEntityManager()->getConnection()
+            ->fetchAll($sql, $queryParams, $typeParams);
+        foreach($res as &$r){
+            $r['instanceInfos'] = [
+                'id' => $r['iid'],
+                'scope' => $r['scope'],
+                'name1' => $r['name1'],
+                'name2' => $r['name2'],
+                'name3' => $r['name3'],
+                'name4' => $r['name4'], // TODO: ajouter le path de l'instance
+            ];
+            unset($r['iid'],$r['scope'],$r['name1'],$r['name2'],$r['name3'],$r['name4']);
+        }
+        return $res;
     }
 
     /**
