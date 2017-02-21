@@ -426,24 +426,33 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         if ($final) {
 
             //overload constatation for volatile comment (after measure)
-            $cacheCommentAfter = '';
+            $cacheCommentAfter = [];
             /** @var RecommandationHistoricTable $recoHistoTable */
             $recoHistoTable = $this->get('recommandationHistoricTable');
             $riskRecoHistos = $recoHistoTable->getEntityByFields([
                 'instanceRisk' => $recoRisk->get('instanceRisk')->get('id')
-            ]);
+            ], ['id' => 'DESC']);
+            $c = 0;
             foreach ($riskRecoHistos as $riskRecoHisto) {
-                if (strlen($cacheCommentAfter) && strlen($riskRecoHisto->get('cacheCommentAfter'))) {
-                    $cacheCommentAfter .= ' > ' . $riskRecoHisto->get('cacheCommentAfter');
-                } else if (strlen($cacheCommentAfter) == 0) {
-                    $cacheCommentAfter = $riskRecoHisto->get('cacheCommentAfter');
+                /*
+                On ne prend que:
+                - le dernier "final"
+                - et les précédent "non final"
+                */
+                if(!$riskRecoHisto->get('final') || ($riskRecoHisto->get('final') && $c <= 0)){
+                    if (strlen($riskRecoHisto->get('cacheCommentAfter'))) {
+                        $cacheCommentAfter[] =  $riskRecoHisto->get('cacheCommentAfter');
+                    }
+                    $c++;
+                }else{
+                    break;
                 }
             }
 
             //update instance risk
             $instanceRisk = $recoRisk->get('instanceRisk');
 
-            $instanceRisk->comment = $cacheCommentAfter;
+            $instanceRisk->comment = implode(' > ', array_reverse($cacheCommentAfter)); // array_reverse because "['id' => 'DESC']"
             $instanceRisk->commentAfter = '';
 
             //apply reduction vulnerability on risk
