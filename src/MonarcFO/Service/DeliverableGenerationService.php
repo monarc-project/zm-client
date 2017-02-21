@@ -889,7 +889,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $styleHeaderFont = ['bold' => true, 'size' => 10];
             $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
             $styleContentFont = ['bold' => false, 'size' => 10];
-            $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+            $cellColSpan = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
 
             $table->addRow(400,['tblHeader'=>true]);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleHeaderCell)->addText(_WT($this->anrTranslate('Risk description')), $styleHeader2Font, ['Alignment' => 'center']);
