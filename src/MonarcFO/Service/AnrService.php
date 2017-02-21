@@ -161,9 +161,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $user = $userCliTable->get($userArray['id']);
         foreach ($anrs as &$anr) {
             //verify if this is the last current user's anr
-            if (isset($user['currentAnr']) && $anr['id'] == $user['currentAnr']->get('id')) {
-                $anr['isCurrentAnr'] = 1;
-            }
+            $anr['isCurrentAnr'] = (isset($user['currentAnr']) && $anr['id'] == $user['currentAnr']->get('id'))?1:0;
 
             $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id'], 'anr' => $anr['id']]));
             $anr['rwd'] = (empty($lk)) ? -1 : $lk->get('rwd');
