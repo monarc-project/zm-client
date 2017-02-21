@@ -447,6 +447,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $instanceRisk->commentAfter = '';
 
             //apply reduction vulnerability on risk
+            $oldVulRate = $instanceRisk->get('vulnerabilityRate');
             $newVulnerabilityRate = $instanceRisk->get('vulnerabilityRate') - $instanceRisk->get('reductionAmount');
             $instanceRisk->vulnerabilityRate = ($newVulnerabilityRate >= 0) ? $newVulnerabilityRate : 0;
 
@@ -470,7 +471,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
 
             $instanceRisk->cacheMaxRisk = (count($risks)) ? max($risks) : -1;
-            $instanceRisk->cacheTargetedRisk = $this->getTargetRisk($impacts, $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'), $instanceRisk->get('reductionAmount'));
+            $instanceRisk->cacheTargetedRisk = $this->getTargetRisk($impacts, $instanceRisk->get('threatRate'), $oldVulRate, $instanceRisk->get('reductionAmount'));
 
             //set reduction amount to 0
             $instanceRisk->reductionAmount = 0;
