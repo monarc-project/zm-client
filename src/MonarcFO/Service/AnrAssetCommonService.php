@@ -183,7 +183,7 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
                 - utiliser l'import déjà en place
                 */
                 $f = null;
-                $data = $this->get('coreServiceAsset')->generateExportArray($asset->get('id'), $f);
+                $data = $this->get('coreServiceAsset')->get('assetExportService')->generateExportArray($asset->get('id'), $f);
                 $id = $this->get('cliServiceAsset')->importFromArray($data, $anr);
                 return $id;
             } else {
