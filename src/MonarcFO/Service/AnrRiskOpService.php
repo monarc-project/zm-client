@@ -152,7 +152,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             $sql .= " AND (" . implode(' OR ', $orFilter) . ") ";
         }
         // FILTER: cache_max_risk (min)
-        if (isset($params['thresholds']) && $instanceRiskOp->cacheNetRisk != -1 && $params['thresholds'] != -1) {
+        if (isset($params['thresholds']) && $params['thresholds'] != -1) {
             $sql .= " AND ir.cache_net_risk > :min ";
             $queryParams[':min'] = $params['thresholds'];
         }
