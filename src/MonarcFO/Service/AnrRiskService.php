@@ -52,7 +52,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
      * @param $params
      * @return string
      */
-    public function getCsvRisks($anrId, $instanceId = null, $params)
+    public function getCsvRisks($anrId, $instanceId = null, $params = [])
     {
         return $this->get('table')->getCsvRisks($anrId, $instanceId, $params, $this->get('translateService'), \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE);
     }

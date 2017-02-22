@@ -146,9 +146,15 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
             //on détermine le contexte de travail
             //A. Quel est l'impact MAX au regard du masque CID de la menace
             $c = $i = $d = 0;
-            if ($r['mc']) $c = $r['ic'];
-            if ($r['mi']) $i = $r['ii'];
-            if ($r['md']) $d = $r['id'];
+            if ($r['mc']) {
+                $c = $r['ic'];
+            }
+            if ($r['mi']) {
+                $i = $r['ii'];
+            }
+            if ($r['md']) {
+                $d = $r['id'];
+            }
 
             $imax = max($c, $i, $d);
             $max = $r['maximus'];
@@ -214,9 +220,15 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
      */
     private function getColor($val)
     {
-        if ($val == -1 || is_null($val)) return '';
-        if ($val <= $this->anr->get('seuil1')) return 0;
-        if ($val <= $this->anr->get('seuil2')) return 1;
+        if ($val == -1 || is_null($val)) {
+            return '';
+        }
+        if ($val <= $this->anr->get('seuil1')) {
+            return 0;
+        }
+        if ($val <= $this->anr->get('seuil2')) {
+            return 1;
+        }
         return 2;
     }
 }
