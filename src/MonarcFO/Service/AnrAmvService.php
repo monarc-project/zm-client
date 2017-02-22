@@ -12,9 +12,9 @@ use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\ObjectTable;
 
 /**
- * Anr Asset Service
- *
- * Class AnrAmvService
+ * This class is the service that handles AMV links in use within an ANR.
+ * @see \MonarcFO\Model\Entity\Amv
+ * @see \MonarcFO\Model\Table\AmvTable
  * @package MonarcFO\Service
  */
 class AnrAmvService extends \MonarcCore\Service\AbstractService
@@ -32,13 +32,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'asset', 'threat', 'vulnerability', 'measure[1]()', 'measure[2]()', 'measure[3]()'];
 
     /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return mixed
+     * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
@@ -118,12 +112,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Update
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -155,12 +144,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Patch
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -193,11 +177,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
