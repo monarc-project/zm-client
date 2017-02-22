@@ -23,11 +23,10 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
     protected $cliServiceAsset;
 
     /**
-     * Get List Assets
-     *
-     * @param $anrId
-     * @return array
-     * @throws \Exception
+     * Returns the list of assets attached to the provided ANR ID
+     * @param int $anrId The ANR ID
+     * @return array An array of assets, in array (not entity) format
+     * @throws \Exception If the ANR does not exist
      */
     public function getListAssets($anrId)
     {
@@ -70,12 +69,11 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Asset
-     *
-     * @param $anrId
-     * @param $assetId
-     * @return mixed
-     * @throws \Exception
+     * Returns a specific asset data as an array
+     * @param int $anrId The ANR ID
+     * @param int $assetId The asset ID
+     * @return array The asset fields
+     * @throws \Exception If the ANR mismatches or the entity does not exist
      */
     public function getAsset($anrId, $assetId)
     {
@@ -148,17 +146,18 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Import Asset
-     *
-     * @param $anrId
-     * @param $assetId
-     * @return mixed
-     * @throws \Exception
+     * Imports an asset from the common knowledge base (common database) into the provided client (local) ANR
+     * @param int $anrId The target ANR ID
+     * @param int $assetId The common asset ID to import
+     * @return int The generated asset ID
+     * @throws \Exception If the asset or ANR does not exist
      */
     public function importAsset($anrId, $assetId)
     {
         $anr = $this->get('anrTable')->getEntity($anrId);
+
         if ($anr) {
+            // Lookup the asset inside the common database
             $model = $this->get('coreServiceAsset')->get('modelTable')->getEntity($anr->get('model'));
 
             $asset = $this->get('table')->getRepository()->createQueryBuilder('a');
@@ -177,6 +176,7 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
             }
             $asset = $asset->setFirstResult(0)->setMaxResults(1)
                 ->getQuery()->getSingleResult(); // même si on fait une autre requête dans AssetService::generateExportArray(), cela permet d'avoir un contrôle sur asset_id & model_id
+
             if ($asset) {
                 /*
                 - faire un export de cet asset

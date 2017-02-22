@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Asset Common Service Factory
- *
- * Class AnrAssetCommonServiceFactory
+ * Factory class attached to AnrAssetCommonService
  * @package MonarcFO\Service
  */
 class AnrAssetCommonServiceFactory extends AbstractServiceFactory
