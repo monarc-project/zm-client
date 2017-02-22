@@ -968,7 +968,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         $instanceService = $this->get('instanceService');
         $table = $this->get('instanceCliTable');
-        $instances = $table->getEntityByFields(['anr' => $entity->get('id'), 'parent' => null]);
+        $instances = $table->getEntityByFields(['anr' => $entity->get('id'), 'parent' => null], ['position'=>'ASC']);
         $f = '';
         $with_scale = false;
         foreach ($instances as $i) {
