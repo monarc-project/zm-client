@@ -36,42 +36,28 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        $filterJoin = [
-            [
-                'as' => 'a',
-                'rel' => 'asset',
-            ],
-            [
-                'as' => 'th',
-                'rel' => 'threat',
-            ],
-            [
-                'as' => 'v',
-                'rel' => 'vulnerability',
-            ],
-        ];
-        $filterLeft = [
-            [
-                'as' => 'm1',
-                'rel' => 'measure1',
-            ],
-            [
-                'as' => 'm2',
-                'rel' => 'measure2',
-            ],
-            [
-                'as' => 'm3',
-                'rel' => 'measure3',
-            ],
-        ];
-        $filtersCol = ['a.code', 'a.label1', 'a.label2', 'a.label3', 'a.description2', 'a.description3', 'th.code',
-            'th.label1', 'th.label2', 'th.label3', 'th.description1', 'th.description2', 'th.description3', 'v.code',
-            'v.label1', 'v.label2', 'v.label3', 'v.description1', 'v.description2', 'v.description3', 'm1.code',
-            'm1.description1', 'm1.description2', 'm1.description3', 'm2.code', 'm2.description1', 'm2.description2',
-            'm2.description3', 'm3.code', 'm3.description1', 'm3.description2', 'm3.description3'];
+        list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
 
         return $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
+            $page,
+            $limit,
+            $this->parseFrontendOrder($order),
+            $this->parseFrontendFilter($filter, $filtersCol),
+            $filterAnd,
+            $filterJoin,
+            $filterLeft
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    {
+        list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
+
+        return $this->get('table')->countFiltered(
             $page,
             $limit,
             $this->parseFrontendOrder($order),

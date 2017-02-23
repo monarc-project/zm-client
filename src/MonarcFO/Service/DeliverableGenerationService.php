@@ -383,7 +383,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             // Then ROLFP and custom columns as rows
             $first = true;
             foreach ($impactsTypes as $impactType) {
-                if ($impactType['type_id'] < 4 || $impactType['isHidden']) continue;
+                if ($impactType['type_id'] < 4 || $impactType['isHidden']) {
+                    continue;
+                }
 
                 if ($first) {
                     $first = false;
@@ -990,10 +992,16 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     foreach ($risks as $risk) {
                         if ($risk['instanceRisk']) {
                             $sharedInstanceRisk = $this->instanceRiskTable->get($risk['instanceRisk']->id);
-                            if ($sharedInstanceRisk['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED || is_null($sharedInstanceRisk['kindOfMeasure']) || $sharedInstanceRisk['kindOfMeasure'] <= 0) continue;
+                            if ($sharedInstanceRisk['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED ||
+                                is_null($sharedInstanceRisk['kindOfMeasure']) || $sharedInstanceRisk['kindOfMeasure'] <= 0) {
+                                continue;
+                            }
                         } else if ($risk['instanceRiskOp']) {
                             $sharedInstanceRisk = $this->instanceRiskOpTable->get($risk['instanceRiskOp']->id);
-                            if ($sharedInstanceRisk['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED || is_null($sharedInstanceRisk['kindOfMeasure']) || $sharedInstanceRisk['kindOfMeasure'] <= 0) continue;
+                            if ($sharedInstanceRisk['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED ||
+                                is_null($sharedInstanceRisk['kindOfMeasure']) || $sharedInstanceRisk['kindOfMeasure'] <= 0) {
+                                continue;
+                            }
                         }
 
 
@@ -1127,9 +1135,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
                 // CID
                 $cid = '';
-                if ($threat['c']) $cid .= 'C';
-                if ($threat['i']) $cid .= 'I';
-                if ($threat['d']) $cid .= 'D';
+                if ($threat['c']) {
+                    $cid .= 'C';
+                }
+                if ($threat['i']) {
+                    $cid .= 'I';
+                }
+                if ($threat['d']) {
+                    $cid .= 'D';
+                }
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.50), $styleContentCellCenter)->addText($cid, $styleContentFont, array('Alignment' => 'center'));
 
                 // Trend

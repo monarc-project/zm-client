@@ -7,13 +7,11 @@
 
 namespace MonarcFO\Model\Table;
 
-use MonarcCore\Model\Table\AbstractEntityTable;
-
 /**
  * Class InstanceRiskTable
  * @package MonarcFO\Model\Table
  */
-class InstanceRiskTable extends AbstractEntityTable
+class InstanceRiskTable extends \MonarcCore\Model\Table\InstanceRiskTable
 {
     /**
      * InstanceRiskTable constructor.

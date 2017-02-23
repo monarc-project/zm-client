@@ -721,9 +721,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      */
     protected function approximate($x, $minorig, $maxorig, $mindest, $maxdest)
     {
-        if ($x == $maxorig) return $maxdest;
-        else if ($x == -1) return -1;
-        else if (($maxorig - $minorig) != -1) return min(max(round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)), $mindest), $maxdest);
-        else return -1;
+        if ($x == $maxorig){
+            return $maxdest;
+        } elseif ($x != -1 && ($maxorig - $minorig) != -1) {
+            return min(max(round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)), $mindest), $maxdest);
+        } else {
+            return -1;
+        }
     }
 }
