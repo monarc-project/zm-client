@@ -7,15 +7,13 @@
 
 namespace MonarcFO\Service;
 
-use MonarcFO\Service\AbstractService;
+use MonarcCore\Service\AbstractService;
 
 /**
- * Anr Recommandation Measure Service
- *
- * Class AnrRecommandationMeasureService
+ * This class is the service that handles measures' recommendations within an ANR. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
-class AnrRecommandationMeasureService extends \MonarcCore\Service\AbstractService
+class AnrRecommandationMeasureService extends AbstractService
 {
     protected $dependencies = ['anr', 'recommandation', 'measure'];
     protected $anrTable;

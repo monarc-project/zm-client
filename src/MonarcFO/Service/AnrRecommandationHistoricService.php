@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcFO\Service\AbstractService;
 
 /**
- * Anr Recommandation Historic Service
- *
- * Class AnrRecommandationHistoricService
+ * This class is the service that handles the recommendation events history. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class AnrRecommandationHistoricService extends \MonarcCore\Service\AbstractService
