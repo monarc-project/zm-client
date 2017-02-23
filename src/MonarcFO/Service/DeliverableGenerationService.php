@@ -674,7 +674,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
             $draw->setFontSize(10);
             $draw->setStrokeAntialias(true);
-            // $draw->setStrokeColor('black');
 
             //Axes principaux
             $draw->line(20, 185, 380, 185);
@@ -1021,9 +1020,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $cellfusion)->addText($contentreco, $styleContentFont, ['Alignment' => 'left']);
 
                         switch ($reco['importance']) {
-                            case 0:
-                                $contentreco = "";
-                                break;
                             case 1:
                                 $contentreco = "o";
                                 break;
@@ -1032,6 +1028,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                                 break;
                             case 3:
                                 $contentreco = "ooo";
+                                break;
+                            default:
+                            case 0:
+                                $contentreco = "";
                                 break;
                         }
 
@@ -1147,7 +1147,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.50), $styleContentCellCenter)->addText($cid, $styleContentFont, array('Alignment' => 'center'));
 
                 // Trend
-                $trend = '';
                 switch ($threat['trend']) {
                     case 1:
                         $trend = '-';
@@ -1160,6 +1159,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         break;
                     case 4:
                         $trend = '++';
+                        break;
+                    default:
+                        $trend = '';
                         break;
                 }
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.70), $styleContentCellCenter)->addText($trend, $styleContentFont, array('Alignment' => 'center'));
@@ -1200,12 +1202,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             ['<br/>', '', ''],
             $input
         );
-        /*$input = str_replace(
-            ['<br>', '<div>', '</div>', '<blockquote>', '</blockquote>'],
-            ['</p><p>', '<p>', '</p>', '<blockquote><p>', '</p></blockquote>'],
-            $input);*/
-
-        //die("errors: " . $input);
 
         // Turn it into word data
         $phpWord = new PhpWord();

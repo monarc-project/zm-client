@@ -105,7 +105,9 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
                 $days = round($diff / 60 / 60 / 24);
                 if ($days <= 15) {//arbitrary 15 days
                     return "warning";
-                } else return "large";
+                } else {
+                    return "large";
+                }
             }
         }
     }

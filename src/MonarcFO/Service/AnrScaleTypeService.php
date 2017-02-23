@@ -87,7 +87,6 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
 
         $anrId = $data['anr'];
 
-        //$entity = $this->get('entity');
         $class = $this->get('entity');
         $entity = new $class();
         $entity->setDbAdapter($this->get('table')->getDb());
