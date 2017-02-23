@@ -197,12 +197,9 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
             foreach ($instancesRisks as $instanceRisk) {
                 foreach ($brothers as $brother) {
-                    if ($brother->id == $instanceRisk->instance->id) {
-                        if ($instanceRisk->id != $id) {
-                            $this->get('table')->delete($instanceRisk->id);
-                        }
+                    if ($brother->id == $instanceRisk->instance->id && $instanceRisk->id != $id) {
+                        $this->get('table')->delete($instanceRisk->id);
                     }
-
                 }
             }
         }

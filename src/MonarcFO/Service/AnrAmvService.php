@@ -119,10 +119,8 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         $entity->setLanguage($this->getLanguage());
 
         foreach ($this->dependencies as $dependency) {
-            if (!isset($data[$dependency])) {
-                if ($entity->$dependency) {
-                    $data[$dependency] = $entity->$dependency->id;
-                }
+            if (!isset($data[$dependency]) && $entity->$dependency) {
+                $data[$dependency] = $entity->$dependency->id;
             }
         }
 

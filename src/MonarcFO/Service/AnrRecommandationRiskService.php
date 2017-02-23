@@ -215,10 +215,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
                 $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $recommandationRisk->recommandation->id]);
                 foreach ($recommandationRisksReco as $recommandationRiskReco) {
-                    if ($recommandationRiskReco->instanceRisk) {
-                        if (in_array($recommandationRiskReco->instanceRisk->id, $brothersIds)) {
-                            $this->get('table')->delete($recommandationRiskReco->id);
-                        }
+                    if ($recommandationRiskReco->instanceRisk && in_array($recommandationRiskReco->instanceRisk->id, $brothersIds)) {
+                        $this->get('table')->delete($recommandationRiskReco->id);
                     }
                 }
             } else {
@@ -238,10 +236,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
                 $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $recommandationRisk->recommandation->id]);
                 foreach ($recommandationRisksReco as $recommandationRiskReco) {
-                    if ($recommandationRiskReco->instanceRiskOp) {
-                        if (in_array($recommandationRiskReco->instanceRiskOp->id, $brothersIds)) {
-                            $this->get('table')->delete($recommandationRiskReco->id);
-                        }
+                    if ($recommandationRiskReco->instanceRiskOp && in_array($recommandationRiskReco->instanceRiskOp->id, $brothersIds)) {
+                        $this->get('table')->delete($recommandationRiskReco->id);
                     }
                 }
             } else {
@@ -261,7 +257,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $reco->set('position',null);
             $this->get('recommandationTable')->save($reco);
         }
-
     }
 
 
@@ -300,37 +295,33 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             foreach ($recommandationsRisks as $recommandationRisk) {
                 if ($recommandationRisk->recommandation->id == $recommandation->id) {
                     // Retrieve instance risk associated, if any
-                    if ($recommandationRisk->instanceRisk) {
-                        if ($recommandationRisk->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
-                            $instanceRisk = $recommandationRisk->instanceRisk;
-                            if (is_object($instanceRisk->asset)) {
-                                $instanceRisk->asset = $instanceRisk->asset->getJsonArray();
-                            }
-                            if (is_object($instanceRisk->threat)) {
-                                $instanceRisk->threat = $instanceRisk->threat->getJsonArray();
-                            }
-                            if (is_object($instanceRisk->vulnerability)) {
-                                $instanceRisk->vulnerability = $instanceRisk->vulnerability->getJsonArray();
-                            }
-                            $riskData = $instanceRisk->getJsonArray();
-                            $riskData['instance'] = $this->instanceTable->getEntity($riskData['instance'])->getJsonArray();
-                            $recommandations[$key]['risks'][] = $riskData;
-                            $nbRisks++;
+                    if ($recommandationRisk->instanceRisk && $recommandationRisk->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
+                        $instanceRisk = $recommandationRisk->instanceRisk;
+                        if (is_object($instanceRisk->asset)) {
+                            $instanceRisk->asset = $instanceRisk->asset->getJsonArray();
                         }
+                        if (is_object($instanceRisk->threat)) {
+                            $instanceRisk->threat = $instanceRisk->threat->getJsonArray();
+                        }
+                        if (is_object($instanceRisk->vulnerability)) {
+                            $instanceRisk->vulnerability = $instanceRisk->vulnerability->getJsonArray();
+                        }
+                        $riskData = $instanceRisk->getJsonArray();
+                        $riskData['instance'] = $this->instanceTable->getEntity($riskData['instance'])->getJsonArray();
+                        $recommandations[$key]['risks'][] = $riskData;
+                        $nbRisks++;
                     }
 
                     // Retrieve instance risk op associated, if any
-                    if ($recommandationRisk->instanceRiskOp) {
-                        if ($recommandationRisk->instanceRiskOp->kindOfMeasure != InstanceRiskOp::KIND_NOT_TREATED) {
-                            $data = $recommandationRisk->instanceRiskOp->getJsonArray();
-                            $instance = $recommandationRisk->instanceRiskOp->instance->getJsonArray();
-                            unset($instance['__initializer__']);
-                            unset($instance['__cloner__']);
-                            unset($instance['__isInitialized__']);
-                            $data['instance'] = $instance;
-                            $recommandations[$key]['risksop'][] = $data;
-                            $nbRisks++;
-                        }
+                    if ($recommandationRisk->instanceRiskOp && $recommandationRisk->instanceRiskOp->kindOfMeasure != InstanceRiskOp::KIND_NOT_TREATED) {
+                        $data = $recommandationRisk->instanceRiskOp->getJsonArray();
+                        $instance = $recommandationRisk->instanceRiskOp->instance->getJsonArray();
+                        unset($instance['__initializer__']);
+                        unset($instance['__cloner__']);
+                        unset($instance['__isInitialized__']);
+                        $data['instance'] = $instance;
+                        $recommandations[$key]['risksop'][] = $data;
+                        $nbRisks++;
                     }
 
                     // If the object is global, only keep the highest risk value
@@ -487,7 +478,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         // Verify if risk is final or intermediate (risk attach to others recommandations)
         $riskRecommandations = $table->getEntityByFields(['instanceRisk' => $recoRisk->instanceRisk->id]);
-        $final = (count($riskRecommandations) == 1) ? true : false;
+        $final = (count($riskRecommandations) == 1);
 
         // Automatically record the change in history before modifying values
         $this->createRecoHistoric($data, $recoRisk, $final);
