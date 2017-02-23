@@ -21,12 +21,7 @@ class ApiAnrInstancesRisksController extends ApiAnrAbstractController
     protected $name = 'instances-risks';
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {

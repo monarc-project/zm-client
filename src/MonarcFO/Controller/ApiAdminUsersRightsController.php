@@ -21,9 +21,7 @@ class ApiAdminUsersRightsController extends \MonarcCore\Controller\AbstractContr
     protected $name = 'rights';
 
     /**
-     * Get List
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -34,6 +32,9 @@ class ApiAdminUsersRightsController extends \MonarcCore\Controller\AbstractContr
         return new JsonModel($rights);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();

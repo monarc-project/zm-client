@@ -21,10 +21,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     protected $dependencies = ['asset', 'threat', 'vulnerability', 'measure1', 'measure2', 'measure3'];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -77,10 +74,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function get($id)
     {

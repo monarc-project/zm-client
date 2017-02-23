@@ -19,12 +19,7 @@ use Zend\View\Model\JsonModel;
 class ApiUserPasswordController extends AbstractController
 {
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -37,26 +32,41 @@ class ApiUserPasswordController extends AbstractController
         return new JsonModel(['status' => 'ok']);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($token, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         return $this->methodNotAllowed();

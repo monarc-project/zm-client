@@ -20,9 +20,8 @@ class ApiAnrObjectController extends ApiAnrAbstractController
     protected $name = 'object';
 
     /**
-     * Parents Action
-     *
-     * @return JsonModel
+     * GET action that retrieves the parents of the object
+     * @return JsonModel The JSON data of the parents
      */
     public function parentsAction()
     {
@@ -30,31 +29,49 @@ class ApiAnrObjectController extends ApiAnrAbstractController
         return new JsonModel($this->getService()->getParents($matcher->getParam('anrid'), $matcher->getParam('id')));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         $this->methodNotAllowed();

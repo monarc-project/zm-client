@@ -20,10 +20,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     protected $name = 'objects';
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -39,12 +36,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     }
 
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -62,11 +54,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function get($id)
     {

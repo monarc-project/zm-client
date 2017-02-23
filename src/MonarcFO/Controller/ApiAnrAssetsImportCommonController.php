@@ -20,10 +20,7 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
     protected $name = "assets";
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -43,11 +40,7 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -64,11 +57,7 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {

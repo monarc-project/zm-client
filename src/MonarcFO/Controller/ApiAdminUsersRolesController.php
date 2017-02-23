@@ -20,9 +20,7 @@ class ApiAdminUsersRolesController extends \MonarcCore\Controller\AbstractContro
     protected $name = 'roles';
 
     /**
-     * Get List
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -35,8 +33,7 @@ class ApiAdminUsersRolesController extends \MonarcCore\Controller\AbstractContro
     }
 
     /**
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -48,21 +45,33 @@ class ApiAdminUsersRolesController extends \MonarcCore\Controller\AbstractContro
         ]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

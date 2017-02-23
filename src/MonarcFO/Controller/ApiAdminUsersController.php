@@ -21,9 +21,7 @@ class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
     protected $name = 'users';
 
     /**
-     * Get list
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -53,10 +51,7 @@ class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -74,11 +69,7 @@ class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
     }
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -102,10 +93,7 @@ class ApiAdminUsersController extends \MonarcCore\Controller\AbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function get($id)
     {

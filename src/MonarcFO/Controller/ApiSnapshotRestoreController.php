@@ -21,11 +21,7 @@ class ApiSnapshotRestoreController extends ApiAnrAbstractController
     protected $name = 'snapshots';
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -49,31 +45,49 @@ class ApiSnapshotRestoreController extends ApiAnrAbstractController
         ]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function deleteList($data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();

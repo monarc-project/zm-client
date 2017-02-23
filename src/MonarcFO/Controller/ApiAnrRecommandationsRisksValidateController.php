@@ -19,12 +19,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecommandationsRisksValidateController extends ApiAnrAbstractController
 {
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -41,16 +36,25 @@ class ApiAnrRecommandationsRisksValidateController extends ApiAnrAbstractControl
         return new JsonModel(['status' => 'ok']);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();

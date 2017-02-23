@@ -20,11 +20,7 @@ class ApiAnrInstancesConsequencesController extends ApiAnrAbstractController
     protected $name = 'instances-consequences';
 
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function patch($id, $data)
     {

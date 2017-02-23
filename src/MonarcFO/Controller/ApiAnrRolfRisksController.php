@@ -22,9 +22,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
     protected $dependencies = ['categories', 'tags'];
 
     /**
-     * Get list
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {

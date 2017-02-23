@@ -10,18 +10,13 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api Anr Abstract Controller
- *
- * Class ApiAnrAbstractController
+ * Abstract controller for all ANR-based routes. Allows easy permissions filtering for routes below this one.
  * @package MonarcFO\Controller
  */
 abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractController
 {
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -58,11 +53,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -84,11 +75,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -107,12 +94,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     }
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -128,12 +110,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     }
 
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -149,10 +126,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     }
 
     /**
-     * Delete
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function delete($id)
     {
@@ -166,10 +140,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     }
 
     /**
-     * Delete list
-     *
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function deleteList($data)
     {

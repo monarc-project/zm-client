@@ -21,10 +21,7 @@ class ApiAnrCartoRisksController extends ApiAnrAbstractController
     protected $dependencies = [];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -63,31 +60,49 @@ class ApiAnrCartoRisksController extends ApiAnrAbstractController
         }
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function deleteList($data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         $this->methodNotAllowed();

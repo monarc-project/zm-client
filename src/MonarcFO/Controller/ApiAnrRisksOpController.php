@@ -20,10 +20,7 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
     protected $name = 'oprisks';
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -43,9 +40,7 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
     }
 
     /**
-     * Get List
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -65,11 +60,7 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -88,9 +79,7 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
     }
 
     /**
-     * Parse Params
-     *
-     * @return array
+     * @inheritdoc
      */
     protected function parseParams()
     {
@@ -113,16 +102,25 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
     public function deleteList($data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         $this->methodNotAllowed();

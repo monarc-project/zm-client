@@ -16,10 +16,7 @@ namespace MonarcFO\Controller;
 class ApiAnrExportController extends ApiAnrAbstractController
 {
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return \Zend\Stdlib\ResponseInterface
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -45,31 +42,49 @@ class ApiAnrExportController extends ApiAnrAbstractController
         return $this->response;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
-        $this->methodNotAllowed($id);
+        $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function deleteList($data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         $this->methodNotAllowed();

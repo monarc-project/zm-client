@@ -22,10 +22,7 @@ class ApiClientsController extends AbstractController
     protected $name = 'clients';
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -45,11 +42,7 @@ class ApiClientsController extends AbstractController
     }
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function update($id, $data)
     {

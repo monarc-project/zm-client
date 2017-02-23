@@ -35,9 +35,7 @@ class ApiUserProfileController extends AbstractController
     }
 
     /**
-     * Get List
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -47,10 +45,7 @@ class ApiUserProfileController extends AbstractController
     }
 
     /**
-     * Patch List
-     *
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function patchList($data)
     {
@@ -58,36 +53,48 @@ class ApiUserProfileController extends AbstractController
     }
 
     /**
-     * Replace List
-     *
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function replaceList($data)
     {
         return new JsonModel($this->getService()->update($this->connectedUser->getConnectedUser(), $data));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         return $this->methodNotAllowed();

@@ -19,10 +19,7 @@ use Zend\View\Model\JsonModel;
 class ApiModelVerifyLanguageController extends AbstractController
 {
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -31,26 +28,41 @@ class ApiModelVerifyLanguageController extends AbstractController
         return new JsonModel($result);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($token, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

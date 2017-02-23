@@ -24,9 +24,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     protected $dependencies = ['anr', 'asset', 'object', 'root', 'parent'];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -41,11 +39,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     }
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -59,11 +53,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     }
 
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -77,10 +67,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -98,11 +85,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {

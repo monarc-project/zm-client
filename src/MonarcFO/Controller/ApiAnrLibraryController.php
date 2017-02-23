@@ -25,10 +25,7 @@ class ApiAnrLibraryController extends AbstractController
     protected $dependencies = ['anr', 'parent'];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -52,11 +49,7 @@ class ApiAnrLibraryController extends AbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -81,11 +74,7 @@ class ApiAnrLibraryController extends AbstractController
     }
 
     /**
-     * Delete
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function delete($id)
     {
@@ -103,16 +92,25 @@ class ApiAnrLibraryController extends AbstractController
         ]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();

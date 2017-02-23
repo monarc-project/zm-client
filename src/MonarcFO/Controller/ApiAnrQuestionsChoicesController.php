@@ -20,11 +20,7 @@ class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
     protected $name = 'choices';
 
     /**
-     * Replace List
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function replaceList($data)
     {

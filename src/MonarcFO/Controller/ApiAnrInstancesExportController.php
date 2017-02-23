@@ -18,11 +18,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrInstancesExportController extends ApiAnrAbstractController
 {
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -53,26 +49,41 @@ class ApiAnrInstancesExportController extends ApiAnrAbstractController
         return $this->response;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         return $this->methodNotAllowed();
