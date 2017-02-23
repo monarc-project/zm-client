@@ -19,11 +19,20 @@
                     "reference": "master"
                 },
                 "require": {
-                    "php": ">=5.5"
+                    "php": ">=5.5",
+                    "ext-intl": "*",
+                    "ext-imagick": "*",
+                    "phpoffice/phpword": "dev-stable"
                 },
                 "autoload": {
                     "psr-0": {"MonarcFO\\":"/"}
-                }
+                },
+                "repositories": [
+                    {
+                        "type": "vcs",
+                        "url": "git+ssh://gogs@rhea.netlor.fr:2222/libs/PHPWord"
+                    }
+                ]
             }
         }
     }

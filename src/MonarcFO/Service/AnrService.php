@@ -491,21 +491,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             }
 
-            //duplicate rolf risk/tags association
-            /** @var RolfTag $rolfTag */
-            /*foreach ($rolfTags as $rolfTag) {
-                $tag = $rolfTagsNewIds[$rolfTag->id];
-                $risks = $rolfTag->get('risks');
-                $newRisks = [];
-
-                foreach ($risks as $risk) {
-                    $newRisks[] = $rolfRisksNewIds[$risk->id];
-                }
-
-                $tag->set('risks', $newRisks);
-                $this->get('rolfTagCliTable')->save($tag, $last);
-            }*/
-
             //duplicate objects categories
             $objects = ($source == Object::SOURCE_COMMON) ? $this->get('objectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objects as $key => $object) {

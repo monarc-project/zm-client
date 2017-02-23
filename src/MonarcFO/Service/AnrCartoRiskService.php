@@ -190,9 +190,9 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 
         // le premier algo nous a permis d'isoler les maximus des globaux pour ne les compter qu'une seule fois
         // maintenant il faut compter de manière à pouvoir distribuer cela dans la matrice
-        foreach ($temp as $id_biblio => $risks) {
-            foreach ($risks as $amv => $contexts) {
-                foreach ($contexts as $idx => $context) {
+        foreach ($temp as $risks) {
+            foreach ($risks as $contexts) {
+                foreach ($contexts as $context) {
                     if ($context['impact'] < 0) {
                         continue;
                     }

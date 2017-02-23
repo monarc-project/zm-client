@@ -69,7 +69,48 @@ class AnrRecommandationService extends AbstractService
     }
 
     /**
+<<<<<<< HEAD
+     * Due date
+     *
+     * @param $dueDate
+     * @return string
+     */
+    protected function getDueDateColor($dueDate)
+    {
+        if (empty($dueDate) || $dueDate == '0000-00-00') {
+            return 'no-date';
+        } else {
+            $now = time();
+            if ($dueDate instanceof \DateTime) {
+                $dueDate = $dueDate->getTimestamp();
+            } else {
+                $dueDate = strtotime($dueDate);
+            }
+            $diff = $dueDate - $now;
+
+            if ($diff < 0) {
+                return "alert";
+            } else {
+                $days = round($diff / 60 / 60 / 24);
+                if ($days <= 15) {//arbitrary 15 days
+                    return "warning";
+                } else {
+                    return "large";
+                }
+            }
+        }
+    }
+
+    /**
+     * Patch
+     *
+     * @param $id
+     * @param $data
+     * @return mixed
+     * @throws \Exception
+=======
      * @inheritdoc
+>>>>>>> f4d419dee2d083f51d48d14ee87638e64fad5667
      */
     public function patch($id, $data)
     {
@@ -222,9 +263,7 @@ class AnrRecommandationService extends AbstractService
                 $days = round($diff / 60 / 60 / 24);
                 if ($days <= 15) {//arbitrary 15 days
                     return "warning";
-                } else {
-                    return "large";
-                }
+                } else return "large";
             }
         }
     }
