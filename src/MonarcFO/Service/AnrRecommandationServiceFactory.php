@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Recommandation Service Factory
- *
- * Class AnrRecommandationServiceFactory
+ * Factory class attached to AnrRecommandationService
  * @package MonarcFO\Service
  */
 class AnrRecommandationServiceFactory extends AbstractServiceFactory
