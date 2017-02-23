@@ -13,7 +13,7 @@
         "php": ">=5.5",
         "ext-intl": "*",
         "ext-imagick": "*",
-        "phpoffice/phpword": "dev-stable"
+        "phpoffice/phpword": "stable"
     },
     "autoload": {
         "psr-0": {"MonarcFO\\":"/"}
