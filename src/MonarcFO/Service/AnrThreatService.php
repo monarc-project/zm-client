@@ -11,9 +11,7 @@ use MonarcCore\Service\InstanceRiskService;
 use MonarcFO\Model\Table\InstanceRiskTable;
 
 /**
- * Anr Threat Service
- *
- * Class AnrThreatService
+ * This class is the service that handles threats within an ANR.
  * @package MonarcFO\Service
  */
 class AnrThreatService extends \MonarcCore\Service\AbstractService
@@ -31,38 +29,28 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
     ];
 
     /**
-     * Update
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
+     * @inheritdoc
      */
     public function update($id, $data)
     {
         $this->manageQualification($id, $data);
-
         return parent::update($id, $data);
     }
 
     /**
-     * Patch
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
         $this->manageQualification($id, $data);
-
         return parent::patch($id, $data);
     }
 
     /**
-     * Manage Qualification
-     *
-     * @param $id
-     * @param $data
+     * Updates the qualifications for the specified threat whenever they are created or updated. This noticeably
+     * handles qualification values inheritance.
+     * @param int $id The threat ID
+     * @param array $data The qualification data
      */
     public function manageQualification($id, $data)
     {
@@ -72,7 +60,7 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
                 'threat' => $id,
             ];
 
-            //if qualification is not forced, retrieve only instance risks inherited
+            // If qualification is not forced, retrieve only inherited instance risks
             if ((!isset($data['forceQualification'])) || $data['forceQualification'] == 0) {
                 $filter['mh'] = 1;
             }
@@ -85,7 +73,8 @@ class AnrThreatService extends \MonarcCore\Service\AbstractService
             $nbInstancesRisks = count($instancesRisks);
             foreach ($instancesRisks as $instanceRisk) {
                 $instanceRisk->threatRate = $data['qualification'];
-                //if qualification is forced, instances risks become inherited
+
+                // If qualification is forced, instances risks become inherited
                 if ((isset($data['forceQualification'])) && $data['forceQualification'] == 1) {
                     $instanceRisk->mh = 1;
                 }

@@ -10,17 +10,19 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\DeliveriesModelsService;
 use MonarcCore\Service\QuestionChoiceService;
 use MonarcCore\Service\QuestionService;
+use MonarcFO\Model\Entity\Anr;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ClientTable;
 use MonarcFO\Model\Table\DeliveryTable;
+use MonarcFO\Model\Table\InstanceRiskOpTable;
+use MonarcFO\Model\Table\InstanceRiskTable;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\Writer\Word2007;
 
 /**
- * Anr Deliverable Service
- *
- * Class AnrAssetService
+ * This class is the service that handles the generation of the deliverable Word documents throughout the steps of the
+ * risk analysis.
  * @package MonarcFO\Service
  */
 class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
@@ -68,40 +70,27 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     protected $currentLangAnrIndex;
 
     /**
-     * Construct
-     *
-     * AbstractService constructor.
-     * @param null $serviceFactory
-     */
-    public function __construct($serviceFactory = null)
-    {
-        if (is_array($serviceFactory)) {
-            foreach ($serviceFactory as $k => $v) {
-                $this->set($k, $v);
-            }
-        } else {
-            $this->serviceFactory = $serviceFactory;
-        }
-    }
-
-    /**
-     * Set Language
-     *
-     * @param mixed $lang
+     * Language field setter
+     * @param string $lang
      */
     public function setLanguage($lang)
     {
         $this->language = $lang;
     }
 
+    /**
+     * Translates the provided input text into the current ANR language
+     * @param string $text The text to translate
+     * @return string THe translated text, or $text if no translation was found
+     */
     public function anrTranslate($text){
         return $this->get('translateService')->translate($text,$this->currentLangAnrIndex);
     }
 
     /**
-     * Get Delivery Models
-     *
-     * @return mixed
+     * Returns the list of delivery models.
+     * @see DeliveriesModelsService::getList()
+     * @return array An array of delivery models
      */
     public function getDeliveryModels()
     {
@@ -109,18 +98,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Last Deliveries
-     *
-     * @param $anrId
-     * @param null $typeDoc
-     * @return array
+     * Retrieve the previous delivery for the specified type of document, or all types if none is specified.
+     * @param int $anrId The ANR ID
+     * @param null|int $typeDoc The type of document, or null to retrieve all
+     * @return array The previous deliveries
      */
     public function getLastDeliveries($anrId, $typeDoc = null)
     {
         /** @var DeliveryTable $table */
         $table = $this->get('table');
 
-        //if typedoc is specify, retrieve only last delivery of typedoc else, retrieve last delivery for each typedoc
+        // If typedoc is specified, retrieve only the last delivery of typedoc. Else, retrieve last delivery for each
+        // type of document.
         if (!empty($typeDoc)) {
             $deliveries = $table->getEntityByFields(['anr' => $anrId, 'typedoc' => $typeDoc], ['createdAt' => 'DESC']);
             $lastDelivery = null;
@@ -145,14 +134,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Deliverable With Values
-     *
-     * @param $anrId
-     * @param $typeDoc
-     * @param $values
-     * @param $data
-     * @return string
-     * @throws \Exception
+     * Generates the deliverable Word file
+     * @param int $anrId The ANR ID
+     * @param int $typeDoc The type of document model
+     * @param array $values The values to fill in the document
+     * @param array $data The user-provided data when generating the deliverable
+     * @return string The output file path
+     * @throws \Exception If the model or ANR are not found.
      */
     public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data)
     {
@@ -201,12 +189,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Deliverable With Values And Model
-     *
-     * @param $modelPath
-     * @param $values
-     * @return string
-     * @throws \Exception
+     * Method called by generateDeliverableWithValues to generate the model from its path and values.
+     * @see #generateDeliverableWithValues
+     * @param string $modelPath The file path to the DOCX model to use
+     * @param array $values The values to fill in the document
+     * @return string The path to the generated document
+     * @throws \Exception If the model is not found
      */
     protected function generateDeliverableWithValuesAndModel($modelPath, $values)
     {
@@ -249,10 +237,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Model Type
-     *
-     * @param $modelCategory
-     * @return string
+     * Returns a human-readable string for the provided model type
+     * @param int $modelCategory The model type value
+     * @return string The model type description
      */
     protected function getModelType($modelCategory)
     {
@@ -269,11 +256,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Build Values
-     *
-     * @param $anr
-     * @param $modelCategory
-     * @return array
+     * Builds the values to fill in the word document
+     * @param Anr $anr The ANR object
+     * @param int $modelCategory The model type
+     * @return array The values for the Word document as a key-value array
      */
     protected function buildValues($anr, $modelCategory)
     {
@@ -290,10 +276,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Build Context Validation Values
-     *
-     * @param $anr
-     * @return array
+     * Build values for Step 1 deliverable (context validation)
+     * @param Anr $anr The ANR object
+     * @return array The key-value array
      */
     protected function buildContextValidationValues($anr)
     {
@@ -618,6 +603,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         return $values;
     }
 
+    /**
+     * Build values for Step 2 deliverable (context modeling)
+     * @param Anr $anr The ANR object
+     * @return array The key-value array
+     */
     protected function buildContextModelingValues($anr)
     {
         // Models are incremental, so use values from level-1 model
@@ -630,10 +620,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Build Risk Assessment Values
-     *
-     * @param $anr
-     * @return array
+     * Build values for Step 3 deliverable (risk assessment)
+     * @param Anr $anr The ANR object
+     * @return array The key-value array
      */
     protected function buildRiskAssessmentValues($anr)
     {
@@ -654,10 +643,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Risks Graph
-     *
-     * @param $anr
-     * @return string
+     * Generates the risks graph that is included in the model
+     * @param Anr $anr The ANR object
+     * @return array An array with the path and details of the generated canvas
      */
     protected function generateRisksGraph($anr)
     {
@@ -747,10 +735,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Table Audit
-     *
-     * @param $anr
-     * @return mixed|string
+     * Generate the audit table data
+     * @param Anr $anr The ANR object
+     * @return mixed|string The generated WordXml data
      */
     protected function generateTableAudit($anr)
     {
@@ -846,8 +833,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
+    /**
+     * Generates the audit table data for operational risks
+     * @param Anr $anr The ANR object
+     * @return mixed|string The generated WordXml data
+     */
     public function generateTableAuditOp($anr){
-
         $query = $this->instanceRiskOpTable->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
                 'ir.riskCacheLabel' . $anr->language . ' AS label', 'ir.comment AS comment',
@@ -917,10 +908,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Risks Distribution
-     *
-     * @param $anr
-     * @return string
+     * Generates Word-compliant HTML for the risks distribution paragraph
+     * @param Anr $anr The ANR object
+     * @return string HTML data that can be converted into WordXml data
      */
     protected function getRisksDistribution($anr)
     {
@@ -944,11 +934,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Risks Plan
-     *
-     * @param $anr
-     * @param bool $full
-     * @return mixed|string
+     * Generates the Risks Plan data
+     * @param Anr $anr The ANR object
+     * @param bool $full Whether or not the full plan is requested or just an extract
+     * @return mixed|string The WordXml data generated
      */
     protected function generateRisksPlan($anr, $full = false)
     {
@@ -1049,10 +1038,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Impacts Appreciation
-     *
-     * @param $anr
-     * @return mixed|string
+     * Generate the impacts appreciation table data
+     * @param Anr $anr The ANR object
+     * @return mixed|string The WordXml table data
      */
     protected function generateImpactsAppreciation($anr)
     {
@@ -1095,11 +1083,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Threats Table
-     *
-     * @param $anr
-     * @param bool $fullGen
-     * @return mixed|string
+     * Generate the threats table data
+     * @param Anr $anr The ANR object
+     * @param bool $fullGen Whether or not to generate the full table (all but normal) or just the normal threats
+     * @return mixed|string The WordXml generated data
      */
     protected function generateThreatsTable($anr, $fullGen = false)
     {
@@ -1175,9 +1162,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Company Name
-     *
-     * @return mixed
+     * Retrieves the company name to display within the document
+     * @return string The company name
      */
     protected function getCompanyName()
     {
@@ -1186,10 +1172,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Generate Word Xml Front Html
-     *
-     * @param $input
-     * @return mixed
+     * Generates WordXml data from HTML.
+     * @param string $input HTML input
+     * @return string WordXml data
      */
     protected function generateWordXmlFromHtml($input)
     {
@@ -1220,11 +1205,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Word Xml From Word Object
-     *
-     * @param $phpWord
-     * @param bool $useBody
-     * @return mixed|string
+     * Retrieves the WordXml data from a generated PhpWord Object
+     * @param PhpWord $phpWord The PhpWord Object
+     * @param bool $useBody Whether to keep the entire <w:body> tag or just <w:r>
+     * @return string The WordXml data
      */
     protected function getWordXmlFromWordObject($phpWord, $useBody = true)
     {

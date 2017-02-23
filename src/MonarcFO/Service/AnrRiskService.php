@@ -10,11 +10,10 @@ namespace MonarcFO\Service;
 use MonarcFO\Model\Entity\InstanceRisk;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Table\InstanceTable;
+use MonarcFO\Model\Table\UserAnrTable;
 
 /**
- * Anr Risk Service
- *
- * Class AnrRiskService
+ * This class is the service that handles risks within an ANR.
  * @package MonarcFO\Service
  */
 class AnrRiskService extends \MonarcCore\Service\AbstractService
@@ -30,13 +29,12 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     protected $translateService;
 
     /**
-     * Get Risks
-     *
-     * @param $anrId
-     * @param null $instanceId
-     * @param array $params
-     * @param bool $count
-     * @return int
+     * Computes and returns the list of risks for either the entire ANR, or a specific instance if an ID is set.
+     * @param int $anrId The ANR ID
+     * @param int|null $instanceId An instance ID, or null to not filter by instance
+     * @param array $params An array of fields to filter
+     * @param bool $count If true, only the number of risks will be returned
+     * @return int|array If $count is true, the number of risks. Otherwise, an array of risks.
      */
     public function getRisks($anrId, $instanceId = null, $params = [], $count = false)
     {
@@ -45,12 +43,11 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Csv Risks
-     *
-     * @param $anrId
-     * @param null $instanceId
-     * @param $params
-     * @return string
+     * Returns the list of risks in CSV format for either the entire ANR, or a specific instance if an ID is set.
+     * @param int $anrId The ANR ID
+     * @param int|null $instanceId An instance ID, or null to not filter by instance
+     * @param array $params An array of fields to filter
+     * @return string CSV-compliant data of the risks list
      */
     public function getCsvRisks($anrId, $instanceId = null, $params = [])
     {
@@ -58,14 +55,11 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Instances Risks
-     *
-     * @param $anrId
-     * @param null $instanceId
-     * @param array $params
-     * @param bool $count
-     * @return int
-     * @throws \Exception
+     * Computes and returns the list of risks for either the entire ANR, or a specific instance if an ID is set.
+     * @param int $anrId The ANR ID
+     * @param int|null $instanceId An instance ID, or null to not filter by instance
+     * @param array $params An array of fields to filter
+     * @return array An array of risks.
      */
     protected function getInstancesRisks($anrId, $instanceId = null, $params = [])
     {
@@ -73,12 +67,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
@@ -127,10 +116,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Delete
-     *
-     * @param $instanceId
-     * @param $anrId
+     * @inheritdoc
      */
     public function deleteInstanceRisks($instanceId, $anrId)
     {
@@ -145,12 +131,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Delete From Anr
-     *
-     * @param $id
-     * @param null $anrId
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function deleteFromAnr($id, $anrId = null)
     {
@@ -180,14 +161,14 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             throw new \Exception('You are not authorized to do this action', 412);
         }
 
-        //if object is global, delete all risks link to brothers instances
+        // If the object is global, delete all risks link to brothers instances
         if ($entity->instance->object->scope == Object::SCOPE_GLOBAL) {
-            //retrieve brothers
+            // Retrieve brothers
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');
             $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id]);
 
-            //retrieve instances with same risk
+            // Retrieve instances with same risk
             $instancesRisks = $this->get('table')->getEntityByFields([
                 'anr' => $entity->anr->id,
                 'asset' => $entity->asset->id,

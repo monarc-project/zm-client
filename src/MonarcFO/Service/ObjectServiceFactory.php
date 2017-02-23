@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Object Service Factory
- *
- * Class ObjectServiceFactory
+ * Proxy class to instantiate MonarcCore's ObjectService, with MonarcFO's services
  * @package MonarcFO\Service
  */
 class ObjectServiceFactory extends AbstractServiceFactory

@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Snapshot Service Factory
- *
- * Class SnapshotServiceFactory
+ * Factory class attached to SnapshotService
  * @package MonarcFO\Service
  */
 class SnapshotServiceFactory extends AbstractServiceFactory

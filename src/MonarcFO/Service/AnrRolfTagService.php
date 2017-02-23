@@ -8,9 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Rolf Tag Service
- *
- * Class AnrRolfTagService
+ * This class is the service that handles ROLF tags within an ANR. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class AnrRolfTagService extends \MonarcCore\Service\AbstractService

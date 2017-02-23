@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Deliverable Generation Service Factory
- *
- * Class DeliverableGenerationServiceFactory
+ * Factory class attached to DeliverableGenerationService
  * @package MonarcFO\Service
  */
 class DeliverableGenerationServiceFactory extends AbstractServiceFactory

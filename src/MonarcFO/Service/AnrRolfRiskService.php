@@ -8,9 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Rolf Risk Service
- *
- * Class AnrRolfRiskService
+ * This class is the service that handles ROLF risks within an ANR. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class AnrRolfRiskService extends \MonarcCore\Service\RolfRiskService

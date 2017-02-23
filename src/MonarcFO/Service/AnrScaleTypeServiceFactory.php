@@ -8,9 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Scale Type Service Factory
- *
- * Class AnrScaleTypeServiceFactory
+ * Factory class attached to AnrScaleTypeService
  * @package MonarcFO\Service
  */
 class AnrScaleTypeServiceFactory extends \MonarcCore\Service\AbstractServiceFactory

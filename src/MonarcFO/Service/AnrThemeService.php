@@ -8,9 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Theme Service
- *
- * Class AnrThemeService
+ * This class is the service that handles themes within an ANR. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class AnrThemeService extends \MonarcCore\Service\AbstractService

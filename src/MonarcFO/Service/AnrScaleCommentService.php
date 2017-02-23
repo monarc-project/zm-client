@@ -7,10 +7,12 @@
 
 namespace MonarcFO\Service;
 
+use MonarcFO\Model\Entity\Scale;
+use MonarcFO\Model\Entity\ScaleComment;
+use MonarcFO\Model\Table\AnrTable;
+
 /**
- * Anr Scale Comment Service
- *
- * Class AnrScaleCommentService
+ * This class is the service that handles comments on scales within an ANR. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class AnrScaleCommentService extends \MonarcCore\Service\AbstractService
@@ -23,22 +25,24 @@ class AnrScaleCommentService extends \MonarcCore\Service\AbstractService
     protected $dependencies = ['anr', 'scale', 'scaleImpactType'];
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
         $class = $this->get('entity');
+
+        /** @var ScaleComment $entity */
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
         $entity->setDbAdapter($this->get('table')->getDb());
+
+        // If a scale is set, ensure we retrieve the proper scale object
         if (isset($data['scale'])) {
             $scale = $this->get('scaleTable')->getEntity($data['scale']);
             $entity->setScale($scale);
-            if ($scale->type != 1) {
+
+            // If this is not an IMPACT scale, remove the impact type as we won't need it
+            if ($scale->type != Scale::TYPE_IMPACT) {
                 unset($data['scaleImpactType']);
             }
         }

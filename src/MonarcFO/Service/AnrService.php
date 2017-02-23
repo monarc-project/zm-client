@@ -8,6 +8,10 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Model\Entity\AnrSuperClass;
+use MonarcCore\Model\Entity\Model;
+use MonarcCore\Model\Table\ModelTable;
+use MonarcFO\Model\Entity\Anr;
+use MonarcFO\Model\Entity\AnrObjectCategory;
 use MonarcFO\Model\Entity\Interview;
 use MonarcFO\Model\Entity\Recommandation;
 use MonarcFO\Model\Entity\RecommandationHistoric;
@@ -16,12 +20,11 @@ use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Entity\RolfTag;
 use MonarcFO\Model\Entity\User;
 use MonarcFO\Model\Table\AnrTable;
+use MonarcFO\Model\Table\ClientTable;
 use MonarcFO\Model\Table\InstanceTable;
-use MonarcFO\Model\Table\ModelTable;
 use MonarcFO\Model\Table\SnapshotTable;
 use MonarcFO\Model\Table\UserAnrTable;
 use MonarcFO\Model\Table\UserRoleTable;
-use MonarcFO\Service\AbstractService;
 use MonarcFO\Model\Entity\Asset;
 use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Entity\Threat;
@@ -29,9 +32,7 @@ use MonarcFO\Model\Entity\Vulnerability;
 use MonarcFO\Model\Table\UserTable;
 
 /**
- * Anr Service
- *
- * Class AnrService
+ * This class is the service that handles ANR CRUD operations, and various actions on them.
  * @package MonarcFO\Service
  */
 class AnrService extends \MonarcCore\Service\AbstractService
@@ -97,27 +98,21 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $instanceService;
 
     /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return mixed
+     * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        //retrieve connected user
+        // Retrieve connected user
         /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
 
-        //retrieve roles for connected user
+        // Retrieve roles for connected user
         /** @var UserRoleTable $userRoleTable */
         $userRoleTable = $this->get('userRoleTable');
         $userRoles = $userRoleTable->getEntityByFields(['user' => $userArray['id']]);
 
-        //verify if connected user is admin
+        // Verify if connected user is admin
         $isSuperAdmin = false;
         foreach ($userRoles as $userRole) {
             if ($userRole->role == 'superadminfo') {
@@ -126,7 +121,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        //retrieve connected user anrs
+        // Retrieve connected user anrs
         $filterAnd['id'] = [];
         if (!$isSuperAdmin) {
             $anrs = $this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id']]);
@@ -140,7 +135,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        //remove snapshots of connected user anrs
+        // Filter out snapshots, as we don't want to show them unless we explicitly ask for them
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $snapshots = $snapshotCliTable->getEntityByFields(['anr' => $filterAnd['id']]);
@@ -148,7 +143,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             unset($filterAnd['id'][$snapshot->get('anr')->get('id')]);
         }
 
-        //retrieve anrs information
+        // Retrieve ANRs information
         $anrs = $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
@@ -171,10 +166,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Filtered Count
-     *
-     * @param null $filter
-     * @return int
+     * @inheritdoc
      */
     public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
@@ -182,8 +174,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Anrs
-     * @return array|bool
+     * Returns all ANRs without any filtering
+     * @return array An array of ANRs
      */
     public function getAnrs()
     {
@@ -191,28 +183,26 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Entity
-     *
-     * @param $id
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getEntity($id)
     {
         $anr = $this->get('table')->get($id);
 
-        //retrieve snapshot
+        // Retrieve snapshot
         /** @var SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $anrSnapshot = current($snapshotCliTable->getEntityByFields(['anr' => $id]));
 
         $anr['isSnapshot'] = 0;
         $anr['snapshotParent'] = null;
-        if (!empty($anrSnapshot)) { // On est sur un snapshot
+        if (!empty($anrSnapshot)) {
+            // This is a snapshot, tag it as so
             $anr['isSnapshot'] = 1;
             $anr['rwd'] = 0;
             $anr['snapshotParent'] = $anrSnapshot->get('anrReference')->get('id');
         } else {
+            /** @var ClientTable $userCliTable */
             $userCliTable = $this->get('userCliTable');
             $userArray = $userCliTable->getConnectedUser();
 
@@ -230,11 +220,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Create From Model To Client
-     *
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * Creates a new ANR from a model which is located inside the common database.
+     * @param array $data Data coming from the API
+     * @return int The newly created ANR id
+     * @throws \Exception If the source model is not found
      */
     public function createFromModelToClient($data)
     {
@@ -251,16 +240,16 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Duplicate Anr
-     *
-     * @param $anr
-     * @param string $source
-     * @param null $model
-     * @return mixed
+     * Duplicates either an existing ANR from the client, or an ANR model from the common database.
+     * @param int|AnrSuperClass $anr The ANR to clone, either its ID or the object
+     * @param string $source The source, either Object::SOURCE_CLIENT or Object::SOURCE_COMMON
+     * @param Model|null $model The source common model, or null if none
+     * @return int The newly created ANR id
      * @throws \Exception
      */
     public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false, $isSnapshotCloning = false)
     {
+        // This may take a lot of time on huge ANRs, so ignore the time limit
         ini_set('max_execution_time', 0);
 
         if (is_integer($anr)) {
@@ -852,9 +841,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Set User Current Anr
-     *
-     * @param $anrId
+     * Defines the user's "current" (ie. last visited) ANR to the specified ID
+     * @param int $anrId The ANR ID
      */
     public function setUserCurrentAnr($anrId)
     {
@@ -875,11 +863,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Parents Category Ids
-     *
-     * @param $category
-     * @param $categoriesIds
-     * @return array
+     * Recursively retrieves parent categories IDs
+     * @param AnrObjectCategory $category The category for which we want the parents
+     * @param array $categoriesIds Reference to an array of categories
+     * @return array The IDs of the categories of all parents
      */
     public function getParentsCategoryIds($category, &$categoriesIds)
     {
@@ -894,12 +881,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Color
-     *
-     * @param $anr
-     * @param $value
-     * @param array $classes
-     * @return mixed
+     * Returns the color to apply on the ROLF risks
+     * @param Anr $anr The ANR Object
+     * @param int $value The risk value
+     * @param array $classes The classes name to return for low, med and hi risks
+     * @return mixed One of the value of $classes
      */
     public function getColor($anr, $value, $classes = ['green', 'orange', 'alerte'])
     {
@@ -913,9 +899,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Delete
-     *
-     * @param $id
+     * @inheritdoc
      */
     public function delete($id)
     {
@@ -931,10 +915,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Verify language
-     *
-     * @param $modelId
-     * @return array
+     * Returns an array that specifies in which language the model may be instancied
+     * @param int $modelId The model ID
+     * @return array The array of languages that are valid
      */
     public function verifyLanguage($modelId)
     {

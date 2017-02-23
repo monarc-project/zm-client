@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Password Service Factory
- *
- * Class PasswordServiceFactory
+ * Proxy class to instantiate MonarcCore's PasswordService, with MonarcFO's services
  * @package MonarcFO\Service
  */
 class PasswordServiceFactory extends AbstractServiceFactory
