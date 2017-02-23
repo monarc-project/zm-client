@@ -897,6 +897,7 @@ return array(
 
             //services
             '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
+            '\MonarcFO\Service\AnrCoreService' => '\MonarcFO\Service\AnrCoreServiceFactory',
             '\MonarcFO\Service\SnapshotService' => '\MonarcFO\Service\SnapshotServiceFactory',
             '\MonarcFO\Service\UserService' => '\MonarcFO\Service\UserServiceFactory',
             '\MonarcFO\Service\UserAnrService' => '\MonarcFO\Service\UserAnrServiceFactory',

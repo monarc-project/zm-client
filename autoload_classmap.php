@@ -204,6 +204,7 @@ return array(
     'MonarcFO\Service\AnrCartoRiskServiceFactory'                             => __DIR__ . '/src/MonarcFO/Service/AnrCartoRiskServiceFactory.php',
     'MonarcFO\Service\AnrCheckStartedService'                                 => __DIR__ . '/src/MonarcFO/Service/AnrCheckStartedService.php',
     'MonarcFO\Service\AnrCheckStartedServiceFactory'                          => __DIR__ . '/src/MonarcFO/Service/AnrCheckStartedServiceFactory.php',
+    'MonarcFO\Service\AnrCoreServiceFactory'                                  => __DIR__ . '/src/MonarcFO/Service/AnrCoreServiceFactory.php',
     'MonarcFO\Service\AnrInstanceConsequenceServiceFactory'                   => __DIR__ . '/src/MonarcFO/Service/AnrInstanceConsequenceServiceFactory.php',
     'MonarcFO\Service\AnrInstanceRiskOpServiceFactory'                        => __DIR__ . '/src/MonarcFO/Service/AnrInstanceRiskOpServiceFactory.php',
     'MonarcFO\Service\AnrInstanceRiskServiceFactory'                          => __DIR__ . '/src/MonarcFO/Service/AnrInstanceRiskServiceFactory.php',
