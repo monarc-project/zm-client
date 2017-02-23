@@ -7,15 +7,13 @@
 
 namespace MonarcFO\Service;
 
-use MonarcFO\Service\AbstractService;
+use MonarcCore\Service\AbstractService;
 
 /**
- * Anr Recommandation Service
- *
- * Class AnrRecommandationService
+ * This class is the service that handles recommendations within an ANR.
  * @package MonarcFO\Service
  */
-class AnrRecommandationService extends \MonarcCore\Service\AbstractService
+class AnrRecommandationService extends AbstractService
 {
     protected $filterColumns = ['code', 'description'];
     protected $dependencies = ['anr'];
@@ -23,13 +21,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
 
     /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return mixed
+     * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
@@ -51,11 +43,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
@@ -81,42 +69,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Due date
-     *
-     * @param $dueDate
-     * @return string
-     */
-    protected function getDueDateColor($dueDate)
-    {
-        if (empty($dueDate) || $dueDate == '0000-00-00') {
-            return 'no-date';
-        } else {
-            $now = time();
-            if ($dueDate instanceof \DateTime) {
-                $dueDate = $dueDate->getTimestamp();
-            } else {
-                $dueDate = strtotime($dueDate);
-            }
-            $diff = $dueDate - $now;
-
-            if ($diff < 0) {
-                return "alert";
-            } else {
-                $days = round($diff / 60 / 60 / 24);
-                if ($days <= 15) {//arbitrary 15 days
-                    return "warning";
-                } else return "large";
-            }
-        }
-    }
-
-    /**
-     * Patch
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -136,12 +89,7 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Update
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -160,6 +108,11 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         parent::update($id, $data);
     }
 
+    /**
+     * Updates the position of the recommendation, based on the implicitPosition field passed in $data.
+     * @param int $id The recommendation ID
+     * @param array $data The positionning data (implicitPosition field, and previous)
+     */
     public function updateRecoPosition($id, &$data){
         if(!empty($data['implicitPosition'])){
             $entity = $this->get('table')->getEntity($id);
@@ -241,4 +194,37 @@ class AnrRecommandationService extends \MonarcCore\Service\AbstractService
         unset($data['implicitPosition']);
         unset($data['previous']);
     }
+
+
+    /**
+     * Computes the due date color for the recommendation. Returns 'no-date' if no due date is set on the
+     * recommendation, 'large' if there's a lot of time remaining, 'warning' if there is less than 15 days remaining,
+     * and 'alert' if the due date is in the past.
+     * @param string $dueDate The due date, in yyyy-mm-dd format
+     * @return string 'no-date', 'large', 'warning', 'alert'
+     */
+    protected function getDueDateColor($dueDate)
+    {
+        if (empty($dueDate) || $dueDate == '0000-00-00') {
+            return 'no-date';
+        } else {
+            $now = time();
+            if ($dueDate instanceof \DateTime) {
+                $dueDate = $dueDate->getTimestamp();
+            } else {
+                $dueDate = strtotime($dueDate);
+            }
+            $diff = $dueDate - $now;
+
+            if ($diff < 0) {
+                return "alert";
+            } else {
+                $days = round($diff / 60 / 60 / 24);
+                if ($days <= 15) {//arbitrary 15 days
+                    return "warning";
+                } else return "large";
+            }
+        }
+    }
+
 }

@@ -7,14 +7,13 @@
 
 namespace MonarcFO\Service;
 
+use MonarcCore\Model\Entity\AbstractEntity;
 use MonarcFO\Model\Entity\Asset;
 use MonarcFO\Model\Entity\InstanceRiskOp;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
 
 /**
- * Anr RiskOp Service
- *
- * Class AnrRiskOpService
+ * This class is the service that handles operational risks within an ANR.
  * @package MonarcFO\Service
  */
 class AnrRiskOpService extends \MonarcCore\Service\AbstractService
@@ -30,12 +29,12 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
 
     /**
-     * Find In Fields
-     *
-     * @param $obj
-     * @param $search
-     * @param array $fields
-     * @return bool
+     * Helper method to find the specified string in the provided fields within the provided object. The search is
+     * a wildcard, case-insensitive search.
+     * @param AbstractEntity $obj The entity in which we want to find the search string
+     * @param string $search The string to find
+     * @param array $fields The fields inside the object in which we want to find the data
+     * @return bool true if the string was found, false otherwise.
      */
     protected function findInFields($obj, $search, $fields = [])
     {
@@ -49,12 +48,12 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Risks Op
-     *
-     * @param $anrId
-     * @param null $instance
-     * @param array $params
-     * @return array
+     * Computes and returns the list of operational risks for the provided ANR and instance. The instance may be
+     * omitted to retrieve the entire list of operational risks for the entire ANR.
+     * @param int $anrId The ANR ID
+     * @param array|null $instance The instance data array, or null to not filter by instance
+     * @param array $params Eventual filters on kindOfMeasure, keywords, thresholds
+     * @return array An array of operational risks
      */
     public function getRisksOp($anrId, $instance = null, $params = [])
     {
@@ -175,11 +174,11 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Create Specific Risk Op
-     *
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * Creates a specific operational risk (a manual risk that is not directly related to an AMV link). It may either
+     * be entirely new, or duplicated for another existing operational risk.
+     * @param array $data The operational risk details fields
+     * @return object The resulting created risk object (entity)
+     * @throws \Exception If the risk already exists on the instance
      */
     public function createSpecificRiskOp($data)
     {
@@ -234,12 +233,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Delete From Anr
-     *
-     * @param $id
-     * @param null $anrId
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function deleteFromAnr($id, $anrId = null)
     {
