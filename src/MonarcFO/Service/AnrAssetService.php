@@ -288,6 +288,19 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                     $this->get('amvTable')->deleteList($amvs);
                 }
             }
+            if(empty($risks)){
+                $amvs = $this->get('amvTable')->getEntityByFields([
+                    'asset' => $idAsset,
+                    'id' => ['op' => 'NOT IN', 'value' => $localAmv],
+                ]);
+                $idsAmv = [];
+                foreach($amvs as $amv){
+                    $idsAmv[$amv->get('id')] = $amv->get('id');
+                }
+                if (!empty($idsAmv)) {
+                    $this->get('amvTable')->deleteList($idsAmv);
+                }
+            }
 
             return $idAsset;
         }
