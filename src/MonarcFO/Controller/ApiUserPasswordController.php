@@ -26,7 +26,7 @@ class ApiUserPasswordController extends AbstractController
         if ($data['new'] == $data['confirm']) {
             $this->getService()->changePassword($id, $data['old'], $data['new']);
         } else {
-            throw  new \Exception('Password must be the same', 422);
+            throw  new \MonarcCore\Exception\Exception('Password must be the same', 422);
         }
 
         return new JsonModel(['status' => 'ok']);

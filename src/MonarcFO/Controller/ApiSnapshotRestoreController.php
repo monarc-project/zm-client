@@ -27,12 +27,12 @@ class ApiSnapshotRestoreController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $id = (int)$this->params()->fromRoute('id');
         if (empty($id)) {
-            throw new \Exception('Snapshot id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Snapshot id missing', 412);
         }
 
         /** @var SnapshotService $service */

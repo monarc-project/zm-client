@@ -28,7 +28,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];
@@ -61,10 +61,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Exception('Anr ids diffence', 412);
+            throw new \MonarcCore\Exception\Exception('Anr ids diffence', 412);
         }
 
         if (count($this->dependencies)) {
@@ -81,7 +81,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -100,7 +100,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -116,7 +116,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 

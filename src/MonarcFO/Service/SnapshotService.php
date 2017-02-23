@@ -105,7 +105,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
         if (!is_null($anrId)) {
             $entity = $this->get('table')->getEntity($id);
             if ($entity->anrReference->id != $anrId) {
-                throw new \Exception('Anr id error', 412);
+                throw new \MonarcCore\Exception\Exception('Anr id error', 412);
             }
 
             $connectedUser = $this->get('table')->getConnectedUser();
@@ -121,7 +121,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
             }
 
             if (!$rwd) {
-                throw new \Exception('You are not authorized to do this action', 412);
+                throw new \MonarcCore\Exception\Exception('You are not authorized to do this action', 412);
             }
         }
 

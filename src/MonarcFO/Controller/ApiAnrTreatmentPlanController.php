@@ -27,7 +27,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         /** @var AnrRecommandationRiskService $service */
@@ -51,7 +51,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         /** @var AnrRecommandationRiskService $service */
@@ -66,7 +66,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
         if (count($entities)) {
             return new JsonModel($entities[0]);
         } else {
-            throw new \Exception('ENtity not exist', 412);
+            throw new \MonarcCore\Exception\Exception('ENtity not exist', 412);
         }
 
 
@@ -79,7 +79,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         /** @var AnrRecommandationRiskService $service */

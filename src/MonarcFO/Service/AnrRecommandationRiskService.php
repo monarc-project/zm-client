@@ -140,7 +140,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $tableUsed = $this->get('instanceRiskTable');
         }
         if (count($exist)) {
-            throw new \Exception('Risk already link to this recommendation', 412);
+            throw new \MonarcCore\Exception\Exception('Risk already link to this recommendation', 412);
         }
 
         $gRisk = $tableUsed->getEntity($data['risk']);
@@ -463,7 +463,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      * Validates a recommendation risk. Operational risks may not be validated, and will throw an error.
      * @param int $recoRiskId Recommendation risk ID
      * @param string $data The validation data (comment, etc)
-     * @throws \Exception If the risk is an OP risk, or if the recommendation risk ID is invalid.
+     * @throws \MonarcCore\Exception\Exception If the risk is an OP risk, or if the recommendation risk ID is invalid.
      */
     public function validateFor($recoRiskId, $data)
     {
@@ -473,7 +473,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         // We can't validate operational risks, only regular risks
         if (is_null($recoRisk->instanceRisk)) {
-            throw new \Exception('Not possible to validate operational risk', 412);
+            throw new \MonarcCore\Exception\Exception('Not possible to validate operational risk', 412);
         }
 
         // Verify if risk is final or intermediate (risk attach to others recommandations)

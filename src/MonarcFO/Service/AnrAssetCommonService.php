@@ -25,7 +25,7 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
      * Returns the list of assets attached to the provided ANR ID
      * @param int $anrId The ANR ID
      * @return array An array of assets, in array (not entity) format
-     * @throws \Exception If the ANR does not exist
+     * @throws \MonarcCore\Exception\Exception If the ANR does not exist
      */
     public function getListAssets($anrId)
     {
@@ -63,7 +63,7 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
             }
             return $return;
         } else {
-            throw new \Exception('Anr does not exist', 412);
+            throw new \MonarcCore\Exception\Exception('Anr does not exist', 412);
         }
     }
 
@@ -72,7 +72,7 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
      * @param int $anrId The ANR ID
      * @param int $assetId The asset ID
      * @return array The asset fields
-     * @throws \Exception If the ANR mismatches or the entity does not exist
+     * @throws \MonarcCore\Exception\Exception If the ANR mismatches or the entity does not exist
      */
     public function getAsset($anrId, $assetId)
     {
@@ -137,10 +137,10 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
                 }
                 return $return;
             } else {
-                throw new \Exception('Asset does not exist', 412);
+                throw new \MonarcCore\Exception\Exception('Asset does not exist', 412);
             }
         } else {
-            throw new \Exception('Anr does not exist', 412);
+            throw new \MonarcCore\Exception\Exception('Anr does not exist', 412);
         }
     }
 
@@ -149,7 +149,7 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
      * @param int $anrId The target ANR ID
      * @param int $assetId The common asset ID to import
      * @return int The generated asset ID
-     * @throws \Exception If the asset or ANR does not exist
+     * @throws \MonarcCore\Exception\Exception If the asset or ANR does not exist
      */
     public function importAsset($anrId, $assetId)
     {
@@ -185,10 +185,10 @@ class AnrAssetCommonService extends \MonarcCore\Service\AbstractService
                 $data = $this->get('coreServiceAsset')->get('assetExportService')->generateExportArray($asset->get('id'), $f);
                 return $this->get('cliServiceAsset')->importFromArray($data, $anr);
             } else {
-                throw new \Exception('Asset does not exist', 412);
+                throw new \MonarcCore\Exception\Exception('Asset does not exist', 412);
             }
         } else {
-            throw new \Exception('Anr does not exist', 412);
+            throw new \MonarcCore\Exception\Exception('Anr does not exist', 412);
         }
     }
 }

@@ -41,18 +41,18 @@ class AnrCheckStartedService extends \MonarcCore\Service\AbstractService
      *  - Threats have been evaluated
      * @param \MonarcFO\Model\Entity\Anr|array|int $anr The ANR entity, data array, or ID
      * @return bool True if the ANR sensitive values can be safely edited, false otherwise
-     * @throws \Exception If the ANR in parameter is invalid
+     * @throws \MonarcCore\Exception\Exception If the ANR in parameter is invalid
      */
     public function canChange($anr)
     {
         if (is_object($anr)) {
             if (!$anr instanceof AnrSuperClass) {
-                throw new \Exception('Anr missing', 412);
+                throw new \MonarcCore\Exception\Exception('Anr missing', 412);
             }
         } elseif (is_int($anr)) {
             $anr = $this->get('table')->getEntity($anr);
         } else {
-            throw new \Exception('Anr missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr missing', 412);
         }
 
         $isScalesUpdatable = true;

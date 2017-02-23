@@ -28,7 +28,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      * @param int $anrId The ANR ID
      * @param array $data The data that has been posted to the API
      * @return array An array where the first key is the generated IDs, and the second are import errors
-     * @throws \Exception If the uploaded data is invalid, or the ANR invalid
+     * @throws \MonarcCore\Exception\Exception If the uploaded data is invalid, or the ANR invalid
      */
     public function importFromFile($anrId, $data)
     {
@@ -43,11 +43,11 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
         // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
         if (empty($data['file'])) {
-            throw new \Exception('File missing', 412);
+            throw new \MonarcCore\Exception\Exception('File missing', 412);
         }
 
         $ids = $errors = [];
-        $anr = $this->get('anrTable')->getEntity($anrId); // throws an Exception if invalid
+        $anr = $this->get('anrTable')->getEntity($anrId); // throws an MonarcCore\Exception\Exception if invalid
 
         foreach ($data['file'] as $keyfile => $f) {
             // Ensure the file has been uploaded properly, silently skip the files that are erroneous

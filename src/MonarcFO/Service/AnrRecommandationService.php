@@ -76,8 +76,8 @@ class AnrRecommandationService extends AbstractService
         if (!empty($data['duedate'])) {
             try {
                 $data['duedate'] = new \DateTime($data['duedate']);
-            } catch (\Exception $e) {
-                throw new \Exception('Invalid date format', 412);
+            } catch (Exception $e) {
+                throw new \MonarcCore\Exception\Exception('Invalid date format', 412);
             }
         }elseif(isset($data['duedate'])){
             $data['duedate'] = null;
@@ -96,8 +96,8 @@ class AnrRecommandationService extends AbstractService
         if (!empty($data['duedate'])) {
             try {
                 $data['duedate'] = new \DateTime($data['duedate']);
-            } catch (\Exception $e) {
-                throw new \Exception('Invalid date format', 412);
+            } catch (Exception $e) {
+                throw new \MonarcCore\Exception\Exception('Invalid date format', 412);
             }
         }elseif(isset($data['duedate'])){
             $data['duedate'] = null;

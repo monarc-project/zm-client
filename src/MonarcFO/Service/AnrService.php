@@ -208,7 +208,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $lk = current($this->get('userAnrCliTable')->getEntityByFields(['user' => $userArray['id'], 'anr' => $anr['id']]));
             if (empty($lk)) {
-                throw new \Exception('Restricted ANR', 412);
+                throw new \MonarcCore\Exception\Exception('Restricted ANR', 412);
             } else {
                 $anr['rwd'] = $lk->get('rwd');
             }
@@ -223,7 +223,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * Creates a new ANR from a model which is located inside the common database.
      * @param array $data Data coming from the API
      * @return int The newly created ANR id
-     * @throws \Exception If the source model is not found
+     * @throws \MonarcCore\Exception\Exception If the source model is not found
      */
     public function createFromModelToClient($data)
     {
@@ -233,7 +233,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
         if ($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE) { // disabled or deleted
-            throw new \Exception('Model not found', 412);
+            throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
         return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model, $data);
@@ -245,7 +245,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @param string $source The source, either Object::SOURCE_CLIENT or Object::SOURCE_COMMON
      * @param Model|null $model The source common model, or null if none
      * @return int The newly created ANR id
-     * @throws \Exception
+     * @throws \MonarcCore\Exception\Exception
      */
     public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false, $isSnapshotCloning = false)
     {
@@ -259,7 +259,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
 
         if (!$anr instanceof AnrSuperClass) {
-            throw new \Exception('Anr missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr missing', 412);
         }
         if (empty($model)) {
             $idModel = $anr->get('model');
@@ -277,7 +277,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anr->id, 'user' => $userArray['id']]);
 
             if (count($userAnr) == 0) {
-                throw new \Exception('You are not authorized to duplicate this analysis', 412);
+                throw new \MonarcCore\Exception\Exception('You are not authorized to duplicate this analysis', 412);
             }
         }
 
@@ -819,7 +819,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $anrCliTable->delete($id);
             }
 
-            throw new  \Exception('Error during analysis creation', 412);
+            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
         }
 
         return $newAnr->get('id');

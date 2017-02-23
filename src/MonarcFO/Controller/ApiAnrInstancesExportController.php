@@ -23,17 +23,17 @@ class ApiAnrInstancesExportController extends ApiAnrAbstractController
     public function create($data)
     {
         if (empty($data['id'])) {
-            throw new \Exception('Instance to export is required', 412);
+            throw new \MonarcCore\Exception\Exception('Instance to export is required', 412);
         }
         $entity = $this->getService()->getEntity($data['id']);
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         if ($entity['anr']->get('id') != $anrId) {
-            throw new \Exception('Anr ids differents', 412);
+            throw new \MonarcCore\Exception\Exception('Anr ids differents', 412);
         }
 
         $output = $this->getService()->export($data);

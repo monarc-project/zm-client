@@ -37,7 +37,7 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];

@@ -21,12 +21,12 @@ class ApiAnrExportController extends ApiAnrAbstractController
     public function create($data)
     {
         if (empty($data['id'])) {
-            throw new \Exception('Anr to export is required', 412);
+            throw new \MonarcCore\Exception\Exception('Anr to export is required', 412);
         }
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $output = $this->getService()->exportAnr($data);

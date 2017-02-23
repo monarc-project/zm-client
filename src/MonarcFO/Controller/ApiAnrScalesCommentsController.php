@@ -32,13 +32,13 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $filterAnd = ['anr' => $anrId];
 
         $scaleId = (int)$this->params()->fromRoute('scaleid');
         if (empty($scaleId)) {
-            throw new \Exception('Scale id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Scale id missing', 412);
         }
         $filterAnd['scale'] = $scaleId;
 
@@ -66,18 +66,18 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Exception('Anr ids diffence', 412);
+            throw new \MonarcCore\Exception\Exception('Anr ids diffence', 412);
         }
 
         $scaleId = (int)$this->params()->fromRoute('scaleid');
         if (empty($scaleId)) {
-            throw new \Exception('Scale id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Scale id missing', 412);
         }
         if (!$entity['scale'] || $entity['scale']->get('id') != $scaleId) {
-            throw new \Exception('Scale ids diffence', 412);
+            throw new \MonarcCore\Exception\Exception('Scale ids diffence', 412);
         }
 
         if (count($this->dependencies)) {
@@ -94,12 +94,12 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
         $scaleId = (int)$this->params()->fromRoute('scaleid');
         if (empty($scaleId)) {
-            throw new \Exception('Scale id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Scale id missing', 412);
         }
         $data['scale'] = $scaleId;
 
@@ -118,12 +118,12 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
         $scaleId = (int)$this->params()->fromRoute('scaleid');
         if (empty($scaleId)) {
-            throw new \Exception('Scale id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Scale id missing', 412);
         }
         $data['scale'] = $scaleId;
 
@@ -139,12 +139,12 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
         $scaleId = (int)$this->params()->fromRoute('scaleid');
         if (empty($scaleId)) {
-            throw new \Exception('Scale id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Scale id missing', 412);
         }
         $data['scale'] = $scaleId;
 

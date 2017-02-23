@@ -76,7 +76,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         // Check that we don't already have a risk with this vuln/threat/instance combo
         $entity = $this->instanceRiskTable->getEntityByFields(['anr' => $data['anr'], 'vulnerability' => $data['vulnerability'], 'threat' => $data['threat'], 'instance' => $data['instance']]);
         if ($entity) {
-            throw new \Exception("This risk already exists in this instance", 412);
+            throw new \MonarcCore\Exception\Exception("This risk already exists in this instance", 412);
         }
 
         $class = $this->get('entity');
@@ -138,11 +138,11 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $entity = $this->get('table')->getEntity($id);
 
         if (!$entity->specific) {
-            throw new \Exception('You can not delete a not specific risk', 412);
+            throw new \MonarcCore\Exception\Exception('You can not delete a not specific risk', 412);
         }
 
         if ($entity->anr->id != $anrId) {
-            throw new \Exception('Anr id error', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id error', 412);
         }
 
         $connectedUser = $this->get('table')->getConnectedUser();
@@ -158,7 +158,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         }
 
         if (!$rwd) {
-            throw new \Exception('You are not authorized to do this action', 412);
+            throw new \MonarcCore\Exception\Exception('You are not authorized to do this action', 412);
         }
 
         // If the object is global, delete all risks link to brothers instances

@@ -31,7 +31,7 @@ class ApiAnrLibraryController extends AbstractController
     {
         $anrId = $this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         /** @var AnrObjectService $service */
@@ -55,12 +55,12 @@ class ApiAnrLibraryController extends AbstractController
     {
         $anrId = $this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
         if (!isset($data['objectId'])) {
-            throw new \Exception('objectId is missing');
+            throw new \MonarcCore\Exception\Exception('objectId is missing');
         }
 
         /** @var ObjectService $service */
@@ -80,7 +80,7 @@ class ApiAnrLibraryController extends AbstractController
     {
         $anrId = $this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         /** @var ObjectService $service */

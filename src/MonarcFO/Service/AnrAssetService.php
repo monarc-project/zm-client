@@ -41,7 +41,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
      * @param int $anrId The target ANR ID
      * @param array $data The data that has been posted to the API (password, file)
      * @return array An array where the first key is an array of generated IDs, and the second the eventual errors
-     * @throws \Exception If the posted data is invalid, or ANR ID is ivalid
+     * @throws \MonarcCore\Exception\Exception If the posted data is invalid, or ANR ID is ivalid
      */
     public function importFromFile($anrId, $data)
     {
@@ -50,11 +50,11 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
 
         // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
         if (empty($data['file'])) {
-            throw new \Exception('File missing', 412);
+            throw new \MonarcCore\Exception\Exception('File missing', 412);
         }
 
         $ids = $errors = [];
-        $anr = $this->get('anrTable')->getEntity($anrId); // throws Exception if invalid
+        $anr = $this->get('anrTable')->getEntity($anrId); // throws MonarcCore\Exception\Exception if invalid
 
         foreach ($data['file'] as $f) {
             if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {

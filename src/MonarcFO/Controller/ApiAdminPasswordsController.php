@@ -31,7 +31,7 @@ class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractControl
             try {
                 $service->passwordForgotten($data['email']);
             } catch (\Exception $e) {
-                // Ignore the exception: We don't want to leak any data
+                // Ignore the \Exception: We don't want to leak any data
             }
         }
 
@@ -47,7 +47,7 @@ class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractControl
             if ($data['password'] == $data['confirm']) {
                 $service->newPasswordByToken($data['token'], $data['password']);
             } else {
-                throw  new \Exception('Password must be the same', 422);
+                throw new \MonarcCore\Exception\Exception('Password must be the same', 422);
             }
         }
 

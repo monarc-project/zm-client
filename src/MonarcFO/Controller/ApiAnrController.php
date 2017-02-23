@@ -54,7 +54,7 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
         $service = $this->getService();
 
         if (!isset($data['model'])) {
-            throw new \Exception('Model missing', 412);
+            throw new \MonarcCore\Exception\Exception('Model missing', 412);
         }
 
         $id = $service->createFromModelToClient($data);

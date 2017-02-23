@@ -27,7 +27,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
      * @param int $anrId The ANR ID
      * @param array $data The data that has been posted to the API
      * @return array An array where the first key is the generated IDs, and the second are import errors
-     * @throws \Exception If the uploaded data is invalid, or the ANR invalid
+     * @throws \MonarcCore\Exception\Exception If the uploaded data is invalid, or the ANR invalid
      */
     public function importFromFile($anrId, $data)
     {
@@ -39,11 +39,11 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
 
         // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
         if (empty($data['file'])) {
-            throw new \Exception('File missing', 412);
+            throw new \MonarcCore\Exception\Exception('File missing', 412);
         }
 
         $ids = $errors = [];
-        $anr = $this->get('anrTable')->getEntity($anrId); // throws an Exception if invalid
+        $anr = $this->get('anrTable')->getEntity($anrId); // throws an MonarcCore\Exception\Exception if invalid
 
         foreach ($data['file'] as $f) {
             // Ensure the file has been uploaded properly, silently skip the files that are erroneous
@@ -69,15 +69,15 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
      * @see #getCommonEntity
      * @param int $anrId The target ANR ID
      * @return array An array of available objects from the common database (knowledge base)
-     * @throws \Exception If the ANR ID is not set or invalid
+     * @throws \MonarcCore\Exception\Exception If the ANR ID is not set or invalid
      */
     public function getCommonObjects($anrId)
     {
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
-        $anr = $this->get('anrTable')->getEntity($anrId); // throws an Exception if unknown
+        $anr = $this->get('anrTable')->getEntity($anrId); // throws an MonarcCore\Exception\Exception if unknown
 
         // Fetch the objects from the common database
         $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), null, null, $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE);
@@ -110,12 +110,12 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
      * @param int $anrId The target ANR ID
      * @param int $id The common object ID
      * @return Object The fetched object
-     * @throws \Exception If the ANR is invalid, or the object ID is not found
+     * @throws \MonarcCore\Exception\Exception If the ANR is invalid, or the object ID is not found
      */
     public function getCommonEntity($anrId, $id)
     {
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
@@ -123,7 +123,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         if (!empty($object)) {
             return $this->get('selfCoreService')->getCompleteEntity($id);
         } else {
-            throw new \Exception('Object not found', 412);
+            throw new \MonarcCore\Exception\Exception('Object not found', 412);
         }
     }
 
@@ -132,12 +132,12 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
      * @param int $id The common object ID
      * @param array $data An array with ['anr' => 'The anr id', 'mode' => 'merge or duplicate']
      * @return Object The imported object
-     * @throws \Exception If the ANR is invalid, or the object ID is not found
+     * @throws \MonarcCore\Exception\Exception If the ANR is invalid, or the object ID is not found
      */
     public function importFromCommon($id, $data)
     {
         if (empty($data['anr'])) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $anr = $this->get('anrTable')->getEntity($data['anr']); // on a une erreur si inconnue
         $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['id' => $id], $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE));
@@ -148,7 +148,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
                 return $this->get('objectExportService')->importFromArray($json, $anr, isset($data['mode']) ? $data['mode'] : 'merge');
             }
         } else {
-            throw new \Exception('Object not found', 412);
+            throw new \MonarcCore\Exception\Exception('Object not found', 412);
         }
     }
 }

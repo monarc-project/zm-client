@@ -177,7 +177,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
      * be entirely new, or duplicated for another existing operational risk.
      * @param array $data The operational risk details fields
      * @return object The resulting created risk object (entity)
-     * @throws \Exception If the risk already exists on the instance
+     * @throws \MonarcCore\Exception\Exception If the risk already exists on the instance
      */
     public function createSpecificRiskOp($data)
     {
@@ -208,7 +208,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             /** @var InstanceRiskOpTable $table */
             $table = $this->get('table');
             if ($table->getEntityByFields(['anr' => $data['anr'], 'instance' => $data['instance']->id, 'rolfRisk' => $data['risk']])) {
-                throw new \Exception("This risk already exists in this instance", 412);
+                throw new \MonarcCore\Exception\Exception("This risk already exists in this instance", 412);
             }
 
         }
@@ -239,7 +239,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         $entity = $this->get('table')->getEntity($id);
 
         if (!$entity->specific) {
-            throw new \Exception('You can not delete a not specific risk', 412);
+            throw new \MonarcCore\Exception\Exception('You can not delete a not specific risk', 412);
         }
 
         return parent::deleteFromAnr($id, $anrId);

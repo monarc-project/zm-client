@@ -27,12 +27,12 @@ abstract class ApiAnrImportAbstractController extends AbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $files = $this->params()->fromFiles('file');
         if (empty($files)) {
-            throw new \Exception('File missing', 412);
+            throw new \MonarcCore\Exception\Exception('File missing', 412);
         }
         $data['file'] = $files;
 

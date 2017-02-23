@@ -62,7 +62,7 @@ class UserAnrService extends AbstractService
         $userAnrTable = $this->get('table');
         $userAnr = $userAnrTable->getEntityByFields(['user' => $data['user'], 'anr' => $data['anr']]);
         if (count($userAnr)) {
-            throw new \Exception('This right already exist', 412);
+            throw new \MonarcCore\Exception\Exception('This right already exist', 412);
         }
 
         return parent::create($data, $last);
@@ -111,7 +111,7 @@ class UserAnrService extends AbstractService
 
             $existingUserAnr = $userAnrTable->getEntityByFields(['user' => $newUser, 'anr' => $newAnr]);
             if (count($existingUserAnr)) {
-                throw new \Exception('This right already exist', 412);
+                throw new \MonarcCore\Exception\Exception('This right already exist', 412);
             }
         }
 

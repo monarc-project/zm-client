@@ -263,7 +263,7 @@ class UserService extends \MonarcCore\Service\UserService
      * Checks whether or not a specific action is authorized or not for the specified user id
      * @param int $id The user ID
      * @param array $data The action information array
-     * @throws \Exception If the user is not found, or if the action is invalid
+     * @throws \MonarcCore\Exception\Exception If the user is not found, or if the action is invalid
      */
     public function verifyAuthorizedAction($id, $data)
     {
@@ -305,7 +305,7 @@ class UserService extends \MonarcCore\Service\UserService
                  &&
                  $nbActivateAdminUser <= 1 //verify if this is not the last superadminfo and verify date_end
             ) {
-                throw new \Exception('You can not deactivate, delete or change role of the last admin', 412);
+                throw new \MonarcCore\Exception\Exception('You can not deactivate, delete or change role of the last admin', 412);
             }
         }
     }

@@ -26,7 +26,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $objects = $this->getService()->getCommonObjects($anrId);
         return new JsonModel([
@@ -42,7 +42,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
         $newid = $this->getService()->importFromCommon($id, $data);
@@ -60,7 +60,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $object = $this->getService()->getCommonEntity($anrId, $id);

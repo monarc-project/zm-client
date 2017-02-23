@@ -75,10 +75,10 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     {
         $entity = $this->get('table')->getEntity($id);
         if (!$entity) {
-            throw new \Exception('Entity does not exist', 412);
+            throw new \MonarcCore\Exception\Exception('Entity does not exist', 412);
         }
         if ($entity->get('anr')->get('id') != $data['anr']) {
-            throw new \Exception('Anr id error', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id error', 412);
         }
 
         $data['asset'] = $entity->get('asset')->get('id'); // on ne permet pas de modifier l'asset
@@ -89,7 +89,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         $entity->setLanguage($this->getLanguage());
 
         if (empty($data)) {
-            throw new \Exception('Data missing', 412);
+            throw new \MonarcCore\Exception\Exception('Data missing', 412);
         }
 
         $entity->exchangeArray($data);
@@ -107,10 +107,10 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     {
         $entity = $this->get('table')->getEntity($id);
         if (!$entity) {
-            throw new \Exception('Entity does not exist', 412);
+            throw new \MonarcCore\Exception\Exception('Entity does not exist', 412);
         }
         if ($entity->get('anr')->get('id') != $data['anr']) {
-            throw new \Exception('Anr id error', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id error', 412);
         }
 
         // on ne permet pas de modifier l'asset

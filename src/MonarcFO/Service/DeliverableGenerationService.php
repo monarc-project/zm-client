@@ -140,20 +140,20 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      * @param array $values The values to fill in the document
      * @param array $data The user-provided data when generating the deliverable
      * @return string The output file path
-     * @throws \Exception If the model or ANR are not found.
+     * @throws \MonarcCore\Exception\Exception If the model or ANR are not found.
      */
     public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data)
     {
         // Find the model to use
         $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category' => $typeDoc]));
         if (!$model) {
-            throw new \Exception("Model `id` not found");
+            throw new \MonarcCore\Exception\Exception("Model `id` not found");
         }
 
         // Load the ANR
         $anr = $this->anrTable->getEntity($anrId);
         if (!$anr) {
-            throw new \Exception("Anr `id` not found");
+            throw new \MonarcCore\Exception\Exception("Anr `id` not found");
         }
 
         $delivery = $this->get('entity');
@@ -194,13 +194,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      * @param string $modelPath The file path to the DOCX model to use
      * @param array $values The values to fill in the document
      * @return string The path to the generated document
-     * @throws \Exception If the model is not found
+     * @throws \MonarcCore\Exception\Exception If the model is not found
      */
     protected function generateDeliverableWithValuesAndModel($modelPath, $values)
     {
         //verify template exist
         if (!file_exists($modelPath)) {
-            throw new \Exception("Model path not found: " . $modelPath);
+            throw new \MonarcCore\Exception\Exception("Model path not found: " . $modelPath);
         }
 
         //create word

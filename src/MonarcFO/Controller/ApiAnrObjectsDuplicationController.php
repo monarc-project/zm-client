@@ -31,7 +31,7 @@ class ApiAnrObjectsDuplicationController extends ApiAnrAbstractController
                 'id' => $id,
             ]);
         } else {
-            throw new \Exception('Object to duplicate is required');
+            throw new \MonarcCore\Exception\Exception('Object to duplicate is required');
         }
     }
 

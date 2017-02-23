@@ -27,13 +27,13 @@ class ApiAnrDeliverableController extends AbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
         $typeDoc = $data['typedoc'];
         if (empty($typeDoc)) {
-            throw new \Exception('Document type missing', 412);
+            throw new \MonarcCore\Exception\Exception('Document type missing', 412);
         }
 
         $params = [
@@ -68,7 +68,7 @@ class ApiAnrDeliverableController extends AbstractController
 
             return $this->response;
         } else {
-            throw new \Exception("Generated file not found: " . $filePath);
+            throw new \MonarcCore\Exception\Exception("Generated file not found: " . $filePath);
         }
     }
 
@@ -79,7 +79,7 @@ class ApiAnrDeliverableController extends AbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $result = [
@@ -95,7 +95,7 @@ class ApiAnrDeliverableController extends AbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $result = [

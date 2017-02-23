@@ -28,7 +28,7 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $entities = $service->getListAssets($anrId);
@@ -48,7 +48,7 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
         $entitie = $service->getAsset($anrId, $id);
@@ -63,10 +63,10 @@ class ApiAnrAssetsImportCommonController extends ApiAnrImportAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Exception('Anr id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         if (empty($data['asset'])) {
-            throw new \Exception('Asset id missing', 412);
+            throw new \MonarcCore\Exception\Exception('Asset id missing', 412);
         }
         $id = $this->getService()->importAsset($anrId, $data['asset']);
 

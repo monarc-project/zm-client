@@ -30,7 +30,7 @@ class ApiDuplicateAnrController extends \MonarcCore\Controller\AbstractControlle
         $service = $this->getService();
 
         if (!isset($data['anr'])) {
-            throw new \Exception('Anr missing', 412);
+            throw new \MonarcCore\Exception\Exception('Anr missing', 412);
         }
 
         $id = $service->duplicateAnr(intval($data['anr']), Object::SOURCE_CLIENT, null, $data);

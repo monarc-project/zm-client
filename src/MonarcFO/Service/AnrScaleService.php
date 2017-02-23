@@ -41,7 +41,7 @@ class AnrScaleService extends \MonarcCore\Service\ScaleService
         if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             return parent::create($data,$last);
         } else {
-            throw new \Exception('Scale is not editable', 412);
+            throw new \MonarcCore\Exception\Exception('Scale is not editable', 412);
         }
     }
 
@@ -54,7 +54,7 @@ class AnrScaleService extends \MonarcCore\Service\ScaleService
         if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             return parent::patch($id, $data);
         } else {
-            throw new \Exception('Scale is not editable', 412);
+            throw new \MonarcCore\Exception\Exception('Scale is not editable', 412);
         }
     }
 
@@ -67,7 +67,7 @@ class AnrScaleService extends \MonarcCore\Service\ScaleService
         if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             return \MonarcCore\Service\AbstractService::patch($id, $data);
         } else {
-            throw new \Exception('Scale is not editable', 412);
+            throw new \MonarcCore\Exception\Exception('Scale is not editable', 412);
         }
     }
 }
