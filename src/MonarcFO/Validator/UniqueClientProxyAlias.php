@@ -22,11 +22,6 @@ class UniqueClientProxyAlias extends AbstractValidator
         self::ALREADYUSED => 'This proxy alias is already used',
     );
 
-    public function __construct(array $options = array())
-    {
-        parent::__construct($options);
-    }
-
     public function isValid($value)
     {
         if (empty($this->options['adapter'])) {
