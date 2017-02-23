@@ -64,40 +64,11 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
                 'rel' => 'measure3',
             ],
         ];
-        $filtersCol = [];
-        $filtersCol[] = 'a.code';
-        $filtersCol[] = 'a.label1';
-        $filtersCol[] = 'a.label2';
-        $filtersCol[] = 'a.label3';
-        $filtersCol[] = 'a.description1';
-        $filtersCol[] = 'a.description2';
-        $filtersCol[] = 'a.description3';
-        $filtersCol[] = 'th.code';
-        $filtersCol[] = 'th.label1';
-        $filtersCol[] = 'th.label2';
-        $filtersCol[] = 'th.label3';
-        $filtersCol[] = 'th.description1';
-        $filtersCol[] = 'th.description2';
-        $filtersCol[] = 'th.description3';
-        $filtersCol[] = 'v.code';
-        $filtersCol[] = 'v.label1';
-        $filtersCol[] = 'v.label2';
-        $filtersCol[] = 'v.label3';
-        $filtersCol[] = 'v.description1';
-        $filtersCol[] = 'v.description2';
-        $filtersCol[] = 'v.description3';
-        $filtersCol[] = 'm1.code';
-        $filtersCol[] = 'm1.description1';
-        $filtersCol[] = 'm1.description2';
-        $filtersCol[] = 'm1.description3';
-        $filtersCol[] = 'm2.code';
-        $filtersCol[] = 'm2.description1';
-        $filtersCol[] = 'm2.description2';
-        $filtersCol[] = 'm2.description3';
-        $filtersCol[] = 'm3.code';
-        $filtersCol[] = 'm3.description1';
-        $filtersCol[] = 'm3.description2';
-        $filtersCol[] = 'm3.description3';
+        $filtersCol = ['a.code', 'a.label1', 'a.label2', 'a.label3', 'a.description2', 'a.description3', 'th.code',
+            'th.label1', 'th.label2', 'th.label3', 'th.description1', 'th.description2', 'th.description3', 'v.code',
+            'v.label1', 'v.label2', 'v.label3', 'v.description1', 'v.description2', 'v.description3', 'm1.code',
+            'm1.description1', 'm1.description2', 'm1.description3', 'm2.code', 'm2.description1', 'm2.description2',
+            'm2.description3', 'm3.code', 'm3.description1', 'm3.description2', 'm3.description3'];
 
         return $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
@@ -156,7 +127,8 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
             throw new \Exception('Anr id error', 412);
         }
 
-        $data['asset'] = $entity->get('asset')->get('id'); // on ne permet pas de modifier l'asset
+        // on ne permet pas de modifier l'asset
+        $data['asset'] = $entity->get('asset')->get('id');
 
         $entity->setLanguage($this->getLanguage());
 
@@ -194,7 +166,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         $table = $this->get('table');
         $id = $table->save($entity, $last);
 
-        //create instances risks
+        // Create instances risks
         /** @var ObjectTable $objectTable */
         $objectTable = $this->get('objectTable');
         $objects = $objectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => $entity->get('asset')->get('id')]);

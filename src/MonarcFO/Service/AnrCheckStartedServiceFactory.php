@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Check Started Service Factory
- *
- * Class AnrCheckStartedServiceFactory
+ * Factory class attached to AnrCheckStartedService
  * @package MonarcFO\Service
  */
 class AnrCheckStartedServiceFactory extends AbstractServiceFactory

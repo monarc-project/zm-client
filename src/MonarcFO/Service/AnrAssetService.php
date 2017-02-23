@@ -8,9 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Asset Service
- *
- * Class AnrAssetService
+ * This class is the service that handles assets in use within an ANR.
  * @package MonarcFO\Service
  */
 class AnrAssetService extends \MonarcCore\Service\AbstractService
@@ -39,23 +37,25 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     ];
 
     /**
-     * Import From File
-     *
-     * @param $anrId
-     * @param $data
-     * @return array
-     * @throws \Exception
+     * Imports an asset that has been exported into a file.
+     * @param int $anrId The target ANR ID
+     * @param array $data The data that has been posted to the API (password, file)
+     * @return array An array where the first key is an array of generated IDs, and the second the eventual errors
+     * @throws \Exception If the posted data is invalid, or ANR ID is ivalid
      */
     public function importFromFile($anrId, $data)
     {
-        // on a bien un pwd (ou vide)
+        // Ensure we either have a password, or an empty string (and not 'null')
         $key = empty($data['password']) ? '' : $data['password'];
-        // On aura la possibilité d'avoir plusieurs fichiers (même pwd: si un fichier ne match pas, on renvoie un warning)
+
+        // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
         if (empty($data['file'])) {
             throw new \Exception('File missing', 412);
         }
+
         $ids = $errors = [];
-        $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
+        $anr = $this->get('anrTable')->getEntity($anrId); // throws Exception if invalid
+
         foreach ($data['file'] as $f) {
             if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
                 $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
@@ -71,18 +71,21 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Import From Array
-     *
-     * @param $data
-     * @param $anr
-     * @param array $objectsCache
-     * @return bool
+     * Imports an asset from a data array. This data is generally what has been exported into a file.
+     * @param array $data The asset's data fields
+     * @param \MonarcFO\Model\Entity\Anr $anr The target ANR entity
+     * @param array $objectsCache An object cache array reference to speed up processing
+     * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr, &$objectsCache = [])
     {
+        // Ensure that we're importing an asset and that it has been exported from the same app version it's being
+        // imported into (this is NOT a backup feature!)
         if (isset($data['type']) && $data['type'] == 'asset' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()
         ) {
+            // Lookup if we already have the same asset, in which case we'll update it from the data. Otherwise,
+            // we'll create a new one.
             $asset = current($this->get('table')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['asset']['code']]));
             if (!empty($asset)) {
                 $idAsset = $asset->get('id');
@@ -97,6 +100,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                 $idAsset = $this->get('table')->save($asset);
             }
 
+            // Match the AMV Links with the asset
             $localAmv = [];
             if (!empty($data['amvs']) && !empty($idAsset)) {
                 $localThemes = [];

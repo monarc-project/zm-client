@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use \MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Instance Consequence Service Factory
- *
- * Class AnrInstanceConsequenceServiceFactory
+ * Proxy factory class to instantiate MonarcCore's InstanceConsequenceService using MonarcFO's services
  * @package MonarcFO\Service
  */
 class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory

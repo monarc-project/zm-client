@@ -11,9 +11,7 @@ use \MonarcCore\Model\Entity\Scale;
 use \MonarcCore\Model\Entity\Object;
 
 /**
- * ANR Cartography Risks Real & Targeted Service
- *
- * Class AnrCartoRiskService
+ * This class is the service that handles the ANR Cartography of real & targeted risks (as shown on the dashboard)
  * @package MonarcFO\Service
  */
 class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
@@ -31,10 +29,9 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     private $headers = null;
 
     /**
-     * Get Carto Real
-     *
-     * @param $anrId
-     * @return array
+     * Computes and returns the cartography of real risks
+     * @param int $anrId The ANR ID
+     * @return array An associative array of Impact, MxV, counters and distrib to display as a table
      */
     public function getCartoReal($anrId)
     {
@@ -50,10 +47,9 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Carto Targeted
-     *
-     * @param $anrId
-     * @return array|null
+     * Computes and returns the cartography of targeted risks
+     * @param int $anrId The ANR ID
+     * @return array An associative array of Impact (rows), MxV (columns), counters and distrib to display as a table
      */
     public function getCartoTargeted($anrId)
     {
@@ -73,15 +69,18 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Build List Scales And Headers
-     *
-     * @param $anrId
+     * Computes and builds the List Scales and headers for the table (Impact and MxV fields)
+     * @param int $anrId The ANR ID
      */
     public function buildListScalesAndHeaders($anrId)
     {
+        // Only load the ANR if we don't have the ANR already loaded, or a different one.
         if (!$this->anr || $this->anr->get('id') != $anrId) {
             $this->anr = $this->get('anrTable')->getEntity($anrId);
         }
+
+        // Only compute the listScales and headers fields if we didn't already
+        // TODO: If we reuse the service to build the carto for 2 different ANRs in the same run, this will cause issues!
         if (is_null($this->listScales)) {
             $scales = $this->get('table')->getEntityByFields(['anr' => $this->anr->get('id')]);
             $this->listScales = [
@@ -97,6 +96,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
                 }
             }
         }
+
         if (is_null($this->headers)) {
             $this->headers = [];
             foreach ($this->listScales[Scale::TYPE_IMPACT] as $i) {
@@ -115,10 +115,9 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get Counters Risks
-     *
-     * @param string $mode
-     * @return array
+     * Calculates the number of risks for each impact/MxV combo
+     * @param string $mode The mode to use, either 'raw' or 'target'
+     * @return array Associative array of values to show in the table
      */
     public function getCountersRisks($mode = 'raw')
     {
@@ -143,8 +142,8 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
                 continue;
             }
 
-            //on détermine le contexte de travail
-            //A. Quel est l'impact MAX au regard du masque CID de la menace
+            // on détermine le contexte de travail
+            // A. Quel est l'impact MAX au regard du masque CID de la menace
             $c = $i = $d = 0;
             if ($r['mc']) $c = $r['ic'];
             if ($r['mi']) $i = $r['ii'];
@@ -162,18 +161,23 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
                 'color' => $this->getColor($max),
             ];
 
-            //on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
+            // on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
             if ($r['scope'] == Object::SCOPE_GLOBAL) {
-                if (!isset($temp[$r['object']][$context['amv']][0])) { // dans ce cas pas grand chose à faire on doit stocker le context local
+                if (!isset($temp[$r['object']][$context['amv']][0])) {
+                    // dans ce cas pas grand chose à faire on doit stocker le context local
                     $temp[$r['object']][$context['amv']][0] = $context;
-                } else { // dans ce cas on doit comparer la valeur max qu'on a. Si c'est plus haut alors on remplace par le contexte courant
+                } else {
+                    // dans ce cas on doit comparer la valeur max qu'on a. Si c'est plus haut alors on remplace par le contexte courant
                     $cur = $temp[$r['object']][$context['amv']][0];
-                    if ($context['max'] > $cur['max']) {//on doit remplacer $cur
+
+                    // Si on a un max plus grand, on le remplace, sinon on ne fait rien
+                    if ($context['max'] > $cur['max']) {
                         unset($temp[$r['object']][$context['amv']][0]);
                         $temp[$r['object']][$context['amv']][0] = $context;
-                    } // sinon rien à faire
+                    }
                 }
-            } else { // pour les locaux, l'amv peut exister plusieurs fois sur le même biblio, du coup pour bien les compter plusieurs fois on rajoute
+            } else {
+                // pour les locaux, l'amv peut exister plusieurs fois sur le même biblio, du coup pour bien les compter plusieurs fois on rajoute
                 $temp[$r['object']][$context['amv']][$r['myid']] = $context;
             }
         }
@@ -203,17 +207,14 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         return [$counters, $distrib];
     }
 
-    /*
-    Provient de l'ancienne version, on ne remonte que les valeurs '' / 0 / 1 / 2, les couleurs seront traitées par le FE
-    */
     /**
-     * Get Color
-     *
-     * @param $val
-     * @return int|string
+     * Returns the cell color to display for the provided risk value
+     * @param int $val The risk value
+     * @return int|string 0, 1, 2 corresponding to low/med/hi risk color, or an empty string in case of invalid value
      */
     private function getColor($val)
     {
+        // Provient de l'ancienne version, on ne remonte que les valeurs '' / 0 / 1 / 2, les couleurs seront traitées par le FE
         if ($val == -1 || is_null($val)) return '';
         if ($val <= $this->anr->get('seuil1')) return 0;
         if ($val <= $this->anr->get('seuil2')) return 1;
