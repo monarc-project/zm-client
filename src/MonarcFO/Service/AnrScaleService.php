@@ -10,9 +10,9 @@ namespace MonarcFO\Service;
 use MonarcFO\Model\Entity\Scale;
 
 /**
- * Anr Scale Service
- *
- * Class AnrScaleService
+ * This class is the service that handles scales within an ANR. This is a simple CRUD service.
+ * Note that the scales are not editable after the ANR has started being evaluated.
+ * @see AnrCheckStartedService
  * @package MonarcFO\Service
  */
 class AnrScaleService extends \MonarcCore\Service\ScaleService
@@ -21,30 +21,19 @@ class AnrScaleService extends \MonarcCore\Service\ScaleService
     protected $AnrCheckStartedService;
 
     /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return mixed
+     * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         $anrId = isset($filterAnd['anr']) ? $filterAnd['anr'] : null;
-
         $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
 
+        // Return both the scales, and also whether or not we can modify them
         return [$scales, $this->get('AnrCheckStartedService')->canChange($anrId)];
     }
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
@@ -57,11 +46,7 @@ class AnrScaleService extends \MonarcCore\Service\ScaleService
     }
 
     /**
-     * Patch
-     *
-     * @param $id
-     * @param $data
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -74,12 +59,7 @@ class AnrScaleService extends \MonarcCore\Service\ScaleService
     }
 
     /**
-     * Update
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {

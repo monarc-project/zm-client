@@ -12,9 +12,8 @@ use MonarcFO\Model\Table\UserRoleTable;
 use MonarcFO\Model\Table\UserTable;
 
 /**
- * User Service
- *
- * Class UserService
+ * This class is the service that handles the users. This is a simple CRUD service that inherits from its
+ * MonarcCore parent.
  * @package MonarcCore\Service
  */
 class UserService extends \MonarcCore\Service\UserService
@@ -27,13 +26,7 @@ class UserService extends \MonarcCore\Service\UserService
     protected $snapshotCliTable;
 
     /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return mixed
+     * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
@@ -85,10 +78,9 @@ class UserService extends \MonarcCore\Service\UserService
     }
 
     /**
-     * Get Complete User
-     *
-     * @param $id
-     * @return bool
+     * Retrieves a complete user profile, including ANRs and permissions
+     * @param int $id User's ID
+     * @return array User information
      */
     public function getCompleteUser($id)
     {
@@ -142,11 +134,7 @@ class UserService extends \MonarcCore\Service\UserService
 
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
@@ -205,11 +193,7 @@ class UserService extends \MonarcCore\Service\UserService
     }
 
     /**
-     * Update
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -236,12 +220,7 @@ class UserService extends \MonarcCore\Service\UserService
 
 
     /**
-     * Patch
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -271,10 +250,7 @@ class UserService extends \MonarcCore\Service\UserService
     }
 
     /**
-     * Delete
-     *
-     * @param $id
-     * @return mixed
+     * @inheritdoc
      */
     public function delete($id)
     {
@@ -284,11 +260,10 @@ class UserService extends \MonarcCore\Service\UserService
     }
 
     /**
-     * Verify Authorized Action
-     *
-     * @param $id
-     * @param $data
-     * @throws \Exception
+     * Checks whether or not a specific action is authorized or not for the specified user id
+     * @param int $id The user ID
+     * @param array $data The action information array
+     * @throws \Exception If the user is not found, or if the action is invalid
      */
     public function verifyAuthorizedAction($id, $data)
     {
@@ -336,10 +311,9 @@ class UserService extends \MonarcCore\Service\UserService
     }
 
     /**
-     * Update User Anr
-     *
-     * @param $id
-     * @param $data
+     * Updates the access permissions to ANRs for the specified user ID
+     * @param int $id The user ID
+     * @param array $data An array of ANRs in the 'anrs' key that the user may access
      */
     public function updateUserAnr($id, $data)
     {

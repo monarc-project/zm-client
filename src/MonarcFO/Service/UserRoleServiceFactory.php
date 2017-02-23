@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * User Role Service Factory
- *
- * Class UserRoleServiceFactory
+ * Factory class attached to UserRoleService
  * @package MonarcFO\Service
  */
 class UserRoleServiceFactory extends AbstractServiceFactory

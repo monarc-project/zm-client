@@ -8,7 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * Class AnrRiskServiceFactory
+ * Factory class attached to AnrRiskService
  * @package MonarcFO\Service
  */
 class AnrRiskServiceFactory extends \MonarcCore\Service\AbstractServiceFactory

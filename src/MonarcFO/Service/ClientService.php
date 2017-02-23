@@ -12,9 +12,7 @@ use MonarcFO\Model\Table\ClientTable;
 use MonarcCore\Service\AbstractService;
 
 /**
- * Client Service
- *
- * Class ClientService
+ * This class is the service that handles clients. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class ClientService extends AbstractService

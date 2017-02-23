@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Theme Service Factory
- *
- * Class AnrThemeServiceFactory
+ * Factory class attached to AnrThemeService
  * @package MonarcFO\Service
  */
 class AnrThemeServiceFactory extends AbstractServiceFactory

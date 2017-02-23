@@ -11,9 +11,9 @@ use MonarcCore\Model\Table\UserRoleTable;
 use MonarcFO\Model\Table\UserAnrTable;
 
 /**
- * User Role Service
- *
- * Class UserRoleService
+ * This class is the service that handles the users roles. This is a simple CRUD service that inherits from its
+ * MonarcCore parent.
+ * @see \MonarcCore\Service\UserRoleService
  * @package MonarcFO\Service
  */
 class UserRoleService extends \MonarcCore\Service\UserRoleService
@@ -23,15 +23,14 @@ class UserRoleService extends \MonarcCore\Service\UserRoleService
     protected $dependencies = ['user'];
 
     /**
-     * Get By User Token
-     *
-     * @param $token
-     * @return array
-     * @throws \Exception
+     * Retrieve user's roles from its authentication token
+     * @param string $token User authentication token
+     * @return array An array of roles and ANRs accesses
+     * @throws \Exception If the token is not found
      */
     public function getByUserToken($token)
     {
-        //retrieve user access
+        // Retrieve user access
         $userId = $this->getUserIdByToken($token);
         $anrs = [];
         /** @var UserAnrTable $userAnrCliTable */

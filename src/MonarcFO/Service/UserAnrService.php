@@ -11,9 +11,7 @@ use MonarcCore\Service\AbstractService;
 use MonarcFO\Model\Table\UserAnrTable;
 
 /**
- * User ANr Service
- *
- * Class UserAnrService
+ * This class is the service that handles the user<->anr permissions matrix. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class UserAnrService extends AbstractService
@@ -23,9 +21,8 @@ class UserAnrService extends AbstractService
     protected $dependencies = ['anr', 'user'];
 
     /**
-     * Get Matrix
-     *
-     * @return array
+     * Retrieves the user <-> ANR permissions matrix
+     * @return array An array with the rights for each user
      */
     public function getMatrix()
     {
@@ -56,12 +53,7 @@ class UserAnrService extends AbstractService
 
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
@@ -77,11 +69,7 @@ class UserAnrService extends AbstractService
     }
 
     /**
-     * Get Entity
-     *
-     * @param $id
-     * @return array
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getEntity($id)
     {
@@ -105,15 +93,11 @@ class UserAnrService extends AbstractService
     }
 
     /**
-     * Patch
-     *
-     * @param $id
-     * @param $data
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
-        //verify if right already exist to not create a doublon
+        // Check if the permission already exists to avoid duplicates
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('table');
         $userAnr = $userAnrTable->get($id);

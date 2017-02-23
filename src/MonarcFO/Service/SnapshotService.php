@@ -14,9 +14,8 @@ use MonarcFO\Model\Table\SnapshotTable;
 use MonarcFO\Service\AbstractService;
 
 /**
- * Snapshot Service
- *
- * Class SnapshotService
+ * This class is the service that handles snapshots. Snapshots are backups of ANRs at a specific point in time, and
+ * may be consulted or restored at any time.
  * @package MonarcFO\Service
  */
 class SnapshotService extends \MonarcCore\Service\AbstractService
@@ -28,13 +27,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     protected $anrService;
 
     /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return mixed
+     * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
@@ -51,10 +44,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Create
-     *
-     * @param $data
-     * @return mixed
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
@@ -70,11 +60,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Patch
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
+     * @inheritdoc
      */
     public function patch($id, $data)
     {
@@ -88,11 +74,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Update
-     *
-     * @param $id
-     * @param $data
-     * @return mixed
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -100,9 +82,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Delete
-     *
-     * @param $id
+     * @inheritdoc
      */
     public function delete($id)
     {
@@ -117,16 +97,11 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Delete From Anr
-     *
-     * @param $id
-     * @param null $anrId
-     * @return mixed
-     * @throws \Exception
+     * @inheritdoc
      */
     public function deleteFromAnr($id, $anrId = null)
     {
-        //verify user authorization to do this action
+        // Ensure user is allowed to perform this action
         if (!is_null($anrId)) {
             $entity = $this->get('table')->getEntity($id);
             if ($entity->anrReference->id != $anrId) {
@@ -154,10 +129,10 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Restore
-     *
-     * @param $anrId
-     * @return mixed
+     * Restores a snapshot into a separate regular ANR
+     * @param int $anrId Reference ANR ID
+     * @param int $id Snapshot ID to restore
+     * @return int Newly created ANR ID
      */
     public function restore($anrId, $id)
     {

@@ -8,9 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Rolf Category Service
- *
- * Class AnrRolfCategoryService
+ * This class is the service that handles ROLF categories within an ANR. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class AnrRolfCategoryService extends \MonarcCore\Service\AbstractService

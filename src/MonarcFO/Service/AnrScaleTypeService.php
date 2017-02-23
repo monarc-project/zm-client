@@ -7,10 +7,12 @@
 
 namespace MonarcFO\Service;
 
+use MonarcCore\Service\InstanceConsequenceService;
+use MonarcFO\Model\Entity\ScaleImpactType;
+use MonarcFO\Model\Table\InstanceTable;
+
 /**
- * Anr Scale Type Service
- *
- * Class AnrScaleTypeService
+ * This class is the service that handles scales types within an ANR. This is a simple CRUD service.
  * @package MonarcFO\Service
  */
 class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
@@ -31,11 +33,12 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         6 => 'L',
         7 => 'F',
         8 => 'P',
-        9 => 'CUS',
+        9 => 'CUS', // Custom user-defined column
     ];
 
     /**
-     * @return array
+     * Returns the types of scales available
+     * @return array [id => type kind string]
      */
     public function getTypes()
     {
@@ -43,13 +46,7 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @return mixed
+     * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
@@ -67,11 +64,7 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     * @return mixed
+     * @inheritdoc
      */
     public function create($data, $last = true)
     {
@@ -88,6 +81,8 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         $anrId = $data['anr'];
 
         $class = $this->get('entity');
+
+        /** @var ScaleImpactType $entity */
         $entity = new $class();
         $entity->setDbAdapter($this->get('table')->getDb());
 
@@ -98,7 +93,7 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
 
         $id = $this->get('table')->save($entity);
 
-        //retrieve all instances for current anr
+        // Retrieve all instances for the current ANR
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
         $instances = $instanceTable->getEntityByFields(['anr' => $anrId]);
