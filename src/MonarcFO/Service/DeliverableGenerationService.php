@@ -324,16 +324,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderFont = ['bold' => true, 'size' => 10, 'alignment' => 'center'];
 
         $styleContentCell = ['align' => 'left', 'size' => 10];
-        $styleContentCellCenter = ['align' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentParag = ['align' => 'left', 'size' => 10];
-        $styleContentParagCenter = ['align' => 'center', 'size' => 10];
 
         $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
         $cellRowContinue = ['vMerge' => 'continue', 'bgcolor' => 'DFDFDF'];
         $cellColSpan = ['gridSpan' => 3, 'bgcolor' => 'DFDFDF', 'size' => 10, 'valign' => 'center', 'align' => 'center', 'Alignment' => 'center'];
-        $cellHCentered = ['alignment' => 'center'];
-        $cellVCentered = ['valign' => 'center'];
 
         $table->addRow(400);
 
@@ -735,7 +730,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             ];
 
             unset($canvas);
-            unset($imgWord);
 
             return $return;
         }
@@ -815,7 +809,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table = $section->addTable($styleTable);
             $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
             $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
-            $styleHeaderFont = ['bold' => true, 'size' => 10];
             $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
             $styleContentFont = ['bold' => false, 'size' => 10];
             $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
@@ -825,7 +818,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Vulnerability')), $styleHeader2Font, ['Alignment' => 'center']);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.00), $styleHeaderCell)->addText(_WT($this->anrTranslate('Measures set')), $styleHeader2Font, ['Alignment' => 'center']);
 
-            foreach ($mem_risks as $id_inst => $data) {
+            foreach ($mem_risks as $data) {
                 $table->addRow(400);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(19.00), $cellColSpan)->addText(_WT($data['ctx']), $styleContentFont, ['Alignment' => 'left']);
 
@@ -887,7 +880,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table = $section->addTable($styleTable);
             $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
             $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
-            $styleHeaderFont = ['bold' => true, 'size' => 10];
             $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
             $styleContentFont = ['bold' => false, 'size' => 10];
             $cellColSpan = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
@@ -962,10 +954,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderFont = array('bold' => true, 'size' => 10);
 
         $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
-        $styleContentCellCenter = array('align' => 'center', 'valign' => 'center', 'size' => 10);
         $styleContentFont = array('bold' => false, 'size' => 10);
-        $styleContentParag = array('align' => 'left', 'size' => 10);
-        $styleContentParagCenter = array('align' => 'center', 'size' => 10);
         $alignCenter = ['Alignment' => 'center'];
         $styleContentFontRed = array('bold' => true, 'color' => 'FF0000', 'size' => 10);
 
@@ -1071,10 +1060,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderFont = array('bold' => true, 'size' => 10);
 
         $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
-        $styleContentCellCenter = array('align' => 'center', 'valign' => 'center', 'size' => 10);
         $styleContentFont = array('bold' => false, 'size' => 10);
-        $styleContentParag = array('align' => 'left', 'size' => 10);
-        $styleContentParagCenter = array('align' => 'center', 'size' => 10);
         $alignCenter = ['Alignment' => 'center'];
 
         $table->addRow(400,['tblHeader'=>true]);
@@ -1116,8 +1102,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
         $styleContentCellCenter = array('align' => 'center', 'valign' => 'center', 'size' => 10);
         $styleContentFont = array('bold' => false, 'size' => 10);
-        $styleContentParag = array('align' => 'left', 'size' => 10);
-        $styleContentParagCenter = array('align' => 'center', 'size' => 10);
 
         $table->addRow(400,['tblHeader'=>true]);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleHeaderCell)->addText($this->anrTranslate('Code'), $styleHeaderFont, array('Alignment' => 'center'));

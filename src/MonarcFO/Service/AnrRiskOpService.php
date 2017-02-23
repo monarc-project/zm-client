@@ -126,7 +126,6 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         }
         // FILTER: Keywords
         if (!empty($params['keywords'])) {
-            $fields = ['riskCacheLabel1', 'riskCacheLabel2', 'riskCacheLabel3', 'riskCacheLabel4', 'riskCacheDescription1', 'riskCacheDescription2', 'riskCacheDescription3', 'riskCacheDescription4', 'comment'];
             $filters = [
                 'i.label1',
                 'i.label2',
