@@ -22,10 +22,7 @@ class ApiSnapshotController extends ApiAnrAbstractController
     protected $dependencies = ['anr'];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {

@@ -22,11 +22,7 @@ class ApiAnrRisksController extends ApiAnrAbstractController
     protected $dependencies = [];
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -49,10 +45,7 @@ class ApiAnrRisksController extends ApiAnrAbstractController
     }
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -75,9 +68,8 @@ class ApiAnrRisksController extends ApiAnrAbstractController
     }
 
     /**
-     * Parse Params
-     *
-     * @return array
+     * Helper function to parse query parameters
+     * @return array The sorted parameters
      */
     protected function parseParams()
     {
@@ -100,16 +92,25 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
     public function deleteList($data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         $this->methodNotAllowed();

@@ -21,9 +21,7 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
     protected $name = 'anrs';
 
     /**
-     * Get list
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -48,11 +46,7 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {

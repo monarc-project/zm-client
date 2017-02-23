@@ -12,7 +12,7 @@ use Zend\View\Model\JsonModel;
 
 
 /**
- * Api Adin Passwords Controller
+ * Api Admin Passwords Controller
  *
  * Class ApiAdminPasswordsController
  * @package MonarcFO\Controller
@@ -20,11 +20,7 @@ use Zend\View\Model\JsonModel;
 class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractController
 {
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -58,26 +54,41 @@ class ApiAdminPasswordsController extends \MonarcCore\Controller\AbstractControl
         return new JsonModel(['status' => 'ok']);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($token, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

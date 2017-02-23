@@ -21,10 +21,7 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
     protected $dependencies = ['parent', 'root', 'anr'];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -81,11 +78,10 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
     }
 
     /**
-     * Get Clean Fields
-     *
-     * @param $items
-     * @param $fields
-     * @return array
+     * Helper method that cleans up an entity by only keeping the fields that are listed in the $fields parameter
+     * @param array $items The items to filter
+     * @param array $fields The fields to keep
+     * @return array The filtered items
      */
     public function getCleanFields($items, $fields)
     {
@@ -105,10 +101,7 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
     }
 
     /**
-     * Create
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {

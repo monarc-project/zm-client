@@ -21,10 +21,7 @@ class ApiAnrScalesController extends ApiAnrAbstractController
     protected $dependencies = [];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {

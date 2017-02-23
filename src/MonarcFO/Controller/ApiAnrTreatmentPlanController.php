@@ -21,10 +21,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     protected $name = 'recommandations-risks';
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -48,11 +45,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -80,11 +73,7 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     }
 
     /**
-     * Delete List
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function deleteList($data)
     {
@@ -100,11 +89,17 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
         return new JsonModel(['status' => 'ok']);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($token, $data)
     {
         return $this->methodNotAllowed();

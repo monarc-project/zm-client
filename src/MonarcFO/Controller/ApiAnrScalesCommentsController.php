@@ -21,10 +21,7 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     protected $name = 'comments';
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -61,11 +58,7 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -95,11 +88,7 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -123,12 +112,7 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     }
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -149,12 +133,7 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     }
 
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {

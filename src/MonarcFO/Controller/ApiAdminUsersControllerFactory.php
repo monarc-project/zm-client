@@ -8,9 +8,7 @@
 namespace MonarcFO\Controller;
 
 /**
- * Api Admin Users Controller Factory
- *
- * Class ApiAdminUsersControllerFactory
+ * Factory class attached to ApiAdminUsersController
  * @package MonarcFO\Controller
  */
 class ApiAdminUsersControllerFactory extends \MonarcCore\Controller\AbstractControllerFactory

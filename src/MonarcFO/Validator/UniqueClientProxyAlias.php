@@ -9,6 +9,11 @@ namespace MonarcFO\Validator;
 
 use Zend\Validator\AbstractValidator;
 
+/**
+ * Class UniqueClientProxyAlias is an implementation of AbstractValidator that ensures the uniqueness or a client
+ * proxy alias (which may only exist once ever)
+ * @package MonarcFO\Validator
+ */
 class UniqueClientProxyAlias extends AbstractValidator
 {
     protected $options = array(

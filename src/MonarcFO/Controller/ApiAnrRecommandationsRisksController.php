@@ -22,10 +22,7 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
     protected $dependencies = ['recommandation', 'asset', 'threat', 'vulnerability', 'instance', 'instanceRisk', 'instanceRiskOp'];
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -74,6 +71,9 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
         ]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();

@@ -20,11 +20,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
 {
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -40,11 +36,7 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -62,16 +54,25 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
         ]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getList()
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();

@@ -22,11 +22,7 @@ class ApiDuplicateAnrController extends \MonarcCore\Controller\AbstractControlle
     protected $name = 'anrs';
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {

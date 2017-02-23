@@ -21,11 +21,7 @@ class ApiAnrDeliverableController extends AbstractController
     protected $name = 'deliverable';
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return \Zend\Stdlib\ResponseInterface
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -77,11 +73,7 @@ class ApiAnrDeliverableController extends AbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -97,10 +89,7 @@ class ApiAnrDeliverableController extends AbstractController
     }
 
     /**
-     * Get List
-     *
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function getList()
     {
@@ -117,10 +106,7 @@ class ApiAnrDeliverableController extends AbstractController
     }
 
     /**
-     * Delete
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function delete($id)
     {
@@ -128,10 +114,7 @@ class ApiAnrDeliverableController extends AbstractController
     }
 
     /**
-     * Delete list
-     *
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function deleteList($data)
     {
@@ -139,11 +122,7 @@ class ApiAnrDeliverableController extends AbstractController
     }
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -151,11 +130,7 @@ class ApiAnrDeliverableController extends AbstractController
     }
 
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
+     * @inheritdoc
      */
     public function patch($id, $data)
     {

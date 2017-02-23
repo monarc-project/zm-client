@@ -18,11 +18,17 @@ class ApiAnrRecommandationsMeasuresController extends ApiAnrAbstractController
     protected $name = 'recommandations-measures';
     protected $dependencies = ['anr', 'recommandation', 'measure'];
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($token, $data)
     {
         return $this->methodNotAllowed();

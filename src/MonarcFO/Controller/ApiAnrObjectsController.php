@@ -24,9 +24,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
     protected $dependencies = ['asset', 'category', 'rolfTag'];
 
     /**
-     * Get list
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
@@ -56,10 +54,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
     }
 
     /**
-     * Get
-     *
-     * @param mixed $id
-     * @return JsonModel
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -83,11 +78,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
     }
 
     /**
-     * Create
-     *
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function create($data)
     {
@@ -109,12 +100,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
 
 
     /**
-     * Update
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function update($id, $data)
     {
@@ -132,12 +118,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
     }
 
     /**
-     * Patch
-     *
-     * @param mixed $id
-     * @param mixed $data
-     * @return JsonModel
-     * @throws \Exception
+     * @inheritdoc
      */
     public function patch($id, $data)
     {

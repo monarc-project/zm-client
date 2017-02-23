@@ -23,9 +23,7 @@ class ApiGuidesItemsController extends AbstractController
     protected $dependencies = [];
 
     /**
-     * Get list
-     *
-     * @return JsonModel
+     * @inheritdoc
      */
     public function getList()
     {
