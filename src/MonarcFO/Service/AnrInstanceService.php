@@ -12,9 +12,8 @@ use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Model\Table\UserAnrTable;
 
 /**
- * ANR Instance Service
- *
- * Class AnrInstanceService
+ * This class is the service that handles instances in use within an ANR. Inherits most of the behavior from its
+ * MonarcCore parent class.
  * @package MonarcFO\Service
  */
 class AnrInstanceService extends \MonarcCore\Service\InstanceService

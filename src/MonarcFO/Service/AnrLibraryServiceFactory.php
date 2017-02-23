@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Library Service Factory
- *
- * Class AnrLibraryServiceFactory
+ * Proxy class to instantiate MonarcCore's AnrObjectService, in order to provide the common library to a client ANR
  * @package MonarcFO\Service
  */
 class AnrLibraryServiceFactory extends AbstractServiceFactory

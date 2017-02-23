@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Question Choice Service Factory
- *
- * Class AnrQuestionChoiceServiceFactory
+ * Proxy class to instantiate MonarcCore's QuestionChoiceService, with MonarcFO's services
  * @package MonarcFO\Service
  */
 class AnrQuestionChoiceServiceFactory extends AbstractServiceFactory

@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use \MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Object Category Service Factory
- *
- * Class AnrObjectCategoryServiceFactory
+ * Proxy class to instantiate MonarcCore's ObjectCategoryService, with MonarcFO's services
  * @package MonarcFO\Service
  */
 class AnrObjectCategoryServiceFactory extends AbstractServiceFactory
