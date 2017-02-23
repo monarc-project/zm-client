@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use \MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Instance Service Factory
- *
- * Class AnrInstanceServiceFactory
+ * Factory class attached to AnrInstanceService
  * @package MonarcFO\Service
  */
 class AnrInstanceServiceFactory extends AbstractServiceFactory
@@ -39,11 +37,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceRiskOpService' => 'MonarcFO\Service\AnrInstanceRiskOpService',
         'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
         'translateService' => 'MonarcCore\Service\TranslateService',
-
-        // Useless (Deprecated)
-        'assetTable' => 'MonarcFO\Model\Table\AssetTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
-        'rolfRiskTable' => 'MonarcFO\Model\Table\RolfRiskTable',
 
         // Export (Services)
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',

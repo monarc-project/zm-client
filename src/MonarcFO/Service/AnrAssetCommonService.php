@@ -8,9 +8,8 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Asset Common Service
- *
- * Class AnrAssetCommonService
+ * This class is the service that handles assets coming from the common database and that may be imported into a
+ * client-specific ANR.
  * @package MonarcFO\Service
  */
 class AnrAssetCommonService extends \MonarcCore\Service\AbstractService

@@ -8,9 +8,9 @@
 namespace MonarcFO\Service;
 
 /**
- * Anr Measure Service
- *
- * Class AnrMeasureService
+ * This class is the service that handles measures in use within an ANR. Inherits its behavior from its MonarcCore
+ * parent class MeasureService
+ * @see \MonarcCore\Service\MeasureService
  * @package MonarcFO\Service
  */
 class AnrMeasureService extends \MonarcCore\Service\MeasureService

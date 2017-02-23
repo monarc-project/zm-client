@@ -10,9 +10,8 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Amv Service Factory
- *
- * Class AmvServiceFactory
+ * Proxy factory class to instantiate MonarcCore's AmvService using MonarcFO's services
+ * @see \MonarcCore\Service\AmvService
  * @package MonarcFO\Service
  */
 class AmvServiceFactory extends AbstractServiceFactory

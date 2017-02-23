@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractService;
 
 /**
- * Anr Interview Service
- *
- * Class AnrInterviewService
+ * This class is the service that handles interviews made on an ANR. This is a basic CRUD service.
  * @package MonarcCore\Service
  */
 class AnrInterviewService extends AbstractService

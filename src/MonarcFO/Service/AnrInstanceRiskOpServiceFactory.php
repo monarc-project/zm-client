@@ -10,9 +10,7 @@ namespace MonarcFO\Service;
 use \MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Anr Instance Risk Op Service Factory
- *
- * Class AnrInstanceRiskOpServiceFactory
+ * Proxy factory class to instantiate MonarcCore's InstanceRiskOpService using MonarcFO's services
  * @package MonarcFO\Service
  */
 class AnrInstanceRiskOpServiceFactory extends AbstractServiceFactory

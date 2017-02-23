@@ -113,7 +113,8 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
             throw new \Exception('Anr id error', 412);
         }
 
-        $data['asset'] = $entity->get('asset')->get('id'); // on ne permet pas de modifier l'asset
+        // on ne permet pas de modifier l'asset
+        $data['asset'] = $entity->get('asset')->get('id');
 
         $entity->setLanguage($this->getLanguage());
 
@@ -149,7 +150,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         $table = $this->get('table');
         $id = $table->save($entity, $last);
 
-        //create instances risks
+        // Create instances risks
         /** @var ObjectTable $objectTable */
         $objectTable = $this->get('objectTable');
         $objects = $objectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => $entity->get('asset')->get('id')]);
