@@ -4,17 +4,6 @@ namespace MonarcFO;
 return array(
     'router' => array(
         'routes' => array(
-            'home' => array(
-                'type' => 'Zend\Mvc\Router\Http\Literal',
-                'options' => array(
-                    'route' => '/',
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\Index',
-                        'action' => 'index',
-                    ),
-                ),
-            ),
-
             'monarc_api_admin_users_roles' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -710,7 +699,6 @@ return array(
     'controllers' => array(
         'invokables' => array(),
         'factories' => array(
-            '\MonarcFO\Controller\Index' => '\MonarcCore\Controller\IndexControllerFactory',
             '\MonarcFO\Controller\ApiAdminPasswords' => '\MonarcFO\Controller\ApiAdminPasswordsControllerFactory',
             '\MonarcFO\Controller\ApiAdminRoles' => '\MonarcFO\Controller\ApiAdminRolesControllerFactory',
             '\MonarcFO\Controller\ApiAdminUsers' => '\MonarcFO\Controller\ApiAdminUsersControllerFactory',
