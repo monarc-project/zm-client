@@ -27,6 +27,9 @@ class UniqueClientProxyAlias extends AbstractValidator
         self::ALREADYUSED => 'This proxy alias is already used',
     );
 
+    /**
+     * @inheritdoc
+     */
     public function isValid($value)
     {
         if (empty($this->options['adapter'])) {
