@@ -52,7 +52,7 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
         }
 
         return new JsonModel([
-            'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
+            'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ]);
     }

@@ -43,12 +43,9 @@ class ClientService extends AbstractService
      * @param null $filterAnd
      * @return mixed
      */
-    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    public function getFilteredCount($filter = null, $filterAnd = null)
     {
         return $this->table->countFiltered(
-            $page,
-            $limit,
-            $this->parseFrontendOrder($order),
             $this->parseFrontendFilter(
                 $filter,
                 ['name', 'address', 'postalcode', 'phone', 'email', 'contact_fullname', 'contact_email', 'contact_phone']

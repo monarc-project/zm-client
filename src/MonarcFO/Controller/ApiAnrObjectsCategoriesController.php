@@ -72,7 +72,7 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
         }
 
         return new JsonModel([
-            'count' => $this->getService()->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
+            'count' => $this->getService()->getFilteredCount($filter, $filterAnd),
             $this->name => $recursiveArray
         ]);
     }

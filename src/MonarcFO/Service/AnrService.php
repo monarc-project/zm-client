@@ -168,9 +168,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
     /**
      * @inheritdoc
      */
-    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    public function getFilteredCount($filter = null, $filterAnd = null)
     {
-        return count($this->getList($page, $limit, $order, $filter, $filterAnd));
+        return count($this->getList(1, 0, null, $filter, $filterAnd));
     }
 
     /**

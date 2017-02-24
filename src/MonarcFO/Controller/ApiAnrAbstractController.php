@@ -47,7 +47,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         }
 
         return new JsonModel([
-            'count' => $service->getFilteredCount($page, $limit, $order, $filter, $filterAnd),
+            'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ]);
     }

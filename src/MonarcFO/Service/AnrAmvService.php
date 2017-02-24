@@ -53,14 +53,11 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     /**
      * @inheritdoc
      */
-    public function getFilteredCount($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    public function getFilteredCount($filter = null, $filterAnd = null)
     {
         list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
 
         return $this->get('table')->countFiltered(
-            $page,
-            $limit,
-            $this->parseFrontendOrder($order),
             $this->parseFrontendFilter($filter, $filtersCol),
             $filterAnd,
             $filterJoin,
