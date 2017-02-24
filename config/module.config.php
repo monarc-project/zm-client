@@ -191,28 +191,6 @@ return array(
                             ),
                         ),
                     ),
-                    'assets_import' => array(
-                        'type' => 'segment',
-                        'options' => array(
-                            'route' => 'assets/import',
-                            'constraints' => array(),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrAssetsImport',
-                            ),
-                        ),
-                    ),
-                    'assets_import_common' => array(
-                        'type' => 'segment',
-                        'options' => array(
-                            'route' => 'assets/importcomm[/:id]',
-                            'constraints' => array(
-                                'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrAssetsImportCommon',
-                            ),
-                        ),
-                    ),
                     'amvs' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -764,8 +742,6 @@ return array(
             '\MonarcFO\Controller\ApiAnrRolfTags' => '\MonarcFO\Controller\ApiAnrRolfTagsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfCategories' => '\MonarcFO\Controller\ApiAnrRolfCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfRisks' => '\MonarcFO\Controller\ApiAnrRolfRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrAssetsImport' => '\MonarcFO\Controller\ApiAnrAssetsImportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrAssetsImportCommon' => '\MonarcFO\Controller\ApiAnrAssetsImportCommonControllerFactory',
             '\MonarcFO\Controller\ApiAnrInterviews' => '\MonarcFO\Controller\ApiAnrInterviewsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandations' => '\MonarcFO\Controller\ApiAnrRecommandationsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsHistorics' => '\MonarcFO\Controller\ApiAnrRecommandationsHistoricsControllerFactory',
@@ -1020,8 +996,6 @@ return array(
             'monarc_api_global_client_anr/amvs',
             'monarc_api_client_anr',
             'monarc_api_global_client_anr/assets',
-            'monarc_api_global_client_anr/assets_import',
-            'monarc_api_global_client_anr/assets_import_common',
             'monarc_api_global_client_anr/measures',
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/objects_parents',
