@@ -36,9 +36,6 @@ class ClientService extends AbstractService
     /**
      * Get Filtered Count
      *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
      * @param null $filter
      * @param null $filterAnd
      * @return mixed
