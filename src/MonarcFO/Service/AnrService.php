@@ -7,6 +7,7 @@
 
 namespace MonarcFO\Service;
 
+use MonarcCore\Exception\Exception;
 use MonarcCore\Model\Entity\AnrSuperClass;
 use MonarcCore\Model\Entity\Model;
 use MonarcCore\Model\Table\ModelTable;
@@ -265,6 +266,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $idModel = $anr->get('model');
         } else {
             $idModel = $model->get('id');
+        }
+
+        if (!$this->verifyLanguage($idModel)) {
+            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
         }
 
         /** @var UserTable $userCliTable */
