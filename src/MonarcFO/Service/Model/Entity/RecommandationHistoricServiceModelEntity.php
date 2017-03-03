@@ -7,7 +7,6 @@
 
 namespace MonarcFO\Service\Model\Entity;
 
-use MonarcCore\Service\Model\Entity\AbstractServiceModelEntity;
 
 /**
  * Recommandation Historic Service Model Entity

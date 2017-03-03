@@ -7,8 +7,6 @@
 
 namespace MonarcFO\Controller;
 
-use Zend\View\Model\JsonModel;
-
 /**
  * Api ANR Assets Controller
  *

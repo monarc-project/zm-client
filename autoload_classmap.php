@@ -257,6 +257,8 @@ return array(
     'MonarcFO\Service\MailServiceFactory'                                     => __DIR__ . '/src/MonarcFO/Service/MailServiceFactory.php',
     'MonarcFO\Service\ModelServiceFactory'                                    => __DIR__ . '/src/MonarcFO/Service/ModelServiceFactory.php',
     'MonarcFO\Service\Model\DbCliFactory'                                     => __DIR__ . '/src/MonarcFO/Service/Model/DbClifactory.php',
+    'MonarcFO\Service\Model\Entity\AbstractServiceModelEntity'                => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AbstractServiceModelEntity.php',
+    'MonarcFO\Service\Model\Entity\AbstractServiceModelEntity'                => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AbstractServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\AmvServiceModelEntity'                     => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AmvServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\AnrObjectCategoryServiceModelEntity'       => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AnrObjectCategoryServiceModelEntity.php',
     'MonarcFO\Service\Model\Entity\AnrServiceModelEntity'                     => __DIR__ . '/src/MonarcFO/Service/Model/Entity/AnrServiceModelEntity.php',

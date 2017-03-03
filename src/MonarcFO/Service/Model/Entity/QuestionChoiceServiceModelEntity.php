@@ -7,8 +7,6 @@
 
 namespace MonarcFO\Service\Model\Entity;
 
-use MonarcCore\Service\Model\Entity\AbstractServiceModelEntity;
-
 /**
  * Question Choice Service Model Entity
  *

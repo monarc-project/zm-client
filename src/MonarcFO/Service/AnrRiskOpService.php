@@ -202,6 +202,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 'label' . $anr->language => $label,
                 'description' . $anr->language => $desc,
             ];
+
             $data['risk'] = $this->rolfRiskService->create($riskData, true);
         } else {
             // Check if we don't already have it
