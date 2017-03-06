@@ -20,30 +20,8 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 abstract class AbstractServiceModelEntity extends \MonarcCore\Service\Model\Entity\AbstractServiceModelEntity
 {
     protected $ressources = [
-        'setDbAdapter' => '\MonarcCore\Model\Db',
+        'setDbAdapter' => '\MonarcCli\Model\Db',
     ];
-
-    public function createService(ServiceLocatorInterface $serviceLocator)
-    {
-        $class = str_replace('Service\\', '', substr(get_class($this), 0, -18));
-        if (class_exists($class)) {
-            $ressources = $this->getRessources();
-            $instance = new $class();
-            if (!empty($ressources) && is_array($ressources)) {
-                foreach ($ressources as $key => $value) {
-                    if (method_exists($instance, $key)) {
-                        $instance->$key($serviceLocator->get($value));
-                    }
-                }
-            }
-
-            $instance->setLanguage($this->getDefaultLanguage($serviceLocator));
-
-            return $instance;
-        } else {
-            return false;
-        }
-    }
 
     public function getDefaultLanguage($sm)
     {
@@ -52,22 +30,20 @@ abstract class AbstractServiceModelEntity extends \MonarcCore\Service\Model\Enti
         /** @var TreeRouteStack $router */
         $router = $sm->get('Router');
         /** @var RouteMatch $match */
-        $match   = $router->match($request);
+        $match = $router->match($request);
+        if($router){
+            $anrId = $match->getParam('anrid', false);
 
-        $anrId = $match->getParam('anrid', false);
+            if ($anrId) {
+                /** @var AnrTable $anrTable */
+                $anrTable = $sm->get('\MonarcFO\Model\Table\AnrTable');
+                $anr = $anrTable->getEntity($anrId);
 
-        if ($anrId) {
-            /** @var AnrTable $anrTable */
-            $anrTable = $sm->get('\MonarcFO\Model\Table\AnrTable');
-            $anr = $anrTable->getEntity($anrId);
-
-            if ($anr->get('language')) {
-                return $anr->get('language');
-            } else {
-                parent::getDefaultLanguage($sm);
+                if ($anr->get('language')) {
+                    return $anr->get('language');
+                }
             }
-        } else {
-            parent::getDefaultLanguage($sm);
         }
+        return parent::getDefaultLanguage($sm);
     }
 }
