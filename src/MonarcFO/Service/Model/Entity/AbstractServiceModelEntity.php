@@ -31,7 +31,7 @@ abstract class AbstractServiceModelEntity extends \MonarcCore\Service\Model\Enti
         $router = $sm->get('Router');
         /** @var RouteMatch $match */
         $match = $router->match($request);
-        if($router){
+        if($match){
             $anrId = $match->getParam('anrid', false);
 
             if ($anrId) {
