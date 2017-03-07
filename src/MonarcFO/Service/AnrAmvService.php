@@ -8,6 +8,7 @@
 namespace MonarcFO\Service;
 
 use MonarcFO\Model\Entity\InstanceRisk;
+use MonarcFO\Model\Table\InstanceRiskTable;
 use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\ObjectTable;
 
@@ -78,7 +79,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
             throw new \MonarcCore\Exception\Exception('Anr id error', 412);
         }
 
-        $data['asset'] = $entity->get('asset')->get('id'); // on ne permet pas de modifier l'asset
+        $data['asset'] = $entity->get('asset')->get('id'); // asset can not be changed
 
         $this->filterPostFields($data, $entity);
 
@@ -93,6 +94,19 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
 
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
+
+        //update instance risk associated
+        $i = 1;
+        /** @var InstanceRiskTable $instanceRiskTable */
+        $instanceRiskTable = $this->get('instanceRiskTable');
+        $instancesRisks = $instanceRiskTable->getEntityByFields(['amv' => $id]);
+        $nbInstancesRisks = count($instancesRisks);
+        foreach ($instancesRisks as $instanceRisk) {
+            $instanceRisk->threat = $entity->threat;
+            $instanceRisk->vulnerability = $entity->vulnerability;
+            $instanceRiskTable->save($instanceRisk, ($i == $nbInstancesRisks));
+            $i++;
+        }
 
         return $this->get('table')->save($entity);
     }
