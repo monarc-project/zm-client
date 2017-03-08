@@ -213,7 +213,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
         if(!empty($values['img']) && method_exists($word,'setImg')){
             foreach ($values['img'] as $key => $value) {
-                $word->setImg($key, $value['path'], $value['options']);
+                if(isset($value['path']) && file_exists($value['path'])) {
+                    $word->setImg($key, $value['path'], $value['options']);
+                }
             }
         }
         if(!empty($values['html']) && method_exists($word,'setHtml')){
@@ -227,7 +229,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         if(!empty($values['img'])){
             foreach ($values['img'] as $key => $value) {
-                if(file_exists($value['path'])){
+                if(isset($value['path']) && file_exists($value['path'])) {
                     unlink($value['path']);
                 }
             }
