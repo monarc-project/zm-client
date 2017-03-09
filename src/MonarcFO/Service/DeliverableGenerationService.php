@@ -1036,7 +1036,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     protected function generateImpactsAppreciation($anr)
     {
         // TODO: C'est moche, optimiser
-        $all_instances = $this->instanceService->getList(1, 0, null, null, ['anr' => $anr->id]);
+        /** @var AnrInstanceService $instanceService */
+        $instanceService = $this->instanceService;
+        $all_instances = $instanceService->getList(1, 0, null, null, ['anr' => $anr->id]);
         $instances = array_filter($all_instances, function ($in) {
             return (($in['c'] > -1 && $in['ch'] == 0) || ($in['i'] > -1 && $in['ih'] == 0) || ($in['d'] > -1 && $in['dh'] == 0));
         });
@@ -1047,24 +1049,63 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table = $section->addTable($styleTable);
 
         $styleHeaderCell = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10);
+        $styleHeaderCellSpan = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10, 'gridSpan' => 3);
         $styleHeaderFont = array('bold' => true, 'size' => 10);
 
         $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
         $styleContentFont = array('bold' => false, 'size' => 10);
         $alignCenter = ['Alignment' => 'center'];
+        $alignLeft = ['Alignment' => 'left'];
+
+        $cellRowSpan = ['vMerge' => 'restart'];
+        $cellRowContinue = ['vMerge' => 'continue'];
+
+        $impacts = ['c', 'i', 'd'];
 
         $table->addRow(400,['tblHeader'=>true]);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(13.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText("C", $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText("I", $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText("D", $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Actif'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Consequence'), $styleHeaderFont, $alignCenter);
 
         foreach ($instances as $i) {
-            $table->addRow(400);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(13.00), $styleContentCell)->addText($i['name' . $anr->language], $styleContentFont, ['Alignment' => 'left']);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCell)->addText($i['c'], $styleContentFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCell)->addText($i['i'], $styleContentFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCell)->addText($i['d'], $styleContentFont, $alignCenter);
+            $instanceConsequences = $instanceService->getConsequences($anr->id, $i, true);
+
+            //delete scale type C,I and D
+            $impactsConsequences = [];
+            foreach ($instanceConsequences as $keyConsequence => $instanceConsequence) {
+                if ($instanceConsequence['scaleImpactType'] < 4) {
+                    unset($instanceConsequences[$keyConsequence]);
+                    $impactsConsequences[$keyConsequence] = $instanceConsequence;
+                }
+            }
+
+            //reinitialization keys
+            $instanceConsequences = array_values($instanceConsequences);
+
+            foreach($impacts as $keyImpact => $impact) {
+                foreach ($instanceConsequences as $keyConsequence => $instanceConsequence) {
+                    $table->addRow(400);
+                    if ((!$keyImpact) && (!$keyConsequence)) {
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowSpan)->addText($i['name' . $anr->language], $styleContentFont, ['Alignment' => 'left']);
+                    } else {
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowContinue);
+                    }
+                    if (!$keyConsequence) {
+                        $comment = $impactsConsequences[$keyImpact]['comments'][($i[$impact] != -1) ? $i[$impact] : 0];
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText(ucfirst($impact), $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($i[$impact], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowSpan)->addText($comment, $styleContentFont, $alignLeft);
+                    } else {
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowContinue);
+                    }
+                    $comment = $instanceConsequences[$keyConsequence]['comments'][($instanceConsequence[$impact . '_risk'] != -1) ? $instanceConsequence[$impact . '_risk'] : 0];
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText(substr($instanceConsequence['scaleImpactTypeDescription1'], 0, 1), $styleContentFont, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($instanceConsequence[$impact . '_risk'], $styleContentFont, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText($comment, $styleContentFont, $alignLeft);
+                }
+            }
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
