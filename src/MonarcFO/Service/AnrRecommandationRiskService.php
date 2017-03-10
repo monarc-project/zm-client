@@ -727,4 +727,18 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $this->get('recommandationTable')->save($reco);
         }
     }
+
+    /**
+     * Get Delivery Recommandations Risks
+     *
+     * @param $anrId
+     * @return array|bool
+     */
+    public function getDeliveryRecommandationsRisks($anrId) {
+        /** @var RecommandationRiskTable $table */
+        $table = $this->get('table');
+        $recosRisks = $table->getEntityByFields(['anr' => $anrId], ['recommandation' => 'ASC']);
+
+        return $recosRisks;
+    }
 }

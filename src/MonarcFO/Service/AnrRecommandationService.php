@@ -8,6 +8,7 @@
 namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractService;
+use MonarcFO\Model\Table\RecommandationTable;
 
 /**
  * This class is the service that handles recommendations within an ANR.
@@ -228,5 +229,4 @@ class AnrRecommandationService extends AbstractService
             }
         }
     }
-
 }
