@@ -1065,7 +1065,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table->addRow(400,['tblHeader'=>true]);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Actif'), $styleHeaderFont, $alignCenter);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Consequence'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Consequences'), $styleHeaderFont, $alignCenter);
 
         foreach ($instances as $i) {
             $instanceConsequences = $instanceService->getConsequences($anr->id, $i, true);
