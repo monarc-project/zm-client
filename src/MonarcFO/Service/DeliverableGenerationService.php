@@ -1027,25 +1027,23 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB');
+        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB'];
         $table = $section->addTable($styleTable);
 
-        $styleHeaderCell = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10);
-        $styleHeaderCellSpan = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10, 'gridSpan' => 3);
-        $styleHeaderFont = array('bold' => true, 'size' => 10);
-
-        $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
-        $styleContentFont = array('bold' => false, 'size' => 10);
+        $styleHeaderCellSpan = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10, 'gridSpan' => 3];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentFont =['bold' => false, 'size' => 10];
         $alignCenter = ['Alignment' => 'center'];
         $alignLeft = ['Alignment' => 'left'];
-
         $cellRowSpan = ['vMerge' => 'restart'];
         $cellRowContinue = ['vMerge' => 'continue'];
+        $cellColSpan = ['gridSpan' => 6, 'bgcolor' => 'dbe5f1', 'size' => 10, 'valign' => 'center', 'align' => 'center', 'Alignment' => 'center'];
 
         $impacts = ['c', 'i', 'd'];
 
+        //header
         $table->addRow(400, ['tblHeader' => true]);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Actif'), $styleHeaderFont, $alignCenter);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Consequences'), $styleHeaderFont, $alignCenter);
 
@@ -1066,12 +1064,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
             foreach ($impacts as $keyImpact => $impact) {
                 foreach ($instanceConsequences as $keyConsequence => $instanceConsequence) {
-                    $table->addRow(400);
                     if ((!$keyImpact) && (!$keyConsequence)) {
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowSpan)->addText($i['name' . $anr->language], $styleContentFont, ['Alignment' => 'left']);
-                    } else {
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowContinue);
+                        $table->addRow(400);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(21.50), $cellColSpan)->addText($i['name' . $anr->language], $styleHeaderFont, $alignLeft);
                     }
+                    $table->addRow(400);
                     if (!$keyConsequence) {
                         $comment = $impactsConsequences[$keyImpact]['comments'][($i[$impact] != -1) ? $i[$impact] : 0];
                         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText(ucfirst($impact), $styleContentFont, $alignCenter);
@@ -1082,10 +1079,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
                         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowContinue);
                     }
-                    $comment = $instanceConsequences[$keyConsequence]['comments'][($instanceConsequence[$impact . '_risk'] != -1) ? $instanceConsequence[$impact . '_risk'] : 0];
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText(substr($instanceConsequence['scaleImpactTypeDescription1'], 0, 1), $styleContentFont, $alignCenter);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($instanceConsequence[$impact . '_risk'], $styleContentFont, $alignCenter);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText($comment, $styleContentFont, $alignLeft);
+                    if ($instanceConsequence[$impact . '_risk'] >= 0) {
+                        $comment = $instanceConsequences[$keyConsequence]['comments'][($instanceConsequence[$impact . '_risk'] != -1) ? $instanceConsequence[$impact . '_risk'] : 0];
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText(substr($instanceConsequence['scaleImpactTypeDescription1'], 0, 1), $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($instanceConsequence[$impact . '_risk'], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText($comment, $styleContentFont, $alignLeft);
+                    }
                 }
             }
         }
