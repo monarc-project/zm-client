@@ -31,6 +31,9 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
+        if (is_null($order)) {
+            $order = '-id';
+        }
         /** @var SnapshotTable $table */
         $table = $this->get('table');
         return $table->fetchAllFiltered(
