@@ -471,12 +471,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $section = $tableWord->addSection();
         $table = $section->addTable(['align' => 'center']);
 
-        $risksTableCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFFFFF');
-        $risksTableGreenCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => '4CAF50');
-        $risksTableOrangeCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FF9800');
-        $risksTableRedCellStyle = array('alignment' => 'center', 'valign' => 'center', 'BorderSize' => 6, 'BorderColor' => 'FFFFFF', 'BgColor' => 'F44336');
-        $risksTableFontStyle = array('bold' => true);
-        $risksTableValueFontStyle = array('Alignment' => 'center', 'bold' => true, 'color' => 'FFFFFF');
+        $risksTableCellStyle        = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFFFFF'];
+        $risksTableGreenCellStyle   = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'D6F107'];
+        $risksTableOrangeCellStyle  = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFBC1C'];
+        $risksTableRedCellStyle     = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FD661F'];
+        $risksTableFontStyleBlack   = ['alignment' => 'center', 'bold' => true, 'color' => '000000'];
+        $risksTableFontStyleWhite   = ['alignment' => 'center', 'bold' => true, 'color' => 'FFFFFF'];
+        $alignCenter                = ['align' => 'center'];
 
         $header = [];
         for ($t = $threatsScale['min']; $t <= $threatsScale['max']; ++$t) {
@@ -489,29 +490,32 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
         asort($header);
 
-        $size = 19 / (count($header) + 1); // 19cm
+        $size = 13 / (count($header) + 1); // 15cm
         $table->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips($size));
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText('');
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText(' ', $risksTableFontStyleBlack, $alignCenter);
         foreach ($header as $MxV) {
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText($MxV, $risksTableFontStyle);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText($MxV, $risksTableFontStyleBlack, $alignCenter);
         }
 
         for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
             $table->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips($size));
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText($row, $risksTableFontStyle);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText($row, $risksTableFontStyleBlack, $alignCenter);
 
             foreach ($header as $MxV) {
                 $value = $MxV * $row;
 
                 if ($value <= $anr->seuil1) {
                     $style = $risksTableGreenCellStyle;
+                    $fontStyle = $risksTableFontStyleBlack;
                 } else if ($value <= $anr->seuil2) {
                     $style = $risksTableOrangeCellStyle;
+                    $fontStyle = $risksTableFontStyleBlack;
                 } else {
                     $style = $risksTableRedCellStyle;
+                    $fontStyle = $risksTableFontStyleWhite;
                 }
 
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $style)->addText($MxV * $row, $risksTableValueFontStyle, ['align' => 'center']);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $style)->addText($MxV * $row, $fontStyle, $alignCenter);
             }
         }
 
