@@ -946,7 +946,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     {
         /** @var AnrRecommandationRiskService $recommandationService */
         $recommandationRiskService = $this->recommandationRiskService;
-        $recosRisks = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->id);
+        $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->id);
+
+        //oder by recommandation position asc and importance desc
+        $recosRisks = [];
+        foreach($recosRisksNotOrdered as $key => $recoRisk) {
+            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->id . '-' . $key;
+            $recosRisks[$newKey] = $recoRisk;
+        }
+        ksort($recosRisks);
 
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
