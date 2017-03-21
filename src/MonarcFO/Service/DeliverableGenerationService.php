@@ -1110,30 +1110,36 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             //reinitialization keys
             $instanceConsequences = array_values($instanceConsequences);
 
+            $headerImpact = false;
             foreach ($impacts as $keyImpact => $impact) {
+                $headerConsequence = false;
                 foreach ($instanceConsequences as $keyConsequence => $instanceConsequence) {
-                    if ((!$keyImpact) && (!$keyConsequence)) {
-                        $table->addRow(400);
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(16), $cellColSpan)->addText($i['name' . $anr->language], $styleHeaderFont, $alignLeft);
-                    }
-                    $table->addRow(400);
-                    if (!$keyConsequence) {
-                        $comment = $impactsConsequences[$keyImpact]['comments'][($i[$impact] != -1) ? $i[$impact] : 0];
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText(ucfirst($impact), $styleContentFont, $alignCenter);
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($i[$impact], $styleContentFont, $alignCenter);
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowSpan)->addText($comment, $styleContentFont, $alignLeft);
-                    } else {
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowContinue);
-                    }
                     if ($instanceConsequence[$impact . '_risk'] >= 0) {
+                        if (!$headerImpact && !$headerConsequence) {
+                            $table->addRow(400);
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(16), $cellColSpan)->addText($i['name' . $anr->language], $styleHeaderFont, $alignLeft);
+                        }
+                        $table->addRow(400);
+                        if (!$headerConsequence) {
+                            $comment = $impactsConsequences[$keyImpact]['comments'][($i[$impact] != -1) ? $i[$impact] : 0];
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText(ucfirst($impact), $styleContentFont, $alignCenter);
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($i[$impact], $styleContentFont, $alignCenter);
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowSpan)->addText($comment, $styleContentFont, $alignLeft);
+                        } else {
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowContinue);
+                        }
                         $comment = $instanceConsequences[$keyConsequence]['comments'][($instanceConsequence[$impact . '_risk'] != -1) ? $instanceConsequence[$impact . '_risk'] : 0];
                         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText(substr($instanceConsequence['scaleImpactTypeDescription1'], 0, 1), $styleContentFont, $alignCenter);
                         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($instanceConsequence[$impact . '_risk'], $styleContentFont, $alignCenter);
                         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText($comment, $styleContentFont, $alignLeft);
+
+                        $headerConsequence = true;
                     }
                 }
+
+                $headerImpact = true;
             }
         }
 
