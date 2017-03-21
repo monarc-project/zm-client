@@ -957,7 +957,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $alignCenter = ['Alignment' => 'center'];
         $alignLeft = ['Alignment' => 'left'];
         $alignRight = ['Alignment' => 'right'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 10];
+        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 15];
         $cell = ['bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
         $cellColSpan = ['gridSpan' => 6, 'bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
 
@@ -1015,7 +1015,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
             $importance = '';
             for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
-                $importance .= 'o';
+                $importance .= '.';
             }
 
             if ($recoRisk->recommandation->id != $previousRecoId) {
