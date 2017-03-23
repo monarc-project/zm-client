@@ -1054,10 +1054,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
 
         $intro = sprintf($this->anrTranslate("The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"), $sum);
-        return $intro . '<br/><ul>' .
-            '<li>' . sprintf($this->anrTranslate('%d critical risk(s) to be treated as priority'), $distrib[2]) . '</li>' .
-            '<li>' . sprintf($this->anrTranslate('%d medium risk(s) to be partially treated'), $distrib[1]) . '</li>' .
-            '<li>' . sprintf($this->anrTranslate('%d low risk(s) negligible'), $distrib[0]) . '</li></ul>';
+        return $intro .
+            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d critical risk(s) to be treated as priority'), $distrib[2])  .
+            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d medium risk(s) to be partially treated'), $distrib[1])  .
+            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d low risk(s) negligible'), $distrib[0]);
     }
 
     /**
