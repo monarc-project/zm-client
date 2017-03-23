@@ -1132,55 +1132,57 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $alreadySet = [];
         foreach ($recosRisks as $recoRisk) {
-            foreach ($impacts as $impact) {
-                $risk = 'risk' . ucfirst($impact);
-                $bgcolor = 'FFBC1C';
-                if (($recoRisk->instanceRisk->$risk == -1) || (!$recoRisk->threat->$impact)) {
-                    $bgcolor = 'E7E6E6';
-                } else if ($recoRisk->instanceRisk->$risk <= $anr->seuil1) {
-                    $bgcolor = 'D6F107';
-                } else if ($recoRisk->instanceRisk->$risk > $anr->seuil2) {
-                    $bgcolor = 'FD661F';
-                }
-                ${'styleContentCell' . ucfirst($impact)} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
-            }
-
-            $importance = '';
-            for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
-                $importance .= '.';
-            }
-
-            if ($recoRisk->recommandation->id != $previousRecoId) {
-                $recoName = " [" . $recoRisk->recommandation->code . "]";
-                if ($recoRisk->recommandation->description) {
-                    $recoName .= " - " . _WT($recoRisk->recommandation->description);
+            if ($recoRisk->instanceRisk) {
+                foreach ($impacts as $impact) {
+                    $risk = 'risk' . ucfirst($impact);
+                    $bgcolor = 'FFBC1C';
+                    if (($recoRisk->instanceRisk->$risk == -1) || (!$recoRisk->threat->$impact)) {
+                        $bgcolor = 'E7E6E6';
+                    } else if ($recoRisk->instanceRisk->$risk <= $anr->seuil1) {
+                        $bgcolor = 'D6F107';
+                    } else if ($recoRisk->instanceRisk->$risk > $anr->seuil2) {
+                        $bgcolor = 'FD661F';
+                    }
+                    ${'styleContentCell' . ucfirst($impact)} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
                 }
 
-                $table->addRow(400);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $cell)->addText($importance, $styleContentFontRed, $alignRight);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(21.00), $cellColSpan)->addText($recoName, $styleContentFontBold, $alignLeft);
-            }
-
-            $continue = true;
-
-            $key = $recoRisk->recommandation->id . ' - ' . $recoRisk->threat->id . ' - ' . $recoRisk->vulnerability->id . ' - ' . $recoRisk->objectGlobal->id;
-            if (isset($toUnset[$key])) {
-                if (($recoRisk->instanceRisk->cacheMaxRisk < $toUnset[$key]) || (isset($alreadySet[$key]))) {
-                    $continue = false;
-                } else {
-                    $alreadySet[$key] = true;
+                $importance = '';
+                for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
+                    $importance .= '.';
                 }
-            }
 
-            if ($continue) {
-                $table->addRow(400);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText(_WT($recoRisk->instance->{'name' . $anr->language}), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($recoRisk->threat->{'label' . $anr->language}), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->vulnerability->{'label' . $anr->language}), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(_WT($recoRisk->instanceRisk->comment), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellC)->addText(_WT($this->anrTranslate('C')), $styleContentFontBold, $alignCenter);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellI)->addText(_WT($this->anrTranslate('I')), $styleContentFontBold, $alignCenter);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellD)->addText(_WT($this->anrTranslate('D')), $styleContentFontBold, $alignCenter);
+                if ($recoRisk->recommandation->id != $previousRecoId) {
+                    $recoName = " [" . $recoRisk->recommandation->code . "]";
+                    if ($recoRisk->recommandation->description) {
+                        $recoName .= " - " . _WT($recoRisk->recommandation->description);
+                    }
+
+                    $table->addRow(400);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $cell)->addText($importance, $styleContentFontRed, $alignRight);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(21.00), $cellColSpan)->addText($recoName, $styleContentFontBold, $alignLeft);
+                }
+
+                $continue = true;
+
+                $key = $recoRisk->recommandation->id . ' - ' . $recoRisk->threat->id . ' - ' . $recoRisk->vulnerability->id . ' - ' . $recoRisk->objectGlobal->id;
+                if (isset($toUnset[$key])) {
+                    if (($recoRisk->instanceRisk->cacheMaxRisk < $toUnset[$key]) || (isset($alreadySet[$key]))) {
+                        $continue = false;
+                    } else {
+                        $alreadySet[$key] = true;
+                    }
+                }
+
+                if ($continue) {
+                    $table->addRow(400);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText(_WT($recoRisk->instance->{'name' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($recoRisk->threat->{'label' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->vulnerability->{'label' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(_WT($recoRisk->instanceRisk->comment), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellC)->addText(_WT($this->anrTranslate('C')), $styleContentFontBold, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellI)->addText(_WT($this->anrTranslate('I')), $styleContentFontBold, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellD)->addText(_WT($this->anrTranslate('D')), $styleContentFontBold, $alignCenter);
+                }
             }
             $previousRecoId = $recoRisk->recommandation->id;
         }
@@ -1237,6 +1239,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     unset($instanceConsequences[$keyConsequence]);
                     $impactsConsequences[$keyConsequence] = $instanceConsequence;
                 }
+                $impactsConsequences[$keyConsequence] = $instanceConsequence;
             }
 
             //reinitialization keys
@@ -1253,7 +1256,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         }
                         $table->addRow(400);
                         if (!$headerConsequence) {
-                            $comment = $impactsConsequences[$keyImpact]['comments'][($i[$impact] != -1) ? $i[$impact] : 0];
+                            $comment = $impactsConsequences[$keyImpact]
+                            ['comments'][($i[$impact] != -1)
+                                ? $i[$impact] : 0];
                             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText(ucfirst($impact), $styleContentFont, $alignCenter);
                             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($i[$impact], $styleContentFont, $alignCenter);
                             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowSpan)->addText($comment, $styleContentFont, $alignLeft);
