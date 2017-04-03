@@ -702,10 +702,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText($impact, $risksTableFontStyleBlack, $alignCenter);
 
                 foreach ($header as $MxV) {
-                    $value = $MxV * $impact;
-
-                    $result = $cartoRisk['counters'][$impact][$MxV] ?? 0;
-
+			                   
+			$value = $MxV * $impact;
+			
+                   	$result = $cartoRisk['counters'][$impact][$MxV] ?? 0;
+			
+			
                     if ($value <= $anr->seuil1) {
                         $style = $risksTableGreenCellStyle;
                         $fontStyle = $risksTableFontStyleBlack;
@@ -725,10 +727,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                             $nbHigh += $result;
                         }
                     }
-
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $style)->addText($result, $fontStyle, $alignCenter);
                 }
-            }
+            } 
 
 
             $risksTableGreenCellStyle   = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'D6F107'];
@@ -749,19 +750,22 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5))->addText($nbLow . ' ' . $this->anrTranslate('low risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($lowSize), $risksTableGreenCellStyle);
+	if(($maxSize - $lowSize) != 0)  
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $lowSize), $risksTableGreenCellStyle2);
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5))->addText($nbMedium . ' ' . $this->anrTranslate('medium risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($mediumSize), $risksTableOrangeCellStyle);
+	if(($maxSize - $mediumSize) != 0)   
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $mediumSize), $risksTableOrangeCellStyle2);
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5))->addText($nbHigh . ' ' . $this->anrTranslate('high risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($highSize), $risksTableRedCellStyle);
-            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $highSize), $risksTableRedCellStyle2);
+	if(($maxSize - $highSize) != 0)           
+		$tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $highSize), $risksTableRedCellStyle2);
 
 
 
