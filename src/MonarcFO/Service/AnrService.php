@@ -268,9 +268,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $idModel = $model->get('id');
         }
 
-        if (!$this->verifyLanguage($idModel)) {
-            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
-        }
+        if(!empty($idModel)){
+            if (!$this->verifyLanguage($idModel)) {
+                throw new \MonarcCore\Exception\Exception('Error during analysis creation', 412);
+            }
+        } // if empty($idModel), maybe created from migration tool & model don't match with existing datas
 
         /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
@@ -911,7 +913,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      */
     public function verifyLanguage($modelId)
     {
-        $languages = [1, 2, 3, 4];
+        $languages = [1, 2, 3, 4]; // TODO: why don't use config list ?
         $success = [];
         foreach ($languages as $lang) {
             $success[$lang] = true;
