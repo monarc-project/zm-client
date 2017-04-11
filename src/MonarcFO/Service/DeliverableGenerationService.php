@@ -175,9 +175,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table->save($delivery);
 
         if (!file_exists($model->get('path' . $anr->language))) {
-            if (!file_exists('./data/monarc/models')) {
+            $datapath = './data/';
+            $appconfdir = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
+            if( ! empty($appconfdir) ){
+                $datapath = $appconfdir.'/data/';
+            }
+            $datapath .= 'monarc/models';
+            if (!file_exists($datapath)) {
                 $oldumask = umask(0);
-                mkdir('./data/monarc/models', 0775, true);
+                mkdir($datapath, 0775, true);
                 umask($oldumask);
             }
             file_put_contents($model->get('path' . $anr->language), $model->get('content' . $anr->language));
@@ -226,7 +232,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        $pathTmp = "data/" . uniqid("", true) . "_" . microtime(true) . ".docx";
+        $datapath = './data/';
+        $appconfdir = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
+        if( ! empty($appconfdir) ){
+            $datapath = $appconfdir.'/data/';
+        }
+        $pathTmp = $datapath . uniqid("", true) . "_" . microtime(true) . ".docx";
         $word->saveAs($pathTmp);
 
         if (!empty($values['img'])) {
@@ -311,15 +322,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
-	$styleHeaderParagraph =['alignment' => 'center', 'spaceAfter' => '0' ];
+    $styleHeaderParagraph =['alignment' => 'center', 'spaceAfter' => '0' ];
 
         $styleContentCell = ['valign' => 'center', 'align' => 'left', 'size' => 10];
-	$styleContentCell2 = ['valign' => 'bottom', 'align' => 'left', 'size' => 10];
-	$styleContentCell3 = ['valign' => 'top', 'align' => 'left', 'size' => 10];
+    $styleContentCell2 = ['valign' => 'bottom', 'align' => 'left', 'size' => 10];
+    $styleContentCell3 = ['valign' => 'top', 'align' => 'left', 'size' => 10];
         $styleContentFont = ['valign' => 'center', 'bold' => false, 'size' => 10];
         $styleContentParagraph =['Alignment' => 'left', 'spaceAfter' => '0' ];
-	$styleContentParagraph2 =['Alignment' => 'left', 'spaceAfter' => '0' , 'spaceBefore' => '1'];
- 	$styleLevelParagraph =['Alignment' => 'center', 'spaceAfter' => '0' ];
+    $styleContentParagraph2 =['Alignment' => 'left', 'spaceAfter' => '0' , 'spaceBefore' => '1'];
+    $styleLevelParagraph =['Alignment' => 'center', 'spaceAfter' => '0' ];
 
         $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
         $cellRowContinue = ['vMerge' => 'continue','valign' => 'center', 'bgcolor' => 'DFDFDF'];
@@ -708,12 +719,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText($impact, $risksTableFontStyleBlack, $alignCenter);
 
                 foreach ($header as $MxV) {
-			                   
-			$value = $MxV * $impact;
-			
-                   	$result = $cartoRisk['counters'][$impact][$MxV] ?? 0;
-			
-			
+                               
+                    $value = $MxV * $impact;
+            
+                    $result = $cartoRisk['counters'][$impact][$MxV] ?$cartoRisk['counters'][$impact][$MxV]: 0;
+            
+            
                     if ($value <= $anr->seuil1) {
                         $style = $risksTableGreenCellStyle;
                         $fontStyle = $risksTableFontStyleBlack;
@@ -757,25 +768,25 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(11), $risksTableCellStyle)->addText(' ', $risksTableFontStyleBlack, $alignLeft);
             
             $tableLegend = $section->addTable();
-	    $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
+        $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbLow . ' ' . $this->anrTranslate('low risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($lowSize), $risksTableGreenCellStyle);
-	if(($maxSize - $lowSize) != 0)  
+    if(($maxSize - $lowSize) != 0)  
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $lowSize), $risksTableGreenCellStyle2);
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbMedium . ' ' . $this->anrTranslate('medium risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($mediumSize), $risksTableOrangeCellStyle);
-	if(($maxSize - $mediumSize) != 0)   
+    if(($maxSize - $mediumSize) != 0)   
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $mediumSize), $risksTableOrangeCellStyle2);
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbHigh . ' ' . $this->anrTranslate('high risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($highSize), $risksTableRedCellStyle);
-	if(($maxSize - $highSize) != 0)           
-		$tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $highSize), $risksTableRedCellStyle2);
+    if(($maxSize - $highSize) != 0)           
+        $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $highSize), $risksTableRedCellStyle2);
 
 
 
@@ -860,7 +871,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $draw->annotation ( 280 , 200 , ucfirst($this->anrTranslate('low risks')) );
 
             $canvas->drawImage($draw);
-            $path = "data/".uniqid("", true)."_riskgraph.png";
+            $datapath = './data/';
+            $appconfdir = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
+            if( ! empty($appconfdir) ){
+                $datapath = $appconfdir.'/data/';
+            }
+            $path = $datapath.uniqid("", true)."_riskgraph.png";
             $canvas->writeImage($path);
 
             $return = [
@@ -951,7 +967,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $styleContentFont = ['bold' => false, 'size' => 10];
             $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
             $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
-       	    $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
+            $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
 
 
             $table->addRow(400, ['tblHeader' => true]);
@@ -1030,7 +1046,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $styleContentFont = ['bold' => false, 'size' => 10];
             $cellColSpan = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
             $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
-       	    $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
+            $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
 
             $table->addRow(400, ['tblHeader' => true]);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleHeaderCell)->addText(_WT($this->anrTranslate('Risk description')), $styleHeader2Font, $alignCenter);
@@ -1113,8 +1129,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
         $cell = ['bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
         $cellColSpan = ['gridSpan' => 6, 'bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
-	$styleHeaderCell2 = ['gridSpan' => 3,'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-	
+    $styleHeaderCell2 = ['gridSpan' => 3,'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+    
         //create section
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
@@ -1234,7 +1250,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFontBold =['bold' => true, 'size' => 10];
-	$styleContentFont =['bold' => false, 'size' => 10];
+    $styleContentFont =['bold' => false, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
         $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center'];
@@ -1325,8 +1341,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentCell = array('align' => 'left', 'valign' => 'center', 'size' => 10);
         $styleContentCellCenter = array('align' => 'center', 'valign' => 'center', 'size' => 10);
         $styleContentFont = array('bold' => false, 'size' => 10);
-	$styleContentParagraphCenter = array('Alignment' => 'center', 'spaceAfter' => '0');
-	$styleContentParagraphLeft = array('Alignment' => 'left', 'spaceAfter' => '0');
+    $styleContentParagraphCenter = array('Alignment' => 'center', 'spaceAfter' => '0');
+    $styleContentParagraphLeft = array('Alignment' => 'left', 'spaceAfter' => '0');
 
         $nbThreats = 0;
         foreach ($threats as $threat) {
