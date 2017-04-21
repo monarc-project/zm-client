@@ -45,22 +45,4 @@ class Anr extends AnrSuperClass
      * @ORM\Column(name="cache_model_is_scales_updatable", type="smallint", options={"unsigned":true, "default":0})
      */
     protected $cacheModelIsScalesUpdatable = '0';
-
-    /**
-     * @return int
-     */
-    public function getLanguage()
-    {
-        return $this->language;
-    }
-
-    /**
-     * @param int $language
-     * @return Anr
-     */
-    public function setLanguage($language)
-    {
-        $this->language = $language;
-        return $this;
-    }
 }
