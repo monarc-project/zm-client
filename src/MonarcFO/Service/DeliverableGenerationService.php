@@ -1361,7 +1361,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
 
         foreach ($threats as $threat) {
-            if (($threat['trend'] > 0 && $threat['trend'] != 1) || $fullGen) { // All but normal
+            if (($threat['trend'] != 1) || $fullGen) { // All but normal
                 $table->addRow(400);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.85), $styleContentCell)->addText(_WT($threat['label' . $anr->language]), $styleContentFont, $styleContentParagraphLeft);
 
