@@ -7,6 +7,8 @@
 
 namespace MonarcFO\Service\Model\Entity;
 
+use Zend\ServiceManager\ServiceLocatorInterface;
+
 /**
  * User Service Model Entity
  *
@@ -18,4 +20,5 @@ class UserServiceModelEntity extends AbstractServiceModelEntity
     protected $ressources = [
         'setDbAdapter' => '\MonarcCli\Model\Db',
     ];
+
 }

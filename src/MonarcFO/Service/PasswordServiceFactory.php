@@ -22,6 +22,7 @@ class PasswordServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\PasswordTokenTable',
         'userTable' => 'MonarcFO\Model\Table\UserTable',
         'userService' => 'MonarcFO\Service\UserService',
-        'mailService' => 'MonarcFO\Service\MailService'
+        'mailService' => 'MonarcFO\Service\MailService',
+        'securityService' => 'MonarcCore\Service\SecurityService',
     ];
 }

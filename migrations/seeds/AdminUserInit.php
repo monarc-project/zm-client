@@ -19,10 +19,6 @@ class AdminUserInit extends AbstractSeed
         if(file_exists($pathLocal)){
             $localConf = require $pathLocal;
         }
-        $salt = "";
-        if(!empty($localConf['monarc']['salt'])){
-            $salt = $localConf['monarc']['salt'];
-        }
 
         //create client
         $dataClient = [
@@ -43,7 +39,7 @@ class AdminUserInit extends AbstractSeed
             'firstname' => $firstname,
             'lastname' => $lastname,
             'email' => $email,
-            'password' => password_hash($salt . $password, PASSWORD_BCRYPT),
+            'password' => password_hash($password, PASSWORD_BCRYPT),
             'language' => 1,
             'creator' => 'System',
             'created_at' => date('Y-m-d H:i:s'),
