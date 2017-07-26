@@ -14,7 +14,7 @@
                     {"name": "Thomas Metois", "email": "thomas@netlor.fr"}
                 ],
                 "source": {
-                    "url": "https://github.com/CASES-LU/zm-client",
+                    "url": "https://github.com/monarc-project/zm-client",
                     "type": "git",
                     "reference": "master"
                 },
