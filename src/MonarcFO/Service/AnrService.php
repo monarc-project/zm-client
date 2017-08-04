@@ -484,16 +484,26 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRolfRisk = new \MonarcFO\Model\Entity\RolfRisk($rolfRisk);
                 $newRolfRisk->set('id', null);
                 $newRolfRisk->setAnr($newAnr);
+                //Link categories
+                $indexCategRisk =0;
+                $listTagCateg = [];
                 foreach ($rolfRisk->categories as $key => $category) {
                     if (!empty($rolfCategoriesNewIds[$category->id])) {
-                        $newRolfRisk->setCategory($key, $rolfCategoriesNewIds[$category->id]);
-                    }
+                        $listTagCateg[i]=$rolfCategoriesNewIds[$category->id];
+                        $indexTagCateg++;
+                        }
                 }
+                $newRolfRisk->setCategories($listTagCateg);
+                //Link tags
+                $indexTagRisk = 0;
+                $listTagrisk = [];
                 foreach ($rolfRisk->tags as $key => $tag) {
                     if (!empty($rolfTagsNewIds[$tag->id])) {
-                        $newRolfRisk->setTag($key, $rolfTagsNewIds[$tag->id]);
+                        $listTagrisk[i]=$rolfTagsNewIds[$tag->id];
+                        $indexTagRisk++;
                     }
                 }
+                $newRolfRisk->setTags($listTagrisk);
                 $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             }
