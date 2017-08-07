@@ -1200,7 +1200,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 }
 
                 if ($recoRisk->recommandation->id != $previousRecoId) {
-                    $recoName = " [" . $recoRisk->recommandation->code . "]";
+                    $recoName = " [" . _WT($recoRisk->recommandation->code) . "]";
                     if ($recoRisk->recommandation->description) {
                         $recoName .= " - " . _WT($recoRisk->recommandation->description);
                     }
@@ -1343,7 +1343,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 }
 
                 if ($recoRisk->recommandation->id != $previousRecoId) {
-                    $recoName = " [" . $recoRisk->recommandation->code . "]";
+                    $recoName = " [" . _WT($recoRisk->recommandation->code) . "]";
                     if ($recoRisk->recommandation->description) {
                         $recoName .= " - " . _WT($recoRisk->recommandation->description);
                     }
@@ -1452,7 +1452,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     if ($instanceConsequence[$impact . '_risk'] >= 0) {
                         if (!$headerImpact && !$headerConsequence) {
                             $table->addRow(400);
-                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(16), $cellColSpan)->addText($i['name' . $anr->language], $styleHeaderFont, $alignLeft);
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(16), $cellColSpan)->addText(_WT($i['name' . $anr->language]), $styleHeaderFont, $alignLeft);
                         }
                         $table->addRow(400);
                         if (!$headerConsequence) {
