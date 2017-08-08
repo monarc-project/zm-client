@@ -484,16 +484,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRolfRisk = new \MonarcFO\Model\Entity\RolfRisk($rolfRisk);
                 $newRolfRisk->set('id', null);
                 $newRolfRisk->setAnr($newAnr);
-                //Link categories
-                $indexCategRisk =0;
-                $listTagCateg = [];
-                foreach ($rolfRisk->categories as $key => $category) {
-                    if (!empty($rolfCategoriesNewIds[$category->id])) {
-                        $listTagCateg[i]=$rolfCategoriesNewIds[$category->id];
-                        $indexTagCateg++;
-                        }
-                }
-                $newRolfRisk->setCategories($listTagCateg);
                 //Link tags
                 $indexTagRisk = 0;
                 $listTagrisk = [];
