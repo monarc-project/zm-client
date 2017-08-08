@@ -38,13 +38,13 @@ class ApiAnrDeliverableController extends AbstractController
 
         $params = [
             'txt' => [
-                'VERSION' => $data['version'],
+                'VERSION' => htmlspecialchars($data['version']),
                 'STATE' => $data['status'] == 0 ? 'Draft' : 'Final',
-                'CLASSIFICATION' => $data['classification'],
-                'DOCUMENT' => $data['docname'],
+                'CLASSIFICATION' => htmlspecialchars($data['classification']),
+                'DOCUMENT' => htmlspecialchars($data['docname']),
                 'DATE' => date('d/m/Y'),
-                'CLIENT' => $data['managers'],
-                'SMILE' => $data['consultants'],
+                'CLIENT' => htmlspecialchars($data['managers']),
+                'SMILE' => htmlspecialchars($data['consultants']),
             ],
             'img' => [],
             'html' => [
