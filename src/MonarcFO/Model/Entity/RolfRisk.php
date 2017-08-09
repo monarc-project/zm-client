@@ -61,14 +61,6 @@ class RolfRisk extends RolfRiskSuperclass
     }
 
     /**
-     * @return RolfCategory
-     */
-    public function getCategories()
-    {
-        return $this->categories;
-    }
-
-    /**
      * @return RolfTag
      */
     public function getTags()

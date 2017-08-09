@@ -30,22 +30,14 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-        $category = $this->params()->fromQuery('category');
         $tag = $this->params()->fromQuery('tag');
         $anr = $this->params()->fromRoute("anrid");
 
         /** @var RolfRiskService $service */
         $service = $this->getService();
 
-        $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $category, $tag, $anr);
+        $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $tag, $anr);
         foreach ($rolfRisks as $key => $rolfRisk) {
-
-            $rolfRisk['categories']->initialize();
-            $rolfCategories = $rolfRisk['categories']->getSnapshot();
-            $rolfRisks[$key]['categories'] = [];
-            foreach ($rolfCategories as $rolfCategory) {
-                $rolfRisks[$key]['categories'][] = $rolfCategory->getJsonArray();
-            }
 
             $rolfRisk['tags']->initialize();
             $rolfTags = $rolfRisk['tags']->getSnapshot();
@@ -56,7 +48,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         }
 
         return new JsonModel([
-            'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $category, $tag, $anr),
+            'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $tag, $anr),
             $this->name => $rolfRisks
         ]);
     }
