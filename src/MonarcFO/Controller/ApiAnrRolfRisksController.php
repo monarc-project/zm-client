@@ -19,7 +19,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {
     protected $name = 'risks';
 
-    protected $dependencies = ['categories', 'tags'];
+    protected $dependencies = ['tags'];
 
     /**
      * @inheritdoc
