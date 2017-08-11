@@ -32,17 +32,6 @@ class RolfRisk extends RolfRiskSuperclass
     protected $anr;
 
     /**
-     * @var \MonarcFO\Model\Entity\RolfCategory
-     *
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RolfCategory", cascade={"persist"})
-     * @ORM\JoinTable(name="rolf_risks_categories",
-     *  joinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="rolf_category_id", referencedColumnName="id")}
-     * )
-     */
-    protected $categories;
-
-    /**
      * @var \MonarcFO\Model\Entity\RolfTag
      *
      * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RolfTag", inversedBy="risks", cascade={"persist"})
@@ -68,24 +57,6 @@ class RolfRisk extends RolfRiskSuperclass
     public function setAnr($anr)
     {
         $this->anr = $anr;
-        return $this;
-    }
-
-    /**
-     * @return RolfCategory
-     */
-    public function getCategories()
-    {
-        return $this->categories;
-    }
-
-    /**
-     * @param RolfCategory $categories
-     * @return RolfRisk
-     */
-    public function setCategories($categories)
-    {
-        $this->categories = $categories;
         return $this;
     }
 

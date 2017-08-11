@@ -51,7 +51,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $objectTable;
     protected $objectCategoryTable;
     protected $objectObjectTable;
-    protected $rolfCategoryTable;
     protected $rolfRiskTable;
     protected $rolfTagTable;
     protected $scaleTable;
@@ -80,7 +79,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $recommandationHistoricCliTable;
     protected $recommandationMeasureCliTable;
     protected $recommandationRiskCliTable;
-    protected $rolfCategoryCliTable;
     protected $rolfRiskCliTable;
     protected $rolfTagCliTable;
     protected $scaleCliTable;
@@ -454,17 +452,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $amvsNewIds[$amv->id] = $newAmv;
             }
 
-            //duplicate rolf categories
-            $rolfCategoriesNewIds = [];
-            $rolfCategories = ($source == Object::SOURCE_COMMON) ? $this->get('rolfCategoryTable')->fetchAllObject() : $this->get('rolfCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
-            foreach ($rolfCategories as $rolfCategory) {
-                $newRolfCategory = new \MonarcFO\Model\Entity\RolfCategory($rolfCategory);
-                $newRolfCategory->set('id', null);
-                $newRolfCategory->setAnr($newAnr);
-                $this->get('rolfCategoryCliTable')->save($newRolfCategory,false);
-                $rolfCategoriesNewIds[$rolfCategory->id] = $newRolfCategory;
-            }
-
             //duplicate rolf tags
             $rolfTagsNewIds = [];
             $rolfTags = ($source == Object::SOURCE_COMMON) ? $this->get('rolfTagTable')->fetchAllObject() : $this->get('rolfTagCliTable')->getEntityByFields(['anr' => $anr->id]);
@@ -484,16 +471,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRolfRisk = new \MonarcFO\Model\Entity\RolfRisk($rolfRisk);
                 $newRolfRisk->set('id', null);
                 $newRolfRisk->setAnr($newAnr);
-                //Link categories
-                $indexCategRisk =0;
-                $listTagCateg = [];
-                foreach ($rolfRisk->categories as $key => $category) {
-                    if (!empty($rolfCategoriesNewIds[$category->id])) {
-                        $listTagCateg[i]=$rolfCategoriesNewIds[$category->id];
-                        $indexTagCateg++;
-                        }
-                }
-                $newRolfRisk->setCategories($listTagCateg);
                 //Link tags
                 $indexTagRisk = 0;
                 $listTagrisk = [];
@@ -937,11 +914,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        //themes, measures, rolf categories, rolf tags, rolf risks, object categories, questions and questions choices
+        //themes, measures, rolf tags, rolf risks, object categories, questions and questions choices
         $array = [
             'theme' => 'label',
             'measure' => 'description',
-            'rolfCategory' => 'label',
             'rolfRisk' => 'label',
             'rolfTag' => 'label',
             'objectCategory' => 'label',
