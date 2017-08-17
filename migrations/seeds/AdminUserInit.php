@@ -32,8 +32,8 @@ class AdminUserInit extends AbstractSeed
         //create first user
         $firstname = 'Admin';
         $lastname = 'Admin';
-        $email = 'username@domain.com';
-        $password = 'Password123&';
+        $email = 'admin@admin.test';
+        $password = 'admin';
         $dataUser = [
             'status' => 1,
             'firstname' => $firstname,
