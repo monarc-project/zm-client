@@ -132,7 +132,7 @@ class Delivery extends AbstractEntity
 
     /**
      * @param Anr $anr
-     * @return RolfCategory
+     * @return Delivery
      */
     public function setAnr($anr)
     {

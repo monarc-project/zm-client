@@ -146,11 +146,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      */
     public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data)
     {
-        // Find the model to use
-        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category' => $typeDoc]));
+        /* $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category' => $typeDoc]));
         if (!$model) {
             throw new \MonarcCore\Exception\Exception("Model `id` not found");
-        }
+        }*/
 
         // Load the ANR
         $anr = $this->anrTable->getEntity($anrId);
@@ -174,26 +173,31 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table = $this->get('table');
         $table->save($delivery);
 
-        if (!file_exists($model->get('path' . $anr->language))) {
-            $datapath = './data/';
-            $appconfdir = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
-            if( ! empty($appconfdir) ){
-                $datapath = $appconfdir.'/data/';
-            }
-            $datapath .= 'monarc/models';
-            if (!file_exists($datapath)) {
-                $oldumask = umask(0);
-                mkdir($datapath, 0775, true);
-                umask($oldumask);
-            }
-            file_put_contents($model->get('path' . $anr->language), $model->get('content' . $anr->language));
+        //find the right model
+        $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
+        $pathModel .= './deliveries/cases/';
+        switch ($anr->language) {
+          case 1:
+            $pathModel .= 'FR/';
+            break;
+          case 2:
+            $pathModel .= 'EN/';
+            break;
+          case 3:
+            $pathModel .= 'DE/';
+            break;
         }
+        $pathModel .= $typeDoc;
+        $pathModel .= '.docx';
 
+
+        if (!file_exists($pathModel)) {
+            throw new \MonarcCore\Exception\Exception("Model not found ".$pathModel);
+        }
         $this->currentLangAnrIndex = $anr->language;
-
-        $values = array_merge_recursive($values, $this->buildValues($anr, $model->get('category')));
-        $values['txt']['TYPE'] = $this->getModelType($model->get('category'));
-        return $this->generateDeliverableWithValuesAndModel($model->get('path' . $anr->language), $values);
+        $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc));
+        $values['txt']['TYPE'] = $typeDoc;
+        return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
 
     /**
@@ -314,7 +318,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $impactsTypes = $this->scaleTypeService->getList(1, 0, null, null, ['anr' => $anr->id]);
         $impactsComments = $this->scaleCommentService->getList(1, 0, null, null, ['anr' => $anr->id, 'scale' => $impactsScale['id']]);
 
-        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'align' => 'center'];
+        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'align' => 'center', 'cellMarginRight' => '0'];
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
@@ -322,15 +326,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
-    $styleHeaderParagraph =['alignment' => 'center', 'spaceAfter' => '0' ];
+    	  $styleHeaderParagraph =['alignment' => 'center', 'spaceAfter' => '0' ];
 
         $styleContentCell = ['valign' => 'center', 'align' => 'left', 'size' => 10];
-    $styleContentCell2 = ['valign' => 'bottom', 'align' => 'left', 'size' => 10];
-    $styleContentCell3 = ['valign' => 'top', 'align' => 'left', 'size' => 10];
+        $styleContentCell2 = ['valign' => 'bottom', 'align' => 'left', 'size' => 10];
+        $styleContentCell3 = ['valign' => 'top', 'align' => 'left', 'size' => 10];
         $styleContentFont = ['valign' => 'center', 'bold' => false, 'size' => 10];
         $styleContentParagraph =['Alignment' => 'left', 'spaceAfter' => '0' ];
-    $styleContentParagraph2 =['Alignment' => 'left', 'spaceAfter' => '0' , 'spaceBefore' => '1'];
-    $styleLevelParagraph =['Alignment' => 'center', 'spaceAfter' => '0' ];
+        $styleContentParagraph2 =['Alignment' => 'left', 'spaceAfter' => '0' , 'spaceBefore' => '1'];
+        $styleLevelParagraph =['Alignment' => 'center', 'spaceAfter' => '0' ];
 
         $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
         $cellRowContinue = ['vMerge' => 'continue','valign' => 'center', 'bgcolor' => 'DFDFDF'];
@@ -551,7 +555,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable(['borderSize' => 0, 'borderColor' => 'FFFFFF']);
+        $table = $section->addTable(['borderSize' => 0, 'borderColor' => 'FFFFFF', 'cellMarginRight' => '0']);
 
 
         // Fill in each row
@@ -659,13 +663,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $values['img']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
-        $risksPlan = $this->generateRisksPlan($anr);
-
         $values['txt']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
         $values['txt']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
 
-        $values['txt']['RISKS_RECO'] = $risksPlan;
-        $values['txt']['RISKS_RECO_FULL'] = $risksPlan;
+        $values['txt']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr);
+        $values['txt']['OPRISKS_RECO_FULL'] = $this->generateOperationalRisksPlan($anr);
+
         $values['txt']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
         $values['txt']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
 
@@ -699,7 +702,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             // Generate risks table
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $table = $section->addTable(['align' => 'center','cellMarginRight' => '0']);
+            $table = $section->addTable(['align' => 'center','cellMarginRight' => '0', 'cellMarginRight' => '0']);
 
             $header = $cartoRisk['MxV'];
             $size = 13 / (count($header) + 1); // 15cm
@@ -719,12 +722,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $risksTableCellStyle)->addText($impact, $risksTableFontStyleBlack, $alignCenter);
 
                 foreach ($header as $MxV) {
-                               
+
                     $value = $MxV * $impact;
-            
+
                     $result = $cartoRisk['counters'][$impact][$MxV] ?$cartoRisk['counters'][$impact][$MxV]: 0;
-            
-            
+
+
                     if ($value <= $anr->seuil1) {
                         $style = $risksTableGreenCellStyle;
                         $fontStyle = $risksTableFontStyleBlack;
@@ -746,7 +749,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     }
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $style)->addText($result, $fontStyle, $alignCenter);
                 }
-            } 
+            }
 
 
             $risksTableGreenCellStyle   = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'D6F107', 'BorderTopSize' => 0, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
@@ -766,26 +769,26 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0,1));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(11), $risksTableCellStyle)->addText(' ', $risksTableFontStyleBlack, $alignLeft);
-            
+
             $tableLegend = $section->addTable();
         $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbLow . ' ' . $this->anrTranslate('low risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($lowSize), $risksTableGreenCellStyle);
-    if(($maxSize - $lowSize) != 0)  
+    if(($maxSize - $lowSize) != 0)
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $lowSize), $risksTableGreenCellStyle2);
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbMedium . ' ' . $this->anrTranslate('medium risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($mediumSize), $risksTableOrangeCellStyle);
-    if(($maxSize - $mediumSize) != 0)   
+    if(($maxSize - $mediumSize) != 0)
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $mediumSize), $risksTableOrangeCellStyle2);
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbHigh . ' ' . $this->anrTranslate('high risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($highSize), $risksTableRedCellStyle);
-    if(($maxSize - $highSize) != 0)           
+    if(($maxSize - $highSize) != 0)
         $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($maxSize - $highSize), $risksTableRedCellStyle2);
 
 
@@ -817,7 +820,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $draw = new \ImagickDraw();
 
             $draw->setFontSize(10);
-            $draw->setFontFamily("NewCenturySchlbk"); 
+            $draw->setFontFamily("NewCenturySchlbk");
             $draw->setStrokeAntialias(true);
 
             //Axes principaux
@@ -959,7 +962,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if (!empty($mem_risks)) {
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB'];
+            $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
             $table = $section->addTable($styleTable);
             $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
             $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
@@ -1038,7 +1041,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if (!empty($lst)) {
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB'];
+            $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
             $table = $section->addTable($styleTable);
             $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
             $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
@@ -1097,7 +1100,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d low risk(s) negligible'), $distrib[0]);
     }
 
-    /**
+     /**
      * Generates the Risks Plan data
      * @param Anr $anr The ANR object
      * @param bool $full Whether or not the full plan is requested or just an extract
@@ -1115,7 +1118,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->id . '-' . $key;
             $recosRisks[$newKey] = $recoRisk;
         }
-        ksort($recosRisks);
+        ksort($recosRisks,SORT_NUMERIC);
 
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
@@ -1128,22 +1131,24 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $alignRight = ['Alignment' => 'right', 'spaceAfter' => '0'];
         $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
         $cell = ['bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
-        $cellColSpan = ['gridSpan' => 6, 'bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
-    $styleHeaderCell2 = ['gridSpan' => 3,'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-    
+        $cellColSpan = ['gridSpan' => 8, 'bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
+        $styleHeaderCell2 = ['gridSpan' => 3,'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+
         //create section
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB']);
+        $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
         //header if array is not empty
         if (count($recosRisks)) {
             $table->addRow(400, ['tblHeader' => true]);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.50), $styleHeaderCell)->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Threat'), $styleHeaderFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.50), $styleHeaderCell)->addText($this->anrTranslate('Vulnerability'), $styleHeaderFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.50), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.30), $styleHeaderCell2)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);            
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Threat'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Vulnerability'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell2)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Target risk'), $styleHeaderFont, $alignCenter);
         }
 
         $previousRecoId = null;
@@ -1180,22 +1185,33 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         $bgcolor = 'FD661F';
                     }
                     ${'styleContentCell' . ucfirst($impact)} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
-                }
 
+
+
+                    $bgcolor = 'FFBC1C';
+                    if ($recoRisk->instanceRisk->cacheTargetedRisk == -1)  {
+                        $bgcolor = 'E7E6E6';
+                    } else if ($recoRisk->instanceRisk->cacheTargetedRisk <= $anr->seuil1) {
+                        $bgcolor = 'D6F107';
+                    } else if ($recoRisk->instanceRisk->cacheTargetedRisk > $anr->seuil2) {
+                        $bgcolor = 'FD661F';
+                    }
+                    $styleContentCellTargetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
+}
                 $importance = '';
                 for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
                     $importance .= '●';
                 }
 
                 if ($recoRisk->recommandation->id != $previousRecoId) {
-                    $recoName = " [" . $recoRisk->recommandation->code . "]";
+                    $recoName = " [" . _WT($recoRisk->recommandation->code) . "]";
                     if ($recoRisk->recommandation->description) {
                         $recoName .= " - " . _WT($recoRisk->recommandation->description);
                     }
 
                     $table->addRow(400);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $cell)->addText($importance, $styleContentFontRed, $alignRight);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(21.00), $cellColSpan)->addText($recoName, $styleContentFontBold, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(23.00), $cellColSpan)->addText($recoName, $styleContentFontBold, $alignLeft);
                 }
 
                 $continue = true;
@@ -1209,18 +1225,169 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     }
                 }
 
+                $KindOfTreatment = $recoRisk->instanceRisk->kindOfMeasure;
+
+						switch ($KindOfTreatment) {
+
+   					case 1:
+        					$Treatment = "Reduction";
+        					break;
+    					case 2;
+        					$Treatment = "Denied";
+        					break;
+    					case 3:
+        					$Treatment = "Accepted";
+        					break;
+        				case 4:
+        					$Treatment = "Shared";
+        					break;
+    					default:
+        					$Treatment = "Not processed";
+						}
+
                 if ($continue) {
                     $table->addRow(400);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText(_WT($recoRisk->instance->{'name' . $anr->language}), $styleContentFont, $alignLeft);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($recoRisk->threat->{'label' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($recoRisk->instance->{'name' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->threat->{'label' . $anr->language}), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->vulnerability->{'label' . $anr->language}), $styleContentFont, $alignLeft);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(_WT($recoRisk->instanceRisk->comment), $styleContentFont, $alignLeft);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.10), $styleContentCellC)->addText(_WT($this->anrTranslate('C')), $styleContentFontBold, $alignCenter);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.10), $styleContentCellI)->addText(_WT($this->anrTranslate('I')), $styleContentFontBold, $alignCenter);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.10), $styleContentCellD)->addText(_WT($this->anrTranslate('A')), $styleContentFontBold, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRisk->comment), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCellC)->addText(_WT($this->anrTranslate('C')), $styleContentFontBold, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCellI)->addText(_WT($this->anrTranslate('I')), $styleContentFontBold, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCellD)->addText(_WT($this->anrTranslate('A')), $styleContentFontBold, $alignCenter);
+						  $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCell)->addText(_WT($this->anrTranslate($Treatment)), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText(_WT(''), $styleHeaderFont, $alignCenter);
                 }
             }
             $previousRecoId = $recoRisk->recommandation->id;
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
+    }
+
+     /**
+     * Generates the Operational Risks Plan data
+     * @param Anr $anr The ANR object
+     * @param bool $full Whether or not the full plan is requested or just an extract
+     * @return mixed|string The WordXml data generated
+     */
+    protected function generateOperationalRisksPlan($anr)
+    {
+        /** @var AnrRecommandationRiskService $recommandationService */
+        $recommandationRiskService = $this->recommandationRiskService;
+        $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->id);
+
+        //oder by recommandation position asc and importance desc
+        $recosRisks = [];
+        foreach($recosRisksNotOrdered as $key => $recoRisk) {
+            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->id . '-' . $key;
+            $recosRisks[$newKey] = $recoRisk;
+        }
+        ksort($recosRisks,SORT_NUMERIC);
+
+        //css
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentFont = ['bold' => false, 'size' => 10];
+        $styleContentFontBold = ['bold' => true, 'size' => 10];
+        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
+        $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $alignRight = ['Alignment' => 'right', 'spaceAfter' => '0'];
+        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
+        $cell = ['bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
+        $cellColSpan = ['gridSpan' => 5, 'bgcolor' => 'DBE5F1', 'size' => 10, 'valign' => 'center'];
+        $styleHeaderCell2 = ['gridSpan' => 3,'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+
+        //create section
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
+
+        //header if array is not empty
+        if (count($recosRisks)) {
+            $table->addRow(400, ['tblHeader' => true]);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleHeaderCell)->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(12.20), $styleHeaderCell)->addText($this->anrTranslate('Risk description'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Target risk'), $styleHeaderFont, $alignCenter);
+        }
+
+        $previousRecoId = null;
+
+        //$alreadySet = [];
+        foreach ($recosRisks as $recoRisk) {
+            if ($recoRisk->instanceRiskOp) {
+                    $bgcolor = 'FFBC1C';
+                    if ($recoRisk->instanceRiskOp->cacheNetRisk == -1)  {
+                        $bgcolor = 'E7E6E6';
+                    } else if ($recoRisk->instanceRiskOp->cacheNetRisk <= $anr->seuilRolf1) {
+                        $bgcolor = 'D6F107';
+                    } else if ($recoRisk->instanceRiskOp->cacheNetRisk > $anr->seuilRolf2) {
+                        $bgcolor = 'FD661F';
+                    }
+                    $styleContentCellNetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
+
+
+                    $bgcolor = 'FFBC1C';
+                    if ($recoRisk->instanceRiskOp->cacheTargetedRisk == -1)  {
+                        $bgcolor = 'E7E6E6';
+                    } else if ($recoRisk->instanceRiskOp->cacheTargetedRisk <= $anr->seuilRolf1) {
+                        $bgcolor = 'D6F107';
+                    } else if ($recoRisk->instanceRiskOp->cacheTargetedRisk > $anr->seuilRolf2) {
+                        $bgcolor = 'FD661F';
+                    }
+                    $styleContentCellTargetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
+
+
+                $importance = '';
+                for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
+                    $importance .= '●';
+                }
+
+                if ($recoRisk->recommandation->id != $previousRecoId) {
+                    $recoName = " [" . _WT($recoRisk->recommandation->code) . "]";
+                    if ($recoRisk->recommandation->description) {
+                        $recoName .= " - " . _WT($recoRisk->recommandation->description);
+                    }
+
+                    $table->addRow(400);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $cell)->addText($importance, $styleContentFontRed, $alignRight);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(23.00), $cellColSpan)->addText($recoName, $styleContentFontBold, $alignLeft);
+                }
+
+                $KindOfTreatment = $recoRisk->instanceRiskOp->kindOfMeasure;
+
+						switch ($KindOfTreatment) {
+
+   					case 1:
+        					$Treatment = "Reduction";
+        					break;
+    					case 2;
+        					$Treatment = "Denied";
+        					break;
+    					case 3:
+        					$Treatment = "Accepted";
+        					break;
+        				case 4:
+        					$Treatment = "Shared";
+        					break;
+    					default:
+        					$Treatment = "Not processed";
+						}
+
+                    $table->addRow(400);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($recoRisk->instance->{'name' . $anr->language}), $styleContentFont, $alignLeft);
+						  $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(12.20), $styleContentCell)->addText(_WT($recoRisk->instanceRiskOp->{'riskCacheLabel' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRiskOp->comment), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellNetRisk)->addText(_WT(''), $styleContentFontBold, $alignCenter);
+ 						  $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCell)->addText(_WT($this->anrTranslate($Treatment)), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText(_WT(''), $styleHeaderFont, $alignCenter);
+
+         	        $previousRecoId = $recoRisk->recommandation->id;
+            }
+
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
@@ -1243,14 +1410,14 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB'];
+        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
         $table = $section->addTable($styleTable);
 
         $styleHeaderCellSpan = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10, 'gridSpan' => 3];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFontBold =['bold' => true, 'size' => 10];
-    $styleContentFont =['bold' => false, 'size' => 10];
+        $styleContentFont =['bold' => false, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
         $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center'];
@@ -1289,7 +1456,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     if ($instanceConsequence[$impact . '_risk'] >= 0) {
                         if (!$headerImpact && !$headerConsequence) {
                             $table->addRow(400);
-                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(16), $cellColSpan)->addText($i['name' . $anr->language], $styleHeaderFont, $alignLeft);
+                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(16), $cellColSpan)->addText(_WT($i['name' . $anr->language]), $styleHeaderFont, $alignLeft);
                         }
                         $table->addRow(400);
                         if (!$headerConsequence) {
@@ -1332,7 +1499,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
-        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB', 'align' => 'center');
+        $styleTable = array('borderSize' => 1, 'borderColor' => 'ABABAB', 'align' => 'center', 'cellMarginRight' => '0');
         $table = $section->addTable($styleTable);
 
         $styleHeaderCell = array('valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10);

@@ -252,18 +252,6 @@ return array(
                             ),
                         ),
                     ),
-                    'rolf_categories' => array(
-                        'type' => 'segment',
-                        'options' => array(
-                            'route' => 'rolf-categories[/:id]',
-                            'constraints' => array(
-                                'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRolfCategories',
-                            ),
-                        ),
-                    ),
                     'rolf_risks' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -728,7 +716,6 @@ return array(
             '\MonarcFO\Controller\ApiAnrThemes' => '\MonarcFO\Controller\ApiAnrThemesControllerFactory',
             '\MonarcFO\Controller\ApiAnrVulnerabilities' => '\MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfTags' => '\MonarcFO\Controller\ApiAnrRolfTagsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRolfCategories' => '\MonarcFO\Controller\ApiAnrRolfCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRolfRisks' => '\MonarcFO\Controller\ApiAnrRolfRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrInterviews' => '\MonarcFO\Controller\ApiAnrInterviewsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandations' => '\MonarcFO\Controller\ApiAnrRecommandationsControllerFactory',
@@ -800,7 +787,6 @@ return array(
             '\MonarcFO\Model\Table\ObjectCategoryTable' => '\MonarcFO\Service\Model\Table\ObjectCategoryServiceModelTable',
             '\MonarcFO\Model\Table\ObjectObjectTable' => '\MonarcFO\Service\Model\Table\ObjectObjectServiceModelTable',
             '\MonarcFO\Model\Table\PasswordTokenTable' => '\MonarcFO\Service\Model\Table\PasswordTokenServiceModelTable',
-            '\MonarcFO\Model\Table\RolfCategoryTable' => '\MonarcFO\Service\Model\Table\RolfCategoryServiceModelTable',
             '\MonarcFO\Model\Table\RolfRiskTable' => '\MonarcFO\Service\Model\Table\RolfRiskServiceModelTable',
             '\MonarcFO\Model\Table\RolfTagTable' => '\MonarcFO\Service\Model\Table\RolfTagServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationTable' => '\MonarcFO\Service\Model\Table\RecommandationServiceModelTable',
@@ -838,7 +824,6 @@ return array(
             '\MonarcFO\Model\Entity\ObjectCategory' => '\MonarcFO\Service\Model\Entity\ObjectCategoryServiceModelEntity',
             '\MonarcFO\Model\Entity\ObjectObject' => '\MonarcFO\Service\Model\Entity\ObjectObjectServiceModelEntity',
             '\MonarcFO\Model\Entity\PasswordToken' => '\MonarcFO\Service\Model\Entity\PasswordTokenServiceModelEntity',
-            '\MonarcFO\Model\Entity\RolfCategory' => '\MonarcFO\Service\Model\Entity\RolfCategoryServiceModelEntity',
             '\MonarcFO\Model\Entity\RolfRisk' => '\MonarcFO\Service\Model\Entity\RolfRiskServiceModelEntity',
             '\MonarcFO\Model\Entity\RolfTag' => '\MonarcFO\Service\Model\Entity\RolfTagServiceModelEntity',
             '\MonarcFO\Model\Entity\Recommandation' => '\MonarcFO\Service\Model\Entity\RecommandationServiceModelEntity',
@@ -877,7 +862,6 @@ return array(
             '\MonarcFO\Service\AnrThemeService' => '\MonarcFO\Service\AnrThemeServiceFactory',
             '\MonarcFO\Service\AnrVulnerabilityService' => '\MonarcFO\Service\AnrVulnerabilityServiceFactory',
             '\MonarcFO\Service\AnrRolfTagService' => '\MonarcFO\Service\AnrRolfTagServiceFactory',
-            '\MonarcFO\Service\AnrRolfCategoryService' => '\MonarcFO\Service\AnrRolfCategoryServiceFactory',
             '\MonarcFO\Service\AnrRolfRiskService' => '\MonarcFO\Service\AnrRolfRiskServiceFactory',
             '\MonarcFO\Service\AmvService' => '\MonarcFO\Service\AmvServiceFactory',
             '\MonarcFO\Service\AssetService' => '\MonarcFO\Service\AssetServiceFactory',
