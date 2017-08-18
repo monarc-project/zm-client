@@ -583,6 +583,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 $aReco->setLanguage($this->getLanguage());
                                 $aReco->exchangeArray($toExchange, $aReco->get('id') > 0);
                                 $this->setDependencies($aReco, ['anr']);
+                                if(isset($toExchange['duedate']['date']))
+                                  $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
                                 $sharedData['recos'][$reco['id']] = $this->get('recommandationTable')->save($aReco);
                             }
 
