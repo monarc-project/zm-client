@@ -169,6 +169,14 @@ class Recommandation extends AbstractEntity
     }
 
     /**
+     * @return Date
+     */
+    public function getDueDate()
+    {
+        return $this->duedate;
+    }
+
+    /**
      * @param Anr $anr
      * @return Scale
      */
@@ -177,6 +185,17 @@ class Recommandation extends AbstractEntity
         $this->anr = $anr;
         return $this;
     }
+
+    /**
+     * @param DateTime date
+     * @return Scale
+     */
+    public function setDueDate($date)
+    {
+        $this->duedate = $date;
+        return $this;
+    }
+
 
     /**
      * @param bool $partial

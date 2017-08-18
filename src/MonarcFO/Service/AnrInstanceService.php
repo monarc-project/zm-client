@@ -10,7 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Model\Entity\AnrSuperClass;
 use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Model\Table\UserAnrTable;
-
+use \DateTime;
 /**
  * This class is the service that handles instances in use within an ANR. Inherits most of the behavior from its
  * MonarcCore parent class.
@@ -401,6 +401,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     $aReco->setLanguage($this->getLanguage());
                                     $aReco->exchangeArray($toExchange, $aReco->get('id') > 0);
                                     $this->setDependencies($aReco, ['anr']);
+                                    if(isset($toExchange['duedate']['date']))
+                                      $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
                                     $sharedData['recos'][$reco['id']] = $this->get('recommandationTable')->save($aReco);
                                 }
 
