@@ -26,6 +26,25 @@ class UserService extends \MonarcCore\Service\UserService
     protected $snapshotCliTable;
 
     /**
+     * The list of fields deleted during a GET
+     * @var array
+     */
+    protected $forbiddenFields = ['password'];
+
+
+    protected function filterGetFields(&$entity, $forbiddenFields = false)
+    {
+        $forbiddenFields = (!$forbiddenFields) ? $this->forbiddenFields : $forbiddenFields;
+        foreach ($entity as $id => $user) {
+            foreach($entity[$id] as $key => $value){
+                if (in_array($key, $forbiddenFields)) {
+                    unset($entity[$id][$key]);
+                }
+            }
+        }
+    }
+
+    /**
      * @inheritdoc
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
@@ -41,6 +60,8 @@ class UserService extends \MonarcCore\Service\UserService
             $this->parseFrontendFilter($filter, $this->filterColumns),
             $filterAnd
         );
+
+
 
         //retrieve role for each users
         /** @var UserRoleTable $userRoleTable */
@@ -73,7 +94,7 @@ class UserService extends \MonarcCore\Service\UserService
                 }
             }
         }
-
+        $this->filterGetFields($users);
         return $users;
     }
 
@@ -129,6 +150,7 @@ class UserService extends \MonarcCore\Service\UserService
         }
         $user['anrs'] = array_values($user['anrs']);
 
+        unset($user['password']);
         return $user;
     }
 
@@ -200,7 +222,7 @@ class UserService extends \MonarcCore\Service\UserService
         $this->verifyAuthorizedAction($id, $data);
 
         $user = $this->get('table')->getEntity($id);
-        
+
         if (isset($data['role'])) {
             $this->manageRoles($user, $data);
         }
