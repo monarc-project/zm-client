@@ -150,7 +150,9 @@ class UserService extends \MonarcCore\Service\UserService
         }
         $user['anrs'] = array_values($user['anrs']);
 
+        // fields we never want to return
         unset($user['password']);
+
         return $user;
     }
 
