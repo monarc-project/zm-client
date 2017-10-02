@@ -820,7 +820,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $draw = new \ImagickDraw();
 
             $draw->setFontSize(10);
-            $draw->setFontFamily("NewCenturySchlbk");
+            $draw->setFontFamily("Liberation-Serif");
             $draw->setStrokeAntialias(true);
 
             //Axes principaux
