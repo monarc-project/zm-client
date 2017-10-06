@@ -702,7 +702,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             // Generate risks table
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $table = $section->addTable(['align' => 'center','cellMarginRight' => '0', 'cellMarginRight' => '0']);
+            $table = $section->addTable(['align' => 'center', 'cellMarginRight' => '0']);
 
             $header = $cartoRisk['MxV'];
             $size = 13 / (count($header) + 1); // 15cm
@@ -820,7 +820,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $draw = new \ImagickDraw();
 
             $draw->setFontSize(10);
-            $draw->setFontFamily("Liberation-Serif");
+            $draw->setFontFamily("Lato");
             $draw->setStrokeAntialias(true);
 
             //Axes principaux
