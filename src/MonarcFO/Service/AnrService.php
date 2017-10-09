@@ -476,7 +476,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $listTagrisk = [];
                 foreach ($rolfRisk->tags as $key => $tag) {
                     if (!empty($rolfTagsNewIds[$tag->id])) {
-                        $listTagrisk[i]=$rolfTagsNewIds[$tag->id];
+                        $listTagrisk[$indexTagRisk]=$rolfTagsNewIds[$tag->id];
                         $indexTagRisk++;
                     }
                 }
