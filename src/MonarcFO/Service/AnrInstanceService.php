@@ -361,7 +361,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         // les calculs.
                         // Cas particulier, faudrait pas mettre n'importe quoi dans cette colonne si on part d'une scale
                         // 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
-                        $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate')) : 0);
+                        $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate'),0) : 0);
                         $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
 
                         // Recommandations
@@ -722,14 +722,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
      * @param int $maxdest The target max bound
      * @return int|mixed The approximated value
      */
-    protected function approximate($x, $minorig, $maxorig, $mindest, $maxdest)
+    protected function approximate($x, $minorig, $maxorig, $mindest, $maxdest, $defaultvalue = -1)
     {
         if ($x == $maxorig){
             return $maxdest;
         } elseif ($x != -1 && ($maxorig - $minorig) != -1) {
             return min(max(round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)), $mindest), $maxdest);
         } else {
-            return -1;
+            return $defaultvalue;
         }
     }
 }
