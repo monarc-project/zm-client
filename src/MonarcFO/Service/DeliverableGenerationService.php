@@ -186,6 +186,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
           case 3:
             $pathModel .= 'DE/';
             break;
+          default:
+            $pathModel .= 'EN/';
+            break;
         }
         $pathModel .= $typeDoc;
         $pathModel .= '.docx';
