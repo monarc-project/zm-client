@@ -17,10 +17,6 @@ use MonarcCore\Service\AbstractService;
  */
 class ClientService extends AbstractService
 {
-    protected $countryTable;
-    protected $countryEntity;
-    protected $cityTable;
-    protected $cityEntity;
     protected $forbiddenFields = ['model_id'];
 
     /**
@@ -84,16 +80,6 @@ class ClientService extends AbstractService
     public function getEntity($id)
     {
         $client = $this->table->get($id);
-
-        if (!empty($client['country_id'])) {
-            $country = $this->get('countryTable')->get($client['country_id']);
-            $client['country'] = $country;
-        }
-        if (!empty($client['city_id'])) {
-            $city = $this->get('cityTable')->get($client['city_id']);
-            $client['city'] = $city;
-        }
-
         return $client;
     }
 
