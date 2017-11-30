@@ -45,9 +45,6 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
      */
     public function importFromFile($anrId, $data)
     {
-        // Ensure we either have a password, or an empty string (and not 'null')
-        $key = empty($data['password']) ? '' : $data['password'];
-
         // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
         if (empty($data['file'])) {
             throw new \MonarcCore\Exception\Exception('File missing', 412);
@@ -58,7 +55,21 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
 
         foreach ($data['file'] as $f) {
             if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
-                $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                $file = [];
+                if (empty($data['password'])) {
+                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
+                    if ($file == false) { // support legacy export which were base64 encoded
+                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), '')), true);
+                    }
+                } else {
+                    // Decrypt the file and store the JSON data as an array in memory
+                    $key = $data['password'];
+                    $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
+                    if ($file == false) { // support legacy export which were base64 encoded
+                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                    }
+                }
+
                 if ($file !== false && ($id = $this->get('objectExportService')->importFromArray($file, $anr)) !== false) {
                     $ids[] = $id;
                 } else {
