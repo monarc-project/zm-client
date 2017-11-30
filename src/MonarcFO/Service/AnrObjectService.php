@@ -31,9 +31,6 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
      */
     public function importFromFile($anrId, $data)
     {
-        // Ensure we either have a password, or an empty string (and not 'null')
-        $key = empty($data['password']) ? '' : $data['password'];
-
         // Mode may either be 'merge' or 'duplicate'
         $mode = empty($data['mode']) ? 'merge' : $data['mode'];
 
@@ -48,8 +45,20 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         foreach ($data['file'] as $f) {
             // Ensure the file has been uploaded properly, silently skip the files that are erroneous
             if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
-                // Decrypt the file and store the JSON data as an array in memory
-                $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                $file = [];
+                if (empty($data['password'])) {
+                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
+                    if ($file == false) { // support legacy export which were base64 encoded
+                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), '')), true);
+                    }
+                } else {
+                    // Decrypt the file and store the JSON data as an array in memory
+                    $key = $data['password'];
+                    $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
+                    if ($file == false) { // support legacy export which were base64 encoded
+                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                    }
+                }
 
                 if ($file !== false && ($id = $this->get('objectExportService')->importFromArray($file, $anr, $mode)) !== false) {
                     // Import was successful, store the ID
