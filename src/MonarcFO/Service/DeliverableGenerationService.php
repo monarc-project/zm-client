@@ -1440,18 +1440,17 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $instanceConsequences = $instanceService->getConsequences($anr->id, $i, true);
 
             //delete scale type C,I and D
+            // set the correct order in the deliverable. not perfect but work
             $impactsConsequences = [];
             foreach ($instanceConsequences as $keyConsequence => $instanceConsequence) {
                 if ($instanceConsequence['scaleImpactType'] < 4) {
                     unset($instanceConsequences[$keyConsequence]);
-                    $impactsConsequences[$keyConsequence] = $instanceConsequence;
+                    $impactsConsequences[$instanceConsequence['scaleImpactType']-1] = $instanceConsequence;
                 }
-                $impactsConsequences[$keyConsequence] = $instanceConsequence;
+                $impactsConsequences[$instanceConsequence['scaleImpactType']-1] = $instanceConsequence;
             }
-
             //reinitialization keys
             $instanceConsequences = array_values($instanceConsequences);
-
             $headerImpact = false;
             foreach ($impacts as $keyImpact => $impact) {
                 $headerConsequence = false;
