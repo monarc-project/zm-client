@@ -23,7 +23,10 @@ class ApiConfigController extends AbstractController
      */
     public function getList()
     {
-        return new JsonModel($this->getService()->getLanguage());
+        return new JsonModel(array_merge(
+                                $this->getService()->getLanguage(),
+                                $this->getService()->getAppVersion())
+                            );
     }
 
     /**
