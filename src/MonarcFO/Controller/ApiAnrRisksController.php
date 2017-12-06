@@ -33,7 +33,7 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         $params = $this->parseParams();
 
         if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv');
+            header('Content-Type: text/csv; charset=utf-8');
             die($this->getService()->getCsvRisks($anrId, ['id' => $id], $params));
         } else {
             $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
@@ -56,7 +56,7 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         $params = $this->parseParams();
 
         if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv');
+            header('Content-Type: text/csv; charset=utf-8');
             die($this->getService()->getCsvRisks($anrId, null, $params));
         } else {
             $lst = $this->getService()->getRisks($anrId, null, $params);

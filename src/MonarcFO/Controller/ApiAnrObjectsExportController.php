@@ -43,8 +43,8 @@ class ApiAnrObjectsExportController extends ApiAnrAbstractController
 
         $headers = $response->getHeaders();
         $headers->clearHeaders()
-            ->addHeaderLine('Content-Type', 'text/plain; charset=utf-8')
-            ->addHeaderLine('Content-Disposition', 'attachment; filename="' . (empty($data['filename']) ? $data['id'] : $data['filename']) . '.bin"');
+            ->addHeaderLine('Content-Type', 'application/json; charset=utf-8')
+            ->addHeaderLine('Content-Disposition', 'attachment; filename="' . (empty($data['filename']) ? $data['id'] : $data['filename']) . '.json"');
 
         return $this->response;
     }
