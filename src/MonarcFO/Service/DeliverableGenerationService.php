@@ -1263,7 +1263,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $cellRowSpan)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $cellRowSpan)->addText($this->anrTranslate('Target risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeaderFont, $alignCenter);
 
             $table->addRow();
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $cellRowContinue);
@@ -1308,6 +1308,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $bgcolor = 'FFBC1C';
                     if (($recoRisk->instanceRisk->$risk == -1) || (!$recoRisk->threat->$impact)) {
                         $bgcolor = 'E7E6E6';
+                        $recoRisk->instanceRisk->$risk = null;
                     } else if ($recoRisk->instanceRisk->$risk <= $anr->seuil1) {
                         $bgcolor = 'D6F107';
                     } else if ($recoRisk->instanceRisk->$risk > $anr->seuil2) {
@@ -1438,7 +1439,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Target risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Residual risk'), $styleHeaderFont, $alignCenter);
         }
 
         $previousRecoId = null;
