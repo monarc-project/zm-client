@@ -8,6 +8,10 @@
 namespace MonarcFO\Service;
 
 use MonarcFO\Service\AbstractService;
+use MonarcFO\Model\Table\RecommandationHistoricTable;
+use MonarcFO\Model\Table\RecommandationTable;
+
+
 
 /**
  * This class is the service that handles the recommendation events history. This is a simple CRUD service.
@@ -17,4 +21,21 @@ class AnrRecommandationHistoricService extends \MonarcCore\Service\AbstractServi
 {
     protected $dependencies = ['anr'];
     protected $userAnrTable;
+    protected $recommandationHistoricTable;
+    protected $recommandationHistoricEntity;
+
+    /**
+     * Get Delivery Recommandations Risks
+     *
+     * @param $anrId
+     * @return array|bool
+     */
+
+    public function getDeliveryRecommandationsHistory($anrId) {
+        /** @var RecommandationHistoricTable $table */
+        $table = $this->get('table');
+        $recoRecords = $table->getEntityByFields(['anr' => $anrId], ['id' => 'ASC']);
+
+        return $recoRecords;
+    }
 }
