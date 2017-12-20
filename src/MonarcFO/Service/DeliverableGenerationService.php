@@ -1532,13 +1532,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
        $recommandationRiskService = $this->recommandationRiskService;
        $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->id);
 
-       //oder by recommandation position asc and importance desc
-       $recosRisks = [];
+       //keep the recommandation's order from the application
+       $recoLists = [];
        foreach($recosRisksNotOrdered as $key => $recoRisk) {
-           $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->id . '-' . $key;
-           $recosRisks[$newKey] = $recoRisk;
+          if (!in_array($recoRisk->recommandation,$recoLists))
+            $recoLists[$recoRisk->recommandation->position] = $recoRisk->recommandation;
        }
-       ksort($recosRisks,SORT_NUMERIC);
+       ksort($recoLists,SORT_NUMERIC);
 
        //css
        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
@@ -1568,30 +1568,30 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
        $previousRecoId = null;
 
        //$alreadySet = [];
-       foreach ($recosRisks as $recoRisk) {
+       foreach ($recoLists as $recoRisk) {
                $importance = '';
-               for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
+               for ($i = 0; $i <= ($recoRisk->importance - 1); $i++) {
                    $importance .= '●';
                }
 
-               if ($recoRisk->recommandation->duedate == null) {
+               if ($recoRisk->duedate == null) {
                    $recoDeadline = '';
                    }
                    else {
-                  $recoDeadline = $recoRisk->recommandation->duedate->format('d-m-Y');
+                  $recoDeadline = $recoRisk->duedate->format('d-m-Y');
                    }
 
                    $table->addRow(400);
                    $cellRecoName = $table -> addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleContentCell);
                    $cellRecoNameRun = $cellRecoName->addTextRun($styleContentCell);
-                   $cellRecoNameRun -> addText(_WT($recoRisk->recommandation->code) . '<w:br/>', $styleContentFontBold);
-                   $cellRecoNameRun -> addText(_WT($recoRisk->recommandation->description), $styleContentFont);
+                   $cellRecoNameRun -> addText(_WT($recoRisk->code) . '<w:br/>', $styleContentFontBold);
+                   $cellRecoNameRun -> addText(_WT($recoRisk->description), $styleContentFont);
                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCell)->addText($importance, $styleContentFontRed, $alignCenter);
-                   $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($recoRisk->recommandation->comment), $styleContentFont, $alignLeft);
-                   $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText(_WT($recoRisk->recommandation->responsable), $styleContentFont, $alignCenter);
+                   $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($recoRisk->comment), $styleContentFont, $alignLeft);
+                   $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText(_WT($recoRisk->responsable), $styleContentFont, $alignCenter);
                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($recoDeadline, $styleContentFont, $alignCenter);
 
-                 $previousRecoId = $recoRisk->recommandation->id;
+                 $previousRecoId = $recoRisk->id;
            }
 
        return $this->getWordXmlFromWordObject($tableWord);
