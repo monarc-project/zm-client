@@ -1556,7 +1556,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
        $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
        //header if array is not empty
-       if (count($recosRisks)) {
+       if (count($recoLists)) {
            $table->addRow(400, ['tblHeader' => true]);
            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Recommendation'), $styleHeaderFont, $alignCenter);
            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText($this->anrTranslate('Imp.'), $styleHeaderFont, $alignCenter);
