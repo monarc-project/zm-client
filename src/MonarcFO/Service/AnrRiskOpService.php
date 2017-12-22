@@ -245,4 +245,25 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         return parent::deleteFromAnr($id, $anrId);
     }
+
+    public function getCsvRisksOp($anrId, $instance=null, $params=[])
+    {
+      $risks = $this->getRisksOp($anrId, $instance, $params);
+
+      $output = '';
+      if (count($risks) > 0) {
+          // Fill in the header
+          $output .= implode(',', array_keys($risks[0])) . "\n";
+
+          // Fill in the lines then
+          foreach ($risks as $risk) {
+              $array_values = array_values($risk);
+              $output .= '"';
+              $output .= implode('","', str_replace('"', '\"', $array_values));
+              $output .= "\"\r\n";
+          }
+      }
+
+      return $output;
+    }
 }
