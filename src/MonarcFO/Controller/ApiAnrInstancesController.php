@@ -76,7 +76,9 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         /** @var InstanceService $service */
         $service = $this->getService();
         $entity = $service->getEntityByIdAndAnr($id, $anrId);
-
+        if ($this->params()->fromQuery('csv', false)) {
+            header('Content-Type: text/csv');
+            die($this->getService()->getCsvRisksOp($anrId, $entity, $params));}
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
