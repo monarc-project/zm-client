@@ -23,5 +23,6 @@ class AnrRiskOpServiceFactory extends \MonarcCore\Service\AbstractServiceFactory
         'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
+        'translateService' => 'MonarcCore\Service\TranslateService'
     ];
 }

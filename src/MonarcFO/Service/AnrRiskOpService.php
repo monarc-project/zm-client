@@ -27,6 +27,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $objectTable;
     protected $anrTable;
     protected $userAnrTable;
+    protected $translateService;
 
     /**
      * Helper method to find the specified string in the provided fields within the provided object. The search is
@@ -255,19 +256,81 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
      */
     public function getCsvRisksOp($anrId, $instance=null, $params=[])
     {
+      $translate = $this->get('translateService');
       $risks = $this->getRisksOp($anrId, $instance, $params);
+      $lang = $this->anrTable->getEntity($anrId)->language;
+      $ShowBrut = null;
+      if ($this->anrTable->getEntity($anrId)->showRolfBrut != 0) {
+        $ShowBrut = '1';
+      }
 
       $output = '';
       if (count($risks) > 0) {
-          // Fill in the header
-          $output .= implode(',', array_keys($risks[0])) . "\n";
+          $fields_1 = [
+              'instanceInfos' => $translate->translate('Asset', $lang),
+              'label'. $lang => $translate->translate('Risk description', $lang),
+              ];
+          if ($ShowBrut == 1){
+          $fields_2 = [
+              'brutProb' =>  $translate->translate('Prob.', $lang) . "(" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutR' => 'R' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutO' => 'O' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutL' => 'L' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutF' => 'F' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutF' => 'P' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'cacheBrutRisk' => $translate->translate('Current risk', $lang) . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              ];
+          }
+          else {
+            $fields_2 = [];
+          }
+          $fields_3 = [
+              'netProb' => $translate->translate('Prob.', $lang) . "(" . $translate->translate('Net risk', $lang) . ")",
+              'netR' => 'R' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netO' => 'O' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netL' => 'L' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netF' => 'F' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netF' => 'P' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'cacheNetRisk' => $translate->translate('Current risk', $lang) . " (" . $translate->translate('Net risk', $lang) . ")",
+              'comment' => $translate->translate('Existing controls', $lang),
+              'kindOfMeasure' => $translate->translate('Treatment', $lang),
+              'cacheTargetedRisk' => $translate->translate('Residual risk', $lang),
+              ];
+          $fields = $fields_1 + $fields_2 + $fields_3;
 
-          // Fill in the lines then
+        // Fill in the headers
+          $output .= implode(',', array_values($fields)) . "\n";
           foreach ($risks as $risk) {
-              $array_values = array_values($risk);
-              $output .= '"';
-              $output .= implode('","', str_replace('"', '\"', $array_values));
-              $output .= "\"\r\n";
+          foreach ($fields as $k => $v) {
+              if ($k == 'kindOfMeasure'){
+                  switch ($risk[$k]) {
+                    case 1:
+                        $array_values[] = 'Reduction';
+                        break;
+                    case 2:
+                        $array_values[] = 'Denied';
+                        break;
+                    case 3:
+                        $array_values[] = 'Accepted';
+                        break;
+                    default:
+                      $array_values[] = 'Not treated';
+                  }
+                }
+                elseif ($k == 'instanceInfos') {
+                  $array_values[] = $risk[$k]['name' . $lang];
+                }
+                elseif ($risk[$k] == '-1'){
+                  $array_values[] = null;
+                }
+                else {
+                  $array_values[] = $risk[$k];
+                }
+            }
+          $output .= '"';
+          $output .= implode('","', str_replace('"', '\"', $array_values));
+          $output .= "\"\r\n";
+          $array_values = null;
           }
       }
 
