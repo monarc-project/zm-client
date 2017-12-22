@@ -259,10 +259,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
       $translate = $this->get('translateService');
       $risks = $this->getRisksOp($anrId, $instance, $params);
       $lang = $this->anrTable->getEntity($anrId)->language;
-      $ShowBrut = null;
-      if ($this->anrTable->getEntity($anrId)->showRolfBrut != 0) {
-        $ShowBrut = '1';
-      }
+      $ShowBrut = $this->anrTable->getEntity($anrId)->showRolfBrut;
 
       $output = '';
       if (count($risks) > 0) {
