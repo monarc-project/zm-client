@@ -62,7 +62,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         $instances = [];
         if ($instance) {
-            $instanceEntity = $instanceTable->getEntity($instance['id']);
+            $instanceEntity = $instanceTable->getEntity($instance);
             $instances[] = $instanceEntity->id;
 
             // Get children instances
@@ -246,6 +246,13 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         return parent::deleteFromAnr($id, $anrId);
     }
 
+    /**
+     * Return a csv containing the operational risks
+     * @param int $anrId The ANR ID
+     * @param array|null $instance The instance data array, or null to not filter by instance
+     * @param array $params Eventual filters on kindOfMeasure, keywords, thresholds
+     * @return a string with all the data CV formated
+     */
     public function getCsvRisksOp($anrId, $instance=null, $params=[])
     {
       $risks = $this->getRisksOp($anrId, $instance, $params);
