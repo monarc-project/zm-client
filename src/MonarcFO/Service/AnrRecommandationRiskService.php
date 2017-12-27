@@ -636,6 +636,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         /** @var RecommandationHistoricTable $recoHistoTable */
         $recoHistoTable = $this->get('recommandationHistoricTable');
+        $lang = $this->anrTable->getEntity($anr)->language;
 
         $histo = [
             'final' => $final,
@@ -646,12 +647,12 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             'recoComment' => $reco->get('comment'),
             'recoDuedate' => $reco->get('duedate'),
             'recoResponsable' => $reco->get('responsable'),
-            'riskInstance' => $instanceRisk->get('instance')->get('name1'),
+            'riskInstance' => $instanceRisk->get('instance')->get('name' . $lang),
             'riskInstanceContext' => $anrInstanceService->getDisplayedAscendance($instanceRisk->get('instance')),
-            'riskAsset' => $instanceRisk->get('asset')->get('label1'),
-            'riskThreat' => $instanceRisk->get('threat')->get('label1'),
+            'riskAsset' => $instanceRisk->get('asset')->get('label' . $lang),
+            'riskThreat' => $instanceRisk->get('threat')->get('label' . $lang),
             'riskThreatVal' => $instanceRisk->get('threatRate'),
-            'riskVul' => $instanceRisk->get('vulnerability')->get('label1'),
+            'riskVul' => $instanceRisk->get('vulnerability')->get('label' . $lang),
             'riskVulValBefore' => $instanceRisk->get('vulnerabilityRate'),
             'riskVulValAfter' => ($final) ? max(0, $instanceRisk->get('vulnerabilityRate') - $instanceRisk->get('reductionAmount')) : $instanceRisk->get('vulnerabilityRate'),
             'riskKindOfMeasure' => $instanceRisk->get('kindOfMeasure'),
