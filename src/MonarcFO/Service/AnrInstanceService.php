@@ -701,6 +701,20 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         } else if (isset($data['type']) && $data['type'] == 'anr' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()
         ) {
+
+          // Method information
+
+            $anrTable = $this->get('anrTable');
+            foreach ($data['method'] as $key) {
+              foreach ($key as $k => $v ) {
+                if (is_null($anr->get($k)) || $anr->get($k) === 0 ) {
+                  $anr->set($k,$v);
+                }
+              }
+            }
+            $anrTable->save($anr);
+
+
             $first = true;
             $instanceIds = [];
             foreach ($data['instances'] as $inst) {
