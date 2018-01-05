@@ -33,5 +33,7 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'scaleImpactTypeTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
         'scaleCommentTable' => 'MonarcFO\Model\Table\ScaleCommentTable',
         'instanceService' => 'MonarcFO\Service\AnrInstanceService',
+        'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
+        'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
     ];
 }

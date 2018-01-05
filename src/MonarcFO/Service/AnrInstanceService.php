@@ -20,6 +20,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 {
     /** @var UserAnrTable */
     protected $userAnrTable;
+    protected $questionTable;
+    protected $questionChoiceTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -703,17 +705,57 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         ) {
 
           // Method information
-
-            $anrTable = $this->get('anrTable');
-            foreach ($data['method'] as $key) {
-              foreach ($key as $k => $v ) {
-                if (is_null($anr->get($k)) || $anr->get($k) === 0 ) {
-                  $anr->set($k,$v);
-                }
+          if (!empty($data['method'])) {
+              if (!empty($data['method']['questions'])) {
+                    $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
+                    $nbQuestions= count($data['method']['questions']);
+                    $pos = 1;
+                    foreach ($questions as $q) {
+                      if ($q->get('label' . $this->getLanguage()) == $data['method']['questions'][$pos]['label' . $this->getLanguage()] && $pos <= $nbQuestions) {
+                        $q->response = $data['method']['questions'][$pos]['response'];
+                        $this->get('questionTable')->save($q,($pos == $nbQuestions));
+                        $pos++;
+                      }
+                    }
+                    while ($pos <= $nbQuestions) {
+                      $class = $this->get('questionTable')->getClass();
+                      $newQuestion = new $class();
+                      $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
+                      $newQuestion->setLanguage($this->getLanguage());
+                      $newQuestion->exchangeArray([
+                        'anr' => $anr->get('id'),
+                        'label' . $this->getLanguage() => $data['method']['questions'][$pos]['label' . $this->getLanguage()],
+                        'mode' => $data['method']['questions'][$pos]['mode'],
+                        'type' => 1,
+                        'response' => $data['method']['questions'][$pos]['response'],
+                        'multichoice' => $data['method']['questions'][$pos]['multichoice'],
+                      ]);
+                      $newQuestion->set('position',$pos);
+                      $this->setDependencies($newQuestion, ['anr']);
+                      $this->get('questionTable')->save($newQuestion,($pos == $nbQuestions));
+                      $pos++;
+                    }
               }
-            }
-            $anrTable->save($anr);
+              if (!empty($data['method']['steps'])) {
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['steps'] as $key => $v) {
+                    if ($anr->get($key) === 0 ) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                    }
+                  }
+              }
+              if (!empty($data['method']['data'])) {
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['data'] as $key => $v) {
+                    if (is_null($anr->get($key)) ) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                    }
+                  }
+              }
 
+          }
 
             $first = true;
             $instanceIds = [];
