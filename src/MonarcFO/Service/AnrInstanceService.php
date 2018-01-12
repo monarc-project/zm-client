@@ -810,36 +810,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 $pos++;
               }
           }
-          if (!empty($data['scalesComments'])) { // Scales comments
-                $pos = 1;
-                foreach ($data['scalesComments'] as $sc) {
-                    $scIds[$pos] = $sc['id'];
-                    $pos++;
-                }
-                $scaleComment = $this->get('scaleCommentTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
-                foreach ($scaleComment as $sc) {
-                  $this->get('scaleCommentTable')->delete($sc->id);
-                }
-                $nbComment= count($data['scalesComments']);
-
-                for ($pos=1; $pos <= $nbComment; $pos++) {
-                  $scale = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id, 'type' => $data['scalesComments'][$scIds[$pos]]['scale']['type']]);
-                  foreach ($scale as $s) {
-                    $sId = $s->get('id');
-                  }
-                  $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id, 'type' => $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['type']]);
-                  foreach ($scaleImpactType as $si) {
-                    $siId = $si->get('id');
-                  }
-
-                  $toExchange = $data['scalesComments'][$scIds[$pos]];
-                  $toExchange['anr'] = $anr->get('id');
-                  $toExchange['scale'] = $sId;
-                  $toExchange['scaleImpactType'] = $siId;
-                  $this->get('scaleCommentService')->create($toExchange);
-                }
-          }
-
 
             $first = true;
             $instanceIds = [];
@@ -856,7 +826,38 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $instanceIds[] = $instanceId;
                 }
             }
+            if (!empty($data['scalesComments'])) { // Scales comments
+                  $pos = 1;
+                  foreach ($data['scalesComments'] as $sc) {
+                      $scIds[$pos] = $sc['id'];
+                      $pos++;
+                  }
+                  $scaleComment = $this->get('scaleCommentTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
+                  foreach ($scaleComment as $sc) {
+                    $this->get('scaleCommentTable')->delete($sc->id);
+                  }
+                  $nbComment= count($data['scalesComments']);
+
+                  for ($pos=1; $pos <= $nbComment; $pos++) {
+                    $scale = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id, 'type' => $data['scalesComments'][$scIds[$pos]]['scale']['type']]);
+                    foreach ($scale as $s) {
+                      $sId = $s->get('id');
+                    }
+                    $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id, 'position' => $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position']]);
+                      foreach ($scaleImpactType as $si) {
+                        $siId = $si->get('id');
+                      }
+
+                    $toExchange = $data['scalesComments'][$scIds[$pos]];
+                    $toExchange['anr'] = $anr->get('id');
+                    $toExchange['scale'] = $sId;
+                    $toExchange['scaleImpactType'] = $siId;
+                    $this->get('scaleCommentService')->create($toExchange);
+                  }
+            }
+
             return $instanceIds;
+
         }
         return false;
     }
