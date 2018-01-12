@@ -33,6 +33,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'recommandationTable' => 'MonarcFO\Model\Table\RecommandationTable',
         'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
         'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
+        'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
 
         // Services
         'instanceConsequenceService' => 'MonarcFO\Service\AnrInstanceConsequenceService',
@@ -45,5 +46,6 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         // Export (Services)
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',
         'amvService' => 'MonarcFO\Service\AmvService',
+        'scaleCommentService' => 'MonarcFO\Service\AnrScaleCommentService',
     ];
 }

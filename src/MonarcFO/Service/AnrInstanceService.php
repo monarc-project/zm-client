@@ -22,6 +22,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $userAnrTable;
     protected $questionTable;
     protected $questionChoiceTable;
+    protected $threatTable;
+    protected $scaleCommentTable;
+    protected $scaleTable;
+    protected $scaleCommentService;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -705,8 +709,33 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         ) {
 
           // Method information
-          if (!empty($data['method'])) {
-              if (!empty($data['method']['questions'])) {
+          if (!empty($data['method'])) { //Steps checkboxes
+              if (!empty($data['method']['steps'])) {
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['steps'] as $key => $v) {
+                    if ($anr->get($key) === 0 ) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                    }
+                  }
+              }
+              if (!empty($data['method']['data'])) { //Data of textboxes
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['data'] as $key => $v) {
+                    if (is_null($anr->get($key)) ) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                    }
+                  }
+              }
+              if (!empty($data['method']['thresholds'])) { // Value of thresholds
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['thresholds'] as $key => $v) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                  }
+              }
+              if (!empty($data['method']['questions'])) { // Questions of trends evaluation
                     $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
                     $nbQuestions= count($data['method']['questions']);
                     $pos = 1;
@@ -717,45 +746,100 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $pos++;
                       }
                     }
-                    while ($pos <= $nbQuestions) {
+                    while ($pos <= $nbQuestions) { // Question creation if not exist
+                      $toExchange = $data['method']['questions'][$pos];
+                      $toExchange['anr'] = $anr->get('id');
+                      $toExchange['type'] = 1;
                       $class = $this->get('questionTable')->getClass();
                       $newQuestion = new $class();
                       $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
                       $newQuestion->setLanguage($this->getLanguage());
-                      $newQuestion->exchangeArray([
-                        'anr' => $anr->get('id'),
-                        'label' . $this->getLanguage() => $data['method']['questions'][$pos]['label' . $this->getLanguage()],
-                        'mode' => $data['method']['questions'][$pos]['mode'],
-                        'type' => 1,
-                        'response' => $data['method']['questions'][$pos]['response'],
-                        'multichoice' => $data['method']['questions'][$pos]['multichoice'],
-                      ]);
+                      $newQuestion->exchangeArray($toExchange);
                       $newQuestion->set('position',$pos);
                       $this->setDependencies($newQuestion, ['anr']);
                       $this->get('questionTable')->save($newQuestion,($pos == $nbQuestions));
                       $pos++;
                     }
               }
-              if (!empty($data['method']['steps'])) {
-                  $anrTable = $this->get('anrTable');
-                  foreach ($data['method']['steps'] as $key => $v) {
-                    if ($anr->get($key) === 0 ) {
-                      $anr->set($key,$v);
-                      $anrTable->save($anr);
+              if (!empty($data['method']['threats'])) { // Evaluation of threats
+                    $pos = 1;
+                    foreach ($data['method']['threats'] as $t) {
+                        $tIds[$pos] = $t['id'];
+                        $pos++;
                     }
-                  }
-              }
-              if (!empty($data['method']['data'])) {
-                  $anrTable = $this->get('anrTable');
-                  foreach ($data['method']['data'] as $key => $v) {
-                    if (is_null($anr->get($key)) ) {
-                      $anr->set($key,$v);
-                      $anrTable->save($anr);
+                    $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
+                    $nbThreats= count($data['method']['threats']);
+                    $pos = 1;
+                    foreach ($threats as $t) {
+                      if ($t->get('code') == $data['method']['threats'][$tIds[$pos]]['code']) {
+                        $t->comment = $data['method']['threats'][$tIds[$pos]]['comment'];
+                        $t->trend = $data['method']['threats'][$tIds[$pos]]['trend'];
+                        $t->qualification = $data['method']['threats'][$tIds[$pos]]['qualification'];
+                        $this->get('threatTable')->save($t,($pos == $nbThreats));
+                        $pos++;
+                      }
                     }
-                  }
+                    for ($pos=$pos; $pos <= $nbThreats; $pos++) {
+                      $toExchange = $data['method']['threats'][$tIds[$pos]];
+                      $toExchange['anr'] = $anr->get('id');
+                      $toExchange['mode'] = 0;
+                      $toExchange['theme'] = null;
+                      $class = $this->get('threatTable')->getClass();
+                      $newThreat = new $class();
+                      $newThreat->setDbAdapter($this->get('threatTable')->getDb());
+                      $newThreat->setLanguage($this->getLanguage());
+                      $newThreat->exchangeArray($toExchange);
+                      $this->setDependencies($newThreat, ['anr']);
+                      $this->get('threatTable')->save($newThreat,($pos == $nbThreats));
+                    }
               }
-
           }
+          if (!empty($data['scales'])) {
+            $pos = 1;
+            foreach ($data['scales'] as $s) {
+                $sIds[$pos] = $s['type'];
+                $pos++;
+            }
+              $pos = 1;
+              $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id],['type' => 'ASC']);
+              foreach ($scales as $s) {
+                if ($s->type == $data['scales'][$sIds[$pos]]['type']) {
+                  $s->min = $data['scales'][$sIds[$pos]]['min'];
+                  $s->max = $data['scales'][$sIds[$pos]]['max'];
+                }
+                $pos++;
+              }
+          }
+          if (!empty($data['scalesComments'])) { // Scales comments
+                $pos = 1;
+                foreach ($data['scalesComments'] as $sc) {
+                    $scIds[$pos] = $sc['id'];
+                    $pos++;
+                }
+                $scaleComment = $this->get('scaleCommentTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
+                foreach ($scaleComment as $sc) {
+                  $this->get('scaleCommentTable')->delete($sc->id);
+                }
+                $nbComment= count($data['scalesComments']);
+
+                for ($pos=1; $pos <= $nbComment; $pos++) {
+                  $scale = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id, 'type' => $data['scalesComments'][$scIds[$pos]]['scale']['type']]);
+                  foreach ($scale as $s) {
+                    $sId = $s->get('id');
+                  }
+                  $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id, 'type' => $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['type']]);
+                  foreach ($scaleImpactType as $si) {
+                    $siId = $si->get('id');
+                  }
+
+                  $toExchange = $data['scalesComments'][$scIds[$pos]];
+                  $toExchange['anr'] = $anr->get('id');
+                  $toExchange['scale'] = $sId;
+                  $toExchange['scaleImpactType'] = $siId;
+                  $this->get('scaleCommentService')->create($toExchange);
+                }
+          }
+
 
             $first = true;
             $instanceIds = [];

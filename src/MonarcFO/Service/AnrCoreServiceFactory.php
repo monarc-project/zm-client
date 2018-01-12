@@ -35,5 +35,6 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'instanceService' => 'MonarcFO\Service\AnrInstanceService',
         'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
         'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
+        'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
     ];
 }
