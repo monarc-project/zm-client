@@ -73,6 +73,8 @@ return array(
     'MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory' => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecommandationsRisksValidateControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRisksController'                               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksController.php',
     'MonarcFO\Controller\ApiAnrRisksControllerFactory'                        => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrRisksDashboardController'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksDashboardController.php',
+    'MonarcFO\Controller\ApiAnrRisksDashboardControllerFactory'               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksDashboardControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRisksOpController'                             => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksOpController.php',
     'MonarcFO\Controller\ApiAnrRisksOpControllerFactory'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksOpControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRolfRisksController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRolfRisksController.php',

@@ -471,6 +471,15 @@ return array(
                             ),
                         ),
                     ),
+                    'dashboard' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'risks-dashboard[/:id]',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRisksDashboard',
+                            ),
+                        ),
+                    ),
                     'risks_op' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -729,6 +738,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrScalesComments' => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
             '\MonarcFO\Controller\ApiAnrCartoRisks' => '\MonarcFO\Controller\ApiAnrCartoRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisks' => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRisksDashboard' => '\MonarcFO\Controller\ApiAnrRisksDashboardControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisksOp' => '\MonarcFO\Controller\ApiAnrRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibrary' => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibraryCategory' => '\MonarcFO\Controller\ApiAnrLibraryCategoryControllerFactory',
@@ -965,6 +975,7 @@ return array(
             'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/risks',
             'monarc_api_global_client_anr/risks_op',
+            'monarc_api_global_client_anr/dashboard',
             'monarc_api_global_client_anr/amvs',
             'monarc_api_client_anr',
             'monarc_api_global_client_anr/assets',
