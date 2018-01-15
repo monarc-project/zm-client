@@ -27,6 +27,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $scaleTable;
     protected $scaleCommentService;
     protected $interviewTable;
+    protected $themeTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -797,29 +798,52 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $pos++;
                     }
                     $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
-                    $nbThreats= count($data['method']['threats']);
-                    $pos = 1;
                     foreach ($threats as $t) {
-                      if ($t->get('code') == $data['method']['threats'][$tIds[$pos]]['code']) {
-                        $t->comment = $data['method']['threats'][$tIds[$pos]]['comment'];
-                        $t->trend = $data['method']['threats'][$tIds[$pos]]['trend'];
-                        $t->qualification = $data['method']['threats'][$tIds[$pos]]['qualification'];
-                        $this->get('threatTable')->save($t,($pos == $nbThreats));
-                        $pos++;
-                      }
+                    $this->get('threatTable')->delete($t->id);
                     }
-                    for ($pos=$pos; $pos <= $nbThreats; $pos++) {
-                      $toExchange = $data['method']['threats'][$tIds[$pos]];
-                      $toExchange['anr'] = $anr->get('id');
-                      $toExchange['mode'] = 0;
-                      $toExchange['theme'] = null;
-                      $class = $this->get('threatTable')->getClass();
-                      $newThreat = new $class();
-                      $newThreat->setDbAdapter($this->get('threatTable')->getDb());
-                      $newThreat->setLanguage($this->getLanguage());
-                      $newThreat->exchangeArray($toExchange);
-                      $this->setDependencies($newThreat, ['anr']);
-                      $this->get('threatTable')->save($newThreat,($pos == $nbThreats));
+
+                    $nbThreats= count($data['method']['threats']);
+
+                    for ($pos=1; $pos <= $nbThreats; $pos++) {
+                      $themes = $this->get('themeTable')->getEntityByFields(['anr' => $anr->id, 'label' . $this->getLanguage() => $data['method']['threats'][$tIds[$pos]]['theme']['label' . $this->getLanguage()]],['id' => 'ASC']);
+                      if (empty($themes)) { // Creation of new theme
+                        $toExchange = $data['method']['threats'][$tIds[$pos]]['theme'];
+                        $toExchange['anr'] = $anr->get('id');
+                        $class = $this->get('themeTable')->getClass();
+                        $newTheme = new $class();
+                        $newTheme->setDbAdapter($this->get('themeTable')->getDb());
+                        $newTheme->setLanguage($this->getLanguage());
+                        $newTheme->exchangeArray($toExchange);
+                        $this->setDependencies($newTheme, ['anr']);
+                        $this->get('themeTable')->save($newTheme);
+
+                        $toExchange = $data['method']['threats'][$tIds[$pos]]; //Match with threat
+                        $toExchange['anr'] = $anr->get('id');
+                        $toExchange['mode'] = 0;
+                        $toExchange['theme'] = $newTheme->id;
+                        $class = $this->get('threatTable')->getClass();
+                        $newThreat = new $class();
+                        $newThreat->setDbAdapter($this->get('threatTable')->getDb());
+                        $newThreat->setLanguage($this->getLanguage());
+                        $newThreat->exchangeArray($toExchange);
+                        $this->setDependencies($newThreat, ['anr', 'theme']);
+                        $this->get('threatTable')->save($newThreat);
+                        } else {
+                        $toExchange = $data['method']['threats'][$tIds[$pos]];
+                        $toExchange['anr'] = $anr->get('id');
+                        $toExchange['mode'] = 0;
+                          foreach ($themes as $th) {
+                            $thId = $th->get('id');
+                          }
+                        $toExchange['theme'] = $thId;
+                        $class = $this->get('threatTable')->getClass();
+                        $newThreat = new $class();
+                        $newThreat->setDbAdapter($this->get('threatTable')->getDb());
+                        $newThreat->setLanguage($this->getLanguage());
+                        $newThreat->exchangeArray($toExchange);
+                        $this->setDependencies($newThreat, ['anr', 'theme']);
+                        $this->get('threatTable')->save($newThreat,($pos == $nbThreats));
+                      }
                     }
               }
           }
