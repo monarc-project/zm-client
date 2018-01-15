@@ -26,6 +26,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $scaleCommentTable;
     protected $scaleTable;
     protected $scaleCommentService;
+    protected $interviewTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -726,6 +727,19 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       $anr->set($key,$v);
                       $anrTable->save($anr);
                     }
+                  }
+              }
+              if (!empty($data['method']['interviews'])) { //Data of interviews
+                  foreach ($data['method']['interviews'] as $key => $v) {
+                    $toExchange = $data['method']['interviews'][$key];
+                    $toExchange['anr'] = $anr->get('id');
+                    $class = $this->get('interviewTable')->getClass();
+                    $newInterview = new $class();
+                    $newInterview->setDbAdapter($this->get('interviewTable')->getDb());
+                    $newInterview->setLanguage($this->getLanguage());
+                    $newInterview->exchangeArray($toExchange);
+                    $this->setDependencies($newInterview, ['anr']);
+                    $this->get('interviewTable')->save($newInterview);
                   }
               }
               if (!empty($data['method']['thresholds'])) { // Value of thresholds

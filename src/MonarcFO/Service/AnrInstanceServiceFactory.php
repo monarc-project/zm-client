@@ -34,6 +34,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
         'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
+        'interviewTable' => 'MonarcFO\Model\Table\InterviewTable',
 
         // Services
         'instanceConsequenceService' => 'MonarcFO\Service\AnrInstanceConsequenceService',
