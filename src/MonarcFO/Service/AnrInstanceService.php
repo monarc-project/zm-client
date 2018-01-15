@@ -740,8 +740,23 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $nbQuestions= count($data['method']['questions']);
                     $pos = 1;
                     foreach ($questions as $q) {
-                      if ($q->get('label' . $this->getLanguage()) == $data['method']['questions'][$pos]['label' . $this->getLanguage()] && $pos <= $nbQuestions) {
-                        $q->response = $data['method']['questions'][$pos]['response'];
+                      if ($q->multichoice == 0){
+                        if ($q->get('label' . $this->getLanguage()) == $data['method']['questions'][$pos]['label' . $this->getLanguage()] && $pos <= $nbQuestions) {
+                          $q->response = $data['method']['questions'][$pos]['response'];
+                          $this->get('questionTable')->save($q,($pos == $nbQuestions));
+                          $pos++;
+                        }
+                      } else { // Match Multichoice responses
+                        $replace = ["[","]"];
+                        $OriginQc = preg_split("/[,]/",str_replace($replace,"",$data['method']['questions'][$pos]['response']));
+                        foreach ($OriginQc as $qc ) {
+                          $DestQc[$qc] = $data['method']['questionChoice'][$qc];
+                          $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
+                          foreach ($questionChoices as $qc) {
+                            $NewQcIds .= $qc->get('id') . ",";
+                          }
+                        }
+                        $q->response = "[". substr($NewQcIds,0,-1) . "]";
                         $this->get('questionTable')->save($q,($pos == $nbQuestions));
                         $pos++;
                       }
