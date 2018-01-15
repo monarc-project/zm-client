@@ -764,8 +764,23 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       } else { // Match Multichoice responses
                         $replace = ["[","]"];
                         $OriginQc = preg_split("/[,]/",str_replace($replace,"",$data['method']['questions'][$pos]['response']));
+
                         foreach ($OriginQc as $qc ) {
                           $DestQc[$qc] = $data['method']['questionChoice'][$qc];
+                          $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
+                          if (empty($questionChoices)) {
+                            $toExchange = $data['method']['questionChoice'][$qc];
+                            $toExchange['anr'] = $anr->get('id');
+                            $toExchange['position'] = \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_END;
+                            $toExchange['question'] = $q->get('id');
+                            $class = $this->get('questionChoiceTable')->getClass();
+                            $newQuestionChoice = new $class();
+                            $newQuestionChoice->setDbAdapter($this->get('questionChoiceTable')->getDb());
+                            $newQuestionChoice->setLanguage($this->getLanguage());
+                            $newQuestionChoice->exchangeArray($toExchange);
+                            $this->setDependencies($newQuestionChoice, ['anr', 'question']);
+                            $this->get('questionChoiceTable')->save($newQuestionChoice);
+                          }
                           $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
                           foreach ($questionChoices as $qc) {
                             $NewQcIds .= $qc->get('id') . ",";
