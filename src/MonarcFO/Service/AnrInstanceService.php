@@ -764,10 +764,69 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $this->get('deliveryTable')->save($newDelivery);
                   }
               }
+
               if (!empty($data['method']['questions'])) { // Questions of trends evaluation
                     $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
+                    foreach ($questions as $q) {
+                    $this->get('questionTable')->delete($q->id);
+                    }
+
                     $nbQuestions= count($data['method']['questions']);
-                    $pos = 1;
+                    $nbQuestionChoices = count($data['method']['questionChoice']);
+
+                    foreach ($data['method']['questions'] as $q => $v) {
+
+                      if ($data['method']['questions'][$q]['multichoice'] == 0){
+
+                        $toExchange = $data['method']['questions'][$q];
+                        $toExchange['anr'] = $anr->get('id');
+                        $class = $this->get('questionTable')->getClass();
+                        $newQuestion = new $class();
+                        $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
+                        $newQuestion->setLanguage($this->getLanguage());
+                        $newQuestion->exchangeArray($toExchange);
+                        $newQuestion->set('position',$q);
+                        $this->setDependencies($newQuestion, ['anr']);
+                        $this->get('questionTable')->save($newQuestion,($q == $nbQuestions));
+                      } else { // Multichoice questions
+                        $OldIdQuestion = $data['method']['questions'][$q]['id'];
+                        $toExchange = $data['method']['questions'][$q];
+                        $toExchange['anr'] = $anr->get('id');
+                        $class = $this->get('questionTable')->getClass();
+                        $newQuestion = new $class();
+                        $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
+                        $newQuestion->setLanguage($this->getLanguage());
+                        $newQuestion->exchangeArray($toExchange);
+                        $newQuestion->set('position',$q);
+                        $this->setDependencies($newQuestion, ['anr']);
+                        $this->get('questionTable')->save($newQuestion);
+
+                        foreach ($data['method']['questionChoice'] as $qc => $v ) {
+
+                          $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id, 'label' . $this->getLanguage() => $data['method']['questionChoice'][$qc]['label' . $this->getLanguage()]]);
+
+                          if (empty($questionChoices)) { // Link responses releated to multichoice question
+                            if ($data['method']['questionChoice'][$qc]['question'] == $OldIdQuestion) {
+                                $toExchange = $data['method']['questionChoice'][$qc];
+                                $toExchange['anr'] = $anr->get('id');
+                                $toExchange['position'] = \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_END;
+                                $toExchange['question'] = $newQuestion->id;
+                                $class = $this->get('questionChoiceTable')->getClass();
+                                $newQuestionChoice = new $class();
+                                $newQuestionChoice->setDbAdapter($this->get('questionChoiceTable')->getDb());
+                                $newQuestionChoice->setLanguage($this->getLanguage());
+                                $newQuestionChoice->exchangeArray($toExchange);
+                                $this->setDependencies($newQuestionChoice, ['anr', 'question']);
+                                $this->get('questionChoiceTable')->save($newQuestionChoice);
+                            }
+                          }
+                        }
+                      }
+                    }
+
+                    $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
+
+                    for ($pos=1; $pos <= $nbQuestions; $pos++) {
                     foreach ($questions as $q) {
                       if ($q->multichoice == 0){
                         if ($q->get('label' . $this->getLanguage()) == $data['method']['questions'][$pos]['label' . $this->getLanguage()] && $pos <= $nbQuestions) {
@@ -778,23 +837,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       } else { // Match Multichoice responses
                         $replace = ["[","]"];
                         $OriginQc = preg_split("/[,]/",str_replace($replace,"",$data['method']['questions'][$pos]['response']));
+                        $NewQcIds = null;
 
                         foreach ($OriginQc as $qc ) {
                           $DestQc[$qc] = $data['method']['questionChoice'][$qc];
-                          $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
-                          if (empty($questionChoices)) {
-                            $toExchange = $data['method']['questionChoice'][$qc];
-                            $toExchange['anr'] = $anr->get('id');
-                            $toExchange['position'] = \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_END;
-                            $toExchange['question'] = $q->get('id');
-                            $class = $this->get('questionChoiceTable')->getClass();
-                            $newQuestionChoice = new $class();
-                            $newQuestionChoice->setDbAdapter($this->get('questionChoiceTable')->getDb());
-                            $newQuestionChoice->setLanguage($this->getLanguage());
-                            $newQuestionChoice->exchangeArray($toExchange);
-                            $this->setDependencies($newQuestionChoice, ['anr', 'question']);
-                            $this->get('questionChoiceTable')->save($newQuestionChoice);
-                          }
                           $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
                           foreach ($questionChoices as $qc) {
                             $NewQcIds .= $qc->get('id') . ",";
@@ -805,20 +851,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $pos++;
                       }
                     }
-                    while ($pos <= $nbQuestions) { // Question creation if not exist
-                      $toExchange = $data['method']['questions'][$pos];
-                      $toExchange['anr'] = $anr->get('id');
-                      $toExchange['type'] = 1;
-                      $class = $this->get('questionTable')->getClass();
-                      $newQuestion = new $class();
-                      $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
-                      $newQuestion->setLanguage($this->getLanguage());
-                      $newQuestion->exchangeArray($toExchange);
-                      $newQuestion->set('position',$pos);
-                      $this->setDependencies($newQuestion, ['anr']);
-                      $this->get('questionTable')->save($newQuestion,($pos == $nbQuestions));
-                      $pos++;
-                    }
+                  }
               }
               if (!empty($data['method']['threats'])) { // Evaluation of threats
                     $pos = 1;
@@ -925,6 +958,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             }
             if (!empty($data['scalesComments'])) { // Scales comments
                   $pos = 1;
+                  $siId = null;
+                  $scIds = null;
+                  $sId = null;
+
                   foreach ($data['scalesComments'] as $sc) {
                       $scIds[$pos] = $sc['id'];
                       $pos++;
