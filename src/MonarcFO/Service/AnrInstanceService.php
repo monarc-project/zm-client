@@ -772,7 +772,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     }
 
                     $nbQuestions= count($data['method']['questions']);
-                    $nbQuestionChoices = count($data['method']['questionChoice']);
 
                     foreach ($data['method']['questions'] as $q => $v) {
 
@@ -787,7 +786,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $newQuestion->exchangeArray($toExchange);
                         $newQuestion->set('position',$q);
                         $this->setDependencies($newQuestion, ['anr']);
-                        $this->get('questionTable')->save($newQuestion,($q == $nbQuestions));
+                        $this->get('questionTable')->save($newQuestion);
                       } else { // Multichoice questions
                         $OldIdQuestion = $data['method']['questions'][$q]['id'];
                         $toExchange = $data['method']['questions'][$q];
@@ -801,15 +800,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $this->setDependencies($newQuestion, ['anr']);
                         $this->get('questionTable')->save($newQuestion);
 
-                        foreach ($data['method']['questionChoice'] as $qc => $v ) {
-
-                          $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id, 'label' . $this->getLanguage() => $data['method']['questionChoice'][$qc]['label' . $this->getLanguage()]]);
-
-                          if (empty($questionChoices)) { // Link responses releated to multichoice question
+                        foreach ($data['method']['questionChoice'] as $qc => $v ) { //Creation of Multichoice responses
                             if ($data['method']['questionChoice'][$qc]['question'] == $OldIdQuestion) {
                                 $toExchange = $data['method']['questionChoice'][$qc];
                                 $toExchange['anr'] = $anr->get('id');
-                                $toExchange['position'] = \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_END;
                                 $toExchange['question'] = $newQuestion->id;
                                 $class = $this->get('questionChoiceTable')->getClass();
                                 $newQuestionChoice = new $class();
@@ -819,7 +813,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 $this->setDependencies($newQuestionChoice, ['anr', 'question']);
                                 $this->get('questionChoiceTable')->save($newQuestionChoice);
                             }
-                          }
                         }
                       }
                     }
