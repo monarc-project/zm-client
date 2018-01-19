@@ -503,10 +503,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         'netO',
                         'netL',
                         'netF',
+                        'netP',
                         'targetedR',
                         'targetedO',
                         'targetedL',
                         'targetedF',
+                        'targetedP',
                     ],
                 ];
                 $toInit = [];
@@ -516,6 +518,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutO';
                     $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutL';
                     $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutF';
+                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutP';
                 } else {
                     $toInit = [
                         'brutProb',
@@ -523,6 +526,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         'brutO',
                         'brutL',
                         'brutF',
+                        'brutP',
                     ];
                 }
                 foreach ($data['risksop'] as $ro) {
@@ -764,7 +768,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $this->get('deliveryTable')->save($newDelivery);
                   }
               }
-
               if (!empty($data['method']['questions'])) { // Questions of trends evaluation
                     $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
                     foreach ($questions as $q) {
@@ -892,20 +895,141 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               }
           }
           if (!empty($data['scales'])) {
-            $pos = 1;
-            foreach ($data['scales'] as $s) {
-                $sIds[$pos] = $s['type'];
-                $pos++;
+            //Approximate values from destination analyse
+            $ts = ['c', 'i', 'd'];
+            $instances = $this->get('table')->getEntityByFields(['anr' => $anr->id]);
+            $consequences = $this->get('instanceConsequenceTable')->getEntityByFields(['anr' => $anr->id]);
+            $scalesOrig = [];
+            $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach ($scales as $sc) {
+                $scalesOrig[$sc->get('type')]['min'] = $sc->get('min');
+                $scalesOrig[$sc->get('type')]['max'] = $sc->get('max');
             }
-              $pos = 1;
-              $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id],['type' => 'ASC']);
-              foreach ($scales as $s) {
-                if ($s->type == $data['scales'][$sIds[$pos]]['type']) {
-                  $s->min = $data['scales'][$sIds[$pos]]['min'];
-                  $s->max = $data['scales'][$sIds[$pos]]['max'];
-                }
-                $pos++;
+
+            $minScaleImpOrig = $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'];
+            $maxScaleImpOrig = $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'];
+            $minScaleImpDest = $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'];
+            $maxScaleImpDest = $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'];
+
+            //Instances
+            foreach ($ts as $t) {
+              foreach ($instances as $instance) {
+                  if ($instance->get($t . 'h')) {
+                      $instance->set($t . 'h', 1);
+                      $instance->set($t, -1);
+                  } else {
+                      $instance->set($t . 'h', 0);
+                      $instance->set($t, $this->approximate(
+                          $instance->get($t),
+                          $minScaleImpOrig,
+                          $maxScaleImpOrig,
+                          $minScaleImpDest,
+                          $maxScaleImpDest
+                      ));
+                  }
+                $this->refreshImpactsInherited($anr->id,$instance->parent->id,$instance);
               }
+              //Impacts & Consequences
+              foreach ($consequences as $conseq) {
+                $conseq->set($t, $conseq->isHidden ? -1 : $this->approximate(
+                  $conseq->get($t),
+                  $minScaleImpOrig,
+                  $maxScaleImpOrig,
+                  $minScaleImpDest,
+                  $maxScaleImpDest
+                ));
+                $this->get('instanceConsequenceTable')->save($conseq);
+              }
+            }
+
+            // Information Risks
+            $risks = $this->get('instanceRiskService')->get('table')->getEntityByFields(['anr' => $anr->get('id')]);
+            foreach ($risks as $r) {
+              $r->set('threatRate', $this->approximate(
+                $r->get('threatRate'),
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max']
+              ));
+              $oldVulRate = $r->vulnerabilityRate;
+              $r->set('vulnerabilityRate', $this->approximate(
+                $r->get('vulnerabilityRate'),
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['min'],
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['max'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['min'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['max']
+                            ));
+              $newVulRate = $r->vulnerabilityRate;
+              $r->set('reductionAmount', ($r->get('reductionAmount') != 0) ? $this->approximate(
+                $r->get('reductionAmount'),
+                0,
+                $oldVulRate,
+                0,
+                $newVulRate,
+                0) : 0);
+                $this->get('instanceRiskService')->update($r->id,$risks);
+            }
+
+            //Operational Risks
+            $risksOp = $this->get('instanceRiskOpService')->get('table')->getEntityByFields(['anr' => $anr->get('id')]);
+            if (!empty($risksOp)) {
+              foreach ($risksOp as $rOp) {
+                $toApproximate = [
+                    \MonarcCore\Model\Entity\Scale::TYPE_THREAT => [
+                        'netProb',
+                        'targetedProb',
+                        'brutProb',
+                    ],
+                    \MonarcCore\Model\Entity\Scale::TYPE_IMPACT => [
+                        'netR',
+                        'netO',
+                        'netL',
+                        'netF',
+                        'netP',
+                        'brutR',
+                        'brutO',
+                        'brutL',
+                        'brutF',
+                        'brutP',
+                        'targetedR',
+                        'targetedO',
+                        'targetedL',
+                        'targetedF',
+                        'targetedP',
+                    ],
+                ];
+                    foreach ($toApproximate as $type => $list) {
+                        foreach ($list as $i) {
+                            $rOp->set($i, $this->approximate(
+                                $rOp->get($i),
+                                $scalesOrig[$type]['min'],
+                                $scalesOrig[$type]['max'],
+                                $data['scales'][$type]['min'],
+                                $data['scales'][$type]['max']
+                            ));
+                        }
+                    }
+              $this->get('instanceRiskOpService')->update($rOp->id,$risksOp);
+              }
+            }
+
+            // Finally update scales from import 
+            $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id]);
+            $types = [];
+            $types = [
+                \MonarcCore\Model\Entity\Scale::TYPE_IMPACT,
+                \MonarcCore\Model\Entity\Scale::TYPE_THREAT,
+                \MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY,
+            ];
+            foreach ($types as $type) {
+              foreach ($scales as $s) {
+                if ($s->type == $type) {
+                    $s->min = $data['scales'][$type]['min'];
+                    $s->max = $data['scales'][$type]['max'];
+                }
+              }
+            }
           }
 
             $first = true;
