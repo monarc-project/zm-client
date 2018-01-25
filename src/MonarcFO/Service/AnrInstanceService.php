@@ -942,6 +942,19 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               }
             }
 
+            // Threat Qualification
+              $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->get('id')]);
+              foreach ($threats as $t) {
+              $t->set('qualification', $this->approximate(
+                $t->get('qualification'),
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max']
+              ));
+              $this->get('threatTable')->save($t);
+            }
+
             // Information Risks
             $risks = $this->get('instanceRiskService')->get('table')->getEntityByFields(['anr' => $anr->get('id')]);
             foreach ($risks as $r) {
@@ -1014,7 +1027,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               }
             }
 
-            // Finally update scales from import 
+            // Finally update scales from import
             $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id]);
             $types = [];
             $types = [
