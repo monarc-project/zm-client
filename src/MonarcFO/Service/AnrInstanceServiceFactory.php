@@ -31,6 +31,12 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'recommandationRiskTable' => 'MonarcFO\Model\Table\RecommandationRiskTable',
         'recommandationMeasureTable' => 'MonarcFO\Model\Table\RecommandationMeasureTable',
         'recommandationTable' => 'MonarcFO\Model\Table\RecommandationTable',
+        'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
+        'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
+        'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
+        'interviewTable' => 'MonarcFO\Model\Table\InterviewTable',
+        'themeTable' => 'MonarcFO\Model\Table\ThemeTable',
+        'deliveryTable' => 'MonarcFO\Model\Table\DeliveryTable',
 
         // Services
         'instanceConsequenceService' => 'MonarcFO\Service\AnrInstanceConsequenceService',
@@ -43,5 +49,6 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         // Export (Services)
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',
         'amvService' => 'MonarcFO\Service\AmvService',
+        'scaleCommentService' => 'MonarcFO\Service\AnrScaleCommentService',
     ];
 }

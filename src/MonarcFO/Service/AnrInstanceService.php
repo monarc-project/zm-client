@@ -20,6 +20,15 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 {
     /** @var UserAnrTable */
     protected $userAnrTable;
+    protected $questionTable;
+    protected $questionChoiceTable;
+    protected $threatTable;
+    protected $scaleCommentTable;
+    protected $scaleTable;
+    protected $scaleCommentService;
+    protected $interviewTable;
+    protected $themeTable;
+    protected $deliveryTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -494,10 +503,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         'netO',
                         'netL',
                         'netF',
+                        'netP',
                         'targetedR',
                         'targetedO',
                         'targetedL',
                         'targetedF',
+                        'targetedP',
                     ],
                 ];
                 $toInit = [];
@@ -507,6 +518,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutO';
                     $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutL';
                     $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutF';
+                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutP';
                 } else {
                     $toInit = [
                         'brutProb',
@@ -514,6 +526,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         'brutO',
                         'brutL',
                         'brutF',
+                        'brutP',
                     ];
                 }
                 foreach ($data['risksop'] as $ro) {
@@ -701,6 +714,337 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         } else if (isset($data['type']) && $data['type'] == 'anr' &&
             array_key_exists('version', $data) && $data['version'] == $this->getVersion()
         ) {
+
+          // Method information
+          if (!empty($data['method'])) { //Steps checkboxes
+              if (!empty($data['method']['steps'])) {
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['steps'] as $key => $v) {
+                    if ($anr->get($key) === 0 ) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                    }
+                  }
+              }
+              if (!empty($data['method']['data'])) { //Data of textboxes
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['data'] as $key => $v) {
+                    if (is_null($anr->get($key)) ) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                    }
+                  }
+              }
+              if (!empty($data['method']['interviews'])) { //Data of interviews
+                  foreach ($data['method']['interviews'] as $key => $v) {
+                    $toExchange = $data['method']['interviews'][$key];
+                    $toExchange['anr'] = $anr->get('id');
+                    $class = $this->get('interviewTable')->getClass();
+                    $newInterview = new $class();
+                    $newInterview->setDbAdapter($this->get('interviewTable')->getDb());
+                    $newInterview->setLanguage($this->getLanguage());
+                    $newInterview->exchangeArray($toExchange);
+                    $this->setDependencies($newInterview, ['anr']);
+                    $this->get('interviewTable')->save($newInterview);
+                  }
+              }
+              if (!empty($data['method']['thresholds'])) { // Value of thresholds
+                  $anrTable = $this->get('anrTable');
+                  foreach ($data['method']['thresholds'] as $key => $v) {
+                      $anr->set($key,$v);
+                      $anrTable->save($anr);
+                  }
+              }
+              if (!empty($data['method']['deliveries'])) { // Data of deliveries generation
+                  foreach ($data['method']['deliveries'] as $key => $v) {
+                    $toExchange = $data['method']['deliveries'][$key];
+                    $toExchange['anr'] = $anr->get('id');
+                    $class = $this->get('deliveryTable')->getClass();
+                    $newDelivery = new $class();
+                    $newDelivery->setDbAdapter($this->get('deliveryTable')->getDb());
+                    $newDelivery->setLanguage($this->getLanguage());
+                    $newDelivery->exchangeArray($toExchange);
+                    $this->setDependencies($newDelivery, ['anr']);
+                    $this->get('deliveryTable')->save($newDelivery);
+                  }
+              }
+              if (!empty($data['method']['questions'])) { // Questions of trends evaluation
+                    $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
+                    foreach ($questions as $q) {
+                    $this->get('questionTable')->delete($q->id);
+                    }
+
+                    $nbQuestions= count($data['method']['questions']);
+
+                    foreach ($data['method']['questions'] as $q => $v) {
+
+                      if ($data['method']['questions'][$q]['multichoice'] == 0){
+
+                        $toExchange = $data['method']['questions'][$q];
+                        $toExchange['anr'] = $anr->get('id');
+                        $class = $this->get('questionTable')->getClass();
+                        $newQuestion = new $class();
+                        $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
+                        $newQuestion->setLanguage($this->getLanguage());
+                        $newQuestion->exchangeArray($toExchange);
+                        $newQuestion->set('position',$q);
+                        $this->setDependencies($newQuestion, ['anr']);
+                        $this->get('questionTable')->save($newQuestion);
+                      } else { // Multichoice questions
+                        $OldIdQuestion = $data['method']['questions'][$q]['id'];
+                        $toExchange = $data['method']['questions'][$q];
+                        $toExchange['anr'] = $anr->get('id');
+                        $class = $this->get('questionTable')->getClass();
+                        $newQuestion = new $class();
+                        $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
+                        $newQuestion->setLanguage($this->getLanguage());
+                        $newQuestion->exchangeArray($toExchange);
+                        $newQuestion->set('position',$q);
+                        $this->setDependencies($newQuestion, ['anr']);
+                        $this->get('questionTable')->save($newQuestion);
+
+                        foreach ($data['method']['questionChoice'] as $qc => $v ) { //Creation of Multichoice responses
+                            if ($data['method']['questionChoice'][$qc]['question'] == $OldIdQuestion) {
+                                $toExchange = $data['method']['questionChoice'][$qc];
+                                $toExchange['anr'] = $anr->get('id');
+                                $toExchange['question'] = $newQuestion->id;
+                                $class = $this->get('questionChoiceTable')->getClass();
+                                $newQuestionChoice = new $class();
+                                $newQuestionChoice->setDbAdapter($this->get('questionChoiceTable')->getDb());
+                                $newQuestionChoice->setLanguage($this->getLanguage());
+                                $newQuestionChoice->exchangeArray($toExchange);
+                                $this->setDependencies($newQuestionChoice, ['anr', 'question']);
+                                $this->get('questionChoiceTable')->save($newQuestionChoice);
+                            }
+                        }
+                      }
+                    }
+
+                    $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
+
+                    for ($pos=1; $pos <= $nbQuestions; $pos++) {
+                    foreach ($questions as $q) {
+                      if ($q->multichoice == 0){
+                        if ($q->get('label' . $this->getLanguage()) == $data['method']['questions'][$pos]['label' . $this->getLanguage()] && $pos <= $nbQuestions) {
+                          $q->response = $data['method']['questions'][$pos]['response'];
+                          $this->get('questionTable')->save($q,($pos == $nbQuestions));
+                          $pos++;
+                        }
+                      } else { // Match Multichoice responses
+                        $replace = ["[","]"];
+                        $OriginQc = preg_split("/[,]/",str_replace($replace,"",$data['method']['questions'][$pos]['response']));
+                        $NewQcIds = null;
+
+                        foreach ($OriginQc as $qc ) {
+                          $DestQc[$qc] = $data['method']['questionChoice'][$qc];
+                          $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
+                          foreach ($questionChoices as $qc) {
+                            $NewQcIds .= $qc->get('id') . ",";
+                          }
+                        }
+                        $q->response = "[". substr($NewQcIds,0,-1) . "]";
+                        $this->get('questionTable')->save($q,($pos == $nbQuestions));
+                        $pos++;
+                      }
+                    }
+                  }
+              }
+              if (!empty($data['method']['threats'])) { // Evaluation of threats
+                    foreach ($data['method']['threats'] as $tId => $v) {
+                      if (!empty($data['method']['threats'][$tId]['theme'])) {
+                          $themes = $this->get('themeTable')->getEntityByFields(['anr' => $anr->id, 'label' . $this->getLanguage() => $data['method']['threats'][$tId]['theme']['label' . $this->getLanguage()]],['id' => 'ASC']);
+                          if (empty($themes)) { // Creation of new theme if no exist
+                            $toExchange = $data['method']['threats'][$tId]['theme'];
+                            $toExchange['anr'] = $anr->get('id');
+                            $class = $this->get('themeTable')->getClass();
+                            $newTheme = new $class();
+                            $newTheme->setDbAdapter($this->get('themeTable')->getDb());
+                            $newTheme->setLanguage($this->getLanguage());
+                            $newTheme->exchangeArray($toExchange);
+                            $this->setDependencies($newTheme, ['anr']);
+                            $this->get('themeTable')->save($newTheme);
+                            $data['method']['threats'][$tId]['theme']['id'] = $newTheme->id;
+                          } else {
+                            foreach ($themes as $th) {
+                              $data['method']['threats'][$tId]['theme']['id'] = $th->id;
+                            }
+                          }
+                      }
+                    $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->id, 'code' => $data['method']['threats'][$tId]['code']],['id' => 'ASC']);
+                    if (empty($threats)) {
+                      $toExchange = $data['method']['threats'][$tId];
+                      $toExchange['anr'] = $anr->get('id');
+                      $toExchange['mode'] = 0;
+                      $toExchange['theme'] = $data['method']['threats'][$tId]['theme']['id'];
+                      $class = $this->get('threatTable')->getClass();
+                      $newThreat = new $class();
+                      $newThreat->setDbAdapter($this->get('threatTable')->getDb());
+                      $newThreat->setLanguage($this->getLanguage());
+                      $newThreat->exchangeArray($toExchange);
+                      $this->setDependencies($newThreat, ['anr', 'theme']);
+                      $this->get('threatTable')->save($newThreat);
+                    } else {
+                      foreach ($threats as $t) {
+                        $t->set('trend', $data['method']['threats'][$tId]['trend']);
+                        $t->set('comment', $data['method']['threats'][$tId]['comment']);
+                        $t->set('qualification', $data['method']['threats'][$tId]['qualification']);
+                        $this->get('threatTable')->save($t);
+                      }
+                    }
+                    }
+              }
+          }
+          if (!empty($data['scales'])) {
+            //Approximate values from destination analyse
+            $ts = ['c', 'i', 'd'];
+            $instances = $this->get('table')->getEntityByFields(['anr' => $anr->id]);
+            $consequences = $this->get('instanceConsequenceTable')->getEntityByFields(['anr' => $anr->id]);
+            $scalesOrig = [];
+            $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach ($scales as $sc) {
+                $scalesOrig[$sc->get('type')]['min'] = $sc->get('min');
+                $scalesOrig[$sc->get('type')]['max'] = $sc->get('max');
+            }
+
+            $minScaleImpOrig = $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'];
+            $maxScaleImpOrig = $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'];
+            $minScaleImpDest = $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['min'];
+            $maxScaleImpDest = $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_IMPACT]['max'];
+
+            //Instances
+            foreach ($ts as $t) {
+              foreach ($instances as $instance) {
+                  if ($instance->get($t . 'h')) {
+                      $instance->set($t . 'h', 1);
+                      $instance->set($t, -1);
+                  } else {
+                      $instance->set($t . 'h', 0);
+                      $instance->set($t, $this->approximate(
+                          $instance->get($t),
+                          $minScaleImpOrig,
+                          $maxScaleImpOrig,
+                          $minScaleImpDest,
+                          $maxScaleImpDest
+                      ));
+                  }
+                $this->refreshImpactsInherited($anr->id,$instance->parent->id,$instance);
+              }
+              //Impacts & Consequences
+              foreach ($consequences as $conseq) {
+                $conseq->set($t, $conseq->isHidden ? -1 : $this->approximate(
+                  $conseq->get($t),
+                  $minScaleImpOrig,
+                  $maxScaleImpOrig,
+                  $minScaleImpDest,
+                  $maxScaleImpDest
+                ));
+                $this->get('instanceConsequenceTable')->save($conseq);
+              }
+            }
+
+            // Threat Qualification
+              $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->get('id')]);
+              foreach ($threats as $t) {
+              $t->set('qualification', $this->approximate(
+                $t->get('qualification'),
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max']
+              ));
+              $this->get('threatTable')->save($t);
+            }
+
+            // Information Risks
+            $risks = $this->get('instanceRiskService')->get('table')->getEntityByFields(['anr' => $anr->get('id')]);
+            foreach ($risks as $r) {
+              $r->set('threatRate', $this->approximate(
+                $r->get('threatRate'),
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['min'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_THREAT]['max']
+              ));
+              $oldVulRate = $r->vulnerabilityRate;
+              $r->set('vulnerabilityRate', $this->approximate(
+                $r->get('vulnerabilityRate'),
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['min'],
+                $scalesOrig[\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['max'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['min'],
+                $data['scales'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['max']
+                            ));
+              $newVulRate = $r->vulnerabilityRate;
+              $r->set('reductionAmount', ($r->get('reductionAmount') != 0) ? $this->approximate(
+                $r->get('reductionAmount'),
+                0,
+                $oldVulRate,
+                0,
+                $newVulRate,
+                0) : 0);
+                $this->get('instanceRiskService')->update($r->id,$risks);
+            }
+
+            //Operational Risks
+            $risksOp = $this->get('instanceRiskOpService')->get('table')->getEntityByFields(['anr' => $anr->get('id')]);
+            if (!empty($risksOp)) {
+              foreach ($risksOp as $rOp) {
+                $toApproximate = [
+                    \MonarcCore\Model\Entity\Scale::TYPE_THREAT => [
+                        'netProb',
+                        'targetedProb',
+                        'brutProb',
+                    ],
+                    \MonarcCore\Model\Entity\Scale::TYPE_IMPACT => [
+                        'netR',
+                        'netO',
+                        'netL',
+                        'netF',
+                        'netP',
+                        'brutR',
+                        'brutO',
+                        'brutL',
+                        'brutF',
+                        'brutP',
+                        'targetedR',
+                        'targetedO',
+                        'targetedL',
+                        'targetedF',
+                        'targetedP',
+                    ],
+                ];
+                    foreach ($toApproximate as $type => $list) {
+                        foreach ($list as $i) {
+                            $rOp->set($i, $this->approximate(
+                                $rOp->get($i),
+                                $scalesOrig[$type]['min'],
+                                $scalesOrig[$type]['max'],
+                                $data['scales'][$type]['min'],
+                                $data['scales'][$type]['max']
+                            ));
+                        }
+                    }
+              $this->get('instanceRiskOpService')->update($rOp->id,$risksOp);
+              }
+            }
+
+            // Finally update scales from import
+            $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id]);
+            $types = [];
+            $types = [
+                \MonarcCore\Model\Entity\Scale::TYPE_IMPACT,
+                \MonarcCore\Model\Entity\Scale::TYPE_THREAT,
+                \MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY,
+            ];
+            foreach ($types as $type) {
+              foreach ($scales as $s) {
+                if ($s->type == $type) {
+                    $s->min = $data['scales'][$type]['min'];
+                    $s->max = $data['scales'][$type]['max'];
+                }
+              }
+            }
+          }
+
             $first = true;
             $instanceIds = [];
             foreach ($data['instances'] as $inst) {
@@ -716,7 +1060,44 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $instanceIds[] = $instanceId;
                 }
             }
+            if (!empty($data['scalesComments'])) { // Scales comments
+                  $pos = 1;
+                  $siId = null;
+                  $scIds = null;
+                  $sId = null;
+
+                  foreach ($data['scalesComments'] as $sc) {
+                      $scIds[$pos] = $sc['id'];
+                      $pos++;
+                  }
+                  $scaleComment = $this->get('scaleCommentTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
+                  foreach ($scaleComment as $sc) {
+                    if ($sc->scaleImpactType->isSys == 1) {
+                      $this->get('scaleCommentTable')->delete($sc->id);
+                    }
+                  }
+                  $nbComment= count($data['scalesComments']);
+
+                  for ($pos=1; $pos <= $nbComment; $pos++) {
+                    $scale = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id, 'type' => $data['scalesComments'][$scIds[$pos]]['scale']['type']]);
+                    foreach ($scale as $s) {
+                      $sId = $s->get('id');
+                    }
+                    $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id, 'position' => $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position']]);
+                      foreach ($scaleImpactType as $si) {
+                        $siId = $si->get('id');
+                      }
+
+                    $toExchange = $data['scalesComments'][$scIds[$pos]];
+                    $toExchange['anr'] = $anr->get('id');
+                    $toExchange['scale'] = $sId;
+                    $toExchange['scaleImpactType'] = $siId;
+                    $this->get('scaleCommentService')->create($toExchange);
+                  }
+            }
+
             return $instanceIds;
+
         }
         return false;
     }
