@@ -1099,6 +1099,29 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   }
             }
 
+            //Add user consequences to all instances
+            $instances = $this->get('table')->getEntityByFields(['anr' => $anr->id]);
+            $scaleImpactTypes = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id]);
+             foreach ($instances as $instance) {
+               foreach ($scaleImpactTypes as $siType ) {
+                 $instanceConsequence = $this->get('instanceConsequenceTable')->getEntityByFields(['anr' => $anr->id, 'instance' => $instance->id, 'scaleImpactType' => $siType->id]);
+                 if (empty($instanceConsequence)) {
+                   $class = $this->get('instanceConsequenceTable')->getClass();
+                   $consequence = new $class();
+                   $consequence->setDbAdapter($this->get('instanceConsequenceTable')->getDb());
+                   $consequence->setLanguage($this->getLanguage());
+                   $consequence->exchangeArray([
+                       'anr' => $anr->get('id'),
+                       'instance' => $instance->id,
+                       'object' => $instance->object,
+                       'scaleImpactType' => $siType->id,
+                   ]);
+                   $this->setDependencies($consequence, ['anr', 'object', 'instance', 'scaleImpactType']);
+                   $this->get('instanceConsequenceTable')->save($consequence);
+                 }
+               }
+             }
+
             return $instanceIds;
 
         }
