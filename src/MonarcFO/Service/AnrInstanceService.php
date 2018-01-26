@@ -51,9 +51,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         if (empty($data['file'])) {
             throw new \MonarcCore\Exception\Exception('File missing', 412);
         }
-
         $ids = $errors = [];
         $anr = $this->get('anrTable')->getEntity($anrId); // throws an MonarcCore\Exception\Exception if invalid
+
 
         foreach ($data['file'] as $keyfile => $f) {
             // Ensure the file has been uploaded properly, silently skip the files that are erroneous
@@ -114,6 +114,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         // When importing huge instances trees, Zend can take up a whole lot of memory
         ini_set('max_execution_time', 0);
         ini_set('memory_limit', -1);
+
 
         // Ensure we're importing an instance, from the same version (this is NOT a backup feature!)
         if (isset($data['type']) && $data['type'] == 'instance' &&
@@ -1047,6 +1048,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
             $first = true;
             $instanceIds = [];
+            $nbScaleImpactTypes = count($this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id]));
             foreach ($data['instances'] as $inst) {
                 if ($first) {
                     if ($data['with_eval'] && isset($data['scales'])) {
@@ -1080,14 +1082,15 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
                   for ($pos=1; $pos <= $nbComment; $pos++) {
                     $scale = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->id, 'type' => $data['scalesComments'][$scIds[$pos]]['scale']['type']]);
-                    foreach ($scale as $s) {
-                      $sId = $s->get('id');
-                    }
-                    $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id, 'position' => $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position']]);
+                      foreach ($scale as $s) {
+                        $sId = $s->get('id');
+                      }
+                    $OrigPosition = $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position'];
+                    $position = ($OrigPosition > 8) ? $OrigPosition + ($nbScaleImpactTypes - 8) : $OrigPosition;
+                    $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id, 'position' => $position ]);
                       foreach ($scaleImpactType as $si) {
                         $siId = $si->get('id');
                       }
-
                     $toExchange = $data['scalesComments'][$scIds[$pos]];
                     $toExchange['anr'] = $anr->get('id');
                     $toExchange['scale'] = $sId;
@@ -1095,6 +1098,29 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $this->get('scaleCommentService')->create($toExchange);
                   }
             }
+
+            //Add user consequences to all instances
+            $instances = $this->get('table')->getEntityByFields(['anr' => $anr->id]);
+            $scaleImpactTypes = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id]);
+             foreach ($instances as $instance) {
+               foreach ($scaleImpactTypes as $siType ) {
+                 $instanceConsequence = $this->get('instanceConsequenceTable')->getEntityByFields(['anr' => $anr->id, 'instance' => $instance->id, 'scaleImpactType' => $siType->id]);
+                 if (empty($instanceConsequence)) {
+                   $class = $this->get('instanceConsequenceTable')->getClass();
+                   $consequence = new $class();
+                   $consequence->setDbAdapter($this->get('instanceConsequenceTable')->getDb());
+                   $consequence->setLanguage($this->getLanguage());
+                   $consequence->exchangeArray([
+                       'anr' => $anr->get('id'),
+                       'instance' => $instance->id,
+                       'object' => $instance->object,
+                       'scaleImpactType' => $siType->id,
+                   ]);
+                   $this->setDependencies($consequence, ['anr', 'object', 'instance', 'scaleImpactType']);
+                   $this->get('instanceConsequenceTable')->save($consequence);
+                 }
+               }
+             }
 
             return $instanceIds;
 
