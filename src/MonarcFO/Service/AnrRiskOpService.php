@@ -93,7 +93,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                             ir.targeted_prob as targetedProb, ir.targeted_r as targetedR, ir.targeted_o as targetedO, ir.targeted_l as targetedL,
                             ir.targeted_f as targetedF, ir.targeted_p as targetedP, ir.cache_targeted_risk as cacheTargetedRisk,
                             IF(ir.kind_of_measure IS NULL OR ir.kind_of_measure = " .  \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED . ", false, true) as t,
-                            i.id as iid, i.name1, i.name2, i.name3, i.name4,
+                            i.id as iid, i.name_translation_id, i.name_translation_id, i.name_translation_id, i.name_translation_id,
                             o.scope
                 FROM        instances_risks_op as ir
                 INNER JOIN  instances as i
