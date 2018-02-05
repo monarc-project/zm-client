@@ -126,8 +126,8 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
             'ir.id as myid', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
-            'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
-            'm.c as mc', 'm.i as mi', 'm.d as md',
+            'i.confidentiality as ic', 'i.integrity as ii', 'i.availability as id', 'IDENTITY(i.object) as object',
+            'm.confidentiality as mc', 'm.integrity as mi', 'm.availability as md',
             'o.scope',
         ])->where('ir.anr = :anrid')
             ->setParameter(':anrid', $this->anr->get('id'))
