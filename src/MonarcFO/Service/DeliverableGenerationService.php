@@ -1022,10 +1022,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             'i.id', 'i.c as impactC',
             'i.id', 'i.i as impactI',
             'i.id', 'i.d as impactA',
-            'm.id as mid', 'm.label' . $anr->language . ' as mlabel', 'm.c as threatC', 'm.i as threatI', 'm.d as threatA',
-            //'m.id', 'm.c as threatC',
-            //'m.id', 'm.i as threatI',
-            //'m.id', 'm.d as threatA',
+            'm.id as mid', 'm.label' . $anr->language . ' as mlabel',
+            'm.c as threatC',
+            'm.i as threatI',
+            'm.d as threatA',
             'ir.threatRate',
             'v.id as vid', 'v.label' . $anr->language . ' as vlabel',
             'ir.comment',
@@ -1042,6 +1042,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             ->innerJoin('ir.threat', 'm')
             ->innerJoin('ir.vulnerability', 'v')
             ->innerJoin('i.object', 'o')
+            ->orderBy('ir.cacheMaxRisk', 'DESC')
             ->getQuery()->getResult();
 
 
@@ -1166,14 +1167,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         ${'styleContentCell' . ucfirst($impact)} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
                       }
 
-                      if ($r['threatRate'] == -1) {
-                        $r['threatRate'] = "-";
-                      }
-
-                      if ($r['vulRate'] == -1) {
-                        $r['vulRate'] = "-";
-                      }
-
                       $bgcolor = 'FFBC1C';
                       if ($r['targetRisk'] == -1)  {
                           $bgcolor = '';
@@ -1184,6 +1177,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                           $bgcolor = 'FD661F';
                       }
                       $styleContentCellTargetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
+
+                      foreach ($r as $key => $value) {
+                        if ($value == -1){
+                          $r[$key] = '-';
+                        }
+                      }
 
                       switch ($r['kindOfMeasure']) {
 
@@ -1237,8 +1236,25 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     {
         $query = $this->instanceRiskOpTable->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-            'ir.riskCacheLabel' . $anr->language . ' AS label', 'ir.comment AS comment',
-            'i.id', 'i.name' . $anr->language . ' as name', 'IDENTITY(i.root)'
+            'i.id', 'i.name' . $anr->language . ' as name', 'IDENTITY(i.root)',
+            'ir.riskCacheLabel' . $anr->language . ' AS label',
+            'ir.brutProb AS brutProb',
+            'ir.brutR AS brutR',
+            'ir.brutO AS brutO',
+            'ir.brutL AS brutL',
+            'ir.brutF AS brutF',
+            'ir.brutP AS brutP',
+            'ir.cacheBrutRisk AS cacheBrutRisk',
+            'ir.netProb AS netProb',
+            'ir.netR AS netR',
+            'ir.netO AS netO',
+            'ir.netL AS netL',
+            'ir.netF AS netF',
+            'ir.netP AS netP',
+            'ir.cacheNetRisk AS cacheNetRisk',
+            'ir.comment AS comment',
+            'ir.cacheTargetedRisk AS cacheTargetedRisk',
+            'ir.kindOfMeasure AS kindOfMeasure'
         ])->where('ir.anr = :anrid')
             ->setParameter(':anrid', $anr->id)
             ->innerJoin('ir.instance', 'i')
@@ -1265,7 +1281,23 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
             $lst[$r['id']]['risks'][] = [
                 'label' => $r['label'],
+                'brutProb' => $r['brutProb'],
+                'brutR' => $r['brutR'],
+                'brutO' => $r['brutO'],
+                'brutL' => $r['brutL'],
+                'brutF' => $r['brutF'],
+                'brutP' => $r['brutP'],
+                'brutRisk' => $r['cacheBrutRisk'],
+                'netProb' => $r['netProb'],
+                'netR' => $r['netR'],
+                'netO' => $r['netO'],
+                'netL' => $r['netL'],
+                'netF' => $r['netF'],
+                'netP' => $r['netP'],
+                'netRisk' => $r['cacheNetRisk'],
                 'comment' => $r['comment'],
+                'targetedRisk' => $r['cacheTargetedRisk'],
+                'kindOfMeasure' => $r['kindOfMeasure']
             ];
         }
         if (!empty($lst)) {
@@ -1277,23 +1309,133 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
             $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
             $styleContentFont = ['bold' => false, 'size' => 10];
-            $cellColSpan = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+            $styleContentFontBold = ['bold' => true, 'size' => 10];
+            $cellColSpan5 = ['gridSpan' => 5, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+            $cellColSpan11 = ['gridSpan' => 11, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+            $cellColSpan7 = ['gridSpan' => 7, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+            $cellColSpan8 = ['gridSpan' => 8, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+            $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => '444444', 'align' => 'center', 'Alignment' => 'center'];
+            $cellRowContinue = ['vMerge' => 'continue','valign' => 'center', 'bgcolor' => '444444'];
             $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
             $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
 
             $table->addRow(400, ['tblHeader' => true]);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleHeaderCell)->addText(_WT($this->anrTranslate('Risk description')), $styleHeader2Font, $alignCenter);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleHeaderCell)->addText(_WT($this->anrTranslate('Existing controls')), $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $cellRowSpan)->addText($this->anrTranslate('Risk description'), $styleHeader2Font, $alignCenter);
+            if ($anr->showRolfBrut == 1) {
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.50), $cellColSpan7)->addText(_WT($this->anrTranslate('Inherent risk')), $styleHeader2Font, $alignCenter);
+            }
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(15.00), $cellColSpan8)->addText(_WT($this->anrTranslate('Net risk')), $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeader2Font, $alignCenter);
 
+
+            $table->addRow(400, ['tblHeader' => true]);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $cellRowContinue);
+            if ($anr->showRolfBrut == 1) {
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText(_WT($this->anrTranslate('Prob.')), $styleHeader2Font, $alignCenter);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.50), $cellColSpan5)->addText(_WT($this->anrTranslate('Impact')), $styleHeader2Font, $alignCenter);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Current risk'), $styleHeader2Font, $alignCenter);
+            }
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText(_WT($this->anrTranslate('Prob.')), $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.50), $cellColSpan5)->addText(_WT($this->anrTranslate('Impact')), $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Current risk'), $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $cellRowSpan)->addText($this->anrTranslate('Existing controls'), $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowContinue);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowContinue);
+
+            $table->addRow(400, ['tblHeader' => true]);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $cellRowContinue);
+            if ($anr->showRolfBrut == 1) {
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('R', $styleHeader2Font, $alignCenter);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('O', $styleHeader2Font, $alignCenter);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('L', $styleHeader2Font, $alignCenter);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('F', $styleHeader2Font, $alignCenter);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('P', $styleHeader2Font, $alignCenter);
+              $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+            }
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('R', $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('O', $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('L', $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('F', $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $cellRowSpan)->addText('P', $styleHeader2Font, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $cellRowContinue);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowContinue);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $cellRowContinue);
+
+
+            $risks = ['brutRisk', 'netRisk', 'targetedRisk'];
             foreach ($lst as $data) {
                 $table->addRow(400);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(19.00), $cellColSpan)->addText(_WT($data['path']), $styleContentFont, $alignLeft);
+                if ($anr->showRolfBrut == 1) {
+                  $cellColSpan11 = ['gridSpan' => 18, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+                }
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(19.00), $cellColSpan11)->addText(_WT($data['path']), $styleContentFontBold, $alignLeft);
+                foreach ($data['risks'] as $r) {
+                  if (!empty($data['risks'])) {
+                    foreach ($risks as $risk) {
+                      $bgcolor = 'FFBC1C';
+                      if ($r[$risk] == -1) {
+                        $bgcolor = '';
+                        $r[$risk] = "-";
+                      } else if ($r[$risk] <= $anr->seuilRolf1) {
+                        $bgcolor = 'D6F107';
+                      } else if ($r[$risk] > $anr->seuilRolf2) {
+                        $bgcolor = 'FD661F';
+                      }
+                      ${'styleContentCell' . $risk} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
+                    }
 
-                if (!empty($data['risks'])) {
-                    foreach ($data['risks'] as $r) {
+                    switch ($r['kindOfMeasure']) {
+
+                    case 1:
+                          $Treatment = "Reduction";
+                          break;
+                      case 2;
+                          $Treatment = "Denied";
+                          break;
+                      case 3:
+                          $Treatment = "Accepted";
+                          break;
+                        case 4:
+                          $Treatment = "Shared";
+                          break;
+                      default:
+                          $Treatment = "Not treated";
+                    }
+
+                    foreach ($r as $key => $value) {
+                      if ($value == -1){
+                          $r[$key] = '-';
+                      }
+                    }
                         $table->addRow(400);
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleContentCell)->addText(_WT($r['label']), $styleContentFont, $alignLeft);
-                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(9.50), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(_WT($r['label']), $styleContentFont, $alignLeft);
+                        if ($anr->showRolfBrut == 1) {
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($r['brutProb'], $styleContentFont, $alignCenter);
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['brutR'], $styleContentFont, $alignCenter);
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['brutO'], $styleContentFont, $alignCenter);
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['brutL'], $styleContentFont, $alignCenter);
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['brutF'], $styleContentFont, $alignCenter);
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['brutP'], $styleContentFont, $alignCenter);
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellbrutRisk)->addText($r['brutRisk'], $styleContentFontBold, $alignCenter);
+                        }
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($r['netProb'], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['netR'], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['netO'], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['netL'], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['netF'], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['netP'], $styleContentFont, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellnetRisk)->addText($r['netRisk'], $styleContentFontBold, $alignCenter);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
+                        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCell)->addText(_WT($this->anrTranslate($Treatment)), $styleContentFont, $alignLeft);
+                        if ($r['targetedRisk'] == '-') {
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCellnetRisk)->addText($r['netRisk'], $styleContentFontBold, $alignCenter);
+                        } else {
+                          $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCelltargetedRisk)->addText($r['targetedRisk'], $styleContentFontBold, $alignCenter);
+                        }
                     }
                 }
             }
