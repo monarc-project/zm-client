@@ -2064,8 +2064,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                             $comment = $impactsConsequences[$keyImpact]
                             ['comments'][($i[$impact] != -1)
                                 ? $i[$impact] : 0];
-                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate(ucfirst($impact)), $styleContentFontBold, $alignCenter);
-                            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($i[$impact], $styleContentFontBold, $alignCenter);
+			    $translatedImpact = ucfirst($impact);
+			    if ($impact === 'd'){
+				$translatedImpact = ucfirst($this->anrTranslate('A'));
+			    }
+			    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($translatedImpact, $styleContentFontBold, $alignCenter);
+			    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($i[$impact], $styleContentFontBold, $alignCenter);
                             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cellRowSpan)->addText($comment, $styleContentFont, $alignLeft);
                         } else {
                             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $cellRowContinue);
