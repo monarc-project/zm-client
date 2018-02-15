@@ -10,11 +10,12 @@ namespace MonarcFO\Controller;
 use MonarcCore\Controller\AbstractControllerFactory;
 
 /**
+ * Api Anr Carto Risks Controller Factory
  *
- * Class ApiAnrRisksDashboardControllerFactory
+ * Class ApiDashboardAnrCartoRisksControllerFactory
  * @package MonarcFO\Controller
  */
-class ApiAnrRisksDashboardControllerFactory extends AbstractControllerFactory
+class ApiDashboardAnrCartoRisksControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\MonarcFO\Service\AnrRiskService';
+    protected $serviceName = '\MonarcFO\Service\AnrCartoRiskService';
 }

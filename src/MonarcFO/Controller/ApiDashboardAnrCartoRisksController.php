@@ -12,10 +12,10 @@ use Zend\View\Model\JsonModel;
 /**
  * Api ANR Cartography Risks Real & Targeted Controller
  *
- * Class ApiAnrCartoRisksController
+ * Class ApiDashboardAnrCartoRisksController
  * @package MonarcFO\Controller
  */
-class ApiAnrCartoRisksController extends ApiAnrAbstractController
+class ApiDashboardAnrCartoRisksController extends ApiAnrAbstractController
 {
     protected $name = 'carto';
     protected $dependencies = [];
@@ -30,6 +30,7 @@ class ApiAnrCartoRisksController extends ApiAnrAbstractController
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $type = $this->params()->fromRoute('type', 'all'); // real / targeted / all
+        file_put_contents('php://stderr', print_r('ApiAnrCartoRisksController getList()', TRUE));
         switch ($type) {
             case 'real':
                 return new JsonModel([

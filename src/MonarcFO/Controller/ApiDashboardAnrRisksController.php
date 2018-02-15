@@ -12,10 +12,10 @@ use Zend\View\Model\JsonModel;
 /**
  * Api ANR Risks Controller
  *
- * Class ApiAnrRisksDashboardController
+ * Class ApiDashboardAnrRisksController
  * @package MonarcFO\Controller
  */
-class ApiAnrRisksDashboardController extends ApiAnrAbstractController
+class ApiDashboardAnrRisksController extends ApiAnrAbstractController
 {
     protected $name = 'risks';
 
@@ -39,7 +39,7 @@ class ApiAnrRisksDashboardController extends ApiAnrAbstractController
             $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
             return new JsonModel([
                 'count' => count($lst),
-                '$this->name' => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
+                $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
             ]);
         }
     }

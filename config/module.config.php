@@ -449,12 +449,12 @@ return array(
                     'carto_risks' => array(
                         'type' => 'segment',
                         'options' => array(
-                            'route' => 'carto-risks[/:type]',
+                            'route' => 'carto-risks-dashboard[/:type]',
                             'constraints' => array(
                                 'type' => 'all|real|targeted',
                             ),
                             'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrCartoRisks',
+                                'controller' => 'MonarcFO\Controller\ApiDashboardAnrCartoRisks',
                                 'type' => 'all',
                             ),
                         ),
@@ -476,7 +476,7 @@ return array(
                         'options' => array(
                             'route' => 'risks-dashboard[/:id]',
                             'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRisksDashboard',
+                                'controller' => 'MonarcFO\Controller\ApiDashboardAnrRisks',
                             ),
                         ),
                     ),
@@ -736,9 +736,9 @@ return array(
             '\MonarcFO\Controller\ApiAnrScales' => '\MonarcFO\Controller\ApiAnrScalesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesTypes' => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesComments' => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrCartoRisks' => '\MonarcFO\Controller\ApiAnrCartoRisksControllerFactory',
+            '\MonarcFO\Controller\ApiDashboardAnrCartoRisks' => '\MonarcFO\Controller\ApiDashboardAnrCartoRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisks' => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRisksDashboard' => '\MonarcFO\Controller\ApiAnrRisksDashboardControllerFactory',
+            '\MonarcFO\Controller\ApiDashboardAnrRisks' => '\MonarcFO\Controller\ApiDashboardAnrRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisksOp' => '\MonarcFO\Controller\ApiAnrRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibrary' => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibraryCategory' => '\MonarcFO\Controller\ApiAnrLibraryCategoryControllerFactory',
