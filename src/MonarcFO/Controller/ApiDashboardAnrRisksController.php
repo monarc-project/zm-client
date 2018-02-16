@@ -10,7 +10,7 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api ANR Risks Controller
+ * Api Dashboard ANR Risks Controller
  *
  * Class ApiDashboardAnrRisksController
  * @package MonarcFO\Controller
@@ -32,16 +32,12 @@ class ApiDashboardAnrRisksController extends ApiAnrAbstractController
         }
         $params = $this->parseParams();
 
-        if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv; charset=utf-8');
-            die($this->getService()->getCsvRisks($anrId, ['id' => $id], $params));
-        } else {
-            $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
-            return new JsonModel([
-                'count' => count($lst),
-                $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
-            ]);
-        }
+        $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
+        return new JsonModel([
+            'count' => count($lst),
+            $this->name => $params['limit'] > 0 ?
+                array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
+        ]);
     }
 
     /**
@@ -61,27 +57,22 @@ class ApiDashboardAnrRisksController extends ApiAnrAbstractController
         }
         $params = $this->parseParams();
 
-        if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv; charset=utf-8');
-            die($this->getService()->getCsvRisks($anrId, null, $params));
-        } else {
-            $service = $this->getService('anr');
-            $entities = $service->getList($page, $limit, $order, $filter);
-            if (count($this->dependencies)) {
-                foreach ($entities as $key => $entity) {
-                    $this->formatDependencies($entities[$key], $this->dependencies);
-                }
+        $service = $this->getService('anr');
+        $entities = $service->getList($page, $limit, $order, $filter);
+        if (count($this->dependencies)) {
+            foreach ($entities as $key => $entity) {
+                $this->formatDependencies($entities[$key], $this->dependencies);
             }
-            // file_put_contents('php://stderr', print_r($service, TRUE));
-
-
-            $lst = $this->getService()->getRisks($anrId, null, $params);
-
-            return new JsonModel([
-                'count' => count($lst),
-                $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
-            ]);
         }
+
+        $lst = $this->getService()->getRisks($anrId, null, $params);
+
+        return new JsonModel([
+            'count' => count($lst),
+            $this->name => $params['limit'] > 0 ?
+                array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
+        ]);
+
     }
 
     /**

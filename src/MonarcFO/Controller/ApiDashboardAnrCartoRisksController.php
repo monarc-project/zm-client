@@ -10,7 +10,7 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api ANR Cartography Risks Real & Targeted Controller
+ * Api Dashboard ANR Cartography Risks Real & Targeted Controller
  *
  * Class ApiDashboardAnrCartoRisksController
  * @package MonarcFO\Controller
@@ -30,7 +30,6 @@ class ApiDashboardAnrCartoRisksController extends ApiAnrAbstractController
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $type = $this->params()->fromRoute('type', 'all'); // real / targeted / all
-        file_put_contents('php://stderr', print_r('ApiAnrCartoRisksController getList()', TRUE));
         switch ($type) {
             case 'real':
                 return new JsonModel([

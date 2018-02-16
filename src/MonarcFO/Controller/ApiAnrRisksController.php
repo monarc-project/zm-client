@@ -38,8 +38,6 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         } else {
             $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
 
-            file_put_contents('php://stderr', print_r('ApiAnrRisksController get()', TRUE));
-
             return new JsonModel([
                 'count' => count($lst),
                 $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
@@ -57,8 +55,6 @@ class ApiAnrRisksController extends ApiAnrAbstractController
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $params = $this->parseParams();
-
-        file_put_contents('php://stderr', print_r('ApiAnrRisksController getList()\n', TRUE));
 
         if ($this->params()->fromQuery('csv', false)) {
             header('Content-Type: text/csv; charset=utf-8');

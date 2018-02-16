@@ -39,8 +39,6 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
             }
         }
 
-        file_put_contents('php://stderr', print_r('ApiAnrController getList()', TRUE));
-
         return new JsonModel([
             'count' => count($entities),
             $this->name => $entities
