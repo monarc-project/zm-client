@@ -830,8 +830,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
                     $value = $MxV * $impact;
 
-                    $result = $cartoRisk['counters'][$impact][$MxV] ?$cartoRisk['counters'][$impact][$MxV]: 0;
-
+                    if (isset($cartoRisk['counters'][$impact]) && isset($cartoRisk['counters'][$impact][$MxV])) {
+                        $result = $cartoRisk['counters'][$impact][$MxV] ? $cartoRisk['counters'][$impact][$MxV]: 0;
+                    } else {
+                        $result = 0;
+                    }
 
                     if ($value <= $anr->seuil1) {
                         $style = $risksTableGreenCellStyle;
@@ -1501,6 +1504,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
         $alignRight = ['Alignment' => 'right', 'spaceAfter' => '0'];
         $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
+        $styleContentFont = ['bold' => false, 'size' => 10];
         $styleContentFontBold = ['bold' => true, 'size' => 10];
         $cell = ['gridSpan' => 9, 'bgcolor' => 'DBE5F1', 'valign' => 'center'];
         $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
