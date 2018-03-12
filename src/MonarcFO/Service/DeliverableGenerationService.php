@@ -246,8 +246,17 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if( ! empty($appconfdir) ){
             $datapath = $appconfdir.'/data/';
         }
-        $pathTmp = $datapath . uniqid("", true) . "_" . microtime(true) . ".docx";
+        $pathTmp = $datapath . uniqid("", true) . "_" . microtime(true) . ".odt";
         $word->saveAs($pathTmp);
+
+        // Test export to PDF with DomPDF
+        // $pathTmp1 = $datapath . uniqid("", true) . "_" . microtime(true) . ".pdf";
+        // \PhpOffice\PhpWord\Settings::setPdfRendererPath('vendor/dompdf/dompdf');
+        // \PhpOffice\PhpWord\Settings::setPdfRendererName('DomPDF');
+        // $phpWord = \PhpOffice\PhpWord\IOFactory::load($pathTmp);
+        // //Save it
+        // $xmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'PDF');
+        // $xmlWriter->save($pathTmp1);
 
         if (!empty($values['img'])) {
             foreach ($values['img'] as $key => $value) {
@@ -2201,7 +2210,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      */
     protected function generateWordXmlFromHtml($input)
     {
-        // Portion Copyright © Netlor SAS - 2015
         // Process trix caveats
         $input = str_replace(
             ['<br>', '<div>', '</div>'],
@@ -2229,7 +2237,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      */
     protected function getWordXmlFromWordObject($phpWord, $useBody = true)
     {
-        // Portion Copyright © Netlor SAS - 2015
         $part = new \PhpOffice\PhpWord\Writer\Word2007\Part\Document();
         $part->setParentWriter(new Word2007($phpWord));
         $docXml = $part->write();
