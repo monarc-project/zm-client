@@ -246,7 +246,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if( ! empty($appconfdir) ){
             $datapath = $appconfdir.'/data/';
         }
-        $pathTmp = $datapath . uniqid("", true) . "_" . microtime(true) . ".odt";
+        $pathTmp = $datapath . uniqid("", true) . "_" . microtime(true) . ".docx";
         $word->saveAs($pathTmp);
 
         // Test export to PDF with DomPDF
