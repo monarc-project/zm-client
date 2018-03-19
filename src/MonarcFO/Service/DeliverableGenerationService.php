@@ -189,7 +189,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $pathModel .= 'DE/';
             break;
           default:
-            $pathModel .= 'EN/';
+            $pathModel .= 'NE/';
             break;
         }
         $pathModel .= $typeDoc;
