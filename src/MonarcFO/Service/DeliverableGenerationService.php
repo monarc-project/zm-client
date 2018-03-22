@@ -148,10 +148,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      */
     public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data)
     {
-        /* $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category' => $typeDoc]));
+        $model = current($this->deliveryModelService->get("cliTable")->getEntityByFields(['category' => $typeDoc]));
         if (!$model) {
             throw new \MonarcCore\Exception\Exception("Model `id` not found");
-        }*/
+        }
+        file_put_contents('php://stderr', print_r($model->path1, TRUE));
 
         // Load the ANR
         $anr = $this->anrTable->getEntity($anrId);
@@ -177,23 +178,26 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //find the right model
         $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
-        $pathModel .= './deliveries/cases/';
+        // $pathModel .= './deliveries/cases/';
         switch ($anr->language) {
           case 1:
-            $pathModel .= 'FR/';
+            $pathModel .= $model->path1;
             break;
           case 2:
-            $pathModel .= 'EN/';
+            $pathModel .= $model->path2;
             break;
           case 3:
-            $pathModel .= 'DE/';
+            $pathModel .= $model->path3;
+            break;
+          case 4:
+            $pathModel .= $model->path4;
             break;
           default:
-            $pathModel .= 'NE/';
+            $pathModel .= $model->path2;
             break;
         }
-        $pathModel .= $typeDoc;
-        $pathModel .= '.docx';
+        // $pathModel .= $typeDoc;
+        // $pathModel .= '.docx';
 
 
         if (!file_exists($pathModel)) {
