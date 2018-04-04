@@ -148,11 +148,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      */
     public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data)
     {
-        $model = current($this->deliveryModelService->get("cliTable")->getEntityByFields(['category' => $typeDoc]));
+        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['id' => $data['template']['id']]));
         if (!$model) {
             throw new \MonarcCore\Exception\Exception("Model `id` not found");
         }
-        file_put_contents('php://stderr', print_r($model->path1, TRUE));
 
         // Load the ANR
         $anr = $this->anrTable->getEntity($anrId);
