@@ -195,8 +195,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $pathModel .= $model->path2;
             break;
         }
-        // $pathModel .= $typeDoc;
-        // $pathModel .= '.docx';
 
 
         if (!file_exists($pathModel)) {
