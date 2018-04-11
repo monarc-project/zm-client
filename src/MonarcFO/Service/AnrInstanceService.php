@@ -1074,7 +1074,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   }
                   $scaleComment = $this->get('scaleCommentTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
                   foreach ($scaleComment as $sc) {
-                    if ($sc->scaleImpactType->isSys == 1) {
+                    if ($sc->scaleImpactType->isSys == 1 or is_null($sc->scaleImpactType)) {
                       $this->get('scaleCommentTable')->delete($sc->id);
                     }
                   }
