@@ -177,25 +177,33 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //find the right model
         $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
-        // $pathModel .= './deliveries/cases/';
+        $pathLang = '';
         switch ($anr->language) {
           case 1:
-            $pathModel .= $model->path1;
+            $pathLang = $model->path1;
             break;
           case 2:
-            $pathModel .= $model->path2;
+            $pathLang = $model->path2;
             break;
           case 3:
-            $pathModel .= $model->path3;
+            $pathLang = $model->path3;
             break;
           case 4:
-            $pathModel .= $model->path4;
+            $pathLang = $model->path4;
             break;
           default:
-            $pathModel .= $model->path2;
             break;
         }
-
+        $pathModel .= $pathLang;
+        if (!file_exists($pathModel)) {
+            // if template not available in the language of the ANR, use the
+            // default template of the category
+            $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
+            $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category' => $typeDoc,
+                                                                                            'path2' => ['op'=>'IS NOT', 'value'=>null]]));
+            $pathModel .= $model->path2;
+            // throw new \MonarcCore\Exception\Exception("Model not found for the language");
+        }
 
         if (!file_exists($pathModel)) {
             throw new \MonarcCore\Exception\Exception("Model not found ".$pathModel);
