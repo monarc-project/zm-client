@@ -35,7 +35,6 @@ class ApiDeliveriesModelsController extends AbstractController
                 $data['path' . $i] = $file['file'][$i];
             }
         }
-        // file_put_contents('php://stderr', print_r($data, TRUE));
         $service->create($data);
 
         return new JsonModel(array('status' => 'ok'));
@@ -60,13 +59,15 @@ class ApiDeliveriesModelsController extends AbstractController
             }
         }
 
+        $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
         foreach($entities as $k => $v){
             for($i=1;$i<=4;$i++){
                 $entities[$k]['filename'.$i] = '';
                 if(!empty($entities[$k]['path'.$i])){
                     // $name = explode('_',pathinfo($entities[$k]['path'.$i],PATHINFO_BASENAME));
                     // unset($name[0]);
-                    if ( ! file_exists($entities[$k]['path'.$i])) {
+                    $currentPath = $pathModel . $entities[$k]['path'.$i];
+                    if (!file_exists($currentPath)) {
                         $entities[$k]['filename'.$i] = '';
                         $entities[$k]['path'.$i] = '';
                     } else {
@@ -91,10 +92,12 @@ class ApiDeliveriesModelsController extends AbstractController
         $entity = $this->getService()->getEntity($id);
         if(!empty($entity)){
             $lang = $this->params()->fromQuery('lang',1);
-            if(isset($entity['path'.$lang]) && file_exists($entity['path'.$lang])){
-                $name = pathinfo($entity['path'.$lang],PATHINFO_BASENAME);
+            $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
+            $currentPath = $pathModel . $entity['path'.$lang];
+            if(isset($entity['path'.$lang]) && file_exists($currentPath)){
+                $name = pathinfo($currentPath);
 
-                $fileContents = file_get_contents($entity['path'.$lang]);
+                $fileContents = file_get_contents($currentPath);
                 if($fileContents !== false){
                     $response = $this->getResponse();
                     $response->setContent($fileContents);
