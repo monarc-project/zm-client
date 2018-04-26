@@ -67,8 +67,8 @@ class ApiDeliveriesModelsController extends AbstractController
                     // $name = explode('_',pathinfo($entities[$k]['path'.$i],PATHINFO_BASENAME));
                     // unset($name[0]);
                     if ( ! file_exists($entities[$k]['path'.$i])) {
-                        $entities[$k]['filename'.$i] = 'null';
-                        $entities[$k]['path'.$i] = 'null';
+                        $entities[$k]['filename'.$i] = '';
+                        $entities[$k]['path'.$i] = '';
                     } else {
                         $entities[$k]['filename'.$i] = pathinfo($entities[$k]['path'.$i],PATHINFO_BASENAME);
                         $entities[$k]['path'.$i] = './api/deliveriesmodels/'.$v['id'].'?lang='.$i;
