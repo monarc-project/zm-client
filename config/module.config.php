@@ -666,6 +666,18 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_doc_models' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/deliveriesmodels[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiDeliveriesModels',
+                    ),
+                ),
+            ),
             'monarc_api_user_password' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -754,6 +766,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrExport' => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesConsequences' => '\MonarcFO\Controller\ApiAnrInstancesConsequencesControllerFactory',
             '\MonarcFO\Controller\ApiModelVerifyLanguage' => '\MonarcFO\Controller\ApiModelVerifyLanguageControllerFactory',
+            '\MonarcFO\Controller\ApiDeliveriesModels'          => '\MonarcFO\Controller\ApiDeliveriesModelsControllerFactory',
         ),
     ),
 
@@ -937,6 +950,7 @@ return array(
     'roles' => array(
         // Super Admin : Gestion des droits des utilisateurs uniquement (Carnet d’adresses)
         'superadminfo' => array(
+            'monarc_api_doc_models',
             'monarc_api_admin_users',
             'monarc_api_admin_users_roles',
             'monarc_api_admin_users_rights',

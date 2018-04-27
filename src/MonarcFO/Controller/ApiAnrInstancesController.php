@@ -1,8 +1,8 @@
 <?php
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) Cases is a registered trademark of SECURITYMADEIN.LU
- * @license   MyCases is licensed under the GNU Affero GPL v3 - See license.txt for more information
+ * @copyright Copyright (c) 2018 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace MonarcFO\Controller;
@@ -72,11 +72,17 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-
         /** @var InstanceService $service */
         $service = $this->getService();
         $entity = $service->getEntityByIdAndAnr($id, $anrId);
-
+        if ($this->params()->fromQuery('csv', false)) {
+            header('Content-Type: text/csv');
+            die($this->getService()->getCsvRisksOp($anrId, $entity, $params));
+          }
+        if ($this->params()->fromQuery('csvInfoInst', false)) {
+            header('Content-Type: text/csv');
+            die($this->getService()->getCsvRisks($anrId, $id, $params));
+          }
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }

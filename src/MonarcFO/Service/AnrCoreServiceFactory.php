@@ -1,8 +1,8 @@
 <?php
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) Cases is a registered trademark of SECURITYMADEIN.LU
- * @license   MyCases is licensed under the GNU Affero GPL v3 - See license.txt for more information
+ * @copyright Copyright (c) 2018 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace MonarcFO\Service;
@@ -33,5 +33,10 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'scaleImpactTypeTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
         'scaleCommentTable' => 'MonarcFO\Model\Table\ScaleCommentTable',
         'instanceService' => 'MonarcFO\Service\AnrInstanceService',
+        'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
+        'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
+        'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
+        'interviewTable' => 'MonarcFO\Model\Table\InterviewTable',
+        'deliveryTable' => 'MonarcFO\Model\Table\DeliveryTable'
     ];
 }

@@ -1,8 +1,8 @@
 <?php
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) Cases is a registered trademark of SECURITYMADEIN.LU
- * @license   MyCases is licensed under the GNU Affero GPL v3 - See license.txt for more information
+ * @copyright Copyright (c) 2018 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace MonarcFO\Service;
@@ -27,6 +27,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $objectTable;
     protected $anrTable;
     protected $userAnrTable;
+    protected $translateService;
 
     /**
      * Helper method to find the specified string in the provided fields within the provided object. The search is
@@ -62,7 +63,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         $instances = [];
         if ($instance) {
-            $instanceEntity = $instanceTable->getEntity($instance['id']);
+            $instanceEntity = $instanceTable->getEntity($instance);
             $instances[] = $instanceEntity->id;
 
             // Get children instances
@@ -244,5 +245,92 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         }
 
         return parent::deleteFromAnr($id, $anrId);
+    }
+
+    /**
+     * Return a csv containing the operational risks
+     * @param int $anrId The ANR ID
+     * @param array|null $instance The instance data array, or null to not filter by instance
+     * @param array $params Eventual filters on kindOfMeasure, keywords, thresholds
+     * @return a string with all the data CV formated
+     */
+    public function getCsvRisksOp($anrId, $instance=null, $params=[])
+    {
+      $translate = $this->get('translateService');
+      $risks = $this->getRisksOp($anrId, $instance, $params);
+      $lang = $this->anrTable->getEntity($anrId)->language;
+      $ShowBrut = $this->anrTable->getEntity($anrId)->showRolfBrut;
+
+      $output = '';
+      if (count($risks) > 0) {
+          $fields_1 = [
+              'instanceInfos' => $translate->translate('Asset', $lang),
+              'label'. $lang => $translate->translate('Risk description', $lang),
+              ];
+          if ($ShowBrut == 1){
+          $fields_2 = [
+              'brutProb' =>  $translate->translate('Prob.', $lang) . "(" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutR' => 'R' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutO' => 'O' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutL' => 'L' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutF' => 'F' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'brutF' => 'P' . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'cacheBrutRisk' => $translate->translate('Current risk', $lang) . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              ];
+          }
+          else {
+            $fields_2 = [];
+          }
+          $fields_3 = [
+              'netProb' => $translate->translate('Prob.', $lang) . "(" . $translate->translate('Net risk', $lang) . ")",
+              'netR' => 'R' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netO' => 'O' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netL' => 'L' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netF' => 'F' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'netF' => 'P' . " (" . $translate->translate('Net risk', $lang) . ")",
+              'cacheNetRisk' => $translate->translate('Current risk', $lang) . " (" . $translate->translate('Net risk', $lang) . ")",
+              'comment' => $translate->translate('Existing controls', $lang),
+              'kindOfMeasure' => $translate->translate('Treatment', $lang),
+              'cacheTargetedRisk' => $translate->translate('Residual risk', $lang),
+              ];
+          $fields = $fields_1 + $fields_2 + $fields_3;
+
+        // Fill in the headers
+          $output .= implode(',', array_values($fields)) . "\n";
+          foreach ($risks as $risk) {
+          foreach ($fields as $k => $v) {
+              if ($k == 'kindOfMeasure'){
+                  switch ($risk[$k]) {
+                    case 1:
+                        $array_values[] = 'Reduction';
+                        break;
+                    case 2:
+                        $array_values[] = 'Denied';
+                        break;
+                    case 3:
+                        $array_values[] = 'Accepted';
+                        break;
+                    default:
+                      $array_values[] = 'Not treated';
+                  }
+                }
+                elseif ($k == 'instanceInfos') {
+                  $array_values[] = $risk[$k]['name' . $lang];
+                }
+                elseif ($risk[$k] == '-1'){
+                  $array_values[] = null;
+                }
+                else {
+                  $array_values[] = $risk[$k];
+                }
+            }
+          $output .= '"';
+          $output .= implode('","', str_replace('"', '\"', $array_values));
+          $output .= "\"\r\n";
+          $array_values = null;
+          }
+      }
+
+      return $output;
     }
 }

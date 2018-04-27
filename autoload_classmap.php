@@ -99,6 +99,8 @@ return array(
     'MonarcFO\Controller\ApiClientsControllerFactory'                         => __DIR__ . '/src/MonarcFO/Controller/ApiClientsControllerFactory.php',
     'MonarcFO\Controller\ApiConfigController'                                 => __DIR__ . '/src/MonarcFO/Controller/ApiConfigController.php',
     'MonarcFO\Controller\ApiConfigControllerFactory'                          => __DIR__ . '/src/MonarcFO/Controller/ApiConfigControllerFactory.php',
+    'MonarcFO\Controller\ApiDeliveriesModelsController'                       => __DIR__ . '/src/MonarcFO/Controller/ApiDeliveriesModelsController.php',
+    'MonarcFO\Controller\ApiDeliveriesModelsControllerFactory'                => __DIR__ . '/src/MonarcFO/Controller/ApiDeliveriesModelsControllerFactory.php',
     'MonarcFO\Controller\ApiDuplicateAnrController'                           => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrController.php',
     'MonarcFO\Controller\ApiDuplicateAnrControllerFactory'                    => __DIR__ . '/src/MonarcFO/Controller/ApiDuplicateAnrControllerFactory.php',
     'MonarcFO\Controller\ApiGuidesController'                                 => __DIR__ . '/src/MonarcFO/Controller/ApiGuidesController.php',
