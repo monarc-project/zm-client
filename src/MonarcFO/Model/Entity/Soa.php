@@ -15,7 +15,11 @@ use MonarcCore\Model\Entity\AbstractEntity;
 /**
  * Soa
  *
- * @ORM\Table(name="Soa")
+ * @ORM\Table(name="Soa", indexes={
+ *      @ORM\Index(name="measure", columns={"measure_id"}),
+ *      @ORM\Index(name="anr", columns={"anr_id"})
+
+ * })
  * @ORM\Entity
  */
 class Soa extends AbstractEntity
@@ -33,12 +37,39 @@ class Soa extends AbstractEntity
     protected $id;
 
 
+
+
+
+
+        /**
+         * @var integer
+         *
+         *  @ORM\Column(name="anr_id", type="integer",  nullable=false)
+         */
+        protected $anr;
+
+
+
+
+
+    /**
+     * @var integer
+     *
+     *  @ORM\Column(name="measure_id", type="integer",  nullable=false)
+     */
+    protected $measure;
+
+
+
     /**
      * @var string
      *
      * @ORM\Column(name="reference", type="string", length=255, nullable=true)
      */
+
     protected $reference;
+
+
 
 
     /**
@@ -81,7 +112,7 @@ protected $evidences ;
 protected $actions ;
 
 /**
-* @var string
+ * @var string
  *
  * @ORM\Column(name="compliance", type="string", length=255, nullable=true)
 */
@@ -113,6 +144,45 @@ protected $compliance ;
     {
         $this->id = $id;
     }
+
+    /**
+     * @return int
+     */
+    public function getMeasure()
+    {
+        return $this->measure;
+    }
+
+    /**
+     * @param int $measure
+     *
+     */
+    public function setMeasure($measure)
+    {
+        $this->measure = $measure;
+    }
+
+
+
+    /**
+     * @return int
+     */
+    public function getAnr()
+    {
+        return $this->anr;
+    }
+
+    /**
+     * @param int $anr
+     *
+     */
+    public function setAnr($anr)
+    {
+        $this->anr = $anr;
+    }
+
+
+
 
 
     /**

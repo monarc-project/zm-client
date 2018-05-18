@@ -21,28 +21,41 @@ use Zend\View\Model\JsonModel;
 class ApiAnrSoaController extends  ApiAnrAbstractController
 {
     protected $name = 'Soa-list';
-  //  protected $dependencies = ['anr'];
+    protected $dependencies = ['anr', 'object', 'root', 'parent'];
 
   //  protected $dependencies = ['anr', 'asset', 'object', 'root', 'parent'];
   /**
    * @inheritdoc
    */
-   public function getList()
+
+
+
+
+
+
+
+   public function get($id)
    {
-     //file_put_contents('php://stderr', print_r('controller', TRUE));
-    //   $order = $this->params()->fromQuery('order');
-    //   $filter = $this->params()->fromQuery('filter');
-    //   $anrId = (int) $this->params()->fromRoute('anrId');
+       $entity = $this->getService()->getEntity($id);
 
-       /** @var SoaService $service */
-       $service = $this->getService();
-       $soa = $service->getList(0, 0, null,null, null); //['anr' => $anrId]
+       $anrId = (int)$this->params()->fromRoute('anrid');
+       if (empty($anrId)) {
+           throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+       }
+       if (!$entity['anr'] ) {
+           throw new \MonarcCore\Exception\Exception('Anr ids diffence', 412);
+       }
 
-       return new JsonModel(array(
-          'count' => count($soa),
-           $this->name => $soa
-       ));
+       if (count($this->dependencies)) {
+           $this->formatDependencies($entity, $this->dependencies);
+       }
+
+       return new JsonModel($entity);
    }
+
+
+
+
 
 
 

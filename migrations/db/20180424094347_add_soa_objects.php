@@ -31,29 +31,29 @@ class AddSoaObjects extends AbstractMigration
     {
 
 
-      // Migration for table Soa
-      $table = $this->table('Soa');
-      $table
-          ->addColumn('id', 'integer', array('null' => true, 'signed' => false))
-          ->addColumn('reference', 'string', array('null' => true, 'limit' => 255))
-          ->addColumn('control', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-          ->addColumn('requirement', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-          ->addColumn('justification', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-          ->addColumn('evidences', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-          ->addColumn('actions', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-          ->addColumn('compliance', 'string', array('null' => true, 'limit' => 255))
+            // Migration for table Soa
+            $table = $this->table('Soa');
+            $table
+              //  ->addColumn('id', 'integer', array('null' => true, 'signed' => false))
+                ->addColumn('reference', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('control', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
+                ->addColumn('requirement', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
+                ->addColumn('justification', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
+                ->addColumn('evidences', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
+                ->addColumn('actions', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
+                ->addColumn('compliance', 'string', array('null' => true, 'limit' => 255))
 
-        //  ->addIndex(array(''))
+              //  ->addIndex(array(''))
 
-          ->create();
-      $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+                ->create();
+            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
 
 
-        //    $this->table('measures')
+              //    $this->table('measures')
 
-          //       ->removeColumn('Soa')
-        //         ->removeColumn('Threat')
-        //         ->update();
+                //       ->removeColumn('Soa')
+              //         ->removeColumn('Threat')
+              //         ->update();
 
 
 

@@ -23,6 +23,11 @@ class SoaServiceFactory extends AbstractServiceFactory
     protected $ressources = [
       'entity' => 'MonarcFO\Model\Entity\Soa',
       'table' => 'MonarcFO\Model\Table\SoaTable',
+      //'AmvTable' => 'MonarcFO\Model\Table\AmvTable',
+      //'InstanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
+      //'MeasureTable' => 'MonarcFO\Model\Table\MeasureTable',
+
+
       //  'measure' => 'MonarcFO\Model\Entity\Measure',
       //  'MeasureService' => 'MonarcCore\Service\MeasureService'
     ];
