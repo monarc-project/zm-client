@@ -210,7 +210,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 $brothers = $instanceRiskTable->getEntityByFields(['anr' => $risk->anr->id, 'amv' => $risk->amv->id]);
                 $brothersIds = [];
                 foreach ($brothers as $brother) {
-                    $brothersIds[] = $brother->id;
+                   if ($risk->getInstance()->getObject()->get('id') == $brother->getInstance()->getObject()->get('id')) {
+                       $brothersIds[] = $brother->id;
+                   }
                 }
 
                 $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $recommandationRisk->recommandation->id]);
