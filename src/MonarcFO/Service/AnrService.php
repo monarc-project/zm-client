@@ -31,6 +31,8 @@ use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Entity\Threat;
 use MonarcFO\Model\Entity\Vulnerability;
 use MonarcFO\Model\Table\UserTable;
+use MonarcFO\Model\Table\SoaTable;
+
 
 /**
  * This class is the service that handles ANR CRUD operations, and various actions on them.
@@ -61,6 +63,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $vulnerabilityTable;
     protected $questionTable;
     protected $questionChoiceTable;
+    protected $SoaTable;
+
 
     protected $amvCliTable;
     protected $anrCliTable;
@@ -93,6 +97,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $vulnerabilityCliTable;
     protected $questionCliTable;
     protected $questionChoiceCliTable;
+    protected $SoaCliTable;
 
     protected $instanceService;
 
@@ -412,12 +417,42 @@ class AnrService extends \MonarcCore\Service\AbstractService
             //duplicate measures
             $measuresNewIds = [];
             $measures = ($source == Object::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
+
             foreach ($measures as $measure) {
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->set('id', null);
                 $newMeasure->setAnr($newAnr);
                 $this->get('measureCliTable')->save($newMeasure,false);
+                $this->get('measureCliTable')->getDb()->flush();
                 $measuresNewIds[$measure->id] = $newMeasure;
+
+            }
+
+            //duplicate soas
+            $soasNewIds = [];
+
+            foreach ($measures as $measure) {
+                $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+                $newSoa->set('id', null);
+                $this->get('table')->getDb()->flush();
+                $newSoa->setAnr($newAnr->get('id'));
+                $newSoa->setReference($measuresNewIds[$measure->id]->code);
+              if($newAnr->language==1){
+                  $newSoa->setControl($measuresNewIds[$measure->id]->description1);
+                  }
+              if($newAnr->language==2){
+                $newSoa->setControl($measuresNewIds[$measure->id]->description2);
+                }
+              if($newAnr->language==3){
+                $newSoa->setControl($measuresNewIds[$measure->id]->description3);
+                }
+              if($newAnr->language==4){
+                $newSoa->setControl($measuresNewIds[$measure->id]->description4);
+                }
+                $newSoa->setMeasure($measuresNewIds[$measure->id]->getId());
+                $this->get('SoaCliTable')->save($newSoa,false);
+                $soasNewIds[$soa->id] = $newSoa;
+
             }
 
             //duplicate amvs

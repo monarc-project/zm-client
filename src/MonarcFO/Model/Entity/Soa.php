@@ -81,6 +81,7 @@ class Soa extends AbstractEntity
 
 
 
+
    /**
     * @var text
      *
@@ -223,25 +224,25 @@ protected $compliance ;
 
 
 
-    /**
-     * @return TEXT_LONG
-     */
-    public function getControl()
-    {
-        return $this->control;
-    }
 
-    /**
-     * @param TEXT_LONG $control
-     *
-     */
-    public function setControl($control)
-    {
-        $this->control = $control;
-    }
+          /**
+           * @return TEXT_LONG
+           */
+          public function getControl()
+          {
+              return $this->control;
+          }
 
+          /**
+           * @param TEXT_LONG $control
+           *
+           */
+          public function setControl($control)
+          {
+              $this->control = $control;
+          }
 
-
+        
     /**
      * @return TEXT_LONG
      */
