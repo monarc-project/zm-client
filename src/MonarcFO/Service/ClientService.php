@@ -41,7 +41,7 @@ class ClientService extends AbstractService
         return $this->table->countFiltered(
             $this->parseFrontendFilter(
                 $filter,
-                ['name', 'address', 'postalcode', 'phone', 'email', 'contact_fullname', 'contact_email', 'contact_phone']
+                ['name', 'address', 'postalcode', 'email', 'contact_fullname', 'contact_email']
             )
         );
     }
@@ -59,14 +59,14 @@ class ClientService extends AbstractService
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         return $this->table->fetchAllFiltered(
-            ['id', 'name', 'proxy_alias', 'address', 'postalcode', 'phone', 'fax', 'email', 'contactFullname',
-                'employees_number', 'contact_email', 'contact_phone', 'model_id'],
+            ['id', 'name', 'proxy_alias', 'address', 'postalcode', 'fax', 'email', 'contactFullname',
+                'employees_number', 'contact_email', 'model_id'],
             $page,
             $limit,
             $this->parseFrontendOrder($order),
             $this->parseFrontendFilter(
                 $filter,
-                ['name', 'address', 'postalcode', 'phone', 'email', 'contactFullname', 'contact_email', 'contact_phone']
+                ['name', 'address', 'postalcode', 'email', 'contactFullname', 'contact_email']
             )
         );
     }
