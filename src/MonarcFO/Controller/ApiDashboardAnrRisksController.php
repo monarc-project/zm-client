@@ -1,8 +1,8 @@
 <?php
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2018 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
- * @license   MONARC is licensed under GNU Affero General Public License version 3
+ * @copyright Copyright (c) Cases is a registered trademark of SECURITYMADEIN.LU
+ * @license   MyCases is licensed under the GNU Affero GPL v3 - See license.txt for more information
  */
 
 namespace MonarcFO\Controller;
@@ -10,12 +10,12 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api ANR Risks Controller
+ * Api Dashboard ANR Risks Controller
  *
- * Class ApiAnrRisksController
+ * Class ApiDashboardAnrRisksController
  * @package MonarcFO\Controller
  */
-class ApiAnrRisksController extends ApiAnrAbstractController
+class ApiDashboardAnrRisksController extends ApiAnrAbstractController
 {
     protected $name = 'risks';
 
@@ -32,17 +32,12 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         }
         $params = $this->parseParams();
 
-        if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv; charset=utf-8');
-            die($this->getService()->getCsvRisks($anrId, ['id' => $id], $params));
-        } else {
-            $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
-
-            return new JsonModel([
-                'count' => count($lst),
-                $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
-            ]);
-        }
+        $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
+        return new JsonModel([
+            'count' => count($lst),
+            $this->name => $params['limit'] > 0 ?
+                array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
+        ]);
     }
 
     /**
@@ -50,22 +45,34 @@ class ApiAnrRisksController extends ApiAnrAbstractController
      */
     public function getList()
     {
+        $page = $this->params()->fromQuery('page');
+        $limit = $this->params()->fromQuery('limit');
+        $order = $this->params()->fromQuery('order');
+        $filter = $this->params()->fromQuery('filter');
+
+
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $params = $this->parseParams();
 
-        if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv; charset=utf-8');
-            die($this->getService()->getCsvRisks($anrId, null, $params));
-        } else {
-            $lst = $this->getService()->getRisks($anrId, null, $params);
-            return new JsonModel([
-                'count' => count($lst),
-                $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
-            ]);
+        $service = $this->getService('anr');
+        $entities = $service->getList($page, $limit, $order, $filter);
+        if (count($this->dependencies)) {
+            foreach ($entities as $key => $entity) {
+                $this->formatDependencies($entities[$key], $this->dependencies);
+            }
         }
+
+        $lst = $this->getService()->getRisks($anrId, null, $params);
+
+        return new JsonModel([
+            'count' => count($lst),
+            $this->name => $params['limit'] > 0 ?
+                array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
+        ]);
+
     }
 
     /**

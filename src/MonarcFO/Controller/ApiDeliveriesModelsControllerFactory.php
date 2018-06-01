@@ -4,18 +4,15 @@
  * @copyright Copyright (c) 2018 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
-
 namespace MonarcFO\Controller;
 
 use MonarcCore\Controller\AbstractControllerFactory;
 
 /**
- * Api Anr Carto Risks Controller Factory
- *
- * Class ApiAnrCartoRisksControllerFactory
+ * Factory class attached to ApiDeliveriesModelsController
  * @package MonarcFO\Controller
  */
-class ApiAnrCartoRisksControllerFactory extends AbstractControllerFactory
+class ApiDeliveriesModelsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\MonarcFO\Service\AnrCartoRiskService';
+    protected $serviceName = '\MonarcCore\Service\DeliveriesModelsService';
 }

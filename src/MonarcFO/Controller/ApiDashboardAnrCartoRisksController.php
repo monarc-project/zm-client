@@ -10,12 +10,12 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api ANR Cartography Risks Real & Targeted Controller
+ * Api Dashboard ANR Cartography Risks Real & Targeted Controller
  *
- * Class ApiAnrCartoRisksController
+ * Class ApiDashboardAnrCartoRisksController
  * @package MonarcFO\Controller
  */
-class ApiAnrCartoRisksController extends ApiAnrAbstractController
+class ApiDashboardAnrCartoRisksController extends ApiAnrAbstractController
 {
     protected $name = 'carto';
     protected $dependencies = [];

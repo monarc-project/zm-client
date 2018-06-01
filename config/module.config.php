@@ -449,12 +449,12 @@ return array(
                     'carto_risks' => array(
                         'type' => 'segment',
                         'options' => array(
-                            'route' => 'carto-risks[/:type]',
+                            'route' => 'carto-risks-dashboard[/:type]',
                             'constraints' => array(
                                 'type' => 'all|real|targeted',
                             ),
                             'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrCartoRisks',
+                                'controller' => 'MonarcFO\Controller\ApiDashboardAnrCartoRisks',
                                 'type' => 'all',
                             ),
                         ),
@@ -468,6 +468,15 @@ return array(
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrRisks',
+                            ),
+                        ),
+                    ),
+                    'dashboard' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'risks-dashboard[/:id]',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiDashboardAnrRisks',
                             ),
                         ),
                     ),
@@ -669,6 +678,18 @@ return array(
                     ),
                 ),
             ),
+            'monarc_api_doc_models' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/deliveriesmodels[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiDeliveriesModels',
+                    ),
+                ),
+            ),
             'monarc_api_user_password' => array(
                 'type' => 'segment',
                 'options' => array(
@@ -740,8 +761,9 @@ return array(
             '\MonarcFO\Controller\ApiAnrScales' => '\MonarcFO\Controller\ApiAnrScalesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesTypes' => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesComments' => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrCartoRisks' => '\MonarcFO\Controller\ApiAnrCartoRisksControllerFactory',
+            '\MonarcFO\Controller\ApiDashboardAnrCartoRisks' => '\MonarcFO\Controller\ApiDashboardAnrCartoRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisks' => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
+            '\MonarcFO\Controller\ApiDashboardAnrRisks' => '\MonarcFO\Controller\ApiDashboardAnrRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRisksOp' => '\MonarcFO\Controller\ApiAnrRisksOpControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibrary' => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
             '\MonarcFO\Controller\ApiAnrLibraryCategory' => '\MonarcFO\Controller\ApiAnrLibraryCategoryControllerFactory',
@@ -757,6 +779,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrExport' => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
             '\MonarcFO\Controller\ApiAnrInstancesConsequences' => '\MonarcFO\Controller\ApiAnrInstancesConsequencesControllerFactory',
             '\MonarcFO\Controller\ApiModelVerifyLanguage' => '\MonarcFO\Controller\ApiModelVerifyLanguageControllerFactory',
+            '\MonarcFO\Controller\ApiDeliveriesModels'          => '\MonarcFO\Controller\ApiDeliveriesModelsControllerFactory',
         ),
     ),
 
@@ -943,6 +966,7 @@ return array(
     'roles' => array(
         // Super Admin : Gestion des droits des utilisateurs uniquement (Carnet d’adresses)
         'superadminfo' => array(
+            'monarc_api_doc_models',
             'monarc_api_admin_users',
             'monarc_api_admin_users_roles',
             'monarc_api_admin_users_rights',
@@ -982,6 +1006,7 @@ return array(
             'monarc_api_global_client_anr/soa',
             'monarc_api_global_client_anr/risks',
             'monarc_api_global_client_anr/risks_op',
+            'monarc_api_global_client_anr/dashboard',
             'monarc_api_global_client_anr/amvs',
             'monarc_api_client_anr',
             'monarc_api_global_client_anr/assets',

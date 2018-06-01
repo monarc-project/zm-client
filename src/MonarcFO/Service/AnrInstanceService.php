@@ -676,6 +676,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             }
 
             if (!empty($data['children'])) {
+              usort($data['children'], function($a,$b){
+                return $a['instance']['position'] <=> $b['instance']['position'];
+              });
                 foreach ($data['children'] as $child) {
                     $this->importFromArray($child, $anr, $instanceId, $modeImport, $include_eval, $sharedData);//et ainsi de suite ...
                 }
@@ -1049,6 +1052,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             $first = true;
             $instanceIds = [];
             $nbScaleImpactTypes = count($this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id]));
+            usort($data['instances'], function($a,$b){
+              return $a['instance']['position'] <=> $b['instance']['position'];
+            });
             foreach ($data['instances'] as $inst) {
                 if ($first) {
                     if ($data['with_eval'] && isset($data['scales'])) {
@@ -1074,7 +1080,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   }
                   $scaleComment = $this->get('scaleCommentTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
                   foreach ($scaleComment as $sc) {
-                    if ($sc->scaleImpactType->isSys == 1) {
+                    if ($sc->scaleImpactType->isSys == 1 or is_null($sc->scaleImpactType)) {
                       $this->get('scaleCommentTable')->delete($sc->id);
                     }
                   }
