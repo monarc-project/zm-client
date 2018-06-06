@@ -900,7 +900,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.1));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5), ['vMerge' => 'continue']);
-            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbLow . ' ' . $this->anrTranslate('low risks'), $risksTableFontStyleBlack, $alignLeft);
+            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbLow . ' ' . $this->anrTranslate('Low risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($lowSize), $risksTableGreenCellStyle);
 
             if(($maxSize - $lowSize) != 0)
@@ -909,7 +909,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.1));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5), ['vMerge' => 'continue']);
-            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbMedium . ' ' . $this->anrTranslate('medium risks'), $risksTableFontStyleBlack, $alignLeft);
+            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbMedium . ' ' . $this->anrTranslate('Medium risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($mediumSize), $risksTableOrangeCellStyle);
 
             if(($maxSize - $mediumSize) != 0)
@@ -918,7 +918,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.1));
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5), ['vMerge' => 'continue']);
-            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbHigh . ' ' . $this->anrTranslate('high risks'), $risksTableFontStyleBlack, $alignLeft);
+            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5), $risksTableCellStyle)->addText($nbHigh . ' ' . $this->anrTranslate('High risks'), $risksTableFontStyleBlack, $alignLeft);
             $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($highSize), $risksTableRedCellStyle);
 
             if(($maxSize - $highSize) != 0)
@@ -988,7 +988,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $draw->rectangle(29, 195 - (10 + (($distrib[2] * 180)/$gridmax)) , 137, 184);
             }
             $draw->setFillColor('#000000');
-            $draw->annotation ( 45 , 200 , ucfirst($this->anrTranslate('high risks')) );
+            $draw->annotation ( 45 , 200 , ucfirst($this->anrTranslate('High risks')) );
 
             if(isset($distrib[1]) && $distrib[1]>0){
                 $draw->setFillColor("#FFBC1C");
@@ -996,7 +996,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $draw->rectangle(146, 195 - (10 + (($distrib[1] * 180)/$gridmax)) , 254, 184);
             }
             $draw->setFillColor('#000000');
-            $draw->annotation ( 160 , 200 , ucfirst($this->anrTranslate('medium risks')) );
+            $draw->annotation ( 160 , 200 , ucfirst($this->anrTranslate('Medium risks')) );
 
             if(isset($distrib[0]) && $distrib[0]>0){
                 $draw->setFillColor("#D6F107");
@@ -1004,7 +1004,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $draw->rectangle(263, 195 - (10 + (($distrib[0] * 180)/$gridmax)) , 371, 184);
             }
             $draw->setFillColor('#000000');
-            $draw->annotation ( 280 , 200 , ucfirst($this->anrTranslate('low risks')) );
+            $draw->annotation ( 280 , 200 , ucfirst($this->anrTranslate('Low risks')) );
 
             $canvas->drawImage($draw);
             $datapath = './data/';
