@@ -1959,10 +1959,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $bgcolorRiskBefore = 'D6F107';
             } else if ($recoRecord->riskColorBefore == "orange") {
                 $bgcolorRiskBefore = 'FFBC1C';
-            } else if ($recoRecord->riskColorBefore == "red"){
-                $bgcolorRiskBefore = 'FD661F';
-            }else{
+            } else if ($recoRecord->riskMaxRiskBefore == -1){
                 $bgcolorRiskBefore = 'FFFFFF';
+            }else{
+                $bgcolorRiskBefore = 'FD661F';
             }
 
             $styleContentCellRiskBefore = ['valign' => 'center', 'bgcolor' => $bgcolorRiskBefore, 'size' => 10];
@@ -1971,10 +1971,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $bgcolorRiskAfter = 'D6F107';
             } else if ($recoRecord->riskColorAfter == "orange") {
                 $bgcolorRiskAfter = 'FFBC1C';
-            } else if ($recoRecord->riskColorAfter == "red"){
-                $bgcolorRiskAfter = 'FD661F';
+            } else if ($recoRecord->riskMaxRiskAfter == -1){
+                $bgcolorRiskAfter = 'FFFFFF';
             }else{
-                $bgcolorRiskBefore = 'FFFFFF';
+                $bgcolorRiskBefore = 'FD661F';
             }
 
             $styleContentCellRiskAfter = ['valign' => 'center', 'bgcolor' => $bgcolorRiskAfter, 'size' => 10];
@@ -2011,8 +2011,14 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $cellRiskRun -> addText($this->anrTranslate('New controls') . ': ' , $styleContentFontBold);
                 $cellRiskRun -> addText(_WT($recoRecord->riskCommentAfter) . '<w:br/>', $styleContentFont);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText(_WT($recoRecord->implComment), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleContentCellRiskBefore)->addText($recoRecord->riskMaxRiskBefore, $styleContentFontBold, $alignCenter);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleContentCellRiskAfter)->addText($recoRecord->riskMaxRiskAfter, $styleContentFontBold, $alignCenter);
+                if($recoRecord->riskMaxRiskBefore != -1)
+                  $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleContentCellRiskBefore)->addText($recoRecord->riskMaxRiskBefore, $styleContentFontBold, $alignCenter);
+                else
+                  $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleContentCellRiskBefore)->addText("-", $styleContentFontBold, $alignCenter);
+                if($recoRecord->riskMaxRiskAfter != -1)
+                  $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleContentCellRiskAfter)->addText($recoRecord->riskMaxRiskAfter, $styleContentFontBold, $alignCenter);
+                else
+                  $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.75), $styleContentCellRiskAfter)->addText("-", $styleContentFontBold, $alignCenter);
 
               $previousRecoRecordId = $recoRecord->id;
         }
