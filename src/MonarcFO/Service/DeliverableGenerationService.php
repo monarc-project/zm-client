@@ -1959,8 +1959,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $bgcolorRiskBefore = 'D6F107';
             } else if ($recoRecord->riskColorBefore == "orange") {
                 $bgcolorRiskBefore = 'FFBC1C';
-            } else {
+            } else if ($recoRecord->riskColorBefore == "red"){
                 $bgcolorRiskBefore = 'FD661F';
+            }else{
+                $bgcolorRiskBefore = 'FFFFFF';
             }
 
             $styleContentCellRiskBefore = ['valign' => 'center', 'bgcolor' => $bgcolorRiskBefore, 'size' => 10];
@@ -1969,8 +1971,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $bgcolorRiskAfter = 'D6F107';
             } else if ($recoRecord->riskColorAfter == "orange") {
                 $bgcolorRiskAfter = 'FFBC1C';
-            } else {
+            } else if ($recoRecord->riskColorAfter == "red"){
                 $bgcolorRiskAfter = 'FD661F';
+            }else{
+                $bgcolorRiskBefore = 'FFFFFF';
             }
 
             $styleContentCellRiskAfter = ['valign' => 'center', 'bgcolor' => $bgcolorRiskAfter, 'size' => 10];
