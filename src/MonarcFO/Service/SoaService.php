@@ -29,6 +29,8 @@ use MonarcFO\Model\Table\MeasureTable;
 
  protected $table;
   protected $entity;
+  protected $dependencies = ['anr', 'measures'];
+
 
 
    /**
@@ -60,61 +62,41 @@ use MonarcFO\Model\Table\MeasureTable;
        );
    }
 
-
-
-
-
-
-
-
+   /**
+    * @inheritdoc
+    */
    public function patch($id, $data)
    {
 
-       /** @var Soa $entity */
-       $entity = $this->get('table')->getEntity($id);
-       if (!$entity) {
-           throw new \MonarcCore\Exception\Exception('Entity does not exist', 412);
-       }
-       // If we try to override this object's ANR, make some sanity and security checks. Ensure the data's ANR matches
-       // the existing ANR, and that we have the rights to edit it.
-       if (!empty($data['anr'])) {
+       if ( 0 <= $data['compliance'] && $data['compliance']<= 100 && $data['compliance'].is_int) {
 
-
-           $connectedUser = $this->get('table')->getConnectedUser();
-
-           /** @var UserAnrTable $userAnrTable */
-           $userAnrTable = $this->get('userAnrTable');
-           if ($userAnrTable) {
-               $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser['id'], 'anr' => $entity->anr->id]);
-               $rwd = 0;
-               foreach ($rights as $right) {
-                   if ($right->rwd == 1) {
-                       $rwd = 1;
-                   }
-               }
-
-               if (!$rwd) {
-                   throw new \MonarcCore\Exception\Exception('You are not authorized to do this action', 412);
-               }
-           }
+       }else{
+           $data['compliance'] = 0;
        }
 
-       $entity->setDbAdapter($this->get('table')->getDb());
-       $entity->setLanguage($this->getLanguage());
-       foreach ($this->dependencies as $dependency) {
-           if ((!isset($data[$dependency])) && ($entity->$dependency)) {
-               $data[$dependency] = $entity->$dependency->id;
-           }
-       }
 
-       // Pass our new data to the entity. This might throw an exception if some data is invalid.
-       $entity->exchangeArray($data, true);
-
-       $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-       $this->setDependencies($entity, $dependencies);
-
-       return $this->get('table')->save($entity);
+       parent::patch($id, $data);
    }
+
+   /**
+    * @inheritdoc
+    */
+   public function update($id, $data)
+   {
+
+
+            if (0 <= $data['compliance'] && $data['compliance']<= 100 && $data['compliance'].is_integer) {
+
+            }else{
+                $data['compliance'] = 0;
+            }
+
+
+       parent::update($id, $data);
+   }
+
+
+
 
 
 

@@ -41,13 +41,15 @@ class Soa extends AbstractEntity
 
 
 
-        /**
-         * @var integer
-         *
-         *  @ORM\Column(name="anr_id", type="integer",  nullable=false)
-         */
-        protected $anr;
-
+    /**
+     * @var \MonarcFO\Model\Entity\Anr
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $anr;
 
 
 
@@ -115,7 +117,7 @@ protected $actions ;
 /**
  * @var string
  *
- * @ORM\Column(name="compliance", type="string", length=255, nullable=true)
+ * @ORM\Column(name="compliance", type="integer",  nullable=true)
 */
 protected $compliance ;
 
@@ -166,7 +168,7 @@ protected $compliance ;
 
 
     /**
-     * @return int
+     * @return Anr
      */
     public function getAnr()
     {
@@ -174,15 +176,14 @@ protected $compliance ;
     }
 
     /**
-     * @param int $anr
-     *
+     * @param Anr $anr
+     * @return Soa
      */
     public function setAnr($anr)
     {
         $this->anr = $anr;
+        return $this;
     }
-
-
 
 
 
@@ -242,7 +243,7 @@ protected $compliance ;
               $this->control = $control;
           }
 
-        
+
     /**
      * @return TEXT_LONG
      */
@@ -320,7 +321,7 @@ protected $compliance ;
 
 
     /**
-     * @return string
+     * @return integer
      */
     public function getCompliance()
     {
@@ -328,7 +329,7 @@ protected $compliance ;
     }
 
     /**
-     * @param string $compliance
+     * @param integer $compliance
      *
      */
     public function setCompliance($compliance)

@@ -432,10 +432,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $soasNewIds = [];
 
             foreach ($measures as $measure) {
-                $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+
+
+
+                $newSoa = new \MonarcFO\Model\Entity\Soa();
                 $newSoa->set('id', null);
                 $this->get('table')->getDb()->flush();
-                $newSoa->setAnr($newAnr->get('id'));
+                $newSoa->setAnr($newAnr);
                 $newSoa->setReference($measuresNewIds[$measure->id]->code);
               if($newAnr->language==1){
                   $newSoa->setControl($measuresNewIds[$measure->id]->description1);
@@ -451,7 +454,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
                 $newSoa->setMeasure($measuresNewIds[$measure->id]->getId());
                 $this->get('SoaCliTable')->save($newSoa,false);
-                $soasNewIds[$soa->id] = $newSoa;
+              //  $soasNewIds[$soa->id] = $newSoa;
 
             }
 
@@ -921,7 +924,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
         foreach ($snapshots as $s) {
             if (!empty($s)) {
-                $this->get('table')->delete($s->get('anr')->get('id'), false);
+              $this->get('table')->delete($s->get('anr')->get('id'), false);
             }
         }
 

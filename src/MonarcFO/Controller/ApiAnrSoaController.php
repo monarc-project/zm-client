@@ -21,18 +21,14 @@ use Zend\View\Model\JsonModel;
 class ApiAnrSoaController extends  ApiAnrAbstractController
 {
     protected $name = 'Soa-list';
-    protected $dependencies = ['anr', 'object', 'root', 'parent'];
+    protected $dependencies = ['anr'];
 
-  //  protected $dependencies = ['anr', 'asset', 'object', 'root', 'parent'];
+
+
+
   /**
    * @inheritdoc
    */
-
-
-
-
-
-
 
    public function get($id)
    {
