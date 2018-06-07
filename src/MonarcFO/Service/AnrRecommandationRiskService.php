@@ -467,23 +467,74 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      * @param string $data The validation data (comment, etc)
      * @throws \MonarcCore\Exception\Exception If the risk is an OP risk, or if the recommendation risk ID is invalid.
      */
-    public function validateFor($recoRiskId, $data)
-    {
+    public function validateFor($recoRiskId, $data) {
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
         $recoRisk = $table->getEntity($recoRiskId);
 
-        // We can't validate operational risks, only regular risks
+        // validate for operational risks
         if (is_null($recoRisk->instanceRisk)) {
-            throw new \MonarcCore\Exception\Exception('Not possible to validate operational risk', 412);
-        }
+            // Verify if risk is final or intermediate (risk attach to others recommandations)
+            $riskRecommandations = $table->getEntityByFields(['instanceRiskOp' => $recoRisk->instanceRiskOp->id]);
+            $final = (count($riskRecommandations) == 1);
+            // Automatically record the change in history before modifying values
+            $this->createRecoRiskOpHistoric($data, $recoRisk, $final);
+
+            if ($final) {
+                // Overload observation for volatile comment (after measure)
+                $cacheCommentAfter = [];
+
+                /** @var RecommandationHistoricTable $recoHistoTable */
+                $recoHistoTable = $this->get('recommandationHistoricTable');
+                $riskRecoHistos = $recoHistoTable->getEntityByFields([
+                    'instanceRiskOp' => $recoRisk->get('instanceRiskOp')->get('id')
+                ], ['id' => 'DESC']);
+                $c = 0;
+
+                foreach ($riskRecoHistos as $riskRecoHisto) {
+                    /*
+                    On ne prend que:
+                    - le dernier "final"
+                    - et les précédent "non final"
+                    */
+                    if(!$riskRecoHisto->get('final') || ($riskRecoHisto->get('final') && $c <= 0)){
+                        if (strlen($riskRecoHisto->get('cacheCommentAfter'))) {
+                            $cacheCommentAfter[] =  $riskRecoHisto->get('cacheCommentAfter');
+                        }
+                        $c++;
+                    }else{
+                        break;
+                    }
+                }
+                $instanceRiskOp = $recoRisk->get('instanceRiskOp');
+                $instanceRiskOp->comment = implode("\n\n", array_reverse($cacheCommentAfter)); // array_reverse because "['id' => 'DESC']"
+                $instanceRiskOp->mitigation = '';
+                $instanceRiskOp->netProb = $instanceRiskOp->get('targetedProb');
+                $instanceRiskOp->netR = $instanceRiskOp->get('targetedR');
+                $instanceRiskOp->netO = $instanceRiskOp->get('targetedO');
+                $instanceRiskOp->netL = $instanceRiskOp->get('targetedL');
+                $instanceRiskOp->netF = $instanceRiskOp->get('targetedF');
+                $instanceRiskOp->netP = $instanceRiskOp->get('targetedP');
+                $instanceRiskOp->cacheNetRisk = $instanceRiskOp->get('cacheTargetedRisk');
+
+                $impacts= ['r', 'o', 'l', 'f', 'p'];
+                foreach ($impacts as $i) {
+                    $icol = 'targeted' . strtoupper($i);
+                    $instanceRiskOp->$icol = -1;
+                }
+                $instanceRiskOp->targetedProb = -1;
+                $instanceRiskOp->cacheTargetedRisk = -1;
+                $instanceRiskOp->kindOfMeasure = InstanceRiskOp::KIND_NOT_TREATED;
+
+            }
+        } else { // validate for information risks
 
         // Verify if risk is final or intermediate (risk attach to others recommandations)
         $riskRecommandations = $table->getEntityByFields(['instanceRisk' => $recoRisk->instanceRisk->id]);
         $final = (count($riskRecommandations) == 1);
 
         // Automatically record the change in history before modifying values
-        $this->createRecoHistoric($data, $recoRisk, $final);
+        $this->createRecoRiskHistoric($data, $recoRisk, $final);
 
         if ($final) {
             // Overload observation for volatile comment (after measure)
@@ -515,7 +566,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             // Update instance risk
             $instanceRisk = $recoRisk->get('instanceRisk');
 
-            $instanceRisk->comment = implode(' > ', array_reverse($cacheCommentAfter)); // array_reverse because "['id' => 'DESC']"
+            $instanceRisk->comment = implode("\n\n", array_reverse($cacheCommentAfter)); // array_reverse because "['id' => 'DESC']"
             $instanceRisk->commentAfter = '';
 
             // Apply reduction vulnerability on risk
@@ -594,6 +645,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 }
             }
         }
+      }
         // Repositioning recommendation in hierarchy
         $this->detach($recoRisk);
 
@@ -619,12 +671,12 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Creates an entry in the recommendation's history to keep a log of changes.
+     * Creates an entry in the recommendation's history for information risks to keep a log of changes.
      * @param array $data The history data (comment)
      * @param RecommandationRisk $recoRisk The recommendation risk to historize
      * @param bool $final Whether or not it's the final event
      */
-    public function createRecoHistoric($data, $recoRisk, $final)
+    public function createRecoRiskHistoric($data, $recoRisk, $final)
     {
         $reco = $recoRisk->recommandation;
         $instanceRisk = $recoRisk->instanceRisk;
@@ -639,6 +691,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         /** @var RecommandationHistoricTable $recoHistoTable */
         $recoHistoTable = $this->get('recommandationHistoricTable');
         $lang = $this->anrTable->getEntity($anr)->language;
+
 
         $histo = [
             'final' => $final,
@@ -665,7 +718,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             'riskColorBefore' => ($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : '',
             'cacheCommentAfter' => $recoRisk->get('commentAfter'),
             'riskColorAfter' => ($final)
-                ? ((($instanceRisk->get('cacheTargetedRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheTargetedRisk')) : ''))
+                ?  ((($instanceRisk->get('cacheTargetedRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheTargetedRisk')) : ''))
                 : (($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : ''),
 
         ];
@@ -679,7 +732,78 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $recoHisto->exchangeArray($histo);
 
         $recoHisto->anr = $anr;
+
         $recoHisto->instanceRisk = $instanceRisk;
+
+        $recoHistoTable->save($recoHisto);
+    }
+
+    /**
+     * Creates an entry in the recommendation's history for operational risks to keep a log of changes.
+     * @param array $data The history data (comment)
+     * @param RecommandationRisk $recoRisk The recommendation risk to historize
+     * @param bool $final Whether or not it's the final event
+     */
+    public function createRecoRiskOpHistoric($data, $recoRisk, $final)
+    {
+        $reco = $recoRisk->recommandation;
+        $instanceRiskOp = $recoRisk->instanceRiskOp;
+        $anr = $recoRisk->anr;
+
+        /** @var AnrService $anrService */
+        $anrService = $this->get('anrService');
+
+        /** @var AnrInstanceService $anrInstanceService */
+        $anrInstanceService = $this->get('anrInstanceService');
+
+        /** @var RecommandationHistoricTable $recoHistoTable */
+        $recoHistoTable = $this->get('recommandationHistoricTable');
+        $lang = $this->anrTable->getEntity($anr)->language;
+
+
+        $histo = [
+            'final' => $final,
+            'implComment' => $data['comment'],
+            'recoCode' => $reco->get('code'),
+            'recoDescription' => $reco->get('description'),
+            'recoImportance' => $reco->get('importance'),
+            'recoComment' => $reco->get('comment'),
+            'recoDuedate' => $reco->get('duedate'),
+            'recoResponsable' => $reco->get('responsable'),
+            'riskInstance' => $instanceRiskOp->get('instance')->get('name' . $lang),
+            'riskInstanceContext' => $anrInstanceService->getDisplayedAscendance($instanceRiskOp->get('instance')),
+            'riskAsset' => $instanceRiskOp->get('object')->get('asset')->get('label' . $lang),
+            'riskOpDescription' => $instanceRiskOp->get('riskCacheLabel' . $lang),
+            'netProbBefore' => $instanceRiskOp->get('netProb'),
+            'netRBefore' => $instanceRiskOp->get('netR'),
+            'netOBefore' => $instanceRiskOp->get('netO'),
+            'netLBefore' => $instanceRiskOp->get('netL'),
+            'netFBefore' => $instanceRiskOp->get('netF'),
+            'netPBefore' => $instanceRiskOp->get('netP'),
+            'riskKindOfMeasure' => $instanceRiskOp->get('kindOfMeasure'),
+            'riskCommentBefore' => $instanceRiskOp->get('comment'),
+            'riskCommentAfter' => ($final) ? $recoRisk->get('commentAfter') : $instanceRiskOp->get('comment'),
+            'riskMaxRiskBefore' => $instanceRiskOp->get('cacheNetRisk'),
+            'riskMaxRiskAfter' => ($final) ? $instanceRiskOp->get('cacheTargetedRisk') : $instanceRiskOp->get('cacheNetRisk'),
+            'riskColorBefore' => ($instanceRiskOp->get('cacheNetRisk')  != -1) ? $anrService->getColorRiskOp($anr, $instanceRiskOp->get('cacheNetRisk')) : '',
+            'cacheCommentAfter' => $recoRisk->get('commentAfter'),
+            'riskColorAfter' => ($final)
+                ?  (($instanceRiskOp->get('cacheTargetedRisk') != -1) ? $anrService->getColorRiskOp($anr, $instanceRiskOp->get('cacheTargetedRisk')) : '')
+                : (($instanceRiskOp->get('cacheMaxRisk') != -1) ? $anrService->getColorRiskOp($anr, $instanceRiskOp->get('cacheMaxRisk')) : ''),
+
+        ];
+
+        $class = $this->get('recommandationHistoricEntity');
+
+        /** @var RecommandationHistoric $recoHisto */
+        $recoHisto = new $class();
+        $recoHisto->setLanguage($this->getLanguage());
+        $recoHisto->setDbAdapter($this->get('recommandationHistoricTable')->getDb());
+        $recoHisto->exchangeArray($histo);
+
+        $recoHisto->anr = $anr;
+
+        $recoHisto->instanceRiskOp = $instanceRiskOp;
 
         $recoHistoTable->save($recoHisto);
     }

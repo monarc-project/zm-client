@@ -877,6 +877,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
         }
     }
 
+
+    public function getColorRiskOp($anr, $value, $classes = ['green', 'orange', 'alerte'])
+    {
+        if ($value <= $anr->get('seuilRolf1')) {
+            return $classes[0];
+        } else if ($value <= $anr->get('seuilRolf2')) {
+            return $classes[1];
+        } else {
+            return $classes[2];
+        }
+    }
+
     /**
      * @inheritdoc
      */
