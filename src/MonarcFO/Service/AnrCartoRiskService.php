@@ -55,18 +55,15 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     {
         $this->buildListScalesAndHeaders($anrId);
 
-        if ($this->anr->get('evalRisks')) {
-            list($counters, $distrib) = $this->getCountersRisks('target');
-            return [
-                'Impact' => $this->listScales[Scale::TYPE_IMPACT],
-                'MxV' => $this->headers,
-                'counters' => $counters,
-                'distrib' => $distrib,
-            ];
-        } else {
-            return null;
-        }
-    }
+        list($counters, $distrib) = $this->getCountersRisks('target');
+        return [
+            'Impact' => $this->listScales[Scale::TYPE_IMPACT],
+            'MxV' => $this->headers,
+            'counters' => $counters,
+            'distrib' => $distrib,
+        ];
+
+      }
 
     /**
      * Computes and builds the List Scales and headers for the table (Impact and MxV fields)
