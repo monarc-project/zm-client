@@ -27,6 +27,5 @@ class AmvServiceFactory extends AbstractServiceFactory
         'measureTable' => '\MonarcFO\Model\Table\MeasureTable',
         'threatTable' => '\MonarcFO\Model\Table\ThreatTable',
         'vulnerabilityTable' => '\MonarcFO\Model\Table\VulnerabilityTable',
-        'soaTable' => '\MonarcFO\Model\Table\SoaTable',
     ];
 }
