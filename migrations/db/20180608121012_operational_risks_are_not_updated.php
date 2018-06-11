@@ -38,12 +38,5 @@ class OperationalRisksAreNotUpdated extends AbstractMigration
                         and objects.id = instances_risks_op.object_id
                         and instances_risks_op.anr_id = rolf_risks.anr_id
                         )');
-        $this->query('update instances_risks_op set instances_risks_op.rolf_risk_id = (
-                        select distinct(rolf_risks.id) from  rolf_risks
-                        where (rolf_risks.label1 = instances_risks_op.risk_cache_label1 OR rolf_risks.label2 = instances_risks_op.risk_cache_label2
-                        OR rolf_risks.label3 = instances_risks_op.risk_cache_label3 OR rolf_risks.label4 = instances_risks_op.risk_cache_label4  )
-                        and instances_risks_op.anr_id = rolf_risks.anr_id
-                        )
-                        ');
     }
 }
