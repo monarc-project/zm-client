@@ -43,7 +43,7 @@ use MonarcFO\Model\Table\MeasureTable;
     * @param null $filterAnd
     * @return mixed
     */
-   public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+   public function getList($page = 1, $limit = 25, $order = 'reference', $filter = null, $filterAnd = null)
    {
      //file_put_contents('php://stderr', print_r('testservice', TRUE));
 
@@ -68,7 +68,7 @@ use MonarcFO\Model\Table\MeasureTable;
    public function patch($id, $data)
    {
 
-       if ( 0 <= $data['compliance'] && $data['compliance']<= 100 && $data['compliance'].is_int) {
+     if ( 0 <= $data['compliance'] && $data['compliance']<= 100  ) {
 
        }else{
            $data['compliance'] = 0;
@@ -78,6 +78,7 @@ use MonarcFO\Model\Table\MeasureTable;
        parent::patch($id, $data);
    }
 
+
    /**
     * @inheritdoc
     */
@@ -85,7 +86,7 @@ use MonarcFO\Model\Table\MeasureTable;
    {
 
 
-            if (0 <= $data['compliance'] && $data['compliance']<= 100 && $data['compliance'].is_integer) {
+            if (0 <= $data['compliance'] && $data['compliance']<= 100 ) {
 
             }else{
                 $data['compliance'] = 0;
