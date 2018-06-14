@@ -34,7 +34,7 @@ class AddSoaObjects extends AbstractMigration
             // Migration for table Soa
             $table = $this->table('Soa');
             $table
-              //  ->addColumn('id', 'integer', array('null' => true, 'signed' => false))
+            //  ->addColumn('id', 'integer', array('null' => true, 'signed' => false))
                 ->addColumn('reference', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('control', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
                 ->addColumn('requirement', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
@@ -42,18 +42,15 @@ class AddSoaObjects extends AbstractMigration
                 ->addColumn('evidences', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
                 ->addColumn('actions', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
                 ->addColumn('compliance', 'string', array('null' => true, 'limit' => 255))
-
-              //  ->addIndex(array(''))
+                ->addColumn('measure_id', 'integer', array('null' => true, 'signed' => false))
+                ->addIndex(array('measure_id'))
+                ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
+                ->addIndex(array('anr_id'))
 
                 ->create();
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
 
 
-              //    $this->table('measures')
-
-                //       ->removeColumn('Soa')
-              //         ->removeColumn('Threat')
-              //         ->update();
 
 
 
