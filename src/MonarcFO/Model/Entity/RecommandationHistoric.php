@@ -48,6 +48,16 @@ class RecommandationHistoric extends AbstractEntity
     protected $instanceRisk;
 
     /**
+     * @var \MonarcFO\Model\Entity\InstanceRiskOp
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\InstanceRiskOp", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $instanceRiskOp;
+
+    /**
      * @var smallint
      *
      * @ORM\Column(name="final", type="smallint", options={"unsigned":false, "default":1})
@@ -158,6 +168,55 @@ class RecommandationHistoric extends AbstractEntity
      * @ORM\Column(name="risk_vul_val_after", type="smallint", options={"unsigned":false, "default":-1})
      */
     protected $riskVulValAfter = -1;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="risk_op_description", type="string", length=255, nullable=true)
+     */
+    protected $riskOpDescription;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="net_prob_before", type="smallint", options={"unsigned":false, "default":-1})
+     */
+    protected $netProbBefore = -1;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="net_r_before", type="smallint", options={"unsigned":false, "default":-1})
+     */
+    protected $netRBefore = -1;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="net_o_before", type="smallint", options={"unsigned":false, "default":-1})
+     */
+    protected $netOBefore = -1;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="net_l_before", type="smallint", options={"unsigned":false, "default":-1})
+     */
+    protected $netLBefore = -1;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="net_f_before", type="smallint", options={"unsigned":false, "default":-1})
+     */
+    protected $netFBefore = -1;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="net_p_before", type="smallint", options={"unsigned":false, "default":-1})
+     */
+    protected $netPBefore = -1;
 
     /**
      * @var smallint

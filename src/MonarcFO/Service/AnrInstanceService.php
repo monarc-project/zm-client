@@ -530,6 +530,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         'brutP',
                     ];
                 }
+                $k=0;
                 foreach ($data['risksop'] as $ro) {
                     // faut penser à actualiser l'anr_id, l'instance_id, l'object_id. Le risk_id quant à lui n'est pas repris dans l'export, on s'en moque donc
                     $class = $this->get('instanceRiskOpService')->get('table')->getClass();
@@ -541,6 +542,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $toExchange['anr'] = $anr->get('id');
                     $toExchange['instance'] = $instanceId;
                     $toExchange['object'] = $idObject;
+                    $tagId = $this->get('objectExportService')->get('table')->getEntity($idObject)->get('rolfTag');
+                    $rolfRisks = [];
+                    $rolfRisks= $tagId->risks;
+                    $toExchange['rolfRisk'] = $rolfRisks[$k]->id;
+                    $toExchange['riskCacheCode'] = $rolfRisks[$k]->code;
+                    $k++;
 
                     // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
                     if ($include_eval) {
