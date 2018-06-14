@@ -235,6 +235,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if (!empty($values['txt'])) {
             foreach ($values['txt'] as $key => $value) {
                 $word->setValue($key, $value);
+
             }
         }
         if (!empty($values['img']) && method_exists($word, 'setImg')) {
@@ -246,7 +247,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
         if (!empty($values['html']) && method_exists($word, 'setHtml')) {
             foreach ($values['html'] as $key => $value) {
+                $value = str_replace(
+                    ['<br>', '<div>', '</div>', '<ul>', '</ul>', '<li>', '</li>','<!--block-->'],
+                    ['<br/>', '', '', '', '', '&bull; ','<br />',''],
+                    $value
+                );
                 $word->setHtml($key, $value);
+                file_put_contents('php://stderr', print_r($value, TRUE));
             }
         }
 
