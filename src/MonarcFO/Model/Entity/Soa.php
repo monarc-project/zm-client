@@ -86,13 +86,6 @@ class Soa extends AbstractEntity
 
    /**
     * @var text
-     *
-     * @ORM\Column(name="requirement", type="text", length=255, nullable=true)
-     */
-    protected $requirement ;
-
-   /**
-    * @var text
     *
     * @ORM\Column(name="justification", type="text", length=255, nullable=true)
     */
@@ -123,6 +116,48 @@ protected $compliance ;
 
 
 
+/**
+ * @var smallint
+*
+* @ORM\Column(name="EX", type="smallint", options={"unsigned":true, "default":0})
+ */
+protected $EX = '0';
+
+/**
+ * @var smallint
+*
+* @ORM\Column(name="LR", type="smallint", options={"unsigned":true, "default":0})
+ */
+protected $LR= '0';
+
+/**
+ * @var smallint
+*
+* @ORM\Column(name="CO", type="smallint", options={"unsigned":true, "default":0})
+ */
+protected $CO = '0';
+
+/**
+ * @var smallint
+*
+* @ORM\Column(name="BR", type="smallint", options={"unsigned":true, "default":0})
+ */
+protected $BR = '0';
+
+/**
+ * @var smallint
+*
+* @ORM\Column(name="BP", type="smallint", options={"unsigned":true, "default":0})
+ */
+protected $BP = '0';
+
+
+/**
+ * @var smallint
+*
+* @ORM\Column(name="RRA", type="smallint", options={"unsigned":true, "default":0})
+ */
+protected $RRA = '0';
 
 
 
@@ -244,22 +279,6 @@ protected $compliance ;
           }
 
 
-    /**
-     * @return TEXT_LONG
-     */
-    public function getRequirement()
-    {
-        return $this->requirement;
-    }
-
-    /**
-     * @param TEXT_LONG $requirement
-     *
-     */
-    public function setRequirement($requirement)
-    {
-        $this->requirement = $requirement;
-    }
 
     /**
      * @return TEXT_LONG
@@ -345,5 +364,111 @@ protected $compliance ;
     {
         return $this->isDeleted;
     }
+
+
+    /**
+     * @return int
+     */
+    public function getEx()
+    {
+        return $this->EX;
+    }
+
+    /**
+     * @param int $EX
+     *
+     */
+    public function setEx($EX)
+    {
+        $this->EX = $EX;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLr()
+    {
+        return $this->LR;
+    }
+
+    /**
+     * @param int $LR
+     *
+     */
+    public function setLr($LR)
+    {
+        $this->LR = $LR;
+    }
+
+
+    /**
+     * @return int
+     */
+    public function getCo()
+    {
+        return $this->CO;
+    }
+
+    /**
+     * @param int $CO
+     *
+     */
+    public function setCo($CO)
+    {
+        $this->CO = $CO;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBr()
+    {
+        return $this->BR;
+    }
+
+    /**
+     * @param int $BR
+     *
+     */
+    public function setBr($BR)
+    {
+        $this->BR = $BR;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBp()
+    {
+        return $this->BP;
+    }
+
+    /**
+     * @param int $BP
+     *
+     */
+    public function setBp($BP)
+    {
+        $this->BP = $BP;
+    }
+
+
+    /**
+     * @return int
+     */
+    public function getRra()
+    {
+        return $this->RRA;
+    }
+
+    /**
+     * @param int $RRA
+     *
+     */
+    public function setRra($RRA)
+    {
+        $this->RRA = $RRA;
+    }
+
 
 }
