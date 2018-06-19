@@ -15,14 +15,14 @@ use MonarcCore\Model\Entity\AbstractEntity;
 /**
  * Soa
  *
- * @ORM\Table(name="Soa", indexes={
+ * @ORM\Table(name="category", indexes={
  *      @ORM\Index(name="measure", columns={"measure_id"}),
  *      @ORM\Index(name="anr", columns={"anr_id"})
 
  * })
  * @ORM\Entity
  */
-class Soa extends AbstractEntity
+class Category extends AbstractEntity
 {
 
 

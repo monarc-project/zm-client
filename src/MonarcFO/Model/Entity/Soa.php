@@ -17,7 +17,9 @@ use MonarcCore\Model\Entity\AbstractEntity;
  *
  * @ORM\Table(name="Soa", indexes={
  *      @ORM\Index(name="measure", columns={"measure_id"}),
- *      @ORM\Index(name="anr", columns={"anr_id"})
+ *      @ORM\Index(name="anr", columns={"anr_id"}),
+ *      @ORM\Index(name="category", columns={"category_id"})
+
 
  * })
  * @ORM\Entity
@@ -67,7 +69,7 @@ class Soa extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Category", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="Category_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="category_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $category;
@@ -224,12 +226,10 @@ protected $RRA = '0';
 
     /**
      * @param Category $category
-     * @return Soa
      */
     public function setCategory($category)
     {
         $this->category = $category;
-        return $this;
     }
 
     /**

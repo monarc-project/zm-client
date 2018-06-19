@@ -15,6 +15,8 @@ use MonarcFO\Model\Entity\InstanceRisk;
 use MonarcFO\Model\Table\InstanceRiskTable;
 use MonarcFO\Model\Entity\Measure;
 use MonarcFO\Model\Table\MeasureTable;
+use MonarcFO\Model\Entity\Category;
+use MonarcFO\Model\Table\CategoryTable;
 
 //use MonarcFO\Model\Entity\Measure;
 //use MonarcCore\Service\MeasureService;
@@ -29,8 +31,8 @@ use MonarcFO\Model\Table\MeasureTable;
 
  protected $table;
   protected $entity;
-  protected $dependencies = ['anr', 'measures'];
-
+  protected $dependencies = ['anr', 'measures', 'category'];
+  protected $filterColumns = ['reference', 'control', 'compliance'];
 
 
    /**
