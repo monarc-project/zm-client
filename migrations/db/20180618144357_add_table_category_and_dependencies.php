@@ -64,7 +64,7 @@ class AddTableCategoryAndDependencies extends AbstractMigration
              ("Acquisition, développement et maintenance des systèmes d\'information","System acquisition, development and maintenance","",""),
              ("Relations avec le fournisseurs","Supplier relationships","",""),
              ("Gestion des incidents liés à la sécurité de l\'information","information security incident management","",""),
-             ("Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","Aspects de la sécurité de l\'information dans la gestion de la continuité de l'activité","",""),
+             ("Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","",""),
               ("Conformité","Compliance","","");');
 
 
