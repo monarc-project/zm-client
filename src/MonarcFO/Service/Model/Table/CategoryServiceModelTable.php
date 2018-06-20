@@ -10,7 +10,7 @@ namespace MonarcFO\Service\Model\Table;
 use MonarcCore\Service\Model\Table\AbstractServiceModelTable;
 
 /**
- * Class AssetServiceModelTable
+ * Class CategoryServiceModelTable
  * @package MonarcFO\Service\Model\Table
  */
 class CategoryServiceModelTable extends AbstractServiceModelTable

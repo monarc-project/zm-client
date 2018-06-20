@@ -539,6 +539,17 @@ return array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrSoa',
                             ),
                         ),
+                    ),'category' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'category[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrCategory',
+                            ),
+                        ),
                     ),
                     'instance' => array(
                         'type' => 'segment',
@@ -898,7 +909,7 @@ return array(
             '\MonarcFO\Service\AnrInterviewService' => '\MonarcFO\Service\AnrInterviewServiceFactory',
             '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
             '\MonarcFO\Service\SoaService' => '\MonarcFO\Service\SoaServiceFactory',
-            '\MonarcFO\Service\CategoryService' => '\MonarcFO\Service\CategoryServiceFactory',
+            '\MonarcFO\Service\AnrCategoryService' => '\MonarcFO\Service\AnrCategoryServiceFactory',
             '\MonarcFO\Service\AnrQuestionService' => '\MonarcFO\Service\AnrQuestionServiceFactory',
             '\MonarcFO\Service\AnrQuestionChoiceService' => '\MonarcFO\Service\AnrQuestionChoiceServiceFactory',
             '\MonarcFO\Service\AnrThreatService' => '\MonarcFO\Service\AnrThreatServiceFactory',

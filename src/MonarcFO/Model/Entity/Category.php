@@ -9,17 +9,13 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\AbstractEntity;
-//use MonarcCore\Model\TAble\AbstractEntityTAble;
+//use MonarcCore\Model\Table\AbstractEntityTAble;
 
 
 /**
  * Soa
  *
- * @ORM\Table(name="category", indexes={
- *      @ORM\Index(name="measure", columns={"measure_id"}),
- *      @ORM\Index(name="anr", columns={"anr_id"})
-
- * })
+ * @ORM\Table(name="category")
  * @ORM\Entity
  */
 class Category extends AbstractEntity

@@ -8,9 +8,7 @@
 namespace MonarcFO\Service;
 
 /**
- * This class is the service that handles measures in use within an ANR. Inherits its behavior from its MonarcCore
- * parent class CategoryService
- * @see \MonarcCore\Service\CategoryService
+
  * @package MonarcFO\Service
  */
 class AnrCategoryService extends \MonarcCore\Service\AbstractService

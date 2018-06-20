@@ -103,7 +103,7 @@ class Soa extends AbstractEntity
     *
     * @ORM\Column(name="justification", type="text", length=255, nullable=true)
     */
-  protected $justification ;
+  protected $remarks ;
 
 
 
@@ -313,18 +313,18 @@ protected $RRA = '0';
     /**
      * @return TEXT_LONG
      */
-    public function getJustification()
+    public function getRemarks()
     {
-        return $this->justification;
+        return $this->remarks;
     }
 
     /**
-     * @param TEXT_LONG $justification
+     * @param TEXT_LONG $remarks
      *
      */
-    public function setJustification($justification)
+    public function setRemarks($remarks)
     {
-        $this->justification = $justification;
+        $this->remarks = $remarks;
     }
 
 

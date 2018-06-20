@@ -6,14 +6,14 @@
  */
 
 namespace MonarcFO\Controller;
-
+use \MonarcCore\Controller\AbstractController;
 /**
- * Api ANR Categorys Controller
+ * Api ANR Categories Controller
  *
- * Class ApiAnrCategorysController
+ * Class ApiAnrCategoriesController
  * @package MonarcFO\Controller
  */
-class ApiAnrCategorysController extends ApiAnrAbstractController
+class ApiAnrCategoryController extends \MonarcCore\Controller\AbstractController
 {
-    protected $name = 'categorys';
+    protected $name = 'categories';
 }
