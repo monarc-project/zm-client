@@ -50,8 +50,11 @@ class AddTableCategoryAndDependencies extends AbstractMigration
        ->addColumn('category_id', 'integer',  array('null' => true, 'default' => '15',  'signed' => false))
        ->save();
 
+       $this->table('measures')
+       ->addColumn('category_id', 'integer',  array('null' => true, 'default' => '15',  'signed' => false))
+       ->save();
 
-             
+
 
 
 
