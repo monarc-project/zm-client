@@ -66,11 +66,11 @@ class Soa extends AbstractEntity
 
     /**
      * @var \MonarcFO\Model\Entity\Category
-     *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Category", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="category_id", referencedColumnName="id", nullable=true)
      * })
+     *
      */
     protected $category;
 

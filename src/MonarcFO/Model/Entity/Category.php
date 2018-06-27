@@ -8,128 +8,47 @@
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use MonarcCore\Model\Entity\AbstractEntity;
-//use MonarcCore\Model\Table\AbstractEntityTAble;
+use MonarcCore\Model\Entity\CategoriesSuperClass;
 
 
 /**
- * Soa
+ * Category
  *
- * @ORM\Table(name="category")
+ * @ORM\Table(name="category", indexes={
+ *      @ORM\Index(name="anr", columns={"anr_id"})
+ * })
  * @ORM\Entity
  */
-class Category extends AbstractEntity
+class Category extends CategoriesSuperClass
 {
 
+  /**
+   * @var \MonarcFO\Model\Entity\Anr
+   *
+   * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+   * @ORM\JoinColumns({
+   *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+   * })
+   */
+  protected $anr;
 
+  /**
+   * @return Anr
+   */
+  public function getAnr()
+  {
+      return $this->anr;
+  }
 
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    protected $id;
+  /**
+   * @param Anr $anr
+   * @return Category
+   */
+  public function setAnr($anr)
+  {
+      $this->anr = $anr;
+      return $this;
+  }
 
-
-
-    /**
-     * @var text
-     *
-     * @ORM\Column(name="label1", type="text", length=255, nullable=true)
-     */
-    protected $label1 ;
-
-
-    /**
-     * @var text
-     *
-     * @ORM\Column(name="label2", type="text", length=255, nullable=true)
-     */
-    protected $label2 ;
-
-    /**
-     * @var text
-     *
-     * @ORM\Column(name="label3", type="text", length=255, nullable=true)
-     */
-    protected $label3 ;
-
-    /**
-     * @var text
-     *
-     * @ORM\Column(name="label4", type="text", length=255, nullable=true)
-     */
-    protected $label4 ;
-
-
-          /**
-           * @return TEXT_LONG
-           */
-          public function getlabel1()
-          {
-              return $this->label1;
-          }
-
-          /**
-           * @param TEXT_LONG $label1
-           *
-           */
-          public function setlabel1($label1)
-          {
-              $this->label1 = $label1;
-          }
-
-          /**
-           * @return TEXT_LONG
-           */
-          public function getlabel2()
-          {
-              return $this->label;
-          }
-
-          /**
-           * @param TEXT_LONG $label2
-           *
-           */
-          public function setlabel2($label2)
-          {
-              $this->label2 = $label2;
-          }
-
-          /**
-           * @return TEXT_LONG
-           */
-          public function getlabel3()
-          {
-              return $this->label3;
-          }
-
-          /**
-           * @param TEXT_LONG $label3
-           *
-           */
-          public function setlabel3($label3)
-          {
-              $this->label3 = $label3;
-          }
-
-          /**
-           * @return TEXT_LONG
-           */
-          public function getlabel4()
-          {
-              return $this->label4;
-          }
-
-          /**
-           * @param TEXT_LONG $label4
-           *
-           */
-          public function setlabel4($label4)
-          {
-              $this->label4 = $label4;
-          }
 
 }

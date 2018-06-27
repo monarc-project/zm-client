@@ -32,6 +32,7 @@ use MonarcFO\Model\Entity\Threat;
 use MonarcFO\Model\Entity\Vulnerability;
 use MonarcFO\Model\Table\UserTable;
 use MonarcFO\Model\Table\SoaTable;
+use MonarcFO\Model\Table\CategoryTable;
 
 
 /**
@@ -64,6 +65,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $questionTable;
     protected $questionChoiceTable;
     protected $SoaTable;
+    protected $CategoryTable;
 
 
     protected $amvCliTable;
@@ -98,6 +100,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $questionCliTable;
     protected $questionChoiceCliTable;
     protected $SoaCliTable;
+    protected $CategoryCliTable;
 
     protected $instanceService;
 
@@ -291,7 +294,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        try {
+        // try {
             //duplicate anr
             $newAnr = new \MonarcFO\Model\Entity\Anr($anr);
             $newAnr->setId(null);
@@ -414,6 +417,21 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
             }
 
+
+            //duplicate category
+            $categoryNewIds = [];
+            $category = ($source == Object::SOURCE_COMMON) ? $this->get('CategoryTable')->fetchAllObject() : $this->get('CategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+
+            foreach ($category as $cat) {
+                $newCategory = new \MonarcFO\Model\Entity\Category($cat);
+                $newCategory->set('id', null);
+                $newCategory->setAnr($newAnr);
+                $this->get('CategoryCliTable')->save($newCategory,false);
+                $this->get('CategoryCliTable')->getDb()->flush();
+                $categoryNewIds[$cat->id] = $newCategory;
+
+            }
+
             //duplicate measures
             $measuresNewIds = [];
             $measures = ($source == Object::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
@@ -421,6 +439,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             foreach ($measures as $measure) {
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->set('id', null);
+                $newMeasure->setCategory($categoryNewIds[$measure->category->getId()]);
                 $newMeasure->setAnr($newAnr);
                 $this->get('measureCliTable')->save($newMeasure,false);
                 $this->get('measureCliTable')->getDb()->flush();
@@ -437,8 +456,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                 $newSoa = new \MonarcFO\Model\Entity\Soa();
                 $newSoa->set('id', null);
+
+
                 $this->get('table')->getDb()->flush();
                 $newSoa->setAnr($newAnr);
+
+
                 $newSoa->setReference($measuresNewIds[$measure->id]->code);
               if($newAnr->language==1){
                   $newSoa->setControl($measuresNewIds[$measure->id]->description1);
@@ -452,6 +475,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
               if($newAnr->language==4){
                 $newSoa->setControl($measuresNewIds[$measure->id]->description4);
                 }
+
+                $newSoa->setCategory($categoryNewIds[$measure->category->getId()]);
+
                 $newSoa->setMeasure($measuresNewIds[$measure->id]->getId());
                 $this->get('SoaCliTable')->save($newSoa,false);
               //  $soasNewIds[$soa->id] = $newSoa;
@@ -845,14 +871,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $this->setUserCurrentAnr($newAnr->get('id'));
 
-        } catch (\Exception $e) {
-
-            if (is_integer($id)) {
-                $anrCliTable->delete($id);
-            }
-
-            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
-        }
+        // } catch (\Exception $e) {
+        //
+        //     if (is_integer($id)) {
+        //         $anrCliTable->delete($id);
+        //     }
+        //
+        //     throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
+        // }
 
         return $newAnr->get('id');
     }

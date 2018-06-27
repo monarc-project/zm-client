@@ -30,6 +30,21 @@ class Measure extends MeasureSuperClass
      */
     protected $anr;
 
+
+
+         /**
+          * @var \MonarcFO\Model\Entity\Category
+          *
+          * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Category", cascade={"persist"})
+          * @ORM\JoinColumns({
+          *   @ORM\JoinColumn(name="category_id", referencedColumnName="id", nullable=true)
+          * })
+          */
+         protected $category;
+
+
+
+
     /**
      * @return Anr
      */
@@ -47,4 +62,24 @@ class Measure extends MeasureSuperClass
         $this->anr = $anr;
         return $this;
     }
+
+
+
+        /**
+         * @return Category
+         */
+        public function getCategory()
+        {
+            return $this->category;
+        }
+
+        /**
+         * @param Category $category
+         */
+        public function setCategory($category)
+        {
+            $this->category = $category;
+        }
+
+
 }

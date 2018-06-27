@@ -45,7 +45,7 @@ use MonarcFO\Model\Table\CategoryTable;
     * @param null $filterAnd
     * @return mixed
     */
-   public function getList($page = 1, $limit = 25, $order = 'reference', $filter = null, $filterAnd = null)
+   public function getList($page = 1, $limit = 25, $order , $filter = null, $filterAnd = null)
    {
      //file_put_contents('php://stderr', print_r('testservice', TRUE));
 
@@ -64,40 +64,7 @@ use MonarcFO\Model\Table\CategoryTable;
        );
    }
 
-   /**
-    * @inheritdoc
-    */
-   public function patch($id, $data)
-   {
-
-     if ( 0 <= $data['compliance'] && $data['compliance']<= 100  ) {
-
-       }else{
-           $data['compliance'] = 0;
-       }
-
-
-       parent::patch($id, $data);
-   }
-
-
-   /**
-    * @inheritdoc
-    */
-   public function update($id, $data)
-   {
-
-
-            if (0 <= $data['compliance'] && $data['compliance']<= 100 ) {
-
-            }else{
-                $data['compliance'] = 0;
-            }
-
-
-       parent::update($id, $data);
-   }
-
+   
 
 
 

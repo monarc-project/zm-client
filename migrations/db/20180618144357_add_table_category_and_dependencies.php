@@ -47,27 +47,11 @@ class AddTableCategoryAndDependencies extends AbstractMigration
 
 
        $this->table('Soa')
-       ->addColumn('category_id', 'integer', array('null' => true, 'signed' => false))
+       ->addColumn('category_id', 'integer',  array('null' => true, 'default' => '15',  'signed' => false))
        ->save();
 
 
-             $this->query('INSERT INTO category (label1, label2, label3,label4)
-             VALUES ("Politiques de sécurité de l\'information","Information security policies","",""),
-             ("Organisation de la sécurité de l\'information","Organization of information security ","",""),
-             ("La sécurité des ressources humaines","Human resource security","",""),
-             ("Gestion des actifs","Asset management","",""),
-             ("Contrôle d\'accès","Access control","",""),
-             ("Cryptographie","Cryptography","",""),
-             ("Sécurité physique et environnementale","Physical and environmental security","",""),
-             ("Sécurité liée à l\'exploitation","Operations security","",""),
-             ("Sécurité des communications","Communications security","",""),
-             ("Acquisition, développement et maintenance des systèmes d\'information","System acquisition, development and maintenance","",""),
-             ("Relations avec le fournisseurs","Supplier relationships","",""),
-             ("Gestion des incidents liés à la sécurité de l\'information","information security incident management","",""),
-             ("Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","",""),
-              ("Conformité","Compliance","","");');
-
-
+             
 
 
 
