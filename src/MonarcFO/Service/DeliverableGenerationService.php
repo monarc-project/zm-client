@@ -247,6 +247,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
         if (!empty($values['html']) && method_exists($word, 'setHtml')) {
             foreach ($values['html'] as $key => $value) {
+                file_put_contents('php://stderr', print_r("BEFORE:::", TRUE));
+                file_put_contents('php://stderr', print_r($value, TRUE));
                 $value = str_replace(
                     ['<br>', '<div>', '</div>'],
                     ['<br/>', '', ''],
@@ -254,10 +256,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 );
                 $value = str_replace(
                     ['<ul>', '</ul>', '<li>', '</li>','<!--block-->'],
-                    ['', '', '&bull; ','<br />',''],
+                    ['', '', '&nbsp;&bull;&nbsp;','<br />',''],
                     $value
                 );
                 $word->setHtml($key, $value);
+                file_put_contents('php://stderr', print_r("AFTER:::", TRUE));
                 file_put_contents('php://stderr', print_r($value, TRUE));
             }
         }
