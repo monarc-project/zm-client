@@ -248,8 +248,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if (!empty($values['html']) && method_exists($word, 'setHtml')) {
             foreach ($values['html'] as $key => $value) {
                 $value = str_replace(
-                    ['<br>', '<div>', '</div>', '<ul>', '</ul>', '<li>', '</li>','<!--block-->'],
-                    ['<br/>', '', '', '', '', '&bull; ','<br />',''],
+                    ['<br>', '<div>', '</div>'],
+                    ['<br/>', '', ''],
+                    $value
+                );
+                $value = str_replace(
+                    ['<ul>', '</ul>', '<li>', '</li>','<!--block-->'],
+                    ['', '', '&bull; ','<br />',''],
                     $value
                 );
                 $word->setHtml($key, $value);
