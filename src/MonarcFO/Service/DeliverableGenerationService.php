@@ -215,35 +215,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
-     * Function for performing replaces on strings that allows for the specification of a limit
-     * on the number of occurrences of $search to replace.
-     *
-     * @see http://www.php.net/manual/en/function.str-replace.php#108239
-     *
-     * @param $search
-     * @param $replace
-     * @param $subject
-     * @param $limit
-     * @param null $count
-     * @return mixed
-     */
-    protected function str_replace_limit($search, $replace, $subject, $limit, &$count = null) {
-            $count = 0;
-            if ($limit <= 0) return $subject;
-            $occurrences = substr_count($subject, $search);
-            if ($occurrences === 0) return $subject;
-            else if ($occurrences <= $limit) return str_replace($search, $replace, $subject, $count);
-            //Do limited replace
-            $position = 0;
-            //Iterate through occurrences until we get to the last occurrence of $search we're going to replace
-            for ($i = 0; $i < $limit; $i++)
-                    $position = strpos($subject, $search, $position) + strlen($search);
-            $substring = substr($subject, 0, $position + 1);
-            $substring = str_replace($search, $replace, $substring, $count);
-            return substr_replace($subject, $substring, 0, $position + 1);
-    }
-
-    /**
      * Method called by generateDeliverableWithValues to generate the model from its path and values.
      * @see #generateDeliverableWithValues
      * @param string $modelPath The file path to the DOCX model to use
@@ -278,24 +249,38 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $index = 0;
             foreach ($values['html'] as $key => $value) {
                 // file_put_contents('php://stderr', print_r("BEFORE:::", TRUE));
-                file_put_contents('php://stderr', print_r($key, TRUE));
+
                 $value = str_replace(
-                    ['<br>', '<div>', '</div>'],
-                    ['<br/>', '', ''],
+                    ['<br>', '<div>', '</div>', '<!--block-->'],
+                    ['<br/>', '', '', ''],
                     $value
                 );
+
+
+                if (preg_match("'<ul>(.*?)</ul>'", $value, $groups)) {
+                    $value1 = str_replace(
+                        ['<li>', '</li>'],
+                        ['&nbsp;&bull;&nbsp;','<br />'],
+                        $groups[1]
+                  );
+                  $value = preg_replace("'<ul>(.*?)</ul>'", "<ul>$value1</ul>", $value);
+                  $value = str_replace(
+                              ['<ul>', '</ul>'],
+                              ['', ''],
+                              $value);
+                }
+
                 $index += 1;
                 while (strpos($value, '<ol>') !== false) {
-                    file_put_contents('php://stderr', print_r('found', TRUE));
                     $index += 1;
                     $customCounter = 'customCounter' . strval($index);
-                    file_put_contents('php://stderr', print_r($lcustomCounter, TRUE));
                     $value = preg_replace(
                         '/<ol>/',
-                        '<ol type="1" style="counter-reset: ' . $customCounter . ';start: 1;">',
+                        '<ol style="counter-reset: ' . $customCounter . ';start: 1;">',
                         $value, 1);
-                    file_put_contents('php://stderr', print_r('replaced', TRUE));
                 }
+
+                file_put_contents('php://stderr', print_r($value, TRUE));
                 $word->setHtml($key, $value);
             }
         }
