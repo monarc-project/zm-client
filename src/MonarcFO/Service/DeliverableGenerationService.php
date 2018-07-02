@@ -2037,7 +2037,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         // TODO: C'est moche, optimiser
         /** @var AnrInstanceService $instanceService */
         $instanceService = $this->instanceService;
-        $all_instances = $instanceService->getList(1, 0, null, null, ['anr' => $anr->id]);
+        $all_instances = $instanceService->getList(1, 0, 'position', null, ['anr' => $anr->id]);
         $instances = array_filter($all_instances, function ($in) {
             return (($in['c'] > -1 && $in['ch'] == 0) || ($in['i'] > -1 && $in['ih'] == 0) || ($in['d'] > -1 && $in['dh'] == 0));
         });
