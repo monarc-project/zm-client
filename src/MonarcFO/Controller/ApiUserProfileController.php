@@ -95,6 +95,14 @@ class ApiUserProfileController extends AbstractController
     /**
      * @inheritdoc
      */
+    public function deleteList($id)
+    {
+        return new JsonModel($this->getService()->delete($this->connectedUser->getConnectedUser()['id']));
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function create($data)
     {
         return $this->methodNotAllowed();
