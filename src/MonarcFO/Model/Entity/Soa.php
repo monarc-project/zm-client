@@ -17,8 +17,7 @@ use MonarcCore\Model\Entity\AbstractEntity;
  *
  * @ORM\Table(name="Soa", indexes={
  *      @ORM\Index(name="measure", columns={"measure_id"}),
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- *      @ORM\Index(name="category", columns={"category_id"})
+ *      @ORM\Index(name="anr", columns={"anr_id"})
 
 
  * })
@@ -57,43 +56,15 @@ class Soa extends AbstractEntity
 
 
     /**
-     * @var integer
-     *
-     *  @ORM\Column(name="measure_id", type="integer",  nullable=false)
-     */
-    protected $measure;
-
-
-    /**
-     * @var \MonarcFO\Model\Entity\Category
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Category", cascade={"persist"})
+     * @var \MonarcFO\Model\Entity\Measure
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="category_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="measure_id", referencedColumnName="id", nullable=true)
      * })
      *
      */
-    protected $category;
+    protected $measure;
 
-
-
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="reference", type="string", length=255, nullable=true)
-     */
-
-    protected $reference;
-
-
-
-
-    /**
-     * @var text
-     *
-     * @ORM\Column(name="control", type="text", length=255, nullable=true)
-     */
-    protected $control ;
 
 
 
@@ -198,7 +169,7 @@ protected $RRA = '0';
     }
 
     /**
-     * @return int
+    * @return Measure     *
      */
     public function getMeasure()
     {
@@ -206,7 +177,7 @@ protected $RRA = '0';
     }
 
     /**
-     * @param int $measure
+     * @param Measure  $measure
      *
      */
     public function setMeasure($measure)
@@ -216,21 +187,6 @@ protected $RRA = '0';
 
 
 
-    /**
-     * @return Category
-     */
-    public function getCategory()
-    {
-        return $this->category;
-    }
-
-    /**
-     * @param Category $category
-     */
-    public function setCategory($category)
-    {
-        $this->category = $category;
-    }
 
     /**
      * @return Anr
@@ -252,61 +208,7 @@ protected $RRA = '0';
 
 
 
-    /**
-     * @return string
-     */
-    public function getReference()
-    {
-        return $this->reference;
-    }
 
-    /**
-     * @param string $reference
-     *
-     */
-    public function setReference($reference)
-    {
-        $this->reference = $reference;
-    }
-
-
-
-    /**
-     * @return TEXT_LONG
-     */
-    public function getDescription()
-    {
-        return $this->description;
-    }
-
-    /**
-     * @param TEXT_LONG $description
-     *
-     */
-    public function setDescription($description)
-    {
-        $this->description = $description;
-    }
-
-
-
-
-          /**
-           * @return TEXT_LONG
-           */
-          public function getControl()
-          {
-              return $this->control;
-          }
-
-          /**
-           * @param TEXT_LONG $control
-           *
-           */
-          public function setControl($control)
-          {
-              $this->control = $control;
-          }
 
 
 

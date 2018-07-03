@@ -18,7 +18,6 @@ use MonarcCore\Controller\AbstractControllerFactory;
 class ApiAnrCategoryControllerFactory extends AbstractControllerFactory
 {
     protected $serviceName = '\MonarcFO\Service\AnrCategoryService';
-    protected $dependencies = ['anr', 'object', 'root', 'parent'];
 
 
 

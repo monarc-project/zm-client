@@ -16,4 +16,6 @@ use \MonarcCore\Controller\AbstractController;
 class ApiAnrCategoryController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'categories';
+    protected $dependencies = ['anr'];
+
 }

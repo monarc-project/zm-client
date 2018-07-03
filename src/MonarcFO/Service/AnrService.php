@@ -462,23 +462,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newSoa->setAnr($newAnr);
 
 
-                $newSoa->setReference($measuresNewIds[$measure->id]->code);
-              if($newAnr->language==1){
-                  $newSoa->setControl($measuresNewIds[$measure->id]->description1);
-                  }
-              if($newAnr->language==2){
-                $newSoa->setControl($measuresNewIds[$measure->id]->description2);
-                }
-              if($newAnr->language==3){
-                $newSoa->setControl($measuresNewIds[$measure->id]->description3);
-                }
-              if($newAnr->language==4){
-                $newSoa->setControl($measuresNewIds[$measure->id]->description4);
-                }
 
-                $newSoa->setCategory($categoryNewIds[$measure->category->getId()]);
-
-                $newSoa->setMeasure($measuresNewIds[$measure->id]->getId());
+                $newSoa->setMeasure($measuresNewIds[$measure->id]);
                 $this->get('SoaCliTable')->save($newSoa,false);
               //  $soasNewIds[$soa->id] = $newSoa;
 

@@ -13,8 +13,11 @@ namespace MonarcFO\Service;
  */
 class AnrCategoryService extends \MonarcCore\Service\AbstractService
 {
-    protected $anrTable;
-    protected $userAnrTable;
+
+
+
+      protected $table;
+      protected $entity;
     protected $dependencies = ['anr'];
     protected $forbiddenFields = [];
 
@@ -31,7 +34,7 @@ class AnrCategoryService extends \MonarcCore\Service\AbstractService
             $this->parseFrontendFilter($filter, []),
 
             $filterAnd
-    
+
         );
     }
 

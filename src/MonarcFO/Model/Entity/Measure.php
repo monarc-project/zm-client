@@ -14,8 +14,9 @@ use MonarcCore\Model\Entity\MeasureSuperClass;
  * Measure
  *
  * @ORM\Table(name="measures", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"})
- * })
+ *      @ORM\Index(name="anr", columns={"anr_id"}),
+ *      @ORM\Index(name="category", columns={"category_id"})
+* })
  * @ORM\Entity
  */
 class Measure extends MeasureSuperClass
@@ -30,18 +31,15 @@ class Measure extends MeasureSuperClass
      */
     protected $anr;
 
-
-
-         /**
-          * @var \MonarcFO\Model\Entity\Category
-          *
-          * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Category", cascade={"persist"})
-          * @ORM\JoinColumns({
-          *   @ORM\JoinColumn(name="category_id", referencedColumnName="id", nullable=true)
-          * })
-          */
-         protected $category;
-
+    /**
+     * @var \MonarcFO\Model\Entity\Category
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Category", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="category_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $category;
 
 
 
@@ -64,22 +62,24 @@ class Measure extends MeasureSuperClass
     }
 
 
+    /**
+     * @return Category
+     */
+    public function getCategory()
+    {
+        return $this->category;
+    }
 
-        /**
-         * @return Category
-         */
-        public function getCategory()
-        {
-            return $this->category;
-        }
+    /**
+     * @param Category $category
+     * @return Measure
+     */
+    public function setCategory($category)
+    {
+        $this->category = $category;
+        return $this;
 
-        /**
-         * @param Category $category
-         */
-        public function setCategory($category)
-        {
-            $this->category = $category;
-        }
+    }
 
 
 }

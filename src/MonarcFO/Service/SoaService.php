@@ -29,10 +29,9 @@ use MonarcFO\Model\Table\CategoryTable;
  class SoaService extends \MonarcCore\Service\AbstractService
  {
 
- protected $table;
+  protected $table;
   protected $entity;
-  protected $dependencies = ['anr', 'measures', 'category'];
-  protected $filterColumns = ['reference', 'control', 'compliance'];
+  protected $dependencies = ['anr', 'measure'];
 
 
    /**
@@ -64,7 +63,7 @@ use MonarcFO\Model\Table\CategoryTable;
        );
    }
 
-   
+
 
 
 

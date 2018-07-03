@@ -15,10 +15,10 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class AnrCategoryServiceFactory extends AbstractServiceFactory
 {
+
+
     protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Category',
-        'table' => 'MonarcFO\Model\Table\CategoryTable',
-        'anrTable' => 'MonarcFO\Model\Table\AnrTable',
-        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
+        'table' => 'MonarcFO\Model\Table\CategoryTable'
     ];
 }
