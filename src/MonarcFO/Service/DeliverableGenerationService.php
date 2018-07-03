@@ -248,29 +248,26 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if (!empty($values['html']) && method_exists($word, 'setHtml')) {
             $index = 0;
             foreach ($values['html'] as $key => $value) {
-                // file_put_contents('php://stderr', print_r("BEFORE:::", TRUE));
-
                 $value = str_replace(
                     ['<br>', '<div>', '</div>', '<!--block-->'],
                     ['<br/>', '', '', ''],
                     $value
                 );
 
+                while (strpos($value, '<ul>') !== false) {
+                    if (preg_match_all("'<ul>(.*?)</ul>'", $value, $groups)) {
+                        foreach ($groups as $group) {
+                            $value1 = preg_replace(
+                                        ["'<li>'", "'</li>'"],
+                                        ['&nbsp;&bull;&nbsp;','<br />'],
+                                        $group[0]);
 
-                if (preg_match("'<ul>(.*?)</ul>'", $value, $groups)) {
-                    $value1 = str_replace(
-                        ['<li>', '</li>'],
-                        ['&nbsp;&bull;&nbsp;','<br />'],
-                        $groups[1]
-                  );
-                  $value = preg_replace("'<ul>(.*?)</ul>'", "<ul>$value1</ul>", $value);
-                  $value = str_replace(
-                              ['<ul>', '</ul>'],
-                              ['', ''],
-                              $value);
+                            $value = preg_replace("'<ul>(.*?)</ul>'", "$value1", $value, 1);
+
+                        }
+                    }
                 }
 
-                $index += 1;
                 while (strpos($value, '<ol>') !== false) {
                     $index += 1;
                     $customCounter = 'customCounter' . strval($index);
@@ -280,7 +277,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         $value, 1);
                 }
 
-                file_put_contents('php://stderr', print_r($value, TRUE));
                 $word->setHtml($key, $value);
             }
         }
