@@ -261,7 +261,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                                         ['&nbsp;&bull;&nbsp;','<br />'],
                                         $group[0]);
 
-                            $value = preg_replace("'<ul>(.*?)</ul>'", "$value1", $value, 1);
+                            $value = preg_replace("'<ul>(.*?)</ul>'", "<br />$value1", $value, 1);
 
                         }
                     }
