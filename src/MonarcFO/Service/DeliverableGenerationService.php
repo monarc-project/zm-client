@@ -246,7 +246,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
         }
         if (!empty($values['html']) && method_exists($word, 'setHtml')) {
-            $index = 0;
             foreach ($values['html'] as $key => $value) {
                 $value = str_replace(
                     ['<br>', '<div>', '</div>', '<!--block-->'],
@@ -269,12 +268,19 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 }
 
                 while (strpos($value, '<ol>') !== false) {
-                    $index += 1;
-                    $customCounter = 'customCounter' . strval($index);
-                    $value = preg_replace(
-                        '/<ol>/',
-                        '<ol style="counter-reset: ' . $customCounter . ';start: 1;">',
-                        $value, 1);
+                    if (preg_match_all("'<ol>(.*?)</ol>'", $value, $groups)) {
+                        foreach ($groups as $group) {
+                            $index = 0;
+                            while (strpos($group[0], '<li>') !== false) {
+                                $index += 1;
+                                $group[0] = preg_replace(
+                                            ["'<li>'", "'</li>'"],
+                                            ["&nbsp;[$index]&nbsp;",'<br />'],
+                                            $group[0], 1);
+                            }
+                            $value = preg_replace("'<ol>(.*?)</ol>'", "<br />$group[0]", $value, 1);
+                        }
+                    }
                 }
 
                 $word->setHtml($key, $value);
