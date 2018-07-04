@@ -29,6 +29,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $interviewTable;
     protected $themeTable;
     protected $deliveryTable;
+    protected $instanceRiskTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -444,9 +445,82 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     'op' => 0,
                                     'risk' => $idRisk,
                                 ];
-                                $rr->exchangeArray($toExchange);
-                                $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                                $this->get('recommandationRiskTable')->save($rr);
+                                // Reply recommandation to brothers
+                                if (!empty($toExchange['objectGlobal'])) {
+                                  $instances = $this->get('table')->getEntityByFields([
+                                      'anr' => $anr->get('id'),
+                                      'asset' => $r->get('asset')->get('id'),
+                                      'object' => $obj->get('id')]);
+
+
+                                  if (!empty($instances)) {
+                                    foreach ($instances as $i) {
+                                        $brothers = $this->get('instanceRiskTable')->getEntityByFields([
+                                            'anr' => $anr->get('id'),
+                                            'instance' => $i->get('id'),
+                                            'asset' => $r->get('asset')->get('id'),
+                                            'threat' => $r->get('threat')->get('id'),
+                                            'vulnerability' => $r->get('vulnerability')->get('id'),
+                                        ]);
+                                          foreach ($brothers as $brother) {
+                                              $rr = new $class();
+                                              $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
+                                              $rr->setLanguage($this->getLanguage());
+                                              $toExchange['instanceRisk'] = $brother->id;
+                                              $toExchange['instance'] = $i->get('id');
+                                              $rr->exchangeArray($toExchange);
+                                              $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                                              $this->get('recommandationRiskTable')->save($rr);
+                                          }
+                                    }
+                                  }
+
+                                  $GlobalrecoRisks = $this->get('recommandationRiskTable')->getEntityByFields([
+                                      'anr' => $anr->get('id'),
+                                      'asset' => $r->get('asset')->get('id'),
+                                      'objectGlobal' => $obj->get('id')]);
+                                  foreach ($GlobalrecoRisks as $recorisk) {
+                                      if (
+                                            $recorisk->get('threat')->get('id') != $r->get('threat')->get('id') &&
+                                            $recorisk->get('vulnerability')->get('id') != $r->get('vulnerability')->get('id') &&
+                                            $recorisk->get('recommandation')->get('id') != $sharedData['recos'][$reco['id']]
+                                          ) {
+                                            $instanceRisks = $this->get('instanceRiskTable')->getEntityByFields([
+                                                'anr' => $anr->get('id'),
+                                                'instance' => $i->get('id'),
+                                                'asset' => $recorisk->get('asset')->get('id'),
+                                                'threat' => $recorisk->get('threat')->get('id'),
+                                                'vulnerability' => $recorisk->get('vulnerability')->get('id'),
+                                            ]);
+                                            foreach ($instanceRisks as $ir) {
+                                                  $rr = new $class();
+                                                  $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
+                                                  $rr->setLanguage($this->getLanguage());
+                                                  $toExchange = [
+                                                      'anr' => $anr->get('id'),
+                                                      'recommandation' => $recorisk->recommandation->id,
+                                                      'instanceRisk' => $ir->id,
+                                                      'instance' => $i->get('id'),
+                                                      'objectGlobal' => $recorisk->objectGlobal->id,
+                                                      'asset' => $r->get('asset')->get('id'),
+                                                      'threat' => $recorisk->threat->id,
+                                                      'vulnerability' => $recorisk->vulnerability->id,
+                                                      'commentAfter' => $recorisk->commentAfter,
+                                                      'op' => 0,
+                                                      'risk' => $ir->id,
+                                                  ];
+                                                  $rr->exchangeArray($toExchange);
+                                                  $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                                                  $this->get('recommandationRiskTable')->save($rr);
+                                            }
+                                      }
+                                  }
+                                } else {
+                                  $rr->exchangeArray($toExchange);
+                                  $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                                  $this->get('recommandationRiskTable')->save($rr);
+                                }
+
 
                                 // Recommandation <-> Measures
                                 if (!empty($data['recolinks'][$reco['id']])) {
