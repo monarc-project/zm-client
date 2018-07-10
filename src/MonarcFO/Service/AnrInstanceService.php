@@ -386,6 +386,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
 
                         // Recommandations
+
                         if (!empty($data['recos'][$risk['id']])) {
                             foreach ($data['recos'][$risk['id']] as $reco) {
                                 // La recommandation
@@ -447,13 +448,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 ];
 
                                 // Reply recommandation to brothers
-                                if (!empty($toExchange['objectGlobal'])) {
+                                if (!empty($toExchange['objectGlobal']) && $modeImport == 'merge') {
                                       $instances = $this->get('table')->getEntityByFields([
                                           'id' => ['op' => '!=', 'value' => $instanceId],
                                           'anr' => $anr->get('id'),
                                           'asset' => $r->get('asset')->get('id'),
                                           'object' => $obj->get('id')]);
-
 
                                       if (!empty($instances)) {
                                             foreach ($instances as $i) {
@@ -463,7 +463,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                     'amv' => $r->get('amv')->get('id')]);
 
                                                   foreach ($brothers as $brother) {
-
                                                       $rr = new $class();
                                                       $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
                                                       $rr->setLanguage($this->getLanguage());
@@ -481,7 +480,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                   $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
                                   $this->get('recommandationRiskTable')->save($rr);
                                 }
-
 
                                 // Recommandation <-> Measures
                                 if (!empty($data['recolinks'][$reco['id']])) {
