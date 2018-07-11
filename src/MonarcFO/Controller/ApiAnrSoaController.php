@@ -65,11 +65,11 @@ class ApiAnrSoaController extends  ApiAnrAbstractController
               foreach ($measures as $keyy => $entity) {
                 $this->formatDependencies($measures[$keyy], ['anr','category']);
 
-                if ($measures[$keyy]['id']==$entities[$key]['measure_id']) {
-
-                  $entities[$key]['measure_id']=$measures[$keyy];
-
-                }
+                // if ($measures[$keyy]['id']==$entities[$key]['measure_id']) {
+                //
+                //   $entities[$key]['measure_id']=$measures[$keyy];
+                //
+                // }
                 $this->formatDependencies($entities[$key], $this->dependencies);
 
 

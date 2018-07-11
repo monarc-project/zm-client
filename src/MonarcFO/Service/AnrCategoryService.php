@@ -23,21 +23,7 @@ class AnrCategoryService extends \MonarcCore\Service\AbstractService
 
 
 
-    public function getList($page = 1, $limit = 25, $order , $filter = null, $filterAnd = null)
-    {
-
-        return $this->get('table')->fetchAllFiltered(
-            array_keys($this->get('entity')->getJsonArray()),
-            $page,
-            $limit,
-            $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, []),
-
-            $filterAnd
-
-        );
-    }
-
+    
 
 
 
