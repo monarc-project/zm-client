@@ -372,6 +372,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['min'],
                             $sharedData['scales']['dest'][\MonarcCore\Model\Entity\Scale::TYPE_VULNERABILITY]['max']
                         ));
+                        $r->set('mh', $risk['mh']);
                         $r->set('kindOfMeasure', $risk['kindOfMeasure']);
                         $r->set('comment', $risk['comment']);
                         $r->set('commentAfter', $risk['commentAfter']);

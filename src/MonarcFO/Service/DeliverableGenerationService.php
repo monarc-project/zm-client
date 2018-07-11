@@ -235,6 +235,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if (!empty($values['txt'])) {
             foreach ($values['txt'] as $key => $value) {
                 $word->setValue($key, $value);
+
             }
         }
         if (!empty($values['img']) && method_exists($word, 'setImg')) {
@@ -246,6 +247,42 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
         if (!empty($values['html']) && method_exists($word, 'setHtml')) {
             foreach ($values['html'] as $key => $value) {
+                $value = str_replace(
+                    ['<br>', '<div>', '</div>', '<!--block-->'],
+                    ['<br/>', '', '', ''],
+                    $value
+                );
+
+                while (strpos($value, '<ul>') !== false) {
+                    if (preg_match_all("'<ul>(.*?)</ul>'", $value, $groups)) {
+                        foreach ($groups as $group) {
+                            $value1 = preg_replace(
+                                        ["'<li>'", "'</li>'"],
+                                        ['&nbsp;&bull;&nbsp;','<br />'],
+                                        $group[0]);
+
+                            $value = preg_replace("'<ul>(.*?)</ul>'", "<br />$value1", $value, 1);
+
+                        }
+                    }
+                }
+
+                while (strpos($value, '<ol>') !== false) {
+                    if (preg_match_all("'<ol>(.*?)</ol>'", $value, $groups)) {
+                        foreach ($groups as $group) {
+                            $index = 0;
+                            while (strpos($group[0], '<li>') !== false) {
+                                $index += 1;
+                                $group[0] = preg_replace(
+                                            ["'<li>'", "'</li>'"],
+                                            ["&nbsp;[$index]&nbsp;",'<br />'],
+                                            $group[0], 1);
+                            }
+                            $value = preg_replace("'<ol>(.*?)</ol>'", "<br />$group[0]", $value, 1);
+                        }
+                    }
+                }
+
                 $word->setHtml($key, $value);
             }
         }
@@ -2037,7 +2074,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         // TODO: C'est moche, optimiser
         /** @var AnrInstanceService $instanceService */
         $instanceService = $this->instanceService;
-        $all_instances = $instanceService->getList(1, 0, null, null, ['anr' => $anr->id]);
+        $all_instances = $instanceService->getList(1, 0, 'position', null, ['anr' => $anr->id]);
         $instances = array_filter($all_instances, function ($in) {
             return (($in['c'] > -1 && $in['ch'] == 0) || ($in['i'] > -1 && $in['ih'] == 0) || ($in['d'] > -1 && $in['dh'] == 0));
         });
