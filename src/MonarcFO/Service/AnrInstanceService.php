@@ -448,8 +448,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 ];
 
                                 // Reply recommandation to brothers
-                                if (!empty($toExchange['objectGlobal']) && $modeImport == 'merge') {
-                                      $instances = $this->get('table')->getEntityByFields([
+
+                                if (!empty($toExchange['objectGlobal']) && $modeImport == 'merge' && $r->get('specific') == 0 ) {
+                                      $instances = $this->get('table')->getEntityByFields([ // Get the brothers
                                           'id' => ['op' => '!=', 'value' => $instanceId],
                                           'anr' => $anr->get('id'),
                                           'asset' => $r->get('asset')->get('id'),
@@ -457,20 +458,28 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
                                       if (!empty($instances)) {
                                             foreach ($instances as $i) {
-                                                $brothers = $this->get('instanceRiskTable')->getEntityByFields([
+                                                $brothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get the risks of brothers
                                                     'anr' => $anr->get('id'),
                                                     'instance' => $i->get('id'),
                                                     'amv' => $r->get('amv')->get('id')]);
 
-                                                  foreach ($brothers as $brother) {
-                                                      $rr = new $class();
-                                                      $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
-                                                      $rr->setLanguage($this->getLanguage());
-                                                      $toExchange['instanceRisk'] = $brother->id;
-                                                      $toExchange['instance'] = $i->get('id');
-                                                      $rr->exchangeArray($toExchange);
-                                                      $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                                                      $this->get('recommandationRiskTable')->save($rr);
+                                                    foreach ($brothers as $brother) {
+
+                                                        $RecoCreated= $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
+                                                          'recommandation' => $sharedData['recos'][$reco['id']],
+                                                          'instance' => $i->get('id'),
+                                                          'instanceRisk' => $brother->id]);
+
+                                                        if (empty($RecoCreated)) { // Creation link
+                                                              $rr = new $class();
+                                                              $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
+                                                              $rr->setLanguage($this->getLanguage());
+                                                              $toExchange['instanceRisk'] = $brother->id;
+                                                              $toExchange['instance'] = $i->get('id');
+                                                              $rr->exchangeArray($toExchange);
+                                                              $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                                                              $this->get('recommandationRiskTable')->save($rr);
+                                                        }
                                                   }
                                             }
                                       }
@@ -529,7 +538,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       'asset' => $r->get('asset')->get('id'),
                       'object' => $obj->get('id')]));
 
-                  if (!empty($instanceBrother)) {
+                  if (!empty($instanceBrother) && $r->get('specific') == 0 ) {
                         $instanceRiskBrothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get instance risk of brother
                             'anr' => $anr->get('id'),
                             'instance' => $instanceBrother->get('id'),
