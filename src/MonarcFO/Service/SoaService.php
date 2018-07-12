@@ -34,34 +34,7 @@ use MonarcFO\Model\Table\CategoryTable;
   protected $dependencies = ['anr', 'measure'];
 
 
-   /**
-    * Get List
-    *
-    * @param int $page
-    * @param int $limit
-    * @param null $order
-    * @param null $filter
-    * @param null $filterAnd
-    * @return mixed
-    */
-   public function getList($page = 1, $limit = 25, $order , $filter = null, $filterAnd = null)
-   {
-     //file_put_contents('php://stderr', print_r('testservice', TRUE));
-
-       return $this->get('table')->fetchAllFiltered(
-           array_keys($this->get('entity')->getJsonArray()),
-           $page,
-           $limit,
-           $this->parseFrontendOrder($order),
-           $this->parseFrontendFilter($filter, []),
-
-           $filterAnd
-      /*     $this->parseFrontendFilter(
-               $filter,
-               ['id', ...]
-               )*/
-       );
-   }
+   
 
 
 
