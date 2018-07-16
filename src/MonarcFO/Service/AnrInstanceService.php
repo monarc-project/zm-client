@@ -414,6 +414,32 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate'),0) : 0);
                         $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
 
+                        // Merge all fields for global assets
+
+                        if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\Object::SCOPE_GLOBAL &&
+                            $r->get('specific') == 0 &&
+                            $modeImport == 'merge') {
+
+                            $instanceRiskBrothers = current($this->get('instanceRiskTable')->getEntityByFields([ // Get instance risk of brother
+                                'anr' => $anr->get('id'),
+                                'instance' => ['op' => '!=', 'value' => $instanceId],
+                                'amv' => $r->get('amv')->get('id')]));
+
+                            if (!empty($instanceRiskBrothers)) {
+                                $dataUpdate=[];
+                                $dataUpdate['anr'] = $anr->get('id');
+                                $dataUpdate['threatRate'] = $instanceRiskBrothers->threatRate; // Merge threat rate
+                                $dataUpdate['vulnerabilityRate'] = $instanceRiskBrothers->vulnerabilityRate; // Merge vulnerability rate
+                                $dataUpdate['kindOfMeasure'] = $instanceRiskBrothers->kindOfMeasure; // Merge kind Of Measure
+                                $dataUpdate['reductionAmount'] = $instanceRiskBrothers->reductionAmount; // Merge reduction amount
+                                if (strcmp($instanceRiskBrothers->comment, $r->get('comment')) !== 0) { // Check if comment is different & merge
+                                    $dataUpdate['comment'] = $instanceRiskBrothers->comment . "\n\n" . $r->get('comment');
+                                }
+
+                                $this->get('instanceRiskService')->update($r->get('id'),$dataUpdate,true); // Finally update the risks
+                              }
+                        }
+
                         // Recommandations
 
                         if (!empty($data['recos'][$risk['id']])) {
@@ -629,6 +655,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     'instance' => $instanceId,
                     'specific' => 1]);
                 foreach ($specificRisks as $sr) {
+                  $recoToCreate = [];
                   $exitingRecoRisks = $this->get('recommandationRiskTable')->getEntityByFields([ // Get recommandations of brothers
                       'anr' => $anr->get('id'),
                       'asset' => $sr->get('asset')->get('id'),
@@ -641,7 +668,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       }
                 }
                 foreach ($recoToCreate as $rtc) {
-                  $RecoCreated= $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
+                  $RecoCreated = $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
                     'recommandation' => $rtc->recommandation,
                     'instance' => $instanceId,
                     'asset' => $rtc->asset,
