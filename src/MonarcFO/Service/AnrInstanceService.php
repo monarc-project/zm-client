@@ -277,12 +277,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     }
                 }
             } else {
+
+
                 // on génère celles par défaut
                 $this->createInstanceConsequences($instanceId, $anr->get('id'), $obj);
             }
             $this->refreshImpactsInherited($anr->get('id'), $idParent, $instance);
 
-            if (!empty($data['risks'])) {
+          if (!empty($data['risks'])) {
                 // On charge les "threats" existants
                 $sharedData['ithreats'] = $tCodes = [];
                 foreach ($data['threats'] as $t) {
@@ -337,7 +339,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $instanceBrothers = $this->get('table')->getEntityByFields([ // Get the Instance of brothers
                                 'id' => ['op' => '!=', 'value' => $instanceId],
                                 'anr' => $anr->get('id'),
-                                'asset' => $r->get('asset')->get('id'),
+                                'asset' => $instance->get('asset')->get('id'),
                                 'object' => $obj->get('id')]);
 
                             // Creation of specific risks to brothers
@@ -426,7 +428,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 'amv' => $r->get('amv')->get('id')]));
 
                             if (!empty($instanceRiskBrothers)) {
-                                $dataUpdate=[];
+                                $dataUpdate = [];
                                 $dataUpdate['anr'] = $anr->get('id');
                                 $dataUpdate['threatRate'] = $instanceRiskBrothers->threatRate; // Merge threat rate
                                 $dataUpdate['vulnerabilityRate'] = $instanceRiskBrothers->vulnerabilityRate; // Merge vulnerability rate
@@ -618,7 +620,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                             $RecoCreated= $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
                                               'recommandation' => $brr->recommandation->id,
                                               'instance' => $instanceId,
-                                              'instanceRisk' => $idRisk]);
+                                              'instanceRisk' => $r->get('id')]);
 
                                             if (empty($RecoCreated)) {// Creation of link reco -> risk
                                                     $class = $this->get('recommandationRiskTable')->getClass();
@@ -628,7 +630,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                     $toExchange = [
                                                         'anr' => $anr->get('id'),
                                                         'recommandation' => $brr->recommandation->id,
-                                                        'instanceRisk' => $idRisk,
+                                                        'instanceRisk' => $r->get('id'),
                                                         'instance' => $instanceId,
                                                         'objectGlobal' => $brr->objectGlobal->id,
                                                         'asset' => $brr->asset->id,
@@ -636,7 +638,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                         'vulnerability' => $brr->vulnerability->id,
                                                         'commentAfter' => $brr->commentAfter,
                                                         'op' => 0,
-                                                        'risk' => $idRisk,
+                                                        'risk' => $r->get('id'),
                                                     ];
                                                     $rrb->exchangeArray($toExchange);
                                                     $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
@@ -650,12 +652,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
 
                 // Check recommandations from specific risk of brothers
+                $recoToCreate = [];
                 $specificRisks = $this->get('instanceRiskTable')->getEntityByFields([ // Get all specific risks of instance
                     'anr' => $anr->get('id'),
                     'instance' => $instanceId,
                     'specific' => 1]);
                 foreach ($specificRisks as $sr) {
-                  $recoToCreate = [];
                   $exitingRecoRisks = $this->get('recommandationRiskTable')->getEntityByFields([ // Get recommandations of brothers
                       'anr' => $anr->get('id'),
                       'asset' => $sr->get('asset')->get('id'),
@@ -1303,7 +1305,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   }
                   $scaleComment = $this->get('scaleCommentTable')->getEntityByFields(['anr' => $anr->id],['id' => 'ASC']);
                   foreach ($scaleComment as $sc) {
-                    if ($sc->scaleImpactType->isSys == 1 or is_null($sc->scaleImpactType)) {
+                    if ($sc->scaleImpactType->isSys == 1 || is_null($sc->scaleImpactType)) {
                       $this->get('scaleCommentTable')->delete($sc->id);
                     }
                   }
