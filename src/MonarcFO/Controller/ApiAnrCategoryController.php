@@ -6,14 +6,13 @@
  */
 
 namespace MonarcFO\Controller;
-use \MonarcCore\Controller\AbstractController;
 /**
  * Api ANR Categories Controller
  *
  * Class ApiAnrCategoriesController
  * @package MonarcFO\Controller
  */
-class ApiAnrCategoryController extends \MonarcCore\Controller\AbstractController
+class ApiAnrCategoryController extends ApiAnrAbstractController
 {
     protected $name = 'categories';
     protected $dependencies = ['anr'];
