@@ -19,6 +19,8 @@ class AnrCategoryServiceFactory extends AbstractServiceFactory
 
     protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\Category',
-        'table' => 'MonarcFO\Model\Table\CategoryTable'
+        'table' => 'MonarcFO\Model\Table\CategoryTable',
+         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     ];
 }

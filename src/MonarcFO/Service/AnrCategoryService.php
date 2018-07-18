@@ -18,12 +18,14 @@ class AnrCategoryService extends \MonarcCore\Service\AbstractService
 
       protected $table;
       protected $entity;
+      protected $anrTable;
+      protected $userAnrTable;
     protected $dependencies = ['anr'];
     protected $forbiddenFields = [];
 
 
 
-    
+
 
 
 
