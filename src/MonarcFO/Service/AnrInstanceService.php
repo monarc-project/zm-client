@@ -468,8 +468,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 $dataUpdate['vulnerabilityRate'] = $instanceRiskBrothers->vulnerabilityRate; // Merge vulnerability rate
                                 $dataUpdate['kindOfMeasure'] = $instanceRiskBrothers->kindOfMeasure; // Merge kind Of Measure
                                 $dataUpdate['reductionAmount'] = $instanceRiskBrothers->reductionAmount; // Merge reduction amount
-                                if (strcmp($instanceRiskBrothers->comment, $r->get('comment')) !== 0) { // Check if comment is different & merge
-                                    $dataUpdate['comment'] = $instanceRiskBrothers->comment . "\n\n" . $r->get('comment');
+                                if (strcmp($instanceRiskBrothers->comment, $r->get('comment')) !== 0 && // Check if comment is different
+                                    strpos($instanceRiskBrothers->comment, $r->get('comment')) == false){ // Check if comment is not exist yet
+
+                                    $dataUpdate['comment'] = $instanceRiskBrothers->comment . "\n\n" . $r->get('comment'); // Merge comments
+                                } else {
+                                    $dataUpdate['comment'] = $instanceRiskBrothers->comment;
                                 }
 
                                 $this->get('instanceRiskService')->update($r->get('id'),$dataUpdate,true); // Finally update the risks
