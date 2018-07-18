@@ -274,14 +274,48 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $consequence->exchangeArray($toExchange);
                         $this->setDependencies($consequence, ['anr', 'object', 'instance', 'scaleImpactType']);
                         $this->get('instanceConsequenceTable')->save($consequence);
+
                     }
                 }
             } else {
-
-
                 // on génère celles par défaut
-                $this->createInstanceConsequences($instanceId, $anr->get('id'), $obj);
+
+              $this->createInstanceConsequences($instanceId, $anr->get('id'), $obj);
             }
+
+            // Update impacts from brothers for global assets
+
+            $instanceBrothers = current($this->get('table')->getEntityByFields([ // Get instance risk of brother
+                  'id' => ['op' => '!=', 'value' => $instanceId],
+                  'anr' => $anr->get('id'),
+                  'asset' => $instance->get('asset')->get('id'),
+                  'object' => $instance->get('object')->get('id')]));
+
+            if (!empty($instanceBrothers)) {
+                if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\Object::SCOPE_GLOBAL &&
+                    $modeImport == 'merge' &&
+                    ($instanceBrothers->ch == 0 || $instanceBrothers->ih == 0 || $instanceBrothers->dh == 0)) {
+
+                    $instanceConseqBrothers = $this->get('instanceConsequenceTable')->getEntityByFields([ // Get consequences of brother
+                      'anr' => $anr->get('id'),
+                      'instance' => $instanceBrothers,
+                      'object' => $instance->get('object')->get('id')]);
+
+                    foreach ($instanceConseqBrothers as $icb) { //Update consequences for all brothers
+                      $this->get('instanceConsequenceService')->updateBrothersConsequences($anr->get('id'), $icb->get('id'));
+                    }
+
+                    $ts = ['c', 'i', 'd'];
+                    foreach ($ts as $t) { //Update impacts in instance
+                        if ($instanceBrothers->get($t.'h') == 0) {
+                            $instance->set($t.'h', 0);
+                            $instance->set($t, $instanceBrothers->$t);
+
+                        }
+                    }
+                }
+            }
+
             $this->refreshImpactsInherited($anr->get('id'), $idParent, $instance);
 
           if (!empty($data['risks'])) {
