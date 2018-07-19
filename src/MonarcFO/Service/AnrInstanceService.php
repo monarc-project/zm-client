@@ -293,8 +293,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
             if (!empty($instanceBrothers)) {
                 if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\Object::SCOPE_GLOBAL &&
-                    $modeImport == 'merge' &&
-                    ($instanceBrothers->ch == 0 || $instanceBrothers->ih == 0 || $instanceBrothers->dh == 0)) {
+                    $modeImport == 'merge') {
 
                     $instanceConseqBrothers = $this->get('instanceConsequenceTable')->getEntityByFields([ // Get consequences of brother
                       'anr' => $anr->get('id'),
@@ -304,13 +303,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     foreach ($instanceConseqBrothers as $icb) { //Update consequences for all brothers
                       $this->get('instanceConsequenceService')->updateBrothersConsequences($anr->get('id'), $icb->get('id'));
                     }
-
                     $ts = ['c', 'i', 'd'];
                     foreach ($ts as $t) { //Update impacts in instance
                         if ($instanceBrothers->get($t.'h') == 0) {
                             $instance->set($t.'h', 0);
                             $instance->set($t, $instanceBrothers->$t);
-
+                        }else {
+                          $instance->set($t.'h', 1);
+                          $instance->set($t, $instance->get('parent')->get($t));
                         }
                     }
                 }
