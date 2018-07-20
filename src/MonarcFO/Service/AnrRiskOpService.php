@@ -84,6 +84,10 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             }
         }
 
+        // Get language
+        $anr = $this->anrTable->getEntity($anrId);
+        $l = $anr->language;
+
         $sql = "SELECT      ir.id as id, ir.risk_cache_label1 as label1, ir.risk_cache_label2 as label2, ir.risk_cache_label3 as label3,
                             ir.risk_cache_label4 as label4, ir.risk_cache_description1 as description1, ir.risk_cache_description2 as description2,
                             ir.risk_cache_description3 as description3, ir.risk_cache_description4 as description4, ir.net_prob as netProb, ir.net_r as netR,
@@ -93,7 +97,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                             ir.targeted_prob as targetedProb, ir.targeted_r as targetedR, ir.targeted_o as targetedO, ir.targeted_l as targetedL,
                             ir.targeted_f as targetedF, ir.targeted_p as targetedP, ir.cache_targeted_risk as cacheTargetedRisk,
                             IF(ir.kind_of_measure IS NULL OR ir.kind_of_measure = " .  \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED . ", false, true) as t,
-                            i.id as iid, i.name1, i.name2, i.name3, i.name4,
+                            i.id as iid, i.name$l, i.position,
                             o.scope
                 FROM        instances_risks_op as ir
                 INNER JOIN  instances as i
@@ -128,18 +132,10 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         // FILTER: Keywords
         if (!empty($params['keywords'])) {
             $filters = [
-                'i.label1',
-                'i.label2',
-                'i.label3',
-                'i.label4',
-                'ir.risk_cache_label1',
-                'ir.risk_cache_label2',
-                'ir.risk_cache_label3',
-                'ir.risk_cache_label4',
-                'ir.risk_cache_description1',
-                'ir.risk_cache_description2',
-                'ir.risk_cache_description3',
-                'ir.risk_cache_description4',
+                'i.name' . $l . '',
+                'i.label' . $l . '',
+                'ir.risk_cache_label'. $l . '',
+                'ir.risk_cache_description'. $l . '',
                 'ir.comment',
             ];
             $orFilter = [];
@@ -156,19 +152,44 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             $queryParams[':min'] = $params['thresholds'];
         }
 
-        $sql .= ' ORDER BY ir.cache_net_risk DESC';
+        // ORDER
+        $params['order_direction'] = isset($params['order_direction']) && strtolower(trim($params['order_direction'])) != 'asc' ? 'DESC' : 'ASC';
+        $sql .= " ORDER BY ";
+        switch ($params['order']) {
+            case 'instance':
+                $sql .= " i.name$l ";
+                break;
+            case 'position':
+                $sql .= " i.position ";
+                break;
+            case 'brutProb':
+                $sql .= " ir.brut_prob ";
+                break;
+            case 'cacheBrutRisk':
+                $sql .= " ir.cache_brut_risk ";
+                break;
+            case 'netProb':
+                $sql .= " ir.net_prob ";
+                break;
+            case 'cacheTargetedRisk':
+                $sql .= " ir.cache_targeted_risk ";
+                break;
+            default:
+            case 'cacheNetRisk':
+                $sql .= " ir.cache_net_risk ";
+                break;
+        }
+        $sql .= " " . $params['order_direction'] . " , i.name$l ASC ";
+
         $res = $this->get('table')->getDb()->getEntityManager()->getConnection()
             ->fetchAll($sql, $queryParams, $typeParams);
         foreach($res as &$r){
             $r['instanceInfos'] = [
                 'id' => $r['iid'],
                 'scope' => $r['scope'],
-                'name1' => $r['name1'],
-                'name2' => $r['name2'],
-                'name3' => $r['name3'],
-                'name4' => $r['name4'], // TODO: ajouter le path de l'instance
-            ];
-            unset($r['iid'],$r['scope'],$r['name1'],$r['name2'],$r['name3'],$r['name4']);
+                'name'. $l => $r['name'. $l],
+                ];
+            unset($r['iid'],$r['scope'],$r['name'. $l]);
         }
         return $res;
     }
