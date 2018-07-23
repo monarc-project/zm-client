@@ -53,8 +53,8 @@ class ApiAnrSoaController extends  ApiAnrAbstractController
 
 
 
-      $servicee = $this->getService('measure');
-      $measures = $servicee->getList($page, $limit, $order, $filter);
+      $serviceMeasure = $this->getService('measure');
+      $measures = $serviceMeasure->getList($page, $limit, $order, $filter);
 
 
       $service = $this->getService();

@@ -31,10 +31,9 @@ use MonarcFO\Model\Table\CategoryTable;
 
   protected $table;
   protected $entity;
+  protected $anrTable;
+  protected $userAnrTable;
   protected $dependencies = ['anr', 'measure'];
-
-
-   
 
 
 

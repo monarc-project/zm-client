@@ -16,7 +16,7 @@ use MonarcCore\Model\Entity\CategoriesSuperClass;
  *
  * @ORM\Table(name="category", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"})
- * })
+* })
  * @ORM\Entity
  */
 class Category extends CategoriesSuperClass
@@ -31,6 +31,9 @@ class Category extends CategoriesSuperClass
    * })
    */
   protected $anr;
+
+
+
 
   /**
    * @return Anr
@@ -49,6 +52,5 @@ class Category extends CategoriesSuperClass
       $this->anr = $anr;
       return $this;
   }
-
 
 }
