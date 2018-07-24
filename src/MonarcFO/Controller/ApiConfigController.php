@@ -25,7 +25,9 @@ class ApiConfigController extends AbstractController
     {
         return new JsonModel(array_merge(
                                 $this->getService()->getLanguage(),
-                                $this->getService()->getAppVersion())
+                                $this->getService()->getAppVersion(),
+                                $this->getService()->getCheckVersion(),
+                                $this->getService()->getAppCheckingURL())
                             );
     }
 
