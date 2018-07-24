@@ -806,9 +806,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $values['txt']['OPRISKS_RECO_FULL'] = $this->generateOperationalRisksPlan($anr);
 
         $values['txt']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
-        $values['txt']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr,'ir.cacheNetRisk');
-        $values['txt']['TABLE_AUDIT_RISKS_OP_ORDER_BY_POSITION'] = $this->generateTableAuditOp($anr, 'ir.id');
-
+        $values['txt']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
 
         return $values;
     }
@@ -1292,7 +1290,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      * @param Anr $anr The ANR object
      * @return mixed|string The generated WordXml data
      */
-    public function generateTableAuditOp($anr , $orderBy)
+    public function generateTableAuditOp($anr)
     {
         $query = $this->instanceRiskOpTable->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
@@ -1321,7 +1319,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             ->innerJoin('i.asset', 'a')
             ->andWhere('a.type = :type')
             ->setParameter(':type', \MonarcCore\Model\Entity\AssetSuperClass::TYPE_PRIMARY)
-            ->orderBy($orderBy, 'DESC')
+            ->orderBy('ir.cacheNetRisk', 'DESC')
             ->getQuery()->getResult();
         $lst = [];
         $instanceTable = $this->get('instanceService')->get('table');
