@@ -172,6 +172,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 $sql .= " ir.net_prob ";
                 break;
             case 'cacheTargetedRisk':
+
                 $sql .= " ir.cache_targeted_risk ";
                 break;
             default:
@@ -179,7 +180,12 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 $sql .= " ir.cache_net_risk ";
                 break;
         }
-        $sql .= " " . $params['order_direction'] . " , i.name$l ASC ";
+
+        if ($params['order'] == 'position') {
+            $sql .= " " . $params['order_direction'];
+        }else {
+          $sql .= " " . $params['order_direction'] . " , name$l ASC ";
+        }
 
         $res = $this->get('table')->getDb()->getEntityManager()->getConnection()
             ->fetchAll($sql, $queryParams, $typeParams);
