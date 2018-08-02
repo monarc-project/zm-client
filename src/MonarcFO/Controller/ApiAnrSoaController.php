@@ -60,21 +60,12 @@ class ApiAnrSoaController extends  ApiAnrAbstractController
       $service = $this->getService();
 
       $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
+      //set measures dependencies for each soa
       if (count($this->dependencies)) {
           foreach ($entities as $key => $entity) {
               foreach ($measures as $keyy => $entity) {
                 $this->formatDependencies($measures[$keyy], ['category']);
-
-                // if ($measures[$keyy]['id']==$entities[$key]['measure_id']) {
-                //
-                //   $entities[$key]['measure_id']=$measures[$keyy];
-                //
-                // }
                 $this->formatDependencies($entities[$key], $this->dependencies);
-
-
-
-
               }
 
           }
