@@ -35,9 +35,6 @@ class AddSoaObjects extends AbstractMigration
             $table = $this->table('Soa');
             $table
             //  ->addColumn('id', 'integer', array('null' => true, 'signed' => false))
-                ->addColumn('reference', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('control', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-                ->addColumn('requirement', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
                 ->addColumn('justification', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
                 ->addColumn('evidences', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
                 ->addColumn('actions', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
@@ -46,6 +43,12 @@ class AddSoaObjects extends AbstractMigration
                 ->addIndex(array('measure_id'))
                 ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
                 ->addIndex(array('anr_id'))
+                ->addColumn('EX', 'integer', array('null' => true, 'default' => '0', 'limit' => MysqlAdapter::INT_TINY))
+                ->addColumn('LR', 'integer', array('null' => true, 'default' => '0', 'limit' => MysqlAdapter::INT_TINY))
+                ->addColumn('CO', 'integer', array('null' => true, 'default' => '0', 'limit' => MysqlAdapter::INT_TINY))
+                ->addColumn('BR', 'integer', array('null' => true, 'default' => '0', 'limit' => MysqlAdapter::INT_TINY))
+                ->addColumn('BP', 'integer', array('null' => true, 'default' => '0', 'limit' => MysqlAdapter::INT_TINY))
+                ->addColumn('RRA', 'integer', array('null' => true, 'default' => '0', 'limit' => MysqlAdapter::INT_TINY))
 
                 ->create();
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();

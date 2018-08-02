@@ -28,13 +28,8 @@ class SoasCopy extends AbstractMigration
     public function change()
     {
       $this->execute('
-      INSERT INTO Soa (reference, control, measure_id,anr_id) SELECT measures.code, measures.description1, measures.id, measures.anr_id FROM measures, anrs WHERE measures.anr_id=anrs.id AND anrs.language=\'1\';
+      INSERT INTO Soa ( measure_id,anr_id) SELECT  measures.id, measures.anr_id FROM measures ;
 
-      INSERT INTO Soa (reference, control, measure_id,anr_id) SELECT measures.code, measures.description2, measures.id, measures.anr_id FROM measures, anrs WHERE measures.anr_id=anrs.id AND anrs.language=\'2\';
-
-      INSERT INTO Soa (reference, control, measure_id,anr_id) SELECT measures.code, measures.description3, measures.id, measures.anr_id FROM measures, anrs WHERE measures.anr_id=anrs.id AND anrs.language=\'3\';
-
-      INSERT INTO Soa (reference, control, measure_id,anr_id) SELECT measures.code, measures.description3, measures.id, measures.anr_id FROM measures, anrs WHERE measures.anr_id=anrs.id AND anrs.language=\'4\';
       ');
       }
 }

@@ -39,6 +39,12 @@ class AddTableCategoryAndDependencies extends AbstractMigration
            ->addColumn('label2', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
            ->addColumn('label3', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
            ->addColumn('label4', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
+           ->addColumn('reference', 'string', array('null' => true, 'limit' => 255))
+           ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
+           ->addIndex(array('anr_id'))
+           ->addColumn('status', 'integer', array('null' => true, 'default' => '1', 'limit' => 11))
+
+
            ->create();
        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
 
@@ -46,9 +52,6 @@ class AddTableCategoryAndDependencies extends AbstractMigration
 
 
 
-       $this->table('Soa')
-       ->addColumn('category_id', 'integer',  array('null' => true, 'default' => '15',  'signed' => false))
-       ->save();
 
        $this->table('measures')
        ->addColumn('category_id', 'integer',  array('null' => true, 'default' => '15',  'signed' => false))
