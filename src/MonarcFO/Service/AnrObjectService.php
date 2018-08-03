@@ -76,11 +76,11 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
      * Fetches and returns the list of objects from the common database. This will only return a limited set of fields,
      * use {#getCommonEntity} to get the entire object definition.
      * @see #getCommonEntity
-     * @param int $anrId The target ANR ID
+     * @param int $anrId The target ANR ID, $filter Keywords to search
      * @return array An array of available objects from the common database (knowledge base)
      * @throws \MonarcCore\Exception\Exception If the ANR ID is not set or invalid
      */
-    public function getCommonObjects($anrId)
+    public function getCommonObjects($anrId, $filter = null)
     {
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
@@ -89,7 +89,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         $anr = $this->get('anrTable')->getEntity($anrId); // throws an MonarcCore\Exception\Exception if unknown
 
         // Fetch the objects from the common database
-        $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), null, null, $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE);
+        $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), $filter, null, $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE);
 
         // List of fields we want to keep
         $fields = ['id', 'mode', 'scope', 'name' . $anr->get('language'), 'label' . $anr->get('language'), 'disponibility', 'position'];

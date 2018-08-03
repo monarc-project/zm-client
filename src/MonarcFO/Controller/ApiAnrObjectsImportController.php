@@ -25,10 +25,11 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
+        $filter = $this->params()->fromQuery("filter");
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
-        $objects = $this->getService()->getCommonObjects($anrId);
+        $objects = $this->getService()->getCommonObjects($anrId,$filter);
         return new JsonModel([
             'count' => count($objects),
             $this->name => $objects,
