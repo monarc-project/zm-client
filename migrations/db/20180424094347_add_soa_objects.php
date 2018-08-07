@@ -71,20 +71,20 @@ class AddSoaObjects extends AbstractMigration
             ->save();
             //set the default iso27002 categories
             $this->query('INSERT INTO category (reference,label1, label2, label3,label4, anr_id)
-            SELECT "5","Politiques de sécurité de l\'information","Information security policies","Informationssicherheitspolitik","" ,anrs.id from anrs union all
-            SELECT "6","Organisation de la sécurité de l\'information","Organization of information security","Organisation der Informationssicherheit","" ,anrs.id from anrs union all
-            SELECT "7","La sécurité des ressources humaines","Human resource security","Personalsicherheit","",anrs.id from anrs union all
-            SELECT "8","Gestion des actifs","Asset management","Asset Management","",anrs.id from anrs union all
-            SELECT "9","Contrôle d\'accès","Access control","Zugriffskontrolle","",anrs.id from anrs union all
-            SELECT "10","Cryptographie","Cryptography","Kryptografie","",anrs.id from anrs union all
-            SELECT "11","Sécurité physique et environnementale","Physical and environmental security","Physische und Umgebungssicherheit","",anrs.id from anrs union all
-            SELECT "12","Sécurité liée à l\'exploitation","Operations security","Betriebssicherheit","",anrs.id from anrs union all
-            SELECT "13","Sécurité des communications","Communications security","Kommunikationssicherheit","",anrs.id from anrs union all
-            SELECT "14","Acquisition, développement et maintenance des systèmes d\'information","System acquisition, development and maintenance","Systemerwerb, Entwicklung und Wartung","",anrs.id from anrs union all
-            SELECT "15","Relations avec le fournisseurs","Supplier relationships","Lieferantenbeziehungen","",anrs.id from anrs union all
-            SELECT "16","Gestion des incidents liés à la sécurité de l\'information","information security incident management","Informationssicherheits-Störfallmanagement","",anrs.id from anrs union all
-            SELECT "17","Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","Information security aspects of business continuity management","Informationssicherheitsaspekte des betrieblichen Kontinuitätsmanagement","",anrs.id from anrs union all
-            SELECT "18","Conformité","Compliance","Konformität","",anrs.id from anrs;');
+            SELECT "5","Politiques de sécurité de l\'information","Information security policies","Informationssicherheitspolitik","Informatiebeveiligingsbeleid" ,anrs.id from anrs union all
+            SELECT "6","Organisation de la sécurité de l\'information","Organization of information security","Organisation der Informationssicherheit","Organiseren van informatiebeveiliging" ,anrs.id from anrs union all
+            SELECT "7","La sécurité des ressources humaines","Human resource security","Personalsicherheit","Veilig personeel",anrs.id from anrs union all
+            SELECT "8","Gestion des actifs","Asset management","Asset Management","Beheer van bedrijfsmiddelen",anrs.id from anrs union all
+            SELECT "9","Contrôle d\'accès","Access control","Zugriffskontrolle","Toegangsbeveiliging",anrs.id from anrs union all
+            SELECT "10","Cryptographie","Cryptography","Kryptografie","Cryptografie",anrs.id from anrs union all
+            SELECT "11","Sécurité physique et environnementale","Physical and environmental security","Physische und Umgebungssicherheit","Fysieke beveiliging en beveiliging van de omgeving",anrs.id from anrs union all
+            SELECT "12","Sécurité liée à l\'exploitation","Operations security","Betriebssicherheit","Beveiliging bedrijfsvoering",anrs.id from anrs union all
+            SELECT "13","Sécurité des communications","Communications security","Kommunikationssicherheit","Communicatiebeveiliging",anrs.id from anrs union all
+            SELECT "14","Acquisition, développement et maintenance des systèmes d\'information","System acquisition, development and maintenance","Systemerwerb, Entwicklung und Wartung","Acquisitie, ontwikkeling en onderhoud van informatiesystemen",anrs.id from anrs union all
+            SELECT "15","Relations avec le fournisseurs","Supplier relationships","Lieferantenbeziehungen","Leveranciersrelaties",anrs.id from anrs union all
+            SELECT "16","Gestion des incidents liés à la sécurité de l\'information","information security incident management","Informationssicherheits-Störfallmanagement","Beheer van informatiebeveiligingsincidenten",anrs.id from anrs union all
+            SELECT "17","Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","Information security aspects of business continuity management","Informationssicherheitsaspekte des betrieblichen Kontinuitätsmanagement","Informatiebeveiligingsaspecten van bedrijfscontinuïteitsbeheer",anrs.id from anrs union all
+            SELECT "18","Conformité","Compliance","Konformität","Naleving",anrs.id from anrs;');
             // update category_id in measures tables for all anrs
             $this->execute('UPDATE measures m SET m.category_id= (SELECT id FROM category c WHERE m.anr_id=c.anr_id AND m.code LIKE concat(c.reference ,".","%"));');
     }
