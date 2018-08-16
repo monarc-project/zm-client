@@ -30,7 +30,7 @@ class AddSoaObjects extends AbstractMigration
     public function change()
     {
             // Creation for table Soa
-            $table = $this->table('Soa');
+            $table = $this->table('soa');
             $table
             //  ->addColumn('id', 'integer', array('null' => true, 'signed' => false))
                 ->addColumn('justification', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
@@ -50,10 +50,10 @@ class AddSoaObjects extends AbstractMigration
                 ->create();
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
             $this->execute('
-            INSERT INTO Soa ( measure_id,anr_id) SELECT  measures.id, measures.anr_id FROM measures ;');
+            INSERT INTO soa ( measure_id,anr_id) SELECT  measures.id, measures.anr_id FROM measures ;');
 
             // Creation for table SOAcategory
-            $table = $this->table('SOAcategory');
+            $table = $this->table('soacategory');
             $table
             //  ->addColumn('id', 'integer', array('null' => true, 'signed' => false))
                 ->addColumn('label1', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
@@ -67,10 +67,10 @@ class AddSoaObjects extends AbstractMigration
                 ->create();
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
             $this->table('measures')
-            ->addColumn('SOAcategory_id', 'integer',  array('null' => true, 'default' => '15',  'signed' => false))
+            ->addColumn('soacategory_id', 'integer',  array('null' => true, 'default' => '15',  'signed' => false))
             ->save();
             //set the default iso27002 categories
-            $this->query('INSERT INTO SOAcategory (reference,label1, label2, label3,label4, anr_id)
+            $this->query('INSERT INTO soacategory (reference,label1, label2, label3,label4, anr_id)
             SELECT "5","Politiques de sécurité de l\'information","Information security policies","Informationssicherheitspolitik","Informatiebeveiligingsbeleid" ,anrs.id from anrs union all
             SELECT "6","Organisation de la sécurité de l\'information","Organization of information security","Organisation der Informationssicherheit","Organiseren van informatiebeveiliging" ,anrs.id from anrs union all
             SELECT "7","La sécurité des ressources humaines","Human resource security","Personalsicherheit","Veilig personeel",anrs.id from anrs union all
@@ -86,6 +86,6 @@ class AddSoaObjects extends AbstractMigration
             SELECT "17","Aspects de la sécurité de l\'information dans la gestion de la continuité de l\'activité","Information security aspects of business continuity management","Informationssicherheitsaspekte des betrieblichen Kontinuitätsmanagement","Informatiebeveiligingsaspecten van bedrijfscontinuïteitsbeheer",anrs.id from anrs union all
             SELECT "18","Conformité","Compliance","Konformität","Naleving",anrs.id from anrs;');
             // update category_id in measures tables for all anrs
-            $this->execute('UPDATE measures m SET m.SOAcategory_id= (SELECT id FROM SOAcategory c WHERE m.anr_id=c.anr_id AND m.code LIKE concat(c.reference ,".","%"));');
+            $this->execute('UPDATE measures m SET m.soacategory_id= (SELECT id FROM soacategory c WHERE m.anr_id=c.anr_id AND m.code LIKE concat(c.reference ,".","%"));');
     }
 }

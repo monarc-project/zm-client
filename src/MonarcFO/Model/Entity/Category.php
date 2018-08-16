@@ -14,7 +14,7 @@ use MonarcCore\Model\Entity\CategoriesSuperClass;
 /**
  * Category
  *
- * @ORM\Table(name="SOAcategory", indexes={
+ * @ORM\Table(name="soacategory", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"})
 * })
  * @ORM\Entity

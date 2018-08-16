@@ -15,7 +15,7 @@ use MonarcCore\Model\Entity\AbstractEntity;
 /**
  * Soa
  *
- * @ORM\Table(name="Soa", indexes={
+ * @ORM\Table(name="soa", indexes={
  *      @ORM\Index(name="measure", columns={"measure_id"}),
  *      @ORM\Index(name="anr", columns={"anr_id"})
 

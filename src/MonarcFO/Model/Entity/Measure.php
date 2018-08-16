@@ -36,7 +36,7 @@ class Measure extends MeasureSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Category", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="SOAcategory_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="soacategory_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $category;
