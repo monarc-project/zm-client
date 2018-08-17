@@ -13,7 +13,7 @@ use MonarcCore\Model\Table\AbstractEntityTable;
  * Class CategoryTable
  * @package MonarcFO\Model\Table
  */
-class CategoryTable extends AbstractEntityTable
+class SoaCategoryTable extends AbstractEntityTable
 {
     /**
      * CategoryTable constructor.
@@ -21,6 +21,6 @@ class CategoryTable extends AbstractEntityTable
      */
     public function __construct(\MonarcCore\Model\Db $dbService)
     {
-        parent::__construct($dbService, '\MonarcFO\Model\Entity\Category');
+        parent::__construct($dbService, '\MonarcFO\Model\Entity\SoaCategory');
     }
 }

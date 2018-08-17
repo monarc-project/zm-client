@@ -13,7 +13,7 @@ namespace MonarcFO\Service\Model\Entity;
  * Class CategoryServiceModelEntity
  * @package MonarcFO\Service\Model\Entity
  */
-class CategoryServiceModelEntity extends AbstractServiceModelEntity
+class SoaCategoryServiceModelEntity extends AbstractServiceModelEntity
 {
     protected $ressources = [
         'setDbAdapter' => '\MonarcCli\Model\Db',

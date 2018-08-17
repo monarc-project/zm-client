@@ -8,7 +8,7 @@
 namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use MonarcCore\Model\Entity\CategoriesSuperClass;
+use MonarcCore\Model\Entity\SoaCategorySuperClass;
 
 
 /**
@@ -19,7 +19,7 @@ use MonarcCore\Model\Entity\CategoriesSuperClass;
 * })
  * @ORM\Entity
  */
-class Category extends CategoriesSuperClass
+class SoaCategory extends SoaCategorySuperClass
 {
 
   /**

@@ -15,14 +15,8 @@ use MonarcCore\Controller\AbstractControllerFactory;
  * Class ApiAnrCategorysControllerFactory
  * @package MonarcFO\Controller
  */
-class ApiAnrCategoryControllerFactory extends AbstractControllerFactory
+class ApiSoaCategoryControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\MonarcFO\Service\AnrCategoryService';
-
-
-
-
-
-
+    protected $serviceName = '\MonarcFO\Service\SoaCategoryService';
 
 }

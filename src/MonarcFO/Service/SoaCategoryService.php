@@ -11,7 +11,7 @@ namespace MonarcFO\Service;
 
  * @package MonarcFO\Service
  */
-class AnrCategoryService extends \MonarcCore\Service\AbstractService
+class SoaCategoryService extends \MonarcCore\Service\AbstractService
 {
 
 

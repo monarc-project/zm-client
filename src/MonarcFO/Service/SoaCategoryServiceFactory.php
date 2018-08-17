@@ -13,13 +13,13 @@ use MonarcCore\Service\AbstractServiceFactory;
  * Factory class attached to AnrInterviewService
  * @package MonarcFO\Service
  */
-class AnrCategoryServiceFactory extends AbstractServiceFactory
+class SoaCategoryServiceFactory extends AbstractServiceFactory
 {
 
 
     protected $ressources = [
-        'entity' => 'MonarcFO\Model\Entity\Category',
-        'table' => 'MonarcFO\Model\Table\CategoryTable',
+        'entity' => 'MonarcFO\Model\Entity\SoaCategory',
+        'table' => 'MonarcFO\Model\Table\SoaCategoryTable',
          'anrTable' => 'MonarcFO\Model\Table\AnrTable',
          'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     ];

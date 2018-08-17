@@ -15,8 +15,8 @@ use MonarcFO\Model\Entity\InstanceRisk;
 use MonarcFO\Model\Table\InstanceRiskTable;
 use MonarcFO\Model\Entity\Measure;
 use MonarcFO\Model\Table\MeasureTable;
-use MonarcFO\Model\Entity\Category;
-use MonarcFO\Model\Table\CategoryTable;
+use MonarcFO\Model\Entity\SoaCategory;
+use MonarcFO\Model\Table\SoaCategoryTable;
 
 //use MonarcFO\Model\Entity\Measure;
 //use MonarcCore\Service\MeasureService;
@@ -34,11 +34,5 @@ use MonarcFO\Model\Table\CategoryTable;
   protected $anrTable;
   protected $userAnrTable;
   protected $dependencies = ['anr', 'measure'];
-
-
-
-
-
-
 
 }

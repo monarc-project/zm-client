@@ -32,7 +32,7 @@ use MonarcFO\Model\Entity\Threat;
 use MonarcFO\Model\Entity\Vulnerability;
 use MonarcFO\Model\Table\UserTable;
 use MonarcFO\Model\Table\SoaTable;
-use MonarcFO\Model\Table\CategoryTable;
+use MonarcFO\Model\Table\SoaCategoryTable;
 
 
 /**
@@ -65,7 +65,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $questionTable;
     protected $questionChoiceTable;
     protected $SoaTable;
-    protected $CategoryTable;
+    protected $SoaCategoryTable;
 
 
     protected $amvCliTable;
@@ -100,7 +100,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $questionCliTable;
     protected $questionChoiceCliTable;
     protected $SoaCliTable;
-    protected $CategoryCliTable;
+    protected $SoaCategoryCliTable;
 
     protected $instanceService;
 
@@ -420,14 +420,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate category
             $categoryNewIds = [];
-            $category = ($source == Object::SOURCE_COMMON) ? $this->get('CategoryTable')->fetchAllObject() : $this->get('CategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $category = ($source == Object::SOURCE_COMMON) ? $this->get('CategoryTable')->fetchAllObject() : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
 
             foreach ($category as $cat) {
                 $newCategory = new \MonarcFO\Model\Entity\Category($cat);
                 $newCategory->set('id', null);
                 $newCategory->setAnr($newAnr);
-                $this->get('CategoryCliTable')->save($newCategory,false);
-                $this->get('CategoryCliTable')->getDb()->flush();
+                $this->get('SoaCategoryCliTable')->save($newCategory,false);
+                $this->get('SoaCategoryCliTable')->getDb()->flush();
                 $categoryNewIds[$cat->id] = $newCategory;
 
             }

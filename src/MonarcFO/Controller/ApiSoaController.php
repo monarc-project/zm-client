@@ -18,7 +18,7 @@ use Zend\View\Model\JsonModel;
  * Class ApiAnrSoaController
  * @package MonarcFO\Controller
  */
-class ApiAnrSoaController extends  ApiAnrAbstractController
+class ApiSoaController extends  ApiAnrAbstractController
 {
     protected $name = 'Soa-list';
     protected $dependencies = ['anr','measure','category'];

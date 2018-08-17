@@ -4,20 +4,17 @@
  * @copyright Copyright (c) 2018 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
- namespace MonarcFO\Controller;
 
- use MonarcCore\Controller\AbstractControllerFactory;
-
+namespace MonarcFO\Controller;
 /**
- * Api Anr Soa Controller Factory
+ * Api ANR Categories Controller
  *
- * Class ApiAnrSoaControllerFactory
+ * Class ApiAnrCategoriesController
  * @package MonarcFO\Controller
  */
-class ApiAnrSoaControllerFactory extends AbstractControllerFactory
+class ApiSoaCategoryController extends ApiAnrAbstractController
 {
-
-    protected $serviceName = '\MonarcFO\Service\SoaService';
-
+    protected $name = 'categories';
+    protected $dependencies = ['anr'];
 
 }
