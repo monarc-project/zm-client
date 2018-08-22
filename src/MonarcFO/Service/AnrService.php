@@ -420,10 +420,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate category
             $categoryNewIds = [];
-            $category = ($source == Object::SOURCE_COMMON) ? $this->get('CategoryTable')->fetchAllObject() : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $category = ($source == Object::SOURCE_COMMON) ? $this->get('SoaCategoryTable')->fetchAllObject() : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
 
             foreach ($category as $cat) {
-                $newCategory = new \MonarcFO\Model\Entity\Category($cat);
+                $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                 $newCategory->set('id', null);
                 $newCategory->setAnr($newAnr);
                 $this->get('SoaCategoryCliTable')->save($newCategory,false);
