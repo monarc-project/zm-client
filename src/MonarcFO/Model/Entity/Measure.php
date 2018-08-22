@@ -14,8 +14,9 @@ use MonarcCore\Model\Entity\MeasureSuperClass;
  * Measure
  *
  * @ORM\Table(name="measures", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"})
- * })
+ *      @ORM\Index(name="anr", columns={"anr_id"}),
+ *      @ORM\Index(name="category", columns={"category_id"})
+* })
  * @ORM\Entity
  */
 class Measure extends MeasureSuperClass
@@ -29,6 +30,18 @@ class Measure extends MeasureSuperClass
      * })
      */
     protected $anr;
+
+    /**
+     * @var \MonarcFO\Model\Entity\SoaCategory
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\SoaCategory", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="soacategory_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $category;
+
+
 
     /**
      * @return Anr
@@ -47,4 +60,26 @@ class Measure extends MeasureSuperClass
         $this->anr = $anr;
         return $this;
     }
+
+
+    /**
+     * @return Category
+     */
+    public function getCategory()
+    {
+        return $this->category;
+    }
+
+    /**
+     * @param Category $category
+     * @return Measure
+     */
+    public function setCategory($category)
+    {
+        $this->category = $category;
+        return $this;
+
+    }
+
+
 }

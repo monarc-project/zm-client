@@ -13,14 +13,14 @@ use MonarcCore\Service\AbstractServiceFactory;
  * Factory class attached to AnrInterviewService
  * @package MonarcFO\Service
  */
-class AnrMeasureServiceFactory extends AbstractServiceFactory
+class SoaCategoryServiceFactory extends AbstractServiceFactory
 {
-    protected $ressources = [
-        'entity' => 'MonarcFO\Model\Entity\Measure',
-        'table' => 'MonarcFO\Model\Table\MeasureTable',
-        'anrTable' => 'MonarcFO\Model\Table\AnrTable',
-        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
-        // 'category' => 'MonarcFO\Model\Entity\Category'
 
+
+    protected $ressources = [
+        'entity' => 'MonarcFO\Model\Entity\SoaCategory',
+        'table' => 'MonarcFO\Model\Table\SoaCategoryTable',
+         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     ];
 }

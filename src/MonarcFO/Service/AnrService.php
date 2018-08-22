@@ -31,6 +31,9 @@ use MonarcFO\Model\Entity\Object;
 use MonarcFO\Model\Entity\Threat;
 use MonarcFO\Model\Entity\Vulnerability;
 use MonarcFO\Model\Table\UserTable;
+use MonarcFO\Model\Table\SoaTable;
+use MonarcFO\Model\Table\SoaCategoryTable;
+
 
 /**
  * This class is the service that handles ANR CRUD operations, and various actions on them.
@@ -61,6 +64,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $vulnerabilityTable;
     protected $questionTable;
     protected $questionChoiceTable;
+    protected $SoaTable;
+    protected $SoaCategoryTable;
+
 
     protected $amvCliTable;
     protected $anrCliTable;
@@ -93,6 +99,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $vulnerabilityCliTable;
     protected $questionCliTable;
     protected $questionChoiceCliTable;
+    protected $SoaCliTable;
+    protected $SoaCategoryCliTable;
 
     protected $instanceService;
 
@@ -286,7 +294,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        try {
+        // try {
             //duplicate anr
             $newAnr = new \MonarcFO\Model\Entity\Anr($anr);
             $newAnr->setId(null);
@@ -409,15 +417,56 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
             }
 
+
+            //duplicate category
+            $categoryNewIds = [];
+            $category = ($source == Object::SOURCE_COMMON) ? $this->get('CategoryTable')->fetchAllObject() : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+
+            foreach ($category as $cat) {
+                $newCategory = new \MonarcFO\Model\Entity\Category($cat);
+                $newCategory->set('id', null);
+                $newCategory->setAnr($newAnr);
+                $this->get('SoaCategoryCliTable')->save($newCategory,false);
+                $this->get('SoaCategoryCliTable')->getDb()->flush();
+                $categoryNewIds[$cat->id] = $newCategory;
+
+            }
+
             //duplicate measures
             $measuresNewIds = [];
             $measures = ($source == Object::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
+
             foreach ($measures as $measure) {
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->set('id', null);
+                $newMeasure->setCategory($categoryNewIds[$measure->category->getId()]);
                 $newMeasure->setAnr($newAnr);
                 $this->get('measureCliTable')->save($newMeasure,false);
+                $this->get('measureCliTable')->getDb()->flush();
                 $measuresNewIds[$measure->id] = $newMeasure;
+
+            }
+
+            //duplicate soas
+            $soasNewIds = [];
+
+            foreach ($measures as $measure) {
+
+
+
+                $newSoa = new \MonarcFO\Model\Entity\Soa();
+                $newSoa->set('id', null);
+
+
+                $this->get('table')->getDb()->flush();
+                $newSoa->setAnr($newAnr);
+
+
+
+                $newSoa->setMeasure($measuresNewIds[$measure->id]);
+                $this->get('SoaCliTable')->save($newSoa,false);
+              //  $soasNewIds[$soa->id] = $newSoa;
+
             }
 
             //duplicate amvs
@@ -807,14 +856,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $this->setUserCurrentAnr($newAnr->get('id'));
 
-        } catch (\Exception $e) {
-
-            if (is_integer($id)) {
-                $anrCliTable->delete($id);
-            }
-
-            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
-        }
+        // } catch (\Exception $e) {
+        //
+        //     if (is_integer($id)) {
+        //         $anrCliTable->delete($id);
+        //     }
+        //
+        //     throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
+        // }
 
         return $newAnr->get('id');
     }
@@ -898,7 +947,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
         foreach ($snapshots as $s) {
             if (!empty($s)) {
-                $this->get('table')->delete($s->get('anr')->get('id'), false);
+              $this->get('table')->delete($s->get('anr')->get('id'), false);
             }
         }
 

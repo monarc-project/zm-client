@@ -528,6 +528,29 @@ return array(
                             ),
                         ),
                     ),
+                    'soa' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'soa[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiSoa',
+                            ),
+                        ),
+                    ),'soacategory' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'soacategory[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiSoaCategory',
+                            ),
+                        ),
+                    ),
                     'instance' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -745,6 +768,8 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidate' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsMeasures' => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrTreatmentPlan' => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
+            '\MonarcFO\Controller\ApiSoa' => '\MonarcFO\Controller\ApiSoaControllerFactory',
+            '\MonarcFO\Controller\ApiSoaCategory' => '\MonarcFO\Controller\ApiSoaCategoryControllerFactory',
             '\MonarcFO\Controller\ApiAnrScales' => '\MonarcFO\Controller\ApiAnrScalesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesTypes' => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
             '\MonarcFO\Controller\ApiAnrScalesComments' => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
@@ -820,6 +845,8 @@ return array(
             '\MonarcFO\Model\Table\ScaleCommentTable' => '\MonarcFO\Service\Model\Table\ScaleCommentServiceModelTable',
             '\MonarcFO\Model\Table\ScaleImpactTypeTable' => '\MonarcFO\Service\Model\Table\ScaleImpactTypeServiceModelTable',
             '\MonarcFO\Model\Table\SnapshotTable' => '\MonarcFO\Service\Model\Table\SnapshotServiceModelTable',
+            '\MonarcFO\Model\Table\SoaTable' => '\MonarcFO\Service\Model\Table\SoaServiceModelTable',
+            '\MonarcFO\Model\Table\SoaCategoryTable' => '\MonarcFO\Service\Model\Table\SoaCategoryServiceModelTable',
             '\MonarcFO\Model\Table\ThemeTable' => '\MonarcFO\Service\Model\Table\ThemeServiceModelTable',
             '\MonarcFO\Model\Table\ThreatTable' => '\MonarcFO\Service\Model\Table\ThreatServiceModelTable',
             '\MonarcFO\Model\Table\UserTable' => '\MonarcFO\Service\Model\Table\UserServiceModelTable',
@@ -857,6 +884,8 @@ return array(
             '\MonarcFO\Model\Entity\ScaleComment' => '\MonarcFO\Service\Model\Entity\ScaleCommentServiceModelEntity',
             '\MonarcFO\Model\Entity\ScaleImpactType' => '\MonarcFO\Service\Model\Entity\ScaleImpactTypeServiceModelEntity',
             '\MonarcFO\Model\Entity\Snapshot' => '\MonarcFO\Service\Model\Entity\SnapshotServiceModelEntity',
+            '\MonarcFO\Model\Entity\Soa' => '\MonarcFO\Service\Model\Entity\SoaServiceModelEntity',
+            '\MonarcFO\Model\Entity\SoaCategory' => '\MonarcFO\Service\Model\Entity\SoaCategoryServiceModelEntity',
             '\MonarcFO\Model\Entity\Theme' => '\MonarcFO\Service\Model\Entity\ThemeServiceModelEntity',
             '\MonarcFO\Model\Entity\Threat' => '\MonarcFO\Service\Model\Entity\ThreatServiceModelEntity',
             '\MonarcFO\Model\Entity\User' => '\MonarcFO\Service\Model\Entity\UserServiceModelEntity',
@@ -879,6 +908,8 @@ return array(
             '\MonarcFO\Service\AnrAmvService' => '\MonarcFO\Service\AnrAmvServiceFactory',
             '\MonarcFO\Service\AnrInterviewService' => '\MonarcFO\Service\AnrInterviewServiceFactory',
             '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
+            '\MonarcFO\Service\SoaService' => '\MonarcFO\Service\SoaServiceFactory',
+            '\MonarcFO\Service\SoaCategoryService' => '\MonarcFO\Service\SoaCategoryServiceFactory',
             '\MonarcFO\Service\AnrQuestionService' => '\MonarcFO\Service\AnrQuestionServiceFactory',
             '\MonarcFO\Service\AnrQuestionChoiceService' => '\MonarcFO\Service\AnrQuestionChoiceServiceFactory',
             '\MonarcFO\Service\AnrThreatService' => '\MonarcFO\Service\AnrThreatServiceFactory',
@@ -987,6 +1018,8 @@ return array(
             'monarc_api_anr_objects_parents',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
+            'monarc_api_global_client_anr/soa',
+            'monarc_api_global_client_anr/soacategory',
             'monarc_api_global_client_anr/risks',
             'monarc_api_global_client_anr/risks_op',
             'monarc_api_global_client_anr/dashboard',

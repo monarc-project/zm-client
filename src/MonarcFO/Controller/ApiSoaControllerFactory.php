@@ -4,18 +4,20 @@
  * @copyright Copyright (c) 2018 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
+ namespace MonarcFO\Controller;
 
-namespace MonarcFO\Controller;
-
-use MonarcCore\Controller\AbstractControllerFactory;
+ use MonarcCore\Controller\AbstractControllerFactory;
 
 /**
- * Api Verify Language Controller Factory
+ * Api Anr Soa Controller Factory
  *
- * Class ApiModelVerifyLanguageControllerFactory
+ * Class ApiAnrSoaControllerFactory
  * @package MonarcFO\Controller
  */
-class ApiModelVerifyLanguageControllerFactory extends AbstractControllerFactory
+class ApiSoaControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\MonarcFO\Service\AnrService';
+
+    protected $serviceName = '\MonarcFO\Service\SoaService';
+
+
 }
