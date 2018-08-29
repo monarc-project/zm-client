@@ -346,7 +346,9 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 }
             }
           $output .= '"';
-          $output .= implode('","', str_replace('"', '\"', $array_values));
+          $search = ['"',"\n"];
+          $replace = ["'",' '];
+          $output .= implode('","', str_replace($search, $replace, $array_values));
           $output .= "\"\r\n";
           $array_values = null;
           }
