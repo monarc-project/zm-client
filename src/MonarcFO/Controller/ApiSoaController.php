@@ -67,7 +67,9 @@ class ApiSoaController extends  ApiAnrAbstractController
                 $this->formatDependencies($measures[$keyy], ['category']);
                 $this->formatDependencies($entities[$key], $this->dependencies);
               }
-
+              unset($entities[$key]['anr']);
+              unset($entities[$key]['measure']['anr']);
+              unset($entities[$key]['measure']['category']['anr']);
           }
       }
 
