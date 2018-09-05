@@ -159,7 +159,7 @@ class Module
 
     /**
      * Check Rbac
-     * 
+     *
      * @param MvcEvent $e
      * @return \Zend\Stdlib\ResponseInterface
      */
@@ -246,6 +246,7 @@ class Module
         return $method == 'POST' &&
                 ($route == 'monarc_api_global_client_anr/export' || // export ANR
                 $route == 'monarc_api_global_client_anr/instance_export' || // export Instance
-                $route == 'monarc_api_global_client_anr/objects_export'); // export  Object
+                $route == 'monarc_api_global_client_anr/objects_export' || // export  Object
+                $route == 'monarc_api_global_client_anr/deliverable'); // generate a report
     }
 }

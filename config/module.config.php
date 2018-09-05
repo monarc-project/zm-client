@@ -998,6 +998,8 @@ return array(
         ),
         // Utilisateur : Accès RWD par analyse
         'userfo' => array(
+            'monarc_api_doc_models',
+            'monarc_api_models',
             'monarc_api_admin_users_roles',
             'monarc_api_global_client_anr/instance',
             'monarc_api_global_client_anr/instance_risk',
