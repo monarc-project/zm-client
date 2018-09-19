@@ -8,7 +8,7 @@
 namespace MonarcFO\Service;
 
 use \MonarcCore\Model\Entity\Scale;
-use \MonarcCore\Model\Entity\Object;
+use \MonarcCore\Model\Entity\MonarcObject;
 
 /**
  * This class is the service that handles the ANR Cartography of real & targeted risks (as shown on the dashboard)
@@ -165,7 +165,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
             ];
 
             // on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
-            if ($r['scope'] == Object::SCOPE_GLOBAL) {
+            if ($r['scope'] == MonarcObject::SCOPE_GLOBAL) {
                 if (!isset($temp[$r['object']][$context['amv']][0])) {
                     // dans ce cas pas grand chose à faire on doit stocker le context local
                     $temp[$r['object']][$context['amv']][0] = $context;

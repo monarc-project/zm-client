@@ -11,7 +11,7 @@ use MonarcCore\Service\DeliveriesModelsService;
 use MonarcCore\Service\QuestionChoiceService;
 use MonarcCore\Service\QuestionService;
 use MonarcFO\Model\Entity\Anr;
-use MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Entity\MonarcObject;
 use MonarcFO\Model\Table\AnrTable;
 use MonarcFO\Model\Table\ClientTable;
 use MonarcFO\Model\Table\DeliveryTable;
@@ -1608,7 +1608,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $global = [];
         $toUnset = [];
         foreach ($recosRisks as $recoRisk) {
-            if ($recoRisk->instance->object->scope == Object::SCOPE_GLOBAL) {
+            if ($recoRisk->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
                 $key = $recoRisk->recommandation->id . ' - ' . $recoRisk->threat->id . ' - ' . $recoRisk->vulnerability->id . ' - ' . $recoRisk->objectGlobal->id;
                 if (array_key_exists($key, $global)) {
                     if (array_key_exists($key, $toUnset) && ($recoRisk->instanceRisk->cacheMaxRisk > $toUnset[$key])) {

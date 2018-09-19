@@ -135,7 +135,7 @@ return array(
     'MonarcFO\Model\Entity\InstanceRiskOp'                                    => __DIR__ . '/src/MonarcFO/Model/Entity/InstanceRiskOp.php',
     'MonarcFO\Model\Entity\Interview'                                         => __DIR__ . '/src/MonarcFO/Model/Entity/Interview.php',
     'MonarcFO\Model\Entity\Measure'                                           => __DIR__ . '/src/MonarcFO/Model/Entity/Measure.php',
-    'MonarcFO\Model\Entity\Object'                                            => __DIR__ . '/src/MonarcFO/Model/Entity/Object.php',
+    'MonarcFO\Model\Entity\MonarcObject'                                      => __DIR__ . '/src/MonarcFO/Model/Entity/MonarcObject.php',
     'MonarcFO\Model\Entity\ObjectCategory'                                    => __DIR__ . '/src/MonarcFO/Model/Entity/ObjectCategory.php',
     'MonarcFO\Model\Entity\ObjectObject'                                      => __DIR__ . '/src/MonarcFO/Model/Entity/ObjectObject.php',
     'MonarcFO\Model\Entity\PasswordToken'                                     => __DIR__ . '/src/MonarcFO/Model/Entity/PasswordToken.php',

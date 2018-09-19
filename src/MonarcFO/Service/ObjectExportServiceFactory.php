@@ -19,7 +19,7 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
 
     protected $ressources = [
         'table' => '\MonarcFO\Model\Table\ObjectTable',
-        'entity' => '\MonarcFO\Model\Entity\Object',
+        'entity' => '\MonarcFO\Model\Entity\MonarcObject',
         'assetExportService' => 'MonarcFO\Service\AssetExportService',
         'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
         'categoryTable' => '\MonarcFO\Model\Table\ObjectCategoryTable',

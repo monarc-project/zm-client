@@ -7,7 +7,7 @@
 
 namespace MonarcFO\Service;
 
-use MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Entity\MonarcObject;
 
 /**
  * This class is the service that handles objects in use within an ANR. Inherits its behavior from its MonarcCore

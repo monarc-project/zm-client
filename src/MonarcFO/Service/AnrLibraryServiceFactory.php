@@ -19,7 +19,7 @@ class AnrLibraryServiceFactory extends AbstractServiceFactory
 
     protected $ressources = [
         'table' => 'MonarcFO\Model\Table\ObjectTable',
-        'entity' => 'MonarcFO\Model\Entity\Object',
+        'entity' => 'MonarcFO\Model\Entity\MonarcObject',
         'objectObjectTable' => 'MonarcFO\Model\Table\ObjectObjectTable',
         'objectService' => 'MonarcFO\Service\ObjectService',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
