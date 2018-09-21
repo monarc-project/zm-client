@@ -870,7 +870,7 @@ return array(
             '\MonarcFO\Model\Entity\InstanceRiskOp' => '\MonarcFO\Service\Model\Entity\InstanceRiskOpServiceModelEntity',
             '\MonarcFO\Model\Entity\Interview' => '\MonarcFO\Service\Model\Entity\InterviewServiceModelEntity',
             '\MonarcFO\Model\Entity\Measure' => '\MonarcFO\Service\Model\Entity\MeasureServiceModelEntity',
-            '\MonarcFO\Model\Entity\MonarcObject' => '\MonarcFO\Service\Model\Entity\ObjectServiceModelEntity',
+            '\MonarcFO\Model\Entity\MonarcObject' => '\MonarcFO\Service\Model\Entity\MonarcObjectServiceModelEntity',
             '\MonarcFO\Model\Entity\ObjectCategory' => '\MonarcFO\Service\Model\Entity\ObjectCategoryServiceModelEntity',
             '\MonarcFO\Model\Entity\ObjectObject' => '\MonarcFO\Service\Model\Entity\ObjectObjectServiceModelEntity',
             '\MonarcFO\Model\Entity\PasswordToken' => '\MonarcFO\Service\Model\Entity\PasswordTokenServiceModelEntity',
