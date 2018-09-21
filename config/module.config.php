@@ -831,7 +831,7 @@ return array(
             '\MonarcFO\Model\Table\InstanceRiskOpTable' => '\MonarcFO\Service\Model\Table\InstanceRiskOpServiceModelTable',
             '\MonarcFO\Model\Table\InterviewTable' => '\MonarcFO\Service\Model\Table\InterviewServiceModelTable',
             '\MonarcFO\Model\Table\MeasureTable' => '\MonarcFO\Service\Model\Table\MeasureServiceModelTable',
-            '\MonarcFO\Model\Table\ObjectTable' => '\MonarcFO\Service\Model\Table\ObjectServiceModelTable',
+            '\MonarcFO\Model\Table\ObjectTable' => '\MonarcFO\Service\Model\Table\MonarcObjectServiceModelTable',
             '\MonarcFO\Model\Table\ObjectCategoryTable' => '\MonarcFO\Service\Model\Table\ObjectCategoryServiceModelTable',
             '\MonarcFO\Model\Table\ObjectObjectTable' => '\MonarcFO\Service\Model\Table\ObjectObjectServiceModelTable',
             '\MonarcFO\Model\Table\PasswordTokenTable' => '\MonarcFO\Service\Model\Table\PasswordTokenServiceModelTable',
