@@ -18,7 +18,7 @@ class ObjectServiceFactory extends AbstractServiceFactory
     protected $class = "\\MonarcCore\\Service\\ObjectService";
 
     protected $ressources = [
-        'table' => '\MonarcFO\Model\Table\ObjectTable',
+        'table' => '\MonarcFO\Model\Table\MonarcObjectTable',
         'entity' => '\MonarcFO\Model\Entity\MonarcObject',
         'anrObjectCategoryEntity' => 'MonarcFO\Model\Entity\AnrObjectCategory',
         'amvTable' => '\MonarcFO\Model\Table\AmvTable',

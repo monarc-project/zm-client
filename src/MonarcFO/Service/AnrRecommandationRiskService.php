@@ -38,7 +38,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $anrService;
     protected $anrInstanceService;
     protected $instanceTable;
-    protected $objectTable;
+    protected $MonarcObjectTable;
     protected $dependencies = [
         'anr', 'recommandation', 'asset', 'threat', 'vulnerability', 'instance', 'instanceRisk', 'instanceRiskOp'
     ];

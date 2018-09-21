@@ -21,7 +21,7 @@ class ObjectCategoryServiceFactory extends AbstractServiceFactory
         'table' => '\MonarcFO\Model\Table\ObjectCategoryTable',
         'entity' => '\MonarcFO\Model\Entity\ObjectCategory',
         'anrObjectCategoryTable' => '\MonarcFO\Model\Table\AnrObjectCategoryTable',
-        'objectTable' => '\MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => '\MonarcFO\Model\Table\MonarcObjectTable',
         'rootTable' => 'MonarcFO\Model\Table\ObjectCategoryTable',
         'parentTable' => 'MonarcFO\Model\Table\ObjectCategoryTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',

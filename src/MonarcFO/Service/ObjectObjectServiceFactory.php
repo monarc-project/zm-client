@@ -23,8 +23,8 @@ class ObjectObjectServiceFactory extends AbstractServiceFactory
         'anrTable' => '\MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => '\MonarcFO\Model\Table\UserAnrTable',
         'instanceTable' => '\MonarcFO\Model\Table\InstanceTable',
-        'objectTable' => '\MonarcFO\Model\Table\ObjectTable',
-        'childTable' => '\MonarcFO\Model\Table\ObjectTable',
-        'fatherTable' => '\MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => '\MonarcFO\Model\Table\MonarcObjectTable',
+        'childTable' => '\MonarcFO\Model\Table\MonarcObjectTable',
+        'fatherTable' => '\MonarcFO\Model\Table\MonarcObjectTable',
     ];
 }

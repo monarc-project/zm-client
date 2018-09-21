@@ -51,7 +51,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskOpTable;
     protected $modelTable;
     protected $measureTable;
-    protected $objectTable;
+    protected $MonarcObjectTable;
     protected $objectCategoryTable;
     protected $objectObjectTable;
     protected $rolfRiskTable;
@@ -535,7 +535,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate objects categories
-            $objects = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('objectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $objects = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('MonarcObjectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objects as $key => $object) {
                 $existInAnr = false;
                 foreach ($object->anrs as $anrObject) {
@@ -1050,7 +1050,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         //objects
         if ($model->get('anr')) {
-            $objects = $this->get('objectTable')->fetchAllObject();
+            $objects = $this->get('MonarcObjectTable')->fetchAllObject();
             foreach ($objects as $key => $object) {
                 $existInAnr = false;
                 foreach ($object->anrs as $anrObject) {

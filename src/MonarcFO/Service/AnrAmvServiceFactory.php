@@ -26,6 +26,6 @@ class AnrAmvServiceFactory extends AbstractServiceFactory
         'measureTable' => 'MonarcFO\Model\Table\MeasureTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
-        'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => 'MonarcFO\Model\Table\MonarcObjectTable',
     ];
 }

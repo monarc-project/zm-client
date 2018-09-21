@@ -8,13 +8,13 @@
 namespace MonarcFO\Model\Table;
 
 /**
- * Class ObjectTable
+ * Class MonarcObjectTable
  * @package MonarcFO\Model\Table
  */
-class ObjectTable extends \MonarcCore\Model\Table\ObjectTable
+class MonarcObjectTable extends \MonarcCore\Model\Table\MonarcObjectTable
 {
     /**
-     * ObjectTable constructor.
+     * MonarcObjectTable constructor.
      * @param \MonarcCore\Model\Db $dbService
      */
     public function __construct(\MonarcCore\Model\Db $dbService)

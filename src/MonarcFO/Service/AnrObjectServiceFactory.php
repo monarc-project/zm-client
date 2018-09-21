@@ -16,7 +16,7 @@ use MonarcCore\Service\AbstractServiceFactory;
 class AnrObjectServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => '\MonarcFO\Model\Table\ObjectTable',
+        'table' => '\MonarcFO\Model\Table\MonarcObjectTable',
         'entity' => '\MonarcFO\Model\Entity\MonarcObject',
         'anrObjectCategoryEntity' => 'MonarcFO\Model\Entity\AnrObjectCategory',
         'assetTable' => '\MonarcFO\Model\Table\AssetTable',

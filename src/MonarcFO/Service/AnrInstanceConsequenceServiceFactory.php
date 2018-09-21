@@ -22,7 +22,7 @@ class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
         'entity' => 'MonarcFO\Model\Entity\InstanceConsequence',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
-        'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => 'MonarcFO\Model\Table\MonarcObjectTable',
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',
         'scaleImpactTypeTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',
     ];

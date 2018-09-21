@@ -21,7 +21,7 @@ class AssetServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\AssetTable',
         'entity' => 'MonarcFO\Model\Entity\Asset',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
-        'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => 'MonarcFO\Model\Table\MonarcObjectTable',
         'amvService' => 'MonarcFO\Service\AmvService',
     ];
 }
