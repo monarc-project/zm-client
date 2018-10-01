@@ -800,10 +800,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $toExchange['object'] = $idObject;
                     $tagId = $this->get('objectExportService')->get('table')->getEntity($idObject)->get('rolfTag');
                     $rolfRisks = [];
-                    $rolfRisks= $tagId->risks;
-                    $toExchange['rolfRisk'] = $rolfRisks[$k]->id;
-                    $toExchange['riskCacheCode'] = $rolfRisks[$k]->code;
-                    $k++;
+                    if (null !== $tagId) {
+                        $rolfRisks = $tagId->risks;
+                        $toExchange['rolfRisk'] = $rolfRisks[$k]->id;
+                        $toExchange['riskCacheCode'] = $rolfRisks[$k]->code;
+                        $k++;
+                    }
 
                     // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
                     if ($include_eval) {
