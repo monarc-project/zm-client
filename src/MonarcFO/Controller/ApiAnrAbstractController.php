@@ -87,10 +87,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         // if (! $data instanceof Countable) {
         //     $data = array($data);
         // }
-        $data = array($data);
+        //$data = array($data);
 
         $created_objects = array();
-        foreach ($data as $new_data) {
+        foreach ($data as $key => $new_data) {
             $new_data['anr'] = $anrId;
             $id = $this->getService()->create($new_data);
             array_push($created_objects, $id);
