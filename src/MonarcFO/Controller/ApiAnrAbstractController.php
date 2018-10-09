@@ -84,10 +84,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
-        // if (! $data instanceof Countable) {
-        //     $data = array($data);
-        // }
-        //$data = array($data);
+        if (array_keys($data) !== range(0, count($data) - 1)) {
+            # if $data is an associative array
+            $data = array($data);
+        }
 
         $created_objects = array();
         foreach ($data as $key => $new_data) {
