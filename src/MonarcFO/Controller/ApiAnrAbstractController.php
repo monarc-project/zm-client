@@ -83,13 +83,21 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
-        $data['anr'] = $anrId;
 
-        $id = $this->getService()->create($data);
+        if (! $data instanceof Countable) {
+            $data = array($data);
+        }
+
+        $created_objects = array();
+        foreach ($data as $new_data) {
+            $new_data['anr'] = $anrId;
+            $id = $this->getService()->create($new_data);
+            array_push($created_objects, $id);
+        }
 
         return new JsonModel([
             'status' => 'ok',
-            'id' => $id,
+            'id' => $created_objects,
         ]);
     }
 
