@@ -98,7 +98,7 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
 
         return new JsonModel([
             'status' => 'ok',
-            'id' => $created_objects,
+            'id' => count($created_objects)==1 ? $created_objects[0]: $created_objects,
         ]);
     }
 
