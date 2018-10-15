@@ -95,7 +95,7 @@ class ApiDeliveriesModelsController extends AbstractController
             $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
             $currentPath = $pathModel . $entity['path'.$lang];
             if(isset($entity['path'.$lang]) && file_exists($currentPath)){
-                $name = pathinfo($currentPath);
+                $name = pathinfo($currentPath)['basename'];
 
                 $fileContents = file_get_contents($currentPath);
                 if($fileContents !== false){
