@@ -1351,7 +1351,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                   }
                   $lst[$r['parent']] = [
                     'path' => $path,
-                    'parent' =>$instance->root->id,
+                    'parent' =>$instance->parent->id,
                     'position' => $instance->position,
                     'risks' => [],
                   ];
@@ -1395,8 +1395,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $flat_array = $this->single_level_array($branch);
             $lst = array_merge($lst,$flat_array);
         }
-
-        //$lst = $arr1;
 
         if (!empty($lst)) {
             $tableWord = new PhpWord();
@@ -2347,8 +2345,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
           }elseif(!isset($value['parent']) && $parentId == $element){
             $branch[]=$value;
           }
-
-
       }
       usort($branch, function($a, $b) {
           return $a['position'] <=> $b['position'];
