@@ -807,7 +807,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $values['txt']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
         $values['txt']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr,'ir.cacheNetRisk');
-        $values['txt']['TABLE_AUDIT_RISKS_OP_ORDER_BY_POSITION'] = $this->generateTableAuditOp($anr, 'ir.id');
 
 
         return $values;
@@ -1085,7 +1084,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             'm.id as mid', 'm.label' . $anr->language . ' as mlabel',
             'm.c as threatC',
             'm.i as threatI',
-            'm.d as threatA',
+            'm.a as threatA',
             'ir.threatRate',
             'v.id as vid', 'v.label' . $anr->language . ' as vlabel',
             'ir.comment',
@@ -1287,7 +1286,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 
-    /**
+  /**
      * Generates the audit table data for operational risks
      * @param Anr $anr The ANR object
      * @return mixed|string The generated WordXml data
@@ -1297,6 +1296,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $query = $this->instanceRiskOpTable->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
             'i.id', 'i.name' . $anr->language . ' as name', 'IDENTITY(i.root)',
+            'IDENTITY(i.parent) AS parent', 'i.level', 'i.position',
             'ir.riskCacheLabel' . $anr->language . ' AS label',
             'ir.brutProb AS brutProb',
             'ir.brutR AS brutR',
@@ -1325,20 +1325,39 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             ->getQuery()->getResult();
         $lst = [];
         $instanceTable = $this->get('instanceService')->get('table');
+
         foreach ($result as $r) {
             if (!isset($lst[$r['id']])) {
                 $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
                 $asc = array_reverse($instanceTable->getAscendance($instance));
-
                 $path = $anr->get('label' . $this->currentLangAnrIndex);
+
                 foreach ($asc as $a) {
                     $path .= ' > ' . $a['name' . $this->currentLangAnrIndex];
                 }
                 $lst[$r['id']] = [
                     'path' => $path,
+                    'parent' =>$r['parent'],
+                    'position' => $r['position'],
                     'risks' => [],
                 ];
+                if (!isset($lst[$r['parent']]) && ($r['parent'] != $instance->root->id)) {
+                  $path = '';
+                  $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['parent']]));
+                  $asc = array_reverse($instanceTable->getAscendance($instance));
+                  $path = $anr->get('label' . $this->currentLangAnrIndex);
+                  foreach ($asc as $a) {
+                      $path .= ' > ' . $a['name' . $this->currentLangAnrIndex];
+                  }
+                  $lst[$r['parent']] = [
+                    'path' => $path,
+                    'parent' =>$instance->parent->id,
+                    'position' => $instance->position,
+                    'risks' => [],
+                  ];
+                }
             }
+
             $lst[$r['id']]['risks'][] = [
                 'label' => $r['label'],
                 'brutProb' => $r['brutProb'],
@@ -1360,6 +1379,26 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 'kindOfMeasure' => $r['kindOfMeasure']
             ];
         }
+        $tree = [];
+        $instancesRoot = $instanceTable->getEntityByFields(['anr' => $anr->id, 'parent' => null]);
+        foreach ($instancesRoot as $iRoot) {
+          $branchTree = $this->buildTree($lst,$iRoot->id);
+          if ($branchTree) {
+            $tree[$iRoot->id] = $branchTree;
+            $tree[$iRoot->id]['position'] = $iRoot->position;
+          }
+        }
+
+        $lst=[];
+        usort($tree, function($a, $b) {
+            return $a['position'] <=> $b['position'];
+        });
+        foreach ($tree as $branch) {
+            unset($branch['position']);
+            $flat_array = $this->single_level_array($branch);
+            $lst = array_merge($lst,$flat_array);
+        }
+
         if (!empty($lst)) {
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
@@ -2216,7 +2255,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 if ($threat['i']) {
                     $cid .= 'I';
                 }
-                if ($threat['d']) {
+                if ($threat['a']) {
                     $cid .= $this->anrTranslate('A');
                 }
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.50), $styleContentCellCenter)->addText($cid, $styleContentFont, $styleContentParagraphCenter);
@@ -2288,6 +2327,55 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     }
 
     /**
+       * Generates the instances tree
+       * @param elements $elements instances risks array
+       * @param parentId $parentId id of parent_Root
+       * @return array
+       */
+    protected function buildTree($elements, $parentId) {
+      $branch = [];
+      foreach ($elements as $element => $value)	{
+          if ($value['parent'] == $parentId) {
+              $children = $this->buildTree($elements, $element);
+              if ($children) {
+                usort($children, function($a, $b) {
+                    return $a['position'] <=> $b['position'];
+                });
+                $value['children'] = $children;
+              }
+                $branch[] = $value;
+
+          }elseif(!isset($value['parent']) && $parentId == $element){
+            $branch[]=$value;
+          }
+      }
+      usort($branch, function($a, $b) {
+          return $a['position'] <=> $b['position'];
+      });
+      return $branch;
+    }
+
+    /**
+       * Generates a single-level array from multilevel array
+       * @param multi_level_array $$multi_level_array
+       * @return array
+       */
+    protected function single_level_array($multi_level_array){
+        foreach ($multi_level_array as $a ) {
+            if (isset($a['children'])) {
+              $single_level_array[]= $a;
+              $children_array = $this->single_level_array($a['children']);
+              foreach($children_array as $children){
+                  $single_level_array[]= $children;
+              }
+            }else{
+              $single_level_array[]= $a;
+            }
+          }
+      return $single_level_array;
+    }
+
+    /**
      * Retrieves the WordXml data from a generated PhpWord Object
      * @param PhpWord $phpWord The PhpWord Object
      * @param bool $useBody Whether to keep the entire <w:body> tag or just <w:r>
@@ -2315,6 +2403,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
     }
 }
+
 
 function _WT($input)
 {
