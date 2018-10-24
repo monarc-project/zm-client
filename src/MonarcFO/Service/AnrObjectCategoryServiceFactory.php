@@ -22,7 +22,7 @@ class AnrObjectCategoryServiceFactory extends AbstractServiceFactory
         'entity' => '\MonarcFO\Model\Entity\ObjectCategory',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'anrObjectCategoryTable' => '\MonarcFO\Model\Table\AnrObjectCategoryTable',
-        'objectTable' => '\MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => '\MonarcFO\Model\Table\MonarcObjectTable',
         'rootTable' => 'MonarcFO\Model\Table\ObjectCategoryTable',
         'parentTable' => 'MonarcFO\Model\Table\ObjectCategoryTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',

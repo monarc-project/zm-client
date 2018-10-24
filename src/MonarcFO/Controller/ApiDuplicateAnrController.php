@@ -7,7 +7,7 @@
 
 namespace MonarcFO\Controller;
 
-use MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Entity\MonarcObject;
 use MonarcFO\Service\AnrService;
 use Zend\View\Model\JsonModel;
 
@@ -33,7 +33,7 @@ class ApiDuplicateAnrController extends \MonarcCore\Controller\AbstractControlle
             throw new \MonarcCore\Exception\Exception('Anr missing', 412);
         }
 
-        $id = $service->duplicateAnr(intval($data['anr']), Object::SOURCE_CLIENT, null, $data);
+        $id = $service->duplicateAnr(intval($data['anr']), MonarcObject::SOURCE_CLIENT, null, $data);
 
         return new JsonModel([
             'status' => 'ok',

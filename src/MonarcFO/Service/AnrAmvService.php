@@ -10,7 +10,7 @@ namespace MonarcFO\Service;
 use MonarcFO\Model\Entity\InstanceRisk;
 use MonarcFO\Model\Table\InstanceRiskTable;
 use MonarcFO\Model\Table\InstanceTable;
-use MonarcFO\Model\Table\ObjectTable;
+use MonarcFO\Model\Table\MonarcObjectTable;
 
 /**
  * This class is the service that handles AMV links in use within an ANR.
@@ -24,7 +24,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
     protected $assetTable;
     protected $threatTable;
-    protected $objectTable;
+    protected $MonarcObjectTable;
     protected $instanceTable;
     protected $instanceRiskTable;
     protected $vulnerabilityTable;
@@ -162,9 +162,9 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         $id = $table->save($entity, $last);
 
         // Create instances risks
-        /** @var ObjectTable $objectTable */
-        $objectTable = $this->get('objectTable');
-        $objects = $objectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => $entity->get('asset')->get('id')]);
+        /** @var MonarcObjectTable $MonarcObjectTable */
+        $MonarcObjectTable = $this->get('MonarcObjectTable');
+        $objects = $MonarcObjectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => $entity->get('asset')->get('id')]);
         foreach ($objects as $object) {
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');

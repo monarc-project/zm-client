@@ -27,7 +27,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     protected $measureEntity;
     protected $assetTable; // for setDependencies
     protected $instanceRiskTable;
-    protected $objectTable;
+    protected $MonarcObjectTable;
     protected $instanceTable;
     protected $dependencies = ['anr'];
     protected $filterColumns = [
@@ -244,8 +244,8 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $localAmv[] = $idAmv;
 
                         // On met à jour les instances
-                        $objectTable = $this->get('objectTable');
-                        $objects = $objectTable->getEntityByFields(['anr' => $anr->get('id'), 'asset' => $idAsset]);
+                        $MonarcObjectTable = $this->get('MonarcObjectTable');
+                        $objects = $MonarcObjectTable->getEntityByFields(['anr' => $anr->get('id'), 'asset' => $idAsset]);
                         foreach ($objects as $object) {
                             /** @var InstanceTable $instanceTable */
                             $instanceTable = $this->get('instanceTable');

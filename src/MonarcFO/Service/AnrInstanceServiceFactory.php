@@ -22,7 +22,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'amvTable' => 'MonarcFO\Model\Table\AmvTable',
-        'objectTable' => 'MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => 'MonarcFO\Model\Table\MonarcObjectTable',
         'scaleTable' => 'MonarcFO\Model\Table\ScaleTable',
         'scaleCommentTable' => 'MonarcFO\Model\Table\ScaleCommentTable',
         'scaleImpactTypeTable' => 'MonarcFO\Model\Table\ScaleImpactTypeTable',

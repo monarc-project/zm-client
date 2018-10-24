@@ -29,6 +29,6 @@ class AnrRecommandationRiskServiceFactory extends AbstractServiceFactory
         'anrService' => 'MonarcFO\Service\AnrService',
         'anrInstanceService' => 'MonarcFO\Service\AnrInstanceService',
         'instanceTable' => '\MonarcFO\Model\Table\InstanceTable',
-        'objectTable' => '\MonarcFO\Model\Table\ObjectTable',
+        'MonarcObjectTable' => '\MonarcFO\Model\Table\MonarcObjectTable',
     ];
 }

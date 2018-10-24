@@ -78,9 +78,9 @@ class RecommandationRisk extends AbstractEntity
     protected $instance;
 
     /**
-     * @var \MonarcFO\Model\Entity\Object
+     * @var \MonarcFO\Model\Entity\MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Object", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_global_id", referencedColumnName="id", nullable=true)
      * })

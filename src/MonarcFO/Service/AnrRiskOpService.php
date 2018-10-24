@@ -24,7 +24,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
     protected $instanceTable;
     protected $rolfRiskTable;
     protected $rolfRiskService;
-    protected $objectTable;
+    protected $MonarcObjectTable;
     protected $anrTable;
     protected $userAnrTable;
     protected $translateService;
@@ -207,7 +207,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         $instance = $this->instanceTable->getEntity($data['instance']);
         $data['instance'] = $instance;
-        $data['object'] = $this->objectTable->getEntity($instance->object->id);
+        $data['object'] = $this->MonarcObjectTable->getEntity($instance->object->id);
 
         if ($data['source'] == 2) {
             // Create a new risk
@@ -346,7 +346,9 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 }
             }
           $output .= '"';
-          $output .= implode('","', str_replace('"', '\"', $array_values));
+          $search = ['"',"\n"];
+          $replace = ["'",' '];
+          $output .= implode('","', str_replace($search, $replace, $array_values));
           $output .= "\"\r\n";
           $array_values = null;
           }

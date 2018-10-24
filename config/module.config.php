@@ -831,7 +831,7 @@ return array(
             '\MonarcFO\Model\Table\InstanceRiskOpTable' => '\MonarcFO\Service\Model\Table\InstanceRiskOpServiceModelTable',
             '\MonarcFO\Model\Table\InterviewTable' => '\MonarcFO\Service\Model\Table\InterviewServiceModelTable',
             '\MonarcFO\Model\Table\MeasureTable' => '\MonarcFO\Service\Model\Table\MeasureServiceModelTable',
-            '\MonarcFO\Model\Table\ObjectTable' => '\MonarcFO\Service\Model\Table\ObjectServiceModelTable',
+            '\MonarcFO\Model\Table\MonarcObjectTable' => '\MonarcFO\Service\Model\Table\MonarcObjectServiceModelTable',
             '\MonarcFO\Model\Table\ObjectCategoryTable' => '\MonarcFO\Service\Model\Table\ObjectCategoryServiceModelTable',
             '\MonarcFO\Model\Table\ObjectObjectTable' => '\MonarcFO\Service\Model\Table\ObjectObjectServiceModelTable',
             '\MonarcFO\Model\Table\PasswordTokenTable' => '\MonarcFO\Service\Model\Table\PasswordTokenServiceModelTable',
@@ -870,7 +870,7 @@ return array(
             '\MonarcFO\Model\Entity\InstanceRiskOp' => '\MonarcFO\Service\Model\Entity\InstanceRiskOpServiceModelEntity',
             '\MonarcFO\Model\Entity\Interview' => '\MonarcFO\Service\Model\Entity\InterviewServiceModelEntity',
             '\MonarcFO\Model\Entity\Measure' => '\MonarcFO\Service\Model\Entity\MeasureServiceModelEntity',
-            '\MonarcFO\Model\Entity\Object' => '\MonarcFO\Service\Model\Entity\ObjectServiceModelEntity',
+            '\MonarcFO\Model\Entity\MonarcObject' => '\MonarcFO\Service\Model\Entity\MonarcObjectServiceModelEntity',
             '\MonarcFO\Model\Entity\ObjectCategory' => '\MonarcFO\Service\Model\Entity\ObjectCategoryServiceModelEntity',
             '\MonarcFO\Model\Entity\ObjectObject' => '\MonarcFO\Service\Model\Entity\ObjectObjectServiceModelEntity',
             '\MonarcFO\Model\Entity\PasswordToken' => '\MonarcFO\Service\Model\Entity\PasswordTokenServiceModelEntity',
@@ -998,6 +998,8 @@ return array(
         ),
         // Utilisateur : Accès RWD par analyse
         'userfo' => array(
+            'monarc_api_doc_models',
+            'monarc_api_models',
             'monarc_api_admin_users_roles',
             'monarc_api_global_client_anr/instance',
             'monarc_api_global_client_anr/instance_risk',

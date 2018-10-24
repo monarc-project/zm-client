@@ -9,10 +9,10 @@ namespace MonarcFO\Service\Model\Entity;
 
 /**
  * Object Service Model Entity
- * Class ObjectServiceModelEntity
+ * Class MonarcObjectServiceModelEntity
  * @package MonarcFO\Service\Model\Entity
  */
-class ObjectServiceModelEntity extends AbstractServiceModelEntity
+class MonarcObjectServiceModelEntity extends AbstractServiceModelEntity
 {
     protected $ressources = [
         'setDbAdapter' => '\MonarcCli\Model\Db',

@@ -292,7 +292,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   'object' => $instance->get('object')->get('id')]));
 
             if (!empty($instanceBrothers)) {
-                if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\Object::SCOPE_GLOBAL &&
+                if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\MonarcObject::SCOPE_GLOBAL &&
                     $modeImport == 'merge') {
 
                     $instanceConseqBrothers = $this->get('instanceConsequenceTable')->getEntityByFields([ // Get consequences of brother
@@ -452,7 +452,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
                         // Merge all fields for global assets
 
-                        if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\Object::SCOPE_GLOBAL &&
+                        if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\MonarcObject::SCOPE_GLOBAL &&
                             $r->get('specific') == 0 &&
                             $modeImport == 'merge') {
 
@@ -800,10 +800,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $toExchange['object'] = $idObject;
                     $tagId = $this->get('objectExportService')->get('table')->getEntity($idObject)->get('rolfTag');
                     $rolfRisks = [];
-                    $rolfRisks= $tagId->risks;
-                    $toExchange['rolfRisk'] = $rolfRisks[$k]->id;
-                    $toExchange['riskCacheCode'] = $rolfRisks[$k]->code;
-                    $k++;
+                    if (null !== $tagId) {
+                        $rolfRisks = $tagId->risks;
+                        $toExchange['rolfRisk'] = $rolfRisks[$k]->id;
+                        $toExchange['riskCacheCode'] = $rolfRisks[$k]->code;
+                        $k++;
+                    }
 
                     // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
                     if ($include_eval) {

@@ -8,7 +8,7 @@
 namespace MonarcFO\Controller;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use MonarcCore\Model\Entity\Object;
+use MonarcCore\Model\Entity\MonarcObject;
 use MonarcCore\Service\ObjectService;
 use Zend\View\Model\JsonModel;
 
@@ -62,7 +62,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
 
         /** @var ObjectService $service */
         $service = $this->getService();
-        $object = $service->getCompleteEntity($id, Object::CONTEXT_ANR, $anr);
+        $object = $service->getCompleteEntity($id, MonarcObject::CONTEXT_ANR, $anr);
 
         if (count($this->dependencies)) {
             $this->formatDependencies($object, $this->dependencies);

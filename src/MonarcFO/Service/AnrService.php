@@ -27,7 +27,7 @@ use MonarcFO\Model\Table\SnapshotTable;
 use MonarcFO\Model\Table\UserAnrTable;
 use MonarcFO\Model\Table\UserRoleTable;
 use MonarcFO\Model\Entity\Asset;
-use MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Entity\MonarcObject;
 use MonarcFO\Model\Entity\Threat;
 use MonarcFO\Model\Entity\Vulnerability;
 use MonarcFO\Model\Table\UserTable;
@@ -51,7 +51,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskOpTable;
     protected $modelTable;
     protected $measureTable;
-    protected $objectTable;
+    protected $MonarcObjectTable;
     protected $objectCategoryTable;
     protected $objectObjectTable;
     protected $rolfRiskTable;
@@ -243,25 +243,25 @@ class AnrService extends \MonarcCore\Service\AbstractService
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
-        return $this->duplicateAnr($model->anr, Object::SOURCE_COMMON, $model, $data);
+        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $data);
     }
 
     /**
      * Duplicates either an existing ANR from the client, or an ANR model from the common database.
      * @param int|AnrSuperClass $anr The ANR to clone, either its ID or the object
-     * @param string $source The source, either Object::SOURCE_CLIENT or Object::SOURCE_COMMON
+     * @param string $source The source, either MonarcObject::SOURCE_CLIENT or MonarcObject::SOURCE_COMMON
      * @param Model|null $model The source common model, or null if none
      * @return int The newly created ANR id
      * @throws \MonarcCore\Exception\Exception
      */
-    public function duplicateAnr($anr, $source = Object::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false, $isSnapshotCloning = false)
+    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT, $model = null, $data = [], $isSnapshot = false, $isSnapshotCloning = false)
     {
         // This may take a lot of time on huge ANRs, so ignore the time limit
         ini_set('max_execution_time', 0);
 
         if (is_integer($anr)) {
             /** @var AnrTable $anrTable */
-            $anrTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrTable') : $this->get('anrCliTable');
+            $anrTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('anrTable') : $this->get('anrCliTable');
             $anr = $anrTable->getEntity($anr);
         }
 
@@ -284,7 +284,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $userCliTable = $this->get('userCliTable');
         $userArray = $userCliTable->getConnectedUser();
 
-        if ($source == Object::SOURCE_CLIENT && !$isSnapshotCloning) {
+        if ($source == MonarcObject::SOURCE_CLIENT && !$isSnapshotCloning) {
             /** @var UserAnrTable $userAnrCliTable */
             $userAnrCliTable = $this->get('userAnrCliTable');
             $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anr->id, 'user' => $userArray['id']]);
@@ -333,7 +333,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate themes
             $themesNewIds = [];
-            $themes = ($source == Object::SOURCE_COMMON) ? $this->get('themeTable')->fetchAllObject() : $this->get('themeCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $themes = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('themeTable')->fetchAllObject() : $this->get('themeCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($themes as $theme) {
                 $newTheme = new \MonarcFO\Model\Entity\Theme($theme);
                 $newTheme->set('id', null);
@@ -344,7 +344,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate assets
             $assetsNewIds = [];
-            if ($source == Object::SOURCE_COMMON) {
+            if ($source == MonarcObject::SOURCE_COMMON) {
                 $assets1 = [];
                 if (!$model->isRegulator) {
                     $assets1 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_GENERIC]);
@@ -367,7 +367,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate threats
             $threatsNewIds = [];
-            if ($source == Object::SOURCE_COMMON) {
+            if ($source == MonarcObject::SOURCE_COMMON) {
                 $threats = [];
                 if (!$model->isRegulator) {
                     $threats = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_GENERIC]);
@@ -396,7 +396,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate vulnerabilities
             $vulnerabilitiesNewIds = [];
-            if ($source == Object::SOURCE_COMMON) {
+            if ($source == MonarcObject::SOURCE_COMMON) {
                 $vulnerabilities1 = [];
                 if (!$model->isRegulator) {
                     $vulnerabilities1 = $this->get('vulnerabilityTable')->getEntityByFields(['mode' => Vulnerability::MODE_GENERIC]);
@@ -420,7 +420,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate category
             $categoryNewIds = [];
-            $category = ($source == Object::SOURCE_COMMON) ? $this->get('SoaCategoryTable')->fetchAllObject() : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $category = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('SoaCategoryTable')->fetchAllObject() : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
 
             foreach ($category as $cat) {
                 $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
@@ -434,7 +434,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate measures
             $measuresNewIds = [];
-            $measures = ($source == Object::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $measures = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
 
             foreach ($measures as $measure) {
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
@@ -461,7 +461,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate amvs
             $amvsNewIds = [];
-            $amvs = ($source == Object::SOURCE_COMMON) ? $this->get('amvTable')->fetchAllObject() : $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $amvs = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('amvTable')->fetchAllObject() : $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($amvs as $key => $amv) {
                 if (
                     (!isset($assetsNewIds[$amv->asset->id])) ||
@@ -493,7 +493,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate rolf tags
             $rolfTagsNewIds = [];
-            $rolfTags = ($source == Object::SOURCE_COMMON) ? $this->get('rolfTagTable')->fetchAllObject() : $this->get('rolfTagCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $rolfTags = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('rolfTagTable')->fetchAllObject() : $this->get('rolfTagCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($rolfTags as $rolfTag) {
                 $newRolfTag = new \MonarcFO\Model\Entity\RolfTag($rolfTag);
                 $newRolfTag->set('id', null);
@@ -505,7 +505,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate rolf risk
             $rolfRisksNewIds = [];
-            $rolfRisks = ($source == Object::SOURCE_COMMON) ? $this->get('rolfRiskTable')->fetchAllObject() : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $rolfRisks = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('rolfRiskTable')->fetchAllObject() : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($rolfRisks as $rolfRisk) {
                 $newRolfRisk = new \MonarcFO\Model\Entity\RolfRisk($rolfRisk);
                 $newRolfRisk->set('id', null);
@@ -525,7 +525,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate objects categories
-            $objects = ($source == Object::SOURCE_COMMON) ? $this->get('objectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $objects = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('MonarcObjectTable')->fetchAllObject() : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objects as $key => $object) {
                 $existInAnr = false;
                 foreach ($object->anrs as $anrObject) {
@@ -546,7 +546,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             $objectsCategoriesNewIds = [];
-            $objectsCategories = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id], ['parent' => 'ASC']);
+            $objectsCategories = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('objectCategoryTable')->fetchAllObject() : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id], ['parent' => 'ASC']);
             foreach ($objectsCategories as $objectCategory) {
                 if (in_array($objectCategory->id, $categoriesIds)) {
                     $newObjectCategory = new \MonarcFO\Model\Entity\ObjectCategory($objectCategory);
@@ -567,7 +567,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $objectsNewIds = [];
             $objectsRootCategories = [];
             foreach ($objects as $object) {
-                $newObject = new \MonarcFO\Model\Entity\Object($object);
+                $newObject = new \MonarcFO\Model\Entity\MonarcObject($object);
                 $newObject->set('id', null);
                 $newObject->setAnr($newAnr);
                 $newObject->setAnrs(null);
@@ -584,7 +584,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                 //root category
                 if (!is_null($object->category)) {
-                    $objectCategoryTable = ($source == Object::SOURCE_COMMON) ? $this->get('objectCategoryTable') : $this->get('objectCategoryCliTable');
+                    $objectCategoryTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('objectCategoryTable') : $this->get('objectCategoryCliTable');
                     $objectCategory = $objectCategoryTable->getEntity($object->category->id);
                     $objectsRootCategories[] = ($objectCategory->root) ? $objectCategory->root->id : $objectCategory->id;
                 }
@@ -593,7 +593,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $objectsRootCategories = array_unique($objectsRootCategories);
 
             //duplicate anrs objects categories
-            $anrObjectCategoryTable = ($source == Object::SOURCE_COMMON) ? $this->get('anrObjectCategoryTable') : $this->get('anrObjectCategoryCliTable');
+            $anrObjectCategoryTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('anrObjectCategoryTable') : $this->get('anrObjectCategoryCliTable');
             $anrObjectsCategories = $anrObjectCategoryTable->getEntityByFields(['anr' => $anr->id]);
             foreach ($anrObjectsCategories as $key => $anrObjectCategory) {
                 if (!in_array($anrObjectCategory->category->id, $objectsRootCategories)) {
@@ -609,7 +609,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate objects objects
-            $objectsObjects = ($source == Object::SOURCE_COMMON) ? $this->get('objectObjectTable')->fetchAllObject() : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $objectsObjects = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('objectObjectTable')->fetchAllObject() : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objectsObjects as $key => $objectObject) {
                 if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->id]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->id]))) {
                     unset($objectsObjects[$key]);
@@ -628,7 +628,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $nbInstanceWithParent = 0;
             $instancesNewIds = [];
             /** @var InstanceTable $instanceTable */
-            $instanceTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceTable') : $this->get('instanceCliTable');
+            $instanceTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('instanceTable') : $this->get('instanceCliTable');
             $instances = $instanceTable->getEntityByFields(['anr' => $anr->id], ['parent' => 'ASC']);
             foreach ($instances as $instance) {
                 $newInstance = new \MonarcFO\Model\Entity\Instance($instance);
@@ -659,7 +659,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate scales
             $scalesNewIds = [];
-            $scaleTable = ($source == Object::SOURCE_COMMON) ? $this->get('scaleTable') : $this->get('scaleCliTable');
+            $scaleTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('scaleTable') : $this->get('scaleCliTable');
             $scales = $scaleTable->getEntityByFields(['anr' => $anr->id]);
             foreach ($scales as $scale) {
                 $newScale = new \MonarcFO\Model\Entity\Scale($scale);
@@ -671,7 +671,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             //duplicate scales impact types
             $scalesImpactTypesNewIds = [];
-            $scaleImpactTypeTable = ($source == Object::SOURCE_COMMON) ? $this->get('scaleImpactTypeTable') : $this->get('scaleImpactTypeCliTable');
+            $scaleImpactTypeTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('scaleImpactTypeTable') : $this->get('scaleImpactTypeCliTable');
             $scalesImpactTypes = $scaleImpactTypeTable->getEntityByFields(['anr' => $anr->id]);
             foreach ($scalesImpactTypes as $scaleImpactType) {
                 $newScaleImpactType = new \MonarcFO\Model\Entity\ScaleImpactType($scaleImpactType);
@@ -683,7 +683,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate scales comments
-            $scaleCommentTable = ($source == Object::SOURCE_COMMON) ? $this->get('scaleCommentTable') : $this->get('scaleCommentCliTable');
+            $scaleCommentTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('scaleCommentTable') : $this->get('scaleCommentCliTable');
             $scalesComments = $scaleCommentTable->getEntityByFields(['anr' => $anr->id]);
             foreach ($scalesComments as $scaleComment) {
                 $newScaleComment = new \MonarcFO\Model\Entity\ScaleComment($scaleComment);
@@ -697,7 +697,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate instances risks
-            $instanceRiskTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceRiskTable') : $this->get('instanceRiskCliTable');
+            $instanceRiskTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('instanceRiskTable') : $this->get('instanceRiskCliTable');
             $instancesRisks = $instanceRiskTable->getEntityByFields(['anr' => $anr->id]);
             $instancesRisksNewIds = [];
             foreach ($instancesRisks as $instanceRisk) {
@@ -724,7 +724,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate instances risks op
-            $instanceRiskOpTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceRiskOpTable') : $this->get('instanceRiskOpCliTable');
+            $instanceRiskOpTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('instanceRiskOpTable') : $this->get('instanceRiskOpCliTable');
             $instancesRisksOp = $instanceRiskOpTable->getEntityByFields(['anr' => $anr->id]);
             $instancesRisksOpNewIds = [];
             foreach ($instancesRisksOp as $instanceRiskOp) {
@@ -741,7 +741,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate instances consequences
-            $instanceConsequenceTable = ($source == Object::SOURCE_COMMON) ? $this->get('instanceConsequenceTable') : $this->get('instanceConsequenceCliTable');
+            $instanceConsequenceTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('instanceConsequenceTable') : $this->get('instanceConsequenceCliTable');
             $instancesConsequences = $instanceConsequenceTable->getEntityByFields(['anr' => $anr->id]);
             foreach ($instancesConsequences as $instanceConsequence) {
                 $newInstanceConsequence = new \MonarcFO\Model\Entity\InstanceConsequence($instanceConsequence);
@@ -754,7 +754,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             // duplicate questions & choices
-            $questions = ($source == Object::SOURCE_COMMON) ? $this->get('questionTable')->fetchAllObject() : $this->get('questionCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $questions = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('questionTable')->fetchAllObject() : $this->get('questionCliTable')->getEntityByFields(['anr' => $anr->id]);
             $questionsNewIds = [];
             foreach ($questions as $q) {
                 $newQuestion = new \MonarcFO\Model\Entity\Question($q);
@@ -763,7 +763,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('questionCliTable')->save($newQuestion,false);
                 $questionsNewIds[$q->id] = $newQuestion;
             }
-            $questionChoices = ($source == Object::SOURCE_COMMON) ? $this->get('questionChoiceTable')->fetchAllObject() : $this->get('questionChoiceCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $questionChoices = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('questionChoiceTable')->fetchAllObject() : $this->get('questionChoiceCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($questionChoices as $qc) {
                 $newQuestionChoice = new \MonarcFO\Model\Entity\QuestionChoice($qc);
                 $newQuestionChoice->set('id', null);
@@ -1040,7 +1040,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         //objects
         if ($model->get('anr')) {
-            $objects = $this->get('objectTable')->fetchAllObject();
+            $objects = $this->get('MonarcObjectTable')->fetchAllObject();
             foreach ($objects as $key => $object) {
                 $existInAnr = false;
                 foreach ($object->anrs as $anrObject) {

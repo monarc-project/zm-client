@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\ObjectSuperClass;
 
 /**
- * Object
+ * MonarcObject
  *
  * @ORM\Table(name="objects", indexes={
  *      @ORM\Index(name="anr_id", columns={"anr_id"}),
@@ -21,7 +21,7 @@ use MonarcCore\Model\Entity\ObjectSuperClass;
  * })
  * @ORM\Entity
  */
-class Object extends ObjectSuperClass
+class MonarcObject extends ObjectSuperClass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr

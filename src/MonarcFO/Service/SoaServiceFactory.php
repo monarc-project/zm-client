@@ -18,7 +18,7 @@ use MonarcFO\Model\Table\SoaTable;
  * @package MonarcCore\Service
  */
 class SoaServiceFactory extends AbstractServiceFactory
-{     //file_put_contents('php://stderr', print_r('testservfact', TRUE));
+{
 
     protected $ressources = [
       'entity' => 'MonarcFO\Model\Entity\Soa',

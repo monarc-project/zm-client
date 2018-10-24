@@ -8,7 +8,7 @@
 namespace MonarcFO\Service;
 
 use MonarcFO\Model\Entity\InstanceRisk;
-use MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Entity\MonarcObject;
 use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\UserAnrTable;
 
@@ -100,7 +100,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $id = $table->save($entity, $last);
 
         //if global object, save risk of all instance of global object for this anr
-        if ($entity->instance->object->scope == Object::SCOPE_GLOBAL) {
+        if ($entity->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
             $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id, 'id' => ['op' => '!=', 'value' => $instance->id]]);
             $i = 1;
             $nbBrothers = count($brothers);
@@ -162,7 +162,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // If the object is global, delete all risks link to brothers instances
-        if ($entity->instance->object->scope == Object::SCOPE_GLOBAL) {
+        if ($entity->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
             // Retrieve brothers
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');

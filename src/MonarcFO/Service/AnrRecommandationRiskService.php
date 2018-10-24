@@ -9,7 +9,7 @@ namespace MonarcFO\Service;
 
 use MonarcFO\Model\Entity\InstanceRisk;
 use MonarcFO\Model\Entity\InstanceRiskOp;
-use MonarcFO\Model\Entity\Object;
+use MonarcFO\Model\Entity\MonarcObject;
 use MonarcFO\Model\Entity\RecommandationHistoric;
 use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Table\InstanceRiskOpTable;
@@ -38,7 +38,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $anrService;
     protected $anrInstanceService;
     protected $instanceTable;
-    protected $objectTable;
+    protected $MonarcObjectTable;
     protected $dependencies = [
         'anr', 'recommandation', 'asset', 'threat', 'vulnerability', 'instance', 'instanceRisk', 'instanceRiskOp'
     ];
@@ -145,7 +145,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         $gRisk = $tableUsed->getEntity($data['risk']);
         $id = $this->createRecommandationRisk($data, $gRisk);
-        if ($gRisk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL && !$data['op']) {
+        if ($gRisk->getInstance()->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL && !$data['op']) {
 
             $instances = $this->get('instanceTable')->getEntityByFields([
                 'anr' => $gRisk->anr->id,
@@ -206,7 +206,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $instanceRiskTable = $this->get('instanceRiskTable');
             $risk = $instanceRiskTable->getEntity($recommandationRisk->instanceRisk->id);
 
-            if ($risk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
+            if ($risk->getInstance()->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL) {
                 $brothers = $instanceRiskTable->getEntityByFields(['anr' => $risk->anr->id, 'amv' => $risk->amv->id]);
                 $brothersIds = [];
                 foreach ($brothers as $brother) {
@@ -229,7 +229,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $instanceRiskOpTable = $this->get('instanceRiskOpTable');
             $riskOp = $instanceRiskOpTable->getEntity($recommandationRisk->instanceRiskOp->id);
 
-            if ($riskOp->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
+            if ($riskOp->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL) {
                 $brothers = $instanceRiskOpTable->getEntityByFields(['anr' => $riskOp->anr->id, 'rolfRisk' => $riskOp->rolfRisk->id]);
                 $brothersIds = [];
                 foreach ($brothers as $brother) {
@@ -415,7 +415,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         $entity->setInstance($risk->getInstance());
 
-        if ($risk->getInstance()->getObject()->get('scope') == Object::SCOPE_GLOBAL) {
+        if ($risk->getInstance()->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL) {
             $entity->setObjectGlobal($risk->getInstance()->getObject());
         }
 
