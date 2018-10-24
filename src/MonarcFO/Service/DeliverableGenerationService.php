@@ -1382,8 +1382,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $tree = [];
         $instancesRoot = $instanceTable->getEntityByFields(['anr' => $anr->id, 'parent' => null]);
         foreach ($instancesRoot as $iRoot) {
-          $tree[$iRoot->id] = $this->buildTree($lst,$iRoot->id);
-          $tree[$iRoot->id]['position'] = $iRoot->position;
+          $branchTree = $this->buildTree($lst,$iRoot->id);
+          if ($branchTree) {
+            $tree[$iRoot->id] = $branchTree;
+            $tree[$iRoot->id]['position'] = $iRoot->position;
+          }
         }
 
         $lst=[];
