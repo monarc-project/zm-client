@@ -215,6 +215,11 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                     $measure->setDbAdapter($this->get('measureTable')->getDb());
                                     $measure->setLanguage($this->getLanguage());
                                     $data['measures'][$amvArray['measure' . $i]]['id'] = null;
+                                    if (array_key_exists('description' . $this->getLanguage(),$data['measures'][$amvArray['measure' . $i]])) {
+                                      for ($j=1; $j <= 4; $j++) {
+                                        $data['measures'][$amvArray['measure' . $i]]['label'. $j] = $data['measures'][$amvArray['measure' . $i]]['description' . $j];
+                                      }
+                                    }
                                     $measure->exchangeArray($data['measures'][$amvArray['measure' . $i]]);
                                     $measure->set('anr', $anr->get('id'));
                                     $this->setDependencies($measure, ['anr']);

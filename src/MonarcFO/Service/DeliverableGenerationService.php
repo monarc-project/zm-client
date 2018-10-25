@@ -1084,7 +1084,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             'm.id as mid', 'm.label' . $anr->language . ' as mlabel',
             'm.c as threatC',
             'm.i as threatI',
-            'm.d as threatA',
+            'm.a as threatA',
             'ir.threatRate',
             'v.id as vid', 'v.label' . $anr->language . ' as vlabel',
             'ir.comment',
@@ -2255,7 +2255,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 if ($threat['i']) {
                     $cid .= 'I';
                 }
-                if ($threat['d']) {
+                if ($threat['a']) {
                     $cid .= $this->anrTranslate('A');
                 }
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.50), $styleContentCellCenter)->addText($cid, $styleContentFont, $styleContentParagraphCenter);
