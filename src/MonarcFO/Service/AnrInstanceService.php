@@ -456,9 +456,13 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $r->get('specific') == 0 &&
                             $modeImport == 'merge') {
 
+                            $objectIdsBrothers = $this->get('instanceTable')->getEntityByFields([ // Get object Ids of brother
+                                'anr' => $anr->get('id'),
+                                'object' => $instance->get('object')->get('id') ]);
+
                             $instanceRiskBrothers = current($this->get('instanceRiskTable')->getEntityByFields([ // Get instance risk of brother
                                 'anr' => $anr->get('id'),
-                                'instance' => ['op' => '!=', 'value' => $instanceId],
+                                'instance' => ['op' => 'IN', 'value' => $objectIdsBrothers],
                                 'amv' => $r->get('amv')->get('id')]));
 
                             if (!empty($instanceRiskBrothers)) {
