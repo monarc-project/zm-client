@@ -439,7 +439,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             foreach ($measures as $measure) {
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->set('id', null);
-                $newMeasure->setCategory($categoryNewIds[$measure->category->getId()]);
+                $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 $newMeasure->setAnr($newAnr);
                 $this->get('measureCliTable')->save($newMeasure,false);
                 $this->get('measureCliTable')->getDb()->flush();
