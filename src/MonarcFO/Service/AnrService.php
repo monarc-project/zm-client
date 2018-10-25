@@ -439,7 +439,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             foreach ($measures as $measure) {
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->set('id', null);
-                $newMeasure->setCategory($categoryNewIds[$measure->category->getId()]);
+                $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 $newMeasure->setAnr($newAnr);
                 $this->get('measureCliTable')->save($newMeasure,false);
                 $this->get('measureCliTable')->getDb()->flush();
@@ -448,25 +448,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate soas
-            $soasNewIds = [];
+            $soas = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('SoaTable')->fetchAllObject() : $this->get('SoaCliTable')->getEntityByFields(['anr' => $anr->id]);
 
-            foreach ($measures as $measure) {
-
-
-
-                $newSoa = new \MonarcFO\Model\Entity\Soa();
+            foreach ($soas as $soa) {
+                $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                 $newSoa->set('id', null);
-
-
-                $this->get('table')->getDb()->flush();
                 $newSoa->setAnr($newAnr);
-
-
-
-                $newSoa->setMeasure($measuresNewIds[$measure->id]);
+                $newSoa->setMeasure($measuresNewIds[$soa->measure->id]);
                 $this->get('SoaCliTable')->save($newSoa,false);
-              //  $soasNewIds[$soa->id] = $newSoa;
-
+                $this->get('SoaCliTable')->getDb()->flush();
             }
 
             //duplicate amvs
