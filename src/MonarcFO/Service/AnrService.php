@@ -968,7 +968,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
         //themes, measures, rolf tags, rolf risks, object categories, questions and questions choices
         $array = [
             'theme' => 'label',
-            'measure' => 'description',
+            'measure' => 'label',
             'rolfRisk' => 'label',
             'rolfTag' => 'label',
             'objectCategory' => 'label',

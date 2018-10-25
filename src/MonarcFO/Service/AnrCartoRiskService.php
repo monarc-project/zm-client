@@ -124,7 +124,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         $result = $query->select([
             'ir.id as myid', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
             'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
-            'm.c as mc', 'm.i as mi', 'm.d as md',
+            'm.c as mc', 'm.i as mi', 'm.a as ma',
             'o.scope',
         ])->where('ir.anr = :anrid')
             ->setParameter(':anrid', $this->anr->get('id'))
@@ -148,7 +148,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
             if ($r['mi']) {
                 $i = $r['ii'];
             }
-            if ($r['md']) {
+            if ($r['ma']) {
                 $d = $r['id'];
             }
 
