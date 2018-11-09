@@ -9,6 +9,8 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\AbstractEntity;
+//use MonarcCore\Model\TAble\AbstractEntityTAble;
+
 
 /**
 * Soa
@@ -16,11 +18,14 @@ use MonarcCore\Model\Entity\AbstractEntity;
 * @ORM\Table(name="soa", indexes={
 *      @ORM\Index(name="measure", columns={"measure_id"}),
 *      @ORM\Index(name="anr", columns={"anr_id"})
+
+
 * })
 * @ORM\Entity
 */
 class Soa extends AbstractEntity
 {
+
     /**
     * @var integer
     *
@@ -39,7 +44,7 @@ class Soa extends AbstractEntity
     * })
     */
     protected $anr;
-
+    
     /**
     * @var \MonarcFO\Model\Entity\Measure
     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
@@ -50,12 +55,18 @@ class Soa extends AbstractEntity
     */
     protected $measure;
 
+
+
+
+
     /**
     * @var text
     *
     * @ORM\Column(name="justification", type="text", length=255, nullable=true)
     */
     protected $remarks ;
+
+
 
     /**
     * @var text
@@ -77,6 +88,8 @@ class Soa extends AbstractEntity
     * @ORM\Column(name="compliance", type="integer",  nullable=true)
     */
     protected $compliance ;
+
+
 
     /**
     * @var smallint
@@ -113,12 +126,20 @@ class Soa extends AbstractEntity
     */
     protected $BP = '0';
 
+
     /**
     * @var smallint
     *
     * @ORM\Column(name="RRA", type="smallint", options={"unsigned":true, "default":0})
     */
     protected $RRA = '0';
+
+
+
+
+
+
+
 
     /**
     * @return int
@@ -138,7 +159,7 @@ class Soa extends AbstractEntity
     }
 
     /**
-    * @return Measure
+    * @return Measure     *
     */
     public function getMeasure()
     {
@@ -153,6 +174,9 @@ class Soa extends AbstractEntity
     {
         $this->measure = $measure;
     }
+
+
+
 
     /**
     * @return Anr
@@ -172,6 +196,12 @@ class Soa extends AbstractEntity
         return $this;
     }
 
+
+
+
+
+
+
     /**
     * @return TEXT_LONG
     */
@@ -188,6 +218,7 @@ class Soa extends AbstractEntity
     {
         $this->remarks = $remarks;
     }
+
 
     /**
     * @return TEXT_LONG
@@ -206,6 +237,7 @@ class Soa extends AbstractEntity
         $this->evidences = $evidences;
     }
 
+
     /**
     * @return TEXT_LONG
     */
@@ -222,6 +254,12 @@ class Soa extends AbstractEntity
     {
         $this->actions = $actions;
     }
+
+
+
+
+
+
 
     /**
     * @return integer
@@ -336,6 +374,7 @@ class Soa extends AbstractEntity
         $this->BP = $BP;
     }
 
+
     /**
     * @return int
     */
@@ -352,4 +391,6 @@ class Soa extends AbstractEntity
     {
         $this->RRA = $RRA;
     }
+
+
 }
