@@ -588,7 +588,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 $risks[] = $instanceRisk->get('riskI');
                 $impacts[] = $instanceRisk->get('instance')->get('i');
             }
-            if ($instanceRisk->threat->d) {
+            if ($instanceRisk->threat->a) {
                 $risks[] = $instanceRisk->get('riskD');
                 $impacts[] = $instanceRisk->get('instance')->get('d');
             }
