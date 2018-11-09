@@ -9,8 +9,6 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\AbstractEntity;
-//use MonarcCore\Model\TAble\AbstractEntityTAble;
-
 
 /**
 * Soa
@@ -58,8 +56,6 @@ class Soa extends AbstractEntity
     * @ORM\Column(name="justification", type="text", length=255, nullable=true)
     */
     protected $remarks ;
-
-
 
     /**
     * @var text
@@ -188,12 +184,6 @@ class Soa extends AbstractEntity
         $this->anr = $anr;
         return $this;
     }
-
-
-
-
-
-
 
     /**
     * @return TEXT_LONG
@@ -384,6 +374,4 @@ class Soa extends AbstractEntity
     {
         $this->RRA = $RRA;
     }
-
-
 }
