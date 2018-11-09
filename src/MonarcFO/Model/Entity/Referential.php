@@ -21,26 +21,6 @@ use Ramsey\Uuid\UuidInterface;
 class Referential extends ReferentialSuperClass
 {
     /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\GeneratedValue
-     */
-    protected $id;
-
-    /**
-     * The uuid or the referential.
-     *
-     * @var \Ramsey\Uuid\UuidInterface
-     *
-     * @ORM\Id
-     * @ORM\Column(name="uniqid", type="uuid", unique=true)
-     * @ORM\GeneratedValue(strategy="CUSTOM")
-     * @ORM\CustomIdGenerator(class="Ramsey\Uuid\Doctrine\UuidGenerator")
-     */
-    protected $uniqid;
-
-    /**
      * @var \MonarcFO\Model\Entity\Anr
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
@@ -51,96 +31,20 @@ class Referential extends ReferentialSuperClass
     protected $anr;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="label1", type="string", length=255, nullable=true)
+     * @return Anr
      */
-    protected $label1;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="label2", type="string", length=255, nullable=true)
-     */
-    protected $label2;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="label3", type="string", length=255, nullable=true)
-     */
-    protected $label3;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="label4", type="string", length=255, nullable=true)
-     */
-    protected $label4;
-
-    /**
-     * @var \MonarcCore\Model\Entity\Measure
-     *
-     * @ORM\OneToMany(targetEntity="MonarcCore\Model\Entity\Measure", mappedBy="referential")
-     */
-    protected $measures;
-
-    /**
-     * @var \MonarcCore\Model\Entity\SoaCategory
-     *
-     * @ORM\OneToMany(targetEntity="MonarcCore\Model\Entity\SoaCategory", mappedBy="referential")
-     */
-    protected $categories;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
-
-
-    public function getId()
+    public function getAnr()
     {
-        return $this->id;
+        return $this->anr;
     }
 
     /**
-     * @param int $id
+     * @param Anr $anr
      * @return Referential
      */
-    public function setId($id)
+    public function setAnr($anr)
     {
-        $this->id = $id;
+        $this->anr = $anr;
         return $this;
-    }
-
-    /**
-     * @return UuidInterface
-     */
-    public function getUniqid(): UuidInterface
-    {
-        return $this->uniqid;
     }
 }
