@@ -45,15 +45,27 @@ class AddReferentials extends AbstractMigration
           ->addIndex(array('uniqid'))
           ->create();
 
-      $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-
-      $row = ['id'=>'','uniqid'=>'98ca84fb-db87-11e8-ac77-0800279aaa2b','label1'=>'ISO 27002','label2'=>'ISO 27002','label3'=>'ISO 27002','label4'=>'ISO 27002'];
-      $table->insert($row);
-      $table->saveData();
+      $table->changeColumn('id', 'integer', array('identity'=>true,'signed'=>false))->update();
 
       $table
           ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
           ->update();
+
+      // Create a defaut ISO 27002 referential for each analysis
+      $referentials = [];
+      $and_ids = $this->fetchAll('SELECT id FROM anrs');
+      foreach ($and_ids as $and_id) {
+          $referentials[] = [
+              'id' => '',
+              'anr_id' => $and_id['id'],
+              'uniqid' => '98ca84fb-db87-11e8-ac77-0800279aaa2b',
+              'label1' => 'ISO 27002',
+              'label2' => 'ISO 27002',
+              'label3' => 'ISO 27002',
+              'label4' => 'ISO 27002'
+          ];
+      }
+      $this->insert("referentials", $referentials);
 
       //add foreign key for measures
       $table = $this->table('measures');
@@ -64,6 +76,7 @@ class AddReferentials extends AbstractMigration
       $table
           ->addForeignKey('referential_uniqid', 'referentials', 'uniqid', array('delete' => 'CASCADE','update' => 'RESTRICT'))
           ->update();
+
       //add foreign key for the category
       $table = $this->table('soacategory');
       $table
