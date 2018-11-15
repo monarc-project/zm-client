@@ -773,23 +773,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     ],
                 ];
                 $toInit = [];
-                if ($anr->get('showRolfBrut')) {
-                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_THREAT][] = 'brutProb';
-                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutR';
-                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutO';
-                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutL';
-                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutF';
-                    $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutP';
-                } else {
-                    $toInit = [
-                        'brutProb',
-                        'brutR',
-                        'brutO',
-                        'brutL',
-                        'brutF',
-                        'brutP',
-                    ];
-                }
+                $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_THREAT][] = 'brutProb';
+                $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutR';
+                $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutO';
+                $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutL';
+                $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutF';
+                $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutP';
                 $k=0;
                 foreach ($data['risksop'] as $ro) {
                     // faut penser à actualiser l'anr_id, l'instance_id, l'object_id. Le risk_id quant à lui n'est pas repris dans l'export, on s'en moque donc
@@ -814,9 +803,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
                     if ($include_eval) {
                         // pas d'impact des subscales, on prend les échelles nominales
-                        foreach ($toInit as $i) {
-                            $toExchange[$i] = -1;
-                        }
                         foreach ($toApproximate as $type => $list) {
                             foreach ($list as $i) {
                                 $toExchange[$i] = $this->approximate(
