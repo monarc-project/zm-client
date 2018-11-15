@@ -772,7 +772,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         'targetedP',
                     ],
                 ];
-                $toInit = [];
                 $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_THREAT][] = 'brutProb';
                 $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutR';
                 $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutO';
