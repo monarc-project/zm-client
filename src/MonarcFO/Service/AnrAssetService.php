@@ -244,7 +244,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $amv->setDbAdapter($this->get('amvTable')->getDb());
                         $amv->setLanguage($this->getLanguage());
                         $amv->exchangeArray($amvData, true);
-                        $this->setDependencies($amv, ['anr', 'asset', 'threat', 'vulnerability', 'measure1', 'measure2', 'measure3']);
+                        $this->setDependencies($amv, ['anr', 'asset', 'threat', 'vulnerability', 'measures']);
                         $idAmv = $this->get('amvTable')->save($amv);
                         $localAmv[] = $idAmv;
 

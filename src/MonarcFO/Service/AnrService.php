@@ -495,25 +495,17 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     unset($amvs[$key]);
                 }
             }
-            // foreach ($amvs as $amv) {
-            //     $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
-            //     $newAmv->set('id', null);
-            //     $newAmv->setAnr($newAnr);
-            //     $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
-            //     $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
-            //     $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
-            //     // if ($amv->measure1) {
-            //     //     $newAmv->setMeasure1($measuresNewIds[$amv->measure1->id]);
-            //     // }
-            //     // if ($amv->measure2) {
-            //     //     $newAmv->setMeasure2($measuresNewIds[$amv->measure2->id]);
-            //     // }
-            //     // if ($amv->measure3) {
-            //     //     $newAmv->setMeasure3($measuresNewIds[$amv->measure3->id]);
-            //     // }
-            //     $this->get('amvCliTable')->save($newAmv,false);
-            //     $amvsNewIds[$amv->id] = $newAmv;
-            // }
+            foreach ($amvs as $amv) {
+                $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
+                $newAmv->set('id', null);
+                $newAmv->setAnr($newAnr);
+                $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
+                $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
+                $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
+                $newAmv->setMeasures($amv->getMeasures);
+                $this->get('amvCliTable')->save($newAmv,false);
+                $amvsNewIds[$amv->id] = $newAmv;
+            }
 
             //duplicate rolf tags
             $rolfTagsNewIds = [];

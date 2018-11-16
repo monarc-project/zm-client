@@ -17,10 +17,7 @@ use MonarcCore\Model\Entity\AmvSuperclass;
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  *      @ORM\Index(name="asset", columns={"asset_id"}),
  *      @ORM\Index(name="threat", columns={"threat_id"}),
- *      @ORM\Index(name="vulnerability", columns={"vulnerability_id"}),
- *      @ORM\Index(name="measure1", columns={"measure1_id"}),
- *      @ORM\Index(name="measure2", columns={"measure2_id"}),
- *      @ORM\Index(name="measure3", columns={"measure3_id"})
+ *      @ORM\Index(name="vulnerability", columns={"vulnerability_id"})
  * })
  * @ORM\Entity
  */
@@ -67,32 +64,12 @@ class Amv extends AmvSuperclass
     protected $vulnerability;
 
     /**
-     * @var \MonarcFO\Model\Entity\Measure
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="measure1_id", referencedColumnName="id", nullable=true)
-     * })
+     * @var \Doctrine\Common\Collections\Collection
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="amvs", cascade={"persist"})
+     * @ORM\JoinTable(name="measures_amvs",
+     *  joinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="id")},
+     *  inverseJoinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="id")}
+     * )
      */
-    protected $measure1;
-
-    /**
-     * @var \MonarcFO\Model\Entity\Measure
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="measure2_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $measure2;
-
-    /**
-     * @var \MonarcFO\Model\Entity\Measure
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="measure3_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $measure3;
+    protected $measures;
 }
