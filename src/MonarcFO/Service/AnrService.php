@@ -460,27 +460,27 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             // duplicate soas
-            // if ($source == MonarcObject::SOURCE_COMMON) {
-            //     foreach ($measures as $measure) {
-            //         $newSoa = new \MonarcFO\Model\Entity\Soa();
-            //         $newSoa->set('id', null);
-            //         $this->get('table')->getDb()->flush();
-            //         $newSoa->setAnr($newAnr);
-            //         $newSoa->setMeasure($measuresNewIds[$measure->id]);
-            //         $this->get('SoaCliTable')->save($newSoa,false);
-            //     }
-            // }else {
-            //   $soas = $this->get('SoaCliTable')->getEntityByFields(['anr' => $anr->id]);
-            //
-            //   foreach ($soas as $soa) {
-            //       $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
-            //       $newSoa->set('id', null);
-            //       $newSoa->setAnr($newAnr);
-            //       $newSoa->setMeasure($measuresNewIds[$soa->measure->id]);
-            //       $this->get('SoaCliTable')->save($newSoa,false);
-            //       $this->get('SoaCliTable')->getDb()->flush();
-            //   }
-            // }
+            if ($source == MonarcObject::SOURCE_COMMON) {
+                foreach ($measures as $measure) {
+                    $newSoa = new \MonarcFO\Model\Entity\Soa();
+                    $newSoa->set('id', null);
+                    $this->get('table')->getDb()->flush();
+                    $newSoa->setAnr($newAnr);
+                    $newSoa->setMeasure($measuresNewIds[$measure->id]);
+                    $this->get('SoaCliTable')->save($newSoa,false);
+                }
+            }else {
+              $soas = $this->get('SoaCliTable')->getEntityByFields(['anr' => $anr->id]);
+
+              foreach ($soas as $soa) {
+                  $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+                  $newSoa->set('id', null);
+                  $newSoa->setAnr($newAnr);
+                  $newSoa->setMeasure($measuresNewIds[$soa->measure->id]);
+                  $this->get('SoaCliTable')->save($newSoa,false);
+                  $this->get('SoaCliTable')->getDb()->flush();
+              }
+            }
 
 
             // duplicate amvs

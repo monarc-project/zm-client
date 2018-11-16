@@ -192,6 +192,18 @@ return array(
                             ),
                         ),
                     ),
+                    'referentials' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'referentials[/:id]',
+                            'constraints' => array(
+                                'id' => '[a-f0-9-]*',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrReferentials',
+                            ),
+                        ),
+                    ),
                     'measures' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -749,6 +761,7 @@ return array(
             '\MonarcFO\Controller\ApiUserProfile' => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
             '\MonarcFO\Controller\ApiAnrAssets' => '\MonarcFO\Controller\ApiAnrAssetsControllerFactory',
             '\MonarcFO\Controller\ApiAnrAmvs' => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrReferentials' => '\MonarcFO\Controller\ApiAnrReferentialsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures' => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjects' => '\MonarcFO\Controller\ApiAnrObjectsControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsObjects' => '\MonarcFO\Controller\ApiAnrObjectsObjectsControllerFactory',
@@ -1026,6 +1039,7 @@ return array(
             'monarc_api_global_client_anr/risks_op',
             'monarc_api_global_client_anr/dashboard',
             'monarc_api_global_client_anr/amvs',
+            'monarc_api_global_client_anr/referentials',
             'monarc_api_client_anr',
             'monarc_api_global_client_anr/assets',
             'monarc_api_global_client_anr/measures',
