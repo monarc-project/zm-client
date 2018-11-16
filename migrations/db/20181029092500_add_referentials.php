@@ -53,11 +53,11 @@ class AddReferentials extends AbstractMigration
 
       // Create a defaut ISO 27002 referential for each analysis
       $referentials = [];
-      $and_ids = $this->fetchAll('SELECT id FROM anrs');
-      foreach ($and_ids as $and_id) {
+      $anr_ids = $this->fetchAll('SELECT id FROM anrs');
+      foreach ($anr_ids as $anr_id) {
           $referentials[] = [
               'id' => '',
-              'anr_id' => $and_id['id'],
+              'anr_id' => $anr_id['id'],
               'uniqid' => '98ca84fb-db87-11e8-ac77-0800279aaa2b',
               'label1' => 'ISO 27002',
               'label2' => 'ISO 27002',
@@ -86,6 +86,5 @@ class AddReferentials extends AbstractMigration
       $table
           ->addForeignKey('referential_uniqid', 'referentials', 'uniqid', array('delete' => 'CASCADE','update' => 'RESTRICT'))
           ->update();
-
     }
 }

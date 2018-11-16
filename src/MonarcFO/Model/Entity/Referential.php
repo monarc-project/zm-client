@@ -15,7 +15,9 @@ use Ramsey\Uuid\UuidInterface;
 /**
  * ReferentialSuperClass
  *
- * @ORM\Table(name="referentials")
+ * @ORM\Table(name="referentials", indexes={
+ *      @ORM\Index(name="anr", columns={"anr_id"}),
+* })
  * @ORM\MappedSuperclass
  */
 class Referential extends ReferentialSuperClass

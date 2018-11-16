@@ -41,8 +41,6 @@ class Measure extends MeasureSuperClass
      */
     protected $category;
 
-
-
     /**
      * @return Anr
      */
@@ -60,7 +58,6 @@ class Measure extends MeasureSuperClass
         $this->anr = $anr;
         return $this;
     }
-
 
     /**
      * @return Category
