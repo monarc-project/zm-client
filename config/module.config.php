@@ -216,6 +216,18 @@ return array(
                             ),
                         ),
                     ),
+                    'measuresmeasures' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'measuresmeasures[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrMeasuresMeasures',
+                            ),
+                        ),
+                    ),
                     'threats' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -763,6 +775,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrAmvs' => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
             '\MonarcFO\Controller\ApiAnrReferentials' => '\MonarcFO\Controller\ApiAnrReferentialsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures' => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
+            '\MonarcFO\Controller\ApiAnrMeasuresMeasures' => '\MonarcFO\Controller\ApiAnrMeasuresMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjects' => '\MonarcFO\Controller\ApiAnrObjectsControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsObjects' => '\MonarcFO\Controller\ApiAnrObjectsObjectsControllerFactory',
             '\MonarcFO\Controller\ApiAnrObjectsDuplication' => '\MonarcFO\Controller\ApiAnrObjectsDuplicationControllerFactory',
@@ -844,6 +857,7 @@ return array(
             '\MonarcFO\Model\Table\InstanceRiskOpTable' => '\MonarcFO\Service\Model\Table\InstanceRiskOpServiceModelTable',
             '\MonarcFO\Model\Table\InterviewTable' => '\MonarcFO\Service\Model\Table\InterviewServiceModelTable',
             '\MonarcFO\Model\Table\MeasureTable' => '\MonarcFO\Service\Model\Table\MeasureServiceModelTable',
+            '\MonarcFO\Model\Table\MeasureMeasureTable' => '\MonarcFO\Service\Model\Table\MeasureMeasureServiceModelTable',
             '\MonarcFO\Model\Table\MonarcObjectTable' => '\MonarcFO\Service\Model\Table\MonarcObjectServiceModelTable',
             '\MonarcFO\Model\Table\ObjectCategoryTable' => '\MonarcFO\Service\Model\Table\ObjectCategoryServiceModelTable',
             '\MonarcFO\Model\Table\ObjectObjectTable' => '\MonarcFO\Service\Model\Table\ObjectObjectServiceModelTable',
@@ -885,6 +899,7 @@ return array(
             '\MonarcFO\Model\Entity\Interview' => '\MonarcFO\Service\Model\Entity\InterviewServiceModelEntity',
             '\MonarcFO\Model\Entity\Referential' => '\MonarcFO\Service\Model\Entity\ReferentialServiceModelEntity',
             '\MonarcFO\Model\Entity\Measure' => '\MonarcFO\Service\Model\Entity\MeasureServiceModelEntity',
+            '\MonarcFO\Model\Entity\MeasureMeasure' => '\MonarcFO\Service\Model\Entity\MeasureMeasureServiceModelEntity',
             '\MonarcFO\Model\Entity\MonarcObject' => '\MonarcFO\Service\Model\Entity\MonarcObjectServiceModelEntity',
             '\MonarcFO\Model\Entity\ObjectCategory' => '\MonarcFO\Service\Model\Entity\ObjectCategoryServiceModelEntity',
             '\MonarcFO\Model\Entity\ObjectObject' => '\MonarcFO\Service\Model\Entity\ObjectObjectServiceModelEntity',
@@ -923,6 +938,7 @@ return array(
             '\MonarcFO\Service\AnrAmvService' => '\MonarcFO\Service\AnrAmvServiceFactory',
             '\MonarcFO\Service\AnrInterviewService' => '\MonarcFO\Service\AnrInterviewServiceFactory',
             '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
+            '\MonarcFO\Service\AnrMeasureMeasureService' => '\MonarcFO\Service\AnrMeasureMeasureServiceFactory',
             '\MonarcFO\Service\AnrReferentialService' => '\MonarcFO\Service\AnrReferentialServiceFactory',
             '\MonarcFO\Service\SoaService' => '\MonarcFO\Service\SoaServiceFactory',
             '\MonarcFO\Service\SoaCategoryService' => '\MonarcFO\Service\SoaCategoryServiceFactory',
@@ -1046,6 +1062,7 @@ return array(
             'monarc_api_client_anr',
             'monarc_api_global_client_anr/assets',
             'monarc_api_global_client_anr/measures',
+            'monarc_api_global_client_anr/measuresmeasures',
             'monarc_api_global_client_anr/objects',
             'monarc_api_global_client_anr/objects_parents',
             'monarc_api_global_client_anr/objects_objects',

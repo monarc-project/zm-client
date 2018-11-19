@@ -7,13 +7,15 @@
 
 namespace MonarcFO\Service;
 
+use MonarcCore\Service\AbstractService;
+
 /**
- * This class is the service that handles measures in use within an ANR. Inherits its behavior from its MonarcCore
- * parent class MeasureService
- * @see \MonarcCore\Service\MeasureService
+ * AnrMeasureMeasureService Service
+ *
+ * Class AnrMeasureMeasureService
  * @package MonarcFO\Service
  */
-class AnrMeasureService extends \MonarcCore\Service\MeasureService
+class AnrMeasureMeasureService extends AbstractService
 {
     protected $table;
     protected $entity;
