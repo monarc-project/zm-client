@@ -20,11 +20,4 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
     protected $dependencies = ['anr', 'category'];
 
     // protected $dependencies = ['category', 'anr'];
-
-
-
-
-
-
-
 }

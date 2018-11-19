@@ -16,16 +16,10 @@ namespace MonarcFO\Service;
 
 class AnrMeasureService extends \MonarcCore\Service\MeasureService
 {
-
-
     protected $table;
     protected $entity;
     protected $anrTable;
     protected $userAnrTable;
     protected $dependencies = ['category' ,'anr'];
     protected $forbiddenFields = [];
-
-
-
-
 }
