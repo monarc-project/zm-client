@@ -17,7 +17,7 @@ class ReferentialTable extends AbstractEntityTable
 {
     /**
      * ReferentialTable constructor.
-     * @param \MonarcCore\Model\Db $dbService
+     * @param \MonarcFO\Model\Db $dbService
      */
     public function __construct(\MonarcCore\Model\Db $dbService)
     {

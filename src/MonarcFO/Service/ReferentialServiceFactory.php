@@ -7,17 +7,18 @@
 
 namespace MonarcFO\Service;
 
+use MonarcCore\Service\AbstractServiceFactory;
+
 /**
- * Soa Service
+ * Referential Service Factory
  *
- * Class SoaService
+ * Class ReferentialServiceFactory
  * @package MonarcFO\Service
  */
- class SoaService extends \MonarcCore\Service\AbstractService
- {
-  protected $table;
-  protected $entity;
-  protected $anrTable;
-  protected $userAnrTable;
-  protected $dependencies = ['anr', 'measure'];
+class ReferentialServiceFactory extends AbstractServiceFactory
+{
+    protected $ressources = [
+        'table' => 'MonarcFO\Model\Table\ReferentialTable',
+        'entity' => 'MonarcFO\Model\Entity\Referential',
+    ];
 }
