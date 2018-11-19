@@ -9,8 +9,6 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\ReferentialSuperClass;
-//use MonarcCore\Model\Entity\AbstractEntity;
-use Ramsey\Uuid\UuidInterface;
 
 /**
  * ReferentialSuperClass
