@@ -15,8 +15,6 @@ use MonarcCore\Service\AbstractServiceFactory;
  */
 class SoaCategoryServiceFactory extends AbstractServiceFactory
 {
-
-
     protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\SoaCategory',
         'table' => 'MonarcFO\Model\Table\SoaCategoryTable',

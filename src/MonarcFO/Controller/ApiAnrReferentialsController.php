@@ -7,14 +7,13 @@
 
 namespace MonarcFO\Controller;
 
-// use MonarcCore\Controller\AbstractController;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api Referentials Controller
+ * Api Anr Referentials Controller
  *
  * Class ApiReferentialsController
- * @package MonarcBO\Controller
+ * @package MonarcFO\Controller
  */
 class ApiAnrReferentialsController extends ApiAnrAbstractController
 {

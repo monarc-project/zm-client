@@ -9,8 +9,8 @@ namespace MonarcFO\Controller;
 use MonarcCore\Controller\AbstractControllerFactory;
 
 /**
- * Factory class attached to ApiReferentialsController
- * @package MonarcBO\Controller
+ * Factory class attached to ApiAnrReferentialsController
+ * @package MonarcFO\Controller
  */
 class ApiAnrReferentialsControllerFactory extends AbstractControllerFactory
 {
