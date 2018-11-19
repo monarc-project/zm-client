@@ -10,7 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Factory class attached to AnrInterviewService
+ * Factory class attached to AnrMeasureService
  * @package MonarcFO\Service
  */
 class AnrMeasureServiceFactory extends AbstractServiceFactory

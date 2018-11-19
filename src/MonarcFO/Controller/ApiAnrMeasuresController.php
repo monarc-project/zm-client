@@ -18,6 +18,4 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 {
     protected $name = 'measures';
     protected $dependencies = ['anr', 'category'];
-
-    // protected $dependencies = ['category', 'anr'];
 }

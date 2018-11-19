@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\ReferentialSuperClass;
 
 /**
- * ReferentialSuperClass
+ * Referential
  *
  * @ORM\Table(name="referentials", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
