@@ -20,12 +20,9 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
     protected $name = 'referentials';
     protected $dependencies = ['measures'];
 
-    /**
-     * @inheritdoc
-     */
     public function getList()
     {
-        file_put_contents('php://stderr', print_r('ApiAnrReferentialsController::getList', TRUE).PHP_EOL);
+        file_put_contents('php://stderr', print_r('FO::ApiAnrReferentialsController::getList', TRUE).PHP_EOL);
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');

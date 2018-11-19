@@ -15,8 +15,8 @@ use MonarcCore\Model\Entity\ReferentialSuperClass;
  *
  * @ORM\Table(name="referentials", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
-* })
- * @ORM\MappedSuperclass
+ * })
+ * @ORM\Entity
  */
 class Referential extends ReferentialSuperClass
 {
