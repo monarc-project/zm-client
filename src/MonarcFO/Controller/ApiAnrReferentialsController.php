@@ -12,7 +12,7 @@ use Zend\View\Model\JsonModel;
 /**
  * Api Anr Referentials Controller
  *
- * Class ApiReferentialsController
+ * Class ApiAnrReferentialsController
  * @package MonarcFO\Controller
  */
 class ApiAnrReferentialsController extends ApiAnrAbstractController

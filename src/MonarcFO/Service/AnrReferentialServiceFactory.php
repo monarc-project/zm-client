@@ -12,10 +12,10 @@ use MonarcCore\Service\AbstractServiceFactory;
 /**
  * Referential Service Factory
  *
- * Class ReferentialServiceFactory
+ * Class AnrReferentialServiceFactory
  * @package MonarcFO\Service
  */
-class ReferentialServiceFactory extends AbstractServiceFactory
+class AnrReferentialServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'MonarcFO\Model\Table\ReferentialTable',

@@ -8,12 +8,12 @@
 namespace MonarcFO\Service;
 
 /**
- * Referential Service
+ * AnrReferentialService Service
  *
- * Class ReferentialService
+ * Class AnrReferentialService
  * @package MonarcFO\Service
  */
-class ReferentialService extends \MonarcCore\Service\AbstractService
+class AnrReferentialService extends \MonarcCore\Service\AbstractService
 {
     protected $dependencies = ['anr', 'amvs'];
     protected $filterColumns = ['uniqid', 'label1', 'label2', 'label3', 'label4'];
