@@ -18,7 +18,7 @@ class SoaCategoryServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'entity' => 'MonarcFO\Model\Entity\SoaCategory',
         'table' => 'MonarcFO\Model\Table\SoaCategoryTable',
-         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
-         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
+        'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     ];
 }
