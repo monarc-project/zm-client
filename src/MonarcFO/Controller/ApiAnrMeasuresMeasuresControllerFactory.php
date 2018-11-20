@@ -5,7 +5,7 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace MonarcBO\Controller;
+namespace MonarcFO\Controller;
 
 use MonarcCore\Controller\AbstractControllerFactory;
 

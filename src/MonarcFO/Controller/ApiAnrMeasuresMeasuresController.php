@@ -9,15 +9,13 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api ANR Measures Controller
+ * Api ANR MeasuresMeasures Controller
  *
- * Class ApiAnrMeasuresController
+ * Class ApiAnrMeasuresMeasuresController
  * @package MonarcFO\Controller
  */
 class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
 {
-    protected $name = 'measures';
+    protected $name = 'measuresmeasures';
     protected $dependencies = [];
-
-    
 }
