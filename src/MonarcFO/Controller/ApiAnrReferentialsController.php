@@ -23,14 +23,19 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
     public function getList()
     {
         file_put_contents('php://stderr', print_r('FO::ApiAnrReferentialsController::getList', TRUE).PHP_EOL);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
+        $filterAnd = ['anr' => $anrId];
 
         $service = $this->getService();
 
-        $entities = $service->getList($page, $limit, $order, $filter);
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);
@@ -38,7 +43,7 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter),
+            'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ));
     }

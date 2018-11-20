@@ -24,18 +24,19 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
      */
     public function getList()
     {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-      //  $status = $this->params()->fromQuery('status');
+        //  $status = $this->params()->fromQuery('status');
         $fatherId = $this->params()->fromQuery('fatherId');
         $childId = $this->params()->fromQuery('childId');
-        $filterAnd = [];
-        // if (is_null($status)) {
-        //     $status = 1;
-        // }
-        // $filterAnd = ($status == "all") ? null : ['status' => (int) $status] ;
+        $filterAnd = ['anr' => $anrId];
+
         if ($fatherId) {
           $filterAnd['father'] = (int) $fatherId;
         }
