@@ -246,7 +246,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
-        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $referentials = null, $data);
+        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $referentials_uuid = null, $data);
     }
 
     /**
@@ -257,7 +257,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return int The newly created ANR id
      * @throws \MonarcCore\Exception\Exception
      */
-    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT, $model = null, $referentials = [], $data = [], $isSnapshot = false, $isSnapshotCloning = false)
+    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT, $model = null, $referentials_uuid = [], $data = [], $isSnapshot = false, $isSnapshotCloning = false)
     {
         // This may take a lot of time on huge ANRs, so ignore the time limit
         ini_set('max_execution_time', 0);
@@ -338,6 +338,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $themesNewIds = [];
             $themes = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('themeTable')->fetchAllObject() : $this->get('themeCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($themes as $theme) {
+
                 $newTheme = new \MonarcFO\Model\Entity\Theme($theme);
                 $newTheme->set('id', null);
                 $newTheme->setAnr($newAnr);
@@ -422,11 +423,16 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
 
             // duplicate referentials
-            $referentials = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('referentialTable')->getEntityByFields(['uniqid' => $referential_uniqid]) : $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
-            foreach ($referentials as $referential) {
-                $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
-                $newReferential->setAnr($newAnr);
-                $this->get('referentialCliTable')->save($newReferential);
+            $referentials_uuid = ['98ca84fb-db87-11e8-ac77-0800279aaa2b'];
+            foreach ($referentials_uuid as $referential_uuid) {
+                $referentials = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('referentialTable')->getEntityByFields(['uniqid' => $referential_uuid]) : $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
+                foreach ($referentials as $referential) {
+                    file_put_contents('php://stderr', print_r($referential_uuid, TRUE).PHP_EOL);
+                    $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
+                    $newReferential->set('id', null);
+                    $newReferential->setAnr($newAnr);
+                    $this->get('referentialCliTable')->save($newReferential);
+                }
             }
 
 
@@ -449,7 +455,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             // duplicate measures
             $measuresNewIds = [];
             $measures = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('measureTable')->fetchAllObject() : $this->get('measureCliTable')->getEntityByFields(['anr' => $anr->id]);
-
             foreach ($measures as $measure) {
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->set('id', null);
