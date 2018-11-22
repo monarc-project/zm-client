@@ -20,9 +20,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     protected $name = 'amvs';
     protected $dependencies = ['asset', 'threat', 'vulnerability', 'measures'];
 
-    /**
-     * @inheritdoc
-     */
+
     public function getList()
     {
         $page = $this->params()->fromQuery('page');
@@ -63,7 +61,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
+                $this->formatDependencies($entities[$key], $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['referential']);
             }
         }
 
@@ -81,7 +79,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         $entity = $this->getService()->getEntity($id);
 
         if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
+            $this->formatDependencies($entity, $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['referential']);
         }
 
         // Find out the entity's implicitPosition and previous
