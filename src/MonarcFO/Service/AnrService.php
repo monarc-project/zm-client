@@ -103,6 +103,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $questionChoiceCliTable;
     protected $SoaCliTable;
     protected $SoaCategoryCliTable;
+    protected $referentialCliTable;
 
     protected $instanceService;
 
@@ -415,17 +416,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newVulnerability = new \MonarcFO\Model\Entity\Vulnerability($vulnerability);
                 $newVulnerability->set('id', null);
                 $newVulnerability->setAnr($newAnr);
-                $this->get('vulnerabilityCliTable')->save($newVulnerability,false);
+                $this->get('vulnerabilityCliTable')->save($newVulnerability, false);
                 $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
             }
 
 
             // duplicate referentials
-            // $referentials = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('referentialTable')->getEntityByFields(['uniqid' => $referential_uniqid]) : $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
-            // foreach ($referentials as $referential) {
-            //     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
-            //     $newReferential->setAnr($newAnr);
-            // }
+            $referentials = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('referentialTable')->getEntityByFields(['uniqid' => $referential_uniqid]) : $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach ($referentials as $referential) {
+                $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
+                $newReferential->setAnr($newAnr);
+                $this->get('referentialCliTable')->save($newReferential);
+            }
 
 
             // duplicate category

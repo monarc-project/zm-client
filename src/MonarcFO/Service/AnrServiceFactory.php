@@ -45,6 +45,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'questionChoiceTable' => 'MonarcCore\Model\Table\QuestionChoiceTable',
         'SoaTable' => 'MonarcCore\Model\Table\SoaTable',
         'SoaCategoryTable' => 'MonarcCore\Model\Table\SoaCategoryTable',
+        'referentialTable' => 'MonarcCore\Model\Table\ReferentialTable',
 
         //fo
         'anrCliTable' => 'MonarcFO\Model\Table\AnrTable',
@@ -80,6 +81,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'questionChoiceCliTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
         'SoaCliTable' => 'MonarcFO\Model\Table\SoaTable',
         'SoaCategoryCliTable' => 'MonarcFO\Model\Table\SoaCategoryTable',
+        'referentialCliTable' => 'MonarcFO\Model\Table\ReferentialTable',
 
 
         // export
