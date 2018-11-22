@@ -22,7 +22,6 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
 
     public function getList()
     {
-        file_put_contents('php://stderr', print_r('FO::ApiAnrReferentialsController::getList', TRUE).PHP_EOL);
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
@@ -43,8 +42,42 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
+            //'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ));
+    }
+
+    public function get($id)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $entity = $this->getService()->getEntity(['anr' => $anrId, 'uniqid' => $id]);
+
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
+        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
+            throw new \MonarcCore\Exception\Exception('Anr ids diffence', 412);
+        }
+
+        if (count($this->dependencies)) {
+            $this->formatDependencies($entity, $this->dependencies);
+        }
+
+        return new JsonModel($entity);
+    }
+
+    public function update($id, $data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $newId = ['anr'=> $anrId, 'uniqid' => $data['uniqid']];
+
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
+        $data['anr'] = $anrId;
+
+        $this->getService()->update($newId, $data);
+
+        return new JsonModel(['status' => 'ok']);
     }
 }

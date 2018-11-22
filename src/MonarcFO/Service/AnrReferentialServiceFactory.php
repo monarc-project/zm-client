@@ -20,5 +20,6 @@ class AnrReferentialServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => 'MonarcFO\Model\Table\ReferentialTable',
         'entity' => 'MonarcFO\Model\Entity\Referential',
+        'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
     ];
 }

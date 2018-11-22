@@ -59,7 +59,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     {
         $entity = $this->getService()->getEntity($id);
 
+
         $anrId = (int)$this->params()->fromRoute('anrid');
+
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
