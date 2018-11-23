@@ -32,6 +32,13 @@ class Referential extends ReferentialSuperClass
     protected $anr;
 
     /**
+     * @var \MonarcFO\Model\Entity\Measure
+     *
+     * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="referential", cascade={"persist"})
+     */
+    protected $measures;
+
+    /**
      * @return Anr
      */
     public function getAnr()
@@ -46,6 +53,16 @@ class Referential extends ReferentialSuperClass
     public function setAnr($anr)
     {
         $this->anr = $anr;
+        return $this;
+    }
+
+    /**
+     * @param \MonarcFO\Model\Entity\Measure $measures
+     * @return Referential
+     */
+    public function setMeasures($measures)
+    {
+        $this->measures = $measures;
         return $this;
     }
 }
