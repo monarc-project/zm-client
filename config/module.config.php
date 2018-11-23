@@ -69,6 +69,19 @@ return array(
                 ),
             ),
 
+            'monarc_api_referentials' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route' => '/api/referentials[/:id]',
+                    'constraints' => array(
+                        'id' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'MonarcFO\Controller\ApiReferentials',
+                    ),
+                ),
+            ),
+
             'monarc_api_duplicate_client_anr' => array(
                 'type' => 'literal',
                 'options' => array(
@@ -768,6 +781,7 @@ return array(
             '\MonarcFO\Controller\ApiConfig' => '\MonarcFO\Controller\ApiConfigControllerFactory',
             '\MonarcFO\Controller\ApiClients' => '\MonarcFO\Controller\ApiClientsControllerFactory',
             '\MonarcFO\Controller\ApiModels' => '\MonarcFO\Controller\ApiModelsControllerFactory',
+            '\MonarcFO\Controller\ApiReferentials' => '\MonarcFO\Controller\ApiReferentialsControllerFactory',
             '\MonarcFO\Controller\ApiDuplicateAnr' => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
             '\MonarcFO\Controller\ApiUserPassword' => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
             '\MonarcFO\Controller\ApiUserProfile' => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
@@ -1023,6 +1037,7 @@ return array(
             'monarc_api_guides',
             'monarc_api_guides_items',
             'monarc_api_models',
+            'monarc_api_referentials',
             'monarc_api_client',
             'monarc_api_user_profile',
             'monarc_api_anr_carto_risks',
@@ -1032,6 +1047,7 @@ return array(
         'userfo' => array(
             'monarc_api_doc_models',
             'monarc_api_models',
+            'monarc_api_referentials',
             'monarc_api_admin_users_roles',
             'monarc_api_global_client_anr/instance',
             'monarc_api_global_client_anr/instance_risk',
@@ -1081,6 +1097,7 @@ return array(
             'monarc_api_global_client_anr/deliverable',
             'monarc_api_duplicate_client_anr',
             'monarc_api_models',
+            'monarc_api_referentials',
             'monarc_api_scales',
             'monarc_api_scales_comments',
             'monarc_api_scales_types',

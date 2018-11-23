@@ -10,7 +10,7 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractService;
 
 /**
- * AnrReferentialService Service
+ * AnrReferential Service
  *
  * Class AnrReferentialService
  * @package MonarcFO\Service
@@ -21,6 +21,7 @@ class AnrReferentialService extends AbstractService
     protected $filterColumns = ['uniqid', 'label1', 'label2', 'label3', 'label4'];
     protected $forbiddenFields = ['anr'];
     protected $userAnrTable;
+    protected $selfCoreService;
     /**
      * @inheritdoc
      */
@@ -37,5 +38,22 @@ class AnrReferentialService extends AbstractService
         );
 
         return array_slice($data, ($page - 1) * $limit, $limit, false);
+    }
+
+    /**
+     * Fetches and returns the list of referentials from the common database.
+     * @param int $filter Keywords to search
+     * @return array An array of available referentials from the common database (knowledge base)
+     */
+    public function getCommonReferentials($filter, $order)
+    {
+
+        // Fetch the referentials from the common database
+        $selfCoreService = $this->get('selfCoreService');
+        file_put_contents('php://stderr', print_r($filter . "\n" , TRUE).PHP_EOL);
+
+        $referentials = $selfCoreService->getList(1, 25, $order, $filter, null);
+
+        return $referentials;
     }
 }

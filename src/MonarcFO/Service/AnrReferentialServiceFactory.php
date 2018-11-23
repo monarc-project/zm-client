@@ -21,5 +21,6 @@ class AnrReferentialServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\ReferentialTable',
         'entity' => 'MonarcFO\Model\Entity\Referential',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
+        'selfCoreService' => 'MonarcCore\Service\ReferentialService',
     ];
 }
