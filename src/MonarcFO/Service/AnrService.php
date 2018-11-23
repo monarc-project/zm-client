@@ -423,7 +423,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $referentials_uuid = ['98ca84fb-db87-11e8-ac77-0800279aaa2b']; // temporary
 
-            // duplicate category
+            // duplicate categories
             $categoryNewIds = [];
             $category = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential_uuid]) : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($category as $cat) {
@@ -437,6 +437,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             // duplicate referentials
+            $measuresNewIds = [];
             foreach ($referentials_uuid as $referential_uuid) {
                 $referentials = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('referentialTable')->getEntityByFields(['uniqid' => $referential_uuid]) : $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($referentials as $referential) {
@@ -451,7 +452,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $this->get('measureCliTable')->save($newMeasure, false);
                         $this->get('measureCliTable')->getDb()->flush();
-                        // $measuresNewIds[$measure->id] = $newMeasure;
+                        $measuresNewIds[$measure->id] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures($new_measures);
