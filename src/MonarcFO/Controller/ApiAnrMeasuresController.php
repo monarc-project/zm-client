@@ -17,5 +17,50 @@ use Zend\View\Model\JsonModel;
 class ApiAnrMeasuresController extends ApiAnrAbstractController
 {
     protected $name = 'measures';
-    protected $dependencies = ['anr', 'category'];
+    protected $dependencies = ['anr', 'category', 'referential', 'measuresLinked'];
+
+    public function getList()
+    {
+        $page = $this->params()->fromQuery('page');
+        $limit = $this->params()->fromQuery('limit');
+        $order = $this->params()->fromQuery('order');
+        $filter = $this->params()->fromQuery('filter');
+        $status = $this->params()->fromQuery('status');
+        $referential = $this->params()->fromQuery('referential');
+        $category = $this->params()->fromQuery('category');
+        $anrId = (int)$this->params()->fromRoute('anrid');
+
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
+
+        $filterAnd = [];
+        if (is_null($status)) {
+            $status = 1;
+        }
+        $filterAnd = ($status == "all") ? null : ['status' => (int) $status] ;
+
+        $filterAnd = ['anr' => $anrId];
+
+        if ($referential) {
+          $filterAnd['referential'] = (array)$referential;
+        }
+        if ($category) {
+          $filterAnd['category'] = (int)$category;
+        }
+
+        $service = $this->getService();
+
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
+        if (count($this->dependencies)) {
+            foreach ($entities as $key => $entity) {
+                $this->formatDependencies($entities[$key], $this->dependencies);
+            }
+        }
+
+        return new JsonModel(array(
+            'count' => $service->getFilteredCount($filter, $filterAnd),
+            $this->name => $entities
+        ));
+    }
 }
