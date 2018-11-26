@@ -80,4 +80,19 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
 
         return new JsonModel(['status' => 'ok']);
     }
+
+    public function delete($id)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $newId = ['anr'=> $anrId, 'uniqid' => $id];
+
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
+        $data['anr'] = $anrId;
+
+        $this->getService()->delete($newId);
+
+        return new JsonModel(['status' => 'ok']);
+    }
 }
