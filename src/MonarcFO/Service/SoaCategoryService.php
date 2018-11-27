@@ -19,7 +19,7 @@ class SoaCategoryService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
     protected $filterColumns = ['label1', 'label2', 'label3', 'label4', 'code', 'status'];
 
-    protected $dependencies = ['anr'];
+    protected $dependencies = ['anr', 'referential'];
     protected $forbiddenFields = [];
 
     /**
