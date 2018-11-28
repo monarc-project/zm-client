@@ -63,4 +63,10 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
             $this->name => $entities
         ));
     }
+
+    public function update($id, $data)
+    {
+        $data ['referential'] = $data['referential']['uniqid']; //all the objects is send but we just need the uniqid
+        return parent::update($id, $data);
+    }
 }

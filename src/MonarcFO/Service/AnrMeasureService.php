@@ -19,6 +19,6 @@ class AnrMeasureService extends \MonarcCore\Service\MeasureService
     protected $entity;
     protected $anrTable;
     protected $userAnrTable;
-    protected $dependencies = ['category' ,'anr'];
+    protected $dependencies = ['category' ,'anr', 'referential'];
     protected $forbiddenFields = [];
 }
