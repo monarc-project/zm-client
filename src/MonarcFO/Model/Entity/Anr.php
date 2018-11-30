@@ -46,10 +46,4 @@ class Anr extends AnrSuperClass
      */
     protected $cacheModelIsScalesUpdatable = '0';
 
-    /**
-     * @var \MonarcCore\Model\Entity\Measure
-     *
-     * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="measure")
-     */
-    protected $measures;
 }
