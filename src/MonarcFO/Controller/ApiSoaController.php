@@ -20,25 +20,15 @@ use Zend\View\Model\JsonModel;
  */
 class ApiSoaController extends  ApiAnrAbstractController
 {
-    protected $name = 'Soa-list';
-    protected $dependencies = ['anr','measure','category'];
+    protected $name = 'soaMeasures';
+    protected $dependencies = ['anr','measure'];
 
-  //  protected $dependencies = ['anr', 'asset', 'object', 'root', 'parent'];
-
-
-
-
-
-  /**
-   * @inheritdoc
-   */
   public function getList()
   {
       $page = $this->params()->fromQuery('page');
       $limit = $this->params()->fromQuery('limit');
       $order = $this->params()->fromQuery('order');
       $filter = $this->params()->fromQuery('filter');
-      $status = $this->params()->fromQuery('status');
 
       $anrId = (int)$this->params()->fromRoute('anrid');
       if (empty($anrId)) {
@@ -47,45 +37,20 @@ class ApiSoaController extends  ApiAnrAbstractController
 
       $filterAnd = ['anr' => $anrId];
 
-      if (!is_null($status) && $status != 'all') {
-          $filterAnd['status'] = $status;
-      }
-
-
-
-      $serviceMeasure = $this->getService('measure');
-      $measures = $serviceMeasure->getList($page, $limit, $order, $filter);
-
-
       $service = $this->getService();
 
       $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-      //set measures dependencies for each soa
       if (count($this->dependencies)) {
           foreach ($entities as $key => $entity) {
-              foreach ($measures as $keyy => $entity) {
-                $this->formatDependencies($measures[$keyy], ['category']);
-                $this->formatDependencies($entities[$key], $this->dependencies);
-              }
-              unset($entities[$key]['anr']);
-              unset($entities[$key]['measure']['anr']);
-              unset($entities[$key]['measure']['category']['anr']);
+              $this->formatDependencies($entities[$key], $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['category','referential']);
           }
       }
-
       return new JsonModel([
           'count' => $service->getFilteredCount($filter, $filterAnd),
           $this->name => $entities
       ]);
   }
 
-
-
-
-
-  /**
-   * @inheritdoc
-   */
 
    public function get($id)
    {
@@ -100,15 +65,10 @@ class ApiSoaController extends  ApiAnrAbstractController
        }
 
        if (count($this->dependencies)) {
-           $this->formatDependencies($entity, $this->dependencies);
+           $this->formatDependencies($entity, $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['category','referential']);
        }
 
        return new JsonModel($entity);
    }
-
-
-
-
-
 
 }
