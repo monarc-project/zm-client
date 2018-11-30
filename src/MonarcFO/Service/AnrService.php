@@ -242,11 +242,17 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $modelTable = $this->get('modelTable');
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
+
+        $referentials_uuid = array();
+        foreach ($data['referentials'] as $referential) {
+            array_push($referentials_uuid, $referential['uniqid']);
+        }
+
         if ($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE) { // disabled or deleted
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
-        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $referentials_uuid = null, $data);
+        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $referentials_uuid, $data);
     }
 
     /**
@@ -420,8 +426,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('vulnerabilityCliTable')->save($newVulnerability, false);
                 $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
             }
-
-            $referentials_uuid = ['98ca84fb-db87-11e8-ac77-0800279aaa2b']; // temporary
 
             // duplicate categories, referentials and measure
             $measuresNewIds = [];
