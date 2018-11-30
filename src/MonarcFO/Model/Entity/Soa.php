@@ -125,7 +125,28 @@ class Soa extends AbstractEntity
 
 
 
-
+    public function getFiltersForService(){
+        $filterJoin = [
+            [
+                'as' => 'm',
+                'rel' => 'measure',
+            ],
+        ];
+        $filterLeft = [
+            // [
+            //     'as' => 'm1',
+            //     'rel' => 'measure',
+            // ],
+        ];
+        $filtersCol = [
+            'm.label1',
+            'm.label2',
+            'm.label3',
+            'm.label4',
+            'm.code',
+        ];
+        return [$filterJoin,$filterLeft,$filtersCol];
+    }
 
 
 
