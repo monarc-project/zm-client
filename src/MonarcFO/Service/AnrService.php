@@ -423,23 +423,26 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $referentials_uuid = ['98ca84fb-db87-11e8-ac77-0800279aaa2b']; // temporary
 
-            // duplicate categories
-            $categoryNewIds = [];
-            $category = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('SoaCategoryTable')->getEntityByFields(['id' => 6]) : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
-            foreach ($category as $cat) {
-                $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
-                $newCategory->set('id', null);
-                $newCategory->setAnr($newAnr);
-                $newCategory->setMeasures(null);
-                $newCategory->setReferential(null);
-                $this->get('SoaCategoryCliTable')->save($newCategory, false);
-                //$this->get('SoaCategoryCliTable')->getDb()->flush();
-                $categoryNewIds[$cat->id] = $newCategory;
-            }
-
             // duplicate referentials and measure
             $measuresNewIds = [];
             foreach ($referentials_uuid as $referential_uuid) {
+
+                // duplicate categories
+                $categoryNewIds = [];
+                $category = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential_uuid]) : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+                foreach ($category as $cat) {
+                    $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
+                    $newCategory->set('id', null);
+                    $newCategory->setAnr($newAnr);
+                    $newCategory->setMeasures(null);
+                    $newCategory->setReferential(null);
+                    $this->get('SoaCategoryCliTable')->save($newCategory, false);
+                    //$this->get('SoaCategoryCliTable')->getDb()->flush();
+                    $categoryNewIds[$cat->id] = $newCategory;
+                }
+
+
+
                 $referentials = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('referentialTable')->getEntityByFields(['uniqid' => $referential_uuid]) : $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($referentials as $referential) {
                     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
@@ -462,6 +465,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $this->get('referentialCliTable')->save($newReferential);
                 }
             }
+
 
             // duplicate soas
             if ($source == MonarcObject::SOURCE_COMMON) {
