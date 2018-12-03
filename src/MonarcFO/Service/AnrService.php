@@ -242,11 +242,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $modelTable = $this->get('modelTable');
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
+
         if ($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE) { // disabled or deleted
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
-        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $referentials_uuid = null, $data);
+        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $data);
     }
 
     /**
@@ -257,7 +258,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return int The newly created ANR id
      * @throws \MonarcCore\Exception\Exception
      */
-    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT, $model = null, $referentials_uuid = [], $data = [], $isSnapshot = false, $isSnapshotCloning = false)
+    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT,
+                                    $model = null,
+                                    $data = [], $isSnapshot = false,
+                                    $isSnapshotCloning = false)
     {
         // This may take a lot of time on huge ANRs, so ignore the time limit
         ini_set('max_execution_time', 0);
@@ -304,6 +308,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newAnr->setObjects(null);
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
+            $newAnr->setReferentials(null);
             if (!empty($model) && is_object($model)) {
                 $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
                 $newAnr->set('cacheModelIsScalesUpdatable', $model->isScalesUpdatable);
@@ -421,51 +426,54 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
             }
 
-            $referentials_uuid = ['98ca84fb-db87-11e8-ac77-0800279aaa2b']; // temporary
-
-            // duplicate referentials and measure
+            // duplicate categories, referentials and measure
+            $referentials_uuid = array();
+            foreach ($data['referentials'] as $referential) {
+                array_push($referentials_uuid, $referential['uniqid']);
+            }
+            // unset($data['referentials']);
             $measuresNewIds = [];
             foreach ($referentials_uuid as $referential_uuid) {
 
-                // duplicate categories
+                // first duplicate categories
                 $categoryNewIds = [];
                 $category = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential_uuid]) : $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($category as $cat) {
                     $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                     $newCategory->set('id', null);
+                    //$this->get('SoaCategoryCliTable')->getDb()->flush();
                     $newCategory->setAnr($newAnr);
                     $newCategory->setMeasures(null);
                     $newCategory->setReferential(null);
                     $this->get('SoaCategoryCliTable')->save($newCategory, false);
-                    //$this->get('SoaCategoryCliTable')->getDb()->flush();
                     $categoryNewIds[$cat->id] = $newCategory;
                 }
 
-
-
+                // duplicate referentials
                 $referentials = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('referentialTable')->getEntityByFields(['uniqid' => $referential_uuid]) : $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($referentials as $referential) {
                     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
+                    $newReferential->setUniqid($referential->getUniqid());
+                    $newReferential->setAnr($newAnr);
 
                     $new_measures = [];
                     foreach ($referential->measures as $measure) {
+                        // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                         $newMeasure->set('id', null);
+                        //$this->get('measureCliTable')->getDb()->flush();
                         $newMeasure->setAnr($newAnr);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $this->get('measureCliTable')->save($newMeasure, false);
-                        // $this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->id] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures($new_measures);
 
-                    $newReferential->setUniqid($referential->getUniqid());
-                    $newReferential->setAnr($newAnr);
-                    $this->get('referentialCliTable')->save($newReferential);
+                    $this->get('referentialCliTable')->save($newReferential, false);
+                    //$this->get('referentialCliTable')->getDb()->flush();
                 }
             }
-
 
             // duplicate soas
             if ($source == MonarcObject::SOURCE_COMMON) {
@@ -585,7 +593,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
             }
 
-            //duplicate objects
+            // duplicate objects
             $objectsNewIds = [];
             $objectsRootCategories = [];
             foreach ($objects as $object) {

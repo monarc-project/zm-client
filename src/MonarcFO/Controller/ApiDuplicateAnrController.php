@@ -33,7 +33,7 @@ class ApiDuplicateAnrController extends \MonarcCore\Controller\AbstractControlle
             throw new \MonarcCore\Exception\Exception('Anr missing', 412);
         }
 
-        $id = $service->duplicateAnr(intval($data['anr']), MonarcObject::SOURCE_CLIENT, null, null, $data);
+        $id = $service->duplicateAnr(intval($data['anr']), MonarcObject::SOURCE_CLIENT, null, $data);
 
         return new JsonModel([
             'status' => 'ok',

@@ -51,10 +51,12 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true)
     {
-        //duplicate anr and create snapshot record with new id
+        // duplicate anr and create snapshot record with new id
         /** @var AnrService $anrService */
         $anrService = $this->get('anrService');
-        $anrId = $anrService->duplicateAnr($data['anr'], \MonarcFO\Model\Entity\MonarcObject::SOURCE_CLIENT, null, [], true);
+        $anrId = $anrService->duplicateAnr($data['anr'],
+                            \MonarcFO\Model\Entity\MonarcObject::SOURCE_CLIENT,
+                            null, [], true);
 
         $data['anrReference'] = $data['anr'];
         $data['anr'] = $anrId;
@@ -139,7 +141,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
      */
     public function restore($anrId, $id)
     {
-        //switch anr and anrReference
+        // switch anr and anrReference
         /** @var SnapshotTable $snapshotTable */
         $snapshotTable = $this->get('table');
         /** @var AnrService $anrService */
@@ -149,7 +151,8 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
 
         $anrSnapshot = current($snapshotTable->getEntityByFields(['anrReference' => $anrId, 'id' => $id]));
 
-        $newAnrId = $anrService->duplicateAnr($anrSnapshot->get('anr')->get('id'), MonarcObject::SOURCE_CLIENT, null, [], false, true); // on duplique l'anr liée au snapshot
+        // duplicate the anr linked to this snapshot
+        $newAnrId = $anrService->duplicateAnr($anrSnapshot->get('anr')->get('id'), MonarcObject::SOURCE_CLIENT, null, false, true);
 
         $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
         $i = 1;
@@ -161,7 +164,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
             $i++;
         }
 
-        //resume access
+        // resume access
         $userAnrCliTable = $anrService->get('userAnrCliTable');
         $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anrId]);
         $i = 1;
@@ -172,7 +175,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
             $i++;
         }
 
-        //delete old anr
+        // delete old anr
         $anrTable->delete($anrId);
 
         /** @var Anr $newAnrSnapshot */

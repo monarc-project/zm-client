@@ -46,4 +46,27 @@ class Anr extends AnrSuperClass
      */
     protected $cacheModelIsScalesUpdatable = '0';
 
+    /**
+     * @var \MonarcFO\Model\Entity\Referential
+     *
+     * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\Referential", mappedBy="anr", cascade={"persist"})
+     */
+    protected $referentials;
+
+    /**
+    * @param Referential $referentials
+    */
+    public function setReferentials($referentials)
+    {
+        $this->referentials = $referentials;
+    }
+
+    /**
+    * @return Referential
+    */
+    public function getReferentials()
+    {
+        return $this->referentials;
+    }
+
 }
