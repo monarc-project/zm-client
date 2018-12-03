@@ -25,5 +25,6 @@ class SoaServiceFactory extends AbstractServiceFactory
       'table' => 'MonarcFO\Model\Table\SoaTable',
       'anrTable' => 'MonarcFO\Model\Table\AnrTable',
       'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
+      'measureService' => 'MonarcFO\Service\AnrMeasureService',
     ];
 }

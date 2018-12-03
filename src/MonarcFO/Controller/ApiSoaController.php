@@ -29,6 +29,9 @@ class ApiSoaController extends  ApiAnrAbstractController
       $limit = $this->params()->fromQuery('limit');
       $order = $this->params()->fromQuery('order');
       $filter = $this->params()->fromQuery('filter');
+      $category = $this->params()->fromQuery('category');
+      $referential = $this->params()->fromQuery('referential');
+
 
       $anrId = (int)$this->params()->fromRoute('anrid');
       if (empty($anrId)) {
@@ -36,6 +39,30 @@ class ApiSoaController extends  ApiAnrAbstractController
       }
 
       $filterAnd = ['anr' => $anrId];
+
+      if ($referential) {
+        if ($category != 0) {
+          $filterMeasures['category'] = [
+              'op' => 'IN',
+              'value' => (array)$category,
+          ];
+        }
+
+        $filterMeasures['referential'] = (array)$referential;
+
+        $measureService = $this->getService()->get('measureService');
+
+        $measuresFiltered = $measureService->getList(1, null, null, null, $filterMeasures);
+        $measuresFilteredId = [];
+        foreach ($measuresFiltered as $key) {
+          array_push($measuresFilteredId,$key['id']);
+        }
+
+        $filterAnd['measure']= [
+            'op' => 'IN',
+            'value' => $measuresFilteredId,
+        ];
+      }
 
       $service = $this->getService();
 
