@@ -243,12 +243,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
 
-        // $referentials_uuid = array();
-        // foreach ($data['referentials'] as $referential) {
-        //     array_push($referentials_uuid, $referential['uniqid']);
-        // }
-        // unset($data['referentials']);
-
         if ($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE) { // disabled or deleted
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
