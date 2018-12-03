@@ -39,17 +39,9 @@ class Referential extends ReferentialSuperClass
     protected $measures;
 
     /**
-     * @return Anr
-     */
-    public function getAnr()
-    {
-        return $this->anr;
-    }
-
-    /**
-     * @param Anr $anr
-     * @return Referential
-     */
+    * @param int $anr
+    * @return Referential
+    */
     public function setAnr($anr)
     {
         $this->anr = $anr;

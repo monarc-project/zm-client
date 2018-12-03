@@ -243,16 +243,17 @@ class AnrService extends \MonarcCore\Service\AbstractService
         $model = $modelTable->getEntity($data['model']);
         unset($data['model']);
 
-        $referentials_uuid = array();
-        foreach ($data['referentials'] as $referential) {
-            array_push($referentials_uuid, $referential['uniqid']);
-        }
+        // $referentials_uuid = array();
+        // foreach ($data['referentials'] as $referential) {
+        //     array_push($referentials_uuid, $referential['uniqid']);
+        // }
+        // unset($data['referentials']);
 
         if ($model->get('status') != \MonarcCore\Model\Entity\AbstractEntity::STATUS_ACTIVE) { // disabled or deleted
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
-        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $referentials_uuid, $data);
+        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $data);
     }
 
     /**
@@ -263,7 +264,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return int The newly created ANR id
      * @throws \MonarcCore\Exception\Exception
      */
-    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT, $model = null, $referentials_uuid = [], $data = [], $isSnapshot = false, $isSnapshotCloning = false)
+    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT,
+                                    $model = null,
+                                    $data = [], $isSnapshot = false,
+                                    $isSnapshotCloning = false)
     {
         // This may take a lot of time on huge ANRs, so ignore the time limit
         ini_set('max_execution_time', 0);
@@ -310,6 +314,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $newAnr->setObjects(null);
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
+            $newAnr->setReferentials(null);
             if (!empty($model) && is_object($model)) {
                 $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
                 $newAnr->set('cacheModelIsScalesUpdatable', $model->isScalesUpdatable);
@@ -428,6 +433,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             // duplicate categories, referentials and measure
+            $referentials_uuid = array();
+            foreach ($data['referentials'] as $referential) {
+                array_push($referentials_uuid, $referential['uniqid']);
+            }
+            // unset($data['referentials']);
             $measuresNewIds = [];
             foreach ($referentials_uuid as $referential_uuid) {
 
@@ -589,7 +599,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
             }
 
-            //duplicate objects
+            // duplicate objects
             $objectsNewIds = [];
             $objectsRootCategories = [];
             foreach ($objects as $object) {

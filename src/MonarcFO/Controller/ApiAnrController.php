@@ -19,6 +19,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrController extends \MonarcCore\Controller\AbstractController
 {
     protected $name = 'anrs';
+    protected $dependencies = ['referentials'];
 
     /**
      * @inheritdoc
