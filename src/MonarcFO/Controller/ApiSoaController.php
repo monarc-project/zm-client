@@ -55,9 +55,9 @@ class ApiSoaController extends  ApiAnrAbstractController
         $measuresFiltered = $measureService->getList(1, null, null, null, $filterMeasures);
         $measuresFilteredId = [];
         foreach ($measuresFiltered as $key) {
-          array_push($measuresFilteredId,$key['id']);
+          array_push($measuresFilteredId,$key['uniqid']);
         }
-
+        file_put_contents('php://stderr', print_r($measuresFilteredId, TRUE).PHP_EOL);
         $filterAnd['measure']= [
             'op' => 'IN',
             'value' => $measuresFilteredId,
