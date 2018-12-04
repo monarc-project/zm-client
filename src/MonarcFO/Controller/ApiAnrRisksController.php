@@ -51,6 +51,7 @@ class ApiAnrRisksController extends ApiAnrAbstractController
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
+
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
@@ -81,6 +82,7 @@ class ApiAnrRisksController extends ApiAnrAbstractController
         $thresholds = $this->params()->fromQuery("thresholds");
         $page = $this->params()->fromQuery("page", 1);
         $limit = $this->params()->fromQuery("limit", 50);
+        $amvs = $this->params()->fromQuery("amvs");
 
         return [
             'keywords' => $keywords,
@@ -89,7 +91,8 @@ class ApiAnrRisksController extends ApiAnrAbstractController
             'order_direction' => $order_direction,
             'thresholds' => $thresholds,
             'page' => $page,
-            'limit' => $limit
+            'limit' => $limit,
+            'amvs' => $amvs
         ];
     }
 
