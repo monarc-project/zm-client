@@ -59,20 +59,35 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
+            //'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ));
     }
 
     public function update($id, $data)
     {
-        $data ['referential'] = $data['referential']['uniqid']; //all the objects is send but we just need the uniqid
-        return parent::update($id, $data);
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      $ids = ['anr'=>$anrId,'uniqid'=>$data['uniqid']];
+      $data['anr'] = $anrId;
+      $data ['referential'] = $data['referential']['uniqid']; //all the objects is send but we just need the uniqid
+      unset($data['measuresLinked']);
+      return parent::update($ids, $data);
+
     }
 
     public function create($data)
     {
         $data ['referential'] = $data['referential']['uniqid']; //all the objects is send but we just need the uniqid
         return parent::create($data);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function get($id)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $ids = ['uniqid'=>$id,'anr'=>$anrId];
+        return parent::get($ids);
     }
 }

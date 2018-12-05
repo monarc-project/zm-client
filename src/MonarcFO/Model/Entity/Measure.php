@@ -21,8 +21,18 @@ use MonarcCore\Model\Entity\MeasureSuperClass;
  */
 class Measure extends MeasureSuperClass
 {
+
+  /**
+   * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure")
+   * @ORM\JoinTable(name="measures_measures",
+   *     joinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uniqid")},
+   *     inverseJoinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uniqid")}
+   * )
+   */
+   protected $measuresLinked;
     /**
      * @var \MonarcFO\Model\Entity\Anr
+     *  @ORM\Id
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
