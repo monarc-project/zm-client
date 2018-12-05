@@ -57,7 +57,7 @@ class ApiSoaController extends  ApiAnrAbstractController
         foreach ($measuresFiltered as $key) {
           array_push($measuresFilteredId,$key['uniqid']);
         }
-        file_put_contents('php://stderr', print_r($measuresFilteredId, TRUE).PHP_EOL);
+        //file_put_contents('php://stderr', print_r($measuresFilteredId, TRUE).PHP_EOL);
         $filterAnd['measure']= [
             'op' => 'IN',
             'value' => $measuresFilteredId,
