@@ -436,11 +436,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 foreach ($category as $cat) {
                     $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                     $newCategory->set('id', null);
-                    //$this->get('SoaCategoryCliTable')->getDb()->flush();
                     $newCategory->setAnr($newAnr);
                     $newCategory->setMeasures(null);
-                    $newCategory->setReferential(null);
+                    // $newCategory->setReferential(null);
                     $this->get('SoaCategoryCliTable')->save($newCategory, false);
+                    $this->get('SoaCategoryCliTable')->getDb()->flush();
                     $categoryNewIds[$cat->id] = $newCategory;
                 }
 
@@ -458,6 +458,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     //$this->get('measureCliTable')->getDb()->flush();
                     $newMeasure->setAnr($newAnr);
                     $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                    $newMeasure->setUniqid($measure->getUniqid());
                     $this->get('measureCliTable')->save($newMeasure, false);
                     $measuresNewIds[$measure->id] = $newMeasure;
                     array_push($new_measures, $newMeasure);
@@ -469,26 +470,26 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             // duplicate soas
-            if ($source == MonarcObject::SOURCE_COMMON) {
-                foreach ($measuresNewIds as $key => $value) {
-                    $newSoa = new \MonarcFO\Model\Entity\Soa();
-                    $newSoa->set('id', null);
-                    // $this->get('table')->getDb()->flush();
-                    $newSoa->setAnr($newAnr);
-                    $newSoa->setMeasure($value);
-                    $this->get('SoaCliTable')->save($newSoa, false);
-                }
-            } else {
-              $soas = $this->get('SoaCliTable')->getEntityByFields(['anr' => $anr->id]);
-              foreach ($soas as $soa) {
-                  $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
-                  $newSoa->set('id', null);
-                  $newSoa->setAnr($newAnr);
-                  $newSoa->setMeasure($measuresNewIds[$soa->measure->id]);
-                  $this->get('SoaCliTable')->save($newSoa, false);
-                  // $this->get('SoaCliTable')->getDb()->flush();
-              }
-            }
+            // if ($source == MonarcObject::SOURCE_COMMON) {
+            //     foreach ($measuresNewIds as $key => $value) {
+            //         $newSoa = new \MonarcFO\Model\Entity\Soa();
+            //         $newSoa->set('id', null);
+            //         // $this->get('table')->getDb()->flush();
+            //         $newSoa->setAnr($newAnr);
+            //         $newSoa->setMeasure($value);
+            //         $this->get('SoaCliTable')->save($newSoa, false);
+            //     }
+            // } else {
+            //   $soas = $this->get('SoaCliTable')->getEntityByFields(['anr' => $anr->id]);
+            //   foreach ($soas as $soa) {
+            //       $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+            //       $newSoa->set('id', null);
+            //       $newSoa->setAnr($newAnr);
+            //       $newSoa->setMeasure($measuresNewIds[$soa->measure->id]);
+            //       $this->get('SoaCliTable')->save($newSoa, false);
+            //       // $this->get('SoaCliTable')->getDb()->flush();
+            //   }
+            // }
 
             // duplicate amvs
             $amvsNewIds = [];
