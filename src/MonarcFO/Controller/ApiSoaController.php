@@ -69,7 +69,7 @@ class ApiSoaController extends  ApiAnrAbstractController
       $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
       if (count($this->dependencies)) {
           foreach ($entities as $key => $entity) {
-              $this->formatDependencies($entities[$key], $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['category','referential']);
+              $this->formatDependencies($entities[$key], $this->dependencies, '\MonarcCore\Model\Entity\Measure', ['category','referential']);
           }
       }
       return new JsonModel([
