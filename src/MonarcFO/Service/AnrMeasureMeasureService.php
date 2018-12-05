@@ -48,12 +48,11 @@ class AnrMeasureMeasureService extends AbstractService
           $entity->setAnr($anr);
           $entity->setFather($father);
           $entity->setChild($child);
-          $id = $measureMeasureTable->save($entity, false);
-          $entity2 = $this->get('entity');
-          $entity2->setAnr($anr);
+          $measureMeasureTable->save($entity, false);
+          $entity2 = clone $entity; //make the save in the other way
           $entity2->setFather($child);
           $entity2->setChild($father);
-          $id = $measureMeasureTable->save($entity2);
+          $measureMeasureTable->save($entity2);
         }
         return $id;
     }

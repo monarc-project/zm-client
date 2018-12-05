@@ -38,10 +38,10 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
         $filterAnd = ['anr' => $anrId];
 
         if ($fatherId) {
-          $filterAnd['father'] = (int) $fatherId;
+          $filterAnd['father'] =  $fatherId;
         }
         if ($childId) {
-          $filterAnd['child'] = (int) $childId;
+          $filterAnd['child'] =  $childId;
         }
 
         $service = $this->getService();
