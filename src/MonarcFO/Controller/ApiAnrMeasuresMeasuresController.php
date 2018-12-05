@@ -38,10 +38,10 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
         $filterAnd = ['anr' => $anrId];
 
         if ($fatherId) {
-          $filterAnd['father'] =  $fatherId;
+          $filterAnd['father'] = (int) $fatherId;
         }
         if ($childId) {
-          $filterAnd['child'] =  $childId;
+          $filterAnd['child'] = (int) $childId;
         }
 
         $service = $this->getService();
@@ -59,9 +59,9 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
         ));
     }
 
-    // public function create($data, $last=true){
-    //   file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
-    //   //$data['anr'] = $anrId;
-    //   return parent::create($data, $last=true);
-    // }
+    public function create($data, $last=true){
+      file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
+      //$data['anr'] = $anrId;
+      return parent::create($data, $last=true);
+    }
 }
