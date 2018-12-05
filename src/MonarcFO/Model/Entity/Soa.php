@@ -133,10 +133,7 @@ class Soa extends AbstractEntity
             ],
         ];
         $filterLeft = [
-            // [
-            //     'as' => 'm1',
-            //     'rel' => 'measure',
-            // ],
+
         ];
         $filtersCol = [
             'm.label1',
