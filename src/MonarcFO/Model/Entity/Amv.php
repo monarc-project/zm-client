@@ -68,7 +68,7 @@ class Amv extends AmvSuperclass
      * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="amvs", cascade={"persist"})
      * @ORM\JoinTable(name="measures_amvs",
      *  joinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uniqid")}
+     *  inverseJoinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
      * )
      */
     protected $measures;
