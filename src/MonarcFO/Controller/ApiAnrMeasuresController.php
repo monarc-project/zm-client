@@ -90,4 +90,14 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         $ids = ['uniqid'=>$id,'anr'=>$anrId];
         return parent::get($ids);
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete($id)
+    {
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      $ids = ['uniqid'=>$id,'anr'=>$anrId];
+      return parent::delete($ids);
+    }
 }
