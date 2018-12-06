@@ -40,6 +40,18 @@ class Measure extends MeasureSuperClass
      */
     protected $anr;
 
+
+    /**
+     * @var \MonarcFO\Model\Entity\SoaCategory
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\SoaCategory", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="soacategory_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+
+    protected $category;
+
     /**
      * @return Anr
      */
