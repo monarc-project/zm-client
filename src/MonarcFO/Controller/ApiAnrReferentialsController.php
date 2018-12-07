@@ -18,7 +18,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrReferentialsController extends ApiAnrAbstractController
 {
     protected $name = 'referentials';
-    protected $dependencies = ['anr'];
+    protected $dependencies = ['anr', 'measures'];
 
     public function getList()
     {

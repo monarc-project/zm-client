@@ -50,8 +50,6 @@ class AnrReferentialService extends AbstractService
 
         // Fetch the referentials from the common database
         $selfCoreService = $this->get('selfCoreService');
-        file_put_contents('php://stderr', print_r($filter . "\n" , TRUE).PHP_EOL);
-
         $referentials = $selfCoreService->getList(1, 25, $order, $filter, null);
 
         return $referentials;
