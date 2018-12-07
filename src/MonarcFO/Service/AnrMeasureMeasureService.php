@@ -28,7 +28,6 @@ class AnrMeasureMeasureService extends AbstractService
 
     public function create($data, $last=true)
     {
-      file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
       $id = null;
         if ($data['father'] == $data['child']) {
             throw new \MonarcCore\Exception\Exception("You cannot add yourself as a component", 412);
@@ -36,7 +35,7 @@ class AnrMeasureMeasureService extends AbstractService
         $measureTable = $this->get('measureTable');
         $anrTable = $this->get('anrTable');
         $measureMeasureTable = $this->get('table');
-        $measuresMeasures = $measureMeasureTable->getEntityByFields(['child' => $data['child'] , 'father' => $data['father']]);
+        $measuresMeasures = $measureMeasureTable->getEntityByFields(['child' => $data['child']['uniqid'] , 'father' => $data['father']['uniqid']]);
 
         if (count($measuresMeasures)) { // the linkk already exist
             throw new \MonarcCore\Exception\Exception('This component already exist for this object', 412);

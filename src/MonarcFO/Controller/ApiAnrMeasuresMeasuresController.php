@@ -60,8 +60,16 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
     }
 
     public function create($data, $last=true){
-      file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
-      //$data['anr'] = $anrId;
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      $data['father'] = [
+        'anr' => $anrId,
+        'uniqid' => $data['father']
+      ];
+      $data['child'] = [
+        'anr' => $anrId,
+        'uniqid' => $data['child']
+      ];
+
       return parent::create($data, $last=true);
     }
 }
