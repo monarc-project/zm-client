@@ -20,6 +20,8 @@ class AnrMeasureServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\MeasureTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
+        'SoaEntity' => 'MonarcFO\Model\Entity\Soa',
+        'SoaTable' => 'MonarcFO\Model\Table\SoaTable',
         // 'category' => 'MonarcFO\Model\Entity\Category'
     ];
 }
