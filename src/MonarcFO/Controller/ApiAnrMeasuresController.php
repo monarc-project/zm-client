@@ -35,6 +35,8 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         }
 
         $filterAnd = [];
+        $filterJoin[] = ['as' => 'r','rel' => 'referential'];            //make a join because composite key are not supported
+
         if (is_null($status)) {
             $status = 1;
         }
@@ -43,7 +45,8 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         $filterAnd = ['anr' => $anrId];
 
         if ($referential) {
-          $filterAnd['referential'] = (array)$referential;
+          $filterAnd['r.anr']=$anrId;
+          $filterAnd['r.uniqid']= $referential;
         }
         if ($category) {
           $filterAnd['category'] = (int)$category;
@@ -51,7 +54,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 
         $service = $this->getService();
 
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd,$filterJoin);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);
@@ -69,7 +72,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
       $anrId = (int)$this->params()->fromRoute('anrid');
       $ids = ['anr'=>$anrId,'uniqid'=>$data['uniqid']];
       $data['anr'] = $anrId;
-      $data ['referential'] = $data['referential']['uniqid']; //all the objects is send but we just need the uniqid
+      $data ['referential'] = ['uniqid' => $data['referential']['uniqid'], 'anr' => $anrId]; //all the objects is send but we just need the uniqid
       unset($data['measuresLinked']);
       return parent::update($ids, $data);
 

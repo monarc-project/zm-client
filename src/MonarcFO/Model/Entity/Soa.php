@@ -44,8 +44,8 @@ class Soa extends AbstractEntity
     * @var \MonarcFO\Model\Entity\Measure
     * @ORM\OneToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
     * @ORM\JoinColumns({
-    *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uniqid", nullable=true)
-    * 
+    *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uniqid", nullable=true),
+    *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
     * })
     *
     */
