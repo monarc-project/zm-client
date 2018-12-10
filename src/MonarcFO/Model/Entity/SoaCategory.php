@@ -31,15 +31,6 @@ class SoaCategory extends SoaCategorySuperClass
     */
     protected $anr;
 
-    /**
-     * @var \MonarcFO\Model\Entity\Referential
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Referential", inversedBy="categories", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="referential_uniqid", referencedColumnName="uniqid", nullable=true)
-     * })
-     */
-    protected $referential;
 
     /**
     * @return Anr
