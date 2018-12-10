@@ -57,6 +57,7 @@ class Measure extends MeasureSuperClass
      * })
      */
     protected $category;
+
     /**
      * @var \MonarcFO\Model\Entity\Referential
      *
@@ -121,6 +122,17 @@ class Measure extends MeasureSuperClass
     public function setReferential($referential)
     {
         $this->referential = $referential;
+        return $this;
+
+    }
+
+    /**
+     * @param Amv $amvs
+     * @return Measure
+     */
+    public function setAmvs($amvs)
+    {
+        $this->amvs = $amvs;
         return $this;
 
     }

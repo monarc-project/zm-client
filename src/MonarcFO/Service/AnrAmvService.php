@@ -35,7 +35,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     /**
      * @inheritdoc
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
     {
         list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
 

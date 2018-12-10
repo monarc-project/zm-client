@@ -25,7 +25,7 @@ class AnrReferentialService extends AbstractService
     /**
      * @inheritdoc
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
     {
         file_put_contents('php://stderr', print_r('FO::ReferentialService::getList', TRUE).PHP_EOL);
         $data = $this->get('table')->fetchAllFiltered(

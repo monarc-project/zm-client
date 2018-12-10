@@ -110,7 +110,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     /**
      * @inheritdoc
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
     {
         // Retrieve connected user
         /** @var UserTable $userCliTable */
@@ -458,6 +458,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         // $newMeasure->set('id', null);
                         //$this->get('measureCliTable')->getDb()->flush();
                         $newMeasure->setAnr($newAnr);
+                        $newMeasure->setAmvs(null);
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setUniqid($measure->getUniqid());
@@ -477,10 +478,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 foreach ($category as $cat) {
                     $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                     $newCategory->set('id', null);
-                    // $this->get('SoaCategoryCliTable')->getDb()->flush();
                     $newCategory->setAnr($newAnr);
                     $newCategory->setMeasures(null);
-                    // $newCategory->setReferential(null);
                     $this->get('SoaCategoryCliTable')->save($newCategory, false);
                     $categoryNewIds[$cat->id] = $newCategory;
                 }
@@ -496,7 +495,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     foreach ($referential->measures as $measure) {
                         // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
-                        // $newMeasure->set('id', null);
                         //$this->get('measureCliTable')->getDb()->flush();
                         $newMeasure->setAnr($newAnr);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
