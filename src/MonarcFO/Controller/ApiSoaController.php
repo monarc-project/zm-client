@@ -37,6 +37,7 @@ class ApiSoaController extends  ApiAnrAbstractController
       if (empty($anrId)) {
           throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
       }
+      $filterJoin[] = ['as' => 'r','rel' => 'referential'];            //make a join because composite key are not supported
 
       $filterAnd = ['anr' => $anrId];
 
@@ -48,20 +49,22 @@ class ApiSoaController extends  ApiAnrAbstractController
           ];
         }
 
-        $filterMeasures['referential'] = (array)$referential;
+        $filterMeasures['r.anr']=$anrId;
+        $filterMeasures['r.uniqid']= $referential;
 
         $measureService = $this->getService()->get('measureService');
 
-        $measuresFiltered = $measureService->getList(1, null, null, null, $filterMeasures);
+        $measuresFiltered = $measureService->getList(1, null, null, null, $filterMeasures,$filterJoin);
         $measuresFilteredId = [];
         foreach ($measuresFiltered as $key) {
           array_push($measuresFilteredId,$key['uniqid']);
         }
         //file_put_contents('php://stderr', print_r($measuresFilteredId, TRUE).PHP_EOL);
-        $filterAnd['measure']= [
+        $filterAnd['m.uniqid']= [
             'op' => 'IN',
             'value' => $measuresFilteredId,
         ];
+        $filterAnd['m.anr']=$anrId;
       }
 
       $service = $this->getService();

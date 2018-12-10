@@ -35,6 +35,7 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
         $filter = $this->params()->fromQuery('filter');
         $status = $this->params()->fromQuery('status');
         $referential = $this->params()->fromQuery('referential');
+        $filterJoin[] = ['as' => 'r','rel' => 'referential'];            //make a join because composite key are not supported
 
         $filterAnd = [];
         if (is_null($status)) {
@@ -43,12 +44,13 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
         $filterAnd = ($status == "all") ? null : ['status' => (int) $status] ;
         $filterAnd = ['anr' => $anrId];
         if ($referential) {
-          $filterAnd['referential'] = (array)$referential;
-        }
+          $filterAnd['r.anr']=$anrId;
+          $filterAnd['r.uniqid']= $referential;
+         }
 
         $service = $this->getService();
 
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd, $filterJoin);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);
@@ -56,7 +58,7 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
+            //'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ));
     }
