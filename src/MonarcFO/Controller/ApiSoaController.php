@@ -76,7 +76,7 @@ class ApiSoaController extends  ApiAnrAbstractController
           }
       }
       return new JsonModel([
-          //'count' => $service->getFilteredCount($filter, $filterAnd),
+          'count' => $service->getFilteredCount($filter, $filterAnd),
           $this->name => $entities
       ]);
   }
