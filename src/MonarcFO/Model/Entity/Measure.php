@@ -23,13 +23,10 @@ class Measure extends MeasureSuperClass
 {
 
   /**
-   * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure")
-   * @ORM\JoinTable(name="measures_measures",
-   *     joinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uniqid")},
-   *     inverseJoinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uniqid")}
-   * )
+   * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\MeasureMeasure", mappedBy="father")
    */
    protected $measuresLinked;
+
     /**
      * @var \MonarcFO\Model\Entity\Anr
      *  @ORM\Id
@@ -40,6 +37,15 @@ class Measure extends MeasureSuperClass
      */
     protected $anr;
 
+    /**
+    * @var \Doctrine\Common\Collections\Collection
+    * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Amv", inversedBy="measures")
+    * @ORM\JoinTable(name="measures_amvs",
+    *  inverseJoinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="id")},
+    *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
+    * )
+    */
+    protected $amvs;
 
     /**
      * @var \MonarcFO\Model\Entity\SoaCategory

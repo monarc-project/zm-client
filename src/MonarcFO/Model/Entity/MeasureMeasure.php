@@ -24,9 +24,9 @@ class MeasureMeasure extends MeasureMeasureSuperClass
   /**
    * @var \MonarcCore\Model\Entity\Measure
    * @ORM\Id
-   * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
+   * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="measuresLinked")
    * @ORM\JoinColumns({
-   *   @ORM\JoinColumn(name="father_id", referencedColumnName="uniqid", nullable=true)
+   *   @ORM\JoinColumn(name="father_id", referencedColumnName="uniqid", nullable=true),
    * })
    */
   protected $father;
@@ -42,7 +42,6 @@ class MeasureMeasure extends MeasureMeasureSuperClass
   protected $child;
     /**
      * @var \MonarcFO\Model\Entity\Anr
-     *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
