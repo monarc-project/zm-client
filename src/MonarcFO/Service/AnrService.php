@@ -439,8 +439,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newCategory->set('id', null);
                         // $this->get('SoaCategoryCliTable')->getDb()->flush();
                         $newCategory->setAnr($newAnr);
-                        // $newCategory->setMeasures(null);
-                        // $newCategory->setReferential(null);
+                        $newCategory->setMeasures(null);
+                        $newCategory->setReferential(null);
                         $this->get('SoaCategoryCliTable')->save($newCategory, false);
                         $categoryNewIds[$cat->id] = $newCategory;
                     }
@@ -449,6 +449,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
                     $newReferential->setUniqid($referential->getUniqid());
                     $newReferential->setAnr($newAnr);
+                    $newReferential->setCategories($categoryNewIds);
 
                     $new_measures = [];
                     foreach ($referential->measures as $measure) {
@@ -457,6 +458,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         // $newMeasure->set('id', null);
                         //$this->get('measureCliTable')->getDb()->flush();
                         $newMeasure->setAnr($newAnr);
+                        $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setUniqid($measure->getUniqid());
                         $this->get('measureCliTable')->save($newMeasure, false);
@@ -468,7 +470,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
                 }
-            } else {
+            } else { // copy from an existing anr
                 // first duplicate categories
                 $categoryNewIds = [];
                 $category = $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
