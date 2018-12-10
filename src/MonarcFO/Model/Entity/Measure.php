@@ -15,7 +15,8 @@ use MonarcCore\Model\Entity\MeasureSuperClass;
  *
  * @ORM\Table(name="measures", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
- *      @ORM\Index(name="category", columns={"category_id"})
+ *      @ORM\Index(name="category", columns={"soacategory_id"}),
+ *      @ORM\Index(name="referential", columns={"referential_uniqid"})
 * })
  * @ORM\Entity
  */
@@ -49,8 +50,17 @@ class Measure extends MeasureSuperClass
      *   @ORM\JoinColumn(name="soacategory_id", referencedColumnName="id", nullable=true)
      * })
      */
-
     protected $category;
+
+    /**
+     * @var \MonarcFO\Model\Entity\Referential
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Referential", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="referential_uniqid", referencedColumnName="uniqid", nullable=true)
+     * })
+     */
+    protected $referential;
 
     /**
      * @return Anr
@@ -85,6 +95,25 @@ class Measure extends MeasureSuperClass
     public function setCategory($category)
     {
         $this->category = $category;
+        return $this;
+
+    }
+
+    /**
+     * @return Referential
+     */
+    public function getReferential()
+    {
+        return $this->referential;
+    }
+
+    /**
+     * @param Referential $category
+     * @return Measure
+     */
+    public function setReferential($referential)
+    {
+        $this->referential = $referential;
         return $this;
 
     }

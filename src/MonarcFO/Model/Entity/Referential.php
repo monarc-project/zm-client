@@ -39,6 +39,13 @@ class Referential extends ReferentialSuperClass
     protected $measures;
 
     /**
+     * @var \MonarcFO\Model\Entity\SoaCategory
+     *
+     * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\SoaCategory", mappedBy="referential", cascade={"persist"})
+     */
+    protected $categories;
+
+    /**
     * @param int $anr
     * @return Referential
     */
@@ -55,6 +62,16 @@ class Referential extends ReferentialSuperClass
     public function setMeasures($measures)
     {
         $this->measures = $measures;
+        return $this;
+    }
+
+    /**
+     * @param \MonarcFO\Model\Entity\Category $categories
+     * @return Referential
+     */
+    public function setCategories($categories)
+    {
+        $this->categories = $categories;
         return $this;
     }
 }
