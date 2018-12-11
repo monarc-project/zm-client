@@ -72,8 +72,11 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
       $anrId = (int)$this->params()->fromRoute('anrid');
       $ids = ['anr'=>$anrId,'uniqid'=>$data['uniqid']];
       $data['anr'] = $anrId;
-      $data ['referential'] = ['uniqid' => $data['referential']['uniqid'], 'anr' => $anrId]; //all the objects is send but we just need the uniqid
+      $data ['referential'] = ['anr' => $anrId, 'uniqid' => $data['referential']['uniqid'] ]; //all the objects is send but we just need the uniqid
+      $data['category'] ['referential'] = $data ['referential'];
       unset($data['measuresLinked']);
+      unset($data['amvs']);
+      unset($data ['referential'] );
       return parent::update($ids, $data);
 
     }

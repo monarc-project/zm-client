@@ -24,7 +24,7 @@ class Referential extends ReferentialSuperClass
      * @var \MonarcFO\Model\Entity\Anr
      *
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
