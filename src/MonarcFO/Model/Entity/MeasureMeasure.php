@@ -22,19 +22,19 @@ class MeasureMeasure extends MeasureMeasureSuperClass
 {
 
   /**
-   * @var \MonarcCore\Model\Entity\Measure
+   * @var \MonarcFO\Model\Entity\Measure
    * @ORM\Id
-   * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="measuresLinked")
+   * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Measure", inversedBy="measuresLinked")
    * @ORM\JoinColumns({
-   *   @ORM\JoinColumn(name="father_id", referencedColumnName="uniqid", nullable=true),
+   *   @ORM\JoinColumn(name="father_id", referencedColumnName="uniqid", nullable=true)
    * })
    */
   protected $father;
 
   /**
-   * @var \MonarcCore\Model\Entity\Measure
+   * @var \MonarcFO\Model\Entity\Measure
    * @ORM\Id
-   * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
+   * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Measure", cascade={"persist"})
    * @ORM\JoinColumns({
    *   @ORM\JoinColumn(name="child_id", referencedColumnName="uniqid", nullable=true)
    * })
