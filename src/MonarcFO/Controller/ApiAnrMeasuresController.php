@@ -62,7 +62,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
+            'count' => $service->getFilteredCount($filter, $filterAnd, $filterJoin),
             $this->name => $entities
         ));
     }
