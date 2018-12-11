@@ -44,24 +44,4 @@ class AnrMeasureService extends \MonarcCore\Service\MeasureService
         $SoaEntity->setAnr($anr);
         $SoaTable->save($SoaEntity);
     }
-
-    /**
-     * Deletes an element from the database from its id
-     * @param array $id The object's ID
-     * @return bool True if the deletion is successful, false otherwise
-     */
-    public function delete($id)
-    {
-        $SoaTable = $this->get('SoaTable');
-        $table = $this->get('table');
-        $filterAnd = [];
-        $filterJoin[] = ['as' => 'm','rel' => 'measure']; //make a join because composite key are not supported
-        $filterAnd['anr']= $id['anr'];
-        $filterAnd['m.uniqid']= $id['uniqid'];
-        $soas = $SoaTable->fetchAllFiltered($fields = array(), $page = 1, $limit = 0, $order = null, $filter = null, $filterAnd , $filterJoin , $filterLeft = null);
-        foreach ($soas as $key => $value) {
-          $SoaTable->delete($value['id']);
-        }
-         $table->getDb()->delete($table->getReference($id),true);
-    }
 }

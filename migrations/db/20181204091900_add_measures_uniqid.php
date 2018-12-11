@@ -209,8 +209,6 @@ class AddMeasuresUniqid extends AbstractMigration
       $table->removeColumn('measure_id')
             ->renameColumn('measure_uniqid','measure_id')
             ->update();
-      $table->addForeignKey('measure_id', 'measures', 'uniqid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-            ->update();
 
       // MODIFY STRUCTURE of concerning table
       $table = $this->table('measures_measures');
@@ -222,5 +220,9 @@ class AddMeasuresUniqid extends AbstractMigration
       $table->removeColumn('id')
             ->update();
       $this->execute("ALTER TABLE measures ADD PRIMARY KEY uniqid_anr_id (uniqid, anr_id)");
+
+      $table = $this->table('soa'); //set the stufff for soa
+      $table->addForeignKey(['measure_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
     }
 }
