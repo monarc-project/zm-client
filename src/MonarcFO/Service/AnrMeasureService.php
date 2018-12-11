@@ -54,15 +54,14 @@ class AnrMeasureService extends \MonarcCore\Service\MeasureService
     {
         $SoaTable = $this->get('SoaTable');
         $table = $this->get('table');
+        $filterAnd = [];
         $filterJoin[] = ['as' => 'm','rel' => 'measure']; //make a join because composite key are not supported
-        $filterAnd['m.anr']= $id['anr'];
+        $filterAnd['anr']= $id['anr'];
         $filterAnd['m.uniqid']= $id['uniqid'];
         $soas = $SoaTable->fetchAllFiltered($fields = array(), $page = 1, $limit = 0, $order = null, $filter = null, $filterAnd , $filterJoin , $filterLeft = null);
         foreach ($soas as $key => $value) {
           $SoaTable->delete($value['id']);
-
         }
-        $measure = $table->getEntity($id);
          $table->getDb()->delete($table->getReference($id),true);
     }
 }
