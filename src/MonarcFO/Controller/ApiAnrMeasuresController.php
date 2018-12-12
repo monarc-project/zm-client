@@ -83,7 +83,11 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 
     public function create($data)
     {
-        $data ['referential'] = $data['referential']['uniqid']; //all the objects is send but we just need the uniqid
+      $anrId = (int)$this->params()->fromRoute('anrid');
+        $data ['referential'] = ['anr' => $anrId, 'uniqid' => $data['referential']['uniqid'] ]; //all the objects is send but we just need the uniqid
+        unset($data['measuresLinked']);
+        unset($data['amvs']);
+        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         return parent::create($data);
     }
 
