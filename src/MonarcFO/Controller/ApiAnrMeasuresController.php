@@ -87,7 +87,6 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         $data ['referential'] = ['anr' => $anrId, 'uniqid' => $data['referential']['uniqid'] ]; //all the objects is send but we just need the uniqid
         unset($data['measuresLinked']);
         unset($data['amvs']);
-        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         return parent::create($data);
     }
 

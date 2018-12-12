@@ -23,10 +23,21 @@ use MonarcCore\Model\Entity\MeasureSuperClass;
 class Measure extends MeasureSuperClass
 {
 
-  /**
-   * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\MeasureMeasure", mappedBy="father")
-   */
+
+   /**
+     * Many Users have many Users.
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="measuresLinkedToMe")
+     * @ORM\JoinTable(name="measures_measures",
+     *      joinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uniqid")}
+     *      )
+     */
    protected $measuresLinked;
+   /**
+     * Many Users have many Users.
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="measuresLinked")
+     */
+   protected $measuresLinkedToMe;
 
     /**
      * @var \MonarcFO\Model\Entity\Anr
