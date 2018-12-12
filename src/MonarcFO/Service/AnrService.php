@@ -431,28 +431,32 @@ class AnrService extends \MonarcCore\Service\AbstractService
             if ($source == MonarcObject::SOURCE_COMMON) {
                 foreach ($data['referentials'] as $referential_array) {
                     $referential = $this->get('referentialTable')->getEntity($referential_array['uniqid']);
-                    // first duplicate categories
+                    $measures = $referential->measures;
+                    $referential->setMeasures(null);
+
+                    // duplicate referentials
+                    $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
+                    $newReferential->setUniqid($referential->getUniqid());
+                    $newReferential->setAnr($newAnr);
+
+                    // duplicate categories
                     $categoryNewIds = [];
-                    $category = $this->get('SoaCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+                    $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getUniqid()]);
                     foreach ($category as $cat) {
                         $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                         $newCategory->set('id', null);
                         // $this->get('SoaCategoryCliTable')->getDb()->flush();
                         $newCategory->setAnr($newAnr);
                         $newCategory->setMeasures(null);
-                        $newCategory->setReferential(null);
+                        $newCategory->setReferential($newReferential);
                         $this->get('SoaCategoryCliTable')->save($newCategory, false);
                         $categoryNewIds[$cat->id] = $newCategory;
                     }
 
-                    // duplicate referentials
-                    $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
-                    $newReferential->setUniqid($referential->getUniqid());
-                    $newReferential->setAnr($newAnr);
                     $newReferential->setCategories($categoryNewIds);
 
                     $new_measures = [];
-                    foreach ($referential->measures as $measure) {
+                    foreach ($measures as $measure) {
                         // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                         // $newMeasure->set('id', null);
@@ -463,10 +467,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setUniqid($measure->getUniqid());
                         $this->get('measureCliTable')->save($newMeasure, false);
+                        $this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->id] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
-                    $newReferential->setMeasures($new_measures);
+                    $newReferential->setMeasures(null);
 
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
