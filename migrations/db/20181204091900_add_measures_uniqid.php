@@ -169,8 +169,7 @@ class AddMeasuresUniqid extends AbstractMigration
       $table->removeColumn('measure_id')
             ->renameColumn('measure_uniqid','measure_id')
             ->update();
-      $table->addForeignKey('measure_id', 'measures', 'uniqid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-            ->update();
+
 
       $table = $this->table('measures_measures'); //set the stufff for measures_measures
       $table->dropForeignKey('father_id')
@@ -197,8 +196,6 @@ class AddMeasuresUniqid extends AbstractMigration
       $table->removeColumn('measure_id')
             ->renameColumn('measure_uniqid','measure_id')
             ->update();
-      $table->addForeignKey('measure_id', 'measures', 'uniqid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-            ->update();
 
       $table = $this->table('soa'); //set the stufff for soa
       $table->dropForeignKey('measure_id')
@@ -221,7 +218,14 @@ class AddMeasuresUniqid extends AbstractMigration
             ->update();
       $this->execute("ALTER TABLE measures ADD PRIMARY KEY uniqid_anr_id (uniqid, anr_id)");
 
-      $table = $this->table('soa'); //set the stufff for soa
+      /* SET the foreign key */
+      $table = $this->table('soa');
+      $table->addForeignKey(['measure_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+      $table = $this->table('measures_amvs');
+      $table->addForeignKey(['measure_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+      $table = $this->table('recommandations_measures');
       $table->addForeignKey(['measure_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
     }
