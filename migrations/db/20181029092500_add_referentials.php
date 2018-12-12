@@ -43,6 +43,7 @@ class AddReferentials extends AbstractMigration
           ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
           ->addColumn('updated_at', 'datetime', array('null' => true))
           ->addIndex(array('uniqid'))
+          ->addIndex(['uniqid','anr_id'], ['unique' => true])
           ->create();
 
       $table->changeColumn('id', 'integer', array('identity'=>true,'signed'=>false))->update();
@@ -56,7 +57,6 @@ class AddReferentials extends AbstractMigration
       $anr_ids = $this->fetchAll('SELECT id FROM anrs');
       foreach ($anr_ids as $anr_id) {
           $referentials[] = [
-              'id' => '',
               'anr_id' => $anr_id['id'],
               'uniqid' => '98ca84fb-db87-11e8-ac77-0800279aaa2b',
               'label1' => 'ISO 27002',
@@ -65,16 +65,17 @@ class AddReferentials extends AbstractMigration
               'label4' => 'ISO 27002'
           ];
       }
-      $this->insert("referentials", $referentials);
+      if(count($referentials)>0)
+        $this->insert("referentials", $referentials);
 
       //add foreign key for measures
       $table = $this->table('measures');
       $table
           ->addColumn('referential_uniqid', 'uuid', ['after' => 'soacategory_id'])
-          ->update();
+          ->save();
       $this->execute('UPDATE measures m SET m.referential_uniqid=(SELECT uniqid FROM referentials LIMIT 1) ;');
       $table
-          ->addForeignKey('referential_uniqid', 'referentials', 'uniqid', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+          ->addForeignKey(['referential_uniqid', 'anr_id'], 'referentials', ['uniqid', 'anr_id'], array('delete' => 'CASCADE','update' => 'RESTRICT'))
           ->update();
 
       //add foreign key for the category
@@ -84,7 +85,7 @@ class AddReferentials extends AbstractMigration
           ->update();
       $this->execute('UPDATE soacategory s SET s.referential_uniqid=(SELECT uniqid FROM referentials LIMIT 1) ;');
       $table
-          ->addForeignKey('referential_uniqid', 'referentials', 'uniqid', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+      ->addForeignKey(['referential_uniqid', 'anr_id'], 'referentials', ['uniqid', 'anr_id'], array('delete' => 'CASCADE','update' => 'RESTRICT'))
           ->update();
     }
 }
