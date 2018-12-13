@@ -80,7 +80,8 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
           $anrId = (int)$this->params()->fromRoute('anrid');
           $fatherId = $this->params()->fromQuery('father');
           $childId = $this->params()->fromQuery('child');
-          return $this->getService()->delete(['anr'=>$anrId, 'father'=>$fatherId, 'child'=>$childId]);
+          $this->getService()->delete(['anr'=>$anrId, 'father'=>$fatherId, 'child'=>$childId]);
+          return new JsonModel(['status' => 'ok']);
         }else
           return parent::deleteList($data);
     }
