@@ -35,7 +35,6 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
         $filter = $this->params()->fromQuery('filter');
         $status = $this->params()->fromQuery('status');
         $referential = $this->params()->fromQuery('referential');
-        $filterJoin[] = ['as' => 'r','rel' => 'referential'];            //make a join because composite key are not supported
 
         $filterAnd = [];
         if (is_null($status)) {
@@ -58,7 +57,7 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd, $filterJoin),
+            'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ));
     }
