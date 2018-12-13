@@ -426,7 +426,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
             }
 
-            // duplicate categories, referentials and measure
+            // duplicate categories, referentials and measures
             $measuresNewIds = [];
             if ($source == MonarcObject::SOURCE_COMMON) {
                 foreach ($data['referentials'] as $referential_array) {
@@ -434,7 +434,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $measures = $referential->measures;
                     $referential->setMeasures(null);
 
-                    // duplicate referentials
+                    // duplicate the referential
                     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
                     $newReferential->setUniqid($referential->getUniqid());
                     $newReferential->setAnr($newAnr);
@@ -445,7 +445,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     foreach ($category as $cat) {
                         $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                         $newCategory->set('id', null);
-                        // $this->get('SoaCategoryCliTable')->getDb()->flush();
                         $newCategory->setAnr($newAnr);
                         $newCategory->setMeasures(null);
                         $newCategory->setReferential($newReferential);
@@ -459,8 +458,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     foreach ($measures as $measure) {
                         // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
-                        // $newMeasure->set('id', null);
-                        //$this->get('measureCliTable')->getDb()->flush();
                         $newMeasure->setAnr($newAnr);
                         $newMeasure->setAmvs(null);
                         $newMeasure->setReferential($newReferential);
