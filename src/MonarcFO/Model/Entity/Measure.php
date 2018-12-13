@@ -80,7 +80,6 @@ class Measure extends MeasureSuperClass
      */
     protected $referential;
 
-
     /**
      * @return Anr
      */

@@ -56,6 +56,14 @@ class Referential extends ReferentialSuperClass
     }
 
     /**
+     * @return Measure
+     */
+    public function getMeasures()
+    {
+        return $this->measures;
+    }
+
+    /**
      * @param \MonarcFO\Model\Entity\Measure $measures
      * @return Referential
      */
@@ -63,6 +71,14 @@ class Referential extends ReferentialSuperClass
     {
         $this->measures = $measures;
         return $this;
+    }
+
+    /**
+     * @return Category
+     */
+    public function getCategories()
+    {
+        return $this->categories;
     }
 
     /**
