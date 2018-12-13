@@ -72,4 +72,16 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
       ];
       return parent::create($data, $last=true);
     }
+
+    public function deleteList($data)
+    {
+        if($data==null) //we delete one measuremeasure
+        {
+          $anrId = (int)$this->params()->fromRoute('anrid');
+          $fatherId = $this->params()->fromQuery('father');
+          $childId = $this->params()->fromQuery('child');
+          return $this->getService()->delete(['anr'=>$anrId, 'father'=>$fatherId, 'child'=>$childId]);
+        }else
+          return parent::deleteList($data);
+    }
 }

@@ -57,4 +57,13 @@ class AnrMeasureMeasureService extends AbstractService
         }
         return $id;
     }
+
+    public function delete($id)
+    {
+      $measureTable = $this->get('measureTable');
+      $father = $measureTable->getEntity(['uniqid'=>$id['father'],'anr'=>$id['anr']]);
+      $child = $measureTable->getEntity(['uniqid'=>$id['child'],'anr'=>$id['anr']]);
+      $father->deleteLinkedMeasure($child);
+      $measureTable->save($father);
+    }
 }
