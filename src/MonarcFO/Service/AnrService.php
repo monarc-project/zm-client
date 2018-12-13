@@ -489,19 +489,21 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $referentials = $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($referentials as $referential) {
                     // duplicate referentials
+                    $measures = $referential->measures;
+                    $referential->setMeasures(null);
                     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
                     $newReferential->setUniqid($referential->getUniqid());
                     $newReferential->setAnr($newAnr);
 
                     $new_measures = [];
-                    foreach ($referential->measures as $measure) {
+                    foreach ($measures as $measure) {
                         // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
-                        //$this->get('measureCliTable')->getDb()->flush();
                         $newMeasure->setAnr($newAnr);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setUniqid($measure->getUniqid());
                         $this->get('measureCliTable')->save($newMeasure, false);
+                        $this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->id] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
