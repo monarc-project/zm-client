@@ -68,8 +68,11 @@ class ApiSoaController extends  ApiAnrAbstractController
       }
 
       $service = $this->getService();
-
-      $entities = $service->getList($page, $limit, null, $filter, $filterAnd);
+      if($order=='measure')
+        $order='m.code';
+      else if($order=='-measure')
+        $order='-m.code';
+      $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
       if (count($this->dependencies)) {
           foreach ($entities as $key => $entity) {
               $this->formatDependencies($entities[$key], $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['category','referential']);
