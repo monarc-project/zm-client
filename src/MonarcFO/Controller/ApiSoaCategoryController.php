@@ -50,7 +50,7 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
 
         $service = $this->getService();
 
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd, $filterJoin);
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);

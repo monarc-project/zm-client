@@ -148,5 +148,4 @@ class Measure extends MeasureSuperClass
 
     }
 
-
 }
