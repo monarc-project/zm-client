@@ -313,7 +313,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
                 $newAnr->set('cacheModelIsScalesUpdatable', $model->isScalesUpdatable);
             }
-            if ($isSnapshot) { // Si c'est un snapshot on ajoute le préfixe "[SNAP]"
+            if ($isSnapshot) { // if snapshot, add the prefix "[SNAP]"
                 for ($i = 1; $i <= 4; $i++) {
                     $lab = trim($newAnr->get('label' . $i));
                     if (!empty($lab)) {
@@ -326,7 +326,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $anrCliTable = $this->get('anrCliTable');
             $id = $anrCliTable->save($newAnr,false);
 
-            if (!$isSnapshot && !$isSnapshotCloning) { // inutile si c'est un snapshot & dans la cas d'un restore (SnapshotService::restore)
+            if (!$isSnapshot && !$isSnapshotCloning) { // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
                 //add user to anr
                 $userCliTable = $this->get('userCliTable');
                 $userArray = $userCliTable->getConnectedUser();
@@ -495,16 +495,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     }
                     $newReferential->setCategories($categoryNewIds);
 
-
                     $new_measures = [];
                     foreach ($measures as $measure) {
                         // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                         $newMeasure->setAnr($newAnr);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                        $newMeasure->setUniqid($measure->getUniqid());
+                        $newMeasure->setReferential($newReferential);
                         $this->get('measureCliTable')->save($newMeasure, false);
-                        $this->get('measureCliTable')->getDb()->flush();
+                        //$this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->id] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
@@ -533,7 +532,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                   $newSoa->setAnr($newAnr);
                   $newSoa->setMeasure($measuresNewIds[$soa->measure->id]);
                   $this->get('SoaCliTable')->save($newSoa, false);
-                  // $this->get('SoaCliTable')->getDb()->flush();
               }
             }
 

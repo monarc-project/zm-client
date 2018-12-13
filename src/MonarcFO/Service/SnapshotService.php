@@ -74,7 +74,6 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
                 unset($data[$key]);
             }
         }
-
         return parent::patch($id, $data);
     }
 
