@@ -216,7 +216,6 @@ class AddMeasuresUniqid extends AbstractMigration
 
       $table = $this->table('measures');
       $table->removeColumn('id')
-            ->dropForeignKey('anr_id')
             ->save();
       $this->execute("ALTER TABLE measures ADD PRIMARY KEY uniqid_anr_id (uniqid, anr_id)");
 
@@ -229,6 +228,10 @@ class AddMeasuresUniqid extends AbstractMigration
             ->update();
       $table = $this->table('recommandations_measures');
       $table->addForeignKey(['measure_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+      $table = $this->table('measures_measures');
+      $table->addForeignKey(['father_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->addForeignKey(['child_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
     }
 }

@@ -67,11 +67,16 @@ class AddReferentials extends AbstractMigration
       }
       if(count($referentials)>0)
         $this->insert("referentials", $referentials);
+      //remove the id
+      $table->removeColumn('id')
+            ->save();
+      $this->execute("ALTER TABLE referentials ADD PRIMARY KEY uniqid_anr_id (uniqid, anr_id)");
 
       //add foreign key for measures
       $table = $this->table('measures');
       $table
           ->addColumn('referential_uniqid', 'uuid', ['after' => 'soacategory_id'])
+          ->dropForeignKey('anr_id')
           ->save();
       $this->execute('UPDATE measures m SET m.referential_uniqid=(SELECT uniqid FROM referentials LIMIT 1) ;');
       $table

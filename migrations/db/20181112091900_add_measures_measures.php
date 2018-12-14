@@ -35,8 +35,6 @@ class AddMeasuresMeasures extends AbstractMigration
           ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
           ->addColumn('father_id', 'integer', array('null' => false, 'signed' => false))
           ->addColumn('child_id', 'integer', array('null' => false, 'signed' => false))
-          ->addForeignKey('father_id', 'measures', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-          ->addForeignKey('child_id', 'measures', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
           ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
           ->addColumn('created_at', 'datetime', array('null' => true))
           ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
