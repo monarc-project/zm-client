@@ -107,16 +107,34 @@ class ApiSoaController extends  ApiAnrAbstractController
     */
    public function patch($id, $data)
    {
-     file_put_contents('php://stderr', print_r('$id', TRUE).PHP_EOL);
        $anrId = (int)$this->params()->fromRoute('anrid');
        if (empty($anrId)) {
            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
        }
        $data['anr'] = $anrId;
        $data['measure'] = ['anr' => $anrId , 'uniqid' => $data['measure']['uniqid']];
-       //unset($data['measures']);
-       file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
        return parent::patch($id, $data);
+   }
+
+   public function patchList($data)
+   {
+       $anrId = (int)$this->params()->fromRoute('anrid');
+       if (empty($anrId)) {
+           throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+       }
+
+       $created_objects = array();
+       foreach ($data as $new_data) {
+           $new_data['anr'] = $anrId;
+           $new_data['measure'] = ['anr' => $anrId , 'uniqid' => $new_data['measure']['uniqid']];
+           $id = $new_data['id'];
+           parent::patch($id, $new_data);
+           array_push($created_objects, $id);
+       }
+       return new JsonModel([
+           'status' => 'ok',
+           'id' => $created_objects,
+       ]);
    }
 
 }
