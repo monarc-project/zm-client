@@ -24,25 +24,22 @@ class MeasureMeasure extends MeasureMeasureSuperClass
   /**
    * @var \MonarcFO\Model\Entity\Measure
    * @ORM\Id
-   * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Measure", inversedBy="measuresLinked")
-   * @ORM\JoinColumns({
-   *   @ORM\JoinColumn(name="father_id", referencedColumnName="uniqid", nullable=true)
-   * })
+   * @ORM\Column(name="father_id", type="uuid", nullable=false)
+   * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Measure", mappedBy="measuresLinked")
    */
   protected $father;
 
   /**
    * @var \MonarcFO\Model\Entity\Measure
    * @ORM\Id
-   * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Measure", cascade={"persist"})
-   * @ORM\JoinColumns({
-   *   @ORM\JoinColumn(name="child_id", referencedColumnName="uniqid", nullable=true)
-   * })
+   * @ORM\Column(name="child_id", type="uuid", nullable=false)
+   * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Measure", mappedBy="measuresLinkedToMe")
    */
   protected $child;
     /**
      * @var \MonarcFO\Model\Entity\Anr
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\Id
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr",)
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })

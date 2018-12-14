@@ -24,17 +24,17 @@ class Measure extends MeasureSuperClass
 {
    /**
      * Many Users have many Users.
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="measuresLinkedToMe")
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="father", cascade={"persist"})
      * @ORM\JoinTable(name="measures_measures",
-     *      joinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uniqid")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
+     *      joinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
      *      )
      */
    protected $measuresLinked;
 
    /**
      * Many Users have many Users.
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="measuresLinked")
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="child", cascade={"persist"})
      */
    protected $measuresLinkedToMe;
 
