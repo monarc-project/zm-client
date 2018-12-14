@@ -37,7 +37,6 @@ class ApiSoaController extends  ApiAnrAbstractController
       if (empty($anrId)) {
           throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
       }
-      $filterJoin[] = ['as' => 'r','rel' => 'referential'];            //make a join because composite key are not supported
 
       $filterAnd = ['anr' => $anrId];
 
