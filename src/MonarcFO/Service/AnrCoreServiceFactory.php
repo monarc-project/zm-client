@@ -37,6 +37,9 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
         'interviewTable' => 'MonarcFO\Model\Table\InterviewTable',
-        'deliveryTable' => 'MonarcFO\Model\Table\DeliveryTable'
+        'deliveryTable' => 'MonarcFO\Model\Table\DeliveryTable',
+        'referentialTable' => 'MonarcFO\Model\Table\ReferentialTable',
+        'measureTable' => 'MonarcFO\Model\Table\MeasureTable',
+        'measureMeasureTable' => 'MonarcFO\Model\Table\MeasureMeasureTable',
     ];
 }
