@@ -12,9 +12,7 @@
     "require": {
         "php": ">=5.5",
         "ext-intl": "*",
-        "ext-imagick": "*",
-        "ramsey/uuid": "^3.8",
-        "ramsey/uuid-doctrine": "^1.5"
+        "ext-imagick": "*"
     },
     "autoload": {
         "psr-0": {"MonarcFO\\":"/"}
