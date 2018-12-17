@@ -41,19 +41,19 @@ class AnrMeasureMeasureService extends AbstractService
             throw new \MonarcCore\Exception\Exception('This component already exist for this object', 412);
         }else {
           $anr = $anrTable->getEntity($data['anr']);
-          $father = $measureTable->getEntity($data['father']);
-          $child = $measureTable->getEntity($data['child']);
-          $father->addLinkedMeasure($child);
-          $measureTable->save($father);
-          // $entity = $this->get('entity');
-          // $entity->setAnr($anr);
-          // $entity->setFather($father);
-          // $entity->setChild($child);
-          // $measureMeasureTable->save($entity, false);
-          // $entity2 = clone $entity; //make the save in the other way
-          // $entity2->setFather($child);
-          // $entity2->setChild($father);
-          // $measureMeasureTable->save($entity2);
+          // $father = $measureTable->getEntity($data['father']);
+          // $child = $measureTable->getEntity($data['child']);
+          // $father->addLinkedMeasure($child);
+          // $measureTable->save($father);
+           $entity = $this->get('entity');
+           $entity->setAnr($anr);
+           $entity->setFather($data['father']['uniqid']);
+           $entity->setChild($data['child']['uniqid']);
+           $measureMeasureTable->save($entity, false);
+           $entity2 = clone $entity; //make the save in the other way
+           $entity2->setFather($data['child']['uniqid']);
+           $entity2->setChild($data['father']['uniqid']);
+           $measureMeasureTable->save($entity2);
         }
         return $id;
     }

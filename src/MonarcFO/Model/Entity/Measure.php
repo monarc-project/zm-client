@@ -23,8 +23,8 @@ use MonarcCore\Model\Entity\MeasureSuperClass;
 class Measure extends MeasureSuperClass
 {
    /**
-     * Many Users have many Users.
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="father", cascade={"persist"})
+     * Many Measures have many Measures.
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="measuresLinkedToMe", cascade={"persist"})
      * @ORM\JoinTable(name="measures_measures",
      *      joinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
@@ -33,8 +33,8 @@ class Measure extends MeasureSuperClass
    protected $measuresLinked;
 
    /**
-     * Many Users have many Users.
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="child", cascade={"persist"})
+     * Many Measures have many Measures.
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", inversedBy="measuresLinked", cascade={"persist"})
      */
    protected $measuresLinkedToMe;
 

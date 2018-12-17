@@ -24,16 +24,14 @@ class MeasureMeasure extends MeasureMeasureSuperClass
   /**
    * @var \MonarcFO\Model\Entity\Measure
    * @ORM\Id
-   * @ORM\Column(name="father_id", type="uuid", nullable=false)
-   * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Measure", mappedBy="measuresLinked")
+   * @ORM\Column(name="father_id",type="uuid", nullable=true)
    */
   protected $father;
 
   /**
    * @var \MonarcFO\Model\Entity\Measure
    * @ORM\Id
-   * @ORM\Column(name="child_id", type="uuid", nullable=false)
-   * @ORM\ManyToMany(targetEntity="MonarcCore\Model\Entity\Measure", mappedBy="measuresLinkedToMe")
+   * @ORM\Column(name="child_id",type="uuid", nullable=true)
    */
   protected $child;
     /**
