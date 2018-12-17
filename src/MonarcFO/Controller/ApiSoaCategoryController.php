@@ -66,7 +66,7 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
     {
       $anrId = (int)$this->params()->fromRoute('anrid');
         $data ['referential'] = ['uniqid' => $data['referential'], 'anr'=>$anrId]; //all the objects is send but we just need the uniqid
-        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
+        // file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
 
         return parent::create($data);
     }

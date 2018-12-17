@@ -30,6 +30,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $themeTable;
     protected $deliveryTable;
     protected $instanceRiskTable;
+    protected $referentialTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -134,7 +135,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
             }
 
-
             // On s'occupe de l'évaluation. Le $data['scales'] n'est présent que sur la première instance, il ne l'est
             // plus après donc ce code n'est exécuté qu'une seule fois.
             $local_scale_impact = null;
@@ -159,7 +159,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 $include_eval = true;
             }
 
-            // On importe l'objet
+            // Import the object
             if (!isset($sharedData['objects'])) {
                 $sharedData['objects'] = [];
             }
@@ -485,7 +485,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         }
 
                         // Recommandations
-
                         if (!empty($data['recos'][$risk['id']])) {
                             foreach ($data['recos'][$risk['id']] as $reco) {
                                 // La recommandation
@@ -1167,6 +1166,30 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     }
               }
           }
+          // import the referentials
+          if (isset($data['referentials'])) {
+              file_put_contents('php://stderr', print_r('Importing referentials........', TRUE).PHP_EOL);
+              file_put_contents('php://stderr', print_r(count($data['referentials']), TRUE).PHP_EOL);
+              foreach ($data['referentials'] as $refefentialUUID => $referential_array) {
+                  file_put_contents('php://stderr', print_r($refefentialUUID, TRUE).PHP_EOL);
+                  // check if the referential is not already present in the analysis
+                  $referential = $this->get('referentialTable')->getEntityByFields(['anr' => $anr->id, 'uniqid' => $refefentialUUID]);
+                  if ($referential) {
+                      file_put_contents('php://stderr', print_r('Referential already in analysis', TRUE).PHP_EOL);
+                      return false;
+                  }
+                  $newReferential = new \MonarcFO\Model\Entity\Referential($referential_array);
+                  $newReferential->setAnr($anr);
+                  $this->get('referentialTable')->save($newReferential);
+              }
+          } else {
+              file_put_contents('php://stderr', print_r('No referentials to import', TRUE).PHP_EOL);
+          }
+          // import the measures
+          if (isset($data['measures'])) {
+              
+          }
+          // import scales
           if (!empty($data['scales'])) {
             //Approximate values from destination analyse
             $ts = ['c', 'i', 'd'];
