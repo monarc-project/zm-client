@@ -31,6 +31,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $deliveryTable;
     protected $instanceRiskTable;
     protected $referentialTable;
+    protected $measureTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -1173,21 +1174,32 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               foreach ($data['referentials'] as $refefentialUUID => $referential_array) {
                   file_put_contents('php://stderr', print_r($refefentialUUID, TRUE).PHP_EOL);
                   // check if the referential is not already present in the analysis
-                  $referential = $this->get('referentialTable')->getEntityByFields(['anr' => $anr->id, 'uniqid' => $refefentialUUID]);
-                  if ($referential) {
-                      file_put_contents('php://stderr', print_r('Referential already in analysis', TRUE).PHP_EOL);
-                      return false;
+                  $referentials = $this->get('referentialTable')->getEntityByFields(['anr' => $anr->id, 'uniqid' => $refefentialUUID]);
+                  if (empty($referentials)) {
+                      $newReferential = new \MonarcFO\Model\Entity\Referential($referential_array);
+                      $newReferential->setAnr($anr);
+                      $this->get('referentialTable')->save($newReferential);
                   }
-                  $newReferential = new \MonarcFO\Model\Entity\Referential($referential_array);
-                  $newReferential->setAnr($anr);
-                  $this->get('referentialTable')->save($newReferential);
               }
-          } else {
-              file_put_contents('php://stderr', print_r('No referentials to import', TRUE).PHP_EOL);
           }
           // import the measures
           if (isset($data['measures'])) {
-              
+              file_put_contents('php://stderr', print_r('Importing measures........', TRUE).PHP_EOL);
+              file_put_contents('php://stderr', print_r(count($data['measures']), TRUE).PHP_EOL);
+              foreach ($data['measures'] as $measureUUID => $measure_array) {
+                  // check if the measure is not already in the analysis
+                  $measures = $this->get('measureTable')->getEntityByFields(['anr' => $anr->id, 'uniqid' => $measureUUID]);
+                  if (empty($measures)) {
+                      // load the referential linked to the measure
+                      $referentials = $this->get('referentialTable')->getEntityByFields(['anr' => $anr->id, 'uniqid' => $measure_array['referential']]);
+                      if (!empty($referentials)) {
+                          $newMeasure = new \MonarcFO\Model\Entity\Measure($measure_array);
+                          $newMeasure->setAnr($anr);
+                          $newMeasure->setReferential($referentials[0]);
+                          $this->get('measureTable')->save($newMeasure);
+                      }
+                  }
+              }
           }
           // import scales
           if (!empty($data['scales'])) {

@@ -132,7 +132,6 @@ class Measure extends MeasureSuperClass
     {
         $this->referential = $referential;
         return $this;
-
     }
 
     /**
