@@ -31,6 +31,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $deliveryTable;
     protected $instanceRiskTable;
     protected $referentialTable;
+    protected $soaCategoryTable;
     protected $measureTable;
     protected $measureMeasureTable;
 
@@ -1181,6 +1182,26 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   }
               }
           }
+          // import the soacategories
+          if (isset($data['soacategories'])) {
+              foreach ($data['soacategories'] as $soaCategory) {
+                  // check if the soacategory is not already present in the analysis
+                  $soacategories = $this->get('soaCategoryTable')
+                                        ->getEntityByFields(['anr' => $anr->id, 'code' => $soaCategory['code']]);
+                  if (empty($soacategories)) {
+                       // load the referential linked to the soacategory
+                      $referentials = $this->get('referentialTable')
+                                            ->getEntityByFields(['anr' => $anr->id,
+                                            'uniqid' => $soaCategory['referential']]);
+                      if (!empty($referentials)) {
+                          $newSoaCategory = new \MonarcFO\Model\Entity\SoaCategory($soaCategory);
+                          $newSoaCategory->setAnr($anr);
+                          $newSoaCategory->setReferential($referentials[0]);
+                          $this->get('soaCategoryTable')->save($newSoaCategory);
+                      }
+                  }
+              }
+          }
           // import the measures
           if (isset($data['measures'])) {
               foreach ($data['measures'] as $measureUUID => $measure_array) {
@@ -1191,10 +1212,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       $referentials = $this->get('referentialTable')
                                             ->getEntityByFields(['anr' => $anr->id,
                                             'uniqid' => $measure_array['referential']]);
-                      if (!empty($referentials)) {
+                      $soaCategories = $this->get('soaCategoryTable')
+                                            ->getEntityByFields(['anr' => $anr->id,
+                                                                  'code' => $measure_array['category']]);
+                      if (!empty($referentials) && !empty($soaCategories)) {
                           $newMeasure = new \MonarcFO\Model\Entity\Measure($measure_array);
                           $newMeasure->setAnr($anr);
                           $newMeasure->setReferential($referentials[0]);
+                          $newMeasure->setCategory($soaCategories[0]);
                           $this->get('measureTable')->save($newMeasure);
                       }
                   }

@@ -113,7 +113,6 @@ class Measure extends MeasureSuperClass
     {
         $this->category = $category;
         return $this;
-
     }
 
     /**

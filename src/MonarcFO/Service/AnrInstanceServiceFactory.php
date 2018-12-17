@@ -39,6 +39,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'themeTable' => 'MonarcFO\Model\Table\ThemeTable',
         'deliveryTable' => 'MonarcFO\Model\Table\DeliveryTable',
         'referentialTable' => 'MonarcFO\Model\Table\ReferentialTable',
+        'soaCategoryTable' => 'MonarcFO\Model\Table\SoaCategoryTable',
         'measureTable' => 'MonarcFO\Model\Table\MeasureTable',
         'measureMeasureTable' => 'MonarcFO\Model\Table\MeasureMeasureTable',
 
