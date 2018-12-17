@@ -1170,10 +1170,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
           }
           // import the referentials
           if (isset($data['referentials'])) {
-              file_put_contents('php://stderr', print_r('Importing referentials........', TRUE).PHP_EOL);
-              file_put_contents('php://stderr', print_r(count($data['referentials']), TRUE).PHP_EOL);
               foreach ($data['referentials'] as $refefentialUUID => $referential_array) {
-                  file_put_contents('php://stderr', print_r($refefentialUUID, TRUE).PHP_EOL);
                   // check if the referential is not already present in the analysis
                   $referentials = $this->get('referentialTable')
                                         ->getEntityByFields(['anr' => $anr->id, 'uniqid' => $refefentialUUID]);
@@ -1186,8 +1183,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
           }
           // import the measures
           if (isset($data['measures'])) {
-              file_put_contents('php://stderr', print_r('Importing measures........', TRUE).PHP_EOL);
-              file_put_contents('php://stderr', print_r(count($data['measures']), TRUE).PHP_EOL);
               foreach ($data['measures'] as $measureUUID => $measure_array) {
                   // check if the measure is not already in the analysis
                   $measures = $this->get('measureTable')->getEntityByFields(['anr' => $anr->id, 'uniqid' => $measureUUID]);
@@ -1207,8 +1202,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
           }
           // import the measuresmeasures
           if (isset($data['measuresMeasures'])) {
-              file_put_contents('php://stderr', print_r('Importing measuresmeasures........', TRUE).PHP_EOL);
-              file_put_contents('php://stderr', print_r(count($data['measuresMeasures']), TRUE).PHP_EOL);
               foreach ($data['measuresMeasures'] as $measureMeasure) {
                   // check if the measuremeasure is not already in the analysis
                   $measuresmeasures = $this->get('measureMeasureTable')
