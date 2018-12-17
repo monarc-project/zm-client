@@ -39,7 +39,6 @@ namespace MonarcFO\Service;
           $filterJoin,
           $filterLeft
       );
-      file_put_contents('php://stderr', print_r($order, TRUE).PHP_EOL);
       if ($order == "m.code" || $order == "-m.code") {
         $desc = ($order == "-m.code");
         if(!$desc)
