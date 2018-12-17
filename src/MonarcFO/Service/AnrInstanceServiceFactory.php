@@ -40,6 +40,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'deliveryTable' => 'MonarcFO\Model\Table\DeliveryTable',
         'referentialTable' => 'MonarcFO\Model\Table\ReferentialTable',
         'measureTable' => 'MonarcFO\Model\Table\MeasureTable',
+        'measureMeasureTable' => 'MonarcFO\Model\Table\MeasureMeasureTable',
 
         // Services
         'instanceConsequenceService' => 'MonarcFO\Service\AnrInstanceConsequenceService',
