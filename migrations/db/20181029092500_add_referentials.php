@@ -69,6 +69,7 @@ class AddReferentials extends AbstractMigration
         $this->insert("referentials", $referentials);
       //remove the id
       $table->removeColumn('id')
+            ->dropForeignKey('anr_id')
             ->save();
       $this->execute("ALTER TABLE referentials ADD PRIMARY KEY uniqid_anr_id (uniqid, anr_id)");
 
