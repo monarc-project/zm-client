@@ -65,4 +65,27 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
             'id' => $id,
         ]);
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function patch($id, $data)
+    {
+        /** @var AnrService $service */
+        $service = $this->getService();
+
+        file_put_contents('php://stderr', print_r('ApiAnrController::patch()', TRUE).PHP_EOL);
+
+        if (isset($data['referentials'])) {
+            $service->updateReferentials($data);
+            unset($data['referentials']);
+        }
+
+        $service->patch($id, $data);
+
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
+    }
 }
