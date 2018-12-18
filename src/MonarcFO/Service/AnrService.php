@@ -260,19 +260,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
     public function updateReferentials($data) {
         $anrTable = $this->get('anrCliTable');
         $anr = $anrTable->getEntity($data['id']);
-        $refs = array_map(function($referential) { return $referential['uniqid']; },
-                        $data['referentials']);
+        $uniqid_array = array_map(function($referential) { return $referential['uniqid']; },
+                                    $data['referentials']);
 
         // search for referentials to unlink from the anr
         foreach ($anr->getReferentials() as $referential) {
-            if (! in_array($referential->getUniqid()->toString(), $refs) ) {
+            if (! in_array($referential->getUniqid()->toString(), $uniqid_array) ) {
                 $this->get('referentialCliTable')->delete(['anr' => $anr->id,
                                     'uniqid' => $referential->getUniqid()->toString()]);
             }
         }
 
         // link new referentials to an ANR
-        foreach ($refs as $uniqid) {
+        foreach ($uniqid_array as $uniqid) {
             $referentials = $this->get('referentialCliTable')
                                 ->getEntityByFields(['anr' => $anr->id,
                                                     'uniqid' => $uniqid]);
@@ -296,7 +296,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             foreach ($category as $cat) {
                 $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                 $newCategory->set('id', null);
-                $newCategory->setAnr($newAnr);
+                $newCategory->setAnr($anr);
                 $newCategory->setMeasures(null);
                 $newCategory->setReferential($newReferential);
                 $this->get('SoaCategoryCliTable')->save($newCategory, false);
@@ -308,7 +308,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             foreach ($measures as $measure) {
                 // duplicate and link the measures to the current referential
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
-                $newMeasure->setAnr($newAnr);
+                $newMeasure->setAnr($anr);
                 $newMeasure->setAmvs(null);
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
