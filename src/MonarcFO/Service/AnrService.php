@@ -290,7 +290,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             // duplicate the referential
             $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
-            $newReferential->setUniqid($referential->getUniqid());
             $newReferential->setAnr($anr);
 
             // duplicate categories
@@ -315,7 +314,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setAmvs(null);
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                $newMeasure->setUniqid($measure->getUniqid());
                 $this->get('measureCliTable')->save($newMeasure, false);
                 $this->get('measureCliTable')->getDb()->flush();
                 $measuresNewIds[$measure->getUniqid()] = $newMeasure;
@@ -514,7 +512,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                     // duplicate the referential
                     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
-                    $newReferential->setUniqid($referential->getUniqid());
                     $newReferential->setAnr($newAnr);
 
                     // duplicate categories
@@ -539,7 +536,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setAmvs(null);
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                        $newMeasure->setUniqid($measure->getUniqid());
                         $this->get('measureCliTable')->save($newMeasure, false);
                         $this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->getUniqid()] = $newMeasure;
@@ -559,7 +555,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $referential->setMeasures(null);
                     $referential->setCategories(null);
                     $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
-                    $newReferential->setUniqid($referential->getUniqid());
                     $newReferential->setAnr($newAnr);
 
                     $categoryNewIds = [];
