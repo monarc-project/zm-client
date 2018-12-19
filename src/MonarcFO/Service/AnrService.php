@@ -249,7 +249,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
-        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $data);
+        $newAnrId = $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $data);
+        //$data['id'] = $newAnrId;
+        //$this->updateReferentials($data);
+        return $newAnrId;
     }
 
     /**
@@ -315,7 +318,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setUniqid($measure->getUniqid());
                 $this->get('measureCliTable')->save($newMeasure, false);
                 $this->get('measureCliTable')->getDb()->flush();
-                $measuresNewIds[$measure->id] = $newMeasure;
+                $measuresNewIds[$measure->getUniqid()] = $newMeasure;
                 array_push($new_measures, $newMeasure);
             }
             $newReferential->setMeasures(null);
@@ -539,7 +542,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setUniqid($measure->getUniqid());
                         $this->get('measureCliTable')->save($newMeasure, false);
                         $this->get('measureCliTable')->getDb()->flush();
-                        $measuresNewIds[$measure->id] = $newMeasure;
+                        $measuresNewIds[$measure->getUniqid()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures(null);
@@ -579,7 +582,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setReferential($newReferential);
                         $this->get('measureCliTable')->save($newMeasure, false);
                         //$this->get('measureCliTable')->getDb()->flush();
-                        $measuresNewIds[$measure->id] = $newMeasure;
+                        $measuresNewIds[$measure->getUniqid()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures($new_measures);
@@ -605,7 +608,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                   $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                   $newSoa->set('id', null);
                   $newSoa->setAnr($newAnr);
-                  $newSoa->setMeasure($measuresNewIds[$soa->measure->id]);
+                  $newSoa->setMeasure($measuresNewIds[$soa->measure->getUniqid()]);
                   $this->get('SoaCliTable')->save($newSoa, false);
               }
             }
@@ -950,7 +953,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRecommandationMeasure = new RecommandationMeasure($recommandationMeasure);
                 $newRecommandationMeasure->set('id', null);
                 $newRecommandationMeasure->setAnr($newAnr);
-                $newRecommandationMeasure->set('measure', $measuresNewIds[$newRecommandationMeasure->get('measure')->get('id')]);
+                $newRecommandationMeasure->set('measure', $measuresNewIds[$newRecommandationMeasure->get('measure')->getUniqid()]);
                 $this->get('recommandationMeasureCliTable')->save($newRecommandationMeasure,false);
             }
 
