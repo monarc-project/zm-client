@@ -151,7 +151,7 @@ class SnapshotService extends \MonarcCore\Service\AbstractService
         $anrSnapshot = current($snapshotTable->getEntityByFields(['anrReference' => $anrId, 'id' => $id]));
 
         // duplicate the anr linked to this snapshot
-        $newAnrId = $anrService->duplicateAnr($anrSnapshot->get('anr')->get('id'), MonarcObject::SOURCE_CLIENT, null, false, true);
+        $newAnrId = $anrService->duplicateAnr($data['anr'], \MonarcFO\Model\Entity\MonarcObject::SOURCE_CLIENT, null, [], true);
 
         $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
         $i = 1;

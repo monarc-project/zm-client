@@ -74,8 +74,6 @@ class ApiAnrController extends \MonarcCore\Controller\AbstractController
         /** @var AnrService $service */
         $service = $this->getService();
 
-        file_put_contents('php://stderr', print_r('ApiAnrController::patch()', TRUE).PHP_EOL);
-
         if (isset($data['referentials'])) {
             $service->updateReferentials($data);
             unset($data['referentials']);
