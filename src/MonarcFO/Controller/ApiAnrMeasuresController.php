@@ -72,7 +72,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
       $anrId = (int)$this->params()->fromRoute('anrid');
       $ids = ['anr'=>$anrId,'uniqid'=>$data['uniqid']];
       $data['anr'] = $anrId;
-      $data ['referential'] = ['anr' => $anrId, 'uniqid' => $data['referential']['uniqid'] ]; //all the objects is send but we just need the uniqid
+      $data ['referential'] = ['anr' => $anrId, 'uniqid' => $data['referential']]; //all the objects is send but we just need the uniqid
       $data['category'] ['referential'] = $data ['referential'];
       unset($data['measuresLinked']);
       unset($data['amvs']);
@@ -83,8 +83,6 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 
     public function create($data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-        $data ['referential'] = ['anr' => $anrId, 'uniqid' => $data['referential']['uniqid'] ]; //all the objects is send but we just need the uniqid
         unset($data['measuresLinked']);
         unset($data['amvs']);
         return parent::create($data);
