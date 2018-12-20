@@ -316,10 +316,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 $this->get('measureCliTable')->save($newMeasure, false);
                 $this->get('measureCliTable')->getDb()->flush();
-                $measuresNewIds[$measure->getUniqid()] = $newMeasure;
+                $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                 array_push($new_measures, $newMeasure);
             }
-            $newReferential->setMeasures(null);
+            $newReferential->setMeasures($new_measures);
 
             $this->get('referentialCliTable')->save($newReferential, false);
             $this->get('referentialCliTable')->getDb()->flush();
@@ -538,7 +538,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $this->get('measureCliTable')->save($newMeasure, false);
                         $this->get('measureCliTable')->getDb()->flush();
-                        $measuresNewIds[$measure->getUniqid()] = $newMeasure;
+                        $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures(null);
@@ -577,7 +577,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setReferential($newReferential);
                         $this->get('measureCliTable')->save($newMeasure, false);
                         //$this->get('measureCliTable')->getDb()->flush();
-                        $measuresNewIds[$measure->getUniqid()] = $newMeasure;
+                        $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures($new_measures);
@@ -603,7 +603,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                   $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                   $newSoa->set('id', null);
                   $newSoa->setAnr($newAnr);
-                  $newSoa->setMeasure($measuresNewIds[$soa->measure->getUniqid()]);
+                  $newSoa->setMeasure($measuresNewIds[$soa->measure->getUniqid()->toString()]);
                   $this->get('SoaCliTable')->save($newSoa, false);
               }
             }
@@ -627,8 +627,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
                 $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
                 $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
-                $newAmv->setMeasures($amv->getMeasures);
-                $this->get('amvCliTable')->save($newAmv,false);
+                $new_measures = [];
+                foreach ($amv->getMeasures() as $measure) {
+                    array_push($new_measures, $measuresNewIds[$measure->getUniqid()->toString()]);
+                }
+                $newAmv->setMeasures($new_measures);
+                $this->get('amvCliTable')->save($newAmv, false);
                 $amvsNewIds[$amv->id] = $newAmv;
             }
 
@@ -837,7 +841,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('scaleCommentCliTable')->save($newScaleComment,false);
             }
 
-            //duplicate instances risks
+            // duplicate instances risks
             $instanceRiskTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('instanceRiskTable') : $this->get('instanceRiskCliTable');
             $instancesRisks = $instanceRiskTable->getEntityByFields(['anr' => $anr->id]);
             $instancesRisksNewIds = [];
@@ -948,7 +952,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRecommandationMeasure = new RecommandationMeasure($recommandationMeasure);
                 $newRecommandationMeasure->set('id', null);
                 $newRecommandationMeasure->setAnr($newAnr);
-                $newRecommandationMeasure->set('measure', $measuresNewIds[$newRecommandationMeasure->get('measure')->getUniqid()]);
+                $newRecommandationMeasure->set('measure', $measuresNewIds[$newRecommandationMeasure->get('measure')->getUniqid()->toString()]);
                 $this->get('recommandationMeasureCliTable')->save($newRecommandationMeasure,false);
             }
 
