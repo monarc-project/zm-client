@@ -107,8 +107,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
     protected $instanceService;
 
-    //protected $dependencies = ['referentials'];
-
     /**
      * @inheritdoc
      */
@@ -316,7 +314,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 $this->get('measureCliTable')->save($newMeasure, false);
                 $this->get('measureCliTable')->getDb()->flush();
-                $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                 array_push($new_measures, $newMeasure);
             }
             $newReferential->setMeasures($new_measures);
@@ -576,7 +573,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setReferential($newReferential);
                         $this->get('measureCliTable')->save($newMeasure, false);
-                        //$this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
@@ -584,6 +580,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
+                    //$referentialNewIds[$newReferential->getUniqid()->toString()] = $newReferential;
                 }
             }
 
@@ -592,7 +589,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 foreach ($measuresNewIds as $key => $value) {
                     $newSoa = new \MonarcFO\Model\Entity\Soa();
                     $newSoa->set('id', null);
-                    // $this->get('table')->getDb()->flush();
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($value);
                     $this->get('SoaCliTable')->save($newSoa, false);
@@ -739,7 +735,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $objectsRootCategories = array_unique($objectsRootCategories);
 
-            //duplicate anrs objects categories
+            // duplicate anrs objects categories
             $anrObjectCategoryTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('anrObjectCategoryTable') : $this->get('anrObjectCategoryCliTable');
             $anrObjectsCategories = $anrObjectCategoryTable->getEntityByFields(['anr' => $anr->id]);
             foreach ($anrObjectsCategories as $key => $anrObjectCategory) {
@@ -755,7 +751,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('anrObjectCategoryCliTable')->save($newAnrObjectCategory,false);
             }
 
-            //duplicate objects objects
+            // duplicate objects objects
             $objectsObjects = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('objectObjectTable')->fetchAllObject() : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objectsObjects as $key => $objectObject) {
                 if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->id]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->id]))) {
@@ -771,7 +767,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('objectObjectCliTable')->save($newObjectObject,false);
             }
 
-            //duplicate instances
+            // duplicate instances
             $nbInstanceWithParent = 0;
             $instancesNewIds = [];
             /** @var InstanceTable $instanceTable */
@@ -866,7 +862,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 if ($instanceRisk->instance) {
                     $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
                 }
-                $this->get('instanceRiskCliTable')->save($newInstanceRisk,false);
+                $this->get('instanceRiskCliTable')->save($newInstanceRisk, false);
                 $instancesRisksNewIds[$instanceRisk->id] = $newInstanceRisk;
             }
 
