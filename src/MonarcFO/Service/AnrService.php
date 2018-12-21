@@ -247,14 +247,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
             throw new \MonarcCore\Exception\Exception('Model not found', 412);
         }
 
-        $newAnrId = $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $data);
-        //$data['id'] = $newAnrId;
-        //$this->updateReferentials($data);
-        return $newAnrId;
+        return $this->duplicateAnr($model->anr, MonarcObject::SOURCE_COMMON, $model, $data);
     }
 
     /**
-     * Add or remove referentials to/from an ANR.
+     * Add or remove referentials to/from an existing ANR.
      * @param array $data Data coming from the API
      * @return int
      */
@@ -321,6 +318,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $this->get('referentialCliTable')->save($newReferential, false);
             $this->get('referentialCliTable')->getDb()->flush();
         }
+        return $anr->id;
     }
 
     /**
