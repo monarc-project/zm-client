@@ -111,4 +111,14 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
       $ids = ['uniqid'=>$id,'anr'=>$anrId];
       return parent::delete($ids);
     }
+
+    public function deleteList($data)
+    {
+      $new_data = [];
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      foreach ($data as $uniqid) {
+        $new_data[] = ['uniqid' => $uniqid, 'anr'=>$anrId];
+      }
+      return parent::deleteList($new_data);
+    }
 }
