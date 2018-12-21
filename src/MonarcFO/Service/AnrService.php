@@ -271,6 +271,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
         // link new referentials to an ANR
         foreach ($uniqid_array as $uniqid) {
+            // check if referential already linked to the anr
             $referentials = $this->get('referentialCliTable')
                                 ->getEntityByFields(['anr' => $anr->id,
                                                     'uniqid' => $uniqid]);
@@ -315,8 +316,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             $newReferential->setMeasures($new_measures);
 
-            $this->get('referentialCliTable')->save($newReferential, false);
-            $this->get('referentialCliTable')->getDb()->flush();
+            $this->get('referentialCliTable')->save($newReferential);
         }
         return $anr->id;
     }
