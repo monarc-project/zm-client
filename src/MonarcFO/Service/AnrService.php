@@ -629,7 +629,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
                 $new_measures = [];
                 foreach ($amv->getMeasures() as $measure) {
-                    array_push($new_measures, $measuresNewIds[$measure->getUniqid()->toString()]);
+                    if (isset($measuresNewIds[$measure->getUniqid()->toString()])) {
+                        array_push($new_measures, $measuresNewIds[$measure->getUniqid()->toString()]);
+                    }
                 }
                 $newAmv->setMeasures($new_measures);
                 $this->get('amvCliTable')->save($newAmv, false);
