@@ -123,9 +123,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         $data['measures'][$key] = ['uniqid'=>$value, 'anr' => $anrId];
       }
       unset($data ['referential'] );
-
-
-        return parent::create($data);
+      return parent::create($data);
     }
 
     public function update($id,$data)
@@ -136,8 +134,6 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         $data['measures'][$key] = ['uniqid'=>$value, 'anr' => $anrId];
       }
       unset($data ['referential'] );
-
-
-        return parent::update($id, $data);
+      return parent::update($id, $data);
     }
 }
