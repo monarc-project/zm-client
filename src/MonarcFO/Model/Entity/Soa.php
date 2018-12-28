@@ -142,8 +142,9 @@ class Soa extends AbstractEntity
             'm.label3',
             'm.label4',
             'm.code',
-            'm.anr',
-            'm.uniqid'
+            'remarks',
+            'actions',
+            'evidences'
         ];
         return [$filterJoin,$filterLeft,$filtersCol];
     }
