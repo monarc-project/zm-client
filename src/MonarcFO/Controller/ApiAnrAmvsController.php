@@ -114,4 +114,26 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
 
         return new JsonModel($entity);
     }
+
+    public function create($data)
+    {
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      if(count($data['measures'])>0)
+      foreach ($data['measures'] as $key => $value) {
+        $data['measures'][$key] = ['uniqid'=>$value, 'anr' => $anrId];
+      }
+      unset($data ['referential'] );
+      return parent::create($data);
+    }
+
+    public function update($id,$data)
+    {
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      if(count($data['measures'])>0)
+      foreach ($data['measures'] as $key => $value) {
+        $data['measures'][$key] = ['uniqid'=>$value, 'anr' => $anrId];
+      }
+      unset($data ['referential'] );
+      return parent::update($id, $data);
+    }
 }
