@@ -77,7 +77,6 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
       unset($data['measuresLinked']);
       unset($data['measuresLinkedToMe']);
       unset($data['amvs']);
-      unset($data ['referential'] );
       return parent::update($ids, $data);
 
     }
