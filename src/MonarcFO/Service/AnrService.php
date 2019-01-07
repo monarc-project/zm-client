@@ -414,7 +414,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $themesNewIds = [];
             $themes = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('themeTable')->fetchAllObject() : $this->get('themeCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($themes as $theme) {
-
                 $newTheme = new \MonarcFO\Model\Entity\Theme($theme);
                 $newTheme->set('id', null);
                 $newTheme->setAnr($newAnr);
@@ -536,7 +535,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
-                    $newReferential->setMeasures(null);
+                    //$newReferential->setMeasures(null);
 
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
@@ -558,6 +557,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newCategory->set('id', null);
                         $newCategory->setAnr($newAnr);
                         $newCategory->setMeasures(null);
+                        $newCategory->setReferential($newReferential);
                         $this->get('SoaCategoryCliTable')->save($newCategory, false);
                         $categoryNewIds[$cat->id] = $newCategory;
                     }
@@ -570,11 +570,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setAnr($newAnr);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setReferential($newReferential);
-                        $this->get('measureCliTable')->save($newMeasure, false);
+                        // $this->get('measureCliTable')->save($newMeasure, false);
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
-                    $newReferential->setMeasures($new_measures);
+                    //$newReferential->setMeasures($new_measures);
 
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
