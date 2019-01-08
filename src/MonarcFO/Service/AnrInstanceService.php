@@ -553,7 +553,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 $this->get('recommandationRiskTable')->save($rr);
 
                                 // Reply recommandation to brothers
-
                                 if (!empty($toExchange['objectGlobal']) && $modeImport == 'merge') {
                                       $instances = $this->get('table')->getEntityByFields([ // Get the brothers
                                           'anr' => $anr->get('id'),
@@ -603,7 +602,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     foreach ($data['recolinks'][$reco['id']] as $mid) {
                                         if (isset($sharedData['measures'][$mid])) { // Cette measure a déjà été gérée dans cet import
                                         } elseif ($data['measures'][$mid]) {
-                                            // on teste sa présence
+                                            // test the presence
                                             $toExchange = $data['measures'][$mid];
                                             unset($toExchange['id']);
                                             $toExchange['anr'] = $anr->get('id');

@@ -590,7 +590,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($value);
-                    $this->get('SoaCliTable')->save($newSoa, false);
+                    $this->get('SoaCliTable')->save($newSoa);
                 }
             } else {
               $soas = $this->get('SoaCliTable')->getEntityByFields(['anr' => $anr->id]);
@@ -599,7 +599,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                   $newSoa->set('id', null);
                   $newSoa->setAnr($newAnr);
                   $newSoa->setMeasure($measuresNewIds[$soa->measure->getUniqid()->toString()]);
-                  $this->get('SoaCliTable')->save($newSoa, false);
+                  $this->get('SoaCliTable')->save($newSoa);
               }
             }
 
