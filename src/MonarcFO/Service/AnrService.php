@@ -576,19 +576,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
-                    //$newReferential->setMeasures($new_measures);
-
-                    // duplicate measures-measures
-                    $measuresmeasures = $this->get('measureMeasureCliTable')->getEntityByFields(['anr' => $anr->id]);
-                    foreach ($measuresmeasures as $mm) {
-                        $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($mm);
-                        $newMeasureMeasure->setAnr($newAnr);
-                        $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
-                    }
+                    $newReferential->setMeasures($new_measures);
 
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
                 }
+
+                // duplicate measures-measures
+                // $measuresmeasures = $this->get('measureMeasureCliTable')->getEntityByFields(['anr' => $anr->id]);
+                // foreach ($measuresmeasures as $mm) {
+                //     $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($mm);
+                //     $newMeasureMeasure->setAnr($newAnr);
+                //     $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
+                // }
             }
 
             // duplicate soas
