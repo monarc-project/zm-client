@@ -35,13 +35,14 @@ class AnrMeasureService extends \MonarcCore\Service\MeasureService
     {
         $uniqid = parent::create($data, $last)->toString();
         $table = $this->get('table');
-        $SoaEntity = $this->get('SoaEntity');
+        $SoaClass = $this->get('SoaEntity');
         $SoaTable = $this->get('SoaTable');
         $anrTable = $this->get('anrTable');
         $measure = $table->getEntity(['uniqid' =>$uniqid,'anr'=>$data['anr']]);
         $anr = $anrTable->getEntity($data['anr']);
+        $SoaEntity = new $SoaClass();
         $SoaEntity->setMeasure($measure);
         $SoaEntity->setAnr($anr);
-        $SoaTable->save($SoaEntity);
+        $SoaTable->save($SoaEntity,$last);
     }
 }
