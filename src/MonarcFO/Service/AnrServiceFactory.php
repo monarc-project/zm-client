@@ -82,6 +82,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'SoaCliTable' => 'MonarcFO\Model\Table\SoaTable',
         'SoaCategoryCliTable' => 'MonarcFO\Model\Table\SoaCategoryTable',
         'referentialCliTable' => 'MonarcFO\Model\Table\ReferentialTable',
+        'measureMeasureCliTable' => 'MonarcFO\Model\Table\MeasureMeasureTable',
 
 
         // export

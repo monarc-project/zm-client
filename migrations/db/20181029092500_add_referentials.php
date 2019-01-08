@@ -62,7 +62,9 @@ class AddReferentials extends AbstractMigration
               'label1' => 'ISO 27002',
               'label2' => 'ISO 27002',
               'label3' => 'ISO 27002',
-              'label4' => 'ISO 27002'
+              'label4' => 'ISO 27002',
+              'creator' => 'Migration script',
+              'created_at' => date('Y-m-d H:i:s')
           ];
       }
       if(count($referentials)>0)
@@ -77,6 +79,7 @@ class AddReferentials extends AbstractMigration
       $table = $this->table('measures');
       $table
           ->addColumn('referential_uniqid', 'uuid', ['after' => 'soacategory_id'])
+          ->addIndex(['referential_uniqid', 'code', 'anr_id'], ['unique' => true]) // we can't have 2 times the same code for same referential
           ->dropForeignKey('anr_id')
           ->save();
       $this->execute('UPDATE measures m SET m.referential_uniqid=(SELECT uniqid FROM referentials LIMIT 1) ;');
