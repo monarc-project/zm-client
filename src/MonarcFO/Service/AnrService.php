@@ -571,20 +571,20 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setAnr($newAnr);
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                        //$this->get('measureCliTable')->save($newMeasure, false);
-                        //$this->get('measureCliTable')->getDb()->flush();
+                        $this->get('measureCliTable')->save($newMeasure, false);
+                        $this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     //$newReferential->setMeasures($new_measures);
 
                     // duplicate measures-measures
-                    // $measuresmeasures = $this->get('measureMeasureCliTable')->getEntityByFields(['anr' => $anr->id]);
-                    // foreach ($measuresmeasures as $mm) {
-                    //     $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($mm);
-                    //     $newMeasureMeasure->setAnr($newAnr);
-                    //     $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
-                    // }
+                    $measuresmeasures = $this->get('measureMeasureCliTable')->getEntityByFields(['anr' => $anr->id]);
+                    foreach ($measuresmeasures as $mm) {
+                        $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($mm);
+                        $newMeasureMeasure->setAnr($newAnr);
+                        $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
+                    }
 
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
