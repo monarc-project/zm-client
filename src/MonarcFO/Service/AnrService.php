@@ -298,7 +298,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newCategory->setAnr($anr);
                 $newCategory->setMeasures(null);
                 $newCategory->setReferential($newReferential);
-                $this->get('SoaCategoryCliTable')->save($newCategory, false);
                 $categoryNewIds[$cat->id] = $newCategory;
             }
             $newReferential->setCategories($categoryNewIds);
@@ -311,8 +310,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setAmvs(null);
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                $this->get('measureCliTable')->save($newMeasure, false);
-                $this->get('measureCliTable')->getDb()->flush();
                 array_push($new_measures, $newMeasure);
             }
             $newReferential->setMeasures($new_measures);
@@ -518,7 +515,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newCategory->setAnr($newAnr);
                         $newCategory->setMeasures(null);
                         $newCategory->setReferential($newReferential);
-                        $this->get('SoaCategoryCliTable')->save($newCategory, false);
                         $categoryNewIds[$cat->id] = $newCategory;
                     }
                     $newReferential->setCategories($categoryNewIds);
@@ -531,8 +527,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setAmvs(null);
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                        $this->get('measureCliTable')->save($newMeasure, false);
-                        $this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
@@ -559,7 +553,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newCategory->setAnr($newAnr);
                         $newCategory->setMeasures(null);
                         $newCategory->setReferential($newReferential);
-                        $this->get('SoaCategoryCliTable')->save($newCategory, false);
                         $categoryNewIds[$cat->id] = $newCategory;
                     }
                     $newReferential->setCategories($categoryNewIds);
@@ -572,8 +565,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setMeasuresLinked(null);
-                        $this->get('measureCliTable')->save($newMeasure, false);
-                        $this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
