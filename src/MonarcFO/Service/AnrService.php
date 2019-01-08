@@ -104,6 +104,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $SoaCliTable;
     protected $SoaCategoryCliTable;
     protected $referentialCliTable;
+    protected $measureMeasureCliTable;
 
     protected $instanceService;
 
@@ -540,7 +541,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
                 }
-            } else { // copy from an existing anr
+            } else { // copy from an existing anr (or a snapshot)
                 $referentials = $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($referentials as $referential) {
                     // duplicate referentials
@@ -568,17 +569,25 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                         $newMeasure->setAnr($newAnr);
-                        $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setReferential($newReferential);
-                        // $this->get('measureCliTable')->save($newMeasure, false);
+                        $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                        //$this->get('measureCliTable')->save($newMeasure, false);
+                        //$this->get('measureCliTable')->getDb()->flush();
                         $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     //$newReferential->setMeasures($new_measures);
 
+                    // duplicate measures-measures
+                    // $measuresmeasures = $this->get('measureMeasureCliTable')->getEntityByFields(['anr' => $anr->id]);
+                    // foreach ($measuresmeasures as $mm) {
+                    //     $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($mm);
+                    //     $newMeasureMeasure->setAnr($newAnr);
+                    //     $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
+                    // }
+
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
-                    //$referentialNewIds[$newReferential->getUniqid()->toString()] = $newReferential;
                 }
             }
 
