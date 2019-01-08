@@ -314,6 +314,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             $newReferential->setMeasures($new_measures);
 
+            foreach ($new_measures as $new_measure) {
+                $newSoa = new \MonarcFO\Model\Entity\Soa();
+                $newSoa->set('id', null);
+                $newSoa->setAnr($newAnr);
+                $newSoa->setMeasure($new_measure);
+                $this->get('SoaCliTable')->save($newSoa);
+            }
+
             $this->get('referentialCliTable')->save($newReferential);
         }
         return $anr->id;
