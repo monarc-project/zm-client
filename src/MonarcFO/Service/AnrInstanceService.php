@@ -1223,7 +1223,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                           $this->get('measureTable')->save($newMeasure);
 
                           if (! isset($data['soas'])) {
-                              // if no soas in the analysis to import, create new ones
+                              // if no SOAs in the analysis to import, create new ones
                               $newSoa = new \MonarcFO\Model\Entity\Soa();
                               $newSoa->setAnr($anr);
                               $newSoa->setMeasure($newMeasure);
@@ -1246,6 +1246,15 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       $newMeasureMeasure->setAnr($anr);
                       $this->get('measureMeasureTable')->save($newMeasureMeasure);
                   }
+              }
+          }
+          // import the SOAs
+          if (isset($data['soas'])) {
+              foreach ($data['soas'] as $soa) {
+                  $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+                  $newSoa->setAnr($anr);
+                  //$newSoa->setMeasure($newMeasure);
+                  $this->get('soaTable')->save($newSoa);
               }
           }
           // import scales
