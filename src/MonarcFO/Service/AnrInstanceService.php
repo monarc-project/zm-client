@@ -34,6 +34,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $soaCategoryTable;
     protected $measureTable;
     protected $measureMeasureTable;
+    protected $soaTable;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -950,7 +951,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 return $a['instance']['position'] <=> $b['instance']['position'];
               });
                 foreach ($data['children'] as $child) {
-                    $this->importFromArray($child, $anr, $instanceId, $modeImport, $include_eval, $sharedData);//et ainsi de suite ...
+                    $this->importFromArray($child, $anr, $instanceId, $modeImport, $include_eval, $sharedData); // and so on...
                 }
                 $this->updateChildrenImpacts($instanceId);
             }
@@ -1220,6 +1221,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                           $newMeasure->setReferential($referentials[0]);
                           $newMeasure->setCategory($soaCategories[0]);
                           $this->get('measureTable')->save($newMeasure);
+
+                          if (! isset($data['soas'])) {
+                              // if no soas in the analysis to import, create new ones
+                              $newSoa = new \MonarcFO\Model\Entity\Soa();
+                              $newSoa->setAnr($anr);
+                              $newSoa->setMeasure($newMeasure);
+                              $this->get('soaTable')->save($newSoa);
+                          }
                       }
                   }
               }
