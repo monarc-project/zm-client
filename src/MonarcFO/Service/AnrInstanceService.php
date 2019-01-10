@@ -1203,6 +1203,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               }
           }
           // import the measures
+          $measuresNewIds = [];
           if (isset($data['measures'])) {
               foreach ($data['measures'] as $measureUUID => $measure_array) {
                   // check if the measure is not already in the analysis
@@ -1221,6 +1222,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                           $newMeasure->setReferential($referentials[0]);
                           $newMeasure->setCategory($soaCategories[0]);
                           $this->get('measureTable')->save($newMeasure);
+                          $measuresNewIds[$measureUUID] = $newMeasure;
 
                           if (! isset($data['soas'])) {
                               // if no SOAs in the analysis to import, create new ones
@@ -1253,7 +1255,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               foreach ($data['soas'] as $soa) {
                   $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                   $newSoa->setAnr($anr);
-                  //$newSoa->setMeasure($newMeasure);
+                  $newSoa->setMeasure($measuresNewIds[$soa['measure_id']]);
                   $this->get('soaTable')->save($newSoa);
               }
           }
