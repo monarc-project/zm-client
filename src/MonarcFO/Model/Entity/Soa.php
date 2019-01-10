@@ -79,8 +79,6 @@ class Soa extends AbstractEntity
     */
     protected $compliance ;
 
-
-
     /**
     * @var smallint
     *
@@ -116,15 +114,12 @@ class Soa extends AbstractEntity
     */
     protected $BP = '0';
 
-
     /**
     * @var smallint
     *
     * @ORM\Column(name="RRA", type="smallint", options={"unsigned":true, "default":0})
     */
     protected $RRA = '0';
-
-
 
     public function getFiltersForService(){
         $filterJoin = [
@@ -148,9 +143,6 @@ class Soa extends AbstractEntity
         ];
         return [$filterJoin,$filterLeft,$filtersCol];
     }
-
-
-
 
     /**
     * @return int
@@ -185,9 +177,6 @@ class Soa extends AbstractEntity
     {
         $this->measure = $measure;
     }
-
-
-
 
     /**
     * @return Anr
@@ -224,7 +213,6 @@ class Soa extends AbstractEntity
         $this->remarks = $remarks;
     }
 
-
     /**
     * @return TEXT_LONG
     */
@@ -241,7 +229,6 @@ class Soa extends AbstractEntity
     {
         $this->evidences = $evidences;
     }
-
 
     /**
     * @return TEXT_LONG
@@ -260,12 +247,6 @@ class Soa extends AbstractEntity
         $this->actions = $actions;
     }
 
-
-
-
-
-
-
     /**
     * @return integer
     */
@@ -283,7 +264,6 @@ class Soa extends AbstractEntity
         $this->compliance = $compliance;
     }
 
-
     /**
     * @return boolean
     */
@@ -291,7 +271,6 @@ class Soa extends AbstractEntity
     {
         return $this->isDeleted;
     }
-
 
     /**
     * @return int
@@ -326,7 +305,6 @@ class Soa extends AbstractEntity
     {
         $this->LR = $LR;
     }
-
 
     /**
     * @return int
@@ -378,7 +356,6 @@ class Soa extends AbstractEntity
     {
         $this->BP = $BP;
     }
-
 
     /**
     * @return int
