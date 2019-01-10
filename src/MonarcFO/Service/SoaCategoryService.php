@@ -41,7 +41,7 @@ class SoaCategoryService extends \MonarcCore\Service\AbstractService
             $page,
             $limit,
             $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, $filtersCol),
+            $this->parseFrontendFilter($filter, $this->filterColumns),
             $filterAnd,
             $filterJoin,
             $filterLeft
