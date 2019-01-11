@@ -126,15 +126,4 @@ class Measure extends MeasureSuperClass
         $this->referential = $referential;
         return $this;
     }
-
-    /**
-     * @param Amv $amvs
-     * @return Measure
-     */
-    public function setAmvs($amvs)
-    {
-        $this->amvs = $amvs;
-        return $this;
-
-    }
 }
