@@ -47,4 +47,15 @@ class SoaCategoryService extends \MonarcCore\Service\AbstractService
             $filterLeft
         );
     }
+
+    public function delete($id)
+    {
+      $table = $this->get('table');
+      $categ = $table->getEntity($id);
+      foreach ($categ->measures as $measure) {
+        $measure->setCategory(null);
+      }
+
+      return parent::delete($id);
+    }
 }
