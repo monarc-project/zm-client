@@ -47,6 +47,9 @@ class ApiSoaController extends  ApiAnrAbstractController
               'value' => (array)$category,
           ];
         }
+        if ($category == -1) {
+          $filterMeasures['category'] = NULL;
+        }
 
         $filterMeasures['r.anr']=$anrId;
         $filterMeasures['r.uniqid']= $referential;
