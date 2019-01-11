@@ -302,15 +302,28 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             $newReferential->setCategories($categoryNewIds);
 
-            $new_measures = [];
+            // duplicate the measures
+            $measuresNewIds = [];
             foreach ($measures as $measure) {
                 // duplicate and link the measures to the current referential
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->setAnr($anr);
-                $newMeasure->setAmvs(null);
+                $newAmvs = [];
+                foreach ($newMeasure->getAmvs() as $amv) {
+                    $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
+                    $newAmv->set('id', null);
+                    $newAmv->setAnr($anr);
+                    $this->get('amvCliTable')->save($newAmv);
+                    array_push($newAmvs, $newAmv);
+                    // $newMeasure->addAmv($newAmv);
+                    // $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
+                    // $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
+                    // $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
+                }
+                $newMeasure->setAmvs($newAmvs);
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                array_push($new_measures, $newMeasure);
+                array_push($measuresNewIds, $newMeasure);
 
                 $newSoa = new \MonarcFO\Model\Entity\Soa();
                 $newSoa->set('id', null);
@@ -318,10 +331,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newSoa->setMeasure($newMeasure);
                 $this->get('SoaCliTable')->save($newSoa);
             }
-            $newReferential->setMeasures($new_measures);
+            $newReferential->setMeasures($measuresNewIds);
 
             $this->get('referentialCliTable')->save($newReferential);
+
+
         }
+
         return $anr->id;
     }
 
