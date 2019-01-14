@@ -278,6 +278,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                                                     'uniqid' => $uniqid]);
             if (! empty($referentials)) {
                 // if referential already linked to the anr, go to next iteration
+                file_put_contents('php://stderr', print_r('Nothing. Moving on.', TRUE).PHP_EOL);
                 continue;
             }
 
@@ -308,21 +309,30 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 // duplicate and link the measures to the current referential
                 $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                 $newMeasure->setAnr($anr);
+                $newMeasure->setReferential($newReferential);
+                $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 $newAmvs = [];
                 foreach ($newMeasure->getAmvs() as $amv) {
                     $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
                     $newAmv->set('id', null);
                     $newAmv->setAnr($anr);
-                    $this->get('amvCliTable')->save($newAmv);
+
+                    $asset = $this->get('assetCliTable')->getEntityByFields(['id' => $amv->asset->id]);
+                    $newAmv->setAsset($asset[0]);
+
+                    $threat = $this->get('threatCliTable')->getEntityByFields(['id' => $amv->threat->id]);
+                    $newAmv->setThreat($threat[0]);
+
+                    $vulnerability = $this->get('vulnerabilityCliTable')->getEntityByFields(['id' => $amv->vulnerability->id]);
+                    $newAmv->setVulnerability($vulnerability[0]);
+
+                    $newAmv->setMeasures($measuresNewIds);
+
+                    $this->get('amvCliTable')->save($newAmv, false);
                     array_push($newAmvs, $newAmv);
                     // $newMeasure->addAmv($newAmv);
-                    // $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
-                    // $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
-                    // $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
                 }
                 $newMeasure->setAmvs($newAmvs);
-                $newMeasure->setReferential($newReferential);
-                $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 array_push($measuresNewIds, $newMeasure);
 
                 $newSoa = new \MonarcFO\Model\Entity\Soa();
@@ -336,6 +346,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $this->get('referentialCliTable')->save($newReferential);
 
 
+            // $amvs= $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
+            // foreach ($amvs as $amv) {
+            //     $amv->setMeasures($measuresNewIds);
+            //     $this->get('amvCliTable')->save($amv);
+            // }
         }
 
         return $anr->id;
@@ -460,7 +475,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAsset = new \MonarcFO\Model\Entity\Asset($asset);
                 $newAsset->set('id', null);
                 $newAsset->setAnr($newAnr);
-                $this->get('assetCliTable')->save($newAsset,false);
+                $this->get('assetCliTable')->save($newAsset, false);
                 $assetsNewIds[$asset->id] = $newAsset;
             }
 
@@ -846,7 +861,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $scalesImpactTypesNewIds[$scaleImpactType->id] = $newScaleImpactType;
             }
 
-            //duplicate scales comments
+            // duplicate scales comments
             $scaleCommentTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('scaleCommentTable') : $this->get('scaleCommentCliTable');
             $scalesComments = $scaleCommentTable->getEntityByFields(['anr' => $anr->id]);
             foreach ($scalesComments as $scaleComment) {
@@ -887,7 +902,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $instancesRisksNewIds[$instanceRisk->id] = $newInstanceRisk;
             }
 
-            //duplicate instances risks op
+            // duplicate instances risks op
             $instanceRiskOpTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('instanceRiskOpTable') : $this->get('instanceRiskOpCliTable');
             $instancesRisksOp = $instanceRiskOpTable->getEntityByFields(['anr' => $anr->id]);
             $instancesRisksOpNewIds = [];
