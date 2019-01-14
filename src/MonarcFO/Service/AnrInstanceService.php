@@ -1212,6 +1212,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                             ->getEntityByFields(['anr' => $anr->id,
                                                 'label' . $this->getLanguage() => $measure_array['category']]);
                       if (!empty($referentials) && !empty($soaCategories)) {
+                          // a measure must be linked to a referential and a category
                           $newMeasure = new \MonarcFO\Model\Entity\Measure($measure_array);
                           $newMeasure->setAnr($anr);
                           $newMeasure->setReferential($referentials[0]);
