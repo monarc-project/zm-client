@@ -278,7 +278,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                                                     'uniqid' => $uniqid]);
             if (! empty($referentials)) {
                 // if referential already linked to the anr, go to next iteration
-                file_put_contents('php://stderr', print_r('Nothing. Moving on.', TRUE).PHP_EOL);
                 continue;
             }
 
@@ -311,46 +310,46 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setAnr($anr);
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                $amvs = $newMeasure->getAmvs();
+                $newMeasure->setAmvs([]);
                 $newAmvs = [];
-                foreach ($newMeasure->getAmvs() as $amv) {
-                    $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
-                    $newAmv->set('id', null);
-                    $newAmv->setAnr($anr);
+                foreach ($amvs as $amv_common) {
+                    $asset_common = $amv_common->getAsset();
+                    $threat_common = $amv_common->getThreat();
+                    $vulnerability_common = $amv_common->getVulnerability();
 
-                    $asset = $this->get('assetCliTable')->getEntityByFields(['id' => $amv->asset->id]);
-                    $newAmv->setAsset($asset[0]);
+                    $asset_cli = $this->get('assetCliTable')
+                                        ->getEntityByFields(['anr' => $anr->id,
+                                        'label'.$this->getLanguage() => $asset_common->get('label'.$this->getLanguage())]);
+                    $threat_cli = $this->get('threatCliTable')
+                                        ->getEntityByFields(['anr' => $anr->id,
+                                        'label'.$this->getLanguage() => $threat_common->get('label'.$this->getLanguage())]);
+                    $vulnerability_cli = $this->get('vulnerabilityCliTable')
+                                        ->getEntityByFields(['anr' => $anr->id,
+                                        'label'.$this->getLanguage() => $vulnerability_common->get('label'.$this->getLanguage())]);
 
-                    $threat = $this->get('threatCliTable')->getEntityByFields(['id' => $amv->threat->id]);
-                    $newAmv->setThreat($threat[0]);
+                    $amv_cli = $this->get('amvCliTable')
+                                    ->getEntityByFields(['anr' => $anr->id,
+                                            'asset' => $asset_cli[0]->getId(),
+                                            'threat' => $threat_cli[0]->getId(),
+                                            'vulnerability' => $vulnerability_cli[0]->getId()])[0];
 
-                    $vulnerability = $this->get('vulnerabilityCliTable')->getEntityByFields(['id' => $amv->vulnerability->id]);
-                    $newAmv->setVulnerability($vulnerability[0]);
-
-                    $newAmv->setMeasures($measuresNewIds);
-
-                    $this->get('amvCliTable')->save($newAmv, false);
-                    array_push($newAmvs, $newAmv);
-                    // $newMeasure->addAmv($newAmv);
+                    if ($amv_cli) {
+                        $amv_cli->addMeasure($newMeasure);
+                        $newMeasure->addAmv($amv_cli);
+                    }
                 }
-                $newMeasure->setAmvs($newAmvs);
                 array_push($measuresNewIds, $newMeasure);
 
                 $newSoa = new \MonarcFO\Model\Entity\Soa();
                 $newSoa->set('id', null);
-                $newSoa->setAnr($newAnr);
+                $newSoa->setAnr($anr);
                 $newSoa->setMeasure($newMeasure);
                 $this->get('SoaCliTable')->save($newSoa);
             }
             $newReferential->setMeasures($measuresNewIds);
 
             $this->get('referentialCliTable')->save($newReferential);
-
-
-            // $amvs= $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
-            // foreach ($amvs as $amv) {
-            //     $amv->setMeasures($measuresNewIds);
-            //     $this->get('amvCliTable')->save($amv);
-            // }
         }
 
         return $anr->id;
