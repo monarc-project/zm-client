@@ -313,7 +313,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $amvs = $newMeasure->getAmvs();
                 $newMeasure->setAmvs([]);
                 $newAmvs = [];
+                // update the amv with the new measures from the current referential
                 foreach ($amvs as $amv_common) {
+                    // match the AMVs of common and cli
                     $asset_common = $amv_common->getAsset();
                     $threat_common = $amv_common->getThreat();
                     $vulnerability_common = $amv_common->getVulnerability();
