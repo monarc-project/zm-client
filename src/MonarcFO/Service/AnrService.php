@@ -330,15 +330,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
                                         ->getEntityByFields(['anr' => $anr->id,
                                         'label'.$this->getLanguage() => $vulnerability_common->get('label'.$this->getLanguage())]);
 
+                    if (count($asset_cli)==0 || count($threat_cli)==0 || count($vulnerability_cli)==0) {
+                        continue;
+                    }
+
                     $amv_cli = $this->get('amvCliTable')
                                     ->getEntityByFields(['anr' => $anr->id,
                                             'asset' => $asset_cli[0]->getId(),
                                             'threat' => $threat_cli[0]->getId(),
-                                            'vulnerability' => $vulnerability_cli[0]->getId()])[0];
+                                            'vulnerability' => $vulnerability_cli[0]->getId()]);
 
-                    if ($amv_cli) {
-                        $amv_cli->addMeasure($newMeasure);
-                        $newMeasure->addAmv($amv_cli);
+                    if (count($amv_cli)) {
+                        $amv_cli[0]->addMeasure($newMeasure);
+                        $newMeasure->addAmv($amv_cli[0]);
                     }
                 }
                 array_push($measuresNewIds, $newMeasure);
