@@ -220,7 +220,7 @@ class AddMeasuresUniqid extends AbstractMigration
             ->save();
       $this->execute("ALTER TABLE measures ADD PRIMARY KEY uniqid_anr_id (uniqid, anr_id)");
 
-      /* SET the foreign key */
+      /* SET the foreign keys */
       $table = $this->table('soa');
       $table->addForeignKey(['measure_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
@@ -233,6 +233,9 @@ class AddMeasuresUniqid extends AbstractMigration
       $table = $this->table('measures_measures');
       $table->addForeignKey(['father_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->addForeignKey(['child_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+      $table = $this->table('measures');
+      $table->addForeignKey('referential_uniqid', 'referentials', 'uniqid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
     }
 }
