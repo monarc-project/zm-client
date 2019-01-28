@@ -316,19 +316,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 // update the amv with the new measures from the current referential
                 foreach ($amvs as $amv_common) {
                     // match the AMVs from common with AMVS from cli
-                    $asset_common = $amv_common->getAsset();
-                    $threat_common = $amv_common->getThreat();
-                    $vulnerability_common = $amv_common->getVulnerability();
-
                     $asset_cli = $this->get('assetCliTable')
                                         ->getEntityByFields(['anr' => $anr->id,
-                                        'label'.$this->getLanguage() => $asset_common->get('label'.$this->getLanguage())]);
+                                        'label'.$this->getLanguage() => $amv_common->asset->get('label'.$this->getLanguage())]);
                     $threat_cli = $this->get('threatCliTable')
                                         ->getEntityByFields(['anr' => $anr->id,
-                                        'label'.$this->getLanguage() => $threat_common->get('label'.$this->getLanguage())]);
+                                        'label'.$this->getLanguage() => $amv_common->threat->get('label'.$this->getLanguage())]);
                     $vulnerability_cli = $this->get('vulnerabilityCliTable')
                                         ->getEntityByFields(['anr' => $anr->id,
-                                        'label'.$this->getLanguage() => $vulnerability_common->get('label'.$this->getLanguage())]);
+                                        'label'.$this->getLanguage() => $amv_common->vulnerability->get('label'.$this->getLanguage())]);
 
                     if (count($asset_cli)==0 || count($threat_cli)==0 || count($vulnerability_cli)==0) {
                         continue;
