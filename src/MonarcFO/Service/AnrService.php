@@ -312,7 +312,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 $amvs = $newMeasure->getAmvs();
                 $newMeasure->setAmvs([]);
-                $newAmvs = [];
                 // update the amv with the new measures from the current referential
                 foreach ($amvs as $amv_common) {
                     // match the AMVs from common with AMVS from cli
