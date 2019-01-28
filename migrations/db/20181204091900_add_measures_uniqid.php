@@ -237,5 +237,9 @@ class AddMeasuresUniqid extends AbstractMigration
       $table = $this->table('measures');
       $table->addForeignKey('referential_uniqid', 'referentials', 'uniqid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
+      $table = $this->table('referentials');
+      $table->addForeignKey('anr_id', 'anrs', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+
     }
 }
