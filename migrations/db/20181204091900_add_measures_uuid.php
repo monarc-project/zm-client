@@ -237,6 +237,13 @@ class AddMeasuresUuid extends AbstractMigration
       $table = $this->table('referentials');
       $table->addForeignKey('anr_id', 'anrs', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
+      $table = $this->table('measures_measures');
+      $table->addForeignKey('anr_id', 'anrs', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
 
+      $table = $this->table('measures_measures');
+      $table->dropForeignKey('father_id')
+            ->dropForeignKey('child_id')
+            ->update();
     }
 }
