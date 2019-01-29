@@ -230,12 +230,9 @@ class AddMeasuresUniqid extends AbstractMigration
       $table = $this->table('recommandations_measures');
       $table->addForeignKey(['measure_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
-      $table = $this->table('measures_measures');
-      $table->addForeignKey(['father_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-            ->addForeignKey(['child_id','anr_id'], 'measures', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-            ->update();
       $table = $this->table('measures');
-      $table->addForeignKey('referential_uniqid', 'referentials', 'uniqid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+      $table->addForeignKey(['referential_uniqid','anr_id'], 'referentials', ['uniqid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->addForeignKey('soacategory_id', 'soacategory', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
       $table = $this->table('referentials');
       $table->addForeignKey('anr_id', 'anrs', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
