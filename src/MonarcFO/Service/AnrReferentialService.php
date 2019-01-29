@@ -18,7 +18,7 @@ use MonarcCore\Service\AbstractService;
 class AnrReferentialService extends AbstractService
 {
     protected $dependencies = ['anr', 'amvs'];
-    protected $filterColumns = ['uniqid', 'label1', 'label2', 'label3', 'label4'];
+    protected $filterColumns = ['uuid', 'label1', 'label2', 'label3', 'label4'];
     protected $forbiddenFields = ['anr'];
     protected $userAnrTable;
     protected $selfCoreService;

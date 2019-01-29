@@ -1174,7 +1174,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               foreach ($data['referentials'] as $refefentialUUID => $referential_array) {
                   // check if the referential is not already present in the analysis
                   $referentials = $this->get('referentialTable')
-                                        ->getEntityByFields(['anr' => $anr->id, 'uniqid' => $refefentialUUID]);
+                                        ->getEntityByFields(['anr' => $anr->id, 'uuid' => $refefentialUUID]);
                   if (empty($referentials)) {
                       $newReferential = new \MonarcFO\Model\Entity\Referential($referential_array);
                       $newReferential->setAnr($anr);
@@ -1188,7 +1188,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                    // load the referential linked to the soacategory
                   $referentials = $this->get('referentialTable')
                                         ->getEntityByFields(['anr' => $anr->id,
-                                        'uniqid' => $soaCategory['referential']]);
+                                        'uuid' => $soaCategory['referential']]);
                   if (!empty($referentials)) {
                       $newSoaCategory = new \MonarcFO\Model\Entity\SoaCategory($soaCategory);
                       $newSoaCategory->setAnr($anr);
@@ -1202,12 +1202,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
           if (isset($data['measures'])) {
               foreach ($data['measures'] as $measureUUID => $measure_array) {
                   // check if the measure is not already in the analysis
-                  $measures = $this->get('measureTable')->getEntityByFields(['anr' => $anr->id, 'uniqid' => $measureUUID]);
+                  $measures = $this->get('measureTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $measureUUID]);
                   if (empty($measures)) {
                       // load the referential linked to the measure
                       $referentials = $this->get('referentialTable')
                                             ->getEntityByFields(['anr' => $anr->id,
-                                            'uniqid' => $measure_array['referential']]);
+                                            'uuid' => $measure_array['referential']]);
                       $soaCategories = $this->get('soaCategoryTable')
                                             ->getEntityByFields(['anr' => $anr->id,
                                                 'label' . $this->getLanguage() => $measure_array['category']]);

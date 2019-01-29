@@ -15,7 +15,7 @@ use MonarcCore\Model\Entity\SoaCategorySuperClass;
 *
 * @ORM\Table(name="soacategory", indexes={
 *      @ORM\Index(name="anr", columns={"anr_id"}),
-*      @ORM\Index(name="referential", columns={"referential_uniqid"})
+*      @ORM\Index(name="referential", columns={"referential_uuid"})
 * })
 * @ORM\Entity
 */
@@ -35,7 +35,7 @@ class SoaCategory extends SoaCategorySuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Referential", inversedBy="categories", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="referential_uniqid", referencedColumnName="uniqid", nullable=true),
+     *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */

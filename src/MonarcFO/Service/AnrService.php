@@ -259,29 +259,29 @@ class AnrService extends \MonarcCore\Service\AbstractService
     public function updateReferentials($data) {
         $anrTable = $this->get('anrCliTable');
         $anr = $anrTable->getEntity($data['id']);
-        $uniqid_array = array_map(function($referential) { return $referential['uniqid']; },
+        $uuid_array = array_map(function($referential) { return $referential['uuid']; },
                                     $data['referentials']);
 
         // search for referentials to unlink from the anr
         foreach ($anr->getReferentials() as $referential) {
-            if (! in_array($referential->getUniqid()->toString(), $uniqid_array) ) {
+            if (! in_array($referential->getuuid()->toString(), $uuid_array) ) {
                 $this->get('referentialCliTable')->delete(['anr' => $anr->id,
-                                    'uniqid' => $referential->getUniqid()->toString()]);
+                                    'uuid' => $referential->getuuid()->toString()]);
             }
         }
 
         // link new referentials to an ANR
-        foreach ($uniqid_array as $uniqid) {
+        foreach ($uuid_array as $uuid) {
             // check if referential already linked to the anr
             $referentials = $this->get('referentialCliTable')
                                 ->getEntityByFields(['anr' => $anr->id,
-                                                    'uniqid' => $uniqid]);
+                                                    'uuid' => $uuid]);
             if (! empty($referentials)) {
                 // if referential already linked to the anr, go to next iteration
                 continue;
             }
 
-            $referential = $this->get('referentialTable')->getEntity($uniqid);
+            $referential = $this->get('referentialTable')->getEntity($uuid);
             $measures = $referential->getMeasures();
             $referential->setMeasures(null);
 
@@ -291,7 +291,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             // duplicate categories
             $categoryNewIds = [];
-            $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getUniqid()]);
+            $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getuuid()]);
             foreach ($category as $cat) {
                 $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                 $newCategory->set('id', null);
@@ -535,7 +535,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $measuresNewIds = [];
             if ($source == MonarcObject::SOURCE_COMMON) {
                 foreach ($data['referentials'] as $referential_array) {
-                    $referential = $this->get('referentialTable')->getEntity($referential_array['uniqid']);
+                    $referential = $this->get('referentialTable')->getEntity($referential_array['uuid']);
                     $measures = $referential->getMeasures();
                     $referential->setMeasures(null);
 
@@ -545,7 +545,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                     // duplicate categories
                     $categoryNewIds = [];
-                    $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getUniqid()]);
+                    $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getuuid()]);
                     foreach ($category as $cat) {
                         $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                         $newCategory->set('id', null);
@@ -564,7 +564,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setAmvs(null);
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                        $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
+                        $measuresNewIds[$measure->getuuid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     //$newReferential->setMeasures(null);
@@ -602,7 +602,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setMeasuresLinked(null);
-                        $measuresNewIds[$measure->getUniqid()->toString()] = $newMeasure;
+                        $measuresNewIds[$measure->getuuid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures($new_measures);
@@ -635,7 +635,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                   $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                   $newSoa->set('id', null);
                   $newSoa->setAnr($newAnr);
-                  $newSoa->setMeasure($measuresNewIds[$soa->measure->getUniqid()->toString()]);
+                  $newSoa->setMeasure($measuresNewIds[$soa->measure->getuuid()->toString()]);
                   $this->get('SoaCliTable')->save($newSoa);
               }
             }
@@ -661,8 +661,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
                 $new_measures = [];
                 foreach ($amv->getMeasures() as $measure) {
-                    if (isset($measuresNewIds[$measure->getUniqid()->toString()])) {
-                        array_push($new_measures, $measuresNewIds[$measure->getUniqid()->toString()]);
+                    if (isset($measuresNewIds[$measure->getuuid()->toString()])) {
+                        array_push($new_measures, $measuresNewIds[$measure->getuuid()->toString()]);
                     }
                 }
                 $newAmv->setMeasures($new_measures);
@@ -986,7 +986,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRecommandationMeasure = new RecommandationMeasure($recommandationMeasure);
                 $newRecommandationMeasure->set('id', null);
                 $newRecommandationMeasure->setAnr($newAnr);
-                $newRecommandationMeasure->set('measure', $measuresNewIds[$newRecommandationMeasure->get('measure')->getUniqid()->toString()]);
+                $newRecommandationMeasure->set('measure', $measuresNewIds[$newRecommandationMeasure->get('measure')->getuuid()->toString()]);
                 $this->get('recommandationMeasureCliTable')->save($newRecommandationMeasure,false);
             }
 

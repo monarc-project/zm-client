@@ -35,7 +35,7 @@ class AnrMeasureMeasureService extends AbstractService
         $measureTable = $this->get('measureTable');
         $anrTable = $this->get('anrTable');
         $measureMeasureTable = $this->get('table');
-        $measuresMeasures = $measureMeasureTable->getEntityByFields(['child' => $data['child']['uniqid'] , 'father' => $data['father']['uniqid']]);
+        $measuresMeasures = $measureMeasureTable->getEntityByFields(['child' => $data['child']['uuid'] , 'father' => $data['father']['uuid']]);
 
         if (count($measuresMeasures)) { // the linkk already exist
             throw new \MonarcCore\Exception\Exception('This component already exist for this object', 412);
@@ -47,12 +47,12 @@ class AnrMeasureMeasureService extends AbstractService
           // $measureTable->save($father);
            $entity = $this->get('entity');
            $entity->setAnr($anr);
-           $entity->setFather($data['father']['uniqid']);
-           $entity->setChild($data['child']['uniqid']);
+           $entity->setFather($data['father']['uuid']);
+           $entity->setChild($data['child']['uuid']);
            $measureMeasureTable->save($entity, false);
            $entity2 = clone $entity; //make the save in the other way
-           $entity2->setFather($data['child']['uniqid']);
-           $entity2->setChild($data['father']['uniqid']);
+           $entity2->setFather($data['child']['uuid']);
+           $entity2->setChild($data['father']['uuid']);
            $measureMeasureTable->save($entity2);
         }
         return $id;
@@ -61,8 +61,8 @@ class AnrMeasureMeasureService extends AbstractService
     public function delete($id)
     {
       $measureTable = $this->get('measureTable');
-      $father = $measureTable->getEntity(['uniqid'=>$id['father'],'anr'=>$id['anr']]);
-      $child = $measureTable->getEntity(['uniqid'=>$id['child'],'anr'=>$id['anr']]);
+      $father = $measureTable->getEntity(['uuid'=>$id['father'],'anr'=>$id['anr']]);
+      $child = $measureTable->getEntity(['uuid'=>$id['child'],'anr'=>$id['anr']]);
       $father->deleteLinkedMeasure($child);
       $measureTable->save($father);
     }

@@ -52,16 +52,16 @@ class ApiSoaController extends  ApiAnrAbstractController
         }
 
         $filterMeasures['r.anr']=$anrId;
-        $filterMeasures['r.uniqid']= $referential;
+        $filterMeasures['r.uuid']= $referential;
 
         $measureService = $this->getService()->get('measureService');
 
         $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
         $measuresFilteredId = [];
         foreach ($measuresFiltered as $key) {
-          array_push($measuresFilteredId,$key['uniqid']);
+          array_push($measuresFilteredId,$key['uuid']);
         }
-        $filterAnd['m.uniqid']= [
+        $filterAnd['m.uuid']= [
             'op' => 'IN',
             'value' => $measuresFilteredId,
         ];
@@ -115,7 +115,7 @@ class ApiSoaController extends  ApiAnrAbstractController
            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
        }
        $data['anr'] = $anrId;
-       $data['measure'] = ['anr' => $anrId , 'uniqid' => $data['measure']['uniqid']];
+       $data['measure'] = ['anr' => $anrId , 'uuid' => $data['measure']['uuid']];
        return parent::patch($id, $data);
    }
 
@@ -129,7 +129,7 @@ class ApiSoaController extends  ApiAnrAbstractController
        $created_objects = array();
        foreach ($data as $new_data) {
            $new_data['anr'] = $anrId;
-           $new_data['measure'] = ['anr' => $anrId , 'uniqid' => $new_data['measure']['uniqid']];
+           $new_data['measure'] = ['anr' => $anrId , 'uuid' => $new_data['measure']['uuid']];
            $id = $new_data['id'];
            parent::patch($id, $new_data);
            array_push($created_objects, $id);

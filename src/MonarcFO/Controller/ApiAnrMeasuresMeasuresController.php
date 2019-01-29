@@ -64,11 +64,11 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
       $data['anr'] = $anrId ;
       $data['father'] = [
         'anr' => $anrId,
-        'uniqid' => $data['father']
+        'uuid' => $data['father']
       ];
       $data['child'] = [
         'anr' => $anrId,
-        'uniqid' => $data['child']
+        'uuid' => $data['child']
       ];
       return parent::create($data, $last=true);
     }

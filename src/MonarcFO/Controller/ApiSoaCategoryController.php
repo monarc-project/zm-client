@@ -44,7 +44,7 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
         $filterAnd = ['anr' => $anrId];
         if ($referential) {
           $filterAnd['r.anr']=$anrId;
-          $filterAnd['r.uniqid']= $referential;
+          $filterAnd['r.uuid']= $referential;
          }
 
         $service = $this->getService();

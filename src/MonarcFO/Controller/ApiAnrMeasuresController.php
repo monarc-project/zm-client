@@ -46,7 +46,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 
         if ($referential) {
           $filterAnd['r.anr']=$anrId;
-          $filterAnd['r.uniqid']= $referential;
+          $filterAnd['r.uuid']= $referential;
         }
         if ($category) {
           $filterAnd['category'] = (int)$category;
@@ -70,9 +70,9 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
     public function update($id, $data)
     {
       $anrId = (int)$this->params()->fromRoute('anrid');
-      $ids = ['anr'=>$anrId,'uniqid'=>$data['uniqid']];
+      $ids = ['anr'=>$anrId,'uuid'=>$data['uuid']];
       $data['anr'] = $anrId;
-      $data ['referential'] = ['anr' => $anrId, 'uniqid' => $data['referential']]; //all the objects is send but we just need the uniqid
+      $data ['referential'] = ['anr' => $anrId, 'uuid' => $data['referential']]; //all the objects is send but we just need the uuid
       $data['category'] ['referential'] = $data ['referential'];
       unset($data['measuresLinked']);
       unset($data['amvs']);
@@ -93,7 +93,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $ids = ['uniqid'=>$id,'anr'=>$anrId];
+        $ids = ['uuid'=>$id,'anr'=>$anrId];
         return parent::get($ids);
     }
 
@@ -103,7 +103,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
     public function delete($id)
     {
       $anrId = (int)$this->params()->fromRoute('anrid');
-      $ids = ['uniqid'=>$id,'anr'=>$anrId];
+      $ids = ['uuid'=>$id,'anr'=>$anrId];
       return parent::delete($ids);
     }
 
@@ -111,8 +111,8 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
     {
       $new_data = [];
       $anrId = (int)$this->params()->fromRoute('anrid');
-      foreach ($data as $uniqid) {
-        $new_data[] = ['uniqid' => $uniqid, 'anr'=>$anrId];
+      foreach ($data as $uuid) {
+        $new_data[] = ['uuid' => $uuid, 'anr'=>$anrId];
       }
       return parent::deleteList($new_data);
     }

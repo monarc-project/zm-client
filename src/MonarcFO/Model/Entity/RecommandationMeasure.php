@@ -52,7 +52,7 @@ class RecommandationMeasure extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uniqid", nullable=true)
+     *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid", nullable=true)
      * })
      */
     protected $measure;

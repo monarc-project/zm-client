@@ -50,7 +50,7 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'uniqid' => $id]);
+        $entity = $this->getService()->getEntity(['anr' => $anrId, 'uuid' => $id]);
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
@@ -69,7 +69,7 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uniqid' => $data['uniqid']];
+        $newId = ['anr'=> $anrId, 'uuid' => $data['uuid']];
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
@@ -84,7 +84,7 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
     public function delete($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uniqid' => $id];
+        $newId = ['anr'=> $anrId, 'uuid' => $id];
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);

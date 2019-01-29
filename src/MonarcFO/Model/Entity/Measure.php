@@ -16,7 +16,7 @@ use MonarcCore\Model\Entity\MeasureSuperClass;
  * @ORM\Table(name="measures", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  *      @ORM\Index(name="category", columns={"soacategory_id"}),
- *      @ORM\Index(name="referential", columns={"referential_uniqid"})
+ *      @ORM\Index(name="referential", columns={"referential_uuid"})
 * })
  * @ORM\Entity
  */
@@ -26,8 +26,8 @@ class Measure extends MeasureSuperClass
      * Many Measures have many Measures.
      * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", cascade={"persist"})
      * @ORM\JoinTable(name="measures_measures",
-     *      joinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
+     *      joinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
      *      )
      */
    protected $measuresLinked;
@@ -47,7 +47,7 @@ class Measure extends MeasureSuperClass
     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Amv", mappedBy="measures", cascade={"persist"})
     * @ORM\JoinTable(name="measures_amvs",
     *  inverseJoinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="id")},
-    *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uniqid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
+    *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
     * )
     */
     protected $amvs;
@@ -67,7 +67,7 @@ class Measure extends MeasureSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Referential", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="referential_uniqid", referencedColumnName="uniqid", nullable=true),
+     *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
      *    @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
