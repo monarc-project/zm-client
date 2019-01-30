@@ -338,7 +338,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                     if (count($amv_cli)) {
                         $amv_cli[0]->addMeasure($newMeasure);
-                        $newMeasure->addAmv($amv_cli[0]);
+                        //$newMeasure->addAmv($amv_cli[0]);
                     }
                 }
                 array_push($measuresNewIds, $newMeasure);
