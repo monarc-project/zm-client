@@ -310,6 +310,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setAnr($anr);
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                $newMeasure->setMeasuresLinked(null);
+
                 $amvs = $newMeasure->getAmvs();
                 $newMeasure->setAmvs([]);
                 // update the amv with the new measures from the current referential
@@ -564,6 +566,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setAmvs(null);
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                        $newMeasure->setMeasuresLinked(null);
                         $measuresNewIds[$measure->getuuid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }

@@ -92,6 +92,24 @@ class Measure extends MeasureSuperClass
     }
 
     /**
+     * @param Measure $measuresLinked
+     * @return Measure
+     */
+    public function setMeasuresLinked($measuresLinked)
+    {
+        $this->measuresLinked = $measuresLinked;
+        return $this;
+    }
+
+    /**
+     * @return Measure
+     */
+    public function getMeasuresLinked()
+    {
+        return $this->measuresLinked;
+    }
+
+    /**
      * @return Category
      */
     public function getCategory()
