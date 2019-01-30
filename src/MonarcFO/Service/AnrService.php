@@ -311,7 +311,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                 $newMeasure->setMeasuresLinked(null);
-
                 $amvs = $newMeasure->getAmvs();
                 $newMeasure->setAmvs([]);
                 // update the amv with the new measures from the current referential
