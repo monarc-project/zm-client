@@ -310,6 +310,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newMeasure->setAnr($anr);
                 $newMeasure->setReferential($newReferential);
                 $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                foreach ($newMeasure->getMeasuresLinked() as $measureLinked) {
+                    $data = [];
+                    $data['father'] = $measure->getuuid()->toString();
+                    $data['child'] = $measureLinked->getuuid()->toString();
+                    $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($data);
+                    $newMeasureMeasure->setAnr($anr);
+                    $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
+
+                }
                 $newMeasure->setMeasuresLinked(null);
                 $amvs = $newMeasure->getAmvs();
                 $newMeasure->setAmvs([]);
