@@ -6,7 +6,6 @@
  */
 
 namespace MonarcFO\Service;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 /**
  * This class is the service that handles measures in use within an ANR. Inherits its behavior from its MonarcCore
  * parent class MeasureService
