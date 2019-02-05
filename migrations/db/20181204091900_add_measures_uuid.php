@@ -232,7 +232,7 @@ class AddMeasuresUuid extends AbstractMigration
             ->update();
       $table = $this->table('measures');
       $table->addForeignKey(['referential_uuid','anr_id'], 'referentials', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-            ->addForeignKey('soacategory_id', 'soacategory', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->addForeignKey('soacategory_id', 'soacategory', 'id', ['delete'=> 'SET_NULL', 'update'=> 'RESTRICT'])
             ->update();
       $table = $this->table('referentials');
       $table->addForeignKey('anr_id', 'anrs', 'id', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
@@ -244,6 +244,11 @@ class AddMeasuresUuid extends AbstractMigration
       $table = $this->table('measures_measures');
       $table->dropForeignKey('father_id')
             ->dropForeignKey('child_id')
+            ->update();
+      //delete a theme of a threat mustn't delete all the threat linked to the theme
+      $table = $this->table('threats');
+      $table->dropForeignKey('theme_id')
+            ->addForeignKey('theme_id', 'themes', 'id', ['delete'=> 'SET_NULL', 'update'=> 'RESTRICT'])
             ->update();
     }
 }
