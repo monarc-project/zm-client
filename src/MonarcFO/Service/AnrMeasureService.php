@@ -6,7 +6,7 @@
  */
 
 namespace MonarcFO\Service;
-
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 /**
  * This class is the service that handles measures in use within an ANR. Inherits its behavior from its MonarcCore
  * parent class MeasureService
@@ -33,7 +33,14 @@ class AnrMeasureService extends \MonarcCore\Service\MeasureService
      */
     public function create($data, $last = true)
     {
-        $uuid = parent::create($data, $last)->toString();
+        try{
+          $uuid = parent::create($data, $last);
+        }
+        catch(\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) // we check if the uuid id already existing
+        {
+          unset($data['uuid']); //if the uuid exist create a new one
+          $uuid = parent::create($data, $last)->toString();
+        }
         $table = $this->get('table');
         $SoaClass = $this->get('SoaEntity');
         $SoaTable = $this->get('SoaTable');
