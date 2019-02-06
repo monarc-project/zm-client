@@ -94,8 +94,12 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
         $created_objects = array();
         foreach ($data as $key => $new_data) {
             $new_data['anr'] = $anrId;
-            if($new_data['referential']){
+            if(isset($new_data['referential'])){
                $new_data['referential'] = ['uuid' => $new_data['referential'], 'anr'=>$anrId];
+            }
+            if (isset($new_data['father']) && isset($new_data['child'])) {
+              $new_data['father'] = ['anr' => $anrId, 'uuid' => $new_data['father']];
+              $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
             }
 
             $id = $this->getService()->create($new_data);

@@ -28,7 +28,7 @@ class AnrMeasureMeasureService extends AbstractService
 
     public function create($data, $last=true)
     {
-      $id = null;
+        $id = null;
         if ($data['father'] == $data['child']) {
             throw new \MonarcCore\Exception\Exception("You cannot add yourself as a component", 412);
         }
@@ -40,20 +40,19 @@ class AnrMeasureMeasureService extends AbstractService
         if (count($measuresMeasures)) { // the linkk already exist
             throw new \MonarcCore\Exception\Exception('This component already exist for this object', 412);
         }else {
-          $anr = $anrTable->getEntity($data['anr']);
-          // $father = $measureTable->getEntity($data['father']);
-          // $child = $measureTable->getEntity($data['child']);
-          // $father->addLinkedMeasure($child);
-          // $measureTable->save($father);
-           $entity = $this->get('entity');
-           $entity->setAnr($anr);
-           $entity->setFather($data['father']['uuid']);
-           $entity->setChild($data['child']['uuid']);
-           $measureMeasureTable->save($entity, false);
-           $entity2 = clone $entity; //make the save in the other way
-           $entity2->setFather($data['child']['uuid']);
-           $entity2->setChild($data['father']['uuid']);
-           $measureMeasureTable->save($entity2);
+            $anr = $anrTable->getEntity($data['anr']);
+            $class = $this->get('entity');
+            $entity = new $class();
+            $entity->setLanguage($this->getLanguage());
+            $entity->setDbAdapter($this->get('table')->getDb());
+            $entity->setAnr($anr);
+            $entity->setFather($data['father']['uuid']);
+            $entity->setChild($data['child']['uuid']);
+            $measureMeasureTable->save($entity, false);
+            $entity2 = clone $entity; //make the save in the other way
+            $entity2->setFather($data['child']['uuid']);
+            $entity2->setChild($data['father']['uuid']);
+            $measureMeasureTable->save($entity2);
         }
         return $id;
     }
