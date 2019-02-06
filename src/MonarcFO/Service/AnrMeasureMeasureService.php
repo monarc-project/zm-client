@@ -35,7 +35,7 @@ class AnrMeasureMeasureService extends AbstractService
         $measureTable = $this->get('measureTable');
         $anrTable = $this->get('anrTable');
         $measureMeasureTable = $this->get('table');
-        $measuresMeasures = $measureMeasureTable->getEntityByFields(['child' => $data['child']['uuid'] , 'father' => $data['father']['uuid']]);
+        $measuresMeasures = $measureMeasureTable->getEntityByFields(['anr' => $data['anr'],'child' => $data['child']['uuid'] , 'father' => $data['father']['uuid']]);
 
         if (count($measuresMeasures)) { // the linkk already exist
             throw new \MonarcCore\Exception\Exception('This component already exist for this object', 412);
