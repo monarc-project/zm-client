@@ -33,12 +33,12 @@ class AnrMeasureService extends \MonarcCore\Service\MeasureService
     public function create($data, $last = true)
     {
         try{
-          $uuid = parent::create($data, $last);
+          $uuid = \MonarcCore\Service\AbstractService::create($data, $last);
         }
         catch(\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) // we check if the uuid id already existing
         {
           unset($data['uuid']); //if the uuid exist create a new one
-          $uuid = parent::create($data, $last)->toString();
+          $uuid = \MonarcCore\Service\AbstractService::create($data, $last)->toString();
         }
         $table = $this->get('table');
         $SoaClass = $this->get('SoaEntity');
