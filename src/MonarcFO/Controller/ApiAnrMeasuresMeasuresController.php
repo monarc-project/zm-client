@@ -32,16 +32,15 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-        //  $status = $this->params()->fromQuery('status');
         $fatherId = $this->params()->fromQuery('fatherId');
         $childId = $this->params()->fromQuery('childId');
         $filterAnd = ['anr' => $anrId];
 
         if ($fatherId) {
-          $filterAnd['father'] = (int) $fatherId;
+          $filterAnd['father'] = $fatherId;
         }
         if ($childId) {
-          $filterAnd['child'] = (int) $childId;
+          $filterAnd['child'] = $childId;
         }
 
         $service = $this->getService();
