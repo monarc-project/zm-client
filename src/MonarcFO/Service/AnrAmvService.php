@@ -91,6 +91,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         if (empty($data)) {
             throw new \MonarcCore\Exception\Exception('Data missing', 412);
         }
+
         //manage the measures separatly because it's the slave of the relation amv<-->measures
         foreach ($data['measures'] as $measure) {
             $measureEntity =  $this->get('measureTable')->getEntity($measure);
@@ -98,8 +99,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         }
 
         foreach ($entity->measures as $m) {
-          $delete = false;
-            if(false == array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
+            if(false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
               $m->deleteAmv($entity);
             }
         }
@@ -156,7 +156,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         }
 
         foreach ($entity->measures as $m) {
-            if(false == array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
+            if(false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
               $m->deleteAmv($entity);
             }
         }
