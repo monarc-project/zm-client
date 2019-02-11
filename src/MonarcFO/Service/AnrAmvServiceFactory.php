@@ -24,6 +24,8 @@ class AnrAmvServiceFactory extends AbstractServiceFactory
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
         'vulnerabilityTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
         'measureTable' => 'MonarcFO\Model\Table\MeasureTable',
+        'referentialTable' => 'MonarcFO\Model\Table\ReferentialTable',
+        'amvTable' => 'MonarcFO\Model\Table\AmvTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'MonarcObjectTable' => 'MonarcFO\Model\Table\MonarcObjectTable',
