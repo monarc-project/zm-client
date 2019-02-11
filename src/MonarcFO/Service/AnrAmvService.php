@@ -200,17 +200,15 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
       foreach ($measures_dest as $md) {
         foreach ($md->getMeasuresLinked() as $measureLink) {
           if($measureLink->getReferential()->getuuid()->toString()==$source_uuid ){
-            foreach ($measureLink->amvs as $amv) {
               if(true){
-                $amv->measures->add($md);
-                $this->get('amvTable')->save($amv,false);
+                $md->amvs = $measureLink->amvs;
+                $this->get('measureTable')->save($md,false);
               }
-            }
             //file_put_contents('php://stderr', print_r($measureLink->getuuid()->toString(). " -> " .count($measureLink->getAmvs()), TRUE).PHP_EOL);
           }
         }
         //file_put_contents('php://stderr', print_r($md->getuuid()->toString(). " -> " .count($md->getAmvs()), TRUE).PHP_EOL);
-        $this->get('amvTable')->getDb()->getEntityManager()->flush();
+        $this->get('measureTable')->getDb()->getEntityManager()->flush();
       }
     }
 }
