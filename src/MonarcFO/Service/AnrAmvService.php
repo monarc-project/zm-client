@@ -29,6 +29,8 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskTable;
     protected $vulnerabilityTable;
     protected $measureTable;
+    protected $referentialTable;
+    protected $amvTable;
     protected $filterColumns = ['status'];
     protected $dependencies = ['anr', 'asset', 'threat', 'vulnerability', 'measures'];
 
@@ -189,5 +191,24 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         }
 
         return $id;
+    }
+
+    public function createLinkedAmvs($source_uuid, $destination_uuid, $anrId)
+    {
+      //file_put_contents('php://stderr', print_r('createLinkedAmvs', TRUE).PHP_EOL);
+      $measures_dest = $this->get('referentialTable')->getEntity(['uuid'=>$destination_uuid, 'anr' => $anrId])->getMeasures();
+      foreach ($measures_dest as $md) {
+        foreach ($md->getMeasuresLinked() as $measureLink) {
+          if($measureLink->getReferential()->getuuid()->toString()==$source_uuid ){
+              if(true){
+                $md->amvs = $measureLink->amvs;
+                $this->get('measureTable')->save($md,false);
+              }
+            //file_put_contents('php://stderr', print_r($measureLink->getuuid()->toString(). " -> " .count($measureLink->getAmvs()), TRUE).PHP_EOL);
+          }
+        }
+        //file_put_contents('php://stderr', print_r($md->getuuid()->toString(). " -> " .count($md->getAmvs()), TRUE).PHP_EOL);
+        $this->get('measureTable')->getDb()->getEntityManager()->flush();
+      }
     }
 }

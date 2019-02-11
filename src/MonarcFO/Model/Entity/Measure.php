@@ -44,7 +44,7 @@ class Measure extends MeasureSuperClass
 
     /**
     * @var \Doctrine\Common\Collections\Collection
-    * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Amv", mappedBy="measures", cascade={"persist"})
+    * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Amv", inversedBy="measures", cascade={"persist"})
     * @ORM\JoinTable(name="measures_amvs",
     *  inverseJoinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="id")},
     *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},

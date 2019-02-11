@@ -133,6 +133,8 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
       foreach ($data['measures'] as $key => $value) {
         $data['measures'][$key] = ['uuid'=>$value, 'anr' => $anrId];
       }
+    //  $this->getService()->createLinkedAmvs('98ca84fb-db87-11e8-ac77-0800279aaa2b','d50045a6-c3a7-4190-a340-96b44ee478be',$anrId);
+
       unset($data ['referential'] );
       return parent::update($id, $data);
     }
