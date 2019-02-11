@@ -91,6 +91,19 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         if (empty($data)) {
             throw new \MonarcCore\Exception\Exception('Data missing', 412);
         }
+        //manage the measures separatly because it's the slave of the relation amv<-->measures
+        foreach ($data['measures'] as $measure) {
+            $measureEntity =  $this->get('measureTable')->getEntity($measure);
+            $measureEntity->addAmv($entity);
+        }
+
+        foreach ($entity->measures as $m) {
+          $delete = false;
+            if(false == array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
+              $m->deleteAmv($entity);
+            }
+        }
+        unset($data['measures']);
 
         $entity->exchangeArray($data);
 
@@ -136,6 +149,18 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
                 $data[$dependency] = $entity->$dependency->id;
             }
         }
+        //manage the measures separatly because it's the slave of the relation amv<-->measures
+        foreach ($data['measures'] as $measure) {
+            $measureEntity =  $this->get('measureTable')->getEntity($measure);
+            $measureEntity->addAmv($entity);
+        }
+
+        foreach ($entity->measures as $m) {
+            if(false == array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
+              $m->deleteAmv($entity);
+            }
+        }
+        unset($data['measures']);
 
         $entity->exchangeArray($data, true);
 
@@ -154,6 +179,14 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
         $entity->setDbAdapter($this->get('table')->getDb());
+
+        //manage the measures separatly because it's the slave of the relation amv<-->measures
+        foreach ($data['measures'] as $measure) {
+            $measureEntity =  $this->get('measureTable')->getEntity($measure);
+            $measureEntity->addAmv($entity);
+        }
+        unset($data['measures']);
+
         $entity->exchangeArray($data);
 
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
@@ -193,9 +226,11 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         return $id;
     }
 
+  /*
+  * Function to link automatically the amv of the destination from the source depending of the measures_measures
+  */
     public function createLinkedAmvs($source_uuid, $destination_uuid, $anrId)
     {
-      //file_put_contents('php://stderr', print_r('createLinkedAmvs', TRUE).PHP_EOL);
       $measures_dest = $this->get('referentialTable')->getEntity(['uuid'=>$destination_uuid, 'anr' => $anrId])->getMeasures();
       foreach ($measures_dest as $md) {
         foreach ($md->getMeasuresLinked() as $measureLink) {
@@ -204,11 +239,9 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
                 $md->amvs = $measureLink->amvs;
                 $this->get('measureTable')->save($md,false);
               }
-            //file_put_contents('php://stderr', print_r($measureLink->getuuid()->toString(). " -> " .count($measureLink->getAmvs()), TRUE).PHP_EOL);
           }
         }
-        //file_put_contents('php://stderr', print_r($md->getuuid()->toString(). " -> " .count($md->getAmvs()), TRUE).PHP_EOL);
-        $this->get('measureTable')->getDb()->getEntityManager()->flush();
       }
+      $this->get('measureTable')->getDb()->flush();
     }
 }
