@@ -32,7 +32,7 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
     protected $referentialTable;
     protected $amvTable;
     protected $filterColumns = ['status'];
-    protected $dependencies = ['anr', 'asset', 'threat', 'vulnerability', 'measures'];
+    protected $dependencies = ['anr', 'asset', 'threat', 'vulnerability'];
 
     /**
      * @inheritdoc
@@ -149,18 +149,20 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
                 $data[$dependency] = $entity->$dependency->id;
             }
         }
-        //manage the measures separatly because it's the slave of the relation amv<-->measures
-        foreach ($data['measures'] as $measure) {
-            $measureEntity =  $this->get('measureTable')->getEntity($measure);
-            $measureEntity->addAmv($entity);
-        }
+        if(isset($data['measures'])){
+          //manage the measures separatly because it's the slave of the relation amv<-->measures
+          foreach ($data['measures'] as $measure) {
+              $measureEntity =  $this->get('measureTable')->getEntity($measure);
+              $measureEntity->addAmv($entity);
+          }
 
-        foreach ($entity->measures as $m) {
-            if(false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
-              $m->deleteAmv($entity);
-            }
-        }
-        unset($data['measures']);
+          foreach ($entity->measures as $m) {
+              if(false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
+                $m->deleteAmv($entity);
+              }
+          }
+          unset($data['measures']);
+      }
 
         $entity->exchangeArray($data, true);
 
