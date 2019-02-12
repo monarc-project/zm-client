@@ -694,13 +694,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
                 $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
                 $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
-                $new_measures = [];
+                $newAmv->setMeasures(null);
                 foreach ($amv->getMeasures() as $measure) {
                     if (isset($measuresNewIds[$measure->getuuid()->toString()])) {
-                        array_push($new_measures, $measuresNewIds[$measure->getuuid()->toString()]);
+                        //array_push($new_measures, $measuresNewIds[$measure->getuuid()->toString()]);
+                        $this->get('measureCliTable')->getEntity(['anr'=> $newAnr->id, 'uuid'=>$measure->getuuid()->toString()])->addAmv($newAmv);
                     }
                 }
-                $newAmv->setMeasures($new_measures);
                 $this->get('amvCliTable')->save($newAmv, false);
                 $amvsNewIds[$amv->id] = $newAmv;
             }
