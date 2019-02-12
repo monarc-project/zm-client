@@ -257,6 +257,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return int
      */
     public function updateReferentials($data) {
+      // This may take a lot of time on huge ANRs, so ignore the time limit
+      ini_set('max_execution_time', 0);
+      
         $anrTable = $this->get('anrCliTable');
         $anr = $anrTable->getEntity($data['id']);
         $uuid_array = array_map(function($referential) { return $referential['uuid']; },
