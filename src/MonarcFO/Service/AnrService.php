@@ -257,9 +257,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
      * @return int
      */
     public function updateReferentials($data) {
-      // This may take a lot of time on huge ANRs, so ignore the time limit
+      // This may take a lot of time on huge referentials, so ignore the time limit
       ini_set('max_execution_time', 0);
-      
+
         $anrTable = $this->get('anrCliTable');
         $anr = $anrTable->getEntity($data['id']);
         $uuid_array = array_map(function($referential) { return $referential['uuid']; },
@@ -324,7 +324,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $data['child'] = $measureLinked->getuuid()->toString();
                         $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
-                        $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
+                        $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                     }
                     if ( count($this->get('measureMeasureCliTable')
                          ->getEntityByFields(['anr' => $anr->id,
@@ -335,7 +335,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $data['child'] = $measure->getuuid()->toString();
                         $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
-                        $this->get('measureMeasureCliTable')->save($newMeasureMeasure);
+                        $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                     }
                 }
                 $newMeasure->setMeasuresLinked(null);
@@ -375,7 +375,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newSoa->set('id', null);
                 $newSoa->setAnr($anr);
                 $newSoa->setMeasure($newMeasure);
-                $this->get('SoaCliTable')->save($newSoa);
+                $this->get('SoaCliTable')->save($newSoa, false);
             }
             $newReferential->setMeasures($measuresNewIds);
 
