@@ -17,7 +17,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrMeasuresController extends ApiAnrAbstractController
 {
     protected $name = 'measures';
-    protected $dependencies = ['anr', 'category', 'referential',  'amvs', 'measuresLinked'];
+    protected $dependencies = ['anr', 'category', 'referential',  'amvs', 'measuresLinked', 'rolfRisks'];
 
     public function getList()
     {
@@ -69,6 +69,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 
     public function update($id, $data)
     {
+      unset($data['rolfRisks']); // not managed for the moement
       $anrId = (int)$this->params()->fromRoute('anrid');
       $ids = ['anr'=>$anrId,'uuid'=>$data['uuid']];
       $data['anr'] = $anrId;
@@ -80,8 +81,16 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 
     }
 
+    public function patch($id, $data)
+    {
+      unset($data['measures']);
+      return parent::patch($id, $data);
+    }
+
     public function create($data)
     {
+      unset($data['rolfRisks']); // not managed for the moement
+
         unset($data['measuresLinked']);
         unset($data['amvs']);
         return parent::create($data);

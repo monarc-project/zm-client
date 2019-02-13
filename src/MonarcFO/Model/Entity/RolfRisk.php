@@ -43,6 +43,16 @@ class RolfRisk extends RolfRiskSuperclass
     protected $tags;
 
     /**
+     * @var \Doctrine\Common\Collections\Collection
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="rolfRisks", cascade={"persist"})
+     * @ORM\JoinTable(name="measures_rolf_risks",
+     *  joinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
+     *  inverseJoinColumns={@ORM\JoinColumn(name="measure_uuid", referencedColumnName="uuid")}
+     * )
+     */
+    protected $measures;
+
+    /**
      * @return Anr
      */
     public function getAnr()

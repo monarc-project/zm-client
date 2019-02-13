@@ -19,7 +19,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {
     protected $name = 'risks';
 
-    protected $dependencies = ['tags'];
+    protected $dependencies = ['tags', 'measures'];
 
     /**
      * @inheritdoc
@@ -51,5 +51,17 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
             'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $tag, $anr),
             $this->name => $rolfRisks
         ]);
+    }
+
+    public function update($id, $data)
+    {
+      unset($data['measures']);
+      return parent::update($id, $data);
+    }
+
+    public function patch($id, $data)
+    {
+      unset($data['measures']);
+      return parent::patch($id, $data);
     }
 }
