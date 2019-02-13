@@ -55,13 +55,23 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
     public function update($id, $data)
     {
-      unset($data['measures']);
+      $anr = $this->params()->fromRoute("anrid");
+      $measures= array();
+      foreach ($data['measures'] as $measure) {
+        $measures[] = ['anr' => $anr, 'uuid' => $measure];
+      }
+      $data['measures'] = $measures;
       return parent::update($id, $data);
     }
 
     public function patch($id, $data)
     {
-      unset($data['measures']);
+      $anr = $this->params()->fromRoute("anrid");
+      $measures= array();
+      foreach ($data['measures'] as $measure) {
+        $measures[] = ['anr' => $anr, 'uuid' => $measure];
+      }
+      $data['measures'] = $measures;
       return parent::patch($id, $data);
     }
 }
