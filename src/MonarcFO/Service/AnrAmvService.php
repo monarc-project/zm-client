@@ -236,12 +236,12 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
       $measures_dest = $this->get('referentialTable')->getEntity(['uuid'=>$destination_uuid, 'anr' => $anrId])->getMeasures();
       foreach ($measures_dest as $md) {
         foreach ($md->getMeasuresLinked() as $measureLink) {
-          if($measureLink->getReferential()->getuuid()->toString()==$source_uuid ){
-              if(true){
-                $md->amvs = $measureLink->amvs;
-                $this->get('measureTable')->save($md,false);
+            if($measureLink->getReferential()->getuuid()->toString()==$source_uuid){
+              foreach ($measureLink->amvs as $amv) {
+                $md->addAmv($amv);
               }
-          }
+              $this->get('measureTable')->save($md,false);
+            }
         }
       }
       $this->get('measureTable')->getDb()->flush();
