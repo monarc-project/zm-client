@@ -57,7 +57,7 @@ class Measure extends MeasureSuperClass
     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RolfRisk", inversedBy="measures", cascade={"persist"})
     * @ORM\JoinTable(name="measures_rolf_risks",
     *  inverseJoinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
-    *  joinColumns={@ORM\JoinColumn(name="measure_uuid", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
+    *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
     * )
     */
     protected $rolfRisks;
