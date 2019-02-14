@@ -49,6 +49,10 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $tag, $anr);
         foreach ($rolfRisks as $key => $rolfRisk) {
 
+            if (count($this->dependencies)) {
+                    $this->formatDependencies($rolfRisks[$key], $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['referential']);
+            }
+
             $rolfRisk['tags']->initialize();
             $rolfTags = $rolfRisk['tags']->getSnapshot();
             $rolfRisks[$key]['tags'] = [];
@@ -83,6 +87,18 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
       }
       $data['measures'] = $measures;
       return parent::patch($id, $data);
+    }
+
+
+    public function patchList($data)
+    {
+      $service = $this->getService();
+
+      $service->createLinkedRisks($data['fromReferential'],$data['toReferential']);
+
+      return new JsonModel([
+          'status' =>  'ok',
+      ]);
     }
 
     public function create($data)
