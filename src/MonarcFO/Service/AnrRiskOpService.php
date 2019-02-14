@@ -88,7 +88,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
         $anr = $this->anrTable->getEntity($anrId);
         $l = $anr->language;
 
-        $sql = "SELECT      ir.id as id, ir.risk_cache_label1 as label1, ir.risk_cache_label2 as label2, ir.risk_cache_label3 as label3,
+        $sql = "SELECT      ir.id as id, ir.rolf_risk_id as rolfRiskId, ir.risk_cache_label1 as label1, ir.risk_cache_label2 as label2, ir.risk_cache_label3 as label3,
                             ir.risk_cache_label4 as label4, ir.risk_cache_description1 as description1, ir.risk_cache_description2 as description2,
                             ir.risk_cache_description3 as description3, ir.risk_cache_description4 as description4, ir.net_prob as netProb, ir.net_r as netR,
                             ir.net_o as netO, ir.net_l as netL, ir.net_f as netF, ir.net_p as netP, ir.cache_net_risk as cacheNetRisk, ir.brut_prob as brutProb,
@@ -97,8 +97,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                             ir.targeted_prob as targetedProb, ir.targeted_r as targetedR, ir.targeted_o as targetedO, ir.targeted_l as targetedL,
                             ir.targeted_f as targetedF, ir.targeted_p as targetedP, ir.cache_targeted_risk as cacheTargetedRisk,
                             IF(ir.kind_of_measure IS NULL OR ir.kind_of_measure = " .  \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED . ", false, true) as t,
-                            i.id as iid, i.name$l, i.position,
-                            o.scope
+                            i.id as iid, i.name$l, i.position, o.scope
                 FROM        instances_risks_op as ir
                 INNER JOIN  instances as i
                 ON          i.id = ir.instance_id
