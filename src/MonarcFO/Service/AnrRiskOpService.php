@@ -118,6 +118,14 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
             $typeParams[':ids'] = \Doctrine\DBAL\Connection::PARAM_INT_ARRAY;
         }
 
+        // FILTER: rolfRisks ==
+        if (isset($params['rolfRisks'])) {
+          $params['rolfRisks'] = explode(',', substr($params['rolfRisks'],1,-1));
+          $sql .= " AND ir.rolf_risk_id IN (:rolfRiskIds) ";
+          $queryParams[':rolfRiskIds'] = $params['rolfRisks'];
+          $typeParams[':rolfRiskIds'] = \Doctrine\DBAL\Connection::PARAM_INT_ARRAY;
+        }
+
         // FILTER: kind_of_measure ==
         if (isset($params['kindOfMeasure'])) {
             if ($params['kindOfMeasure'] == \MonarcCore\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED) {

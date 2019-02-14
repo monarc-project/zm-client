@@ -52,9 +52,11 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
             die($this->getService()->getCsvRisksOp($anrId, null, $params));
         } else {
             $risks = $this->getService()->getRisksOp($anrId, null, $params);
+            file_put_contents('php://stderr', print_r($risks , TRUE).PHP_EOL);
+
             return new JsonModel([
                 'count' => count($risks),
-                $this->name => array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit'])
+                $this->name => $params['limit'] > 0 ? array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit']) : $risks,
             ]);
         }
     }
@@ -90,6 +92,7 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
         $thresholds = $this->params()->fromQuery("thresholds");
         $page = $this->params()->fromQuery("page", 1);
         $limit = $this->params()->fromQuery("limit", 50);
+        $rolfRisks = $this->params()->fromQuery("rolfRisks");
 
         return [
             'keywords' => $keywords,
@@ -98,7 +101,8 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
             'order_direction' => $order_direction,
             'thresholds' => $thresholds,
             'page' => $page,
-            'limit' => $limit
+            'limit' => $limit,
+            'rolfRisks' => $rolfRisks
         ];
     }
 
