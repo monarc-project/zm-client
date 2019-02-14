@@ -17,7 +17,7 @@ use Zend\View\Model\JsonModel;
  */
 class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {
-    protected $name = 'rolfRisks';
+    protected $name = 'risks';
 
     protected $dependencies = ['tags', 'measures'];
 
