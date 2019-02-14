@@ -93,7 +93,8 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
     public function patchList($data)
     {
       $service = $this->getService();
-
+      $anr = $this->params()->fromRoute("anrid");
+      $data['toReferential'] = ['uuid' => $data['toReferential'], 'anr' => $anr];
       $service->createLinkedRisks($data['fromReferential'],$data['toReferential']);
 
       return new JsonModel([

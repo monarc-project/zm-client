@@ -22,4 +22,5 @@ class AnrRolfRiskService extends \MonarcCore\Service\RolfRiskService
     protected $categoryTable;
     protected $tagTable;
     protected $measureTable;
+    protected $referentialTable;
 }
