@@ -17,10 +17,20 @@ use Zend\View\Model\JsonModel;
  */
 class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {
-    protected $name = 'risks';
+    protected $name = 'rolfRisks';
 
     protected $dependencies = ['tags', 'measures'];
 
+    public function get($id)
+    {
+        $entity = $this->getService()->getEntity($id);
+
+        if (count($this->dependencies)) {
+            $this->formatDependencies($entity, $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['referential']);
+        }
+
+        return new JsonModel($entity);
+    }
     /**
      * @inheritdoc
      */
