@@ -603,7 +603,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         // duplicate and link the measures to the current referential
                         $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
                         $newMeasure->setAnr($newAnr);
-                        $newMeasure->setAmvs(null);
+                        $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection;
+                        $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         foreach ($newMeasure->getMeasuresLinked() as $measureLinked) {
@@ -653,6 +654,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setMeasuresLinked(null);
+                        $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                         $measuresNewIds[$measure->getuuid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
@@ -740,6 +742,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRolfRisk = new \MonarcFO\Model\Entity\RolfRisk($rolfRisk);
                 $newRolfRisk->set('id', null);
                 $newRolfRisk->setAnr($newAnr);
+                $newRolfRisk->measures = new \Doctrine\Common\Collections\ArrayCollection;
                 // Link tags
                 $indexTagRisk = 0;
                 $listTagrisk = [];
@@ -750,6 +753,11 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     }
                 }
                 $newRolfRisk->setTags($listTagrisk);
+                //link the measures
+                foreach ($rolfRisk->measures as $m) {
+                  $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
+                  $measure->AddOpRisk($newRolfRisk);
+                }
                 $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             }
