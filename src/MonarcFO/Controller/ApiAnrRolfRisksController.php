@@ -69,23 +69,15 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
     public function update($id, $data)
     {
-      $anr = $this->params()->fromRoute("anrid");
-      $measures= array();
-      foreach ($data['measures'] as $measure) {
-        $measures[] = ['anr' => $anr, 'uuid' => $measure];
-      }
-      $data['measures'] = $measures;
+      if(count($data['measures'])>0)
+        $data['measures'] = $this->addAnrId($data['measures']);
       return parent::update($id, $data);
     }
 
     public function patch($id, $data)
     {
-      $anr = $this->params()->fromRoute("anrid");
-      $measures= array();
-      foreach ($data['measures'] as $measure) {
-        $measures[] = ['anr' => $anr, 'uuid' => $measure];
-      }
-      $data['measures'] = $measures;
+      if(count($data['measures'])>0)
+        $data['measures'] = $this->addAnrId($data['measures']);
       return parent::patch($id, $data);
     }
 
@@ -93,8 +85,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
     public function patchList($data)
     {
       $service = $this->getService();
-      $anr = $this->params()->fromRoute("anrid");
-      $data['toReferential'] = ['uuid' => $data['toReferential'], 'anr' => $anr];
+      $data['toReferential'] = $this->addAnrId($data['toReferential']);
       $service->createLinkedRisks($data['fromReferential'],$data['toReferential']);
 
       return new JsonModel([
@@ -104,12 +95,8 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
     public function create($data)
     {
-      $anr = $this->params()->fromRoute("anrid");
-      $measures= array();
-      foreach ($data['measures'] as $measure) {
-        $measures[] = ['anr' => $anr, 'uuid' => $measure];
-      }
-      $data['measures'] = $measures;
+      if(count($data['measures'])>0)
+        $data['measures'] = $this->addAnrId($data['measures']);
       return parent::create($data);
     }
 }

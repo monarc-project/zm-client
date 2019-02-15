@@ -18,7 +18,7 @@ use MonarcFO\Model\Table\MonarcObjectTable;
  * @see \MonarcFO\Model\Table\AmvTable
  * @package MonarcFO\Service
  */
-class AnrAmvService extends \MonarcCore\Service\AbstractService
+class AnrAmvService extends \MonarcCore\Service\AmvService
 {
     protected $anrTable;
     protected $userAnrTable;
@@ -226,24 +226,5 @@ class AnrAmvService extends \MonarcCore\Service\AbstractService
         }
 
         return $id;
-    }
-
-  /*
-  * Function to link automatically the amv of the destination from the source depending of the measures_measures
-  */
-    public function createLinkedAmvs($source_uuid, $destination_uuid, $anrId)
-    {
-      $measures_dest = $this->get('referentialTable')->getEntity(['uuid'=>$destination_uuid, 'anr' => $anrId])->getMeasures();
-      foreach ($measures_dest as $md) {
-        foreach ($md->getMeasuresLinked() as $measureLink) {
-            if($measureLink->getReferential()->getuuid()->toString()==$source_uuid){
-              foreach ($measureLink->amvs as $amv) {
-                $md->addAmv($amv);
-              }
-              $this->get('measureTable')->save($md,false);
-            }
-        }
-      }
-      $this->get('measureTable')->getDb()->flush();
     }
 }
