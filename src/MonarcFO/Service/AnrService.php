@@ -340,7 +340,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
                 $newMeasure->setMeasuresLinked(null);
                 $amvs = $newMeasure->getAmvs();
-                $newMeasure->setAmvs([]);
+                $rolfRisks = $newMeasure->getRolfRisks();
+                $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection;
+                $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                 // update the amv with the new measures from the current referential
                 foreach ($amvs as $amv_common) {
                     // match the AMVs from common with AMVS from cli
@@ -368,6 +370,17 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         //$amv_cli[0]->addMeasure($newMeasure);
                         $newMeasure->addAmv($amv_cli[0]);
                     }
+                }
+                foreach ($rolfRisks as $rolfRisk_common) {
+                  // match the risks from common with risks from cli
+                  $risk_cli = $this->get('rolfRiskCliTable')
+                                      ->getEntityByFields(['anr' => $anr->id,
+                                      'label'.$this->getLanguage() => $rolfRisk_common->get('label'.$this->getLanguage()),
+                                      'code' => $rolfRisk_common->code]);
+                  if (count($risk_cli)) {
+                    //$risk_cli = $risk_cli[0];
+                      $newMeasure->AddOpRisk($risk_cli[0]);
+                  }
                 }
                 array_push($measuresNewIds, $newMeasure);
 
