@@ -171,4 +171,22 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
             return new JsonModel(['status' => 'ok']); // Todo: may be add error message
         }
     }
+
+    /**
+    * Function who put in all records of an array the anr_id
+    * @param Array  list of uuid for which one we want a composite id [uuid,anrid]
+    * @return Array The correct list of composite id
+    */
+    public function addAnrId($input)
+    {
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      $withId = array();
+      if(is_array($input)){
+        foreach ($input as $item) {
+              $withId[] = ['uuid'=>$item, 'anr'=> $anrId];
+          }
+        return $withId;
+      }else
+        return ['uuid'=>$input, 'anr'=> $anrId];
+    }
 }
