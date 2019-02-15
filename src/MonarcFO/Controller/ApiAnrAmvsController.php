@@ -119,9 +119,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     {
       $anrId = (int)$this->params()->fromRoute('anrid');
       if(count($data['measures'])>0)
-      foreach ($data['measures'] as $key => $value) {
-        $data['measures'][$key] = ['uuid'=>$value, 'anr' => $anrId];
-      }
+        $data['measures'] = $this->addAnrId($data['measures']);
       unset($data ['referential'] );
       return parent::create($data);
     }
@@ -130,9 +128,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     {
       $anrId = (int)$this->params()->fromRoute('anrid');
       if(count($data['measures'])>0)
-      foreach ($data['measures'] as $key => $value) {
-        $data['measures'][$key] = ['uuid'=>$value, 'anr' => $anrId];
-      }
+        $data['measures'] = $this->addAnrId($data['measures']);
 
       unset($data ['referential'] );
       return parent::update($id, $data);

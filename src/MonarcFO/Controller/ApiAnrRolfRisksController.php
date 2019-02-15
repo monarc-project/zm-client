@@ -69,13 +69,15 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
     public function update($id, $data)
     {
-      $data['measures'] = $this->addAnrId($data['measures']);
+      if(count($data['measures'])>0)
+        $data['measures'] = $this->addAnrId($data['measures']);
       return parent::update($id, $data);
     }
 
     public function patch($id, $data)
     {
-      $data['measures'] = $this->addAnrId($data['measures']);
+      if(count($data['measures'])>0)
+        $data['measures'] = $this->addAnrId($data['measures']);
       return parent::patch($id, $data);
     }
 
@@ -93,7 +95,8 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
     public function create($data)
     {
-      $data['measures'] = $this->addAnrId($data['measures']);
+      if(count($data['measures'])>0)
+        $data['measures'] = $this->addAnrId($data['measures']);
       return parent::create($data);
     }
 }
