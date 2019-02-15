@@ -136,9 +136,8 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
 
     public function patchList($data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
       $service = $this->getService();
-
+      $data['toReferential'] = $this->addAnrId($data['toReferential']);
       $service->createLinkedAmvs($data['fromReferential'],$data['toReferential'],$anrId);
 
       return new JsonModel([
