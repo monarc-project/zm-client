@@ -52,7 +52,6 @@ class ApiAnrRisksOpController extends ApiAnrAbstractController
             die($this->getService()->getCsvRisksOp($anrId, null, $params));
         } else {
             $risks = $this->getService()->getRisksOp($anrId, null, $params);
-            file_put_contents('php://stderr', print_r($risks , TRUE).PHP_EOL);
 
             return new JsonModel([
                 'count' => count($risks),
