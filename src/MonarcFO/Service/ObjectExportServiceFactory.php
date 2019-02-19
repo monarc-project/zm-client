@@ -27,6 +27,7 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
         'anrObjectCategoryTable' => '\MonarcFO\Model\Table\AnrObjectCategoryTable',
         'rolfTagTable' => '\MonarcFO\Model\Table\RolfTagTable',
         'rolfRiskTable' => '\MonarcFO\Model\Table\RolfRiskTable',
+        'measureTable' => '\MonarcFO\Model\Table\MeasureTable',
         'configService' => 'MonarcCore\Service\ConfigService',
     ];
 }
