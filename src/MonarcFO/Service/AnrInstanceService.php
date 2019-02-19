@@ -1217,6 +1217,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                           $newMeasure->setAnr($anr);
                           $newMeasure->setReferential($referentials[0]);
                           $newMeasure->setCategory($soaCategories[0]);
+                          $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
+                          $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                           $this->get('measureTable')->save($newMeasure);
                           $measuresNewIds[$measureUUID] = $newMeasure;
 
