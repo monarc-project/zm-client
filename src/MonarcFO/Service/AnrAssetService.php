@@ -127,7 +127,6 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         'anr' => $anr->get('id'),
                         'status' => $amvArray['status'],
                     ];
-                    file_put_contents('php://stderr', print_r($amvArray, TRUE).PHP_EOL);
                     if (isset($data['threats'][$amvArray['threat']])) { // Threats
                         if (is_array($data['threats'][$amvArray['threat']])) {
                             // Theme
