@@ -29,6 +29,9 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     protected $instanceRiskTable;
     protected $MonarcObjectTable;
     protected $instanceTable;
+    protected $soaCategoryCommonTable;
+    protected $referentialCommonTable;
+    protected $referentialTable;
     protected $dependencies = ['anr'];
     protected $filterColumns = [
         'label1', 'label2', 'label3', 'label4',
@@ -90,6 +93,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
      */
     public function importFromArray($data, $anr, &$objectsCache = [])
     {
+      $referentialPresent = false;
         // Ensure that we're importing an asset and that it has been exported from the same app version it's being
         // imported into (this is NOT a backup feature!)
         if (isset($data['type']) && $data['type'] == 'asset' &&
@@ -203,37 +207,79 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                     }
 
                       if(isset($data['measures'][$amvArray['measure1']])){ //old version without uuid
+                        //we need to create ISO 27002, we check if the common if it's present or not
+                          $referential = false;
+                          $referentialCli = current($this->get('referentialTable')->getEntityByFields(['anr' => $anr->id, 'uuid' =>'98ca84fb-db87-11e8-ac77-0800279aaa2b']));
+                          if(!$referentialCli)
+                            $referential = current($this->get('referentialCommonTable')->getEntityByFields(['uuid' =>'98ca84fb-db87-11e8-ac77-0800279aaa2b']));
+                          if($referential){
+                            $measures = $referential->getMeasures();
+                            $referential->setMeasures(null);
+
+                            // duplicate the referential
+                            $newReferential = new \MonarcFO\Model\Entity\Referential($referential);
+                            $newReferential->setAnr($anr);
+
+                            // duplicate categories
+                            $categoryNewIds = [];
+                            $category = $referential->categories;
+                            foreach ($category as $cat) {
+                                $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
+                                $newCategory->set('id', null);
+                                $newCategory->setAnr($anr);
+                                $newCategory->setMeasures(null);
+                                $newCategory->setReferential($newReferential);
+                                $categoryNewIds[$cat->id] = $newCategory;
+                            }
+
+                            $newReferential->setCategories($categoryNewIds);
+
+                            // duplicate the measures
+                            $measuresNewIds = [];
+                            foreach ($measures as $measure) {
+                                // duplicate and link the measures to the current referential
+                                $newMeasure = new \MonarcFO\Model\Entity\Measure($measure);
+                                $newMeasure->setAnr($anr);
+                                $newMeasure->setReferential($newReferential);
+                                $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                                $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
+                                $newMeasure->amvs =  new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
+                                $this->get('measureTable')->save($newMeasure,false);
+                            }
+                            $referentialPresent = true;
+                            $this->get('measureTable')->getDb()->flush();
+                          }
+
                         for ($i = 1; $i <= 3; $i++) {
                           if (isset($data['measures'][$amvArray['measure' . $i]])) { // Measure 1 / 2 / 3
                               if (is_array($data['measures'][$amvArray['measure' . $i]])) {
                                   $measure = $this->get('measureTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['measures'][$amvArray['measure' . $i]]['code']]);
                                   if ($measure) {
                                       $measure = current($measure);
-                                      $data['measures'][$amvArray['measure' . $i]] = $measure->get('id');
-                                  } else {
-                                      $c = $this->get('measureTable')->getClass();
-                                      $measure = new $c();
-                                      $measure->setDbAdapter($this->get('measureTable')->getDb());
-                                      $measure->setLanguage($this->getLanguage());
-                                      $data['measures'][$amvArray['measure' . $i]]['id'] = null;
-                                      if (array_key_exists('description' . $this->getLanguage(),$data['measures'][$amvArray['measure' . $i]])) {
-                                        for ($j=1; $j <= 4; $j++) {
-                                          $data['measures'][$amvArray['measure' . $i]]['label'. $j] = $data['measures'][$amvArray['measure' . $i]]['description' . $j];
-                                        }
-                                      }
-                                      $measure->exchangeArray($data['measures'][$amvArray['measure' . $i]]);
-                                      $measure->set('anr', $anr->get('id'));
-                                      $this->setDependencies($measure, ['anr']);
-                                      $objectsCache['measures'][$amvArray['measure' . $i]] = $data['measures'][$amvArray['measure' . $i]] = $this->get('measureTable')->save($measure);
-                                  }
+                                      $data['measures'][$amvArray['measure' . $i]] = $measure->get('uuid')->toString();
+                                   } //else {
+                                  //     $c = $this->get('measureTable')->getClass();
+                                  //     $measure = new $c();
+                                  //     $measure->setDbAdapter($this->get('measureTable')->getDb());
+                                  //     $measure->setLanguage($this->getLanguage());
+                                  //     $data['measures'][$amvArray['measure' . $i]]['id'] = null;
+                                  //     if (array_key_exists('description' . $this->getLanguage(),$data['measures'][$amvArray['measure' . $i]])) {
+                                  //       for ($j=1; $j <= 4; $j++) {
+                                  //         $data['measures'][$amvArray['measure' . $i]]['label'. $j] = $data['measures'][$amvArray['measure' . $i]]['description' . $j];
+                                  //       }
+                                  //     }
+                                  //     $measure->exchangeArray($data['measures'][$amvArray['measure' . $i]]);
+                                  //     $measure->set('anr', $anr->get('id'));
+                                  //     $this->setDependencies($measure, ['anr']);
+                                  //     $objectsCache['measures'][$amvArray['measure' . $i]] = $data['measures'][$amvArray['measure' . $i]] = $this->get('measureTable')->save($measure);
+                                  // }
                               }
-                              $amvData['measure' . $i] = $data['measures'][$amvArray['measure' . $i]];
-                          } else {
-                              $amvData['measure' . $i] = null;
-                          }
+                              $amvData['measures'][] = $data['measures'][$amvArray['measure' . $i]];
+                           } //else  {
+                          //     $amvData['measures'] = null;
+                          // }
                       }
                     }
-
 
                     $amvTest = current($this->get('amvTable')->getEntityByFields([
                         'anr' => $anr->get('id'),
@@ -246,11 +292,20 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $amv = new $c();
                         $amv->setDbAdapter($this->get('amvTable')->getDb());
                         $amv->setLanguage($this->getLanguage());
+                        $measuresAmvs = $amvData['measures'];
+                        unset($amvData['measures']);
                         $amv->exchangeArray($amvData, true);
-                        $this->setDependencies($amv, ['anr', 'asset', 'threat', 'vulnerability', 'measures']);
+                        $this->setDependencies($amv, ['anr', 'asset', 'threat', 'vulnerability',]);
                         $idAmv = $this->get('amvTable')->save($amv);
                         if(isset($amvArray['measures'])){ //version with uuid
                           foreach ($amvArray['measures'] as $m) {
+                            try{
+                              $measure = $this->get('measureTable')->getEntity(['anr'=>$anr->id , 'uuid' =>$m]);
+                              $measure->addAmv($amv);
+                            }catch (\MonarcCore\Exception\Exception $e) {}
+                          }
+                        }else if(isset($measuresAmvs)){ // old version without uuid
+                          foreach ($measuresAmvs as $m) {
                             try{
                               $measure = $this->get('measureTable')->getEntity(['anr'=>$anr->id , 'uuid' =>$m]);
                               $measure->addAmv($amv);
@@ -289,6 +344,13 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $localAmv[] = $amvTest->get('id');
                         if(isset($amvArray['measures'])){ //version with uuid
                           foreach ($amvArray['measures'] as $m) {
+                            try{
+                              $measure = $this->get('measureTable')->getEntity(['anr'=>$anr->id , 'uuid' =>$m]);
+                              $measure->addAmv($amvTest);
+                            }catch (\MonarcCore\Exception\Exception $e) {}
+                          }
+                        }else if(isset($amvData['measures'])){ //old version before uuid
+                          foreach ($amvData['measures'] as $m) {
                             try{
                               $measure = $this->get('measureTable')->getEntity(['anr'=>$anr->id , 'uuid' =>$m]);
                               $measure->addAmv($amvTest);
