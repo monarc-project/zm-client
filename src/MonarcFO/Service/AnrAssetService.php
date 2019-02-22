@@ -206,8 +206,8 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         }
                         $amvData['vulnerability'] = $data['vuls'][$amvArray['vulnerability']];
                     }
+                      if(array_key_exists ( 'measure1' , $amvArray)){ //old version without uuid
 
-                      if(isset($data['measures'][$amvArray['measure1']])){ //old version without uuid
                         //we need to create ISO 27002, we check if the common if it's present or not
                           $referential = false;
                           $referentialCli = current($this->get('referentialTable')->getEntityByFields(['anr' => $anr->id, 'uuid' =>'98ca84fb-db87-11e8-ac77-0800279aaa2b']));
@@ -297,7 +297,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $amv = new $c();
                         $amv->setDbAdapter($this->get('amvTable')->getDb());
                         $amv->setLanguage($this->getLanguage());
-                        $measuresAmvs = $amvData['measures'];
+                        $measuresAmvs = (array_key_exists ( 'measures' , $amvData)) ? $amvData['measures'] : null;
                         unset($amvData['measures']);
                         $amv->exchangeArray($amvData, true);
                         $this->setDependencies($amv, ['anr', 'asset', 'threat', 'vulnerability',]);
