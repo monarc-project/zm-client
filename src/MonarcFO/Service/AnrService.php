@@ -449,7 +449,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        // try {
+        try {
             // duplicate anr
             $newAnr = new \MonarcFO\Model\Entity\Anr($anr);
             $newAnr->setId(null);
@@ -1088,14 +1088,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $this->setUserCurrentAnr($newAnr->get('id'));
 
-        // } catch (\Exception $e) {
-        //
-        //     if (is_integer($id)) {
-        //         $anrCliTable->delete($id);
-        //     }
-        //
-        //     throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
-        // }
+        } catch (\Exception $e) {
+            if (is_integer($id)) {
+                $anrCliTable->delete($id);
+            }
+            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
+        }
 
         return $newAnr->get('id');
     }
