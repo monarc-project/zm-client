@@ -246,7 +246,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                                 $newMeasure->amvs =  new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
                                 $this->get('measureTable')->save($newMeasure,false);
-                                $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+                                $newSoa = new \MonarcFO\Model\Entity\Soa();
                                 $newSoa->setAnr($anr);
                                 $newSoa->setMeasure($newMeasure);
                                 $this->get('soaTable')->save($newSoa,false);
