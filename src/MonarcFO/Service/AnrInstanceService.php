@@ -1455,7 +1455,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       foreach ($scale as $s) {
                         $sId = $s->get('id');
                       }
-                    $OrigPosition = $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position'];
+                    $OrigPosition = (isset($data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position'])) ? $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position'] : 0;
                     $position = ($OrigPosition > 8) ? $OrigPosition + ($nbScaleImpactTypes - 8) : $OrigPosition;
                     $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->id, 'position' => $position ]);
                       foreach ($scaleImpactType as $si) {
