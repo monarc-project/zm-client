@@ -32,6 +32,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
     protected $soaCategoryCommonTable;
     protected $referentialCommonTable;
     protected $referentialTable;
+    protected $soaTable;
     protected $dependencies = ['anr'];
     protected $filterColumns = [
         'label1', 'label2', 'label3', 'label4',
@@ -245,6 +246,10 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                 $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                                 $newMeasure->amvs =  new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
                                 $this->get('measureTable')->save($newMeasure,false);
+                                $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+                                $newSoa->setAnr($anr);
+                                $newSoa->setMeasure($newMeasure);
+                                $this->get('soaTable')->save($newSoa,false);
                             }
                             $referentialPresent = true;
                             $this->get('measureTable')->getDb()->flush();
