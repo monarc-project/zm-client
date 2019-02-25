@@ -654,6 +654,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setReferential($newReferential);
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         $newMeasure->setMeasuresLinked(null);
+                        $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection;
                         $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                         $measuresNewIds[$measure->getuuid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
