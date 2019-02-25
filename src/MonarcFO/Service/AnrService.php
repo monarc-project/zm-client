@@ -755,14 +755,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
                 $newRolfRisk->setTags($listTagrisk);
                 //link the measures
-                if(isset($data['referentials']) && $data['referentials'] != null){
                   foreach ($rolfRisk->measures as $m) {
                     try{
                       $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
                       $measure->AddOpRisk($newRolfRisk);
                     }catch (\MonarcCore\Exception\Exception $e) { } //needed if the measures don't exist in the client ANR
                   }
-                }
                 $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             }
