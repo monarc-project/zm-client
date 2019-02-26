@@ -472,7 +472,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             /** @var AnrTable $anrCliTable */
             $anrCliTable = $this->get('anrCliTable');
-            $id = $anrCliTable->save($newAnr,false);
+            $id = $anrCliTable->save($newAnr);
 
             if (!$isSnapshot && !$isSnapshotCloning) { // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
                 //add user to anr
@@ -755,13 +755,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 }
                 $newRolfRisk->setTags($listTagrisk);
                 //link the measures
-                if($source != MonarcObject::SOURCE_COMMON){
-                  foreach ($rolfRisk->measures as $m) {
-                    try{
-                      $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
-                      $measure->AddOpRisk($newRolfRisk);
-                    }catch (\MonarcCore\Exception\Exception $e) { } //needed if the measures don't exist in the client ANR
-                  }
+
+                foreach ($rolfRisk->measures as $m) {
+                  try{
+                    $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
+                    $measure->AddOpRisk($newRolfRisk);
+                  }catch (\MonarcCore\Exception\Exception $e) { } //needed if the measures don't exist in the client ANR
                 }
                 $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
