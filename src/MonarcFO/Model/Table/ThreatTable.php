@@ -31,7 +31,7 @@ class ThreatTable extends AbstractEntityTable
     public function started($anrId)
     {
         $qb = $this->getRepository()->createQueryBuilder('t');
-        $res = $qb->select('COUNT(t.id)')
+        $res = $qb->select('COUNT(t.uuid)')
             ->where('t.anr = :anrid')
             ->setParameter(':anrid', $anrId)
             ->andWhere('t.qualification != -1')->getQuery()->getSingleScalarResult();
