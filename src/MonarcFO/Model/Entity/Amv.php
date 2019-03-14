@@ -38,7 +38,7 @@ class Amv extends AmvSuperclass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true)
      * })
      */
     protected $asset;
@@ -48,7 +48,7 @@ class Amv extends AmvSuperclass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Threat", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true)
      * })
      */
     protected $threat;
@@ -58,7 +58,7 @@ class Amv extends AmvSuperclass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true)
      * })
      */
     protected $vulnerability;

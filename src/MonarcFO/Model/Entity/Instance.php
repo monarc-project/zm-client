@@ -39,7 +39,7 @@ class Instance extends InstanceSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true)
      * })
      */
     protected $asset;

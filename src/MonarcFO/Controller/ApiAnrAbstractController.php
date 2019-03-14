@@ -57,10 +57,21 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function get($id)
     {
-        $entity = $this->getService()->getEntity($id);
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      $identifier=[];
 
+       $class = $this->getService()->get('entity');
+       $entity = new $class();
+       $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
+       if(count($ids)==2 && \Ramsey\Uuid\Uuid::isValid($id) && in_array("anr", $ids) && in_array("uuid", $ids)) //TO improve check if the key is (uuid, anr_id)
+       {
+         $identifier['uuid'] = $id;
+         $identifier['anr'] = $anrId;
+       }else {
+         $identifier = $id;
+       }
 
-        $anrId = (int)$this->params()->fromRoute('anrid');
+        $entity = $this->getService()->getEntity($identifier);
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);

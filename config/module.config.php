@@ -186,7 +186,7 @@ return array(
                         'options' => array(
                             'route' => 'assets[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrAssets',
@@ -246,7 +246,7 @@ return array(
                         'options' => array(
                             'route' => 'threats[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrThreats',
@@ -270,7 +270,7 @@ return array(
                         'options' => array(
                             'route' => 'vulnerabilities[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrVulnerabilities',
