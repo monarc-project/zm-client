@@ -58,7 +58,8 @@ class MonarcObject extends ObjectSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true)
+     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
+     *    @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $asset;
