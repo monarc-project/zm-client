@@ -74,7 +74,10 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $data['specific'] = 1;
 
         // Check that we don't already have a risk with this vuln/threat/instance combo
-        $entity = $this->instanceRiskTable->getEntityByFields(['anr' => $data['anr'], 'vulnerability' => $data['vulnerability'], 'threat' => $data['threat'], 'instance' => $data['instance']]);
+        $entity = $this->getList(0,10,null,null,['anr' => $data['anr'],'th.anr' => $data['anr'],'v.anr' => $data['anr'], 'v.uuid' => $data['vulnerability']['uuid'], 'th.uuid' => $data['threat']['uuid'],'i.id' => $data['instance'] ]);
+        //$entity = $this->instanceRiskTable->getEntityByFields(['anr' => $data['anr'], 'vulnerability' => $data['vulnerability'], 'threat' => $data['threat'], 'instance' => $data['instance']]);
+
+        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         if ($entity) {
             throw new \MonarcCore\Exception\Exception("This risk already exists in this instance", 412);
         }
@@ -88,10 +91,8 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
         $instance = $instanceTable->getEntity($data['instance']);
-        $data['asset'] = $instance->asset->id;
-
+        $data['asset'] = ['uuid' => $instance->asset->uuid->toString(), 'anr' => $data['anr']];
         $entity->exchangeArray($data);
-
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 

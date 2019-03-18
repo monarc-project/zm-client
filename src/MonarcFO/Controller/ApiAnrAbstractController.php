@@ -108,6 +108,12 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
             if(isset($new_data['referential'])){
                $new_data['referential'] = ['uuid' => $new_data['referential'], 'anr'=>$anrId];
             }
+            if(isset($new_data['threat']) && !is_array($new_data['threat'])){
+               $new_data['threat'] = ['uuid' => $new_data['threat'], 'anr'=>$anrId];
+            }
+            if(isset($new_data['vulnerability']) && !is_array($new_data['vulnerability'])){
+               $new_data['vulnerability'] = ['uuid' => $new_data['vulnerability'], 'anr'=>$anrId];
+            }
             if (isset($new_data['father']) && isset($new_data['child'])) {
               $new_data['father'] = ['anr' => $anrId, 'uuid' => $new_data['father']];
               $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
