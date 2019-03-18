@@ -172,9 +172,9 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             // Retrieve instances with same risk
             $instancesRisks = $this->get('table')->getEntityByFields([
                 'anr' => $entity->anr->id,
-                'asset' => ['uuid' => $entity->asset->uuid->toString(), 'anr' => 470],
-                'threat' => ['uuid'=> $entity->threat->uuid->toString(), 'anr' => 470],
-                'vulnerability' => ['uuid'=> $entity->vulnerability->uuid->toString(), 'anr' => 470],
+                'asset' => ['uuid' => $entity->asset->uuid->toString(), 'anr' => $entity->anr->id],
+                'threat' => ['uuid'=> $entity->threat->uuid->toString(), 'anr' => $entity->anr->id],
+                'vulnerability' => ['uuid'=> $entity->vulnerability->uuid->toString(), 'anr' => $entity->anr->id],
             ]);
 
             foreach ($instancesRisks as $instanceRisk) {
