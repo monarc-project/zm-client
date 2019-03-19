@@ -55,9 +55,6 @@ class ApiSoaController extends  ApiAnrAbstractController
         $filterMeasures['r.uuid']= $referential;
 
         $measureService = $this->getService()->get('measureService');
-        $riskService = $this->getService()->get('riskService');
-        $riskOpService = $this->getService()->get('riskOpService');
-
         $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
         $measuresFilteredId = [];
         foreach ($measuresFiltered as $key) {
@@ -71,6 +68,9 @@ class ApiSoaController extends  ApiAnrAbstractController
       }
 
       $service = $this->getService();
+      $riskService = $this->getService()->get('riskService');
+      $riskOpService = $this->getService()->get('riskOpService');
+      
       if($order=='measure')
         $order='m.code';
       else if($order=='-measure')
