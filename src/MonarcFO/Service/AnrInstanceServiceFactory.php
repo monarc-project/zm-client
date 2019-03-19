@@ -20,6 +20,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\InstanceTable',
         'entity' => 'MonarcFO\Model\Entity\Instance',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
+        'assetTable' => 'MonarcFO\Model\Table\AssetTable',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'amvTable' => 'MonarcFO\Model\Table\AmvTable',
         'MonarcObjectTable' => 'MonarcFO\Model\Table\MonarcObjectTable',
