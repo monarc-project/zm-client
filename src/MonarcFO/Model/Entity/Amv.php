@@ -9,6 +9,7 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\AmvSuperclass;
+use Zend\Validator\Uuid;
 
 /**
  * Amv
@@ -75,4 +76,42 @@ class Amv extends AmvSuperclass
      * )
      */
     protected $measures;
+
+    protected $parameters = array(
+        'implicitPosition' => array(
+            'field' => 'asset',
+        ),
+    );
+
+    public function getInputFilter($partial = false)
+    {
+      if (!$this->inputFilter) {
+          parent::getInputFilter($partial);
+
+          $texts = ['vulnerability', 'asset', 'threat'];
+
+          foreach ($texts as $text) {
+              // $this->inputFilter->add(array(
+              //     'name' => $text."['anr']",
+              //     'required' => ($partial) ? false : true,
+              //     'allow_empty' => false,
+              //     'filters' => array(
+              //         array(
+              //             'name' => 'Digits',
+              //         ),
+              //     ),
+              //     'validators' => array(),
+              // ));
+              $this->inputFilter->add(array(
+                  'name' => $text,
+                  'required' => ($partial) ? false : true,
+                  'allow_empty' => false,
+                  'validators' => array(),
+              ));
+
+          }
+    }
+    //file_put_contents('php://stderr', print_r($this->inputFilter, TRUE).PHP_EOL);
+    return $this->inputFilter;
+  }
 }
