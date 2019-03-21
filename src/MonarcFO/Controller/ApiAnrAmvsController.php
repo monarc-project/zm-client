@@ -45,8 +45,8 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         if ($status != 'all') {
             $filterAnd['status'] = (int)$status;
         }
-        if ($asset > 0) {
-            $filterAnd['asset'] = (int)$asset;
+        if ($asset !=null) {
+            $filterAnd['a.uuid'] = $asset;
         }
 
         if (!empty($amvid)) {
