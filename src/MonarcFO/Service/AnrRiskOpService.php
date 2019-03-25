@@ -101,9 +101,9 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 FROM        instances_risks_op as ir
                 INNER JOIN  instances as i
                 ON          i.id = ir.instance_id
-                left JOIN  assets as a
+                INNER JOIN  assets as a
                 ON          a.uuid = i.asset_id
-                and         a.anr_id = i.anr_id  
+                and         a.anr_id = i.anr_id
                 INNER JOIN  objects as o
                 ON          i.object_id = o.id
                 WHERE       ir.anr_id = :anrid
