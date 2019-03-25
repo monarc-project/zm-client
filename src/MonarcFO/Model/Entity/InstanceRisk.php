@@ -41,7 +41,7 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Amv", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="amv_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid", nullable=true)
      * })
      */
     protected $amv;
