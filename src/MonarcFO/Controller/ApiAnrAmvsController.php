@@ -47,6 +47,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         }
         if ($asset !=null) {
             $filterAnd['a.uuid'] = $asset;
+            $filterAnd['a.anr'] = $anrId;
         }
 
         if (!empty($amvid)) {
@@ -55,6 +56,18 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
                 'value' => (int)$amvid,
             ];
         }
+        if($order == 'asset')
+          $order = 'a.code';
+        if($order == '-asset')
+          $order = '-a.code';
+        if($order == 'threat')
+          $order = 'th.code';
+        if($order == '-threat')
+          $order = '-th.code';
+        if($order == 'vulnerability')
+          $order = 'v.code';
+        if($order == '-vulnerability')
+          $order = '-v.code';
 
         $service = $this->getService();
 
@@ -66,7 +79,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         }
 
         return new JsonModel([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
+            //'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ]);
     }
@@ -77,7 +90,10 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     public function get($id)
     {
         $entity = $this->getService()->getEntity($id);
-
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['referential']);
         }
@@ -87,7 +103,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
             $entity['implicitPosition'] = 1;
         } else {
             // We're not at the beginning, get all AMV links of the same asset, and figure out position and previous
-            $amvsAsset = $this->getService()->getList(1, 0, 'position', null, ['asset' => $entity['asset']['id']]);
+            $amvsAsset = $this->getService()->getList(1, 0, 'position', null, ['a.anr' => $anrId, 'a.uuid' =>$entity['asset']['uuid']->toString()]);
 
             $i = 0;
             foreach ($amvsAsset as $amv) {
