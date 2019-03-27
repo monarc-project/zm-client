@@ -117,6 +117,9 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
             if(isset($new_data['asset']) && !is_array($new_data['asset'])){
                $new_data['asset'] = ['uuid' => $new_data['asset'], 'anr'=>$anrId];
             }
+            if(isset($new_data['amv']) && !is_array($new_data['amv'])){
+               $new_data['amv'] = ['uuid' => $new_data['amv'], 'anr'=>$anrId];
+            }
             if (isset($new_data['father']) && isset($new_data['child'])) {
               $new_data['father'] = ['anr' => $anrId, 'uuid' => $new_data['father']];
               $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
@@ -154,6 +157,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
     public function patch($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
+        if(count($identifier)>1 && in_array('anr',$identifier) && in_array('uuid',$identifier) && !is_array($id))
+            $id = ['uuid' => $id, 'anr' => $anrId];
+
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
@@ -169,7 +176,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function delete($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+      $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      if(count($identifier)>1 && in_array('anr',$identifier) && in_array('uuid',$identifier) && !is_array($id))
+        $id = ['uuid' => $id, 'anr' => $anrId];
 
         if ($this->getService()->deleteFromAnr($id, $anrId)) {
             return new JsonModel(['status' => 'ok']);

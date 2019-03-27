@@ -2002,11 +2002,15 @@ class AddAmvsUuid extends AbstractMigration
       $table = $this->table('measures_amvs'); //set the stufff for measures_amvs
       $table->dropForeignKey('amv_id')
             ->addColumn('amv_uuid', 'uuid')
+            ->addColumn('anr_id2', 'integer', array('null' => true, 'signed' => false))
             ->update();
       $this->execute('UPDATE measures_amvs A,amvs B SET A.amv_uuid = B.uuid where B.id=A.amv_id');
+      $this->execute('UPDATE measures_amvs A SET A.anr_id2 = A.anr_id');
       $table->removeColumn('amv_id')
+            ->removeColumn('id')
             ->renameColumn('amv_uuid','amv_id')
             ->update();
+      $this->execute("ALTER TABLE measures_amvs ADD PRIMARY KEY amv_measure_anr (measure_id, amv_id,anr_id)");
 
       $table = $this->table('amvs');
       $table->removeColumn('id')

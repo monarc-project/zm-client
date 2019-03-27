@@ -51,9 +51,9 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         }
 
         if (!empty($amvid)) {
-            $filterAnd['id'] = [
+            $filterAnd['uuid'] = [
                 'op' => '!=',
-                'value' => (int)$amvid,
+                'value' => $amvid,
             ];
         }
         if($order == 'asset')
@@ -89,11 +89,13 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
      */
     public function get($id)
     {
-        $entity = $this->getService()->getEntity($id);
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      if (empty($anrId)) {
+          throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+      }
+      $id = ['uuid'=>$id, 'anr' => $anrId];
+      $entity = $this->getService()->getEntity($id);
+
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['referential']);
         }

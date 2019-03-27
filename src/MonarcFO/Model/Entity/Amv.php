@@ -26,8 +26,8 @@ class Amv extends AmvSuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\Id
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
@@ -69,9 +69,9 @@ class Amv extends AmvSuperclass
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="amvs", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="amvs", )
      * @ORM\JoinTable(name="measures_amvs",
-     *  joinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="id")},
+     *  joinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
      * )
      */
