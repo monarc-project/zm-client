@@ -193,7 +193,18 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function deleteList($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      $ids=[];
+
+       $class = $this->getService()->get('entity');
+       $entity = new $class();
+       $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
+       if(count($ids)>1){
+          foreach ($data as $key => $value) {
+            if(count($ids)>1 && in_array('anr',$ids) && in_array('uuid',$ids) && !is_array($value))
+              $data[$key] = ['uuid' => $value, 'anr' => $anrId];
+          }
+        }
 
         if ($this->getService()->deleteListFromAnr($data, $anrId)) {
             return new JsonModel(['status' => 'ok']);
