@@ -140,7 +140,10 @@ abstract class ApiAnrAbstractController extends \MonarcCore\Controller\AbstractC
      */
     public function update($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
+      if(count($identifier)>1 && in_array('anr',$identifier) && in_array('uuid',$identifier) && !is_array($id))
+          $id = ['uuid' => $id, 'anr' => $anrId];
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
