@@ -37,7 +37,8 @@ class ObjectObject extends ObjectObjectSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="father_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="father_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $father;
@@ -47,7 +48,8 @@ class ObjectObject extends ObjectObjectSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="child_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="child_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $child;

@@ -105,7 +105,8 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
                 ON          a.uuid = i.asset_id
                 and         a.anr_id = i.anr_id
                 INNER JOIN  objects as o
-                ON          i.object_id = o.id
+                ON          i.object_id = o.uuid
+                and         i.anr_id = o.anr_id
                 WHERE       ir.anr_id = :anrid
                 AND         a.type = :type ";
         $queryParams = [
