@@ -122,6 +122,7 @@ class AddObjectsUuid extends AbstractMigration
             ->addColumn('object_uuid', 'uuid',array('after' => 'id'))
             ->update();
       $this->execute('UPDATE anrs_objects A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
+      $this->execute('UPDATE anrs_objects A SET A.anr_id2 = A.anr_id');
       $table->removeColumn('object_id')
             ->renameColumn('object_uuid','object_id')
             ->update();

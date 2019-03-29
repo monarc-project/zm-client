@@ -37,7 +37,7 @@ class MonarcObject extends ObjectSuperClass
      * @var \Doctrine\Common\Collections\Collection
      * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Anr", inversedBy="objects", cascade={"persist"})
      * @ORM\JoinTable(name="anrs_objects",
-     *  joinColumns={@ORM\JoinColumn(name="object_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
+     *  joinColumns={@ORM\JoinColumn(name="object_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="anr_id", referencedColumnName="id")}
      * )
      */
