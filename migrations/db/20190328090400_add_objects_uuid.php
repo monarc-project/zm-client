@@ -120,6 +120,7 @@ class AddObjectsUuid extends AbstractMigration
       $table = $this->table('anrs_objects'); //set the stufff for anrs_objects
       $table->dropForeignKey('object_id')
             ->addColumn('object_uuid', 'uuid',array('after' => 'id'))
+            ->addColumn('anr_id2', 'integer', array('null' => true, 'signed' => false))
             ->update();
       $this->execute('UPDATE anrs_objects A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
       $this->execute('UPDATE anrs_objects A SET A.anr_id2 = A.anr_id');
