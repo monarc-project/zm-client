@@ -55,7 +55,6 @@ class ApiSoaController extends  ApiAnrAbstractController
         $filterMeasures['r.uuid']= $referential;
 
         $measureService = $this->getService()->get('measureService');
-
         $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
         $measuresFilteredId = [];
         foreach ($measuresFiltered as $key) {
@@ -69,6 +68,9 @@ class ApiSoaController extends  ApiAnrAbstractController
       }
 
       $service = $this->getService();
+      $riskService = $this->getService()->get('riskService');
+      $riskOpService = $this->getService()->get('riskOpService');
+      
       if($order=='measure')
         $order='m.code';
       else if($order=='-measure')
@@ -76,7 +78,17 @@ class ApiSoaController extends  ApiAnrAbstractController
       $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
       if (count($this->dependencies)) {
           foreach ($entities as $key => $entity) {
-              $this->formatDependencies($entities[$key], $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['category','referential']);
+            $amvs = [];
+            $rolfRisks = [];
+            foreach ($entity['measure']->amvs as $amv) {
+              array_push($amvs,$amv->id);
+            }
+            foreach ($entity['measure']->rolfRisks as $rolfRisk) {
+              array_push($rolfRisks,$rolfRisk->id);
+            }
+            $entity['measure']->rolfRisks = $riskOpService->getRisksOp($anrId, null, ['rolfRisks' => $rolfRisks, 'limit' => -1 ,'order'=>'cacheNetRisk', 'order_direction' => 'desc']);
+            $entity['measure']->amvs = $riskService->getRisks($anrId, null, ['amvs' => $amvs, 'limit' => -1, 'order'=>'maxRisk', 'order_direction' => 'desc']);
+            $this->formatDependencies($entities[$key], $this->dependencies, '\MonarcFO\Model\Entity\Measure', ['category','referential']);
           }
       }
       return new JsonModel([

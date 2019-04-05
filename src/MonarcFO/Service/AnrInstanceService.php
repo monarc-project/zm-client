@@ -250,8 +250,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $scaleImpT->setLanguage($this->getLanguage());
                             $scaleImpT->exchangeArray($toExchange);
                             $this->setDependencies($scaleImpT, ['anr', 'scale']);
-                            $localScalesImpactType[$conseq['scaleImpactType']['label' . $this->getLanguage()]] = $this->get('scaleImpactTypeTable')->save($scaleImpT);
+                            $localScalesImpactType[$conseq['scaleImpactType']['label' . $this->getLanguage()]] = $this->get('scaleImpactTypeTable')->save($scaleImpT,false);
                         }
+                        //$this->get('scaleImpactTypeTable')->getDb()->flush();
                         $ts = ['c', 'i', 'd'];
 
                         // Maintenant on peut alimenter le tableau de conséquences comme si ça venait d'un formulaire
@@ -357,7 +358,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $threat->setLanguage($this->getLanguage());
                             $threat->exchangeArray($toExchange);
                             $this->setDependencies($threat, ['anr']);
-                            $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $this->get('instanceConsequenceTable')->save($threat);
+                            $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $this->get('instanceConsequenceTable')->save($threat,false);
                         }
 
                         if (!isset($sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']])) {
@@ -370,7 +371,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $vul->setLanguage($this->getLanguage());
                             $vul->exchangeArray($toExchange);
                             $this->setDependencies($vul, ['anr']);
-                            $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']] = $this->get('instanceRiskService')->get('vulnerabilityTable')->save($vul);
+                            $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']] = $this->get('instanceRiskService')->get('vulnerabilityTable')->save($vul,false);
                         }
 
                         if (isset($obj)) {
@@ -396,9 +397,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                               $rToBrother->setLanguage($this->getLanguage());
                               $rToBrother->exchangeArray($toExchange);
                               $this->setDependencies($rToBrother, ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']);
-                              $idRiskSpecific = $this->get('instanceRiskService')->get('table')->save($rToBrother);
+                              $idRiskSpecific = $this->get('instanceRiskService')->get('table')->save($rToBrother,false);
                               $rToBrother->set('id', $idRiskSpecific);
                             }
+                            //$this->get('table')->getDb()->flush();
 
                         }
 
@@ -416,7 +418,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $r->setLanguage($this->getLanguage());
                         $r->exchangeArray($toExchange);
                         $this->setDependencies($r, ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']);
-                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
+                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r,false);
                         $r->set('id', $idRisk);
                     } else {
                         $r = current($this->get('instanceRiskService')->get('table')->getEntityByFields([
@@ -452,7 +454,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         // Cas particulier, faudrait pas mettre n'importe quoi dans cette colonne si on part d'une scale
                         // 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
                         $r->set('reductionAmount', ($risk['reductionAmount'] != -1) ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate'),0) : 0);
-                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
+                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r,false);
 
                         // Merge all fields for global assets
 
@@ -548,7 +550,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     'op' => 0,
                                     'risk' => $idRisk,
                                 ];
-
                                 $rr->exchangeArray($toExchange);
                                 $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
                                 $this->get('recommandationRiskTable')->save($rr);
@@ -590,7 +591,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                               $toExchange['instance'] = $i->get('id');
                                                               $rr->exchangeArray($toExchange);
                                                               $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                                                              $this->get('recommandationRiskTable')->save($rr);
+                                                              $this->get('recommandationRiskTable')->save($rr,false);
                                                         }
                                                   }
                                             }
@@ -616,7 +617,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                             }
                                             $measure->exchangeArray($toExchange);
                                             $this->setDependencies($measure, ['anr']);
-                                            $sharedData['measures'][$mid] = $this->get('amvService')->get('measureTable')->save($measure);
+                                            $sharedData['measures'][$mid] = $this->get('amvService')->get('measureTable')->save($measure,false);
                                         }
 
                                         if (isset($sharedData['measures'][$mid])) {
@@ -631,11 +632,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                 'measure' => $sharedData['measures'][$mid],
                                             ]);
                                             $this->setDependencies($lk, ['anr', 'recommandation', 'measure']);
-                                            $this->get('recommandationMeasureTable')->save($lk);
+                                            $this->get('recommandationMeasureTable')->save($lk,false);
                                         }
                                     }
                                 }
                             }
+                            $this->get('table')->getDb()->flush();
                         }
                     }
 
@@ -686,14 +688,16 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                     ];
                                                     $rrb->exchangeArray($toExchange);
                                                     $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                                                    $this->get('recommandationRiskTable')->save($rrb);
+                                                    $this->get('recommandationRiskTable')->save($rrb,false);
 
                                             }
                                       }
+                                      $this->get('recommandationRiskTable')->getDb()->flush();
                                 }
                           }
                   }
                 }
+                //$this->get('table')->getDb()->flush();
 
                 // Check recommandations from specific risk of brothers
                 $recoToCreate = [];
@@ -747,9 +751,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                           ];
                           $rrb->exchangeArray($toExchange);
                           $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                          $this->get('recommandationRiskTable')->save($rrb);
+                          $this->get('recommandationRiskTable')->save($rrb,false);
                   }
                 }
+                $this->get('recommandationRiskTable')->getDb()->flush();
 
                 // on met finalement à jour les risques en cascade
                 $this->updateRisks($anr->get('id'), $instanceId);
@@ -982,18 +987,20 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   foreach ($data['method']['steps'] as $key => $v) {
                     if ($anr->get($key) === 0 ) {
                       $anr->set($key,$v);
-                      $anrTable->save($anr);
+                      $anrTable->save($anr,false);
                     }
                   }
+                  $anrTable->getDb()->flush();
               }
               if (!empty($data['method']['data'])) { //Data of textboxes
                   $anrTable = $this->get('anrTable');
                   foreach ($data['method']['data'] as $key => $v) {
                     if (is_null($anr->get($key)) ) {
                       $anr->set($key,$v);
-                      $anrTable->save($anr);
+                      $anrTable->save($anr,false);
                     }
                   }
+                  $anrTable->getDb()->flush();
               }
               if (!empty($data['method']['interviews'])) { //Data of interviews
                   foreach ($data['method']['interviews'] as $key => $v) {
@@ -1005,15 +1012,17 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $newInterview->setLanguage($this->getLanguage());
                     $newInterview->exchangeArray($toExchange);
                     $this->setDependencies($newInterview, ['anr']);
-                    $this->get('interviewTable')->save($newInterview);
+                    $this->get('interviewTable')->save($newInterview,false);
                   }
+                  $this->get('interviewTable')->getDb()->flush();
               }
               if (!empty($data['method']['thresholds'])) { // Value of thresholds
                   $anrTable = $this->get('anrTable');
                   foreach ($data['method']['thresholds'] as $key => $v) {
                       $anr->set($key,$v);
-                      $anrTable->save($anr);
+                      $anrTable->save($anr,false);
                   }
+                  $anrTable->getDb()->flush();
               }
               if (!empty($data['method']['deliveries'])) { // Data of deliveries generation
                   foreach ($data['method']['deliveries'] as $key => $v) {
@@ -1025,8 +1034,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $newDelivery->setLanguage($this->getLanguage());
                     $newDelivery->exchangeArray($toExchange);
                     $this->setDependencies($newDelivery, ['anr']);
-                    $this->get('deliveryTable')->save($newDelivery);
+                    $this->get('deliveryTable')->save($newDelivery,false);
                   }
+                  $this->get('deliveryTable')->getDb()->flush();
               }
               if (!empty($data['method']['questions'])) { // Questions of trends evaluation
                     $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
@@ -1148,8 +1158,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $t->set('trend', $data['method']['threats'][$tId]['trend']);
                         $t->set('comment', $data['method']['threats'][$tId]['comment']);
                         $t->set('qualification', $data['method']['threats'][$tId]['qualification']);
-                        $this->get('threatTable')->save($t);
+                        $this->get('threatTable')->save($t,false);
                       }
+                      $this->get('threatTable')->getDb()->flush();
                     }
                     }
               }
@@ -1178,9 +1189,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       $newSoaCategory = new \MonarcFO\Model\Entity\SoaCategory($soaCategory);
                       $newSoaCategory->setAnr($anr);
                       $newSoaCategory->setReferential($referentials[0]);
-                      $this->get('soaCategoryTable')->save($newSoaCategory);
+                      $this->get('soaCategoryTable')->save($newSoaCategory,false);
                   }
               }
+              $this->get('soaCategoryTable')->getDb()->flush();
           }
           // import the measures
           $measuresNewIds = [];
@@ -1204,7 +1216,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                           $newMeasure->setCategory($soaCategories[0]);
                           $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
                           $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
-                          $this->get('measureTable')->save($newMeasure);
+                          $this->get('measureTable')->save($newMeasure,false);
                           $measuresNewIds[$measureUUID] = $newMeasure;
 
                           if (! isset($data['soas'])) {
@@ -1212,11 +1224,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                               $newSoa = new \MonarcFO\Model\Entity\Soa();
                               $newSoa->setAnr($anr);
                               $newSoa->setMeasure($newMeasure);
-                              $this->get('soaTable')->save($newSoa);
+                              $this->get('soaTable')->save($newSoa,false);
                           }
                       }
                   }
               }
+              $this->get('measureTable')->getDb()->flush();
           }
           // import the measuresmeasures
           if (isset($data['measuresMeasures'])) {
@@ -1229,9 +1242,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   if (empty($measuresmeasures)) {
                       $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($measureMeasure);
                       $newMeasureMeasure->setAnr($anr);
-                      $this->get('measureMeasureTable')->save($newMeasureMeasure);
+                      $this->get('measureMeasureTable')->save($newMeasureMeasure,false);
                   }
               }
+              $this->get('measureMeasureTable')->getDb()->flush();
           }
           // import the SOAs
           if (isset($data['soas'])) {
@@ -1245,6 +1259,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       $this->get('soaTable')->save($newSoa);
                   }
               }
+              $this->get('soaTable')->getDb()->flush();
           }
           // import scales
           if (!empty($data['scales'])) {

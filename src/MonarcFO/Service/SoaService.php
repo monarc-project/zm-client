@@ -20,6 +20,8 @@ namespace MonarcFO\Service;
   protected $anrTable;
   protected $userAnrTable;
   protected $measureService;
+  protected $riskService;
+  protected $riskOpService;
   protected $dependencies = ['anr', 'measure'];
 
   /**
