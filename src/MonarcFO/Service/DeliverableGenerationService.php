@@ -885,9 +885,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 foreach ($header as $MxV) {
 
                     $value = $MxV * $impact;
-
-                    if (isset($cartoRisk['counters'][$impact]) && isset($cartoRisk['counters'][$impact][$MxV])) {
-                        $result = $cartoRisk['counters'][$impact][$MxV] ? $cartoRisk['counters'][$impact][$MxV]: 0;
+                    if (isset($cartoRisk['riskInfo']['counters'][$impact]) && isset($cartoRisk['riskInfo']['counters'][$impact][$MxV])) {
+                        $result = $cartoRisk['riskInfo']['counters'][$impact][$MxV] ? $cartoRisk['riskInfo']['counters'][$impact][$MxV]: 0;
                     } else {
                         $result = 0;
                     }
