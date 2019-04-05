@@ -22,6 +22,7 @@ class AnrCartoRiskServiceFactory extends AbstractServiceFactory
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
+        'instanceRiskOpTable' => 'MonarcFO\Model\Table\InstanceRiskOpTable',
         'instanceConsequenceTable' => 'MonarcFO\Model\Table\InstanceConsequenceTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
     ];
