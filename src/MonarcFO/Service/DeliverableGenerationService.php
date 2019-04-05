@@ -962,10 +962,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $mediumSize = ($total) ? ($maxSize * $nbMedium) / $total : 0;
             $highSize = ($total) ? ($maxSize * $nbHigh) / $total : 0;
 
+            $section->addTextBreak(1);
             $tableLegend = $section->addTable();
-            $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0,1));
-            $tableLegend->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.5), ['vMerge' => 'restart']);
-            $tableLegend->addCell(null,['gridSpan' => (count($header) + 1)]);
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(\PhpOffice\Common\Font::centimeterSizeToTwips(0.1));
