@@ -2015,7 +2015,8 @@ class AddAmvsUuid extends AbstractMigration
       $this->execute("ALTER TABLE measures_amvs ADD PRIMARY KEY amv_measure_anr (measure_id, amv_id,anr_id)");
 
       $table = $this->table('amvs');
-      $table->removeColumn('id')
+      $table->dropForeignKey('anr_id')
+            ->removeColumn('id')
             ->update();
       $this->execute("ALTER TABLE amvs ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
