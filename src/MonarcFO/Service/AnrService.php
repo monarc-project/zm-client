@@ -362,9 +362,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                     $amv_cli = $this->get('amvCliTable')
                                     ->getEntityByFields(['anr' => $anr->id,
-                                            'asset' => $asset_cli[0]->getId(),
-                                            'threat' => $threat_cli[0]->getId(),
-                                            'vulnerability' => $vulnerability_cli[0]->getId()]);
+                                            'asset' => $asset_cli[0]->getUuid(),
+                                            'threat' => $threat_cli[0]->getUuid(),
+                                            'vulnerability' => $vulnerability_cli[0]->getUuid()]);
 
                     if (count($amv_cli)) {
                         //$amv_cli[0]->addMeasure($newMeasure);
@@ -515,7 +515,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($assets as $asset) {
                 $newAsset = new \MonarcFO\Model\Entity\Asset($asset);
-                $newAsset->set('id', null);
                 $newAsset->setAnr($newAnr);
                 $this->get('assetCliTable')->save($newAsset, false);
                 $assetsNewIds[$asset->id] = $newAsset;
@@ -541,7 +540,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($threats as $threat) {
                 $newThreat = new \MonarcFO\Model\Entity\Threat($threat);
-                $newThreat->set('id', null);
                 $newThreat->setAnr($newAnr);
                 if ($threat->theme) {
                     $newThreat->setTheme($themesNewIds[$threat->theme->id]);
@@ -567,7 +565,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($vulnerabilities as $vulnerability) {
                 $newVulnerability = new \MonarcFO\Model\Entity\Vulnerability($vulnerability);
-                $newVulnerability->set('id', null);
                 $newVulnerability->setAnr($newAnr);
                 $this->get('vulnerabilityCliTable')->save($newVulnerability, false);
                 $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
@@ -708,7 +705,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($amvs as $amv) {
                 $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
-                $newAmv->set('id', null);
                 $newAmv->setAnr($newAnr);
                 $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
                 $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
@@ -810,7 +806,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $objectsRootCategories = [];
             foreach ($objects as $object) {
                 $newObject = new \MonarcFO\Model\Entity\MonarcObject($object);
-                $newObject->set('id', null);
                 $newObject->setAnr($newAnr);
                 $newObject->setAnrs(null);
                 $newObject->addAnr($newAnr);
@@ -859,7 +854,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($objectsObjects as $objectObject) {
                 $newObjectObject = new \MonarcFO\Model\Entity\ObjectObject($objectObject);
-                $newObjectObject->set('id', null);
                 $newObjectObject->setAnr($newAnr);
                 $newObjectObject->setFather($objectsNewIds[$objectObject->father->id]);
                 $newObjectObject->setChild($objectsNewIds[$objectObject->child->id]);
