@@ -784,6 +784,7 @@ class AddVulnerabilitiesUuid extends AbstractMigration
 
       $table = $this->table('vulnerabilities');
       $table->removeColumn('id')
+            ->dropForeignKey('anr_id')
             ->update();
       $this->execute("ALTER TABLE vulnerabilities ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 

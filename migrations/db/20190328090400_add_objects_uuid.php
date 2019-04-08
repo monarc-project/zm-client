@@ -180,6 +180,7 @@ class AddObjectsUuid extends AbstractMigration
 
       $table = $this->table('objects');
       $table->removeColumn('id')
+            ->dropForeignKey('anr_id')
             ->update();
       $this->execute("ALTER TABLE objects ADD PRIMARY KEY uuid_anr_id (anr_id,uuid)");
 

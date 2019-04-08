@@ -138,6 +138,7 @@ class AddAssetsUuid extends AbstractMigration
 
       $table = $this->table('assets');
       $table->removeColumn('id')
+            ->dropForeignKey('anr_id')
             ->update();
       $this->execute("ALTER TABLE assets ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
