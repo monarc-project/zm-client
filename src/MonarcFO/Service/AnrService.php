@@ -347,10 +347,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 foreach ($amvs as $amv_common) {
                     // match the AMVs from common with AMVS from cli
                     $amv_cli = $this->get('amvCliTable')
-                                    ->getEntityByFields([
-                                        'asset' => ['uuid' => $amv_common->asset->getUuid()->toString(), 'anr' => $anr->id ],
-                                        'threat' => ['uuid' => $amv_common->threat->getUuid()->toString(), 'anr' => $anr->id ],
-                                        'vulnerability' => ['uuid' => $amv_common->vulnerability->getUuid()->toString(), 'anr' => $anr->id ]]);
+                        ->getEntityByFields([
+                            'asset' => ['uuid' => $amv_common->asset->getUuid()->toString(), 'anr' => $anr->id ],
+                            'threat' => ['uuid' => $amv_common->threat->getUuid()->toString(), 'anr' => $anr->id ],
+                            'vulnerability' => ['uuid' => $amv_common->vulnerability->getUuid()->toString(), 'anr' => $anr->id ]]);
                     if (count($amv_cli)) {
                         $newMeasure->addAmv($amv_cli[0]);
                     }

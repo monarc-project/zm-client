@@ -1104,12 +1104,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             'i.id', 'i.c as impactC',
             'i.id', 'i.i as impactI',
             'i.id', 'i.d as impactA',
-            'm.id as mid', 'm.label' . $anr->language . ' as mlabel',
+            'm.uuid as mid', 'm.label' . $anr->language . ' as mlabel',
             'm.c as threatC',
             'm.i as threatI',
             'm.a as threatA',
             'ir.threatRate',
-            'v.id as vid', 'v.label' . $anr->language . ' as vlabel',
+            'v.uuid as vid', 'v.label' . $anr->language . ' as vlabel',
             'ir.comment',
             'ir.vulnerabilityRate',
             'ir.riskC',
@@ -1117,7 +1117,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             'ir.riskD',
             'ir.kindOfMeasure',
             'ir.cacheTargetedRisk',
-            'o.id as oid', 'o.scope'
+            'o.uuid as oid', 'o.scope'
         ])->where('ir.anr = :anrid')
             ->setParameter(':anrid', $anr->id)
             ->innerJoin('ir.instance', 'i')
