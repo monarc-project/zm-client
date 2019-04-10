@@ -501,7 +501,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAsset = new \MonarcFO\Model\Entity\Asset($asset);
                 $newAsset->setAnr($newAnr);
                 $this->get('assetCliTable')->save($newAsset, false);
-                file_put_contents('php://stderr', print_r($asset->getUuid()->toString(), TRUE).PHP_EOL);
+                // file_put_contents('php://stderr', print_r($asset->getUuid()->toString(), TRUE).PHP_EOL);
                 $assetsNewIds[$asset->getUuid()->toString()] = $newAsset;
             }
 
@@ -833,7 +833,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
             // duplicate objects objects
             $objectsObjects = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('objectObjectTable')->fetchAllObject() : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objectsObjects as $key => $objectObject) {
-                if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->getUuid()]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->getUuid()]))) {
+
+                if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->getUuid()->toString()]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->getUuid()->toString()]))) {
                     unset($objectsObjects[$key]);
                 }
             }
@@ -1046,19 +1047,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $newRecommandationRisk->set('instanceRiskOp', $instancesRisksOpNewIds[$newRecommandationRisk->get('instanceRiskOp')->get('id')]);
                 }
                 $newRecommandationRisk->set('instance', $instancesNewIds[$newRecommandationRisk->get('instance')->get('id')]);
-                if ($newRecommandationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('uuid')->toString()])) {
-                    $newRecommandationRisk->set('objectGlobal', $objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('uuid')->toString()]);
+                if ($newRecommandationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommandationRisk->get('objectGlobal')->getUuid()->toString()])) {
+                    $newRecommandationRisk->set('objectGlobal', $objectsNewIds[$newRecommandationRisk->get('objectGlobal')->getUuid()->toString()]);
                 } else {
                     $newRecommandationRisk->set('objectGlobal', null);
                 }
                 if ($newRecommandationRisk->get('asset')) {
-                    $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->get('uuid')->toString()]);
+                    $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->getUuid()->toString()]);
                 }
                 if ($newRecommandationRisk->get('threat')) {
-                    $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->get('uuid')->toString()]);
+                    $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->getUuid()->toString()]);
                 }
                 if ($newRecommandationRisk->get('vulnerability')) {
-                    $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->get('uuid')->toString()]);
+                    $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->getUuid()->toString()]);
                 }
                 $this->get('recommandationRiskCliTable')->save($newRecommandationRisk,false);
             }
