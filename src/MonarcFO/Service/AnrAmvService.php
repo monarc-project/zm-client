@@ -81,7 +81,7 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
             throw new \MonarcCore\Exception\Exception('Anr id error', 412);
         }
 
-        $data['asset'] = $entity->get('asset')->get('id'); // asset can not be changed
+        $data['asset'] =['anr' => $entity->get('asset')->get('anr')->get('id'),'uuid' => $entity->get('asset')->get('uuid')->toString()]; // asset can not be changed
 
         $this->filterPostFields($data, $entity);
 
@@ -140,7 +140,7 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
         }
 
         // on ne permet pas de modifier l'asset
-        $data['asset'] = $entity->get('asset')->get('id');
+        $data['asset'] =['anr' => $entity->get('asset')->get('anr')->get('id'),'uuid' => $entity->get('asset')->get('uuid')->toString()]; // asset can not be changed
 
         $entity->setLanguage($this->getLanguage());
 
