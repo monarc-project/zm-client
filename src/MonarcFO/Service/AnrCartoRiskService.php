@@ -20,6 +20,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
     protected $instanceTable;
     protected $instanceRiskTable;
+    protected $instanceRiskOpTable;
     protected $instanceConsequenceTable;
     protected $threatTable;
     protected $filterColumns = [];
@@ -38,11 +39,20 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
 
         list($counters, $distrib) = $this->getCountersRisks('raw');
+        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('raw');
+
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
+            'Probability' => $this->listScales[Scale::TYPE_THREAT],
             'MxV' => $this->headers,
-            'counters' => $counters,
-            'distrib' => $distrib,
+            'riskInfo' => [
+              'counters' => $counters,
+              'distrib' => $distrib,
+            ],
+            'riskOp' => [
+              'counters' => $countersRiskOP,
+              'distrib' => $distribRiskOp,
+            ],
         ];
     }
 
@@ -56,11 +66,19 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
 
         list($counters, $distrib) = $this->getCountersRisks('target');
+        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('target');
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
+            'Probability' => $this->listScales[Scale::TYPE_THREAT],
             'MxV' => $this->headers,
-            'counters' => $counters,
-            'distrib' => $distrib,
+            'riskInfo' => [
+              'counters' => $counters,
+              'distrib' => $distrib,
+            ],
+            'riskOp' => [
+              'counters' => $countersRiskOP,
+              'distrib' => $distribRiskOp,
+            ],
         ];
 
       }
@@ -96,6 +114,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
 
         if (is_null($this->headers)) {
             $this->headers = [];
+            $tempHeaders = [];
             foreach ($this->listScales[Scale::TYPE_IMPACT] as $i) {
                 foreach ($this->listScales[Scale::TYPE_THREAT] as $m) {
                     foreach ($this->listScales[Scale::TYPE_VULNERABILITY] as $v) {
@@ -103,11 +122,16 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
                         if ($i != -1 && $m != -1 && $v != -1) {
                             $val = $m * $v;
                         }
-                        $this->headers[$val] = $val;
+                        if(!in_array($val, $tempHeaders, true)){
+                            array_push($tempHeaders,$val);
+                        }
                     }
                 }
             }
-            asort($this->headers);
+            asort($tempHeaders);
+            foreach ($tempHeaders as $value) {
+              array_push($this->headers,$value);
+            }
         }
     }
 
@@ -161,7 +185,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
                 'right' => $right,
                 'amv' => $r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability'],
                 'max' => $max,
-                'color' => $this->getColor($max),
+                'color' => $this->getColor($max,'riskInfo'),
             ];
 
             // on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
@@ -211,23 +235,81 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
     }
 
     /**
+     * Calculates the number of operational risks for each impact/probabiliy combo
+     * @param string $mode The mode to use, either 'raw' or 'target'
+     * @return array Associative array of values to show in the table
+     */
+    public function getCountersOpRisks($mode = 'raw')
+    {
+        $valuesField = ['iro.netProb as netProb', 'iro.netR as netR', 'iro.netO as netO','iro.netL as netL','iro.netF as netF','iro.netP as netP',
+                        'iro.targetedProb as targetedProb', 'iro.targetedR as targetedR', 'iro.targetedO as targetedO','iro.targetedL as targetedL','iro.targetedF as targetedF','iro.targetedP as targetedP'];
+        $query = $this->get('instanceRiskOpTable')->getRepository()->createQueryBuilder('iro');
+        $result = $query->select([
+            'iro.cacheNetRisk as netRisk', 'iro.cacheTargetedRisk as targetedRisk',
+            implode(',', $valuesField)
+        ])->where('iro.anr = :anrid')
+            ->setParameter(':anrid', $this->anr->get('id'))
+            ->andWhere("iro.cacheNetRisk != -1")
+            ->getQuery()->getResult();
+
+
+        $countersRiskOP = $distribRiskOp = $temp = [];
+        foreach ($result as $r) {
+            if ($mode == 'raw' || $r['targetedRisk'] == -1) {
+              $imax = max($r['netR'], $r['netO'],$r['netL'], $r['netF'], $r['netP']);
+              $max = $r['netRisk'];
+              $prob = $r['netProb'];
+              $color = $this->getColor($max,'riskOp');
+            }else {
+              $imax =  max($r['targetedR'], $r['targetedO'],$r['targetedL'], $r['targetedF'], $r['targetedP']);
+              $max = $r['targetedRisk'];
+              $prob = $r['targetedProb'];
+              $color = $this->getColor($max,'riskOp');
+            }
+
+            if (!isset($countersRiskOP[$imax][$prob])) {
+                $countersRiskOP[$imax][$prob] = 0;
+            }
+
+            if (!isset($distribRiskOp[$color])) {
+                $distribRiskOp[$color] = 0;
+            }
+            $countersRiskOP[$imax][$prob]++;
+            $distribRiskOp[$color]++;
+
+
+        }
+
+        return [$countersRiskOP, $distribRiskOp];
+
+    }
+
+    /**
      * Returns the cell color to display for the provided risk value
      * @param int $val The risk value
      * @return int|string 0, 1, 2 corresponding to low/med/hi risk color, or an empty string in case of invalid value
      */
-    private function getColor($val)
+    private function getColor($val,$kindOfRisk = 'riskInfo')
     {
         // Provient de l'ancienne version, on ne remonte que les valeurs '' / 0 / 1 / 2, les couleurs seront traitées par le FE
         if ($val == -1 || is_null($val)) {
             return '';
         }
-        if ($val <= $this->anr->get('seuil1')) {
-            return 0;
+        if ($kindOfRisk == 'riskInfo') {
+          if ($val <= $this->anr->get('seuil1')) {
+              return 0;
+          }
+          if ($val <= $this->anr->get('seuil2')) {
+              return 1;
+          }
+        } else {
+          if ($val <= $this->anr->get('seuilRolf1')) {
+              return 0;
+          }
+          if ($val <= $this->anr->get('seuilRolf2')) {
+              return 1;
+          }
         }
-        if ($val <= $this->anr->get('seuil2')) {
-            return 1;
-        }
-
         return 2;
     }
 }

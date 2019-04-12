@@ -313,9 +313,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         if ($instanceBrothers->get($t.'h') == 0) {
                             $instance->set($t.'h', 0);
                             $instance->set($t, $instanceBrothers->$t);
-                        }else {
+                        }elseif ($instance->get('parent')) {
                           $instance->set($t.'h', 1);
                           $instance->set($t, $instance->get('parent')->get($t));
+                        }else {
+                          $instance->set($t.'h', 1);
+                          $instance->set($t, $instanceBrothers->$t);
                         }
                     }
                 }

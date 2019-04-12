@@ -122,7 +122,9 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         // FILTER: rolfRisks ==
         if (isset($params['rolfRisks'])) {
-          $params['rolfRisks'] = explode(',', substr($params['rolfRisks'],1,-1));
+          if (!is_array($params['rolfRisks'])) {
+            $params['rolfRisks'] = explode(',', substr($params['rolfRisks'],1,-1));
+          }
           $sql .= " AND ir.rolf_risk_id IN (:rolfRiskIds) ";
           $queryParams[':rolfRiskIds'] = $params['rolfRisks'];
           $typeParams[':rolfRiskIds'] = \Doctrine\DBAL\Connection::PARAM_INT_ARRAY;

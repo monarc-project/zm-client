@@ -30,5 +30,6 @@ class AnrInstanceRiskServiceFactory extends AbstractServiceFactory
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
         'vulnerabilityTable' => 'MonarcFO\Model\Table\VulnerabilityTable',
         'recommandationTable' => 'MonarcFO\Model\Table\RecommandationTable',
+        'recommandationRiskTable' => 'MonarcFO\Model\Table\RecommandationRiskTable',
     ];
 }
