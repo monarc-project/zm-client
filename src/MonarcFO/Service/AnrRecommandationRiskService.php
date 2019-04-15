@@ -166,7 +166,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     'instance' => ['op' => 'IN', 'value' => $instanceIds],
                 ]);
 
-                file_put_contents('php://stderr', print_r(count($brothers), TRUE).PHP_EOL);
                 foreach ($brothers as $brother) {
                     $this->createRecommandationRisk($data, $brother);
                 }
