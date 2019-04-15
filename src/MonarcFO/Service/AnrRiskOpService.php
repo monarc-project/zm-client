@@ -218,7 +218,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
 
         $instance = $this->instanceTable->getEntity($data['instance']);
         $data['instance'] = $instance;
-        $data['object'] = $this->MonarcObjectTable->getEntity($instance->object->id);
+        $data['object'] = $this->MonarcObjectTable->getEntity(['anr' => $data['anr'], 'uuid' => $instance->object->uuid->toString()]);
 
         if ($data['source'] == 2) {
             // Create a new risk
