@@ -217,9 +217,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             throw new \MonarcCore\Exception\Exception("Model not found ".$pathModel);
         }
         $this->currentLangAnrIndex = $anr->language;
-        $referential = $data['referential'];
-        $risksByControl = $data['risksByControl'];
-        $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential, $risksByControl));
+
+        if ($data['typedoc'] == 5) {
+          $referential = $data['referential'];
+          $risksByControl = $data['risksByControl'];
+        }
+
+        $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential = null, $risksByControl = false));
         $values['txt']['TYPE'] = $typeDoc;
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
@@ -1371,21 +1375,22 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     'position' => $r['position'],
                     'risks' => [],
                 ];
-                if (!isset($lst[$r['parent']]) && ($r['parent'] != $instance->root->id)) {
-                  $path = '';
-                  $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['parent']]));
-                  $asc = array_reverse($instanceTable->getAscendance($instance));
-                  $path = $anr->get('label' . $this->currentLangAnrIndex);
-                  foreach ($asc as $a) {
-                      $path .= ' > ' . $a['name' . $this->currentLangAnrIndex];
+
+                if (!empty($instance->root->id) && !isset($lst[$r['parent']]) && ($r['parent'] != $instance->root->id)) {
+                    $path = '';
+                    $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['parent']]));
+                    $asc = array_reverse($instanceTable->getAscendance($instance));
+                    $path = $anr->get('label' . $this->currentLangAnrIndex);
+                    foreach ($asc as $a) {
+                        $path .= ' > ' . $a['name' . $this->currentLangAnrIndex];
+                    }
+                    $lst[$r['parent']] = [
+                      'path' => $path,
+                      'parent' =>$instance->parent->id,
+                      'position' => $instance->position,
+                      'risks' => [],
+                    ];
                   }
-                  $lst[$r['parent']] = [
-                    'path' => $path,
-                    'parent' =>$instance->parent->id,
-                    'position' => $instance->position,
-                    'risks' => [],
-                  ];
-                }
             }
 
             $lst[$r['id']]['risks'][] = [
