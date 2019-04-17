@@ -70,7 +70,7 @@ class ApiSoaController extends  ApiAnrAbstractController
       $service = $this->getService();
       $riskService = $this->getService()->get('riskService');
       $riskOpService = $this->getService()->get('riskOpService');
-      
+
       if($order=='measure')
         $order='m.code';
       else if($order=='-measure')
@@ -81,7 +81,7 @@ class ApiSoaController extends  ApiAnrAbstractController
             $amvs = [];
             $rolfRisks = [];
             foreach ($entity['measure']->amvs as $amv) {
-              array_push($amvs,$amv->id);
+              array_push($amvs,$amv->uuid->toString());
             }
             foreach ($entity['measure']->rolfRisks as $rolfRisk) {
               array_push($rolfRisks,$rolfRisk->id);

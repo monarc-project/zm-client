@@ -833,10 +833,10 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         if ($recommandationRisk->objectGlobal) {
             $brothersRecommandationsRisks = $table->getEntityByFields([
                 'recommandation' => $recommandationRisk->get('recommandation')->get('id'),
-                'objectGlobal' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('objectGlobal')->get('id')],
-                'asset' =>['anr' => $idAnr, 'uuid' =>  $recommandationRisk->get('asset')->get('id')],
-                'threat' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('threat')->get('id')],
-                'vulnerability' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('vulnerability')->get('id')],
+                'objectGlobal' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('objectGlobal')->get('uuid')->toString()],
+                'asset' =>['anr' => $idAnr, 'uuid' =>  $recommandationRisk->get('asset')->get('uuid')->toString()],
+                'threat' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('threat')->get('uuid')->toString()],
+                'vulnerability' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('vulnerability')->get('uuid')->toString()],
             ]);
 
             $i = 1;
