@@ -221,9 +221,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if ($data['typedoc'] == 5) {
           $referential = $data['referential'];
           $risksByControl = $data['risksByControl'];
+        }else {
+          $referential = null;
+          $risksByControl = false;
         }
 
-        $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential = null, $risksByControl = false));
+        $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential, $risksByControl));
         $values['txt']['TYPE'] = $typeDoc;
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
@@ -358,7 +361,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      * @param int $modelCategory The model type
      * @return array The values for the Word document as a key-value array
      */
-    protected function buildValues($anr, $modelCategory, $referential, $risksByControl)
+    protected function buildValues($anr, $modelCategory, $referential = null, $risksByControl = false)
     {
         switch ($modelCategory) {
             case 1:
@@ -1740,7 +1743,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
                 $continue = true;
 
-                $key = $recoRisk->recommandation->id . ' - ' . $recoRisk->threat->id . ' - ' . $recoRisk->vulnerability->id . ' - ' . $recoRisk->objectGlobal->id;
+                $key = $recoRisk->recommandation->id . ' - ' . $recoRisk->threat->id . ' - ' . $recoRisk->vulnerability->id . ' - ' . (!empty($recoRisk->objectGlobal) ? $recoRisk->objectGlobal->id : null);
                 if (isset($toUnset[$key])) {
                     if (($recoRisk->instanceRisk->cacheMaxRisk < $toUnset[$key]) || (isset($alreadySet[$key]))) {
                         $continue = false;
@@ -1905,7 +1908,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRiskOp->comment), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellNetRisk)->addText($recoRisk->instanceRiskOp->cacheNetRisk, $styleContentFontBold, $alignCenter);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCell)->addText(_WT($this->anrTranslate($Treatment)), $styleContentFont, $alignLeft);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRiskOp->cacheTargetedRisk, $styleHeaderFont, $alignCenter);
+                    if ($recoRisk->instanceRiskOp->cacheTargetedRisk == '-') {
+                      $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRiskOp->cacheNetRisk, $styleHeaderFont, $alignCenter);
+                    } else {
+                      $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRiskOp->cacheTargetedRisk, $styleHeaderFont, $alignCenter);
+                    }
 
          	          $previousRecoId = $recoRisk->recommandation->id;
             }
@@ -2552,7 +2559,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCellcacheNetRisk)->addText($r['cacheNetRisk'], $styleContentFontBold, $alignCenter);
                 $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
                 $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCell)->addText(_WT($this->anrTranslate($Treatment)), $styleContentFont, $alignLeft);
-                if ($r['targetedRisk'] == '-') {
+                if ($r['cacheTargetedRisk'] == '-') {
                   $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCellcacheNetRisk)->addText($r['cacheNetRisk'], $styleContentFontBold, $alignCenter);
                 } else {
                   $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.00), $styleContentCellcacheTargetedRisk)->addText($r['cacheTargetedRisk'], $styleContentFontBold, $alignCenter);
