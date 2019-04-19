@@ -200,11 +200,11 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
         // Create instances risks
         /** @var MonarcObjectTable $MonarcObjectTable */
         $MonarcObjectTable = $this->get('MonarcObjectTable');
-        $objects = $MonarcObjectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => ['uuid' => $entity->get('asset')->get('uuid'), 'anr' => $data['anr']]]);
+        $objects = $MonarcObjectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => ['uuid' => $entity->get('asset')->get('uuid')->toString(), 'anr' => $data['anr']]]);
         foreach ($objects as $object) {
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');
-            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => $object->get('id')]);
+            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => ['anr' => $data['anr'], 'uuid' => $object->get('uuid')->toString()]]);
             $i = 1;
             $nbInstances = count($instances);
             foreach ($instances as $instance) {

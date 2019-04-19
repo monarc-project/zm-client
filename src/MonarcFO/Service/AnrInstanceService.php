@@ -1143,7 +1143,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             }
                           }
                       }
-                    $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->id, 'code' => $data['method']['threats'][$tId]['code']],['id' => 'ASC']);
+                    $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->id, 'code' => $data['method']['threats'][$tId]['code']],['uuid' => 'ASC']);
                     if (empty($threats)) {
                       $toExchange = $data['method']['threats'][$tId];
                       $toExchange['anr'] = $anr->get('id');
