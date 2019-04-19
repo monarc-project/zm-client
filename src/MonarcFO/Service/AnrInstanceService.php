@@ -183,9 +183,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             $toExchange['anr'] = $anr->get('id');
             $toExchange['object'] = $idObject;
             $toExchange['asset'] = null;
-            $obj = $this->get('objectExportService')->get('table')->getEntity($idObject);
+            $obj = $this->get('objectExportService')->get('table')->getEntity(['anr' => $anr, 'uuid' => $idObject]);
             if ($obj) {
-                $toExchange['asset'] = $obj->get('asset')->get('id');
+                $toExchange['asset'] = $obj->get('asset')->get('uuid')->toString();
                 if ($modeImport == 'duplicate') {
                     for ($i = 1; $i <= 4; $i++) {
                         $toExchange['name' . $i] = $obj->get('name' . $i);
@@ -293,8 +293,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             $instanceBrothers = current($this->get('table')->getEntityByFields([ // Get instance risk of brother
                   'id' => ['op' => '!=', 'value' => $instanceId],
                   'anr' => $anr->get('id'),
-                  'asset' => $instance->get('asset')->get('id'),
-                  'object' => $instance->get('object')->get('id')]));
+                  'asset' => ['anr' => $anr->get('id'), 'uuid' => $instance->get('asset')->get('uuid')->toString()],
+                  'object' => ['anr' => $anr->get('id'), 'uuid' => $instance->get('object')->get('uuid')->toString()]]));
 
             if (!empty($instanceBrothers)) {
                 if ($instance->get('object')->get('scope') == \MonarcCore\Model\Entity\MonarcObject::SCOPE_GLOBAL &&
@@ -303,7 +303,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $instanceConseqBrothers = $this->get('instanceConsequenceTable')->getEntityByFields([ // Get consequences of brother
                       'anr' => $anr->get('id'),
                       'instance' => $instanceBrothers,
-                      'object' => $instance->get('object')->get('id')]);
+                      'object' => ['anr' => $anr->get('id'), 'uuid' => $instance->get('object')->get('uuid')->toString()]]);
 
                     foreach ($instanceConseqBrothers as $icb) { //Update consequences for all brothers
                       $this->get('instanceConsequenceService')->updateBrothersConsequences($anr->get('id'), $icb->get('id'));
@@ -334,7 +334,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
                 $existingRisks = $this->get('instanceRiskService')->get('threatTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $tCodes]);
                 foreach ($existingRisks as $t) {
-                    $sharedData['ithreats'][$t->get('code')] = $t->get('id');
+                    $sharedData['ithreats'][$t->get('code')] = $t->get('uuid')->toString();
                 }
                 // On charge les "vulnerabilities" existants
                 $sharedData['ivuls'] = $vCodes = [];
@@ -343,7 +343,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
                 $existingRisks = $this->get('instanceRiskService')->get('vulnerabilityTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $vCodes]);
                 foreach ($existingRisks as $t) {
-                    $sharedData['ivuls'][$t->get('code')] = $t->get('id');
+                    $sharedData['ivuls'][$t->get('code')] = $t->get('uuid')->toString();
                 }
 
                 foreach ($data['risks'] as $risk) {
@@ -381,8 +381,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $instanceBrothers = $this->get('table')->getEntityByFields([ // Get the Instance of brothers
                                 'id' => ['op' => '!=', 'value' => $instanceId],
                                 'anr' => $anr->get('id'),
-                                'asset' => $instance->get('asset')->get('id'),
-                                'object' => $obj->get('id')]);
+                                'asset' => ['anr' => $anr->get('id'),$instance->get('asset')->get('uuid')->toString()],
+                                'object' => ['anr' => $anr->get('id'),$obj->get('uuid')->toString()]]);
 
                             // Creation of specific risks to brothers
                             foreach ($instanceBrothers as $ib) {
@@ -390,7 +390,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                               unset($toExchange['id']);
                               $toExchange['anr'] = $anr->get('id');
                               $toExchange['instance'] = $ib->get('id');
-                              $toExchange['asset'] = $obj->get('asset')->get('id');
+                              $toExchange['asset'] = $obj->get('asset')->get('uuid')->toString();
                               $toExchange['amv'] = null;
                               $toExchange['threat'] = $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
                               $toExchange['vulnerability'] = $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
@@ -411,7 +411,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         unset($toExchange['id']);
                         $toExchange['anr'] = $anr->get('id');
                         $toExchange['instance'] = $instanceId;
-                        $toExchange['asset'] = $obj ? $obj->get('asset')->get('id') : null;
+                        $toExchange['asset'] = $obj ? $obj->get('asset')->get('uuid')->toString() : null;
                         $toExchange['amv'] = null;
                         $toExchange['threat'] = $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
                         $toExchange['vulnerability'] = $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
@@ -427,9 +427,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $r = current($this->get('instanceRiskService')->get('table')->getEntityByFields([
                             'anr' => $anr->get('id'),
                             'instance' => $instanceId,
-                            'asset' => $obj ? $obj->get('asset')->get('id') : null,
-                            'threat' => $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']],
-                            'vulnerability' => $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']]
+                            'asset' => $obj ? ['anr' => $anr->get('id'), $obj->get('asset')->get('uuid')->toString()] : null,
+                            'threat' => ['anr' => $anr->get('id'), $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']]],
+                            'vulnerability' => ['anr' => $anr->get('id'), $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']]]
                         ]));
                     }
                     if (!empty($r) && $include_eval) {
@@ -467,12 +467,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
                             $objectIdsBrothers = $this->get('instanceTable')->getEntityByFields([ // Get object Ids of brother
                                 'anr' => $anr->get('id'),
-                                'object' => $instance->get('object')->get('id') ]);
+                                'object' => ['anr' => $anr->get('id'), 'uuid' => $instance->get('object')->get('uuid')->toString() ]]);
 
                             $instanceRiskBrothers = current($this->get('instanceRiskTable')->getEntityByFields([ // Get instance risk of brother
                                 'anr' => $anr->get('id'),
                                 'instance' => ['op' => 'IN', 'value' => $objectIdsBrothers],
-                                'amv' => $r->get('amv')->get('id')]));
+                                'amv' => ['anr' => $anr->get('id'), 'uuid' => $r->get('amv')->get('uuid')->toString()]]));
 
                             if (!empty($instanceRiskBrothers)) {
                                 $dataUpdate = [];
@@ -545,10 +545,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     'recommandation' => $sharedData['recos'][$reco['id']],
                                     'instanceRisk' => $idRisk,
                                     'instance' => $instanceId,
-                                    'objectGlobal' => (($obj && $obj->get('scope') == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL) ? $obj->get('id') : null),
-                                    'asset' => $r->get('asset')->get('id'),
-                                    'threat' => $r->get('threat')->get('id'),
-                                    'vulnerability' => $r->get('vulnerability')->get('id'),
+                                    'objectGlobal' => (($obj && $obj->get('scope') == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL) ? $obj->get('uuid')->toString() : null),
+                                    'asset' => $r->get('asset')->get('uuid')->toString(),
+                                    'threat' => $r->get('threat')->get('uuid')->toString(),
+                                    'vulnerability' => $r->get('vulnerability')->get('uuid')->toString(),
                                     'commentAfter' => $reco['commentAfter'],
                                     'op' => 0,
                                     'risk' => $idRisk,
@@ -561,8 +561,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 if (!empty($toExchange['objectGlobal']) && $modeImport == 'merge') {
                                       $instances = $this->get('table')->getEntityByFields([ // Get the brothers
                                           'anr' => $anr->get('id'),
-                                          'asset' => $r->get('asset')->get('id'),
-                                          'object' => $obj->get('id')]);
+                                          'asset' => [$anr->get('id'), 'uuid' => $r->get('asset')->get('uuid')->toString()],
+                                          'object' => [$anr->get('id'), 'uuid' => $obj->get('uuid')->toString()]]);
 
                                       if (!empty($instances)) {
                                           foreach ($instances as $i) {
@@ -570,14 +570,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                               $brothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get the risks of brothers
                                                   'anr' => $anr->get('id'),
                                                   'instance' => $i->get('id'),
-                                                  'amv' => $r->get('amv')->get('id')]);
+                                                  'amv' => ['anr' => $anr->get('id'), 'uuid' => $r->get('amv')->get('uuid')->toString()]]);
                                             }else {
                                               $brothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get the risks of brothers
                                                   'anr' => $anr->get('id'),
                                                   'specific' => 1,
                                                   'instance' => $i->get('id'),
-                                                  'threat' => $r->get('threat')->get('id'),
-                                                  'vulnerability' => $r->get('vulnerability')->get('id')]);
+                                                  'threat' => ['anr' => $anr->get('id'), 'uuid' => $r->get('threat')->get('uuid')->toString()],
+                                                  'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $r->get('vulnerability')->get('uuid')->toString()]]);
                                             }
 
                                                   foreach ($brothers as $brother) {
@@ -648,21 +648,21 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   $instanceBrother = current($this->get('table')->getEntityByFields([ // Get instances of brothers (only one)
                       'id' => ['op' => '!=', 'value' => $instanceId],
                       'anr' => $anr->get('id'),
-                      'asset' => $r->get('asset')->get('id'),
-                      'object' => $obj->get('id')]));
+                      'asset' => ['anr' => $anr->get('id'), 'uuid' => $r->get('asset')->get('uuid')->toString()],
+                      'object' => ['anr' => $anr->get('id'), 'uuid' => $obj->get('uuid')->toString()]]));
 
                   if (!empty($instanceBrother) && $r->get('specific') == 0 ) {
                             $instanceRiskBrothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get instance risk of brother
                                 'anr' => $anr->get('id'),
                                 'instance' => $instanceBrother->get('id'),
-                                'amv' => $r->get('amv')->get('id')]);
+                                'amv' => ['anr' => $anr->get('id'), 'uuid' => $r->get('amv')->get('uuid')->toString()]]);
 
                           foreach ($instanceRiskBrothers as $irb) {
                                 $brotherRecoRisks = $this->get('recommandationRiskTable')->getEntityByFields([ // Get recommendation of brother
                                     'anr' => $anr->get('id'),
                                     'instanceRisk' => $irb->id,
                                     'instance' => ['op' => '!=', 'value' => $instanceId],
-                                    'objectGlobal' => $obj->get('id')]);
+                                    'objectGlobal' => ['anr' => $anr->get('id'), 'uuid' => $obj->get('uuid')->toString()]]);
 
                                 if (!empty($brotherRecoRisks)) {
                                       foreach ($brotherRecoRisks as $brr) {
@@ -681,10 +681,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                         'recommandation' => $brr->recommandation->id,
                                                         'instanceRisk' => $r->get('id'),
                                                         'instance' => $instanceId,
-                                                        'objectGlobal' => $brr->objectGlobal->id,
-                                                        'asset' => $brr->asset->id,
-                                                        'threat' => $brr->threat->id,
-                                                        'vulnerability' => $brr->vulnerability->id,
+                                                        'objectGlobal' => $brr->objectGlobal->uuid->toString(),
+                                                        'asset' => $brr->asset->uuid->toString(),
+                                                        'threat' => $brr->threat->uuid->toString(),
+                                                        'vulnerability' => $brr->vulnerability->uuid->toString(),
                                                         'commentAfter' => $brr->commentAfter,
                                                         'op' => 0,
                                                         'risk' => $r->get('id'),
@@ -711,9 +711,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 foreach ($specificRisks as $sr) {
                   $exitingRecoRisks = $this->get('recommandationRiskTable')->getEntityByFields([ // Get recommandations of brothers
                       'anr' => $anr->get('id'),
-                      'asset' => $sr->get('asset')->get('id'),
-                      'threat' => $sr->get('threat')->get('id'),
-                      'vulnerability' => $sr->get('vulnerability')->get('id')]);
+                      'asset' => ['anr' => $anr->get('id'), 'uuid' => $sr->get('asset')->get('uuid')->toString()],
+                      'threat' => ['anr' => $anr->get('id'), 'uuid' => $sr->get('threat')->get('uuid')->toString()],
+                      'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $sr->get('vulnerability')->get('uuid')->toString()]]);
                       foreach ($exitingRecoRisks as $err) {
                         if ($instanceId != $err->get('instance')->get('id')) {
                           $recoToCreate[] = $err;
@@ -724,9 +724,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   $RecoCreated = $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
                     'recommandation' => $rtc->recommandation,
                     'instance' => $instanceId,
-                    'asset' => $rtc->asset,
-                    'threat' => $rtc->threat,
-                    'vulnerability' => $rtc->vulnerability]);
+                    'asset' => ['anr' => $anr->get('id'), 'uuid' => $rtc->asset->uuid->toString()],
+                    'threat' => ['anr' => $anr->get('id'), 'uuid' => $rtc->threat->uuid->toString()],
+                    'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $rtc->vulnerability->uuid->toString()]]);
 
                   if (empty($RecoCreated)) {// Creation of link reco -> risk
                           $class = $this->get('recommandationRiskTable')->getClass();
@@ -740,14 +740,14 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                       'anr' => $anr->get('id'),
                                                       'instance' => $instanceId,
                                                       'specific' => 1,
-                                                      'asset' => $rtc->asset,
-                                                      'threat' => $rtc->threat,
-                                                      'vulnerability' => $rtc->vulnerability])),
+                                                      'asset' => ['anr' => $anr->get('id'), 'uuid' => $rtc->asset->uuid->toString()],
+                                                      'threat' => ['anr' => $anr->get('id'), 'uuid' => $rtc->threat->uuid->toString()],
+                                                      'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $rtc->vulnerability->uuid->toString()]])),
                               'instance' => $instanceId,
-                              'objectGlobal' => $rtc->objectGlobal,
-                              'asset' => $rtc->asset,
-                              'threat' => $rtc->threat,
-                              'vulnerability' => $rtc->vulnerability,
+                              'objectGlobal' => ['anr' => $anr->get('id'), 'uuid' => $rtc->objectGlobal->uuid->toString()],
+                              'asset' =>['anr' => $anr->get('id'), 'uuid' =>  $rtc->asset->uuid->toString()],
+                              'threat' => ['anr' => $anr->get('id'), 'uuid' => $rtc->threat->uuid->toString()],
+                              'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $rtc->vulnerability->uuid->toString()],
                               'commentAfter' => $rtc->commentAfter,
                               'op' => 0,
                               'risk' => $idRiskSpecific,
@@ -800,7 +800,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     $toExchange['anr'] = $anr->get('id');
                     $toExchange['instance'] = $instanceId;
                     $toExchange['object'] = $idObject;
-                    $tagId = $this->get('objectExportService')->get('table')->getEntity($idObject)->get('rolfTag');
+                    $tagId = $this->get('objectExportService')->get('table')->getEntity(['anr' => $anr->get('id'),'uuid' =>$idObject])->get('rolfTag');
                     $rolfRisks = [];
                     if (null !== $tagId) {
                         $rolfRisks = $tagId->risks;
@@ -885,7 +885,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 'recommandation' => $sharedData['recos'][$reco['id']],
                                 'instanceRiskOp' => $idRiskOp,
                                 'instance' => $instanceId,
-                                'objectGlobal' => (($obj && $obj->get('scope') == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL) ? $obj->get('id') : null),
+                                'objectGlobal' => (($obj && $obj->get('scope') == \MonarcCore\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL) ? $obj->get('uuid')->toString() : null),
                                 'asset' => null,
                                 'threat' => null,
                                 'vulnerability' => null,
