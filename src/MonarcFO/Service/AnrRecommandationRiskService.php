@@ -399,6 +399,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function createRecommandationRisk($data, $risk)
     {
+      /** @var RecommandationRiskTable $table */
+      $table = $this->get('table');
+
         $class = $this->get('entity');
         $entity = new $class();
         $entity->set('anr', $risk->anr);
@@ -411,6 +414,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         if ($data['op']) {
             $entity->setInstanceRisk(null);
             $entity->setInstanceRiskOp($risk);
+            $entity->setAnr(null);
+            $table->save($entity);
+            $entity->set('anr', $risk->anr); //TO IMPROVE  double save to have the correct anr_id with risk op
         } else {
             $entity->setInstanceRisk($risk);
             $entity->setInstanceRiskOp(null);
@@ -424,11 +430,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         if ($risk->getInstance()->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL) {
             $entity->setObjectGlobal($risk->getInstance()->getObject());
         }
-
-        /** @var RecommandationRiskTable $table */
-        $table = $this->get('table');
-        $anrTable = $this->get('anrTable');
-        $entity->set('anr', $anrTable->getEntity($risk->anr->id));
 
         return $table->save($entity);
     }
