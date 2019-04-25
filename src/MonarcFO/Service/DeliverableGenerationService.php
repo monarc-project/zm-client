@@ -1703,6 +1703,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             if ($recoRisk->instanceRisk) {
                 foreach ($impacts as $impact) {
                     $risk = 'risk' . ucfirst($impact);
+                    if ($impact == 'd') {
+                      $impact = 'a'; // Changed to get threat->a value;
+                    }
                     $bgcolor = 'FFBC1C';
                     if (($recoRisk->instanceRisk->$risk == -1) || (!$recoRisk->threat->$impact)) {
                         $bgcolor = 'E7E6E6';
@@ -1780,7 +1783,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRisk->comment), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCellC)->addText($recoRisk->instanceRisk->riskC, $styleContentFontBold, $alignCenter);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCellI)->addText($recoRisk->instanceRisk->riskI, $styleContentFontBold, $alignCenter);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCellD)->addText($recoRisk->instanceRisk->riskD, $styleContentFontBold, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCellA)->addText($recoRisk->instanceRisk->riskD, $styleContentFontBold, $alignCenter);
 						        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCell)->addText(_WT($this->anrTranslate($Treatment)), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRisk->cacheTargetedRisk, $styleHeaderFont, $alignCenter);
                 }
