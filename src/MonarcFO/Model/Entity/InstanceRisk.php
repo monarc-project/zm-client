@@ -41,7 +41,8 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Amv", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="amv_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $amv;
@@ -51,7 +52,8 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $asset;
@@ -61,7 +63,8 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Threat", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $threat;
@@ -71,7 +74,8 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $vulnerability;

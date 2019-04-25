@@ -294,7 +294,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             // duplicate categories
             $categoryNewIds = [];
-            $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getuuid()]);
+            $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
             foreach ($category as $cat) {
                 $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                 $newCategory->set('id', null);
@@ -346,28 +346,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 // update the amv with the new measures from the current referential
                 foreach ($amvs as $amv_common) {
                     // match the AMVs from common with AMVS from cli
-                    $asset_cli = $this->get('assetCliTable')
-                                        ->getEntityByFields(['anr' => $anr->id,
-                                        'label'.$this->getLanguage() => $amv_common->asset->get('label'.$this->getLanguage())]);
-                    $threat_cli = $this->get('threatCliTable')
-                                        ->getEntityByFields(['anr' => $anr->id,
-                                        'label'.$this->getLanguage() => $amv_common->threat->get('label'.$this->getLanguage())]);
-                    $vulnerability_cli = $this->get('vulnerabilityCliTable')
-                                        ->getEntityByFields(['anr' => $anr->id,
-                                        'label'.$this->getLanguage() => $amv_common->vulnerability->get('label'.$this->getLanguage())]);
-
-                    if (count($asset_cli)==0 || count($threat_cli)==0 || count($vulnerability_cli)==0) {
-                        continue;
-                    }
-
                     $amv_cli = $this->get('amvCliTable')
-                                    ->getEntityByFields(['anr' => $anr->id,
-                                            'asset' => $asset_cli[0]->getId(),
-                                            'threat' => $threat_cli[0]->getId(),
-                                            'vulnerability' => $vulnerability_cli[0]->getId()]);
-
+                        ->getEntityByFields([
+                            'asset' => ['uuid' => $amv_common->asset->getUuid()->toString(), 'anr' => $anr->id ],
+                            'threat' => ['uuid' => $amv_common->threat->getUuid()->toString(), 'anr' => $anr->id ],
+                            'vulnerability' => ['uuid' => $amv_common->vulnerability->getUuid()->toString(), 'anr' => $anr->id ]]);
                     if (count($amv_cli)) {
-                        //$amv_cli[0]->addMeasure($newMeasure);
                         $newMeasure->addAmv($amv_cli[0]);
                     }
                 }
@@ -449,7 +433,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        try {
+        // try {
             // duplicate anr
             $newAnr = new \MonarcFO\Model\Entity\Anr($anr);
             $newAnr->setId(null);
@@ -515,10 +499,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($assets as $asset) {
                 $newAsset = new \MonarcFO\Model\Entity\Asset($asset);
-                $newAsset->set('id', null);
                 $newAsset->setAnr($newAnr);
                 $this->get('assetCliTable')->save($newAsset, false);
-                $assetsNewIds[$asset->id] = $newAsset;
+                // file_put_contents('php://stderr', print_r($asset->getUuid()->toString(), TRUE).PHP_EOL);
+                $assetsNewIds[$asset->getUuid()->toString()] = $newAsset;
             }
 
             // duplicate threats
@@ -541,13 +525,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($threats as $threat) {
                 $newThreat = new \MonarcFO\Model\Entity\Threat($threat);
-                $newThreat->set('id', null);
                 $newThreat->setAnr($newAnr);
                 if ($threat->theme) {
                     $newThreat->setTheme($themesNewIds[$threat->theme->id]);
                 }
                 $this->get('threatCliTable')->save($newThreat,false);
-                $threatsNewIds[$threat->id] = $newThreat;
+                $threatsNewIds[$threat->getUuid()->toString()] = $newThreat;
             }
 
             // duplicate vulnerabilities
@@ -567,10 +550,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
             foreach ($vulnerabilities as $vulnerability) {
                 $newVulnerability = new \MonarcFO\Model\Entity\Vulnerability($vulnerability);
-                $newVulnerability->set('id', null);
                 $newVulnerability->setAnr($newAnr);
                 $this->get('vulnerabilityCliTable')->save($newVulnerability, false);
-                $vulnerabilitiesNewIds[$vulnerability->id] = $newVulnerability;
+                $vulnerabilitiesNewIds[$vulnerability->getUuid()->toString()] = $newVulnerability;
             }
 
             // duplicate categories, referentials and measures
@@ -587,7 +569,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                     // duplicate categories
                     $categoryNewIds = [];
-                    $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getuuid()]);
+                    $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
                     foreach ($category as $cat) {
                         $newCategory = new \MonarcFO\Model\Entity\SoaCategory($cat);
                         $newCategory->set('id', null);
@@ -609,15 +591,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                         foreach ($newMeasure->getMeasuresLinked() as $measureLinked) {
                             $data = [];
-                            $data['father'] = $measure->getuuid()->toString();
-                            $data['child'] = $measureLinked->getuuid()->toString();
+                            $data['father'] = $measure->getUuid()->toString();
+                            $data['child'] = $measureLinked->getUuid()->toString();
                             $newMeasureMeasure = new \MonarcFO\Model\Entity\MeasureMeasure($data);
                             $newMeasureMeasure->setAnr($newAnr);
                             $this->get('measureMeasureCliTable')->save($newMeasureMeasure,false);
 
                         }
                         $newMeasure->setMeasuresLinked(null);
-                        $measuresNewIds[$measure->getuuid()->toString()] = $newMeasure;
+                        $measuresNewIds[$measure->getUuid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     //$newReferential->setMeasures(null);
@@ -656,7 +638,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                         $newMeasure->setMeasuresLinked(null);
                         $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection;
                         $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
-                        $measuresNewIds[$measure->getuuid()->toString()] = $newMeasure;
+                        $measuresNewIds[$measure->getUuid()->toString()] = $newMeasure;
                         array_push($new_measures, $newMeasure);
                     }
                     $newReferential->setMeasures($new_measures);
@@ -689,7 +671,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                   $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                   $newSoa->set('id', null);
                   $newSoa->setAnr($newAnr);
-                  $newSoa->setMeasure($measuresNewIds[$soa->measure->getuuid()->toString()]);
+                  $newSoa->setMeasure($measuresNewIds[$soa->measure->getUuid()->toString()]);
                   $this->get('SoaCliTable')->save($newSoa,false);
               }
             }
@@ -699,25 +681,24 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $amvs = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('amvTable')->fetchAllObject() : $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($amvs as $key => $amv) {
                 if (
-                    (!isset($assetsNewIds[$amv->asset->id])) ||
-                    (!isset($threatsNewIds[$amv->threat->id])) ||
-                    (!isset($vulnerabilitiesNewIds[$amv->vulnerability->id]))
+                    (!isset($assetsNewIds[$amv->asset->getUuid()->toString()])) ||
+                    (!isset($threatsNewIds[$amv->threat->getUuid()->toString()])) ||
+                    (!isset($vulnerabilitiesNewIds[$amv->vulnerability->getUuid()->toString()]))
                 ) {
                     unset($amvs[$key]);
                 }
             }
             foreach ($amvs as $amv) {
                 $newAmv = new \MonarcFO\Model\Entity\Amv($amv);
-                $newAmv->set('id', null);
                 $newAmv->setAnr($newAnr);
-                $newAmv->setAsset($assetsNewIds[$amv->asset->id]);
-                $newAmv->setThreat($threatsNewIds[$amv->threat->id]);
-                $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->id]);
+                $newAmv->setAsset($assetsNewIds[$amv->asset->getUuid()->toString()]);
+                $newAmv->setThreat($threatsNewIds[$amv->threat->getUuid()->toString()]);
+                $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->getUuid()->toString()]);
                 $newAmv->setMeasures(null);
                 foreach ($amv->getMeasures() as $measure) {
-                    if (isset($measuresNewIds[$measure->getuuid()->toString()])) {
+                    if (isset($measuresNewIds[$measure->getUuid()->toString()])) {
                         //array_push($new_measures, $measuresNewIds[$measure->getuuid()->toString()]);
-                        $this->get('measureCliTable')->getEntity(['anr'=> $newAnr->id, 'uuid'=>$measure->getuuid()->toString()])->addAmv($newAmv);
+                        $this->get('measureCliTable')->getEntity(['anr'=> $newAnr->id, 'uuid'=>$measure->getUuid()->toString()])->addAmv($newAmv);
                     }
                 }
                 $this->get('amvCliTable')->save($newAmv, false);
@@ -810,19 +791,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
             $objectsRootCategories = [];
             foreach ($objects as $object) {
                 $newObject = new \MonarcFO\Model\Entity\MonarcObject($object);
-                $newObject->set('id', null);
                 $newObject->setAnr($newAnr);
                 $newObject->setAnrs(null);
                 $newObject->addAnr($newAnr);
                 if (!is_null($object->category)) {
                     $newObject->setCategory($objectsCategoriesNewIds[$object->category->id]);
                 }
-                $newObject->setAsset($assetsNewIds[$object->asset->id]);
+                $newObject->setAsset($assetsNewIds[$object->asset->getUuid()->toString()]);
                 if ($object->rolfTag) {
                     $newObject->setRolfTag($rolfTagsNewIds[$object->rolfTag->id]);
                 }
                 $this->get('objectCliTable')->save($newObject,false);
-                $objectsNewIds[$object->id] = $newObject;
+                $objectsNewIds[$object->getUuid()->toString()] = $newObject;
 
                 //root category
                 if (!is_null($object->category)) {
@@ -853,17 +833,17 @@ class AnrService extends \MonarcCore\Service\AbstractService
             // duplicate objects objects
             $objectsObjects = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('objectObjectTable')->fetchAllObject() : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objectsObjects as $key => $objectObject) {
-                if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->id]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->id]))) {
+
+                if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->getUuid()->toString()]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->getUuid()->toString()]))) {
                     unset($objectsObjects[$key]);
                 }
             }
             foreach ($objectsObjects as $objectObject) {
                 $newObjectObject = new \MonarcFO\Model\Entity\ObjectObject($objectObject);
-                $newObjectObject->set('id', null);
                 $newObjectObject->setAnr($newAnr);
-                $newObjectObject->setFather($objectsNewIds[$objectObject->father->id]);
-                $newObjectObject->setChild($objectsNewIds[$objectObject->child->id]);
-                $this->get('objectObjectCliTable')->save($newObjectObject,false);
+                $newObjectObject->setFather($objectsNewIds[$objectObject->father->getUuid()->toString()]);
+                $newObjectObject->setChild($objectsNewIds[$objectObject->child->getUuid()->toString()]);
+                $this->get('objectObjectCliTable')->save($newObjectObject, false);
             }
 
             // duplicate instances
@@ -876,8 +856,8 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInstance = new \MonarcFO\Model\Entity\Instance($instance);
                 $newInstance->set('id', null);
                 $newInstance->setAnr($newAnr);
-                $newInstance->setAsset($assetsNewIds[$instance->asset->id]);
-                $newInstance->setObject($objectsNewIds[$instance->object->id]);
+                $newInstance->setAsset($assetsNewIds[$instance->asset->getUuid()->toString()]);
+                $newInstance->setObject($objectsNewIds[$instance->object->getUuid()->toString()]);
                 if ($instance->root || $instance->parent) {
                     $nbInstanceWithParent++;
                 }
@@ -950,13 +930,13 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
                 }
                 if ($instanceRisk->asset) {
-                    $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->id]);
+                    $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->getUuid()->toString()]);
                 }
                 if ($instanceRisk->threat) {
-                    $newInstanceRisk->setThreat($threatsNewIds[$instanceRisk->threat->id]);
+                    $newInstanceRisk->setThreat($threatsNewIds[$instanceRisk->threat->getUuid()->toString()]);
                 }
                 if ($instanceRisk->vulnerability) {
-                    $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->vulnerability->id]);
+                    $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->vulnerability->getUuid()->toString()]);
                 }
                 if ($instanceRisk->instance) {
                     $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
@@ -974,7 +954,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInstanceRiskOp->set('id', null);
                 $newInstanceRiskOp->setAnr($newAnr);
                 $newInstanceRiskOp->setInstance($instancesNewIds[$instanceRiskOp->instance->id]);
-                $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->id]);
+                $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->getUuid()->toString()]);
                 if ($instanceRiskOp->rolfRisk) {
                     $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
                 }
@@ -990,7 +970,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInstanceConsequence->set('id', null);
                 $newInstanceConsequence->setAnr($newAnr);
                 $newInstanceConsequence->setInstance($instancesNewIds[$instanceConsequence->instance->id]);
-                $newInstanceConsequence->setObject($objectsNewIds[$instanceConsequence->object->id]);
+                $newInstanceConsequence->setObject($objectsNewIds[$instanceConsequence->object->getUuid()->toString()]);
                 $newInstanceConsequence->setScaleImpactType($scalesImpactTypesNewIds[$instanceConsequence->scaleImpactType->id]);
                 $this->get('instanceConsequenceCliTable')->save($newInstanceConsequence,false);
             }
@@ -1067,19 +1047,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     $newRecommandationRisk->set('instanceRiskOp', $instancesRisksOpNewIds[$newRecommandationRisk->get('instanceRiskOp')->get('id')]);
                 }
                 $newRecommandationRisk->set('instance', $instancesNewIds[$newRecommandationRisk->get('instance')->get('id')]);
-                if ($newRecommandationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('id')])) {
-                    $newRecommandationRisk->set('objectGlobal', $objectsNewIds[$newRecommandationRisk->get('objectGlobal')->get('id')]);
+                if ($newRecommandationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommandationRisk->get('objectGlobal')->getUuid()->toString()])) {
+                    $newRecommandationRisk->set('objectGlobal', $objectsNewIds[$newRecommandationRisk->get('objectGlobal')->getUuid()->toString()]);
                 } else {
                     $newRecommandationRisk->set('objectGlobal', null);
                 }
                 if ($newRecommandationRisk->get('asset')) {
-                    $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->get('id')]);
+                    $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->getUuid()->toString()]);
                 }
                 if ($newRecommandationRisk->get('threat')) {
-                    $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->get('id')]);
+                    $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->getUuid()->toString()]);
                 }
                 if ($newRecommandationRisk->get('vulnerability')) {
-                    $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->get('id')]);
+                    $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->getUuid()->toString()]);
                 }
                 $this->get('recommandationRiskCliTable')->save($newRecommandationRisk,false);
             }
@@ -1088,12 +1068,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $this->setUserCurrentAnr($newAnr->get('id'));
 
-        } catch (\Exception $e) {
-            if (is_integer($id)) {
-                $anrCliTable->delete($id);
-            }
-            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
-        }
+        // } catch (\Exception $e) {
+        //     if (is_integer($id)) {
+        //         $anrCliTable->delete($id);
+        //     }
+        //     throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
+        // }
 
         return $newAnr->get('id');
     }
@@ -1272,7 +1252,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                     if (empty($entity->get('label' . $lang))) {
                         $success[$lang] = false;
                     } else {
-                        ${$value}[$entity->get('id')] = $entity->get('id');
+                        ${$value}[$entity->getUuid()->toString()] = $entity->getUuid()->toString();
                     }
                 }
             }

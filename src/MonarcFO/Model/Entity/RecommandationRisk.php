@@ -82,7 +82,8 @@ class RecommandationRisk extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="object_global_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="object_global_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $objectGlobal;
@@ -92,7 +93,8 @@ class RecommandationRisk extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $asset;
@@ -102,7 +104,8 @@ class RecommandationRisk extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Threat", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $threat;
@@ -112,7 +115,8 @@ class RecommandationRisk extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $vulnerability;

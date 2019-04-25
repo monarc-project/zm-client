@@ -74,7 +74,9 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         $data['specific'] = 1;
 
         // Check that we don't already have a risk with this vuln/threat/instance combo
-        $entity = $this->instanceRiskTable->getEntityByFields(['anr' => $data['anr'], 'vulnerability' => $data['vulnerability'], 'threat' => $data['threat'], 'instance' => $data['instance']]);
+        $entity = $this->getList(0,10,null,null,['anr' => $data['anr'],'th.anr' => $data['anr'],'v.anr' => $data['anr'], 'v.uuid' => $data['vulnerability']['uuid'], 'th.uuid' => $data['threat']['uuid'],'i.id' => $data['instance'] ]);
+        //$entity = $this->instanceRiskTable->getEntityByFields(['anr' => $data['anr'], 'vulnerability' => $data['vulnerability'], 'threat' => $data['threat'], 'instance' => $data['instance']]);
+
         if ($entity) {
             throw new \MonarcCore\Exception\Exception("This risk already exists in this instance", 412);
         }
@@ -88,10 +90,8 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
         $instance = $instanceTable->getEntity($data['instance']);
-        $data['asset'] = $instance->asset->id;
-
+        $data['asset'] = ['uuid' => $instance->asset->uuid->toString(), 'anr' => $data['anr']];
         $entity->exchangeArray($data);
-
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
@@ -101,7 +101,7 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
 
         //if global object, save risk of all instance of global object for this anr
         if ($entity->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
-            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id, 'id' => ['op' => '!=', 'value' => $instance->id]]);
+            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => ['anr' => $entity->anr->id, 'uuid' => $entity->instance->object->uuid->toString()], 'id' => ['op' => '!=', 'value' => $instance->id]]);
             $i = 1;
             $nbBrothers = count($brothers);
             foreach ($brothers as $brother) {
@@ -166,14 +166,13 @@ class AnrRiskService extends \MonarcCore\Service\AbstractService
             // Retrieve brothers
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');
-            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => $entity->instance->object->id]);
+            $brothers = $instanceTable->getEntityByFields(['object' => ['anr' => $entity->anr->id, 'uuid' => $entity->instance->object->uuid->toString()], 'anr' => $entity->anr->id]);
 
             // Retrieve instances with same risk
             $instancesRisks = $this->get('table')->getEntityByFields([
-                'anr' => $entity->anr->id,
-                'asset' => $entity->asset->id,
-                'threat' => $entity->threat->id,
-                'vulnerability' => $entity->vulnerability->id,
+                'asset' => ['uuid' => $entity->asset->uuid->toString(), 'anr' => $entity->anr->id],
+                'threat' => ['uuid'=> $entity->threat->uuid->toString(), 'anr' => $entity->anr->id],
+                'vulnerability' => ['uuid'=> $entity->vulnerability->uuid->toString(), 'anr' => $entity->anr->id],
             ]);
 
             foreach ($instancesRisks as $instanceRisk) {

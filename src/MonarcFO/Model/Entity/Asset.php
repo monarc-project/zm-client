@@ -23,8 +23,8 @@ class Asset extends AssetSuperClass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\Id
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr",)
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })

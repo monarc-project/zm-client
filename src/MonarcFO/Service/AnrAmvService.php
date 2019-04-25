@@ -81,7 +81,7 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
             throw new \MonarcCore\Exception\Exception('Anr id error', 412);
         }
 
-        $data['asset'] = $entity->get('asset')->get('id'); // asset can not be changed
+        $data['asset'] =['anr' => $entity->get('asset')->get('anr')->get('id'),'uuid' => $entity->get('asset')->get('uuid')->toString()]; // asset can not be changed
 
         $this->filterPostFields($data, $entity);
 
@@ -140,7 +140,7 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
         }
 
         // on ne permet pas de modifier l'asset
-        $data['asset'] = $entity->get('asset')->get('id');
+        $data['asset'] =['anr' => $entity->get('asset')->get('anr')->get('id'),'uuid' => $entity->get('asset')->get('uuid')->toString()]; // asset can not be changed
 
         $entity->setLanguage($this->getLanguage());
 
@@ -188,9 +188,8 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
             $measureEntity->addAmv($entity);
         }
         unset($data['measures']);
-
         $entity->exchangeArray($data);
-
+        unset($data['measures']);
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
@@ -201,11 +200,11 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
         // Create instances risks
         /** @var MonarcObjectTable $MonarcObjectTable */
         $MonarcObjectTable = $this->get('MonarcObjectTable');
-        $objects = $MonarcObjectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => $entity->get('asset')->get('id')]);
+        $objects = $MonarcObjectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => ['uuid' => $entity->get('asset')->get('uuid')->toString(), 'anr' => $data['anr']]]);
         foreach ($objects as $object) {
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');
-            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => $object->get('id')]);
+            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => ['anr' => $data['anr'], 'uuid' => $object->get('uuid')->toString()]]);
             $i = 1;
             $nbInstances = count($instances);
             foreach ($instances as $instance) {

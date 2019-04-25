@@ -186,7 +186,7 @@ return array(
                         'options' => array(
                             'route' => 'assets[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrAssets',
@@ -198,7 +198,7 @@ return array(
                         'options' => array(
                             'route' => 'amvs[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrAmvs',
@@ -246,7 +246,7 @@ return array(
                         'options' => array(
                             'route' => 'threats[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrThreats',
@@ -270,7 +270,7 @@ return array(
                         'options' => array(
                             'route' => 'vulnerabilities[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrVulnerabilities',
@@ -306,7 +306,7 @@ return array(
                         'options' => array(
                             'route' => 'objects[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrObjects',
@@ -318,7 +318,7 @@ return array(
                         'options' => array(
                             'route' => 'objects/:id/parents',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrObject',
@@ -331,7 +331,7 @@ return array(
                         'options' => array(
                             'route' => 'objects/:id/export',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrObjectsExport',
@@ -343,7 +343,7 @@ return array(
                         'options' => array(
                             'route' => 'objects/import[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrObjectsImport',
@@ -534,7 +534,7 @@ return array(
                         'options' => array(
                             'route' => 'library[/:id]',
                             'constraints' => array(
-                                'id' => '[0-9]+',
+                                'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrLibrary',

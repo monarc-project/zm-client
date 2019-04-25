@@ -9,6 +9,7 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\AmvSuperclass;
+use Zend\Validator\Uuid;
 
 /**
  * Amv
@@ -25,8 +26,8 @@ class Amv extends AmvSuperclass
 {
     /**
      * @var \MonarcFO\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\Id
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
@@ -36,9 +37,10 @@ class Amv extends AmvSuperclass
     /**
      * @var \MonarcFO\Model\Entity\Asset
      *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Asset", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $asset;
@@ -48,7 +50,8 @@ class Amv extends AmvSuperclass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Threat", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $threat;
@@ -58,18 +61,57 @@ class Amv extends AmvSuperclass
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $vulnerability;
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="amvs", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Measure", mappedBy="amvs", )
      * @ORM\JoinTable(name="measures_amvs",
-     *  joinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="id")},
+     *  joinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
      * )
      */
     protected $measures;
+
+    protected $parameters = array(
+        'implicitPosition' => array(
+            'field' => 'asset',
+        ),
+    );
+
+    public function getInputFilter($partial = false)
+    {
+      if (!$this->inputFilter) {
+          parent::getInputFilter($partial);
+
+          $texts = ['vulnerability', 'asset', 'threat'];
+
+          foreach ($texts as $text) {
+              // $this->inputFilter->add(array(
+              //     'name' => $text."['anr']",
+              //     'required' => ($partial) ? false : true,
+              //     'allow_empty' => false,
+              //     'filters' => array(
+              //         array(
+              //             'name' => 'Digits',
+              //         ),
+              //     ),
+              //     'validators' => array(),
+              // ));
+              $this->inputFilter->add(array(
+                  'name' => $text,
+                  'required' => ($partial) ? false : true,
+                  'allow_empty' => false,
+                  'validators' => array(),
+              ));
+
+          }
+    }
+    //file_put_contents('php://stderr', print_r($this->inputFilter, TRUE).PHP_EOL);
+    return $this->inputFilter;
+  }
 }
