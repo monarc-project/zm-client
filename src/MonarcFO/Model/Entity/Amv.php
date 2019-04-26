@@ -27,7 +27,7 @@ class Amv extends AmvSuperclass
     /**
      * @var \MonarcFO\Model\Entity\Anr
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
@@ -102,12 +102,12 @@ class Amv extends AmvSuperclass
               //     ),
               //     'validators' => array(),
               // ));
-              $this->inputFilter->add(array(
-                  'name' => $text,
-                  'required' => ($partial) ? false : true,
-                  'allow_empty' => false,
-                  'validators' => array(),
-              ));
+              // $this->inputFilter->add(array(
+              //     'name' => $text,
+              //     'required' => ($partial) ? false : true,
+              //     'allow_empty' => false,
+              //     'validators' => array(),
+              // ));
 
           }
     }
