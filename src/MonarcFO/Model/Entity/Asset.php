@@ -21,13 +21,13 @@ use MonarcCore\Model\Entity\AssetSuperClass;
  */
 class Asset extends AssetSuperClass
 {
-  /**
-  * @var integer
-  *
-  * @ORM\Column(name="uuid", type="uuid", nullable=false)
-  * @ORM\Id
-  */
-  protected $uuid;
+    /**
+    * @var integer
+    *
+    * @ORM\Column(name="uuid", type="uuid", nullable=false)
+    * @ORM\Id
+    */
+    protected $uuid;
     /**
      * @var \MonarcFO\Model\Entity\Anr
      * @ORM\Id
