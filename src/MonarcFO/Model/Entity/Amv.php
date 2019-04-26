@@ -24,6 +24,14 @@ use Zend\Validator\Uuid;
  */
 class Amv extends AmvSuperclass
 {
+
+  /**
+  * @var integer
+  *
+  * @ORM\Column(name="uuid", type="uuid", nullable=false)
+  * @ORM\Id
+  */
+  protected $uuid;
     /**
      * @var \MonarcFO\Model\Entity\Anr
      * @ORM\Id
