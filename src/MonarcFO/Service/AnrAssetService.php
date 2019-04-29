@@ -161,7 +161,10 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                       $newTheme = null;
                       if(isset($localThemes[$data['themes'][$valueThreat['theme']]['label' . $this->getLanguage()]])){ //theme exists
                         $newTheme = $localThemes[$data['themes'][$valueThreat['theme']]['label' . $this->getLanguage()]];
-                      }else { //theme doesn't exist
+                      }else if(is_null($data['themes'][$valueThreat['theme']])){
+                        $newTheme = null;
+                      }
+                      else{ //theme doesn't exist
                         $c = $this->get('themeTable')->getClass();
                         $newTheme = new $c();
                         $newTheme->setDbAdapter($this->get('themeTable')->getDb());
