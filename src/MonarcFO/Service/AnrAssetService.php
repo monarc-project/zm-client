@@ -99,7 +99,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
         {
           $referentialPresent = false;
 
-          if (version_compare ($monarc_version, "2.8.0")>=0 ) { //TO DO:set the right value with the uuid version
+          if (version_compare ($monarc_version, "2.8.2")>=0 ) { //TO DO:set the right value with the uuid version
             // Lookup if we already have the same asset, in which case we'll update it from the data. Otherwise,
             // we'll create a new one.
             $asset = current($this->get('table')->getEntityByFields(['anr' => $anr->get('id'), 'uuid' => $data['asset']['uuid']]));
@@ -437,6 +437,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                   $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                                   $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                                   $newMeasure->amvs =  new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
+                                  $newMeasure->setMeasuresLinked(null); //old analysis can't have measuresLinked
                                   $this->get('measureTable')->save($newMeasure,false);
                                   $newSoa = new \MonarcFO\Model\Entity\Soa();
                                   $newSoa->setAnr($anr);
