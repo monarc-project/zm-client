@@ -109,7 +109,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
 
             $i = 0;
             foreach ($amvsAsset as $amv) {
-                if ($amv['id'] == $entity['id']) {
+                if ($amv['uuid']->toString() == $entity['uuid']->toString()) {
                     if ($i == count($amvsAsset) - 1) {
                         $entity['implicitPosition'] = 2;
                     } else {
