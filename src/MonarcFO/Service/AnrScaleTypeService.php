@@ -33,7 +33,6 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         6 => 'L',
         7 => 'F',
         8 => 'P',
-        9 => 'CUS', // Custom user-defined column
     ];
 
     /**
@@ -53,10 +52,17 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
         $types = $this->getTypes();
 
         $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
+
+
         foreach ($scales as $key => $scale) {
+
             if (isset($scale['type'])) {
-                $scales[$key]['type'] = $types[$scale['type']];
-                $scales[$key]['type_id'] = $scale['type'];
+              if (isset($types[$scale['type']])) {
+                  $scales[$key]['type'] = $types[$scale['type']];
+              } else {
+                  $scales[$key]['type'] = 'CUS'; // Custom user-defined column
+              }
+              $scales[$key]['type_id'] = $scale['type'];
             }
         }
 
@@ -68,6 +74,8 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
      */
     public function create($data, $last = true)
     {
+        $scales = parent::getList(1,0, null, null, ['anr' => $data['anrId']]);
+
         if (!isset($data['isSys'])) {
             $data['isSys'] = 0;
         }
@@ -75,7 +83,7 @@ class AnrScaleTypeService extends \MonarcCore\Service\AbstractService
             $data['isSys'] = 0;
         }
         if (!isset($data['type'])) {
-            $data['type'] = 9;
+            $data['type'] = count($scales) + 1;
         }
 
         $anrId = $data['anr'];
