@@ -102,7 +102,7 @@ class Amv extends AmvSuperclass
                 'allow_empty' => false,
                 'validators' => array(
                     array(
-                        'name' => 'Callback', //'\MonarcCore\Validator\UniqueAMV',
+                        'name' => 'Callback', //'\MonarcCore\Validator\Uuid',
                         'options' => array(
                             'messages' => array(
                                 \Zend\Validator\Callback::INVALID_VALUE => 'an uuid is missing or incorrect',
