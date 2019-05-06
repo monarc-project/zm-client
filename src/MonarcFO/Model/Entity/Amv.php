@@ -26,11 +26,11 @@ class Amv extends AmvSuperclass
 {
 
     /**
-    * @var integer
-    *
-    * @ORM\Column(name="uuid", type="uuid", nullable=false)
-    * @ORM\Id
-    */
+     * @var integer
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     * @ORM\Id
+     */
     protected $uuid;
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -93,33 +93,40 @@ class Amv extends AmvSuperclass
 
     public function getInputFilter($partial = false)
     {
-      if (!$this->inputFilter) {
-          parent::getInputFilter($partial);
+        if (!$this->inputFilter) {
+            parent::getInputFilter($partial);
 
-          $texts = ['vulnerability', 'asset', 'threat'];
-
-          foreach ($texts as $text) {
-              // $this->inputFilter->add(array(
-              //     'name' => $text."['anr']",
-              //     'required' => ($partial) ? false : true,
-              //     'allow_empty' => false,
-              //     'filters' => array(
-              //         array(
-              //             'name' => 'Digits',
-              //         ),
-              //     ),
-              //     'validators' => array(),
-              // ));
-              // $this->inputFilter->add(array(
-              //     'name' => $text,
-              //     'required' => ($partial) ? false : true,
-              //     'allow_empty' => false,
-              //     'validators' => array(),
-              // ));
-
-          }
+            $this->inputFilter->add(array(
+                'name' => 'status',
+                'required' => ($partial) ? false : true,
+                'allow_empty' => false,
+                'validators' => array(
+                    array(
+                        'name' => 'Callback', //'\MonarcCore\Validator\UniqueAMV',
+                        'options' => array(
+                            'messages' => array(
+                                \Zend\Validator\Callback::INVALID_VALUE => 'an uuid is missing or incorrect',
+                            ),
+                            'callback' => function ($value, $context = array()) use ($partial) {
+                                if (!$partial) {
+                                    $texts = ['threat', 'vulnerability', 'asset'];
+                                    foreach ($texts as $text) {
+                                        if (is_array($context[$text])) {
+                                            if (!preg_match(Uuid::REGEX_UUID, $context[$text]['uuid'])) return false;
+                                        } else {
+                                            if (!preg_match(Uuid::REGEX_UUID, $context[$text])) return false;
+                                        }
+                                    }
+                                    return true;
+                                } else {
+                                    return true;
+                                }
+                            },
+                        ),
+                    ),
+                ),
+            ));
+        }
+        return $this->inputFilter;
     }
-    //file_put_contents('php://stderr', print_r($this->inputFilter, TRUE).PHP_EOL);
-    return $this->inputFilter;
-  }
 }
