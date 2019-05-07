@@ -95,37 +95,6 @@ class Amv extends AmvSuperclass
     {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
-
-            $this->inputFilter->add(array(
-                'name' => 'status',
-                'required' => ($partial) ? false : true,
-                'allow_empty' => false,
-                'validators' => array(
-                    array(
-                        'name' => 'Callback', //'\MonarcCore\Validator\Uuid',
-                        'options' => array(
-                            'messages' => array(
-                                \Zend\Validator\Callback::INVALID_VALUE => 'an uuid is missing or incorrect',
-                            ),
-                            'callback' => function ($value, $context = array()) use ($partial) {
-                                if (!$partial) {
-                                    $texts = ['threat', 'vulnerability', 'asset'];
-                                    foreach ($texts as $text) {
-                                        if (is_array($context[$text])) {
-                                            if (!preg_match(Uuid::REGEX_UUID, $context[$text]['uuid'])) return false;
-                                        } else {
-                                            if (!preg_match(Uuid::REGEX_UUID, $context[$text])) return false;
-                                        }
-                                    }
-                                    return true;
-                                } else {
-                                    return true;
-                                }
-                            },
-                        ),
-                    ),
-                ),
-            ));
         }
         return $this->inputFilter;
     }
