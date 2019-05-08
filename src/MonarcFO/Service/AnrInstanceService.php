@@ -1190,12 +1190,18 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   $referentials = $this->get('referentialTable')
                                         ->getEntityByFields(['anr' => $anr->id,
                                         'uuid' => $soaCategory['referential']]);
-                  if (!empty($referentials)) {
-                      $newSoaCategory = new \MonarcFO\Model\Entity\SoaCategory($soaCategory);
-                      $newSoaCategory->setAnr($anr);
-                      $newSoaCategory->setReferential($referentials[0]);
-                      $this->get('soaCategoryTable')->save($newSoaCategory,false);
-                  }
+                  $categories = $this->get('soaCategoryTable')
+                                          ->getEntityByFields(['anr' => $anr->id,
+                                          'label' . $this->getLanguage() => $soaCategory['label' . $this->getLanguage()],
+                                          'referential' => ['anr' => $anr->id,
+                                                            'uuid' => $referentials[0]->uuid]]);
+                  if (empty($categories)) {
+                    $newSoaCategory = new \MonarcFO\Model\Entity\SoaCategory($soaCategory);
+                    $newSoaCategory->setAnr($anr);
+                    $newSoaCategory->setReferential($referentials[0]);
+                    $this->get('soaCategoryTable')->save($newSoaCategory,false);
+                  };
+
               }
               $this->get('soaCategoryTable')->getDb()->flush();
           }
