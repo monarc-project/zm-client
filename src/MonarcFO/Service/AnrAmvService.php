@@ -11,6 +11,7 @@ use MonarcFO\Model\Entity\InstanceRisk;
 use MonarcFO\Model\Table\InstanceRiskTable;
 use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\MonarcObjectTable;
+use Ramsey\Uuid\Uuid;
 
 /**
  * This class is the service that handles AMV links in use within an ANR.
@@ -104,7 +105,8 @@ class AnrAmvService extends \MonarcCore\Service\AmvService
             }
         }
         unset($data['measures']);
-
+        if($entity->changeUuid($data)) //check if we need a new uuid
+          $data['uuid'] = Uuid::uuid4()->toString();
         $entity->exchangeArray($data);
 
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
