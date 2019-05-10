@@ -50,18 +50,13 @@ class AddRecommandationsUuid extends AbstractMigration
         $table = $this->table('recommandations');
         $table
             ->addColumn('uuid', 'uuid', array('after' => 'id'))
+            ->addIndex(array('anr_id','code'))
             ->addIndex(array('uuid'))
             ->update();
         foreach ($data as $key => $value) { //fill the uuid only for recommandations created by cases
             $this->execute('UPDATE recommandations SET uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');
         }
-        $unUUIDpdo = $this->query('select uuid,id from recommandations' . ' WHERE uuid =' . '"' . '"');
-        $unUUIDrows = $unUUIDpdo->fetchAll();
-
-        foreach ($unUUIDrows as $key => $value) {
-            $this->execute('UPDATE recommandations SET uuid =' . '"' . Uuid::uuid4() . '"' . ' WHERE id =' . $value['id']); //manage recommandations which are not in common
-        }
-
+        
         $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
         $table->dropForeignKey('recommandation_id')
             ->addColumn('recommandation_uuid', 'uuid', array('after' => 'id'))
@@ -80,6 +75,7 @@ class AddRecommandationsUuid extends AbstractMigration
             ->renameColumn('recommandation_uuid', 'recommandation_id')
             ->update();
 
+        //the remove id
         $table = $this->table('recommandations');
         $table->removeColumn('id')
             ->dropForeignKey('anr_id')
