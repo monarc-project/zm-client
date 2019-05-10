@@ -75,7 +75,7 @@ class AddRecommandationsUuid extends AbstractMigration
             ->renameColumn('recommandation_uuid', 'recommandation_id')
             ->update();
 
-        //the remove id
+        //remove the id
         $table = $this->table('recommandations');
         $table->removeColumn('id')
             ->dropForeignKey('anr_id')
