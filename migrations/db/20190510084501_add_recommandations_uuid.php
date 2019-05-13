@@ -50,7 +50,7 @@ class AddRecommandationsUuid extends AbstractMigration
         $table = $this->table('recommandations');
         $table
             ->addColumn('uuid', 'uuid', array('after' => 'id'))
-            ->addIndex(array('anr_id','code'))
+            ->addIndex(array('anr_id','code'), array('name' => 'anr_id_2'))
             ->addIndex(array('uuid'))
             ->update();
         foreach ($data as $key => $value) { //fill the uuid only for recommandations created by cases
