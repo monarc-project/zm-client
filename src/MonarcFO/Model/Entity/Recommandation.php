@@ -14,9 +14,9 @@ use MonarcCore\Model\Entity\AbstractEntity;
 /**
  * Recommandation
  *
- * @ORM\Table(name="recommandations" indexes={
- *      @ORM\Index(name="anr_id_2", columns={"anr_id","code"}),
- *      @ORM\Index(name="anr_id", columns={"anr_id"})
+ * @ORM\Table(name="recommandations", indexes={
+ *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
+ *      @ORM\Index(name="anr_id_2", columns={"anr_id"})
  * })
  * @ORM\Entity
  */
