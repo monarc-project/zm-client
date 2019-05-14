@@ -112,7 +112,10 @@ class AddThreatsUuid extends AbstractMigration
             ->save();
       $this->execute("ALTER TABLE threats ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
-      //manage Foreign key
+        //manage Foreign key
+        $table = $this->table('threats');
+            ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->update();
        $table = $this->table('amvs');
        $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
