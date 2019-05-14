@@ -50,8 +50,6 @@ class AddRecommandationsUuid extends AbstractMigration
         $table = $this->table('recommandations');
         $table
             ->addColumn('uuid', 'uuid', array('after' => 'id'))
-            ->addIndex(array('anr_id','code'), array('name' => 'anr_id_2'))
-            ->addIndex(array('uuid'))
             ->update();
         foreach ($data as $key => $value) { //fill the uuid only for recommandations created by cases
             $this->execute('UPDATE recommandations SET uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');
@@ -79,7 +77,11 @@ class AddRecommandationsUuid extends AbstractMigration
         $table = $this->table('recommandations');
         $table->removeColumn('id')
             ->dropForeignKey('anr_id')
-            ->save();
+            ->removeIndexByName('anr_id')
+            ->addIndex(array('anr_id','code'), array('name' => 'anr_id'))
+            ->addIndex(array('anr_id'), array('name' => 'anr_id_2'))
+            ->addIndex(array('uuid'))
+            ->update();
         $this->execute("ALTER TABLE recommandations ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
         //manage Foreign keys
