@@ -185,6 +185,9 @@ class AddObjectsUuid extends AbstractMigration
       $this->execute("ALTER TABLE objects ADD PRIMARY KEY uuid_anr_id (anr_id,uuid)");
 
       //manage Foreign key
+      $table = $this->table('objects');
+      $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->update();
        $table = $this->table('anrs_objects');
        $table->addForeignKey(['object_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
