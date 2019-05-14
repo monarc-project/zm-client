@@ -37,6 +37,7 @@ class Recommandation extends AbstractEntity
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
+     * @ORM\Id
      */
     protected $anr;
 

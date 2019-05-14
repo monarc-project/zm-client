@@ -125,7 +125,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         if ($data['op']) {
             $exist = $table->getEntityByFields([
                 'anr' => $data['anr'],
-                'recommandation' => ['anr' => $data['anr'], 'uuid' => $data['recommandation']->toString()],
+                'recommandation' => ['anr' => $data['anr'], 'uuid' => $data['recommandation']],
                 'instanceRiskOp' => $data['risk']
             ]);
             /** @var InstanceRiskOpTable $instanceRiskOpTable */
@@ -133,7 +133,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         } else {
             $exist = $table->getEntityByFields([
                 'anr' => $data['anr'],
-                'recommandation' => ['anr' => $data['anr'], 'uuid' => $data['recommandation']->toString()],
+                'recommandation' => ['anr' => $data['anr'], 'uuid' => $data['recommandation']],
                 'instanceRisk' => $data['risk']
             ]);
             /** @var InstanceRiskTable $instanceRiskTable */
@@ -172,7 +172,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        $reco = $this->get('recommandationTable')->getEntityByFields(['anr' => $data['anr'], 'uuid' => $data['recommandation']->toString()]);
+        $reco = $this->get('recommandationTable')->getEntity(['anr' => $data['anr'], 'uuid' => $data['recommandation']]);
         $pos = $reco->get('position');
         if (empty($pos) && ($gRisk->get('kindOfMeasure') != null && $gRisk->get('kindOfMeasure') != InstanceRisk::KIND_NOT_TREATED)) {
             // On ajoute cette recommandation au début de la pile
@@ -257,7 +257,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         // Update brother's recommandation position if necessary
         $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco['uuid'], 'id'=>['op'=>'!=', 'value'=>$id]]));
         if(empty($bros) && $pos > 0){ // is last recorisk
-            $reco = $this->get('recommandationTable')->getEntityByFields($idReco);
+            $reco = $this->get('recommandationTable')->getEntity($idReco);
             $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
             foreach($recos as $r){
                 $r->set('position',$r->get('position')-1);
@@ -833,7 +833,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         //global
         if ($recommandationRisk->objectGlobal) {
             $brothersRecommandationsRisks = $table->getEntityByFields([
-                'recommandation' => $recommandationRisk->get('recommandation')->get('uuid')->toString(),
+                'recommandation' => ['anr' => $idAnr, $recommandationRisk->get('recommandation')->get('uuid')->toString()],
                 'objectGlobal' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('objectGlobal')->get('uuid')->toString()],
                 'asset' =>['anr' => $idAnr, 'uuid' =>  $recommandationRisk->get('asset')->get('uuid')->toString()],
                 'threat' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('threat')->get('uuid')->toString()],
@@ -853,7 +853,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         // Update brother's recommandation position if necessary
         $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco['uuid'], 'id'=>['op'=>'!=', 'value'=>$id]]));
         if(empty($bros)){ // is last recorisk
-            $reco = $this->get('recommandationTable')->getEntityByFields($idReco);
+            $reco = $this->get('recommandationTable')->getEntity($idReco);
             $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
             foreach($recos as $r){
                 $r->set('position',$r->get('position')-1);

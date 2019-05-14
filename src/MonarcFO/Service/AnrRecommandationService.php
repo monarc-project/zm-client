@@ -116,7 +116,7 @@ class AnrRecommandationService extends AbstractService
      */
     public function updateRecoPosition($id, &$data){
         if(!empty($data['implicitPosition'])){
-            $entity = $this->get('table')->getEntityByFields($id);
+            $entity = $this->get('table')->getEntity($id);
             if($entity->get('position') > 0){
                 switch ($data['implicitPosition']) {
                     case \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_START:
