@@ -250,7 +250,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $scaleImpT->setLanguage($this->getLanguage());
                             $scaleImpT->exchangeArray($toExchange);
                             $this->setDependencies($scaleImpT, ['anr', 'scale']);
-                            $localScalesImpactType[$toExchange['label' . $this->getLanguage()]] = $this->get('scaleImpactTypeTable')->save($scaleImpT);
+                            $localScalesImpactType[$conseq['scaleImpactType']['label' . $this->getLanguage()]] = $this->get('scaleImpactTypeTable')->save($scaleImpT);
                         }
 
                         $ts = ['c', 'i', 'd'];
