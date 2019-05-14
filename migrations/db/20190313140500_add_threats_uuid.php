@@ -114,7 +114,7 @@ class AddThreatsUuid extends AbstractMigration
 
         //manage Foreign key
         $table = $this->table('threats');
-            ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+        $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
        $table = $this->table('amvs');
        $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
