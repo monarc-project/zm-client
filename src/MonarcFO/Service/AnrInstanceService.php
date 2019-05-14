@@ -250,9 +250,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $scaleImpT->setLanguage($this->getLanguage());
                             $scaleImpT->exchangeArray($toExchange);
                             $this->setDependencies($scaleImpT, ['anr', 'scale']);
-                            $localScalesImpactType[$conseq['scaleImpactType']['label' . $this->getLanguage()]] = $this->get('scaleImpactTypeTable')->save($scaleImpT,false);
+                            $localScalesImpactType[$toExchange['label' . $this->getLanguage()]] = $this->get('scaleImpactTypeTable')->save($scaleImpT);
                         }
-                        //$this->get('scaleImpactTypeTable')->getDb()->flush();
+
                         $ts = ['c', 'i', 'd'];
 
                         // Maintenant on peut alimenter le tableau de conséquences comme si ça venait d'un formulaire
