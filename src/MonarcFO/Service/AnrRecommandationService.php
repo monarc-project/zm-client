@@ -111,12 +111,12 @@ class AnrRecommandationService extends AbstractService
 
     /**
      * Updates the position of the recommendation, based on the implicitPosition field passed in $data.
-     * @param int $id The recommendation ID
+     * @param int $id The recommendation composite ID [anr, uuid]
      * @param array $data The positionning data (implicitPosition field, and previous)
      */
     public function updateRecoPosition($id, &$data){
         if(!empty($data['implicitPosition'])){
-            $entity = $this->get('table')->getEntity($id);
+            $entity = $this->get('table')->getEntityByFields($id);
             if($entity->get('position') > 0){
                 switch ($data['implicitPosition']) {
                     case \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_START:
@@ -125,8 +125,8 @@ class AnrRecommandationService extends AbstractService
                             ->select()
                             ->where('bro.anr = :anrid')
                             ->setParameter(':anrid', $entity->get('anr')->get('id'))
-                            ->andWhere('bro.id != :id')
-                            ->setParameter(':id', $entity->get('id'))
+                            ->andWhere('bro.uuid != :uuid')
+                            ->setParameter(':uuid', $entity->get('uuid'))
                             ->andWhere('bro.position <= :pos')
                             ->setParameter(':pos', $entity->get('position'))
                             ->andWhere('bro.position IS NOT NULL')
@@ -149,8 +149,8 @@ class AnrRecommandationService extends AbstractService
                             ->select()
                             ->where('bro.anr = :anrid')
                             ->setParameter(':anrid', $entity->get('anr')->get('id'))
-                            ->andWhere('bro.id != :id')
-                            ->setParameter(':id', $entity->get('id'))
+                            ->andWhere('bro.uuid != :uuid')
+                            ->setParameter(':uuid', $entity->get('uuid'))
                             ->andWhere('bro.position >= :pos')
                             ->setParameter(':pos', $entity->get('position'))
                             ->andWhere('bro.position IS NOT NULL')
@@ -170,8 +170,8 @@ class AnrRecommandationService extends AbstractService
                                     ->select()
                                     ->where('bro.anr = :anrid')
                                     ->setParameter(':anrid', $entity->get('anr')->get('id'))
-                                    ->andWhere('bro.id != :id')
-                                    ->setParameter(':id', $entity->get('id'))
+                                    ->andWhere('bro.uuid != :uuid')
+                                    ->setParameter(':uuid', $entity->get('uuid'))
                                     ->andWhere('bro.position '.($entity->get('position')>$data['position']?'>':'<').'= :pos1')
                                     ->setParameter(':pos1', $data['position'])
                                     ->andWhere('bro.position '.($entity->get('position')>$data['position']?'<':'>').' :pos2')

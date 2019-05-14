@@ -17,4 +17,38 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
 {
     protected $name = 'recommandations';
     protected $dependencies = ['anr'];
+
+    public function update($id, $data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $newId = ['anr'=> $anrId, 'uuid' => $id];
+
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
+
+        if(!isset($data['anr'])) $data['anr'] = $anrId;
+
+        $this->getService()->update($newId, $data);
+
+        return new JsonModel(['status' => 'ok']);
+    }
+
+    public function patch($id, $data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $newId = ['anr'=> $anrId, 'uuid' => $id];
+
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
+
+        if(!isset($data['anr'])) $data['anr'] = $anrId;
+
+        $this->getService()->patch($newId, $data);
+
+        return new JsonModel(['status' => 'ok']);
+    }
+
+
 }
