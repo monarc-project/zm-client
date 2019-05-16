@@ -187,23 +187,35 @@ class AddObjectsUuid extends AbstractMigration
       //manage Foreign key
       $table = $this->table('objects');
       $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
-       $table = $this->table('anrs_objects');
-       $table->addForeignKey(['object_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-            ->update();
-      $table = $this->table('recommandations_risks');
-      $table->addForeignKey(['object_global_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-           ->update();
-       $table = $this->table('instances');
+
+      $table = $this->table('anrs_objects');
       $table->addForeignKey(['object_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->update();
-       $table = $this->table('instances_risks_op');
-       $table->addForeignKey(['object_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-             ->update();
-       $table = $this->table('objects_objects');
-       $table->addForeignKey(['father_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+
+      $table = $this->table('recommandations_risks');
+      $table->addForeignKey(['object_global_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+
+      $table = $this->table('instances');
+      $table->addForeignKey(['object_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+
+      $table = $this->table('instances_risks_op');
+      $table->addForeignKey(['object_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+
+      $table = $this->table('instances_risks');
+      $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+              ->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+              ->addForeignKey(['vulnerability_id','anr_id'], 'vulnerabilities', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+              ->update();
+
+      $table = $this->table('objects_objects');
+      $table->addForeignKey(['father_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
               ->addForeignKey(['child_id','anr_id'], 'objects', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
-             ->update();
+              ->update();
 
      }
 }
