@@ -48,6 +48,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
+        list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
         /** @var RecommandationRiskTable $table */
         $table = $this->get('table');
         $recosRisks = $table->fetchAllFiltered(
@@ -56,7 +57,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $limit,
             $this->parseFrontendOrder($order),
             $this->parseFrontendFilter($filter, $this->filterColumns),
-            $filterAnd
+            $filterAnd,
+            $filterJoin,
+            $filterLeft
         );
 
         /** @var RecommandationMeasureTable $recommandationMeasureTable */
@@ -222,7 +225,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                        $brothersIds[] = $brother->id;
                    }
                 }
-                $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $recommandationRisk->recommandation->uuid->toString()]);
+                $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $idReco]);
                 foreach ($recommandationRisksReco as $recommandationRiskReco) {
                     if ($recommandationRiskReco->instanceRisk && in_array($recommandationRiskReco->instanceRisk->id, $brothersIds)) {
                         $this->get('table')->delete($recommandationRiskReco->id);
@@ -243,7 +246,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     $brothersIds[] = $brother->id;
                 }
 
-                $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $recommandationRisk->recommandation->uuid->toString()]);
+                $recommandationRisksReco = $table->getEntityByFields(['anr' => $recommandationRisk->anr->id, 'recommandation' => $idReco]);
                 foreach ($recommandationRisksReco as $recommandationRiskReco) {
                     if ($recommandationRiskReco->instanceRiskOp && in_array($recommandationRiskReco->instanceRiskOp->id, $brothersIds)) {
                         $this->get('table')->delete($recommandationRiskReco->id);
@@ -255,9 +258,10 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // Update brother's recommandation position if necessary
-        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco['uuid'], 'id'=>['op'=>'!=', 'value'=>$id]]));
+        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
         if(empty($bros) && $pos > 0){ // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
+            
             $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
             foreach($recos as $r){
                 $r->set('position',$r->get('position')-1);
@@ -282,7 +286,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $table = $this->get('table');
         $params = ['anr' => $anrId];
         if ($uuid) {
-            $params['recommandation'] = $uuid;
+            $params = ['anr' => $anrId, 'recommandation' => ['anr' => $anrId, 'uuid' => $uuid->toString()]];
         }
         $recommandationsRisks = $table->getEntityByFields($params);
 
@@ -851,7 +855,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         }
 
         // Update brother's recommandation position if necessary
-        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco['uuid'], 'id'=>['op'=>'!=', 'value'=>$id]]));
+        $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
         if(empty($bros)){ // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
             $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);

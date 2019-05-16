@@ -52,7 +52,8 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
         }
 
         if (!is_null($recommandation)) {
-            $filterAnd['recommandation'] = intval($recommandation);
+            $filterAnd['r.uuid'] = $recommandation;
+            $filterAnd['r.anr'] = $anrId;
         }
 
         /** @var AnrRecommandationRiskService $service */
@@ -66,7 +67,7 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
         }
 
         return new JsonModel([
-            'count' => count($entities),
+            'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ]);
     }

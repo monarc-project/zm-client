@@ -17,7 +17,7 @@ use MonarcFO\Model\Table\RecommandationTable;
 class AnrRecommandationService extends AbstractService
 {
     protected $filterColumns = ['code', 'description'];
-    protected $dependencies = ['anr'];
+    protected $dependencies = ['anr', 'recommandation'];
     protected $anrTable;
     protected $userAnrTable;
 
