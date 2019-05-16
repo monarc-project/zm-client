@@ -382,4 +382,26 @@ class RecommandationRisk extends AbstractEntity
 
         return $this->inputFilter;
     }
+
+    public function getFiltersForService(){
+        $filterJoin = [
+            [
+                'as' => 'r',
+                'rel' => 'recommandation',
+            ],
+        ];
+        $filterLeft = [
+            [
+                'as' => 'r1',
+                'rel' => 'recommandation',
+            ],
+
+        ];
+        $filtersCol = [
+            'r.uuid',
+            'r.anr',
+            'r.code',
+        ];
+        return [$filterJoin,$filterLeft,$filtersCol];
+    }
 }
