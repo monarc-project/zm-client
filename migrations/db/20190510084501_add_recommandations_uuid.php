@@ -54,7 +54,13 @@ class AddRecommandationsUuid extends AbstractMigration
         foreach ($data as $key => $value) { //fill the uuid only for recommandations created by cases
             $this->execute('UPDATE recommandations SET uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');
         }
-        
+        $unUUIDpdo = $this->query('select uuid,id from recommandations' . ' WHERE uuid =' . '"' . '"');
+        $unUUIDrows = $unUUIDpdo->fetchAll();
+
+        foreach ($unUUIDrows as $key => $value) {
+            $this->execute('UPDATE recommandations SET uuid =' . '"' . Uuid::uuid4() . '"' . ' WHERE id =' . $value['id']); //manage recommandations which are not default
+        }
+
         $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
         $table->dropForeignKey('recommandation_id')
             ->addColumn('recommandation_uuid', 'uuid', array('after' => 'id'))
@@ -78,7 +84,7 @@ class AddRecommandationsUuid extends AbstractMigration
         $table->removeColumn('id')
             ->dropForeignKey('anr_id')
             ->removeIndexByName('anr_id')
-            ->addIndex(array('anr_id','code'), array('name' => 'anr_id'))
+            ->addIndex(array('anr_id', 'code'), array('name' => 'anr_id'))
             ->addIndex(array('anr_id'), array('name' => 'anr_id_2'))
             ->addIndex(array('uuid'))
             ->update();
