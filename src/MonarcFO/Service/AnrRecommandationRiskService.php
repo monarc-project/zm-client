@@ -659,6 +659,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             }
         }
       }
+
         // Repositioning recommendation in hierarchy
         $this->detach($recoRisk);
 
@@ -837,7 +838,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         //global
         if ($recommandationRisk->objectGlobal) {
             $brothersRecommandationsRisks = $table->getEntityByFields([
-                'recommandation' => ['anr' => $idAnr, $recommandationRisk->get('recommandation')->get('uuid')->toString()],
+                'recommandation' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('recommandation')->get('uuid')->toString()],
                 'objectGlobal' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('objectGlobal')->get('uuid')->toString()],
                 'asset' =>['anr' => $idAnr, 'uuid' =>  $recommandationRisk->get('asset')->get('uuid')->toString()],
                 'threat' => ['anr' => $idAnr, 'uuid' => $recommandationRisk->get('threat')->get('uuid')->toString()],

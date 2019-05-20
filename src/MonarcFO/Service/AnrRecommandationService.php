@@ -83,7 +83,6 @@ class AnrRecommandationService extends AbstractService
         }elseif(isset($data['duedate'])){
             $data['duedate'] = null;
         }
-
         $this->updateRecoPosition($id, $data);
 
         parent::patch($id, $data);
@@ -103,7 +102,6 @@ class AnrRecommandationService extends AbstractService
         }elseif(isset($data['duedate'])){
             $data['duedate'] = null;
         }
-
         $this->updateRecoPosition($id, $data);
 
         parent::update($id, $data);
@@ -163,7 +161,7 @@ class AnrRecommandationService extends AbstractService
                         break;
                     case \MonarcCore\Model\Entity\AbstractEntity::IMP_POS_AFTER:
                         if(!empty($data['previous'])){
-                            $prev = $this->get('table')->getEntity($data['previous']);
+                            $prev = $this->get('table')->getEntity(['anr' => $entity->get('anr')->get('id'), 'uuid'=> $data['previous']]);
                             if($prev && $prev->get('position') > 0 && $prev->get('anr')->get('id') == $entity->get('anr')->get('id')){
                                 $data['position'] = $prev->get('position')+($entity->get('position') > $prev->get('position')?1:0);
                                 $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
