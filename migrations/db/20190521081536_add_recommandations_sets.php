@@ -96,8 +96,8 @@ class AddRecommandationsSets extends AbstractMigration
         //add foreign key for recommendations
         $table = $this->table('recommandations');
         $table
-            ->addColumn('recommandations_sets_uuid', 'uuid', ['after' => 'anr_id'])
-            ->addIndex(['recommandations_sets_uuid', 'code', 'anr_id'], ['unique' => true]) // we can't have 2 times the same code for the same set
+            ->addColumn('recommandation_set_uuid', 'uuid', ['after' => 'anr_id'])
+            ->addIndex(['recommandation_set_uuid', 'code', 'anr_id'], ['unique' => true]) // we can't have 2 times the same code for the same set
             ->dropForeignKey('anr_id')
             ->update();
 
@@ -117,18 +117,18 @@ class AddRecommandationsSets extends AbstractMigration
             'REC RISQUE OP' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59'
         );
 
-        foreach ($data as $key => $value) { //fill the recommandations_sets_uuid only for recommandations created by cases
-            $this->execute('UPDATE recommandations SET recommandations_sets_uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');
+        foreach ($data as $key => $value) { //fill the recommandation_set_uuid only for recommandations created by cases
+            $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');
         }
-        $unUUIDpdo = $this->query('select uuid, code from recommandations' . ' WHERE recommandations_sets_uuid =' . '"' . '"');
+        $unUUIDpdo = $this->query('select uuid, code from recommandations' . ' WHERE recommandation_set_uuid =' . '"' . '"');
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
         foreach ($unUUIDrows as $key => $value) {
-            $this->execute('UPDATE recommandations SET recommandations_sets_uuid =' . '"' . 'b1c26f12-7ba3-11e9-8f9e-2a86e4085a59' . '"' . ' WHERE code =' . '"' . $value['code'] . '"'); //manage recommandations which are not default
+            $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . 'b1c26f12-7ba3-11e9-8f9e-2a86e4085a59' . '"' . ' WHERE code =' . '"' . $value['code'] . '"'); //manage recommandations which are not default
         }
 
         $table
-            ->addForeignKey(['recommandations_sets_uuid', 'anr_id'], 'recommandations_sets', ['uuid', 'anr_id'], array('delete' => 'CASCADE', 'update' => 'RESTRICT'))
+            ->addForeignKey(['recommandation_set_uuid', 'anr_id'], 'recommandations_sets', ['uuid', 'anr_id'], array('delete' => 'CASCADE', 'update' => 'RESTRICT'))
             ->update();
     }
 }
