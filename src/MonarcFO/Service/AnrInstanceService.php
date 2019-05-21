@@ -365,10 +365,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
 
                         if (!isset($sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']])) {
-                          file_put_contents('php://stderr', print_r('$data[vuls]', TRUE).PHP_EOL);
-                          file_put_contents('php://stderr', print_r($data['vuls'][$risk['vulnerability']], TRUE).PHP_EOL);
-                          file_put_contents('php://stderr', print_r('$risks', TRUE).PHP_EOL);
-                          file_put_contents('php://stderr', print_r($risk, TRUE).PHP_EOL);
                             $toExchange = $data['vuls'][$risk['vulnerability']];
                             unset($toExchange['id']);
                             $toExchange['anr'] = $anr->get('id');
