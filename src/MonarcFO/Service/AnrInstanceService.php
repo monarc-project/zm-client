@@ -123,8 +123,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
 
         // Ensure we're importing an instance, from the same version (this is NOT a backup feature!)
-        if (isset($data['type']) && $data['type'] == 'instance' &&
-            array_key_exists('version', $data) && $data['version'] == $this->getVersion()
+        if (isset($data['type']) && $data['type'] == 'instance'
         ) {
             // On teste avant tout que l'on peux importer le fichier dans cette instance (level != LEVEL_INTER)
             if ($isRoot && !empty($idParent)) {
@@ -364,7 +363,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $this->get('instanceConsequenceTable')->save($threat,false);
                         }
 
+
                         if (!isset($sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']])) {
+                          file_put_contents('php://stderr', print_r('$data[vuls]', TRUE).PHP_EOL);
+                          file_put_contents('php://stderr', print_r($data['vuls'][$risk['vulnerability']], TRUE).PHP_EOL);
+                          file_put_contents('php://stderr', print_r('$risks', TRUE).PHP_EOL);
+                          file_put_contents('php://stderr', print_r($risk, TRUE).PHP_EOL);
                             $toExchange = $data['vuls'][$risk['vulnerability']];
                             unset($toExchange['id']);
                             $toExchange['anr'] = $anr->get('id');
@@ -381,8 +385,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $instanceBrothers = $this->get('table')->getEntityByFields([ // Get the Instance of brothers
                                 'id' => ['op' => '!=', 'value' => $instanceId],
                                 'anr' => $anr->get('id'),
-                                'asset' => ['anr' => $anr->get('id'),$instance->get('asset')->get('uuid')->toString()],
-                                'object' => ['anr' => $anr->get('id'),is_string($obj->get('uuid'))?$obj->get('uuid'):$obj->get('uuid')->toString()]]);
+                                'asset' => ['anr' => $anr->get('id'),'uuid' => $instance->get('asset')->get('uuid')->toString()],
+                                'object' => ['anr' => $anr->get('id'),'uuid' => is_string($obj->get('uuid'))?$obj->get('uuid'):$obj->get('uuid')->toString()]]);
 
                             // Creation of specific risks to brothers
                             foreach ($instanceBrothers as $ib) {
@@ -981,8 +985,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
             }
 
             return $instanceId;
-        } else if (isset($data['type']) && $data['type'] == 'anr' &&
-            array_key_exists('version', $data) && $data['version'] == $this->getVersion()
+        } else if (isset($data['type']) && $data['type'] == 'anr'
         ) {
 
           // Method information

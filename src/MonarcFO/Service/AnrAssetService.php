@@ -211,6 +211,8 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                 foreach ($data['amvs'] as $keyAmv => $valueAmv) {
                   $amv = $this->get('amvTable')->getEntityByFields(['anr' => $anr->get('id'), 'uuid' => $keyAmv]);
                   if (!$amv) {//the $amv doesn't exist
+                    // file_put_contents('php://stderr', print_r('$valueAmv', TRUE).PHP_EOL);
+                    // file_put_contents('php://stderr', print_r($valueAmv, TRUE).PHP_EOL);
                     $c = $this->get('amvTable')->getClass();
                     $newAmv = new $c();
                     $newAmv->setDbAdapter($this->get('amvTable')->getDb());
@@ -295,6 +297,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
           }
 
           else{ //old version
+            file_put_contents('php://stderr', print_r('old version', TRUE).PHP_EOL);
               // Lookup if we already have the same asset, in which case we'll update it from the data. Otherwise,
               // we'll create a new one.
               $asset = current($this->get('table')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['asset']['code']]));
@@ -402,7 +405,6 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                           $amvData['vulnerability'] = $data['vuls'][$amvArray['vulnerability']];
                       }
                         if(array_key_exists ( 'measure1' , $amvArray)){ //old version without uuid
-
                           //we need to create ISO 27002, we check if the common if it's present or not
                             $referential = false;
                             $referentialCli = current($this->get('referentialTable')->getEntityByFields(['anr' => $anr->id, 'uuid' =>'98ca84fb-db87-11e8-ac77-0800279aaa2b']));
