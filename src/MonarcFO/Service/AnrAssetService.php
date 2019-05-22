@@ -150,11 +150,11 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                               $newTheme->exchangeArray($data['themes'][$valueThreat['theme']]);
                               $newTheme->set('anr', $anr->get('id'));
                               $this->setDependencies($newTheme, ['anr']);
-                              $idTheme = $this->get('themeTable')->save($newTheme);
+                              $idTheme = $this->get('themeTable')->save($newTheme,false);
                             }
                             $threat->set('theme', $newTheme);
                             $this->setDependencies($threat, ['theme']);
-                            $this->get('threatTable')->save($threat);
+                            $this->get('threatTable')->save($threat,false);
                           }
                         }
                     }else { //threat doesn't exist
@@ -172,7 +172,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                         $newTheme->exchangeArray($data['themes'][$valueThreat['theme']]);
                         $newTheme->set('anr', $anr->get('id'));
                         $this->setDependencies($newTheme, ['anr']);
-                        $idTheme = $this->get('themeTable')->save($newTheme);
+                        $idTheme = $this->get('themeTable')->save($newTheme,false);
                       }
                       $c = $this->get('threatTable')->getClass();
                       $newThreat = new $c();
@@ -182,7 +182,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                       $newThreat->set('anr', $anr->get('id'));
                       $newThreat->set('theme', $newTheme);
                       $this->setDependencies($newThreat, ['anr', 'theme']);
-                      $idThreat = $this->get('threatTable')->save($newThreat);
+                      $idThreat = $this->get('threatTable')->save($newThreat,false);
                       $objectsCache['threats'][$newThreat->uuid] =  $newThreat->uuid;
                     }
                   }
@@ -190,27 +190,31 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
               /*****
               * VULNERABILITIES : uuid is the pivot
               ******/
+              $vulnerabilities = $this->get('vulnerabilityTable')->fetchAllFiltered(['uuid'],1,0,null,null,['anr'=>$anr->get('id')],null,null);
+              $vulnerabilities  = array_map(function($elt){return is_string($elt['uuid'])?$elt['uuid']:$elt['uuid']->toString();},$vulnerabilities);
                 foreach ($data['vuls'] as $keyVul => $valueVul) {
-                  $vulnerability = $this->get('vulnerabilityTable')->getEntityByFields(['anr' => $anr->get('id'), 'uuid' => $keyVul]);
-                  if (!$vulnerability) {//the vulnerability doesn't exist
-                    $c = $this->get('vulnerabilityTable')->getClass();
-                    $newVul = new $c();
-                    $newVul->setDbAdapter($this->get('vulnerabilityTable')->getDb());
-                    $newVul->setLanguage($this->getLanguage());
-                    $newVul->exchangeArray($valueVul);
-                    $newVul->set('anr', $anr->get('id'));
-                    $this->setDependencies($newVul, ['anr']);
-                    $idVul = $this->get('vulnerabilityTable')->save($newVul);
-                    $objectsCache['vuls'][$newVul->uuid] =  $newVul->uuid;
+                  if(!in_array($valueVul['uuid'],$vulnerabilities)){
+                      $c = $this->get('vulnerabilityTable')->getClass();
+                      $newVul = new $c();
+                      $newVul->setDbAdapter($this->get('vulnerabilityTable')->getDb());
+                      $newVul->setLanguage($this->getLanguage());
+                      $newVul->exchangeArray($valueVul);
+                      $newVul->set('anr', $anr->get('id'));
+                      $this->setDependencies($newVul, ['anr']);
+                      $idVul = $this->get('vulnerabilityTable')->save($newVul,false);
+                      $vulnerabilities[] = $newVul->uuid;
+                      $objectsCache['vuls'][$newVul->uuid] =  $newVul->uuid;
                   }
                 }
+                $this->get('vulnerabilityTable')->getDb()->flush();
 
               /*****
               * AMVS : uuid is the pivot
               ******/
+              $currentAmvs = $this->get('amvTable')->fetchAllFiltered(['uuid'],1,0,null,null,['anr'=>$anr->get('id')],null,null);
+              $currentAmvs = array_map(function($elt){return is_string($elt['uuid'])?$elt['uuid']:$elt['uuid']->toString();},$currentAmvs);
                 foreach ($data['amvs'] as $keyAmv => $valueAmv) {
-                  $amv = $this->get('amvTable')->getEntityByFields(['anr' => $anr->get('id'), 'uuid' => $keyAmv]);
-                  if (!$amv) {//the $amv doesn't exist
+                  if (!in_array($valueAmv['uuid'],$currentAmvs)) {//the $amv doesn't exist
                     // file_put_contents('php://stderr', print_r('$valueAmv', TRUE).PHP_EOL);
                     // file_put_contents('php://stderr', print_r($valueAmv, TRUE).PHP_EOL);
                     $c = $this->get('amvTable')->getClass();
@@ -223,8 +227,9 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                     $newAmv->set('measures', null);
                     $this->setDependencies($newAmv, ['anr','asset','threat','vulnerability','measures']);
 
-                    $idAmv = $this->get('amvTable')->save($newAmv);
+                    $idAmv = $this->get('amvTable')->save($newAmv,false);
                     $newAmvs[] = $keyAmv;
+                    $currentAmvs[] = $keyAmv;
                     // link the measures we only link the measures if they are in the DB (potential copyright issue)
                     foreach ($valueAmv['measures'] as $m) {
                       try{
@@ -263,6 +268,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                     $newAmvs[] = $keyAmv;
                   }
                 }
+                $this->get('amvTable')->getDb()->flush();
 
                 //set the olds amvs to specific and delete them
                 $amvsToDelete = [];
