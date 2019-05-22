@@ -205,6 +205,54 @@ return array(
                             ),
                         ),
                     ),
+                    'records' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecords',
+                            ),
+                        ),
+                    ),
+                    'recordcontrollers' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recordcontrollers[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordControllers',
+                            ),
+                        ),
+                    ),
+                    'recordprocessors' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recordprocessors[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordProcessors',
+                            ),
+                        ),
+                    ),
+                    'recordrecipientcategories' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recordrecipientcategories[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordRecipientCategories',
+                            ),
+                        ),
+                    ),
                     'referentials' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -787,6 +835,10 @@ return array(
             '\MonarcFO\Controller\ApiUserProfile' => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
             '\MonarcFO\Controller\ApiAnrAssets' => '\MonarcFO\Controller\ApiAnrAssetsControllerFactory',
             '\MonarcFO\Controller\ApiAnrAmvs' => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordControllers' => '\MonarcFO\Controller\ApiAnrRecordControllersControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordProcessors' => '\MonarcFO\Controller\ApiAnrRecordProcessorsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordRecipientCategories' => '\MonarcFO\Controller\ApiAnrRecordRecipientCategoriesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecords' => '\MonarcFO\Controller\ApiAnrRecordsControllerFactory',
             '\MonarcFO\Controller\ApiAnrReferentials' => '\MonarcFO\Controller\ApiAnrReferentialsControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasures' => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrMeasuresMeasures' => '\MonarcFO\Controller\ApiAnrMeasuresMeasuresControllerFactory',
@@ -878,6 +930,10 @@ return array(
             '\MonarcFO\Model\Table\PasswordTokenTable' => '\MonarcFO\Service\Model\Table\PasswordTokenServiceModelTable',
             '\MonarcFO\Model\Table\RolfRiskTable' => '\MonarcFO\Service\Model\Table\RolfRiskServiceModelTable',
             '\MonarcFO\Model\Table\RolfTagTable' => '\MonarcFO\Service\Model\Table\RolfTagServiceModelTable',
+            '\MonarcFO\Model\Table\RecordControllerTable' => '\MonarcFO\Service\Model\Table\RecordControllerServiceModelTable',
+            '\MonarcFO\Model\Table\RecordProcessorTable' => '\MonarcFO\Service\Model\Table\RecordProcessorServiceModelTable',
+            '\MonarcFO\Model\Table\RecordRecipientCategoryTable' => '\MonarcFO\Service\Model\Table\RecordRecipientCategoryServiceModelTable',
+            '\MonarcFO\Model\Table\RecordTable' => '\MonarcFO\Service\Model\Table\RecordServiceModelTable',
             '\MonarcFO\Model\Table\ReferentialTable' => '\MonarcFO\Service\Model\Table\ReferentialServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationTable' => '\MonarcFO\Service\Model\Table\RecommandationServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationHistoricTable' => '\MonarcFO\Service\Model\Table\RecommandationHistoricServiceModelTable',
@@ -911,6 +967,10 @@ return array(
             '\MonarcFO\Model\Entity\InstanceRisk' => '\MonarcFO\Service\Model\Entity\InstanceRiskServiceModelEntity',
             '\MonarcFO\Model\Entity\InstanceRiskOp' => '\MonarcFO\Service\Model\Entity\InstanceRiskOpServiceModelEntity',
             '\MonarcFO\Model\Entity\Interview' => '\MonarcFO\Service\Model\Entity\InterviewServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordController' => '\MonarcFO\Service\Model\Entity\RecordControllerServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordProcessor' => '\MonarcFO\Service\Model\Entity\RecordProcessorServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordRecipientCategory' => '\MonarcFO\Service\Model\Entity\RecordRecipientCategoryServiceModelEntity',
+            '\MonarcFO\Model\Entity\Record' => '\MonarcFO\Service\Model\Entity\RecordServiceModelEntity',
             '\MonarcFO\Model\Entity\Referential' => '\MonarcFO\Service\Model\Entity\ReferentialServiceModelEntity',
             '\MonarcFO\Model\Entity\Measure' => '\MonarcFO\Service\Model\Entity\MeasureServiceModelEntity',
             '\MonarcFO\Model\Entity\MeasureMeasure' => '\MonarcFO\Service\Model\Entity\MeasureMeasureServiceModelEntity',
@@ -953,6 +1013,10 @@ return array(
             '\MonarcFO\Service\AnrInterviewService' => '\MonarcFO\Service\AnrInterviewServiceFactory',
             '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
             '\MonarcFO\Service\AnrMeasureMeasureService' => '\MonarcFO\Service\AnrMeasureMeasureServiceFactory',
+            '\MonarcFO\Service\AnrRecordControllerService' => '\MonarcFO\Service\AnrRecordControllerServiceFactory',
+            '\MonarcFO\Service\AnrRecordProcessorService' => '\MonarcFO\Service\AnrRecordProcessorServiceFactory',
+            '\MonarcFO\Service\AnrRecordRecipientCategoryService' => '\MonarcFO\Service\AnrRecordRecipientCategoryServiceFactory',
+            '\MonarcFO\Service\AnrRecordService' => '\MonarcFO\Service\AnrRecordServiceFactory',
             '\MonarcFO\Service\AnrReferentialService' => '\MonarcFO\Service\AnrReferentialServiceFactory',
             '\MonarcFO\Service\SoaService' => '\MonarcFO\Service\SoaServiceFactory',
             '\MonarcFO\Service\SoaCategoryService' => '\MonarcFO\Service\SoaCategoryServiceFactory',
@@ -1126,6 +1190,10 @@ return array(
             'monarc_api_global_client_anr/recommandations_measures',
             'monarc_api_global_client_anr/treatment_plan',
             'monarc_api_global_client_anr/objects_categories',
+            'monarc_api_global_client_anr/records',
+            'monarc_api_global_client_anr/recordcontrollers',
+            'monarc_api_global_client_anr/recordprocessors',
+            'monarc_api_global_client_anr/recordrecipientcategories',
         ),
     ),
     'activeLanguages' => array('fr'),
