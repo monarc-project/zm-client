@@ -945,7 +945,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                         }
                                         $measure->exchangeArray($toExchange);
                                         $this->setDependencies($measure, ['anr']);
-                                        $sharedData['measures'][$mid] = $this->get('amvService')->get('measureTable')->save($measure);
+                                        $sharedData['measures'][$mid] = $this->get('amvService')->get('measureTable')->save($measure,false);
                                     }
 
                                     if (isset($sharedData['measures'][$mid])) {
@@ -960,9 +960,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                             'measure' => $sharedData['measures'][$mid],
                                         ]);
                                         $this->setDependencies($lk, ['anr', 'recommandation', 'measure']);
-                                        $this->get('recommandationMeasureTable')->save($lk);
+                                        $this->get('recommandationMeasureTable')->save($lk,false);
                                     }
                                 }
+                                $this->get('amvService')->get('measureTable')->getDb()->flush();
                             }
                         }
                     }
@@ -1294,7 +1295,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                       $newSoa->setAnr($anr);
                       $newSoa->setMeasure($measuresNewIds[$soa['measure_id']]);
-                      $this->get('soaTable')->save($newSoa);
+                      $this->get('soaTable')->save($newSoa,false);
                   }
               }
               $this->get('soaTable')->getDb()->flush();
@@ -1525,10 +1526,11 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                        'scaleImpactType' => $siType->id,
                    ]);
                    $this->setDependencies($consequence, ['anr', 'object', 'instance', 'scaleImpactType']);
-                   $this->get('instanceConsequenceTable')->save($consequence);
+                   $this->get('instanceConsequenceTable')->save($consequence,false);
                  }
                }
              }
+             $this->get('instanceConsequenceTable')->getDb()->flush();
 
             return $instanceIds;
 
