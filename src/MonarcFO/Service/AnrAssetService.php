@@ -104,7 +104,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
             // we'll create a new one.
             $asset = current($this->get('table')->getEntityByFields(['anr' => $anr->get('id'), 'uuid' => $data['asset']['uuid']]));
             if (!empty($asset)) {
-                $idAsset = $asset->get('uuid')->ToString();
+                $idAsset = is_string($asset->get('uuid'))?$asset->get('uuid'):$asset->get('uuid')->toString();
             } else {
                 $c = $this->get('table')->getClass();
                 $asset = new $c();
@@ -152,11 +152,11 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                               $this->setDependencies($newTheme, ['anr']);
                               $idTheme = $this->get('themeTable')->save($newTheme);
                             }
+                            $threat->set('theme', $newTheme);
+                            $this->setDependencies($threat, ['theme']);
+                            $this->get('threatTable')->save($threat);
                           }
                         }
-                        $threat->set('theme', $newTheme);
-                        $this->setDependencies($threat, ['theme']);
-                        $this->get('threatTable')->save($threat);
                     }else { //threat doesn't exist
                       $newTheme = null;
                       if(isset($localThemes[$data['themes'][$valueThreat['theme']]['label' . $this->getLanguage()]])){ //theme exists
@@ -297,7 +297,6 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
           }
 
           else{ //old version
-            file_put_contents('php://stderr', print_r('old version', TRUE).PHP_EOL);
               // Lookup if we already have the same asset, in which case we'll update it from the data. Otherwise,
               // we'll create a new one.
               $asset = current($this->get('table')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['asset']['code']]));

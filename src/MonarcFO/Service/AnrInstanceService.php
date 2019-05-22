@@ -121,7 +121,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
         // When importing huge instances trees, Zend can take up a whole lot of memory
         ini_set('max_execution_time', 0);
         ini_set('memory_limit', -1);
-
+        $monarc_version = isset($data['monarc_version'])?$data['monarc_version']:null;
 
         // Ensure we're importing an instance, from the same version (this is NOT a backup feature!)
         if (isset($data['type']) && $data['type'] == 'instance'
@@ -369,7 +369,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         // on doit le créer localement mais pour ça il nous faut les pivots sur les menaces et vulnérabilités
                         // on checke si on a déjà les menaces et les vulnérabilités liées, si c'est pas le cas, faut les créer
                         if (( !in_array($risk['threat'],$sharedData['ithreats']) && version_compare ($monarc_version, "2.8.2")>=0) ||
-                              (!version_compare ($monarc_version, "2.8.2")>=0 && !isset($sharedData['ithreats'][$data['threats'][$risk['threat']]['code']]))
+                              (version_compare ($monarc_version, "2.8.2")==-1 && !isset($sharedData['ithreats'][$data['threats'][$risk['threat']]['code']]))
                             ) {
                             $toExchange = $data['threats'][$risk['threat']];
                             unset($toExchange['id']);
@@ -381,13 +381,13 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $threat->exchangeArray($toExchange);
                             $this->setDependencies($threat, ['anr']);
                             $tuuid = $this->get('instanceConsequenceTable')->save($threat,false);
-                            if(!version_compare ($monarc_version, "2.8.2")>=0 )
+                            if(!version_compare ($monarc_version, "2.8.2")==-1 )
                               $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $tuuid;
                         }
 
 
                         if (( !in_array($risk['vulnerability'],$sharedData['ivuls']) && version_compare ($monarc_version, "2.8.2")>=0) ||
-                              (!version_compare ($monarc_version, "2.8.2")>=0 && !isset($sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']]))
+                              (version_compare ($monarc_version, "2.8.2")==-1&& !isset($sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']]))
                             ) {
                             $toExchange = $data['vuls'][$risk['vulnerability']];
                             unset($toExchange['id']);
@@ -399,7 +399,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $vul->exchangeArray($toExchange);
                             $this->setDependencies($vul, ['anr']);
                             $vuuid = $this->get('instanceRiskService')->get('vulnerabilityTable')->save($vul,false);
-                            if(!version_compare ($monarc_version, "2.8.2")>=0 )
+                            if(version_compare ($monarc_version, "2.8.2")==-1 )
                               $sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']] = $vuuid;
                         }
 
@@ -407,7 +407,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $instanceBrothers = $this->get('table')->getEntityByFields([ // Get the Instance of brothers
                                 'id' => ['op' => '!=', 'value' => $instanceId],
                                 'anr' => $anr->get('id'),
-                                'asset' => ['anr' => $anr->get('id'),'uuid' => $instance->get('asset')->get('uuid')->toString()],
+                                'asset' => ['anr' => $anr->get('id'),'uuid' => is_string($instance->get('asset')->get('uuid'))?$instance->get('asset')->get('uuid'):$instance->get('asset')->get('uuid')->toString()],
                                 'object' => ['anr' => $anr->get('id'),'uuid' => is_string($obj->get('uuid'))?$obj->get('uuid'):$obj->get('uuid')->toString()]]);
 
                             // Creation of specific risks to brothers
@@ -437,7 +437,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         unset($toExchange['id']);
                         $toExchange['anr'] = $anr->get('id');
                         $toExchange['instance'] = $instanceId;
-                        $toExchange['asset'] = $obj ? $obj->get('asset')->get('uuid')->toString() : null;
+                        $toExchange['asset'] = $obj ?( is_string($obj->get('asset')->get('uuid'))?$obj->get('asset')->get('uuid'):$obj->get('asset')->get('uuid')->toString()) : null;
                         $toExchange['amv'] = null;
                         $toExchange['threat'] = Uuid::isValid($risk['threat'])?$risk['threat']:$sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
                         $toExchange['vulnerability'] = Uuid::isValid($risk['vulnerability'])?$risk['vulnerability']:$sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
