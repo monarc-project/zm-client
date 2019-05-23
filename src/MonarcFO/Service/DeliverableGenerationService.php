@@ -881,7 +881,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $risksTableOrangeCellStyle  = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFBC1C'];
         $risksTableRedCellStyle     = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FD661F'];
         $risksTableFontStyleBlack   = ['alignment' => 'center', 'bold' => true, 'color' => '000000'];
-        $risksTableFontStyleWhite   = ['alignment' => 'center', 'bold' => true, 'color' => 'FFFFFF'];
         $alignCenter                = ['align' => 'center', 'spaceAfter' => '0'];
         $alignLeft                  = ['align' => 'left', 'spaceAfter' => '0'];
         $cellImpactHeader           = ['textDirection'=>'btLr','valign' => 'center', 'vMerge' => 'restart'];
@@ -926,31 +925,35 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
                     $value = $MxV * $impact;
                     if (isset($cartoRisk['riskInfo']['counters'][$impact]) && isset($cartoRisk['riskInfo']['counters'][$impact][$MxV])) {
-                        $result = $cartoRisk['riskInfo']['counters'][$impact][$MxV] ? $cartoRisk['riskInfo']['counters'][$impact][$MxV]: 0;
+                        $result = $cartoRisk['riskInfo']['counters'][$impact][$MxV] ? $cartoRisk['riskInfo']['counters'][$impact][$MxV]: null;
                     } else {
-                        $result = 0;
+                        $result = null;
                     }
 
                     if ($value <= $anr->seuil1) {
                         $style = $risksTableGreenCellStyle;
-                        $fontStyle = $risksTableFontStyleBlack;
                         if ($result) {
                             $nbLow += $result;
                         }
+                        else {
+                          $style['BgColor'] = 'f0f7b2';
+                        }
                     } else if ($value <= $anr->seuil2) {
                         $style = $risksTableOrangeCellStyle;
-                        $fontStyle = $risksTableFontStyleBlack;
                         if ($result) {
                             $nbMedium += $result;
+                        }else {
+                          $style['BgColor'] = 'fcdd94';
                         }
                     } else {
                         $style = $risksTableRedCellStyle;
-                        $fontStyle = $risksTableFontStyleWhite;
                         if ($result) {
                             $nbHigh += $result;
+                        }else {
+                          $style['BgColor'] = 'fcb28f';
                         }
                     }
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $style)->addText($result, $fontStyle, $alignCenter);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips($size), $style)->addText($result, $risksTableFontStyleBlack, $alignCenter);
                 }
             }
 
