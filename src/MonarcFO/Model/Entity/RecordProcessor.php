@@ -32,30 +32,9 @@ class RecordProcessor extends AbstractEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="label1", type="string", length=255, nullable=true)
+     * @ORM\Column(name="label", type="string", length=255, nullable=true)
      */
-    protected $label1;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="label2", type="string", length=255, nullable=true)
-     */
-    protected $label2;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="label3", type="string", length=255, nullable=true)
-     */
-    protected $label3;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="label4", type="string", length=255, nullable=true)
-     */
-    protected $label4;
+    protected $label;
 
     /**
      * @var \MonarcFO\Model\Entity\Anr
@@ -77,7 +56,7 @@ class RecordProcessor extends AbstractEntity
     /**
      * @var \Doctrine\Common\Collections\Collection
      * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordController")
-     * @ORM\JoinTable(name="record_processors_record_controllers",
+     * @ORM\JoinTable(name="record_processors_record_behalf_controllers",
      *  joinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="controller_id", referencedColumnName="id")}
      * )

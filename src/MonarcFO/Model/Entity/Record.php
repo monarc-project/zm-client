@@ -8,6 +8,7 @@
 namespace MonarcFO\Model\Entity;
 
 use MonarcCore\Model\Entity\AbstractEntity;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -67,6 +68,12 @@ class Record extends AbstractEntity
      */
     protected $label4;
 
+    /**
+     * @var \MonarcFO\Model\Entity\Controller
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordController")
+     * @ORM\JoinColumn(name="controller", referencedColumnName="id")
+     */
+    protected $controller;
 
     /**
      * @var \Doctrine\Common\Collections\Collection
@@ -76,7 +83,7 @@ class Record extends AbstractEntity
      *  inverseJoinColumns={@ORM\JoinColumn(name="controller_id", referencedColumnName="id")}
      * )
      */
-    protected $joint;
+    protected $jointControllers;
 
     /**
      * @var string
@@ -154,6 +161,15 @@ class Record extends AbstractEntity
      * )
      */
     protected $processors;
+
+    public function __construct($obj = null)
+    {
+        $this->joint = new ArrayCollection();
+        $this->recipients = new ArrayCollection();
+        $this->processors = new ArrayCollection();
+        parent::__construct($obj);
+    }
+
     /**
      * @return int
      */
@@ -211,18 +227,18 @@ class Record extends AbstractEntity
     /**
      * @return Controller
      */
-    public function getJoint()
+    public function getJointControllers()
     {
-        return $this->joint;
+        return $this->jointControllers;
     }
 
     /**
-    * @param int $joint
+    * @param int $jointControllers
     * @return Record
     */
-    public function setJoint($joint)
+    public function setJointControllers($jointControllers)
     {
-        $this->joint = $joint;
+        $this->jointControllers = $jointControllers;
         return $this;
     }
 
@@ -303,5 +319,33 @@ class Record extends AbstractEntity
     public function setIdThirdCountry($idThirdCountry)
     {
         $this->idThirdCountry = $idThirdCountry;
+    }
+
+    /**
+     * Add joint controller
+     *
+     * @param int $jointController
+     */
+    public function addJointController($jointController)
+    {
+        $this->jointControllers->add($jointController);
+    }
+    /**
+     * Add recipient category
+     *
+     * @param int $recipient
+     */
+    public function addRecipientCategory($recipient)
+    {
+        $this->recipients->add($recipient);
+    }
+    /**
+     * Add processor
+     *
+     * @param int $processor
+     */
+    public function addProcessor($processor)
+    {
+        $this->processors->add($processor);
     }
 }

@@ -18,6 +18,7 @@ use MonarcCore\Service\AbstractService;
 class AnrRecordControllerService extends AbstractService
 {
     protected $dependencies = ['anr'];
+    protected $filterColumns = ['label'];
     protected $userAnrTable;
 
 }

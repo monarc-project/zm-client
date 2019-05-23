@@ -46,56 +46,6 @@ class ApiAnrRecordControllersController extends ApiAnrAbstractController
             $this->name => $entities
         ));
     }
-
-    public function get($id)
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'uuid' => $id]);
-
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \MonarcCore\Exception\Exception('Anr ids are different', 412);
-        }
-
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
-        }
-
-        return new JsonModel($entity);
-    }
-
-    public function update($id, $data)
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $data['uuid']];
-
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-
-        $this->getService()->update($newId, $data);
-
-        return new JsonModel(['status' => 'ok']);
-    }
-
-    public function delete($id)
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $id];
-
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-
-        $this->getService()->delete($newId);
-
-        return new JsonModel(['status' => 'ok']);
-    }
-
     /**
      * @inheritdoc
      */
