@@ -17,7 +17,23 @@ use MonarcCore\Service\AbstractService;
  */
 class AnrRecordProcessorService extends AbstractService
 {
-    protected $dependencies = ['anr'];
+    protected $dependencies = ['anr','controllers'];
     protected $filterColumns = ['label'];
     protected $userAnrTable;
+    protected $anrTable;
+    protected $controllerTable;
+    /**
+     * Creates a processor of processing activity
+     * @param array $data The processor details fields
+     * @return object The resulting created processor object (entity)
+     */
+    public function createProcessor($data)
+    {
+        $behalfControllers = array();
+        foreach ($data['controllers'] as $bc) {
+            array_push($behalfControllers, $bc['id']);
+        }
+        $data['controllers'] = $behalfControllers;
+        return $this->create($data, true);
+    }
 }

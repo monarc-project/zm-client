@@ -18,7 +18,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecordsController extends ApiAnrAbstractController
 {
     protected $name = 'records';
-    protected $dependencies = ['anr'];
+    protected $dependencies = ['anr', 'controller', 'jointControllers', 'processors', 'recipients'];
 
     public function getList()
     {
@@ -50,7 +50,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'uuid' => $id]);
+        $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
@@ -58,7 +58,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
             throw new \MonarcCore\Exception\Exception('Anr ids are different', 412);
         }
-
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
@@ -66,17 +65,79 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         return new JsonModel($entity);
     }
 
+    public function formatDependencies(&$entity, $dependencies, $EntityDependency = "", $subField = []) {
+        foreach($dependencies as $dependency) {
+            if (!empty($entity[$dependency])) {
+                if (is_object($entity[$dependency])) {
+                    if (is_a($entity[$dependency], '\MonarcCore\Model\Entity\AbstractEntity')) {
+                        if(is_a($entity[$dependency], $EntityDependency)){ //fetch more info
+                          $entity[$dependency] = $entity[$dependency]->getJsonArray();
+                            if(!empty($subField)){
+                              foreach ($subField as $key => $value){
+                                $entity[$dependency][$value] = $entity[$dependency][$value] ? $entity[$dependency][$value]->getJsonArray() : [];
+                                unset($entity[$dependency][$value]['__initializer__']);
+                                unset($entity[$dependency][$value]['__cloner__']);
+                                unset($entity[$dependency][$value]['__isInitialized__']);
+                              }
+                            }
+                        }else {
+                          $entity[$dependency] = $entity[$dependency]->getJsonArray();
+                        }
+                        unset($entity[$dependency]['__initializer__']);
+                        unset($entity[$dependency]['__cloner__']);
+                        unset($entity[$dependency]['__isInitialized__']);
+                    }else if(get_class($entity[$dependency]) == 'Doctrine\ORM\PersistentCollection') {
+                        $entity[$dependency]->initialize();
+                        if($entity[$dependency]->count()){
+                            $$dependency = $entity[$dependency]->getSnapshot();
+                            $temp = [];
+                            foreach($$dependency as $d){
+                                if(is_a($d, '\MonarcFO\Model\Entity\RecordProcessor')) { //fetch more info
+                                    $d = $d->getJsonArray();
+                                    $d['controllers']->initialize();
+                                    if($d['controllers']->count()){
+                                        $$controllers = $d['controllers']->getSnapshot();
+                                        $d['controllers'] = [];
+                                        foreach($$controllers as $c){
+                                          $tempController = $c->toArray();
+                                          $d['controllers'][] = $tempController;
+                                        }
+                                    }
+                                    $temp[] = $d;
+                                }
+                                else if(is_a($d, '\MonarcCore\Model\Entity\AbstractEntity')){
+                                    $temp[] = $d->getJsonArray();
+                                }else{
+                                    $temp[] = $d;
+                                }
+                            }
+                            $entity[$dependency] = $temp;
+                        }
+                    }else if (is_array($entity[$dependency])) {
+                        foreach($entity[$dependency] as $key => $value) {
+                            if (is_a($entity[$dependency][$key], '\MonarcCore\Model\Entity\AbstractEntity')) {
+                                $entity[$dependency][$key] = $entity[$dependency][$key]->getJsonArray();
+                                unset($entity[$dependency][$key]['__initializer__']);
+                                unset($entity[$dependency][$key]['__cloner__']);
+                                unset($entity[$dependency][$key]['__isInitialized__']);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $data['uuid']];
-
+        $newId = ['anr'=> $anrId, 'id' => $data['id']];
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
-        $this->getService()->update($newId, $data);
+        $this->getService()->updateRecord($newId, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
@@ -84,7 +145,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
     public function delete($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $id];
+        $newId = ['anr'=> $anrId, 'id' => $id];
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
