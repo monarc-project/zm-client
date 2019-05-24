@@ -483,6 +483,18 @@ return array(
                             ),
                         ),
                     ),
+                    'recommandations_sets' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recommandations-sets[/:id]',
+                            'constraints' => array(
+                                'id' => '[a-f0-9-]*',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsSets',
+                            ),
+                        ),
+                    ),
                     'carto_risks' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -807,6 +819,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecommandationsRisks' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidate' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsMeasures' => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecommandationsSets' => '\MonarcFO\Controller\ApiAnrRecommandationsSetsControllerFactory',
             '\MonarcFO\Controller\ApiAnrTreatmentPlan' => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
             '\MonarcFO\Controller\ApiSoa' => '\MonarcFO\Controller\ApiSoaControllerFactory',
             '\MonarcFO\Controller\ApiSoaCategory' => '\MonarcFO\Controller\ApiSoaCategoryControllerFactory',
@@ -883,6 +896,7 @@ return array(
             '\MonarcFO\Model\Table\RecommandationHistoricTable' => '\MonarcFO\Service\Model\Table\RecommandationHistoricServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationMeasureTable' => '\MonarcFO\Service\Model\Table\RecommandationMeasureServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationRiskTable' => '\MonarcFO\Service\Model\Table\RecommandationRiskServiceModelTable',
+            '\MonarcFO\Model\Table\RecommandationSetTable' => '\MonarcFO\Service\Model\Table\RecommandationSetServiceModelTable',
             '\MonarcFO\Model\Table\ScaleTable' => '\MonarcFO\Service\Model\Table\ScaleServiceModelTable',
             '\MonarcFO\Model\Table\ScaleCommentTable' => '\MonarcFO\Service\Model\Table\ScaleCommentServiceModelTable',
             '\MonarcFO\Model\Table\ScaleImpactTypeTable' => '\MonarcFO\Service\Model\Table\ScaleImpactTypeServiceModelTable',
@@ -924,6 +938,7 @@ return array(
             '\MonarcFO\Model\Entity\RecommandationHistoric' => '\MonarcFO\Service\Model\Entity\RecommandationHistoricServiceModelEntity',
             '\MonarcFO\Model\Entity\RecommandationMeasure' => '\MonarcFO\Service\Model\Entity\RecommandationMeasureServiceModelEntity',
             '\MonarcFO\Model\Entity\RecommandationRisk' => '\MonarcFO\Service\Model\Entity\RecommandationRiskServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecommandationSet' => '\MonarcFO\Service\Model\Entity\RecommandationSetServiceModelEntity',
             '\MonarcFO\Model\Entity\Scale' => '\MonarcFO\Service\Model\Entity\ScaleServiceModelEntity',
             '\MonarcFO\Model\Entity\ScaleComment' => '\MonarcFO\Service\Model\Entity\ScaleCommentServiceModelEntity',
             '\MonarcFO\Model\Entity\ScaleImpactType' => '\MonarcFO\Service\Model\Entity\ScaleImpactTypeServiceModelEntity',
@@ -977,6 +992,7 @@ return array(
             '\MonarcFO\Service\AnrRecommandationHistoricService' => '\MonarcFO\Service\AnrRecommandationHistoricServiceFactory',
             '\MonarcFO\Service\AnrRecommandationMeasureService' => '\MonarcFO\Service\AnrRecommandationMeasureServiceFactory',
             '\MonarcFO\Service\AnrRecommandationRiskService' => '\MonarcFO\Service\AnrRecommandationRiskServiceFactory',
+            '\MonarcFO\Service\AnrRecommandationSetService' => '\MonarcFO\Service\AnrRecommandationSetServiceFactory',
             '\MonarcFO\Service\AnrScaleService' => '\MonarcFO\Service\AnrScaleServiceFactory',
             '\MonarcFO\Service\AnrScaleTypeService' => '\MonarcFO\Service\AnrScaleTypeServiceFactory',
             '\MonarcFO\Service\AnrScaleCommentService' => '\MonarcFO\Service\AnrScaleCommentServiceFactory',
@@ -1111,6 +1127,7 @@ return array(
             'monarc_api_anr_recommandations_risks',
             'monarc_api_anr_recommandations_risks_validate',
             'monarc_api_anr_recommandations_measures',
+            'monarc_api_anr_recommandations_sets',
             'monarc_api_anr_treatment_plan',
             'monarc_api_anr_client_objects_categories',
             'monarc_api_user_password',
@@ -1124,6 +1141,7 @@ return array(
             'monarc_api_global_client_anr/recommandations_risks',
             'monarc_api_global_client_anr/recommandations_risks_validate',
             'monarc_api_global_client_anr/recommandations_measures',
+            'monarc_api_global_client_anr/recommandations_sets',
             'monarc_api_global_client_anr/treatment_plan',
             'monarc_api_global_client_anr/objects_categories',
         ),
