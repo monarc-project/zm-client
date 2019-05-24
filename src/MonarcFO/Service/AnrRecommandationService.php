@@ -9,6 +9,7 @@ namespace MonarcFO\Service;
 
 use MonarcCore\Service\AbstractService;
 use MonarcFO\Model\Table\RecommandationTable;
+use MonarcFO\Model\Table\RecommandationSetTable;
 
 /**
  * This class is the service that handles recommendations within an ANR.
@@ -17,7 +18,7 @@ use MonarcFO\Model\Table\RecommandationTable;
 class AnrRecommandationService extends AbstractService
 {
     protected $filterColumns = ['code', 'description'];
-    protected $dependencies = ['anr', 'recommandation'];
+    protected $dependencies = ['anr', 'recommandationSet'];
     protected $anrTable;
     protected $userAnrTable;
 
@@ -39,7 +40,6 @@ class AnrRecommandationService extends AbstractService
             $recos[$key]['timerColor'] = $this->getDueDateColor($reco['duedate']);
             $recos[$key]['counterTreated'] = ($reco['counterTreated'] == 0) ? 'COMING' : '_SMILE_IN_PROGRESS (<span>' . $reco['counterTreated'] . '</span>)';
         }
-
         return $recos;
     }
 
@@ -63,7 +63,7 @@ class AnrRecommandationService extends AbstractService
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
-        /** @var AnrTable $table */
+        /** @var RecommandationTable $table */
         $table = $this->get('table');
 
         return $table->save($entity, $last);
@@ -83,8 +83,12 @@ class AnrRecommandationService extends AbstractService
         }elseif(isset($data['duedate'])){
             $data['duedate'] = null;
         }
-        $this->updateRecoPosition($id, $data);
+        
+        if(empty($data['recommandationSet'])){
+            $data['recommandationSet'] = $this->get('table')->getEntity($id)->get('recommandationSet');
+        }
 
+        $this->updateRecoPosition($id, $data);
         parent::patch($id, $data);
     }
 
@@ -102,8 +106,12 @@ class AnrRecommandationService extends AbstractService
         }elseif(isset($data['duedate'])){
             $data['duedate'] = null;
         }
-        $this->updateRecoPosition($id, $data);
 
+        if(empty($data['recommandationSet'])){
+            $data['recommandationSet'] = $this->get('table')->getEntity($id)->get('recommandationSet');
+        }
+
+        $this->updateRecoPosition($id, $data);
         parent::update($id, $data);
     }
 

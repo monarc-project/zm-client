@@ -9,6 +9,7 @@ namespace MonarcFO\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use MonarcCore\Model\Entity\AbstractEntity;
+use MonarcFO\Model\Entity\RecommandationSet;
 
 
 /**
@@ -16,18 +17,20 @@ use MonarcCore\Model\Entity\AbstractEntity;
  *
  * @ORM\Table(name="recommandations", indexes={
  *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
- *      @ORM\Index(name="anr_id_2", columns={"anr_id"})
+ *      @ORM\Index(name="anr_id_2", columns={"anr_id"},
+ *      @ORM\Index(name="recommandation_set_uuid", columns={"recommandation_set_uuid", "code", "anr_id"},)
+ * )
  * })
  * @ORM\Entity
  */
 class Recommandation extends AbstractEntity
 {
     /**
-    * @var integer
-    *
-    * @ORM\Column(name="uuid", type="uuid", nullable=false)
-    * @ORM\Id
-    */
+     * @var integer
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     * @ORM\Id
+     */
     protected $uuid;
 
     /**
@@ -40,6 +43,17 @@ class Recommandation extends AbstractEntity
      * @ORM\Id
      */
     protected $anr;
+
+    /**
+     * @var \MonarcFO\Model\Entity\RecommandationSet
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecommandationSet", cascade={"persist"}, fetch="EAGER")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="recommandation_set_uuid", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     * })
+     */
+    protected $recommandationSet;
 
     /**
      * @var string
@@ -192,6 +206,24 @@ class Recommandation extends AbstractEntity
     public function setDueDate($date)
     {
         $this->duedate = $date;
+        return $this;
+    }
+
+    /**
+     * @return RecommandationSet
+     */
+    public function getRecommandationSet()
+    {
+        return $this->recommandationSet;
+    }
+
+    /**
+     * @param RecommandationSet $recommandationSet
+     * @return Recommandation
+     */
+    public function setRecommandationSet($recommandationSet)
+    {
+        $this->recommandationSet = $recommandationSet;
         return $this;
     }
 

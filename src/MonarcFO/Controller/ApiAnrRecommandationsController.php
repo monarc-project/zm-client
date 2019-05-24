@@ -17,7 +17,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecommandationsController extends ApiAnrAbstractController
 {
     protected $name = 'recommandations';
-    protected $dependencies = ['anr'];
+    protected $dependencies = ['anr', 'recommandationSet'];
 
     public function update($id, $data)
     {
@@ -50,6 +50,8 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
 
         return new JsonModel(['status' => 'ok']);
     }
+
+    
 
 
 }
