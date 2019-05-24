@@ -28,6 +28,7 @@ class ApiConfigController extends AbstractController
                                 $this->getService()->getAppVersion(),
                                 $this->getService()->getCheckVersion(),
                                 $this->getService()->getAppCheckingURL(),
+                                $this->getService()->getMospApiUrl(),
                                 $this->getService()->getTerms())
                             );
     }
