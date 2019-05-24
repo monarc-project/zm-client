@@ -40,7 +40,7 @@ class RecommandationRisk extends AbstractEntity
     /**
      * @var \MonarcFO\Model\Entity\Recommandation
      *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Recommandation", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Recommandation", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

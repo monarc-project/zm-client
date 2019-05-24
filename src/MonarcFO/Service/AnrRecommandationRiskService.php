@@ -88,7 +88,9 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     }
                     $recoRisk['recommandation']->duedate = date('d-m-Y', $recoRisk['recommandation']->duedate);
                 }
-                $recosRisks[$key]['recommandation'] = $recoRisk['recommandation'];
+
+                $recoRisk['recommandation']->recommandationSet->anr = $recoRisk['anr']->id; 
+                $recosRisks[$key]['recommandation'] = $recoRisk['recommandation'];         
             }
         }
 
@@ -113,6 +115,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 }
             });
         } else {
+
+
             return $recosRisks;
         }
     }
