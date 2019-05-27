@@ -18,6 +18,7 @@ use MonarcCore\Service\AbstractService;
 class AnrRecordProcessorService extends AbstractService
 {
     protected $dependencies = ['anr','controllers'];
+    protected $recordControllerService;
     protected $filterColumns = ['label'];
     protected $userAnrTable;
     protected $anrTable;
@@ -31,6 +32,11 @@ class AnrRecordProcessorService extends AbstractService
     {
         $behalfControllers = array();
         foreach ($data['controllers'] as $bc) {
+            if(!isset($bc['id'])) {
+                $bc['anr'] = $this->anrTable->getEntity($data['anr']);
+                // Create a new controller
+                $bc['id'] = $this->recordControllerService->create($bc, true);
+            }
             array_push($behalfControllers, $bc['id']);
         }
         $data['controllers'] = $behalfControllers;

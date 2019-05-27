@@ -21,6 +21,8 @@ class AnrRecordServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\RecordTable',
         'entity' => 'MonarcFO\Model\Entity\Record',
         'recordControllerService' => 'MonarcFO\Service\AnrRecordControllerService',
+        'recordProcessorService'  => 'MonarcFO\Service\AnrRecordProcessorService',
+        'recordRecipientCategoryService'  => 'MonarcFO\Service\AnrRecordRecipientCategoryService',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
         'controllerTable' => 'MonarcFO\Model\Table\RecordControllerTable',

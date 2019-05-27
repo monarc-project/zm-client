@@ -19,6 +19,8 @@ class AnrRecordService extends AbstractService
 {
     protected $dependencies = ['anr', 'controller', 'jointControllers', 'processors', 'recipients'];
     protected $recordControllerService;
+    protected $recordProcessorService;
+    protected $recordRecipientCategoryService;
     protected $userAnrTable;
     protected $anrTable;
     protected $controllerTable;
@@ -68,19 +70,34 @@ class AnrRecordService extends AbstractService
             // Create a new controller
             $data['controller']['id'] = $this->recordControllerService->create($data['controller'], true);
         }
-        $data['controller'] = $data['controller']['id'];//$this->controllerTable->getEntity($data['controller']['id']);
+        $data['controller'] = $data['controller']['id'];
         $jointControllers = array();
         foreach ($data['jointControllers'] as $jc) {
+            if(!isset($jc['id'])) {
+                $jc['anr'] = $this->anrTable->getEntity($data['anr']);
+                // Create a new controller
+                $jc['id'] = $this->recordControllerService->create($jc, true);
+            }
             array_push($jointControllers, $jc['id']);
         }
         $data['jointControllers'] = $jointControllers;
         $processors = array();
         foreach ($data['processors'] as $processor) {
+            if(!isset($processor['id'])) {
+                $processor['anr'] = $this->anrTable->getEntity($data['anr']);
+                // Create a new Processor
+                $processor['id'] = $this->recordProcessorService->createProcessor($processor, true);
+            }
             array_push($processors,$processor['id']);
         }
         $data['processors'] = $processors;
         $recipientCategories = array();
         foreach ($data['recipientCategories'] as $recipientCategory) {
+            if(!isset($recipientCategory['id'])) {
+                $recipientCategory['anr'] = $this->anrTable->getEntity($data['anr']);
+                // Create a new recipient category
+                $recipientCategory['id'] = $this->recordRecipientCategoryService->create($recipientCategory, true);
+            }
             array_push($recipientCategories,$recipientCategory['id']);
         }
         $data['recipientCategories'] = $recipientCategories;
