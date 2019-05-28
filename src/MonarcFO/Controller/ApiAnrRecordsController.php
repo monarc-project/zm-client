@@ -40,7 +40,9 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                 $this->formatDependencies($entities[$key], $this->dependencies);
             }
         }
-
+        foreach ($entities as $key => $entity) {
+            $entities[$key]['erasure'] = $entities[$key]['erasure']->format('Y-m-d\TH:i:s\Z');
+        }
         return new JsonModel(array(
             'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
@@ -61,7 +63,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
-
+        $entity['erasure'] = $entity['erasure']->format('Y-m-d\TH:i:s\Z');
         return new JsonModel($entity);
     }
 
@@ -131,13 +133,12 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'id' => $data['id']];
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
-        $this->getService()->updateRecord($newId, $data);
+        $this->getService()->updateRecord($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
@@ -152,7 +153,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         }
         $data['anr'] = $anrId;
 
-        $this->getService()->delete($newId);
+        $this->getService()->deleteRecord($newId);
 
         return new JsonModel(['status' => 'ok']);
     }

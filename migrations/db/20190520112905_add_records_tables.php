@@ -41,7 +41,7 @@ class AddRecordsTables extends AbstractMigration
                 ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('id_third_country', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('dpo_third_country', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('erasure', 'string', array('null' => false))
+                ->addColumn('erasure', 'datetime', array('null' => false))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
                 ->create();
 

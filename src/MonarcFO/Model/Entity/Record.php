@@ -139,9 +139,9 @@ class Record extends AbstractEntity
     protected $dpoThirdCountry;
 
     /**
-     * @var string
+     * @var \DateTime
      *
-     * @ORM\Column(name="erasure", type="string", nullable=false)
+     * @ORM\Column(name="erasure", type="datetime", nullable=false)
      */
     protected $erasure;
 
