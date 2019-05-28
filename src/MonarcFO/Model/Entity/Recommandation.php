@@ -91,6 +91,13 @@ class Recommandation extends AbstractEntity
     protected $comment;
 
     /**
+     * @var smallint
+     *
+     * @ORM\Column(name="status", type="smallint", options={"unsigned":true, "default":1})
+     */
+    protected $status = 1;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="responsable", type="string", length=255, nullable=true)
@@ -227,6 +234,28 @@ class Recommandation extends AbstractEntity
         return $this;
     }
 
+    public function getFiltersForService(){
+        $filterJoin = [
+            [
+                'as' => 'r',
+                'rel' => 'recommandationSet',
+            ],
+        ];
+        $filterLeft = [
+            [
+                'as' => 'r1',
+                'rel' => 'recommandationSet',
+            ],
+
+        ];
+        $filtersCol = [
+            'r.uuid',
+            'r.anr',
+            'r.code',
+        ];
+        return [$filterJoin,$filterLeft,$filtersCol];
+    }
+    
 
     /**
      * @param bool $partial

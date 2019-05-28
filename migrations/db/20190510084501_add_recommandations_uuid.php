@@ -50,6 +50,7 @@ class AddRecommandationsUuid extends AbstractMigration
         $table = $this->table('recommandations');
         $table
             ->addColumn('uuid', 'uuid', array('after' => 'id'))
+            ->addColumn('status', 'integer', array('after' => 'comment','null' => true, 'default' => '1', 'limit' => MysqlAdapter::INT_TINY))
             ->update();
         foreach ($data as $key => $value) { //fill the uuid only for recommandations created by cases
             $this->execute('UPDATE recommandations SET uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');

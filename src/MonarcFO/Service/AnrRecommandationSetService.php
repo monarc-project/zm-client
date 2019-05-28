@@ -25,7 +25,7 @@ class AnrRecommandationSetService extends AbstractService
     /**
      * @inheritdoc
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
+    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         $data = $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
