@@ -62,7 +62,6 @@ class AnrRecordService extends AbstractService
         }
         $result = $this->delete($newId);
         foreach($controllersToDelete as $c) {
-            file_put_contents('php://stderr', print_r($c, TRUE).PHP_EOL);
             $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $c]);
         }
         foreach($processorsToDelete as $p) {
@@ -204,7 +203,7 @@ class AnrRecordService extends AbstractService
             }
         }
         foreach($oldRecipientCategories as $rc) {
-            if(!in_array($rc, $recipientCategories && $this->recipientCategoryWithoutRecord($rc, $id, $data['anr']))) {
+            if(!in_array($rc, $recipientCategories) && $this->recipientCategoryWithoutRecord($rc, $id, $data['anr'])) {
                 $this->recordRecipientCategoryService->delete(['anr'=> $data['anr'], 'id' => $rc]);;
             }
         }
