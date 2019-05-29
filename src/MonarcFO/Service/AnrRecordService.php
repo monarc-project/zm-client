@@ -33,54 +33,94 @@ class AnrRecordService extends AbstractService
         $entity = $this->get('table')->getEntity($newId['id']);
         $controllerId = $entity->controller->id;
         $anrId = $entity->anr->id;
-        $this->removeControllerWithoutRecord($controllerId, $entity->id, $anrId);
+        $controllersToDelete = array();
+        $processorsToDelete = array();
+        $categoriesToDelete = array();
+        if($this->controllerWithoutRecord($controllerId, $entity->id, $anrId)) {
+            array_push($controllersToDelete, $controllerId);
+        }
         foreach($entity->jointControllers as $jc) {
-            $this->removeControllerWithoutRecord($jc->id, $entity->id, $anrId);
+            if($this->controllerWithoutRecord($jc->id, $entity->id, $anrId)) {
+                array_push($controllersToDelete, $jc->id);
+            }
         }
         foreach($entity->processors as $p) {
-            $this->removeProcessorWithoutRecord($p->id, $anrId);
+            if($this->processorWithoutRecord($p->id, $entity->id, $anrId)) {
+                $processorEntity = $this->processorTable->getEntity($p->id);
+                foreach($processorEntity->controllers as $controller) {
+                    if($this->controllerWithoutRecord($controller->id, $entity->id, $anrId)) {
+                        array_push($controllersToDelete, $controller->id);
+                    }
+                }
+                array_push($processorsToDelete, $p->id);
+            }
         }
         foreach($entity->recipients as $r) {
-            $this->removeRecipientCategoryWithoutRecord($r->id, $anrId);
+            if($this->recipientCategoryWithoutRecord($r->id, $entity->id, $anrId)) {
+                array_push($categoriesToDelete, $r->id);
+            }
         }
-        return $this->delete($newId);
+        $result = $this->delete($newId);
+        foreach($controllersToDelete as $c) {
+            file_put_contents('php://stderr', print_r($c, TRUE).PHP_EOL);
+            $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $c]);
+        }
+        foreach($processorsToDelete as $p) {
+            $this->recordProcessorService->delete(['anr'=> $anrId, 'id' => $p]);
+        }
+        foreach($categoriesToDelete as $r) {
+            $this->recordRecipientCategoryService->delete(['anr'=> $anrId, 'id' => $r]);
+        }
+
+        return $result;
     }
 
-    public function removeControllerWithoutRecord($controllerId, $recordId, $anrId) {
+    public function controllerWithoutRecord($controllerId, $recordId, $anrId) {
         $records = $this->get('table')->getEntityByFields(['controller' => $controllerId, 'anr' => $anrId]);
-        $jointForRecords = $this->get('table')->getEntityByFields(['jointControllers' => $controllerId, 'anr' => $anrId]);
-        $canRemove = true;
         foreach($records as $record) {
             if($record->id != $recordId) {
-                $canRemove = false;
-                break;
+                return false;
             }
         }
-        if($canRemove) {
-            foreach($jointForRecords as $record) {
-                if($record->id != $recordId) {
-                    $canRemove = false;
-                    break;
-                }
+        $jointForRecords = $this->get('table')->getEntityByFields(['jointControllers' => $controllerId, 'anr' => $anrId]);
+        foreach($jointForRecords as $record) {
+            if($record->id != $recordId) {
+                return false;
             }
         }
-        if($canRemove) {
-            $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $controllerId]);
+
+        $behalfForProcessors = $this->processorTable->getEntityByFields(['controllers' => $controllerId, 'anr' => $anrId]);
+        foreach($behalfForProcessors as $processor) {
+            $records = $this->get('table')->getEntityByFields(['processors' => $processor->id, 'anr' => $anrId]);
+            if(count($records)> 1 || (count($records)==1 && $records[0]->id != $recordId)) {
+                return false;
+            }
         }
+        return true;
     }
 
-    public function removeProcessorWithoutRecord($processorId, $anrId) {
+    public function processorWithoutRecord($processorId, $recordId, $anrId) {
         $records = $this->get('table')->getEntityByFields(['processors' => $processorId, 'anr' => $anrId]);
-        if(count($records) == 1) {
-            $this->recordProcessorService->delete(['anr'=> $anrId, 'id' => $processorId]);
+        if(count($records) <= 1) {
+            //Sanity Check
+            if (count($records) ==1 && $records[0]->id != $recordId) {
+                file_put_contents('php://stderr', print_r('This processor has only one record and it is not the one currently being deleted', TRUE).PHP_EOL);
+            }
+            return true;
         }
+        return false;
     }
 
-    public function removeRecipientCategoryWithoutRecord($recipientId, $anrId) {
+    public function recipientCategoryWithoutRecord($recipientId, $recordId, $anrId) {
         $records = $this->get('table')->getEntityByFields(['recipients' => $recipientId, 'anr' => $anrId]);
-        if(count($records) == 1) {
-            $this->recordRecipientCategoryService->delete(['anr'=> $anrId, 'id' => $recipientId]);
+        if(count($records) <= 1) {
+            //Sanity Check
+            if (count($records) ==1 && $records[0]->id != $recordId) {
+                file_put_contents('php://stderr', print_r('This recipient category has only one record and it is not the one currently being deleted', TRUE).PHP_EOL);
+            }
+            return true;
         }
+        return false;
     }
 
     /**
@@ -126,17 +166,46 @@ class AnrRecordService extends AbstractService
             }
             array_push($recipientCategories,$recipientCategory['id']);
         }
-        $data['recipientCategories'] = $recipientCategories;
+        $data['recipients'] = $recipientCategories;
         $oldControllerId = $entity->controller->id;
-        $oldJointControllers = $entity->jointControllers;
+        $oldJointControllers = array();
+        foreach( $entity->jointControllers as $js) {
+            array_push($oldJointControllers, $js->id);
+        }
+        $oldProcessors = array();
+        foreach( $entity->processors as $p) {
+            array_push($oldProcessors, $p->id);
+        }
+        $oldRecipientCategories = array();
+        foreach( $entity->recipients as $r) {
+            array_push($oldRecipientCategories, $r->id);
+        }
         $data['erasure'] = new \DateTime($data['erasure']);
         $result = $this->update($id, $data);
-        if(!in_array($oldControllerId, $jointControllers) && $data['controller'] != $oldControllerId) {
-            $this->removeControllerWithoutRecord($oldControllerId, $id, $data['anr']);
+        if(!in_array($oldControllerId, $jointControllers) && $data['controller'] != $oldControllerId
+            && $this->controllerWithoutRecord($oldControllerId, $id, $data['anr'])) {
+            $this->recordControllerService->delete(['anr'=> $data['anr'], 'id' => $oldControllerId]);
         }
         foreach($oldJointControllers as $js) {
-            if(!in_array($js->id, $jointControllers) && $js->id != $data['controller']) {
-                $this->removeControllerWithoutRecord($js->id, $id, $data['anr']);
+            if(!in_array($js, $jointControllers) && $js != $data['controller']
+               && $this->controllerWithoutRecord($js, $id, $data['anr'])) {
+                $this->recordControllerService->delete(['anr'=> $data['anr'], 'id' => $js]);
+            }
+        }
+        foreach($oldProcessors as $processor) {
+            if(!in_array($processor, $processors) && $this->processorWithoutRecord($processor, $id, $data['anr'])) {
+                $processorEntity = $this->processorTable->getEntity($processor);
+                foreach($processorEntity->controllers as $controller) {
+                    if($this->controllerWithoutRecord($controller->id, $id, $data['anr'])) {
+                        $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $controller->id]);
+                    }
+                }
+                $this->recordProcessorService->delete(['anr'=> $data['anr'], 'id' => $processor]);
+            }
+        }
+        foreach($oldRecipientCategories as $rc) {
+            if(!in_array($rc, $recipientCategories && $this->recipientCategoryWithoutRecord($rc, $id, $data['anr']))) {
+                $this->recordRecipientCategoryService->delete(['anr'=> $data['anr'], 'id' => $rc]);;
             }
         }
         return $result;
@@ -183,7 +252,7 @@ class AnrRecordService extends AbstractService
             }
             array_push($recipientCategories,$recipientCategory['id']);
         }
-        $data['recipientCategories'] = $recipientCategories;
+        $data['recipients'] = $recipientCategories;
         $data['erasure'] = new \DateTime($data['erasure']);
         return $this->create($data, true);
     }

@@ -33,7 +33,7 @@ class Record extends AbstractEntity
     /**
      * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -70,14 +70,14 @@ class Record extends AbstractEntity
 
     /**
      * @var \MonarcFO\Model\Entity\Controller
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordController")
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordController", cascade={"persist"})
      * @ORM\JoinColumn(name="controller", referencedColumnName="id")
      */
     protected $controller;
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordController")
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordController", cascade={"persist"})
      * @ORM\JoinTable(name="records_record_joint_controllers",
      *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="controller_id", referencedColumnName="id")}
@@ -116,7 +116,7 @@ class Record extends AbstractEntity
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordRecipientCategory")
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordRecipientCategory", cascade={"persist"})
      * @ORM\JoinTable(name="records_record_recipient_categories",
      *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="recipient_category_id", referencedColumnName="id")}
@@ -154,7 +154,7 @@ class Record extends AbstractEntity
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordProcessor")
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordProcessor", cascade={"persist"})
      * @ORM\JoinTable(name="records_record_processors",
      *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")}

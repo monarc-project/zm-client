@@ -98,9 +98,9 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                                     $d = $d->getJsonArray();
                                     $d['controllers']->initialize();
                                     if($d['controllers']->count()){
-                                        $$controllers = $d['controllers']->getSnapshot();
+                                        $controllers = $d['controllers']->getSnapshot();
                                         $d['controllers'] = [];
-                                        foreach($$controllers as $c){
+                                        foreach($controllers as $c){
                                           $tempController = $c->toArray();
                                           $d['controllers'][] = $tempController;
                                         }
