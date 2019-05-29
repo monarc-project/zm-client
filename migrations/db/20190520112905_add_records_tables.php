@@ -43,6 +43,10 @@ class AddRecordsTables extends AbstractMigration
                 ->addColumn('dpo_third_country', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('erasure', 'datetime', array('null' => false))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
                 ->create();
 
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))
@@ -56,6 +60,10 @@ class AddRecordsTables extends AbstractMigration
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('contact', 'string', array('null' => false, 'limit' => 255))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
                 ->addIndex(array('anr_id'))
                 ->create();
 
@@ -72,6 +80,10 @@ class AddRecordsTables extends AbstractMigration
                 ->addColumn('id_third_country', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('dpo_third_country', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
                 ->addIndex(array('anr_id'))
                 ->create();
 
@@ -85,6 +97,10 @@ class AddRecordsTables extends AbstractMigration
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
                 ->create();
 
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();

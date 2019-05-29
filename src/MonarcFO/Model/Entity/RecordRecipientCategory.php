@@ -47,6 +47,34 @@ class RecordRecipientCategory extends AbstractEntity
     protected $anr;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
+     */
+    protected $creator;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="created_at", type="datetime", nullable=true)
+     */
+    protected $createdAt;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
+     */
+    protected $updater;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
+     */
+    protected $updatedAt;
+
+    /**
      * @return int
      */
     public function getId()
@@ -79,6 +107,78 @@ class RecordRecipientCategory extends AbstractEntity
     public function setAnr($anr)
     {
         $this->anr = $anr;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCreator()
+    {
+        return $this->creator;
+    }
+
+    /**
+     * @param string $creator
+     * @return RecordRecipientCategory
+     */
+    public function setCreator($creator)
+    {
+        $this->creator = $creator;
+        return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getCreatedAt()
+    {
+        return $this->createdAt;
+    }
+
+    /**
+     * @param \DateTime $createdAt
+     * @return RecordRecipientCategory
+     */
+    public function setCreatedAt($createdAt)
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUpdater()
+    {
+        return $this->updater;
+    }
+
+    /**
+     * @param string $updater
+     * @return RecordRecipientCategory
+     */
+    public function setUpdater($updater)
+    {
+        $this->updater = $updater;
+        return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getUpdatedAt()
+    {
+        return $this->updatedAt;
+    }
+
+    /**
+     * @param \DateTime $updatedAt
+     * @return RecordRecipientCategory
+     */
+    public function setUpdatedAt($updatedAt)
+    {
+        $this->updatedAt = $updatedAt;
         return $this;
     }
 }

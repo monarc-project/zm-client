@@ -244,7 +244,7 @@ class AnrRecordService extends AbstractService
         }
         $data['processors'] = $processors;
         $recipientCategories = array();
-        foreach ($data['recipientCategories'] as $recipientCategory) {
+        foreach ($data['recipients'] as $recipientCategory) {
             if(!isset($recipientCategory['id'])) {
                 $recipientCategory['anr'] = $this->anrTable->getEntity($data['anr']);
                 // Create a new recipient category
