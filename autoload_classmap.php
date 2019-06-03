@@ -79,6 +79,8 @@ return array(
     'MonarcFO\Controller\ApiAnrRecordRecipientCategoriesControllerFactory'    => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordRecipientCategoriesControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRecordsController'                             => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsController.php',
     'MonarcFO\Controller\ApiAnrRecordsControllerFactory'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrRecordsExportController'                       => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsExportController.php',
+    'MonarcFO\Controller\ApiAnrRecordsExportControllerFactory'                => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsExportControllerFactory.php',
     'MonarcFO\Controller\ApiAnrReferentialsController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiAnrReferentialsController.php',
     'MonarcFO\Controller\ApiAnrReferentialsControllerFactory'                 => __DIR__ . '/src/MonarcFO/Controller/ApiAnrReferentialsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRisksController'                               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksController.php',

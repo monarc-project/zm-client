@@ -350,6 +350,24 @@ class Record extends AbstractEntity
     }
 
     /**
+     * @return \DateTime
+     */
+    public function getErasure()
+    {
+        return $this->erasure;
+    }
+
+    /**
+     * @param \DateTime $erasure
+     * @return Record
+     */
+    public function setErasure($erasure)
+    {
+        $this->erasure = $erasure;
+        return $this;
+    }
+
+    /**
      * Add joint controller
      *
      * @param int $jointController

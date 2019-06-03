@@ -41,7 +41,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
             }
         }
         foreach ($entities as $key => $entity) {
-            $entities[$key]['erasure'] = $entities[$key]['erasure']->format('Y-m-d\TH:i:s\Z');
+            $entities[$key]['erasure'] = $entities[$key]['erasure']->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
         }
         return new JsonModel(array(
             'count' => $service->getFilteredCount($filter, $filterAnd),
@@ -63,7 +63,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
-        $entity['erasure'] = $entity['erasure']->format('Y-m-d\TH:i:s\Z');
+        $entity['erasure'] = $entity['erasure']->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
         return new JsonModel($entity);
     }
 

@@ -123,7 +123,7 @@ class AnrRecordService extends AbstractService
     }
 
     /**
-     * Creates a record of processing activity
+     * Updates a record of processing activity
      * @param array $data The record details fields
      * @return object The resulting created record object (entity)
      */
@@ -179,7 +179,7 @@ class AnrRecordService extends AbstractService
         foreach( $entity->recipients as $r) {
             array_push($oldRecipientCategories, $r->id);
         }
-        $data['erasure'] = new \DateTime($data['erasure']);
+        $data['erasure'] = (new \DateTime($data['erasure']))->setTimezone((new \DateTime())->getTimezone());
         $result = $this->update($id, $data);
         if(!in_array($oldControllerId, $jointControllers) && $data['controller'] != $oldControllerId
             && $this->controllerWithoutRecord($oldControllerId, $id, $data['anr'])) {
@@ -252,8 +252,94 @@ class AnrRecordService extends AbstractService
             array_push($recipientCategories,$recipientCategory['id']);
         }
         $data['recipients'] = $recipientCategories;
-        $data['erasure'] = new \DateTime($data['erasure']);
+        $data['erasure'] = (new \DateTime($data['erasure']))->setTimezone((new \DateTime())->getTimezone());
         return $this->create($data, true);
     }
 
+
+    /**
+    * Exports a Record of processing activities, optionaly encrypted, for later re-import
+    * @param array $data An array with the Record 'id' and 'password' for encryption
+    * @return string JSON file, optionally encrypted
+    */
+    public function export(&$data)
+    {
+        $filename = "";
+        $exportedRecord = json_encode($this->generateExportArray($data['id'], $filename));
+        $data['filename'] = $filename;
+
+        if (! empty($data['password'])) {
+            $exportedRecord = $this->encrypt($exportedRecord, $data['password']);
+        }
+
+        return $exportedRecord;
+    }
+
+    /**
+    * Generates the array to be exported into a file when calling {#exportRecord}
+    * @see #exportRecord
+    * @param int $id The record's id
+    * @param string $filename The output filename
+    * @return array The data array that should be saved
+    * @throws \MonarcCore\Exception\Exception If the record is not found
+    */
+    public function generateExportArray($id, &$filename = "")
+    {
+        $entity = $this->get('table')->getEntity($id);
+
+        if (!$entity) {
+            throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
+        }
+
+        $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $entity->get('label' . $this->getLanguage()));
+
+        $return = [
+            'type' => 'record',
+            'name' => $entity->get('label' . $this->getLanguage()),
+            'controller' => [
+                                'name' => $entity->controller->label,
+                                'contact' => $entity->controller->contact,
+                            ],
+            'erasure' => strftime("%d/%m/%Y", $entity->erasure->getTimeStamp()),
+        ];
+        if($entity->purposes != '') {
+            $return['purposes'] = $entity->purposes;
+        }
+        if($entity->description != '') {
+            $return['description'] = $entity->description;
+        }
+        if($entity->representative != '') {
+            $return['representative'] = $entity->representative;
+        }
+        if($entity->dpo != '') {
+            $return['data_processor'] = $entity->dpo;
+        }
+        if($entity->secMeasures != '') {
+            $return['security_measures'] = $entity->secMeasures;
+        }
+        if($entity->idThirdCountry) {
+            $return['international_transfer'] = [
+                                                    'transfer' => true,
+                                                    'identifier_third_country' => $entity->idThirdCountry,
+                                                    'data_processor_third_country' => $entity->dpoThirdCountry,
+                                                ];
+        }
+        else {
+            $return['international_transfer'] = ['transfer' => false,];
+        }
+        foreach ($entity->jointControllers as $jc) {
+            $return['joint_controllers'][] = [
+                                                'name' => $jc->label,
+                                                'contact' => $jc->contact,
+                                            ];
+        }
+        foreach ($entity->recipients as $rc) {
+            $return['recipients'][] =  $rc->label;
+        }
+        $processorService = $this->get('recordProcessorService');
+        foreach ($entity->processors as $p) {
+            $return['processors'][] = $processorService->generateExportArray($p->id);
+        }
+        return $return;
+    }
 }
