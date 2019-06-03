@@ -368,6 +368,7 @@ class AnrAssetService extends \MonarcCore\Service\AbstractService
                                   $theme = $threat->get('theme');
                                   $oldTheme = empty($theme) ? null : $theme->get('id');
                                   if ($oldTheme != $idTheme) {
+                                      $threat->setDbAdapter($this->get('threatTable')->getDb());
                                       $threat->set('theme', $idTheme);
                                       $this->setDependencies($threat, ['anr', 'theme']);
                                       $this->get('threatTable')->save($threat);
