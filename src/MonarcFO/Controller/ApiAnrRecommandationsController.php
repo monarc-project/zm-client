@@ -6,6 +6,7 @@
  */
 
 namespace MonarcFO\Controller;
+
 use Zend\View\Model\JsonModel;
 
 /**
@@ -66,17 +67,17 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
             $this->name => $entities
         ]);
     }
-    
+
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $id];
+        $newId = ['anr' => $anrId, 'uuid' => $id];
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
-        if(!isset($data['anr'])) $data['anr'] = $anrId;
+        if (!isset($data['anr'])) $data['anr'] = $anrId;
 
         $this->getService()->update($newId, $data);
 
@@ -86,20 +87,44 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
     public function patch($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $id];
+        $newId = ['anr' => $anrId, 'uuid' => $id];
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
-        if(!isset($data['anr'])) $data['anr'] = $anrId;
+        if (!isset($data['anr'])) $data['anr'] = $anrId;
 
         $this->getService()->patch($newId, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
 
-    
-
-
+    /**
+     * @inheritdoc
+     */
+    public function create($data)
+    {
+        if (isset($data['mass'])) {
+            unset($data['mass']);
+            unset($data['anr']);
+            foreach ($data as $value) {
+                if (empty($value['anr'])) {
+                    throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+                }
+                $obj = $this->getService()->create($value);
+            }
+            return new JsonModel([
+                'status' => 'ok',
+            ]);
+        } else {
+            if (empty($data['anr'])) {
+                throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+            }
+            $obj = $this->getService()->create($data);
+            return new JsonModel([
+                'status' => 'ok'
+            ]);
+        }
+    }
 }
