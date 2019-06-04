@@ -108,14 +108,16 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
         if (isset($data['mass'])) {
             unset($data['mass']);
             unset($data['anr']);
+            $obj = array();
             foreach ($data as $value) {
                 if (empty($value['anr'])) {
                     throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
                 }
-                $obj = $this->getService()->create($value);
+                array_push($obj, $this->getService()->create($value));
             }
             return new JsonModel([
                 'status' => 'ok',
+                'id' => $obj
             ]);
         } else {
             if (empty($data['anr'])) {
@@ -123,7 +125,8 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
             }
             $obj = $this->getService()->create($data);
             return new JsonModel([
-                'status' => 'ok'
+                'status' => 'ok',
+                'id' => $obj
             ]);
         }
     }
