@@ -531,7 +531,7 @@ return array(
                             ),
                         ),
                     ),
-                    'records_export' => array(
+                    'record_export' => array(
                         'type' => 'segment',
                         'options' => array(
                             'route' => 'records/:id/export',
@@ -540,6 +540,16 @@ return array(
                             ),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrRecordsExport',
+                            ),
+                        ),
+                    ),
+                    'record_import' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records/import',
+                            'constraints' => array(),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordsImport',
                             ),
                         ),
                     ),
@@ -872,6 +882,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecordRecipientCategories' => '\MonarcFO\Controller\ApiAnrRecordRecipientCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecords' => '\MonarcFO\Controller\ApiAnrRecordsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordsExport' => '\MonarcFO\Controller\ApiAnrRecordsExportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordsImport' => '\MonarcFO\Controller\ApiAnrRecordsImportControllerFactory',
             '\MonarcFO\Controller\ApiAnrTreatmentPlan' => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
             '\MonarcFO\Controller\ApiSoa' => '\MonarcFO\Controller\ApiSoaControllerFactory',
             '\MonarcFO\Controller\ApiSoaCategory' => '\MonarcFO\Controller\ApiSoaCategoryControllerFactory',
@@ -1207,7 +1218,8 @@ return array(
             'monarc_api_global_client_anr/record_controllers',
             'monarc_api_global_client_anr/record_processors',
             'monarc_api_global_client_anr/record_recipient_categories',
-            'monarc_api_global_client_anr/records_export',
+            'monarc_api_global_client_anr/record_export',
+            'monarc_api_global_client_anr/record_import',
         ),
     ),
     'activeLanguages' => array('fr'),

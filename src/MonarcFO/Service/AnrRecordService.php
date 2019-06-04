@@ -212,7 +212,7 @@ class AnrRecordService extends AbstractService
     /**
      * Creates a record of processing activity
      * @param array $data The record details fields
-     * @return object The resulting created record object (entity)
+     * @return object The resulting created record object (id)
      */
     public function createRecord($data)
     {
@@ -295,12 +295,14 @@ class AnrRecordService extends AbstractService
 
         $return = [
             'type' => 'record',
+            'id' => $entity->id,
             'name' => $entity->get('label' . $this->getLanguage()),
             'controller' => [
+                                'id' => $entity->controller->id,
                                 'name' => $entity->controller->label,
                                 'contact' => $entity->controller->contact,
                             ],
-            'erasure' => strftime("%d/%m/%Y", $entity->erasure->getTimeStamp()),
+            'erasure' => strftime("%d-%m-%Y", $entity->erasure->getTimeStamp()),
         ];
         if($entity->purposes != '') {
             $return['purposes'] = $entity->purposes;
@@ -328,13 +330,17 @@ class AnrRecordService extends AbstractService
             $return['international_transfer'] = ['transfer' => false,];
         }
         foreach ($entity->jointControllers as $jc) {
-            $return['joint_controllers'][] = [
+            $return['joint_controllers'][] =[
+                                                'id' => $jc->id,
                                                 'name' => $jc->label,
                                                 'contact' => $jc->contact,
                                             ];
         }
         foreach ($entity->recipients as $rc) {
-            $return['recipients'][] =  $rc->label;
+            $return['recipients'][] =   [
+                                            'id' => $rc->id,
+                                            'name' => $rc->label,
+                                        ];
         }
         $processorService = $this->get('recordProcessorService');
         foreach ($entity->processors as $p) {
@@ -342,4 +348,164 @@ class AnrRecordService extends AbstractService
         }
         return $return;
     }
+
+    /**
+     * Imports a Record that has been exported into a file.
+     * @param int $anrId The target ANR ID
+     * @param array $data The data that has been posted to the API (file)
+     * @return array An array where the first key is an array of generated records' ID, and the second the eventual errors
+     * @throws \MonarcCore\Exception\Exception If the posted data is invalid, or ANR ID is invalid
+     */
+    public function importFromFile($anrId, $data)
+    {
+        // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
+        if (empty($data['file'])) {
+            throw new \MonarcCore\Exception\Exception('File missing', 412);
+        }
+
+        $ids = $errors = [];
+        $anr = $this->get('anrTable')->getEntity($anrId); // throws MonarcCore\Exception\Exception if invalid
+
+        foreach ($data['file'] as $f) {
+            if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
+                $file = [];
+                if (empty($data['password'])) {
+                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
+                    if ($file == false) { // support legacy export which were base64 encoded
+                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), '')), true);
+                    }
+                } else {
+                    // Decrypt the file and store the JSON data as an array in memory
+                    $key = $data['password'];
+                    $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
+                    if ($file == false) { // support legacy export which were base64 encoded
+                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                    }
+                }
+
+                if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
+                    $ids[] = $id;
+                } else {
+                    $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
+                }
+            }
+        }
+
+        return [$ids, $errors];
+    }
+
+
+    /**
+     * Imports a record from a data array. This data is generally what has been exported into a file.
+     * @param array $data The asset's data fields
+     * @param \MonarcFO\Model\Entity\Anr $anr The target ANR entity
+     * @return bool|int The ID of the generated asset, or false if an error occurred.
+     */
+    public function importFromArray($data, $anr)
+    {
+        if(isset($data['type']) && $data['type'] == 'record')
+        {
+            $newData = [];
+            $newData['anr'] =  $this->anrTable->getEntity($anr);
+            $newData['label1'] = $data['name'];
+            $newData['label2'] = $data['name'];
+            $newData['label3'] = $data['name'];
+            $newData['label4'] = $data['name'];
+            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
+            $newData['description'] = (isset($data['description']) ? $data['description'] : '');
+            $newData['representative'] = (isset($data['representative']) ? $data['representative'] : '');
+            $newData['dpo'] = (isset($data['data_processor']) ? $data['data_processor'] : '');
+            $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
+            $newData['erasure'] = (new \DateTime('@' .strtotime($data['erasure'])))->format('Y-m-d\TH:i:s.u\Z');;
+            if($data['international_transfer']['transfer'] == true) {
+                $newData['idThirdCountry'] = $data['international_transfer']['identifier_third_country'];
+                $newData['dpoThirdCountry'] = $data['international_transfer']['data_processor_third_country'];
+            } else {
+                $newData['idThirdCountry'] = '';
+                $newData['dpoThirdCountry'] = '';
+            }
+            unset($data['international_transfer']);
+            $data['controller']['label'] = $data['controller']['name'];
+            unset($data['controller']['name']);
+            try {
+                $controllerEntity = $this->controllerTable->getEntity($data['controller']['id']);
+                if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $data['controller']['label'] || $controllerEntity->get('contact') != $data['controller']['contact']) {
+                    unset($data['controller']['id']);
+                }
+            } catch (\MonarcCore\Exception\Exception $e) {
+                unset($data['controller']['id']);
+            }
+            $newData['controller'] = $data['controller'];
+            $newData['jointControllers'] = [];
+            foreach ($data['joint_controllers'] as $jc) {
+                $jc['label'] = $jc['name'];
+                unset($jc['name']);
+                try {
+                    $controllerEntity = $this->controllerTable->getEntity($jc['id']);
+                    if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $jc['label'] || $controllerEntity->get('contact') != $jc['contact']) {
+                        unset($jc['id']);
+                    }
+                } catch (\MonarcCore\Exception\Exception $e) {
+                    unset($jc['id']);
+                }
+                $newData['jointControllers'][] = $jc;
+            }
+            $newData['recipients'] = [];
+            foreach ($data['recipients'] as $r) {
+                $r['label'] = $r['name'];
+                unset($r['name']);
+                try {
+                    $recipientEntity = $this->recipientCategoryTable->getEntity($r['id']);
+                    if (!$recipientEntity || $recipientEntity->get('anr')->get('id') != $anr || $recipientEntity->get('label') != $r['label']) {
+                        unset($r['id']);
+                    }
+                } catch (\MonarcCore\Exception\Exception $e) {
+                    unset($r['id']);
+                }
+                $newData['recipients'][] = $r;
+            }
+            $newData['processors'] = [];
+            foreach ($data['processors'] as $processor) {
+                $processor['label'] = $processor['name'];
+                $processor['controllers'] = $processor['controllers_behalf'];
+                unset($processor['name']);
+                unset($processor['controllers_behalf']);
+                if($processor['international_transfer']['transfer'] == true) {
+                    $processor['idThirdCountry'] = $processor['international_transfer']['identifier_third_country'];
+                    $processor['dpoThirdCountry'] = $processor['international_transfer']['data_processor_third_country'];
+                } else {
+                    $processor['idThirdCountry'] = '';
+                    $processor['dpoThirdCountry'] = '';
+                }
+                unset($processor['international_transfer']);
+                try {
+                    $processorEntity = $this->processorTable->getEntity($processor['id']);
+                    if ($processorEntity->get('anr')->get('id') != $anr || $processorEntity->get('label') != $processor['label'] || $processorEntity->get('contact') != $processor['contact']) {
+                        unset($processor['id']);
+                    }
+                } catch (\MonarcCore\Exception\Exception $e) {
+                    unset($processor['id']);
+                }
+                $bcs = array();
+                foreach ($processor['controllers'] as $bc) {
+                    $bc['label'] = $bc['name'];
+                    unset($bc['name']);
+                    try {
+                        $controllerEntity = $this->controllerTable->getEntity($bc['id']);
+                        if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $bc['label'] || $controllerEntity->get('contact') != $bc['contact']) {
+                            unset($bc['id']);
+                        }
+                    } catch (\MonarcCore\Exception\Exception $e) {
+                        unset($bc['id']);
+                    }
+                    array_push($bcs, $bc);
+                }
+                $processor['controllers'] = $bcs;
+                $newData['processors'][] = $processor;
+            }
+            return $this->createRecord($newData);
+        }
+        return false;
+    }
+
 }

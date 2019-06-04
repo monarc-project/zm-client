@@ -81,6 +81,8 @@ return array(
     'MonarcFO\Controller\ApiAnrRecordsControllerFactory'                      => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRecordsExportController'                       => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsExportController.php',
     'MonarcFO\Controller\ApiAnrRecordsExportControllerFactory'                => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsExportControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrRecordsImportController'                       => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsImportController.php',
+    'MonarcFO\Controller\ApiAnrRecordsImportControllerFactory'                => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordsImportControllerFactory.php',
     'MonarcFO\Controller\ApiAnrReferentialsController'                        => __DIR__ . '/src/MonarcFO/Controller/ApiAnrReferentialsController.php',
     'MonarcFO\Controller\ApiAnrReferentialsControllerFactory'                 => __DIR__ . '/src/MonarcFO/Controller/ApiAnrReferentialsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRisksController'                               => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRisksController.php',

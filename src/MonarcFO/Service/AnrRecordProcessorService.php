@@ -60,6 +60,7 @@ class AnrRecordProcessorService extends AbstractService
             throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
         }
         $return = [
+            'id' => $entity->id,
             'name' => $entity->label,
             'contact' => $entity->contact,
         ];
@@ -78,6 +79,7 @@ class AnrRecordProcessorService extends AbstractService
         }
         foreach ($entity->controllers as $bc) {
             $return['controllers_behalf'][] =   [
+                                                    'id' => $bc->id,
                                                     'name' => $bc->label,
                                                     'contact' => $bc->contact,
                                                 ];
