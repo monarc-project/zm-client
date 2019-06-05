@@ -16,7 +16,6 @@ use MonarcFO\Model\Entity\AnrObjectCategory;
 use MonarcFO\Model\Entity\Interview;
 use MonarcFO\Model\Entity\Recommandation;
 use MonarcFO\Model\Entity\RecommandationHistoric;
-use MonarcFO\Model\Entity\RecommandationMeasure;
 use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Entity\RolfTag;
 use MonarcFO\Model\Entity\User;
@@ -85,7 +84,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $objectObjectCliTable;
     protected $recommandationCliTable;
     protected $recommandationHistoricCliTable;
-    protected $recommandationMeasureCliTable;
     protected $recommandationRiskCliTable;
     protected $rolfRiskCliTable;
     protected $rolfTagCliTable;
@@ -1021,16 +1019,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRecommandationHistoric->set('id', null);
                 $newRecommandationHistoric->setAnr($newAnr);
                 $this->get('recommandationHistoricCliTable')->save($newRecommandationHistoric,false);
-            }
-
-            //duplicate recommandations measures
-            $recommandationsMeasures = $this->get('recommandationMeasureCliTable')->getEntityByFields(['anr' => $anr->id]);
-            foreach ($recommandationsMeasures as $recommandationMeasure) {
-                $newRecommandationMeasure = new RecommandationMeasure($recommandationMeasure);
-                $newRecommandationMeasure->set('id', null);
-                $newRecommandationMeasure->setAnr($newAnr);
-                $newRecommandationMeasure->set('measure', $measuresNewIds[$newRecommandationMeasure->get('measure')->getuuid()->toString()]);
-                $this->get('recommandationMeasureCliTable')->save($newRecommandationMeasure,false);
             }
 
             //duplicate recommandations risks

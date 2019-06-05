@@ -79,6 +79,7 @@ class AddAssetsUuid extends AbstractMigration
       $table
           ->addColumn('uuid', 'uuid',array('after' => 'id'))
           ->addIndex(array('uuid'))
+          ->removeIndex(['anr_id','code'])
           ->update();
       foreach ($data as $key => $value) { //fill the uuid only for assets created by cases
         $this->execute('UPDATE assets SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
@@ -143,6 +144,9 @@ class AddAssetsUuid extends AbstractMigration
       $this->execute("ALTER TABLE assets ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
       //manage Foreign key
+        $table = $this->table('assets');
+        $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->update();
        $table = $this->table('amvs');
        $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();

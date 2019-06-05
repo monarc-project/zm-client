@@ -2005,6 +2005,9 @@ class AddAmvsUuid extends AbstractMigration
             ->addColumn('amv_uuid', 'uuid')
             ->addColumn('anr_id2', 'integer', array('null' => true, 'signed' => false))
             ->save();
+      $table = $this->table('measures_amvs');
+      $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->update();
       $this->execute('UPDATE measures_amvs A,amvs B SET A.amv_uuid = B.uuid where B.id=A.amv_id');
       $this->execute('UPDATE measures_amvs A SET A.anr_id2 = A.anr_id');
       $table->removeColumn('amv_id')
@@ -2021,13 +2024,28 @@ class AddAmvsUuid extends AbstractMigration
       $this->execute("ALTER TABLE amvs ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
       //manage Foreign key
-       $table = $this->table('instances_risks');
-       $table->dropForeignKey('anr_id')
-             ->addForeignKey(['amv_id','anr_id'], 'amvs', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+      $table = $this->table('amvs');
+      $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->addForeignKey(['vulnerability_id','anr_id'], 'vulnerabilities', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+
+      $table = $this->table('instances_risks');
+      $table->dropForeignKey('anr_id')
              ->save();
-       $table = $this->table('measures_amvs');
-       $table->dropForeignKey('anr_id')
-             ->addForeignKey(['amv_id','anr_id'], 'amvs', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+      $table = $this->table('instances_risks');
+      $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey(['amv_id','anr_id'], 'amvs', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
+
+      $table = $this->table('measures_amvs');
+      $table->dropForeignKey('anr_id')
              ->save();
+      $table = $this->table('measures_amvs');
+      $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey(['amv_id','anr_id'], 'amvs', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->addForeignKey(['measure_id','anr_id'], 'measures', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+            ->update();
     }
 }

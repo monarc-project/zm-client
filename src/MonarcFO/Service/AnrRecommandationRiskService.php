@@ -16,7 +16,6 @@ use MonarcFO\Model\Table\InstanceRiskOpTable;
 use MonarcFO\Model\Table\InstanceRiskTable;
 use MonarcFO\Model\Table\InstanceTable;
 use MonarcFO\Model\Table\RecommandationHistoricTable;
-use MonarcFO\Model\Table\RecommandationMeasureTable;
 use MonarcFO\Model\Table\RecommandationRiskTable;
 use MonarcFO\Model\Table\RecommandationTable;
 use MonarcFO\Service\AbstractService;
@@ -31,7 +30,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
     protected $userAnrTable;
     protected $recommandationTable;
     protected $recommandationHistoricTable;
-    protected $recommandationMeasureTable;
     protected $instanceRiskTable;
     protected $instanceRiskOpTable;
     protected $recommandationHistoricEntity;
@@ -62,21 +60,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $filterLeft
         );
 
-        /** @var RecommandationMeasureTable $recommandationMeasureTable */
-        $recommandationMeasureTable = $this->get('recommandationMeasureTable');
-
         foreach ($recosRisks as $key => $recoRisk) {
-
-            $recommandationsMeasures = $recommandationMeasureTable->getEntityByFields(['recommandation' => ['anr' => $recoRisk['anr']->id, 'uuid' => $recoRisk['recommandation']->uuid->toString()]]);
-
-            $measures = [];
-            foreach ($recommandationsMeasures as $recommandationMeasure) {
-                $recommandationMeasure = $recommandationMeasure->getJsonArray();
-                $recommandationMeasure['measure'] = $recommandationMeasure['measure']->getJsonArray();
-                $measures[] = $recommandationMeasure;
-            }
-
-            $recosRisks[$key]['measures'] = $measures;
 
             if (!empty($recoRisk['recommandation'])) {
                 if (empty($recoRisk['recommandation']->duedate) || $recoRisk['recommandation']->duedate == '0000-00-00') {
