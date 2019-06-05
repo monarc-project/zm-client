@@ -30,31 +30,13 @@ class AddRecommandationsUuid extends AbstractMigration
      */
     public function change()
     {
-        //uuid for recommandations
-
-        $data = array(
-            'Rec 5' => '8b921900-7301-11e9-b475-0800200c9a66',
-            'Rec 9' => '8b92190a-7301-11e9-b475-0800200c9a66',
-            'Rec 1' => '8b92191d-7301-11e9-b475-0800200c9a66',
-            'Rec 88' => '8b924017-7301-11e9-b475-0800200c9a66',
-            'Rec 34' => '8b924022-7301-11e9-b475-0800200c9a66',
-            'Rec 2' => '8b92402a-7301-11e9-b475-0800200c9a66',
-            'Rec 4' => '8b924035-7301-11e9-b475-0800200c9a66',
-            'Rec 7' => '8b92403a-7301-11e9-b475-0800200c9a66',
-            'Rec 8' => '8b924041-7301-11e9-b475-0800200c9a66',
-            'Rec 6' => '8b926729-7301-11e9-b475-0800200c9a66',
-            'REC RISQUE OP' => '8b926737-7301-11e9-b475-0800200c9a66'
-        );
-
         // Migration for table recommandations -- Modify the data
         $table = $this->table('recommandations');
         $table
             ->addColumn('uuid', 'uuid', array('after' => 'id'))
             ->addColumn('status', 'integer', array('after' => 'comment','null' => true, 'default' => '1', 'limit' => MysqlAdapter::INT_TINY))
             ->update();
-        foreach ($data as $key => $value) { //fill the uuid only for recommandations created by cases
-            $this->execute('UPDATE recommandations SET uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');
-        }
+
         $unUUIDpdo = $this->query('select uuid,id from recommandations' . ' WHERE uuid =' . '"' . '"');
         $unUUIDrows = $unUUIDpdo->fetchAll();
 

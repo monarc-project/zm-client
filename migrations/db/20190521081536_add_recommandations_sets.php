@@ -52,7 +52,7 @@ class AddRecommandationsSets extends AbstractMigration
             ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE', 'update' => 'RESTRICT'))
             ->update();
 
-        // Create a defaut ISO 27002 referential for each analysis
+        // Create a defaut existing recommendations set for each analysis
         $recommandations_sets = [];
         $anr_ids = $this->fetchAll('SELECT id FROM anrs');
         foreach ($anr_ids as $anr_id) {
@@ -70,23 +70,6 @@ class AddRecommandationsSets extends AbstractMigration
         if (count($recommandations_sets) > 0)
             $this->insert("recommandations_sets", $recommandations_sets);
 
-        $recommandations_sets = [];
-        foreach ($anr_ids as $anr_id) {
-            $recommandations_sets[] = [
-                'anr_id' => $anr_id['id'],
-                'uuid' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-                'label1' => 'Recommandations CASES',
-                'label2' => 'CASES Recommendations',
-                'label3' => 'CASES Empfehlungen',
-                'label4' => 'CASES Aanbevelingen',
-                'creator' => 'Migration script',
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-        }
-
-        if (count($recommandations_sets) > 0)
-            $this->insert("recommandations_sets", $recommandations_sets);
-
         //remove the id
         $table->removeColumn('id')
             ->dropForeignKey('anr_id')
@@ -101,25 +84,6 @@ class AddRecommandationsSets extends AbstractMigration
             ->dropForeignKey('anr_id')
             ->update();
 
-
-
-        $data = array(
-            'Rec 5' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 9' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 1' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 88' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 34' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 2' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 4' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 7' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 8' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'Rec 6' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59',
-            'REC RISQUE OP' => 'b1c27872-7ba3-11e9-8f9e-2a86e4085a59'
-        );
-
-        foreach ($data as $key => $value) { //fill the recommandation_set_uuid only for recommandations created by cases
-            $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . $value . '"' . ' WHERE code =' . '"' . $key . '"');
-        }
         $unUUIDpdo = $this->query('select uuid, code from recommandations' . ' WHERE recommandation_set_uuid =' . '"' . '"');
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
