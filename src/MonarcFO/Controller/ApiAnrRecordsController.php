@@ -146,14 +146,13 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
     public function delete($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'id' => $id];
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
-        $this->getService()->deleteRecord($newId);
+        $this->getService()->deleteRecord($id);
 
         return new JsonModel(['status' => 'ok']);
     }

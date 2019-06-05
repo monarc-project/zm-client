@@ -39,16 +39,17 @@ class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
         return new JsonModel($entity);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'id' => $data['id']];
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
-
-        $this->getService()->update($newId, $data);
+        $this->getService()->updateProcessor($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
@@ -58,17 +59,22 @@ class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
      */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        return $this->methodNotAllowed();
+    }
 
-        $id = $this->getService()->createProcessor($data);
+    /**
+     * @inheritdoc
+     */
+    public function patch($id, $data)
+    {
+        return $this->methodNotAllowed();
+    }
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+    /**
+     * @inheritdoc
+     */
+    public function delete($id)
+    {
+        return $this->methodNotAllowed();
     }
 }

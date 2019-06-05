@@ -20,4 +20,13 @@ class AnrRecordRecipientCategoryService extends AbstractService
     protected $dependencies = ['anr'];
     protected $filterColumns = ['label'];
     protected $userAnrTable;
+    protected $recordTable;
+
+    public function recipientCategoryWithoutRecord($recipientId, $recordId, $anrId) {
+        $records = $this->recordTable->getEntityByFields(['recipients' => $recipientId, 'anr' => $anrId]);
+        if(count($records) > 0) {
+            return false;
+        }
+        return true;
+    }
 }

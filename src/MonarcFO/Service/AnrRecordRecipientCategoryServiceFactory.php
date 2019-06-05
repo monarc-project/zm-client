@@ -21,5 +21,6 @@ class AnrRecordRecipientCategoryServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\RecordRecipientCategoryTable',
         'entity' => 'MonarcFO\Model\Entity\RecordRecipientCategory',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
+        'recordTable' => 'MonarcFO\Model\Table\RecordTable',
     ];
 }

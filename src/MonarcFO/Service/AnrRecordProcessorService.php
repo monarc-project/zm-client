@@ -22,6 +22,7 @@ class AnrRecordProcessorService extends AbstractService
     protected $filterColumns = ['label'];
     protected $userAnrTable;
     protected $anrTable;
+    protected $recordTable;
     protected $controllerTable;
 
     /**
@@ -42,6 +43,54 @@ class AnrRecordProcessorService extends AbstractService
         }
         $data['controllers'] = $behalfControllers;
         return $this->create($data, true);
+    }
+
+    public function deleteProcessor($id)
+    {
+        $processorEntity = $this->get('table')->getEntity($id);
+        $anrId = $entity->anr->id;
+        $controllersToCheck = array();
+
+        foreach($processorEntity->controllers as $controller) {
+            array_push($controllersToDelete, $controller->id);
+        }
+        $result = $this->get('table')->delete($id);
+        foreach($controllersToCheck as $c) {
+            if($this->recordControllerService->controllerWithoutRecord($c, $entity->id, $anrId)) {
+                $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $c]);
+            }
+        }
+        return $result;
+    }
+    /**
+     * Updates a processor of processing activity
+     * @param array $data The processor details fields
+     * @return object The resulting created processor object (entity)
+     */
+    public function updateProcessor($id, $data)
+    {
+        $entity = $this->get('table')->getEntity($id);
+        $behalfControllers = array();
+        foreach ($data['controllers'] as $bc) {
+            if(!isset($bc['id'])) {
+                $bc['anr'] = $this->anrTable->getEntity($data['anr']);
+                // Create a new controller
+                $bc['id'] = $this->recordControllerService->create($bc, true);
+            }
+            array_push($behalfControllers, $bc['id']);
+        }
+        $data['controllers'] = $behalfControllers;
+        $oldBehalfs = array();
+        foreach( $entity->controllers as $bc) {
+            array_push($oldBehalfs, $bc->id);
+        }
+        $result = $this->update($id, $data);
+        foreach($oldBehalfs as $bc) {
+            if(!in_array($bc, $behalfControllers) && $this->recordControllerService->controllerWithoutRecord($bc, $id, $data['anr'])) {
+                $this->recordControllerService->delete(['anr'=> $data['anr'], 'id' => $bc]);
+            }
+        }
+        return $result;
     }
 
     /**
@@ -85,5 +134,13 @@ class AnrRecordProcessorService extends AbstractService
                                                 ];
         }
         return $return;
+    }
+
+    public function processorWithoutRecord($processorId, $recordId, $anrId) {
+        $records = $this->recordTable->getEntityByFields(['processors' => $processorId, 'anr' => $anrId]);
+        if(count($records) > 0) {
+            return false;
+        }
+        return true;
     }
 }

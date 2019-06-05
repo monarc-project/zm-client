@@ -19,49 +19,36 @@ class ApiAnrRecordControllersController extends ApiAnrAbstractController
 {
     protected $name = 'record-controllers';
     protected $dependencies = ['anr'];
-
-    public function getList()
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $filterAnd = ['anr' => $anrId];
-
-        $service = $this->getService();
-
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
-
-        return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
-        ));
-    }
+    
     /**
      * @inheritdoc
      */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        return $this->methodNotAllowed();
+    }
 
-        $id = $this->getService()->create($data);
+    /**
+     * @inheritdoc
+     */
+    public function update($id, $data)
+    {
+        return $this->methodNotAllowed();
+    }
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+    /**
+     * @inheritdoc
+     */
+    public function patch($id, $data)
+    {
+        return $this->methodNotAllowed();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete($id)
+    {
+        return $this->methodNotAllowed();
     }
 }

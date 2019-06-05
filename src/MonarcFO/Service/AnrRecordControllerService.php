@@ -20,5 +20,23 @@ class AnrRecordControllerService extends AbstractService
     protected $dependencies = ['anr'];
     protected $filterColumns = ['label'];
     protected $userAnrTable;
+    protected $recordTable;
+    protected $processorTable;
+
+    public function controllerWithoutRecord($controllerId, $recordId, $anrId) {
+        $records = $this->recordTable->getEntityByFields(['controller' => $controllerId, 'anr' => $anrId]);
+        if(count($records)> 0) {
+            return false;
+        }
+        $jointForRecords = $this->recordTable->getEntityByFields(['jointControllers' => $controllerId, 'anr' => $anrId]);
+        if(count($jointForRecords)> 0) {
+            return false;
+        }
+        $behalfForProcessors = $this->processorTable->getEntityByFields(['controllers' => $controllerId, 'anr' => $anrId]);
+        if(count($behalfForProcessors)> 0) {
+            return false;
+        }
+        return true;
+    }
 
 }

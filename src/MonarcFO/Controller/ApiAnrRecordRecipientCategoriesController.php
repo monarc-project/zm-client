@@ -19,23 +19,36 @@ class ApiAnrRecordRecipientCategoriesController extends ApiAnrAbstractController
 {
     protected $name = 'record-recipient-categories';
     protected $dependencies = ['anr'];
-
+    
     /**
      * @inheritdoc
      */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        return $this->methodNotAllowed();
+    }
 
-        $id = $this->getService()->create($data);
+    /**
+     * @inheritdoc
+     */
+    public function update($id, $data)
+    {
+        return $this->methodNotAllowed();
+    }
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+    /**
+     * @inheritdoc
+     */
+    public function patch($id, $data)
+    {
+        return $this->methodNotAllowed();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete($id)
+    {
+        return $this->methodNotAllowed();
     }
 }
