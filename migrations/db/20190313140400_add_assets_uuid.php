@@ -79,6 +79,7 @@ class AddAssetsUuid extends AbstractMigration
       $table
           ->addColumn('uuid', 'uuid',array('after' => 'id'))
           ->addIndex(array('uuid'))
+          ->removeIndex(['anr_id','code'])
           ->update();
       foreach ($data as $key => $value) { //fill the uuid only for assets created by cases
         $this->execute('UPDATE assets SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
