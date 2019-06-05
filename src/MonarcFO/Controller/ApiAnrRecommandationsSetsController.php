@@ -31,10 +31,10 @@ class ApiAnrRecommandationsSetsController extends ApiAnrAbstractController
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
 
-
+        $filterAnd = ['anr' => $anrId];
         $service = $this->getService();
 
-        $entities = $service->getList($page, $limit, $order, $filter);
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);
@@ -42,7 +42,7 @@ class ApiAnrRecommandationsSetsController extends ApiAnrAbstractController
         }
 
         return new JsonModel(array(
-            'count' => count($entities),
+            'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
         ));
     }
