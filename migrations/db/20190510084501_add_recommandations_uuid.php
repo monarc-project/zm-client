@@ -71,15 +71,6 @@ class AddRecommandationsUuid extends AbstractMigration
             ->renameColumn('recommandation_uuid', 'recommandation_id')
             ->update();
 
-        $table = $this->table('recommandations_measures'); //set the stufff for recommandations_measures
-        $table->dropForeignKey('recommandation_id')
-            ->addColumn('recommandation_uuid', 'uuid', array('after' => 'id'))
-            ->update();
-        $this->execute('UPDATE recommandations_measures A,recommandations B SET A.recommandation_uuid = B.uuid where B.id=A.recommandation_id');
-        $table->removeColumn('recommandation_id')
-            ->renameColumn('recommandation_uuid', 'recommandation_id')
-            ->update();
-
         //remove the id
         $table = $this->table('recommandations');
         $table->removeColumn('id')
@@ -93,9 +84,6 @@ class AddRecommandationsUuid extends AbstractMigration
 
         //manage Foreign keys
         $table = $this->table('recommandations_risks');
-        $table->addForeignKey(['recommandation_id', 'anr_id'], 'recommandations', ['uuid', 'anr_id'], ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
-            ->update();
-        $table = $this->table('recommandations_measures');
         $table->addForeignKey(['recommandation_id', 'anr_id'], 'recommandations', ['uuid', 'anr_id'], ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
             ->update();
     }
