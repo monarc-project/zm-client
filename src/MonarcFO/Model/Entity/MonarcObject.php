@@ -23,6 +23,15 @@ use MonarcCore\Model\Entity\ObjectSuperClass;
  */
 class MonarcObject extends ObjectSuperClass
 {
+
+    /**
+    * @var integer
+    *
+    * @ORM\Column(name="uuid", type="uuid", nullable=false)
+    * @ORM\Id
+    */
+    protected $uuid;
+
     /**
      * @var \MonarcFO\Model\Entity\Anr
      * @ORM\Id

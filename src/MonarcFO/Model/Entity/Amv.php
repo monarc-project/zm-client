@@ -24,10 +24,18 @@ use Zend\Validator\Uuid;
  */
 class Amv extends AmvSuperclass
 {
+
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     * @ORM\Id
+     */
+    protected $uuid;
     /**
      * @var \MonarcFO\Model\Entity\Anr
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
@@ -85,33 +93,9 @@ class Amv extends AmvSuperclass
 
     public function getInputFilter($partial = false)
     {
-      if (!$this->inputFilter) {
-          parent::getInputFilter($partial);
-
-          $texts = ['vulnerability', 'asset', 'threat'];
-
-          foreach ($texts as $text) {
-              // $this->inputFilter->add(array(
-              //     'name' => $text."['anr']",
-              //     'required' => ($partial) ? false : true,
-              //     'allow_empty' => false,
-              //     'filters' => array(
-              //         array(
-              //             'name' => 'Digits',
-              //         ),
-              //     ),
-              //     'validators' => array(),
-              // ));
-              $this->inputFilter->add(array(
-                  'name' => $text,
-                  'required' => ($partial) ? false : true,
-                  'allow_empty' => false,
-                  'validators' => array(),
-              ));
-
-          }
+        if (!$this->inputFilter) {
+            parent::getInputFilter($partial);
+        }
+        return $this->inputFilter;
     }
-    //file_put_contents('php://stderr', print_r($this->inputFilter, TRUE).PHP_EOL);
-    return $this->inputFilter;
-  }
 }

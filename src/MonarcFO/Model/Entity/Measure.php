@@ -44,7 +44,7 @@ class Measure extends MeasureSuperClass
 
     /**
     * @var \Doctrine\Common\Collections\Collection
-    * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Amv", inversedBy="measures", )
+    * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\Amv", inversedBy="measures", fetch="EAGER")
     * @ORM\JoinTable(name="measures_amvs",
     *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")},
     *  inverseJoinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")},

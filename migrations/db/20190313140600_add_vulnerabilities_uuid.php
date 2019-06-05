@@ -743,6 +743,7 @@ class AddVulnerabilitiesUuid extends AbstractMigration
       $table
           ->addColumn('uuid', 'uuid',array('after' => 'id'))
           ->addIndex(array('uuid'))
+          ->removeIndex(['anr_id','code'])
           ->update();
       foreach ($data as $key => $value) { //fill the uuid only for vulnerabilities created by cases
         $this->execute('UPDATE vulnerabilities SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
@@ -785,10 +786,13 @@ class AddVulnerabilitiesUuid extends AbstractMigration
       $table = $this->table('vulnerabilities');
       $table->removeColumn('id')
             ->dropForeignKey('anr_id')
-            ->update();
+            ->save();
       $this->execute("ALTER TABLE vulnerabilities ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
       //manage Foreign key
+      $table = $this->table('vulnerabilities');
+      $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+          ->update();
        $table = $this->table('amvs');
        $table->addForeignKey(['vulnerability_id','anr_id'], 'vulnerabilities', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();

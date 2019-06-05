@@ -22,6 +22,15 @@ use MonarcCore\Model\Entity\ThreatSuperClass;
  */
 class Threat extends ThreatSuperClass
 {
+
+    /**
+    * @var integer
+    *
+    * @ORM\Column(name="uuid", type="uuid", nullable=false)
+    * @ORM\Id
+    */
+    protected $uuid;
+
     /**
      * @var \MonarcFO\Model\Entity\Anr
      * @ORM\Id

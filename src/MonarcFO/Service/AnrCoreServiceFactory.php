@@ -42,6 +42,7 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'measureTable' => 'MonarcFO\Model\Table\MeasureTable',
         'measureMeasureTable' => 'MonarcFO\Model\Table\MeasureMeasureTable',
         'soaCategoryTable' => 'MonarcFO\Model\Table\SoaCategoryTable',
-        'soaTable' => 'MonarcFO\Model\Table\SoaTable'
+        'soaTable' => 'MonarcFO\Model\Table\SoaTable',
+        'configService' => 'MonarcCore\Service\ConfigService',
     ];
 }

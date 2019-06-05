@@ -31,7 +31,6 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceRiskTable' => 'MonarcFO\Model\Table\InstanceRiskTable',
         'instanceConsequenceEntity' => 'MonarcFO\Model\Entity\InstanceConsequence',
         'recommandationRiskTable' => 'MonarcFO\Model\Table\RecommandationRiskTable',
-        'recommandationMeasureTable' => 'MonarcFO\Model\Table\RecommandationMeasureTable',
         'recommandationTable' => 'MonarcFO\Model\Table\RecommandationTable',
         'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
         'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
@@ -52,6 +51,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
         'translateService' => 'MonarcCore\Service\TranslateService',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
+        'configService' => 'MonarcCore\Service\ConfigService',
 
         // Export (Services)
         'objectExportService' => 'MonarcFO\Service\ObjectExportService',

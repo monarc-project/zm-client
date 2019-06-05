@@ -25,17 +25,18 @@ class ApiAnrObjectsExportController extends ApiAnrAbstractController
         if (empty($data['id'])) {
             throw new \MonarcCore\Exception\Exception('Object to export is required', 412);
         }
-        $entity = $this->getService()->getEntity($data['id']);
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
 
+        $entity = $this->getService()->getEntity(['uuid' => $data['id'], 'anr' => $anrId]);
+
         if ($entity['anr']->get('id') != $anrId) {
             throw new \MonarcCore\Exception\Exception('Anr ids differents', 412);
         }
-
+        $data['anr'] = $anrId;
         $output = $this->getService()->export($data);
 
         $response = $this->getResponse();

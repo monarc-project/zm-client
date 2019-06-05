@@ -471,18 +471,6 @@ return array(
                             ),
                         ),
                     ),
-                    'recommandations_measures' => array(
-                        'type' => 'segment',
-                        'options' => array(
-                            'route' => 'recommandations-measures[/:id]',
-                            'constraints' => array(
-                                'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsMeasures',
-                            ),
-                        ),
-                    ),
                     'carto_risks' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -806,7 +794,6 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecommandationsHistorics' => '\MonarcFO\Controller\ApiAnrRecommandationsHistoricsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsRisks' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidate' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecommandationsMeasures' => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrTreatmentPlan' => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
             '\MonarcFO\Controller\ApiSoa' => '\MonarcFO\Controller\ApiSoaControllerFactory',
             '\MonarcFO\Controller\ApiSoaCategory' => '\MonarcFO\Controller\ApiSoaCategoryControllerFactory',
@@ -881,7 +868,6 @@ return array(
             '\MonarcFO\Model\Table\ReferentialTable' => '\MonarcFO\Service\Model\Table\ReferentialServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationTable' => '\MonarcFO\Service\Model\Table\RecommandationServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationHistoricTable' => '\MonarcFO\Service\Model\Table\RecommandationHistoricServiceModelTable',
-            '\MonarcFO\Model\Table\RecommandationMeasureTable' => '\MonarcFO\Service\Model\Table\RecommandationMeasureServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationRiskTable' => '\MonarcFO\Service\Model\Table\RecommandationRiskServiceModelTable',
             '\MonarcFO\Model\Table\ScaleTable' => '\MonarcFO\Service\Model\Table\ScaleServiceModelTable',
             '\MonarcFO\Model\Table\ScaleCommentTable' => '\MonarcFO\Service\Model\Table\ScaleCommentServiceModelTable',
@@ -922,7 +908,6 @@ return array(
             '\MonarcFO\Model\Entity\RolfTag' => '\MonarcFO\Service\Model\Entity\RolfTagServiceModelEntity',
             '\MonarcFO\Model\Entity\Recommandation' => '\MonarcFO\Service\Model\Entity\RecommandationServiceModelEntity',
             '\MonarcFO\Model\Entity\RecommandationHistoric' => '\MonarcFO\Service\Model\Entity\RecommandationHistoricServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecommandationMeasure' => '\MonarcFO\Service\Model\Entity\RecommandationMeasureServiceModelEntity',
             '\MonarcFO\Model\Entity\RecommandationRisk' => '\MonarcFO\Service\Model\Entity\RecommandationRiskServiceModelEntity',
             '\MonarcFO\Model\Entity\Scale' => '\MonarcFO\Service\Model\Entity\ScaleServiceModelEntity',
             '\MonarcFO\Model\Entity\ScaleComment' => '\MonarcFO\Service\Model\Entity\ScaleCommentServiceModelEntity',
@@ -975,7 +960,6 @@ return array(
             '\MonarcFO\Service\AnrLibraryService' => '\MonarcFO\Service\AnrLibraryServiceFactory',
             '\MonarcFO\Service\AnrRecommandationService' => '\MonarcFO\Service\AnrRecommandationServiceFactory',
             '\MonarcFO\Service\AnrRecommandationHistoricService' => '\MonarcFO\Service\AnrRecommandationHistoricServiceFactory',
-            '\MonarcFO\Service\AnrRecommandationMeasureService' => '\MonarcFO\Service\AnrRecommandationMeasureServiceFactory',
             '\MonarcFO\Service\AnrRecommandationRiskService' => '\MonarcFO\Service\AnrRecommandationRiskServiceFactory',
             '\MonarcFO\Service\AnrScaleService' => '\MonarcFO\Service\AnrScaleServiceFactory',
             '\MonarcFO\Service\AnrScaleTypeService' => '\MonarcFO\Service\AnrScaleTypeServiceFactory',

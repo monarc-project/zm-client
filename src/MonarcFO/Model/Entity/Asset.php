@@ -22,9 +22,16 @@ use MonarcCore\Model\Entity\AssetSuperClass;
 class Asset extends AssetSuperClass
 {
     /**
+    * @var integer
+    *
+    * @ORM\Column(name="uuid", type="uuid", nullable=false)
+    * @ORM\Id
+    */
+    protected $uuid;
+    /**
      * @var \MonarcFO\Model\Entity\Anr
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr",)
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })

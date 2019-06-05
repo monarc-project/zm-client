@@ -67,6 +67,7 @@ class AddThreatsUuid extends AbstractMigration
       $table
           ->addColumn('uuid', 'uuid',array('after' => 'id'))
           ->addIndex(array('uuid'))
+          ->removeIndex(['anr_id','code'])
           ->update();
       foreach ($data as $key => $value) { //fill the uuid only for threats created by cases
         $this->execute('UPDATE threats SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
@@ -109,10 +110,13 @@ class AddThreatsUuid extends AbstractMigration
       $table = $this->table('threats');
       $table->removeColumn('id')
             ->dropForeignKey('anr_id')
-            ->update();
+            ->save();
       $this->execute("ALTER TABLE threats ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
-      //manage Foreign key
+        //manage Foreign key
+        $table = $this->table('threats');
+        $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->update();
        $table = $this->table('amvs');
        $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
