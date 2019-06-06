@@ -52,7 +52,7 @@ class AnrRecordProcessorService extends AbstractService
         $controllersToCheck = array();
 
         foreach($processorEntity->controllers as $controller) {
-            array_push($controllersToDelete, $controller->id);
+            array_push($controllersToCheck, $controller->id);
         }
         $result = $this->get('table')->delete($id);
         foreach($controllersToCheck as $c) {

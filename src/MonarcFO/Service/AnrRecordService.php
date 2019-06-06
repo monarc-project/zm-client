@@ -46,7 +46,7 @@ class AnrRecordService extends AbstractService
         foreach($entity->recipients as $r) {
             array_push($categoriesToCheck, $r->id);
         }
-        $result = $this>get('table')->delete($id);
+        $result = $this->get('table')->delete($id);
         foreach($controllersToCheck as $c) {
             if($this->recordControllerService->controllerWithoutRecord($c, $entity->id, $anrId)) {
                 $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $c]);
