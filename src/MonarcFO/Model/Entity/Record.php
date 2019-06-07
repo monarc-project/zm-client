@@ -271,6 +271,42 @@ class Record extends AbstractEntity
     }
 
     /**
+     * @return Processor
+     */
+    public function getProcessors()
+    {
+        return $this->processors;
+    }
+
+    /**
+    * @param int $processors
+    * @return Record
+    */
+    public function setProcessors($processors)
+    {
+        $this->processors = $processors;
+        return $this;
+    }
+
+    /**
+     * @return RecipientCategory
+     */
+    public function getRecipients()
+    {
+        return $this->recipients;
+    }
+
+    /**
+    * @param int $recipients
+    * @return Record
+    */
+    public function setRecipients($recipients)
+    {
+        $this->recipients = $recipients;
+        return $this;
+    }
+
+    /**
     * @return string
     */
     public function getRepresentative()

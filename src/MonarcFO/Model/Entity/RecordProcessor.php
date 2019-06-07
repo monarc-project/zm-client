@@ -55,7 +55,7 @@ class RecordProcessor extends AbstractEntity
 
     /**
      * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordController")
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordController", cascade={"persist"})
      * @ORM\JoinTable(name="record_processors_record_behalf_controllers",
      *  joinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="controller_id", referencedColumnName="id")}
@@ -217,6 +217,25 @@ class RecordProcessor extends AbstractEntity
     public function setUpdatedAt($updatedAt)
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+
+    /**
+     * @return Controller
+     */
+    public function getControllers()
+    {
+        return $this->controllers;
+    }
+
+    /**
+    * @param int $jointControllers
+    * @return Record
+    */
+    public function setControllers($controllers)
+    {
+        $this->controllers = $controllers;
         return $this;
     }
 }

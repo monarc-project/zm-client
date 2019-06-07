@@ -36,6 +36,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
     protected $measureTable;
     protected $measureMeasureTable;
     protected $soaTable;
+    protected $recordService;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -1299,6 +1300,12 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   }
               }
               $this->get('soaTable')->getDb()->flush();
+          }
+          // import the GDPR records
+          if (!empty($data['records'])) { //Data of records
+              foreach ($data['records'] as $v) {
+                  $this->get('recordService')->importFromArray($v,$anr->get('id'));
+              }
           }
           // import scales
           if (!empty($data['scales'])) {

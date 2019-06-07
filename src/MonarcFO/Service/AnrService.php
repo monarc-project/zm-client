@@ -101,10 +101,15 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $questionChoiceCliTable;
     protected $SoaCliTable;
     protected $SoaCategoryCliTable;
+    protected $recordCliTable;
+    protected $recordControllerCliTable;
+    protected $recordProcessorCliTable;
+    protected $recordRecipientCategoryCliTable;
     protected $referentialCliTable;
     protected $measureMeasureCliTable;
 
     protected $instanceService;
+    protected $recordService;
 
     /**
      * @inheritdoc
@@ -999,6 +1004,79 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInterview->set('id', null);
                 $newInterview->setAnr($newAnr);
                 $this->get('interviewCliTable')->save($newInterview,false);
+            }
+
+            //duplicate record controllers
+            $recordControllers = $this->get('recordControllerCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $controllerNewIds = [];
+            foreach ($recordControllers as $c) {
+                $newController = new \MonarcFO\Model\Entity\RecordController($c);
+                $newController->set('id', null);
+                $newController->setAnr($newAnr);
+                $this->get('recordControllerCliTable')->save($newController, false);
+                $this->get('recordControllerCliTable')->getDb()->flush();
+                $controllerNewIds[$c->id] = $newController;
+            }
+
+            //duplicate record processors
+            $recordProcessors = $this->get('recordProcessorCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $processorNewIds = [];
+            foreach ($recordProcessors as $p) {
+                $newProcessor = new \MonarcFO\Model\Entity\RecordProcessor($p);
+                $newProcessor->set('id', null);
+                $newProcessor->setAnr($newAnr);
+                $behalfNewIds = [];
+                $behalfControllers = $p->getControllers();
+                foreach ($behalfControllers as $bc) {
+                    $behalfNewIds[$bc->id] = $controllerNewIds[$bc->id];
+                }
+                $newProcessor->setControllers($behalfNewIds);
+                $this->get('recordProcessorCliTable')->save($newProcessor, false);
+                $this->get('recordProcessorCliTable')->getDb()->flush();
+                $processorNewIds[$p->id] = $newProcessor;
+            }
+            //duplicate record recipient categories
+            $recordRecipients = $this->get('recordRecipientCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $recipientNewIds = [];
+            foreach ($recordRecipients as $r) {
+                $newRecipient = new \MonarcFO\Model\Entity\RecordRecipientCategory($r);
+                $newRecipient->set('id', null);
+                $newRecipient->setAnr($newAnr);
+                $this->get('recordRecipientCategoryCliTable')->save($newRecipient, false);
+                $this->get('recordRecipientCategoryCliTable')->getDb()->flush();
+                $recipientNewIds[$r->id] = $newRecipient;
+            }
+
+            $records = $this->get('recordCliTable')->getEntityByFields(['anr' => $anr->id]);
+            foreach ($records as $record) {
+                $newRecord = new \MonarcFO\Model\Entity\Record($record);
+                $newRecord->set('id', null);
+                $newRecord->setAnr($newAnr);
+                $newRecord->setController($controllerNewIds[$record->controller->id]);
+
+                $jointControllerNewIds = [];
+                $jointControllers = $record->getJointControllers();
+                foreach ($jointControllers as $jc) {
+                    $jointControllerNewIds[$jc->id] = $controllerNewIds[$jc->id];
+                }
+                $newRecord->setJointControllers($jointControllerNewIds);
+
+                $processorIds = [];
+                $processors = $record->getProcessors();
+                foreach ($processors as $p) {
+                    $processorIds[$p->id] = $processorNewIds[$p->id];
+                }
+                $newRecord->setProcessors($processorIds);
+
+                $recipientIds = [];
+                $recipients = $record->getRecipients();
+                foreach ($recipients as $r) {
+                    $recipientIds[$r->id] = $recipientNewIds[$r->id];
+                }
+                $newRecord->setRecipients($recipientIds);
+
+                $this->get('recordCliTable')->save($newRecord, false);
+                $this->get('recordCliTable')->getDb()->flush();
             }
 
             //duplicate recommandations

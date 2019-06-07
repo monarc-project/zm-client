@@ -346,7 +346,7 @@ class AnrRecordService extends AbstractService
     /**
      * Imports a record from a data array. This data is generally what has been exported into a file.
      * @param array $data The asset's data fields
-     * @param \MonarcFO\Model\Entity\Anr $anr The target ANR entity
+     * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr)

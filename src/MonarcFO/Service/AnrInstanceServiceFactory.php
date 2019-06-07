@@ -51,6 +51,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'objectObjectService' => 'MonarcFO\Service\ObjectObjectService',
         'translateService' => 'MonarcCore\Service\TranslateService',
         'instanceTable' => 'MonarcFO\Model\Table\InstanceTable',
+        'recordService' => 'MonarcFO\Service\AnrRecordService',
         'configService' => 'MonarcCore\Service\ConfigService',
 
         // Export (Services)
