@@ -39,6 +39,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'measureService' => '\MonarcFO\Service\AnrMeasureService',
         'riskOpService' => '\MonarcFO\Service\AnrRiskOpService',
         'riskService' => '\MonarcFO\Service\AnrRiskService',
+        'recordService' => '\MonarcFO\Service\AnrRecordService',
         'translateService' => 'MonarcCore\Service\TranslateService',
     ];
 }

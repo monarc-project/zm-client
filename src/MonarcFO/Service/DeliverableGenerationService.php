@@ -76,6 +76,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     protected $riskOpService;
     /** @var riskService */
     protected $riskService;
+    /** @var recordService */
+    protected $recordService;
     protected $translateService;
 
     protected $currentLangAnrIndex;
@@ -220,13 +222,19 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         if ($data['typedoc'] == 5) {
           $referential = $data['referential'];
+          $record = null;
           $risksByControl = $data['risksByControl'];
+        } elseif ($data['typedoc'] == 6) {
+          $referential = null;
+          $record = $data['record'];
+          $risksByControl = false;
         }else {
           $referential = null;
+          $record = null;
           $risksByControl = false;
         }
 
-        $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential, $risksByControl));
+        $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential, $record, $risksByControl));
         $values['txt']['TYPE'] = $typeDoc;
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
@@ -361,7 +369,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      * @param int $modelCategory The model type
      * @return array The values for the Word document as a key-value array
      */
-    protected function buildValues($anr, $modelCategory, $referential = null, $risksByControl = false)
+    protected function buildValues($anr, $modelCategory, $referential = null, $record  = null, $risksByControl = false)
     {
         switch ($modelCategory) {
             case 1:
@@ -374,6 +382,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 return $this->buildImplementationPlanValues($anr);
             case 5:
                 return $this->buildStatementOfAppplicabilityValues($anr,$referential,$risksByControl);
+            case 6:
+                return $this->buildRecordOfProcessingActivitiesValues($anr,$record);
             default:
                 return [];
         }
@@ -856,15 +866,31 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
      */
     protected function buildStatementOfAppplicabilityValues($anr, $referential, $risksByControl)
     {
-        // Models are incremental, so use values from level-3 model
+        // Models are incremental, so use values from level-4 model
         $values = [];
-        $values = array_merge($values, $this->buildRiskAssessmentValues($anr));
+        $values = array_merge($values, $this->buildImplementationPlanValues($anr));
         $values['txt']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability($anr, $referential);
         if ($risksByControl) {
           $values['txt']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($anr,$referential);
         }else {
           $values['txt']['TABLE_RISKS_BY_CONTROL'] = null;
         }
+        return $values;
+    }
+
+    /**
+     * Build values for Step 5 deliverable (Record of Processing Activities)
+     * @param Anr $anr The ANR object
+     * @return array The key-value array
+     */
+    protected function buildRecordOfProcessingActivitiesValues($anr, $record)
+    {
+        // Models are incremental, so use values from level-4 model
+        $values = [];
+        $values = array_merge($values, $this->buildImplementationPlanValues($anr));
+        $values['txt']['TABLE_RECORD_INFORMATION'] = $this->generateTableRecordGDPR($anr, $record);
+        $values['txt']['TABLE_JOINT_CONTROLLERS'] = $this->generateTableJointControllers($anr, $record);
+        $values['txt']['TABLE_PROCESSORS'] = $this->generateTableProcessors($anr, $record);
         return $values;
     }
 
@@ -2577,6 +2603,187 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
       return $this->getWordXmlFromWordObject($tableWord);
   }
 
+    /**
+     * Generates the Processing Activities Record's General Informations data
+     * @param Anr $anr The ANR object
+     * @return mixed|string The WordXml data generated
+     */
+    protected function generateTableRecordGDPR($anr, $recordId)
+    {
+        $recordTable = $this->get('recordService')->get('table');
+        $recordEntity = $recordTable->getEntity($recordId);
+        //css
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentFont = ['bold' => false, 'size' => 10];
+        $styleContentFontBold = ['bold' => true, 'size' => 10];
+        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
+        $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
+        $styleRowSpanCell = ['vMerge' => 'restart', 'align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleRowContinueCell = ['vMerge' => 'continue', 'align' => 'left', 'valign' => 'center', 'size' => 10];
+
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
+        $table = $section->addTable($styleTable);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('label'.$this->currentLangAnrIndex), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Controller\'s name'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('controller')->get('label'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Controller\'s contact'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('controller')->get('contact'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('representative'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('dpo'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Record purpose'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('purposes'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Record description'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('description'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Erasure date'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(strftime("%d-%m-%Y", $recordEntity->get('erasure')->getTimeStamp()), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('International transfer entity'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('idThirdCountry'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('International transfer data protection officer'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('dpoThirdCountry'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Security measures'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('secMeasures'), $styleContentFont, $alignLeft);
+        $rs = $recordEntity->get('recipients');
+        if(count($rs) > 0 ) {
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleRowSpanCell)->addText($this->anrTranslate('Recipients of data'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($rs[0]->get('label'), $styleContentFont, $alignLeft);
+            foreach ($rs->slice(1) as $r) {
+                $table->addRow(400);
+                $table->addCell(null, $styleRowContinueCell);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($r->get('label'), $styleContentFont, $alignLeft);
+            }
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
+    }
+
+    /**
+     * Generates the Processing Activities Record's Joint Controllers data
+     * @param Anr $anr The ANR object
+     * @return mixed|string The WordXml data generated
+     */
+    protected function generateTableJointControllers($anr, $recordId)
+    {
+        $recordTable = $this->get('recordService')->get('table');
+        $recordEntity = $recordTable->getEntity($recordId);
+        $jointControllers = $recordEntity->get('jointControllers');
+        //css
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentFont = ['bold' => false, 'size' => 10];
+        $styleContentFontBold = ['bold' => true, 'size' => 10];
+        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
+        $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
+
+        //create section
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
+        $table = $section->addTable($styleTable);
+
+        //header if array is not empty
+        if (count($jointControllers)) {
+            $table->addRow(400, ['tblHeader' => true]);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleHeaderFont, $alignCenter);
+            foreach($jointControllers as $jc) {
+                $table->addRow(400);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($jc->get('label'), $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($jc->get('contact'), $styleContentFont, $alignLeft);
+            }
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
+    }
+
+    /**
+    * Generates the Processing Activities Record's Joint Controllers data
+    * @param Anr $anr The ANR object
+    * @return mixed|string The WordXml data generated
+    */
+    protected function generateTableProcessors($anr, $recordId)
+    {
+        $recordTable = $this->get('recordService')->get('table');
+        $recordEntity = $recordTable->getEntity($recordId);
+        $processors = $recordEntity->get('processors');
+        //css
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleContentCell = ['gridSpan' => 2, 'align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentCellSplit = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleContentFont = ['bold' => false, 'size' => 10];
+        $styleContentFontBold = ['bold' => true, 'size' => 10];
+        $styleRowSpanCell = ['gridSpan' => 2, 'vMerge' => 'restart', 'align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleRowContinueCell = ['gridSpan' => 2, 'vMerge' => 'continue', 'align' => 'left', 'valign' => 'center', 'size' => 10];
+        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
+        $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
+
+        $result = '';
+        foreach ($processors as $p) {
+            //create section
+            $tableWord = new PhpWord();
+            $section = $tableWord->addSection();
+            $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('label'), $styleContentFont, $alignLeft);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Contact'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('contact'), $styleContentFont, $alignLeft);
+            $table->addRow(400);
+            $bcs = $p->get('controllers');
+            if(count($bcs) > 0 ) {
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleRowSpanCell)->addText($this->anrTranslate('Controller on behalf this processor is working for'), $styleHeaderFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCellSplit)->addText($bcs[0]->get('label'), $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCellSplit)->addText($bcs[0]->get('contact'), $styleContentFont, $alignLeft);
+                $table->addRow(400);
+                foreach ($bcs->slice(1) as $bc) {
+                    $table->addCell(null, $styleRowContinueCell);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCellSplit)->addText($bc->get('label'), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCellSplit)->addText($bc->get('contact'), $styleContentFont, $alignLeft);
+                    $table->addRow(400);
+                }
+            }
+
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Security measures'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('secMeasures'), $styleContentFont, $alignLeft);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('International transfer entity'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('idThirdCountry'), $styleContentFont, $alignLeft);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('International transfer officer'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('dpoThirdCountry'), $styleContentFont, $alignLeft);
+            $section->addTextBreak(2);
+            $result .= $this->getWordXmlFromWordObject($tableWord);
+        }
+
+        return $result;
+    }
 
     /**
      * Generate the impacts appreciation table data
