@@ -43,6 +43,8 @@ class AddRecordsTables extends AbstractMigration
                 ->addColumn('dpo_third_country', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('erasure', 'datetime', array('null' => false))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('data_subjects', 'text', array('null' => true))
+                ->addColumn('personal_data', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('created_at', 'datetime', array('null' => true))
                 ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))

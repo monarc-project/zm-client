@@ -267,6 +267,12 @@ class AnrRecordService extends AbstractService
         if($entity->secMeasures != '') {
             $return['security_measures'] = $entity->secMeasures;
         }
+        if($entity->dataSubjects) {
+            $return['data_subjects'] = $entity->dataSubjects;
+        }
+        if($entity->personalData != '') {
+            $return['personal_data'] = $entity->personalData;
+        }
         if($entity->idThirdCountry) {
             $return['international_transfer'] = [
                                                     'transfer' => true,
@@ -364,7 +370,9 @@ class AnrRecordService extends AbstractService
             $newData['representative'] = (isset($data['representative']) ? $data['representative'] : '');
             $newData['dpo'] = (isset($data['data_processor']) ? $data['data_processor'] : '');
             $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
-            $newData['erasure'] = (new \DateTime('@' .strtotime($data['erasure'])))->format('Y-m-d\TH:i:s.u\Z');;
+            $newData['erasure'] = (new \DateTime('@' .strtotime($data['erasure'])))->format('Y-m-d\TH:i:s.u\Z');
+            $newData['dataSubjects'] = (isset($data['data_subjects']) ? $data['data_subjects'] : []);
+            $newData['personalData'] = (isset($data['personal_data']) ? $data['personal_data'] : '');
             if($data['international_transfer']['transfer'] == true) {
                 $newData['idThirdCountry'] = $data['international_transfer']['identifier_third_country'];
                 $newData['dpoThirdCountry'] = $data['international_transfer']['data_processor_third_country'];

@@ -2646,13 +2646,16 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('dpo'), $styleContentFont, $alignLeft);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Record purpose'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Processing activity\'s purpose'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('purposes'), $styleContentFont, $alignLeft);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Record description'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Processing activity\'s description'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('description'), $styleContentFont, $alignLeft);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Erasure date'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Personal data processed'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('personalData'), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Retention_period'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(strftime("%d-%m-%Y", $recordEntity->get('erasure')->getTimeStamp()), $styleContentFont, $alignLeft);
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('International transfer entity'), $styleContentFontBold, $alignLeft);
@@ -2663,6 +2666,19 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Security measures'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('secMeasures'), $styleContentFont, $alignLeft);
+        $dss = $recordEntity->get('dataSubjects');
+        if(count($dss) > 0 ) {
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleRowSpanCell)->addText($this->anrTranslate('Data subjects'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($dss[0], $styleContentFont, $alignLeft);
+            array_splice($dss,0,1);
+            foreach ($dss as $ds) {
+                $table->addRow(400);
+                $table->addCell(null, $styleRowContinueCell);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($ds, $styleContentFont, $alignLeft);
+            }
+        }
+
         $rs = $recordEntity->get('recipients');
         if(count($rs) > 0 ) {
             $table->addRow(400);

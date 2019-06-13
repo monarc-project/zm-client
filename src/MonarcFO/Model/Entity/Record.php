@@ -163,6 +163,20 @@ class Record extends AbstractEntity
     protected $processors;
 
     /**
+     * @var array
+     *
+     * @ORM\Column(name="data_subjects", type="array", nullable=true)
+     */
+    protected $dataSubjects;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="personal_data", type="string", length=255, nullable=true)
+     */
+    protected $personalData;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="creator", type="string", length=255, nullable=true)
@@ -369,6 +383,7 @@ class Record extends AbstractEntity
     {
         $this->description = $description;
     }
+
     /**
     * @return string
     */
@@ -383,6 +398,38 @@ class Record extends AbstractEntity
     public function setIdThirdCountry($idThirdCountry)
     {
         $this->idThirdCountry = $idThirdCountry;
+    }
+
+    /**
+    * @return string
+    */
+    public function getDataSubjects()
+    {
+        return $this->dataSubjects;
+    }
+    /**
+    * @param string $dataSubjects
+    *
+    */
+    public function setDataSubjects($dataSubjects)
+    {
+        $this->dataSubjects = $dataSubjects;
+    }
+
+    /**
+    * @return string
+    */
+    public function getPersonalData()
+    {
+        return $this->personalData;
+    }
+    /**
+    * @param string $personalData
+    *
+    */
+    public function setPersonalData($personalData)
+    {
+        $this->personalData = $personalData;
     }
 
     /**
