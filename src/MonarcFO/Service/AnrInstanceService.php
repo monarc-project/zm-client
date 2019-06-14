@@ -1296,7 +1296,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                   if (array_key_exists($soa['measure_id'], $measuresNewIds)) {
                       $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
                       $newSoa->setAnr($anr);
-                      $newSoa->setMeasure([$measuresNewIds[$soa['measure_id']]]);
+                      $newSoa->setMeasure($measuresNewIds[$soa['measure_id']]);
                       $this->get('soaTable')->save($newSoa,false);
                   }else if (in_array($soa['measure_id'], $measuresStoredId)){ //measure exist so soa exist (normally)
                       $soaExistant = $this->get('soaTable')->getEntityByFields(['measure'=>['anr' => $anr->id, 'uuid' => $soa['measure_id']]]);
