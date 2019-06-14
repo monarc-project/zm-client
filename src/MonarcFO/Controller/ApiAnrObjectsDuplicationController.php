@@ -23,6 +23,10 @@ class ApiAnrObjectsDuplicationController extends ApiAnrAbstractController
      */
     public function create($data)
     {
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      if (!empty($anrId)) {
+          $data['anr'] = $anrId;
+      }
         if (isset($data['id'])) {
             $id = $this->getService()->duplicate($data, AbstractEntity::FRONT_OFFICE);
 
