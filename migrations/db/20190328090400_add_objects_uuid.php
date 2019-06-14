@@ -105,8 +105,13 @@ class AddObjectsUuid extends AbstractMigration
         foreach ($anrList as $index => $val)//for fetch the language of the analysis
         {
             foreach ($data as $key => $value) { //fill the uuid only for objects created by cases
-
-            $this->execute('UPDATE objects SET uuid =' .'"'.$key.'"'.' WHERE name'.$val['language'].' ='.'"'.$value['name'.$val['language']] .'" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+              if($val['language']==3 && $value['name3']=='Mitarbeiter' && $value['name2']=='Employee'){
+                $this->execute('UPDATE objects SET uuid =' .'"96e69e3b-513c-11e9-ac8c-0800277f0571"'.' WHERE name3 ='.'"Mitarbeiter" AND name2 = "Employee" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+              }else if ($val['language']==3 && $value['name3']=='Mitarbeiter' && $value['name2']=='Employees'){
+                $this->execute('UPDATE objects SET uuid =' .'"96e69e5c-513c-11e9-ac8c-0800277f0571"'.' WHERE name3 ='.'"Mitarbeiter" AND name2 = "Employees" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+              }else {
+              $this->execute('UPDATE objects SET uuid =' .'"'.$key.'"'.' WHERE name'.$val['language'].' ='.'"'.$value['name'.$val['language']] .'" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+            }
           }
         }
 
