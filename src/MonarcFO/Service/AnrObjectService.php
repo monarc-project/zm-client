@@ -92,7 +92,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), $filter, null, $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE);
 
         // List of fields we want to keep
-        $fields = ['id', 'mode', 'scope', 'name' . $anr->get('language'), 'label' . $anr->get('language'), 'disponibility', 'position'];
+        $fields = ['uuid', 'mode', 'scope', 'name' . $anr->get('language'), 'label' . $anr->get('language'), 'disponibility', 'position'];
         $fields = array_combine($fields, $fields);
 
         foreach ($objects as $k => $o) {
@@ -109,7 +109,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
             }
 
             // Append the object to our array
-            $objects[$k]['asset'] = $o['asset']->getJsonArray(['id', 'label' . $anr->get('language'), 'description' . $anr->get('language'), 'mode', 'type', 'status']);
+            $objects[$k]['asset'] = $o['asset']->getJsonArray(['uuid', 'label' . $anr->get('language'), 'description' . $anr->get('language'), 'mode', 'type', 'status']);
         }
         return $objects;
     }
@@ -128,7 +128,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
         }
 
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
-        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['id' => $id], $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE));
+        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['uuid' => $id], $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE));
         if (!empty($object)) {
             return $this->get('selfCoreService')->getCompleteEntity($id);
         } else {
@@ -149,7 +149,7 @@ class AnrObjectService extends \MonarcCore\Service\ObjectService
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $anr = $this->get('anrTable')->getEntity($data['anr']); // on a une erreur si inconnue
-        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['id' => $id], $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE));
+        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['uuid' => $id], $anr->get('model'), null, \MonarcCore\Model\Entity\AbstractEntity::FRONT_OFFICE));
         if (!empty($object)) {
             // Export
             $json = $this->get('selfCoreService')->get('objectExportService')->generateExportArray($id);

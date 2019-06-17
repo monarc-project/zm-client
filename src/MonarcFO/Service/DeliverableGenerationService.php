@@ -2333,7 +2333,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $amvs = [];
         $rolfRisks = [];
         foreach ($controlSoa['measure']->amvs as $amv) {
-          array_push($amvs,$amv->id);
+          array_push($amvs,$amv->uuid->tostring());
         }
         foreach ($controlSoa['measure']->rolfRisks as $rolfRisk) {
           array_push($rolfRisks,$rolfRisk->id);
