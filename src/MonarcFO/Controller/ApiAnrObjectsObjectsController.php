@@ -45,6 +45,8 @@ class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
+        $data['child'] = ['anr' => $anrId, 'uuid' => $data['child']];
+        $data['father'] = ['anr' => $anrId, 'uuid' => $data['father']];
 
         $id = $this->getService()->create($data, true, AbstractEntity::FRONT_OFFICE);
 
