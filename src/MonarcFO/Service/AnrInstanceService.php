@@ -1289,6 +1289,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
           }
           // import the SOAs
           if (isset($data['soas'])) {
+            $measuresStoredId = $this->get('measureTable')->fetchAllFiltered(['uuid'],1,0,null,null,['anr'=>$anr->get('id')],null,null);
+            $measuresStoredId  = array_map(function($elt){return is_string($elt['uuid'])?$elt['uuid']:$elt['uuid']->toString();},$measuresStoredId);
               foreach ($data['soas'] as $soa) {
                   // check if the corresponding measure has been created during
                   // this import
@@ -1297,6 +1299,27 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                       $newSoa->setAnr($anr);
                       $newSoa->setMeasure($measuresNewIds[$soa['measure_id']]);
                       $this->get('soaTable')->save($newSoa,false);
+                  }else if (in_array($soa['measure_id'], $measuresStoredId)){ //measure exist so soa exist (normally)
+                      $soaExistant = $this->get('soaTable')->getEntityByFields(['measure'=>['anr' => $anr->id, 'uuid' => $soa['measure_id']]]);
+                      if(empty($soaExistant)){
+                        $newSoa = new \MonarcFO\Model\Entity\Soa($soa);
+                        $newSoa->setAnr($anr);
+                        $newSoa->setMeasure($this->get('measureTable')->getEntity(['anr' => $anr->id, 'uuid' => $soa['measure_id']]));
+                        $this->get('soaTable')->save($newSoa,false);
+                      }else{
+                        $soaExistant = $soaExistant[0];
+                        $soaExistant->remarks = $soa['remarks'];
+                        $soaExistant->evidences = $soa['evidences'];
+                        $soaExistant->actions = $soa['actions'];
+                        $soaExistant->compliance = $soa['compliance'];
+                        $soaExistant->EX = $soa['EX'];
+                        $soaExistant->LR = $soa['LR'];
+                        $soaExistant->CO = $soa['CO'];
+                        $soaExistant->BR = $soa['BR'];
+                        $soaExistant->BP = $soa['BP'];
+                        $soaExistant->RRA = $soa['RRA'];
+                        $this->get('soaTable')->save($soaExistant,false);
+                      }
                   }
               }
               $this->get('soaTable')->getDb()->flush();
