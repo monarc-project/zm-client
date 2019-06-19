@@ -34,9 +34,9 @@ class Recommandation extends AbstractEntity
     protected $uuid;
 
     /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -187,7 +187,7 @@ class Recommandation extends AbstractEntity
     }
 
     /**
-     * @param Anr $anr
+     * @param \MonarcFO\Model\Entity\Anr $anr
      * @return Scale
      */
     public function setAnr($anr)

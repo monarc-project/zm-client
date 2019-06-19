@@ -32,9 +32,9 @@ class RecommandationSet extends AbstractEntity
     protected $uuid;
 
      /**
-     * @var \MonarcCore\Model\Entity\Anr
+     * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcCore\Model\Entity\Anr", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
