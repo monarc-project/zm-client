@@ -32,6 +32,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceConsequenceEntity' => 'MonarcFO\Model\Entity\InstanceConsequence',
         'recommandationRiskTable' => 'MonarcFO\Model\Table\RecommandationRiskTable',
         'recommandationTable' => 'MonarcFO\Model\Table\RecommandationTable',
+        'recommandationSetTable' => 'MonarcFO\Model\Table\RecommandationSetTable',
         'questionTable' => 'MonarcFO\Model\Table\QuestionTable',
         'questionChoiceTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
         'threatTable' => 'MonarcFO\Model\Table\ThreatTable',
