@@ -15,6 +15,7 @@ use MonarcFO\Model\Entity\Anr;
 use MonarcFO\Model\Entity\AnrObjectCategory;
 use MonarcFO\Model\Entity\Interview;
 use MonarcFO\Model\Entity\Recommandation;
+use MonarcFO\Model\Entity\RecommandationSet;
 use MonarcFO\Model\Entity\RecommandationHistoric;
 use MonarcFO\Model\Entity\RecommandationRisk;
 use MonarcFO\Model\Entity\RolfTag;
@@ -85,6 +86,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $recommandationCliTable;
     protected $recommandationHistoricCliTable;
     protected $recommandationRiskCliTable;
+    protected $recommandationSetCliTable;
     protected $rolfRiskCliTable;
     protected $rolfTagCliTable;
     protected $scaleCliTable;
@@ -1000,16 +1002,25 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInterview->setAnr($newAnr);
                 $this->get('interviewCliTable')->save($newInterview,false);
             }
-
-            //duplicate recommandations
+            
+            // duplicate recommandations sets and recommandations
             $recommandationsNewIds = [];
-            $recommandations = $this->get('recommandationCliTable')->getEntityByFields(['anr' => $anr->id]);
-            foreach ($recommandations as $recommandation) {
-                $newRecommandation = new Recommandation($recommandation);
-                $newRecommandation->set('id', null);
-                $newRecommandation->setAnr($newAnr);
-                $this->get('recommandationCliTable')->save($newRecommandation,false);
-                $recommandationsNewIds[$recommandation->id] = $newRecommandation;
+            $recommandationsSets = $this->get('recommandationSetCliTable')->getEntityByFields(['anr' => $anr->id]);
+                foreach ($recommandationsSets as $recommandationSet) {
+                    $recommandations = $recommandationSet->getRecommandations();
+                    $recommandationSet->setRecommandations(null);
+                    $newRecommandationSet = new RecommandationSet($recommandationSet);
+                    $newRecommandationSet->setAnr($newAnr);
+
+                    foreach ($recommandations as $recommandation) {
+                        $newRecommandation = new Recommandation($recommandation);
+                        $newRecommandation->setAnr($newAnr);
+                        $newRecommandation->setRecommandationSet($newRecommandationSet);
+                        $this->get('recommandationCliTable')->save($newRecommandation,false);
+                        $recommandationsNewIds[$recommandation->uuid->toString()] = $newRecommandation;
+                    }
+                    $newRecommandationSet->setRecommandations($recommandationsNewIds);
+                    $this->get('recommandationSetCliTable')->save($newRecommandationSet, false);
             }
 
             //duplicate recommandations historics
@@ -1027,7 +1038,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newRecommandationRisk = new RecommandationRisk($recommandationRisk);
                 $newRecommandationRisk->set('id', null);
                 $newRecommandationRisk->setAnr($newAnr);
-                $newRecommandationRisk->set('recommandation', $recommandationsNewIds[$newRecommandationRisk->get('recommandation')->get('id')]);
+                $newRecommandationRisk->set('recommandation', $recommandationsNewIds[$newRecommandationRisk->get('recommandation')->getUuid()->toString()]);
                 if ($newRecommandationRisk->get('instanceRisk')) {
                     $newRecommandationRisk->set('instanceRisk', $instancesRisksNewIds[$newRecommandationRisk->get('instanceRisk')->get('id')]);
                 }

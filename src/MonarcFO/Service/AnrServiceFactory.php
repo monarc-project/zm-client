@@ -64,6 +64,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'recommandationCliTable' => 'MonarcFO\Model\Table\RecommandationTable',
         'recommandationHistoricCliTable' => 'MonarcFO\Model\Table\RecommandationHistoricTable',
         'recommandationRiskCliTable' => 'MonarcFO\Model\Table\RecommandationRiskTable',
+        'recommandationSetCliTable' => 'MonarcFO\Model\Table\RecommandationSetTable',
         'rolfRiskCliTable' => 'MonarcFO\Model\Table\RolfRiskTable',
         'rolfTagCliTable' => 'MonarcFO\Model\Table\RolfTagTable',
         'scaleCliTable' => 'MonarcFO\Model\Table\ScaleTable',
