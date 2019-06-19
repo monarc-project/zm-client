@@ -1627,7 +1627,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         //oder by recommandation position asc and importance desc
         $recosRisks = [];
         foreach($recosRisksNotOrdered as $key => $recoRisk) {
-            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->id . '-' . $key;
+            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->uuid->toString() . '-' . $key;
             $recosRisks[$newKey] = $recoRisk;
         }
         ksort($recosRisks,SORT_NUMERIC);
@@ -1689,7 +1689,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $toUnset = [];
         foreach ($recosRisks as $recoRisk) {
             if ($recoRisk->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
-                $key = $recoRisk->recommandation->id . ' - ' . $recoRisk->threat->id . ' - ' . $recoRisk->vulnerability->id . ' - ' . $recoRisk->objectGlobal->id;
+                $key = $recoRisk->recommandation->uuid->toString() . ' - ' . $recoRisk->threat->uuid->toString() . ' - ' . $recoRisk->vulnerability->uuid->toString() . ' - ' . $recoRisk->objectGlobal->uuid->toString();
                 if (array_key_exists($key, $global)) {
                     if (array_key_exists($key, $toUnset) && ($recoRisk->instanceRisk->cacheMaxRisk > $toUnset[$key])) {
                         $toUnset[$key] = $recoRisk->instanceRisk->cacheMaxRisk;
@@ -1737,7 +1737,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $importance .= '●';
                 }
 
-                if ($recoRisk->recommandation->id != $previousRecoId) {
+                if ($recoRisk->recommandation->uuid->toString() != $previousRecoId) {
 
                     $table->addRow(400);
                     $cellReco = $table -> addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cell);
@@ -1749,7 +1749,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
                 $continue = true;
 
-                $key = $recoRisk->recommandation->id . ' - ' . $recoRisk->threat->id . ' - ' . $recoRisk->vulnerability->id . ' - ' . (!empty($recoRisk->objectGlobal) ? $recoRisk->objectGlobal->id : null);
+                $key = $recoRisk->recommandation->uuid->toString() . ' - ' . $recoRisk->threat->uuid->toString() . ' - ' . $recoRisk->vulnerability->uuid->toString() . ' - ' . (!empty($recoRisk->objectGlobal) ? $recoRisk->objectGlobal->uuid->toString() : null);
                 if (isset($toUnset[$key])) {
                     if (($recoRisk->instanceRisk->cacheMaxRisk < $toUnset[$key]) || (isset($alreadySet[$key]))) {
                         $continue = false;
@@ -1791,7 +1791,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRisk->cacheTargetedRisk, $styleHeaderFont, $alignCenter);
                 }
             }
-            $previousRecoId = $recoRisk->recommandation->id;
+            $previousRecoId = $recoRisk->recommandation->uuid->toString();
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
@@ -1812,7 +1812,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         //oder by recommandation position asc and importance desc
         $recosRisks = [];
         foreach($recosRisksNotOrdered as $key => $recoRisk) {
-            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->id . '-' . $key;
+            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . $recoRisk->recommandation->uuid->toString() . '-' . $key;
             $recosRisks[$newKey] = $recoRisk;
         }
         ksort($recosRisks,SORT_NUMERIC);
@@ -1878,7 +1878,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $importance .= '●';
                 }
 
-                if ($recoRisk->recommandation->id != $previousRecoId) {
+                if ($recoRisk->recommandation->uuid->toString() != $previousRecoId) {
 
                     $table->addRow(400);
                     $cellReco = $table -> addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(5.00), $cell);
@@ -1920,7 +1920,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                       $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRiskOp->cacheTargetedRisk, $styleHeaderFont, $alignCenter);
                     }
 
-         	          $previousRecoId = $recoRisk->recommandation->id;
+         	          $previousRecoId = $recoRisk->recommandation->uuid->toString();
             }
 
         }
