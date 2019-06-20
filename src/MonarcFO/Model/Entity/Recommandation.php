@@ -72,9 +72,9 @@ class Recommandation extends AbstractEntity
     /**
      * @var smallint
      *
-     * @ORM\Column(name="importance", type="smallint", options={"unsigned":true, "default":1})
+     * @ORM\Column(name="importance", type="smallint", options={"unsigned":true, "default":0}, nullable=true)
      */
-    protected $importance = 1;
+    protected $importance = 0;
 
     /**
      * @var smallint
@@ -265,20 +265,20 @@ class Recommandation extends AbstractEntity
     {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
-            $this->inputFilter->add([
-                'name' => 'importance',
-                'required' => (!$partial) ? true : false,
-                'allow_empty' => false,
-                'validators' => [
-                    [
-                        'name' => 'InArray',
-                        'options' => [
-                            'haystack' => [1, 2, 3],
-                        ],
-                        'default' => 0,
-                    ],
-                ],
-            ]);
+            // $this->inputFilter->add([
+            //     'name' => 'importance',
+            //     'required' => (!$partial) ? true : false,
+            //     'allow_empty' => false,
+            //     'validators' => [
+            //         [
+            //             'name' => 'InArray',
+            //             'options' => [
+            //                 'haystack' => [1, 2, 3],
+            //             ],
+            //             'default' => 0,
+            //         ],
+            //     ],
+            // ]);
 
             $validatorsCode = [];
             if (!$partial) {
