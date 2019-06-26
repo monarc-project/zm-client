@@ -17,49 +17,65 @@ use MonarcCore\Service\AbstractService;
  */
 class AnrRecordService extends AbstractService
 {
-    protected $dependencies = ['anr', 'controller', 'jointControllers', 'processors', 'recipients'];
-    protected $recordControllerService;
+    protected $dependencies = [ 'anr', 'controller', 'representative', 'dpo', 'jointControllers',
+                                'personalData', 'internationalTransfers', 'processors', 'recipients'];
+    protected $recordActorService;
     protected $recordProcessorService;
-    protected $recordRecipientCategoryService;
+    protected $recordRecipientService;
+    protected $recordPersonalDataService;
+    protected $recordInternationalTransferService;
     protected $userAnrTable;
     protected $anrTable;
-    protected $controllerTable;
+    protected $actorTable;
     protected $processorTable;
-    protected $recipientCategoryTable;
+    protected $recipientTable;
 
 
     public function deleteRecord($id)
     {
         $entity = $this->get('table')->getEntity($id);
-        $controllerId = $entity->controller->id;
         $anrId = $entity->anr->id;
-        $controllersToCheck = array();
+        $actorsToCheck = array();
         $processorsToCheck = array();
-        $categoriesToCheck = array();
-        array_push($controllersToCheck, $controllerId);
+        $recipientsToCheck = array();
+        if($entity->controller) {
+            array_push($actorsToCheck, $entity->controller->id);
+        }
+        if($entity->dpo) {
+            array_push($actorsToCheck, $entity->dpo->id);
+        }
+        if($entity->representative) {
+            array_push($actorsToCheck, $entity->representative->id);
+        }
         foreach($entity->jointControllers as $jc) {
-            array_push($controllersToCheck, $jc->id);
+            array_push($actorsToCheck, $jc->id);
         }
         foreach($entity->processors as $p) {
             array_push($processorsToCheck, $p->id);
         }
         foreach($entity->recipients as $r) {
-            array_push($categoriesToCheck, $r->id);
+            array_push($recipientsToCheck, $r->id);
+        }
+        foreach($entity->personalData as $pd) {
+            $this->recordPersonalDataService->delete(['anr'=> $anrId, 'id' => $pd->id]);
+        }
+        foreach($entity->internationalTransfers as $it) {
+            $this->recordInternationalTransferService->delete(['anr'=> $anrId, 'id' => $it->id]);
         }
         $result = $this->get('table')->delete($id);
-        foreach($controllersToCheck as $c) {
-            if($this->recordControllerService->controllerWithoutRecord($c, $entity->id, $anrId)) {
-                $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $c]);
+        foreach($actorsToCheck as $a) {
+            if($this->recordActorService->orphanActor($a, $anrId)) {
+                $this->recordActorService->delete(['anr'=> $anrId, 'id' => $a]);
             }
         }
         foreach($processorsToCheck as $p) {
-            if($this->recordProcessorService->processorWithoutRecord($p, $entity->id, $anrId)) {
+            if($this->recordProcessorService->orphanProcessor($p, $anrId)) {
                 $this->recordProcessorService->deleteProcessor($p);
             }
         }
-        foreach($categoriesToCheck as $r) {
-            if($this->recordRecipientCategoryService->recipientCategoryWithoutRecord($r, $entity->id, $anrId)) {
-                $this->recordRecipientCategoryService->delete(['anr'=> $anrId, 'id' => $r]);
+        foreach($recipientsToCheck as $r) {
+            if($this->recordRecipientService->orphanRecipient($r, $anrId)) {
+                $this->recordRecipientService->delete(['anr'=> $anrId, 'id' => $r]);
             }
         }
 
@@ -74,136 +90,102 @@ class AnrRecordService extends AbstractService
     public function updateRecord($id, $data)
     {
         $entity = $this->get('table')->getEntity($id);
-        if(!isset($data['controller']['id'])) {
-            $data['controller']['anr'] = $this->anrTable->getEntity($data['anr']);
-            // Create a new controller
-            $data['controller']['id'] = $this->recordControllerService->create($data['controller'], true);
+        if(isset($data['controller']['id'])) {
+            $data['controller'] = $data['controller']['id'];
+        } else {
+            $data['controller'] = null;
         }
-        $data['controller'] = $data['controller']['id'];
+        if(isset($data['dpo']['id'])) {
+            $data['dpo'] = $data['dpo']['id'];
+        } else {
+            $data['dpo'] = null;
+        }
+        if(isset($data['representative']['id'])) {
+            $data['representative'] = $data['representative']['id'];
+        } else {
+            $data['representative'] = null;
+        }
         $jointControllers = array();
         foreach ($data['jointControllers'] as $jc) {
-            if(!isset($jc['id'])) {
-                $jc['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new controller
-                $jc['id'] = $this->recordControllerService->create($jc, true);
-            }
             array_push($jointControllers, $jc['id']);
         }
         $data['jointControllers'] = $jointControllers;
+        $personalData = array();
+        foreach ($data['personalData'] as $pd) {
+            array_push($personalData,$pd['id']);
+        }
+        $data['personalData'] = $personalData;
+        $recipients = array();
+        foreach ($data['recipients'] as $recipient) {
+            array_push($recipients,$recipient['id']);
+        }
+        $data['recipients'] = $recipients;
+        $internationalTransfers = array();
+        foreach ($data['internationalTransfers'] as $it) {
+            array_push($internationalTransfers,$it['id']);
+        }
+        $data['internationalTransfers'] = $internationalTransfers;
         $processors = array();
         foreach ($data['processors'] as $processor) {
-            if(!isset($processor['id'])) {
-                $processor['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new Processor
-                $processor['id'] = $this->recordProcessorService->createProcessor($processor, true);
-            }
             array_push($processors,$processor['id']);
         }
         $data['processors'] = $processors;
-        $recipientCategories = array();
-        foreach ($data['recipients'] as $recipientCategory) {
-            if(!isset($recipientCategory['id'])) {
-                $recipientCategory['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new recipient category
-                $recipientCategory['id'] = $this->recordRecipientCategoryService->create($recipientCategory, true);
-            }
-            array_push($recipientCategories,$recipientCategory['id']);
+
+
+        // keep entities on old object to delete orphans
+        $oldActors = array();
+        if($entity->controller && $entity->controller->id) {
+            array_push($oldActors, $entity->controller->id);
         }
-        $data['recipients'] = $recipientCategories;
-        $oldControllerId = $entity->controller->id;
-        $oldJointControllers = array();
-        foreach( $entity->jointControllers as $js) {
-            array_push($oldJointControllers, $js->id);
+        if($entity->representative && $entity->representative->id) {
+            array_push($oldActors, $entity->representative->id);
+        }
+        if($entity->dpo && $entity->dpo->id) {
+            array_push($oldActors, $entity->dpo->id);
+        }
+        foreach($entity->jointControllers as $js) {
+            array_push($oldActors, $js->id);
+        }
+        $oldRecipients = array();
+        foreach( $entity->recipients as $r) {
+            array_push($oldRecipients, $r->id);
         }
         $oldProcessors = array();
         foreach( $entity->processors as $p) {
             array_push($oldProcessors, $p->id);
         }
-        $oldRecipientCategories = array();
-        foreach( $entity->recipients as $r) {
-            array_push($oldRecipientCategories, $r->id);
+
+        foreach($entity->personalData as $pd) {
+            if(!in_array($pd->id, $personalData)) {
+                $this->recordPersonalDataService->deletePersonalData(['anr'=> $data['anr'], 'id' => $pd->id]);
+            }
         }
-        $data['erasure'] = (new \DateTime($data['erasure']))->setTimezone((new \DateTime())->getTimezone());
+        foreach($entity->internationalTransfers as $it) {
+            if(!in_array($it->id, $internationalTransfers)) {
+                $this->recordInternationalTransferService->delete(['anr'=> $data['anr'], 'id' => $it->id]);
+            }
+        }
+
         $result = $this->update($id, $data);
-        if(!in_array($oldControllerId, $jointControllers) && $data['controller'] != $oldControllerId
-            && $this->recordControllerService->controllerWithoutRecord($oldControllerId, $id, $data['anr'])) {
-            $this->recordControllerService->delete(['anr'=> $data['anr'], 'id' => $oldControllerId]);
+
+        foreach($oldActors as $a) {
+            if(!in_array($a, $jointControllers) && $a != $data['controller'] && $a != $data['dpo'] && $a != $data['representative']
+               && $this->recordActorService->orphanActor($a, $data['anr'])) {
+                $this->recordActorService->delete(['anr'=> $data['anr'], 'id' => $a]);
+            }
         }
-        foreach($oldJointControllers as $js) {
-            if(!in_array($js, $jointControllers) && $js != $data['controller']
-               && $this->recordControllerService->controllerWithoutRecord($js, $id, $data['anr'])) {
-                $this->recordControllerService->delete(['anr'=> $data['anr'], 'id' => $js]);
+        foreach($oldRecipients as $rc) {
+            if(!in_array($rc, $recipients) && $this->recordRecipientService->orphanRecipient($rc, $data['anr'])) {
+                $this->recordRecipientService->delete(['anr'=> $data['anr'], 'id' => $rc]);
             }
         }
         foreach($oldProcessors as $processor) {
-            if(!in_array($processor, $processors) && $this->recordProcessorService->processorWithoutRecord($processor, $id, $data['anr'])) {
+            if(!in_array($processor, $processors) && $this->recordProcessorService->orphanProcessor($processor, $id, $data['anr'])) {
                 $this->recordProcessorService->deleteProcessor($processor);
-            }
-        }
-        foreach($oldRecipientCategories as $rc) {
-            if(!in_array($rc, $recipientCategories) && $this->recordRecipientCategoryService->recipientCategoryWithoutRecord($rc, $id, $data['anr'])) {
-                $this->recordRecipientCategoryService->delete(['anr'=> $data['anr'], 'id' => $rc]);
             }
         }
         return $result;
     }
-
-    /**
-     * Updates a processor of processing activity
-     * @param array $data The processor details fields
-     * @return object The resulting created processor object (entity)
-     */
-    public function updateProcessor($id, $data) {
-        return $this->recordProcessorService->updateProcessor($id, $data);
-    }
-
-    /**
-     * Creates a record of processing activity
-     * @param array $data The record details fields
-     * @return object The resulting created record object (id)
-     */
-    public function createRecord($data)
-    {
-        if(!isset($data['controller']['id'])) {
-            $data['controller']['anr'] = $this->anrTable->getEntity($data['anr']);
-            // Create a new controller
-            $data['controller']['id'] = $this->recordControllerService->create($data['controller'], true);
-        }
-        $data['controller'] = $data['controller']['id'];
-        $jointControllers = array();
-        foreach ($data['jointControllers'] as $jc) {
-            if(!isset($jc['id'])) {
-                $jc['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new controller
-                $jc['id'] = $this->recordControllerService->create($jc, true);
-            }
-            array_push($jointControllers, $jc['id']);
-        }
-        $data['jointControllers'] = $jointControllers;
-        $processors = array();
-        foreach ($data['processors'] as $processor) {
-            if(!isset($processor['id'])) {
-                $processor['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new Processor
-                $processor['id'] = $this->recordProcessorService->createProcessor($processor, true);
-            }
-            array_push($processors,$processor['id']);
-        }
-        $data['processors'] = $processors;
-        $recipientCategories = array();
-        foreach ($data['recipients'] as $recipientCategory) {
-            if(!isset($recipientCategory['id'])) {
-                $recipientCategory['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new recipient category
-                $recipientCategory['id'] = $this->recordRecipientCategoryService->create($recipientCategory, true);
-            }
-            array_push($recipientCategories,$recipientCategory['id']);
-        }
-        $data['recipients'] = $recipientCategories;
-        $data['erasure'] = (new \DateTime($data['erasure']))->setTimezone((new \DateTime())->getTimezone());
-        return $this->create($data, true);
-    }
-
 
     /**
     * Exports a Record of processing activities, optionaly encrypted, for later re-import
@@ -221,6 +203,20 @@ class AnrRecordService extends AbstractService
         }
 
         return $exportedRecord;
+    }
+
+    public function exportAll($data) {
+        $recordEntities = $this->get('table')->getEntityByFields(['anr' => $data["anr"]]);
+        $exportedRecords = [];
+        foreach($recordEntities as $entity) {
+            $exportedRecords[] = $this->generateExportArray($entity->get("id"));
+        }
+        $exportedRecords = json_encode($exportedRecords);
+        if (! empty($data['password'])) {
+            $exportedRecords = $this->encrypt($exportedRecords, $data['password']);
+        }
+
+        return $exportedRecords;
     }
 
     /**
@@ -384,7 +380,7 @@ class AnrRecordService extends AbstractService
             $data['controller']['label'] = $data['controller']['name'];
             unset($data['controller']['name']);
             try {
-                $controllerEntity = $this->controllerTable->getEntity($data['controller']['id']);
+                $controllerEntity = $this->actorTable->getEntity($data['controller']['id']);
                 if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $data['controller']['label'] || $controllerEntity->get('contact') != $data['controller']['contact']) {
                     unset($data['controller']['id']);
                 }
@@ -397,7 +393,7 @@ class AnrRecordService extends AbstractService
                 $jc['label'] = $jc['name'];
                 unset($jc['name']);
                 try {
-                    $controllerEntity = $this->controllerTable->getEntity($jc['id']);
+                    $controllerEntity = $this->actorTable->getEntity($jc['id']);
                     if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $jc['label'] || $controllerEntity->get('contact') != $jc['contact']) {
                         unset($jc['id']);
                     }
@@ -411,7 +407,7 @@ class AnrRecordService extends AbstractService
                 $r['label'] = $r['name'];
                 unset($r['name']);
                 try {
-                    $recipientEntity = $this->recipientCategoryTable->getEntity($r['id']);
+                    $recipientEntity = $this->recipientTable->getEntity($r['id']);
                     if (!$recipientEntity || $recipientEntity->get('anr')->get('id') != $anr || $recipientEntity->get('label') != $r['label']) {
                         unset($r['id']);
                     }
@@ -447,7 +443,7 @@ class AnrRecordService extends AbstractService
                     $bc['label'] = $bc['name'];
                     unset($bc['name']);
                     try {
-                        $controllerEntity = $this->controllerTable->getEntity($bc['id']);
+                        $controllerEntity = $this->actorTable->getEntity($bc['id']);
                         if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $bc['label'] || $controllerEntity->get('contact') != $bc['contact']) {
                             unset($bc['id']);
                         }

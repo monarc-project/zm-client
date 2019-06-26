@@ -11,14 +11,14 @@ use MonarcCore\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * RecordRecipientCategory
+ * RecordDataCategory
  *
- * @ORM\Table(name="record_recipient_categories", indexes={
+ * @ORM\Table(name="record_data_categories", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  * })
  * @ORM\Entity
  */
-class RecordRecipientCategory extends AbstractEntity
+class RecordDataCategory extends AbstractEntity
 {
     /**
      * @var integer
@@ -30,21 +30,22 @@ class RecordRecipientCategory extends AbstractEntity
     protected $id;
 
     /**
+     * @var \MonarcFO\Model\Entity\Anr
+     *
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
+     * })
+     */
+    protected $anr;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="label", type="string", length=255, nullable=true)
      */
     protected $label;
 
-    /**
-     * @var \MonarcFO\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
-     */
-    protected $anr;
 
     /**
      * @var string
@@ -120,7 +121,7 @@ class RecordRecipientCategory extends AbstractEntity
 
     /**
      * @param string $creator
-     * @return RecordRecipientCategory
+     * @return RecordDataCategory
      */
     public function setCreator($creator)
     {
@@ -138,7 +139,7 @@ class RecordRecipientCategory extends AbstractEntity
 
     /**
      * @param \DateTime $createdAt
-     * @return RecordRecipientCategory
+     * @return RecordDataCategory
      */
     public function setCreatedAt($createdAt)
     {
@@ -156,7 +157,7 @@ class RecordRecipientCategory extends AbstractEntity
 
     /**
      * @param string $updater
-     * @return RecordRecipientCategory
+     * @return RecordDataCategory
      */
     public function setUpdater($updater)
     {
@@ -174,7 +175,7 @@ class RecordRecipientCategory extends AbstractEntity
 
     /**
      * @param \DateTime $updatedAt
-     * @return RecordRecipientCategory
+     * @return RecordDataCategory
      */
     public function setUpdatedAt($updatedAt)
     {

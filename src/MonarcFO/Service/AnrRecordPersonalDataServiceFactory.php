@@ -10,20 +10,19 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Record Processor Service Factory
+ * Record Personal Data Service Factory
  *
- * Class AnrRecordProcessorServiceFactory
+ * Class AnrRecordPersonalDataServiceFactory
  * @package MonarcFO\Service
  */
-class AnrRecordProcessorServiceFactory extends AbstractServiceFactory
+class AnrRecordPersonalDataServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => 'MonarcFO\Model\Table\RecordProcessorTable',
-        'entity' => 'MonarcFO\Model\Entity\RecordProcessor',
-        'recordActorService' => 'MonarcFO\Service\AnrRecordActorService',
-        'recordInternationalTransferService' => 'MonarcFO\Service\AnrRecordInternationalTransferService',
+        'table' => 'MonarcFO\Model\Table\RecordPersonalDataTable',
+        'entity' => 'MonarcFO\Model\Entity\RecordPersonalData',
+        'recordDataCategoryService' => 'MonarcFO\Service\AnrRecordDataCategoryService',
+        'recordDataSubjectService' => 'MonarcFO\Service\AnrRecordDataSubjectService',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
-        'recordTable' => 'MonarcFO\Model\Table\RecordTable',
     ];
 }

@@ -10,16 +10,16 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Record Controller Service Factory
+ * Record Actor Service Factory
  *
- * Class AnrRecordControllerServiceFactory
+ * Class AnrRecordActorServiceFactory
  * @package MonarcFO\Service
  */
-class AnrRecordControllerServiceFactory extends AbstractServiceFactory
+class AnrRecordActorServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => 'MonarcFO\Model\Table\RecordControllerTable',
-        'entity' => 'MonarcFO\Model\Entity\RecordController',
+        'table' => 'MonarcFO\Model\Table\RecordActorTable',
+        'entity' => 'MonarcFO\Model\Entity\RecordActor',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'recordTable' => 'MonarcFO\Model\Table\RecordTable',
         'processorTable' => 'MonarcFO\Model\Table\RecordProcessorTable',

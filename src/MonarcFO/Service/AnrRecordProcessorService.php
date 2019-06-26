@@ -17,49 +17,40 @@ use MonarcCore\Service\AbstractService;
  */
 class AnrRecordProcessorService extends AbstractService
 {
-    protected $dependencies = ['anr','controllers'];
-    protected $recordControllerService;
+    protected $dependencies = ['anr','representative', 'dpo', 'cascadedProcessors', 'internationalTransfers'];
+    protected $recordActorService;
+    protected $recordInternationalTransferService;
     protected $filterColumns = ['label'];
     protected $userAnrTable;
     protected $anrTable;
     protected $recordTable;
-    protected $controllerTable;
-
-    /**
-     * Creates a processor of processing activity
-     * @param array $data The processor details fields
-     * @return object The resulting created processor object (entity)
-     */
-    public function createProcessor($data)
-    {
-        $behalfControllers = array();
-        foreach ($data['controllers'] as $bc) {
-            if(!isset($bc['id'])) {
-                $bc['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new controller
-                $bc['id'] = $this->recordControllerService->create($bc, true);
-            }
-            array_push($behalfControllers, $bc['id']);
-        }
-        $data['controllers'] = $behalfControllers;
-        return $this->create($data, true);
-    }
 
     public function deleteProcessor($id)
     {
         $processorEntity = $this->get('table')->getEntity($id);
         $anrId = $entity->anr->id;
-        $controllersToCheck = array();
-
-        foreach($processorEntity->controllers as $controller) {
-            array_push($controllersToCheck, $controller->id);
+        $actorsToCheck = array();
+        if($entity->dpo) {
+            array_push($actorsToCheck, $entity->dpo->id);
         }
+        if($entity->representative) {
+            array_push($actorsToCheck, $entity->representative->id);
+        }
+        foreach($entity->cascadedProcessors as $cp) {
+            array_push($actorsToCheck, $cp->id);
+        }
+
+        foreach($entity->internationalTransfers as $it) {
+            $this->recordInternationalTransferService->delete(['anr'=> $anrId, 'id' => $it->id]);
+        }
+
         $result = $this->get('table')->delete($id);
-        foreach($controllersToCheck as $c) {
-            if($this->recordControllerService->controllerWithoutRecord($c, $entity->id, $anrId)) {
-                $this->recordControllerService->delete(['anr'=> $anrId, 'id' => $c]);
+        foreach($actorsToCheck as $a) {
+            if($this->recordActorService->orphanActor($a, $anrId)) {
+                $this->recordActorService->delete(['anr'=> $anrId, 'id' => $a]);
             }
         }
+
         return $result;
     }
     /**
@@ -70,26 +61,53 @@ class AnrRecordProcessorService extends AbstractService
     public function updateProcessor($id, $data)
     {
         $entity = $this->get('table')->getEntity($id);
-        $behalfControllers = array();
-        foreach ($data['controllers'] as $bc) {
-            if(!isset($bc['id'])) {
-                $bc['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new controller
-                $bc['id'] = $this->recordControllerService->create($bc, true);
+        if(isset($data['dpo']['id'])) {
+            $data['dpo'] = $data['dpo']['id'];
+        } else {
+            $data['dpo'] = null;
+        }
+        if(isset($data['representative']['id'])) {
+            $data['representative'] = $data['representative']['id'];
+        } else {
+            $data['representative'] = null;
+        }
+        $cascadedProcessors = array();
+        foreach ($data['cascadedProcessors'] as $cp) {
+            array_push($cascadedProcessors, $cp['id']);
+        }
+        $data['cascadedProcessors'] = $cascadedProcessors;
+        $internationalTransfers = array();
+        foreach ($data['internationalTransfers'] as $it) {
+            array_push($internationalTransfers,$it['id']);
+        }
+        $data['internationalTransfers'] = $internationalTransfers;
+
+        $oldActors = array();
+        if($entity->representative && $entity->representative->id) {
+            array_push($oldActors, $entity->representative->id);
+        }
+        if($entity->dpo && $entity->dpo->id) {
+            array_push($oldActors, $entity->dpo->id);
+        }
+        foreach($entity->cascadedProcessors as $cp) {
+            array_push($oldActors, $cp->id);
+        }
+
+        foreach($entity->internationalTransfers as $it) {
+            if(!in_array($it->id, $internationalTransfers)) {
+                $this->recordInternationalTransferService->delete(['anr'=> $data['anr'], 'id' => $it->id]);
             }
-            array_push($behalfControllers, $bc['id']);
         }
-        $data['controllers'] = $behalfControllers;
-        $oldBehalfs = array();
-        foreach( $entity->controllers as $bc) {
-            array_push($oldBehalfs, $bc->id);
-        }
+
         $result = $this->update($id, $data);
-        foreach($oldBehalfs as $bc) {
-            if(!in_array($bc, $behalfControllers) && $this->recordControllerService->controllerWithoutRecord($bc, $id, $data['anr'])) {
-                $this->recordControllerService->delete(['anr'=> $data['anr'], 'id' => $bc]);
+        foreach($oldActors as $a) {
+            if(!in_array($a, $cascadedProcessors) && $a != $data['dpo'] && $a != $data['representative']
+               && $this->recordActorService->orphanActor($a, $data['anr'])) {
+                $this->recordActorService->delete(['anr'=> $data['anr'], 'id' => $a]);
             }
         }
+
+
         return $result;
     }
 
@@ -136,7 +154,7 @@ class AnrRecordProcessorService extends AbstractService
         return $return;
     }
 
-    public function processorWithoutRecord($processorId, $recordId, $anrId) {
+    public function orphanProcessor($processorId, $anrId) {
         $records = $this->recordTable->getEntityByFields(['processors' => $processorId, 'anr' => $anrId]);
         if(count($records) > 0) {
             return false;

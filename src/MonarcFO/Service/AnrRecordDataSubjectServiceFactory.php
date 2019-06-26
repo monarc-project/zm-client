@@ -10,17 +10,17 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractServiceFactory;
 
 /**
- * Record Recipient Category Service Factory
+ * Record Data Subject Service Factory
  *
- * Class AnrRecordRecipientCategoryServiceFactory
+ * Class AnrRecordDataSubjectServiceFactory
  * @package MonarcFO\Service
  */
-class AnrRecordRecipientCategoryServiceFactory extends AbstractServiceFactory
+class AnrRecordDataSubjectServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => 'MonarcFO\Model\Table\RecordRecipientCategoryTable',
-        'entity' => 'MonarcFO\Model\Entity\RecordRecipientCategory',
+        'table' => 'MonarcFO\Model\Table\RecordDataSubjectTable',
+        'entity' => 'MonarcFO\Model\Entity\RecordDataSubject',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
-        'recordTable' => 'MonarcFO\Model\Table\RecordTable',
+        'personalDataTable' => 'MonarcFO\Model\Table\RecordPersonalDataTable',
     ];
 }

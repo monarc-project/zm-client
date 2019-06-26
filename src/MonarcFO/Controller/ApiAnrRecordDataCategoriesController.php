@@ -10,16 +10,16 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api Anr Record Recipient Categories Controller
+ * Api Anr Record Data Categories Controller
  *
- * Class ApiAnrRecordRecipientCategoriesController
+ * Class ApiAnrRecordDataCategoriesController
  * @package MonarcFO\Controller
  */
-class ApiAnrRecordRecipientCategoriesController extends ApiAnrAbstractController
+class ApiAnrRecordDataCategoriesController extends ApiAnrAbstractController
 {
-    protected $name = 'record-recipient-categories';
+    protected $name = 'record-data-categories';
     protected $dependencies = ['anr'];
-    
+
     /**
      * @inheritdoc
      */

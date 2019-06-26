@@ -10,10 +10,10 @@ namespace MonarcFO\Service\Model\Table;
 use MonarcCore\Service\Model\Table\AbstractServiceModelTable;
 
 /**
- * Class RecordControllerServiceModelTable
+ * Class RecordActorServiceModelTable
  * @package MonarcFO\Service\Model\Table
  */
-class RecordControllerServiceModelTable extends AbstractServiceModelTable
+class RecordActorServiceModelTable extends AbstractServiceModelTable
 {
     protected $dbService = '\MonarcCli\Model\Db';
 }

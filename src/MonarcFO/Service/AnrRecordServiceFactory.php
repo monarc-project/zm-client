@@ -20,13 +20,15 @@ class AnrRecordServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => 'MonarcFO\Model\Table\RecordTable',
         'entity' => 'MonarcFO\Model\Entity\Record',
-        'recordControllerService' => 'MonarcFO\Service\AnrRecordControllerService',
+        'recordActorService' => 'MonarcFO\Service\AnrRecordActorService',
         'recordProcessorService'  => 'MonarcFO\Service\AnrRecordProcessorService',
-        'recordRecipientCategoryService'  => 'MonarcFO\Service\AnrRecordRecipientCategoryService',
+        'recordRecipientService'  => 'MonarcFO\Service\AnrRecordRecipientService',
+        'recordPersonalDataService'  => 'MonarcFO\Service\AnrRecordPersonalDataService',
+        'recordInternationalTransferService'  => 'MonarcFO\Service\AnrRecordInternationalTransferService',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
-        'controllerTable' => 'MonarcFO\Model\Table\RecordControllerTable',
+        'actorTable' => 'MonarcFO\Model\Table\RecordActorTable',
         'processorTable' => 'MonarcFO\Model\Table\RecordProcessorTable',
-        'recipientCategoryTable' => 'MonarcFO\Model\Table\RecordRecipientCategoryTable',
+        'recipientTable' => 'MonarcFO\Model\Table\RecordRecipientTable',
     ];
 }

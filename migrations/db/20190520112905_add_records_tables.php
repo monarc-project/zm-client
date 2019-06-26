@@ -1,5 +1,6 @@
 <?php
 
+use Phinx\Db\Adapter\MysqlAdapter;
 use Phinx\Migration\AbstractMigration;
 
 class AddRecordsTables extends AbstractMigration
@@ -30,145 +31,236 @@ class AddRecordsTables extends AbstractMigration
     	$table = $this->table('records');
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('label1', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('label2', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('label3', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('label4', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('controller', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('representative', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('dpo', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('purposes', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('id_third_country', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('dpo_third_country', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('erasure', 'datetime', array('null' => false))
-                ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('data_subjects', 'text', array('null' => true))
-                ->addColumn('personal_data', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('created_at', 'datetime', array('null' => true))
-                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('updated_at', 'datetime', array('null' => true))
-                ->create();
-
-            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))
-                ->addIndex(array('anr_id'))->update();
-            $table
-                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
-
-            $table = $this->table('record_controllers');
-            $table
-                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('contact', 'string', array('null' => false, 'limit' => 255))
+                ->addColumn('purposes', 'text', array('null' => true))
+                ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('controller_id', 'integer', array('null' => true, 'signed' => false))
+                ->addColumn('representative_id', 'integer', array('null' => true, 'signed' => false))
+                ->addColumn('dpo_id', 'integer', array('null' => true, 'signed' => false))
                 ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('created_at', 'datetime', array('null' => true))
                 ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('updated_at', 'datetime', array('null' => true))
                 ->addIndex(array('anr_id'))
                 ->create();
+            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))
+                ->update();
+            $table
+                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+                ->update();
 
+            $table = $this->table('record_actors');
+            $table
+                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
+                ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('contact', 'text', array('null' => true))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
+                ->addIndex(array('anr_id'))
+                ->create();
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
             $table
                 ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+                ->update();
+
+            $table = $this->table('record_data_categories');
+            $table
+                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
+                ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
+                ->addIndex(array('anr_id'))
+                ->create();
+            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+            $table
+                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+                ->update();
+
+            $table = $this->table('record_data_subjects');
+            $table
+                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
+                ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
+                ->addIndex(array('anr_id'))
+                ->create();
+            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+            $table
+                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+                ->update();
+
+            $table = $this->table('record_international_transfers');
+            $table
+                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
+                ->addColumn('record_id', 'integer', array('null' => true, 'signed' => false))
+                ->addColumn('processor_id', 'integer', array('null' => true, 'signed' => false))
+                ->addColumn('organisation', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('country', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('documents', 'text', array('null' => true))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
+                ->addIndex(array('anr_id'))
+                ->create();
+            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+            $table
+                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+                ->update();
+
+            $table = $this->table('record_personal_data');
+            $table
+                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
+                ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
+                ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('retention_period', 'integer', array('null' => true, 'limit' => 255))
+                ->addColumn('retention_period_mode', 'integer', array('null' => true, 'limit' => MysqlAdapter::INT_TINY))
+                ->addColumn('retention_period_description', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('created_at', 'datetime', array('null' => true))
+                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('updated_at', 'datetime', array('null' => true))
+                ->addIndex(array('anr_id'))
+                ->create();
+            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+            $table
+                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'NO_ACTION','update' => 'RESTRICT'))
+                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
                 ->update();
 
     	$table = $this->table('record_processors');
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('contact', 'string', array('null' => false, 'limit' => 255))
-                ->addColumn('id_third_country', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('dpo_third_country', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('activities', 'text', array('null' => false))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('representative', 'integer', array('null' => true, 'signed' => false))
+                ->addColumn('dpo', 'integer', array('null' => true, 'signed' => false))
                 ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('created_at', 'datetime', array('null' => true))
                 ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('updated_at', 'datetime', array('null' => true))
                 ->addIndex(array('anr_id'))
                 ->create();
-
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-    	$table
+    	    $table
                 ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
                 ->update();
 
 
-    	$table = $this->table('record_recipient_categories');
-            $table
-                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('created_at', 'datetime', array('null' => true))
-                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('updated_at', 'datetime', array('null' => true))
-                ->create();
+    	$table = $this->table('record_recipients');
+        $table
+            ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
+            ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
+            ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
+            ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
+            ->addColumn('created_at', 'datetime', array('null' => true))
+            ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
+            ->addColumn('updated_at', 'datetime', array('null' => true))
+            ->addIndex(array('anr_id'))
+            ->create();
 
-            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-
-            $table
-                ->addIndex(array('anr_id'))
-                ->update();
-            $table
-                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
+        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+        $table
+            ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->update();
 
     	$table = $this->table('records');
-            $table
-    	    ->addForeignKey('controller', 'record_controllers', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
+        $table
+	    ->addForeignKey('controller_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+	    ->addForeignKey('dpo_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+	    ->addForeignKey('representative_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
+
+    	$table = $this->table('record_international_transfers');
+        $table
+            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
 
         $table = $this->table('records_record_joint_controllers');
-            $table
-                ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('controller_id', 'integer', array('null' => false, 'signed' => false))
-                ->addIndex(array('record_id'))
-                ->addIndex(array('controller_id'))
-                ->create();
-            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+        $table
+            ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
+            ->addColumn('controller_id', 'integer', array('null' => false, 'signed' => false))
+            ->addIndex(array('record_id'))
+            ->addIndex(array('controller_id'))
+            ->create();
+        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+        $table
+            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('controller_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
+
+    	$table = $this->table('records_record_recipients');
+        $table
+            ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
+            ->addColumn('recipient_id', 'integer', array('null' => false, 'signed' => false))
+            ->addIndex(array('record_id'))
+            ->addIndex(array('recipient_id'))
+            ->create();
+        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->addForeignKey('controller_id', 'record_controllers', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
+            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('recipient_id', 'record_recipients', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
 
     	$table = $this->table('records_record_processors');
-            $table
-                ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('processor_id', 'integer', array('null' => false, 'signed' => false))
-                ->addIndex(array('record_id'))
-                ->addIndex(array('processor_id'))
-                ->create();
-            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+        $table
+            ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
+            ->addColumn('processor_id', 'integer', array('null' => false, 'signed' => false))
+            ->addIndex(array('record_id'))
+            ->addIndex(array('processor_id'))
+            ->create();
+        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
+            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
 
-    	$table = $this->table('records_record_recipient_categories');
-            $table
-                ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('recipient_category_id', 'integer', array('null' => false, 'signed' => false))
-                ->addIndex(array('record_id'))
-                ->addIndex(array('recipient_category_id'))
-                ->create();
-            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+        $table = $this->table('record_personal_data_record_data_subjects');
+        $table
+            ->addColumn('personal_data_id', 'integer', array('null' => false, 'signed' => false))
+            ->addColumn('data_subject_id', 'integer', array('null' => false, 'signed' => false))
+            ->addIndex(array('personal_data_id'))
+            ->addIndex(array('data_subject_id'))
+            ->create();
+        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->addForeignKey('recipient_category_id', 'record_recipient_categories', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
+            ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('data_subject_id', 'record_data_subjects', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
 
-    	$table = $this->table('record_processors_record_behalf_controllers');
-            $table
-                ->addColumn('processor_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('controller_id', 'integer', array('null' => false, 'signed' => false))
-                ->addIndex(array('processor_id'))
-                ->addIndex(array('controller_id'))
-                ->create();
-            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+        $table = $this->table('record_personal_data_record_data_categories');
+        $table
+            ->addColumn('personal_data_id', 'integer', array('null' => false, 'signed' => false))
+            ->addColumn('data_category_id', 'integer', array('null' => false, 'signed' => false))
+            ->addIndex(array('personal_data_id'))
+            ->addIndex(array('data_category_id'))
+            ->create();
+        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-                ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->addForeignKey('controller_id', 'record_controllers', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
+            ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('data_category_id', 'record_data_categories', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
+
+	           $table = $this->table('record_processors_record_actors');
+        $table
+            ->addColumn('processor_id', 'integer', array('null' => false, 'signed' => false))
+            ->addColumn('actor_id', 'integer', array('null' => false, 'signed' => false))
+            ->addIndex(array('processor_id'))
+            ->addIndex(array('actor_id'))
+            ->create();
+        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
+     	$table
+            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('actor_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->update();
     }
 }

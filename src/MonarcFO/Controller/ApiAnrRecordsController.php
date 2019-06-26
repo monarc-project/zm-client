@@ -18,7 +18,8 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecordsController extends ApiAnrAbstractController
 {
     protected $name = 'records';
-    protected $dependencies = ['anr', 'controller', 'jointControllers', 'processors', 'recipients'];
+    protected $dependencies = [ 'anr', 'controller', 'representative', 'dpo', 'jointControllers',
+                                'personalData', 'internationalTransfers', 'processors', 'recipients'];
 
     public function getList()
     {
@@ -40,9 +41,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                 $this->formatDependencies($entities[$key], $this->dependencies);
             }
         }
-        foreach ($entities as $key => $entity) {
-            $entities[$key]['erasure'] = $entities[$key]['erasure']->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
-        }
         return new JsonModel(array(
             'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
@@ -52,7 +50,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
+        $entity = $this->getService()->getEntity(['id' => $id]);
 
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
@@ -63,7 +61,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
-        $entity['erasure'] = $entity['erasure']->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
         return new JsonModel($entity);
     }
 
@@ -96,15 +93,56 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                             foreach($$dependency as $d){
                                 if(is_a($d, '\MonarcFO\Model\Entity\RecordProcessor')) { //fetch more info
                                     $d = $d->getJsonArray();
-                                    $d['controllers']->initialize();
-                                    if($d['controllers']->count()){
-                                        $controllers = $d['controllers']->getSnapshot();
-                                        $d['controllers'] = [];
-                                        foreach($controllers as $c){
-                                          $tempController = $c->toArray();
-                                          $d['controllers'][] = $tempController;
+                                    if($d['representative']){
+                                        $d['representative'] = $d['representative']->getJsonArray();
+                                    }
+                                    if($d['dpo']){
+                                        $d['dpo'] = $d['dpo']->getJsonArray();
+                                    }
+                                    $d['cascadedProcessors']->initialize();
+                                    if($d['cascadedProcessors']->count()){
+                                        $cascadedProcessors = $d['cascadedProcessors']->getSnapshot();
+                                        $d['cascadedProcessors'] = [];
+                                        foreach($cascadedProcessors as $cp){
+                                          $tempProcessor = $cp->toArray();
+                                          $d['cascadedProcessors'][] = $tempProcessor;
                                         }
                                     }
+                                    $d['internationalTransfers']->initialize();
+                                    if($d['internationalTransfers']->count()){
+                                        $internationalTransfers = $d['internationalTransfers']->getSnapshot();
+                                        $d['internationalTransfers'] = [];
+                                        foreach($internationalTransfers as $it){
+                                          $tempInternationalTransfer = $it->toArray();
+                                          $d['internationalTransfers'][] = $tempInternationalTransfer;
+                                        }
+                                    }
+                                    $temp[] = $d;
+                                }
+                                else if(is_a($d, '\MonarcFO\Model\Entity\RecordPersonalData')) { //fetch more info
+                                    $d = $d->getJsonArray();
+                                    $d['dataSubjects']->initialize();
+                                    if($d['dataSubjects']->count()){
+                                        $dataSubjects = $d['dataSubjects']->getSnapshot();
+                                        $d['dataSubjects'] = [];
+                                        foreach($dataSubjects as $ds){
+                                          $tempDataSubject = $ds->toArray();
+                                          $d['dataSubjects'][] = $tempDataSubject;
+                                        }
+                                    }
+                                    $d['dataCategories']->initialize();
+                                    if($d['dataCategories']->count()){
+                                        $dataCategories = $d['dataCategories']->getSnapshot();
+                                        $d['dataCategories'] = [];
+                                        foreach($dataCategories as $dc){
+                                          $tempDataCategory = $dc->toArray();
+                                          $d['dataCategories'][] = $tempDataCategory;
+                                        }
+                                    }
+                                    if($d['record']){
+                                        $d['record'] = $d['record']->getJsonArray();
+                                    }
+
                                     $temp[] = $d;
                                 }
                                 else if(is_a($d, '\MonarcCore\Model\Entity\AbstractEntity')){
@@ -168,7 +206,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         }
         $data['anr'] = $anrId;
 
-        $id = $this->getService()->createRecord($data);
+        $id = $this->getService()->create($data);
 
         return new JsonModel([
             'status' => 'ok',

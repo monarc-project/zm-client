@@ -22,41 +22,70 @@ class ApiAnrRecordsExportController extends ApiAnrAbstractController
      */
     public function create($data)
     {
-        if (empty($data['id'])) {
+        if (!empty($data['id'])) {
+            $entity = $this->getService()->getEntity($data['id']);
+
+            $anrId = (int)$this->params()->fromRoute('anrid');
+            if (empty($anrId)) {
+                throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+            }
+
+            if ($entity['anr']->get('id') != $anrId) {
+                throw new \MonarcCore\Exception\Exception('Anr ids differents', 412);
+            }
+
+            $output = $this->getService()->export($data);
+
+            if (empty($data['password'])) {
+              $contentType = 'application/json; charset=utf-8';
+              $extension = '.json';
+            } else {
+              $contentType = 'text/plain; charset=utf-8';
+              $extension = '.bin';
+            }
+
+            $this->getResponse()
+                 ->getHeaders()
+                 ->clearHeaders()
+                 ->addHeaderLine('Content-Type', $contentType)
+                 ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
+                                  (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
+
+            $this->getResponse()
+                 ->setContent($output);
+
+            return $this->getResponse();
+        }
+        else if ($data['export'] == "All") {
+            if (empty($data['password'])) {
+              $contentType = 'application/json; charset=utf-8';
+              $extension = '.json';
+            } else {
+              $contentType = 'text/plain; charset=utf-8';
+              $extension = '.bin';
+            }
+            $anrId = (int)$this->params()->fromRoute('anrid');
+            if (empty($anrId)) {
+                throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+            }
+            $data['anr'] = $anrId;
+            $data['filename'] = "records_list";
+            $output = $this->getService()->exportAll($data);
+
+            $this->getResponse()
+                 ->getHeaders()
+                 ->clearHeaders()
+                 ->addHeaderLine('Content-Type', $contentType)
+                 ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
+                                  (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
+
+            $this->getResponse()
+                 ->setContent($output);
+
+            return $this->getResponse();
+        } else {
             throw new \MonarcCore\Exception\Exception('Record to export is required', 412);
         }
-        $entity = $this->getService()->getEntity($data['id']);
-
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-
-        if ($entity['anr']->get('id') != $anrId) {
-            throw new \MonarcCore\Exception\Exception('Anr ids differents', 412);
-        }
-
-        $output = $this->getService()->export($data);
-
-        if (empty($data['password'])) {
-          $contentType = 'application/json; charset=utf-8';
-          $extension = '.json';
-        } else {
-          $contentType = 'text/plain; charset=utf-8';
-          $extension = '.bin';
-        }
-
-        $this->getResponse()
-             ->getHeaders()
-             ->clearHeaders()
-             ->addHeaderLine('Content-Type', $contentType)
-             ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
-                              (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
-
-        $this->getResponse()
-             ->setContent($output);
-
-        return $this->getResponse();
     }
 
     /**

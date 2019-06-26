@@ -10,48 +10,40 @@ namespace MonarcFO\Controller;
 use Zend\View\Model\JsonModel;
 
 /**
- * Api Anr Record Processors Controller
+ * Api Anr Record Personal Data Controller
  *
- * Class ApiAnrRecordProcessorsController
+ * Class ApiAnrRecordPersonalDataController
  * @package MonarcFO\Controller
  */
-class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
+class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
 {
-    protected $name = 'record-processors';
-    protected $dependencies = ['anr', 'representative', 'dpo', 'cascadedProcessors', 'internationalTransfers'];
+    protected $name = 'record-personal-data';
+    protected $dependencies = ['anr', 'record', 'dataSubjects', 'dataCategories'];
 
-    public function get($id)
+    public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
-
         if (empty($anrId)) {
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \MonarcCore\Exception\Exception('Anr ids are different', 412);
-        }
+        $page = $this->params()->fromQuery('page');
+        $limit = $this->params()->fromQuery('limit');
+        $order = $this->params()->fromQuery('order');
+        $filter = $this->params()->fromQuery('filter');
+        $filterAnd = ['anr' => $anrId];
 
+        $service = $this->getService();
+
+        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
         if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
+            foreach ($entities as $key => $entity) {
+                $this->formatDependencies($entities[$key], $this->dependencies);
+            }
         }
-
-        return new JsonModel($entity);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $this->getService()->updateProcessor($id, $data);
-
-        return new JsonModel(['status' => 'ok']);
+        return new JsonModel(array(
+            'count' => $service->getFilteredCount($filter, $filterAnd),
+            $this->name => $entities
+        ));
     }
 
     /**
@@ -64,13 +56,27 @@ class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
             throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
-
-        $id = $this->getService()->create($data);
-
+        $id = $this->getService()->createPersonalData($data);
         return new JsonModel([
             'status' => 'ok',
             'id' => $id,
         ]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function update($id, $data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new \MonarcCore\Exception\Exception('Anr id missing', 412);
+        }
+        $data['anr'] = $anrId;
+
+        $service = $this->getService()->updatePersonalData($id, $data);
+
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**

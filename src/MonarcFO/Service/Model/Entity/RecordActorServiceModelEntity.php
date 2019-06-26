@@ -8,10 +8,10 @@
 namespace MonarcFO\Service\Model\Entity;
 
 /**
- * Class RecordRecipientCategoryServiceModelEntity
+ * Class RecordActorServiceModelEntity
  * @package MonarcFO\Service\Model\Entity
  */
-class RecordRecipientCategoryServiceModelEntity extends AbstractServiceModelEntity
+class RecordActorServiceModelEntity extends AbstractServiceModelEntity
 {
     protected $ressources = [
         'setDbAdapter' => '\MonarcCli\Model\Db',

@@ -8,17 +8,19 @@
 namespace MonarcFO\Model\Entity;
 
 use MonarcCore\Model\Entity\AbstractEntity;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * RecordController
+ * RecordPersonalData
  *
- * @ORM\Table(name="record_controllers", indexes={
+ * @ORM\Table(name="record_personal_data", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
+ *      @ORM\Index(name="record", columns={"record_id"})
  * })
  * @ORM\Entity
  */
-class RecordController extends AbstractEntity
+class RecordPersonalData extends AbstractEntity
 {
     /**
      * @var integer
@@ -30,16 +32,9 @@ class RecordController extends AbstractEntity
     protected $id;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="label", type="string", length=255, nullable=true)
-     */
-    protected $label;
-
-    /**
      * @var \MonarcFO\Model\Entity\Anr
      *
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", )
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
@@ -47,11 +42,62 @@ class RecordController extends AbstractEntity
     protected $anr;
 
     /**
+     * @var \MonarcFO\Model\Entity\Record
+     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Record")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false)
+     * })
+     */
+    protected $record;
+
+    /**
+     * @var \Doctrine\Common\Collections\Collection
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordDataSubject", cascade={"persist"})
+     * @ORM\JoinTable(name="record_personal_data_record_data_subjects",
+     *  joinColumns={@ORM\JoinColumn(name="personal_data_id", referencedColumnName="id")},
+     *  inverseJoinColumns={@ORM\JoinColumn(name="data_subject_id", referencedColumnName="id")}
+     * )
+     */
+    protected $dataSubjects;
+
+    /**
+     * @var \Doctrine\Common\Collections\Collection
+     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordDataCategory", cascade={"persist"})
+     * @ORM\JoinTable(name="record_personal_data_record_data_categories",
+     *  joinColumns={@ORM\JoinColumn(name="personal_data_id", referencedColumnName="id")},
+     *  inverseJoinColumns={@ORM\JoinColumn(name="data_category_id", referencedColumnName="id")}
+     * )
+     */
+    protected $dataCategories;
+
+    /**
      * @var string
      *
-     * @ORM\Column(name="contact", type="string", length=255, nullable=false)
+     * @ORM\Column(name="description", type="string", length=255, nullable=true)
      */
-    protected $contact;
+    protected $description;
+
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="retention_period", type="integer", options={"unsigned":true, "default":0})
+     */
+    protected $retentionPeriod = 0;
+
+    /**
+     * @var smallint
+     *
+     * @ORM\Column(name="retention_period_mode", type="smallint", options={"default":0})
+     */
+    protected $retentionPeriodMode = 0;
+
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="retention_period_description", type="string", length=255, nullable=false)
+     */
+    protected $retentionPeriodDescription;
 
     /**
      * @var string
@@ -80,6 +126,13 @@ class RecordController extends AbstractEntity
      * @ORM\Column(name="updated_at", type="datetime", nullable=true)
      */
     protected $updatedAt;
+
+    public function __construct($obj = null)
+    {
+        $this->dataSubjects = new ArrayCollection();
+        $this->dataCategories = new ArrayCollection();
+        parent::__construct($obj);
+    }
 
     /**
      * @return int
@@ -127,7 +180,7 @@ class RecordController extends AbstractEntity
 
     /**
      * @param string $creator
-     * @return RecordController
+     * @return RecordPersonalData
      */
     public function setCreator($creator)
     {
@@ -145,7 +198,7 @@ class RecordController extends AbstractEntity
 
     /**
      * @param \DateTime $createdAt
-     * @return RecordController
+     * @return RecordPersonalData
      */
     public function setCreatedAt($createdAt)
     {
@@ -163,7 +216,7 @@ class RecordController extends AbstractEntity
 
     /**
      * @param string $updater
-     * @return RecordController
+     * @return RecordPersonalData
      */
     public function setUpdater($updater)
     {
@@ -181,7 +234,7 @@ class RecordController extends AbstractEntity
 
     /**
      * @param \DateTime $updatedAt
-     * @return RecordController
+     * @return RecordPersonalData
      */
     public function setUpdatedAt($updatedAt)
     {

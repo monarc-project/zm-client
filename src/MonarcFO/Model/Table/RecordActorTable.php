@@ -10,17 +10,17 @@ namespace MonarcFO\Model\Table;
 use MonarcCore\Model\Table\AbstractEntityTable;
 
 /**
- * Class RecordControllerTable
+ * Class RecordActorTable
  * @package MonarcFO\Model\Table
  */
-class RecordControllerTable extends AbstractEntityTable
+class RecordActorTable extends AbstractEntityTable
 {
     /**
-     * RecordControllerTable constructor.
+     * RecordActorTable constructor.
      * @param \MonarcCore\Model\Db $dbService
      */
     public function __construct(\MonarcCore\Model\Db $dbService)
     {
-        parent::__construct($dbService, '\MonarcFO\Model\Entity\RecordController');
+        parent::__construct($dbService, '\MonarcFO\Model\Entity\RecordActor');
     }
 }

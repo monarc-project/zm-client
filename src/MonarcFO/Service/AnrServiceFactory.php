@@ -81,9 +81,9 @@ class AnrServiceFactory extends AbstractServiceFactory
         'SoaCliTable' => 'MonarcFO\Model\Table\SoaTable',
         'SoaCategoryCliTable' => 'MonarcFO\Model\Table\SoaCategoryTable',
         'recordCliTable' => 'MonarcFO\Model\Table\RecordTable',
-        'recordControllerCliTable' => 'MonarcFO\Model\Table\RecordControllerTable',
+        'recordActorCliTable' => 'MonarcFO\Model\Table\RecordActorTable',
         'recordProcessorCliTable' => 'MonarcFO\Model\Table\RecordProcessorTable',
-        'recordRecipientCategoryCliTable' => 'MonarcFO\Model\Table\RecordRecipientCategoryTable',
+        'recordRecipientCliTable' => 'MonarcFO\Model\Table\RecordRecipientTable',
         'referentialCliTable' => 'MonarcFO\Model\Table\ReferentialTable',
         'measureMeasureCliTable' => 'MonarcFO\Model\Table\MeasureMeasureTable',
 

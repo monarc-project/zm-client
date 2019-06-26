@@ -10,17 +10,17 @@ namespace MonarcFO\Model\Table;
 use MonarcCore\Model\Table\AbstractEntityTable;
 
 /**
- * Class RecordRecipientCategoryTable
+ * Class RecordRecipientTable
  * @package MonarcFO\Model\Table
  */
-class RecordRecipientCategoryTable extends AbstractEntityTable
+class RecordRecipientTable extends AbstractEntityTable
 {
     /**
-     * RecordRecipientCategoryTable constructor.
+     * RecordRecipientTable constructor.
      * @param \MonarcCore\Model\Db $dbService
      */
     public function __construct(\MonarcCore\Model\Db $dbService)
     {
-        parent::__construct($dbService, '\MonarcFO\Model\Entity\RecordRecipientCategory');
+        parent::__construct($dbService, '\MonarcFO\Model\Entity\RecordRecipient');
     }
 }

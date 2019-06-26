@@ -11,10 +11,10 @@ use MonarcCore\Controller\AbstractControllerFactory;
 
 /**
  *
- * Factory class attached to ApiAnrRecordControllersController
+ * Factory class attached to ApiAnrRecordDataSubjectsController
  * @package MonarcFO\Controller
  */
-class ApiAnrRecordControllersControllerFactory extends AbstractControllerFactory
+class ApiAnrRecordDataSubjectsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\MonarcFO\Service\AnrRecordControllerService';
+    protected $serviceName = '\MonarcFO\Service\AnrRecordDataSubjectService';
 }

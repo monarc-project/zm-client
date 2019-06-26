@@ -8,18 +8,17 @@
 namespace MonarcFO\Model\Entity;
 
 use MonarcCore\Model\Entity\AbstractEntity;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * RecordProcessor
+ * RecordActor
  *
- * @ORM\Table(name="record_processors", indexes={
+ * @ORM\Table(name="record_actors", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  * })
  * @ORM\Entity
  */
-class RecordProcessor extends AbstractEntity
+class RecordActor extends AbstractEntity
 {
     /**
      * @var integer
@@ -50,46 +49,9 @@ class RecordProcessor extends AbstractEntity
     /**
      * @var array
      *
-     * @ORM\Column(name="activities", type="array", nullable=true)
+     * @ORM\Column(name="contact", type="array", nullable=true)
      */
-    protected $activities;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="sec_measures", type="string", length=255, nullable=true)
-     */
-    protected $secMeasures;
-
-    /**
-     * @var \MonarcFO\Model\Entity\RecordActor
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="representative", referencedColumnName="id", nullable=true)
-     */
-    protected $representative;
-
-    /**
-     * @var \MonarcFO\Model\Entity\RecordActor
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="dpo", referencedColumnName="id", nullable=true)
-     */
-    protected $dpo;
-
-    /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinTable(name="record_processors_record_actors",
-     *  joinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="actor_id", referencedColumnName="id")}
-     * )
-     */
-    protected $cascadedProcessors;
-
-    /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\RecordInternationalTransfer", mappedBy="processor", cascade={"persist"})
-     */
-    protected $internationalTransfers;
+    protected $contact;
 
     /**
      * @var string
@@ -121,9 +83,7 @@ class RecordProcessor extends AbstractEntity
 
     public function __construct($obj = null)
     {
-        $this->activities = [];
-        $this->cascadedProcessors = new ArrayCollection();
-        $this->internationalTransfers = new ArrayCollection();
+        $this->contact = [];
         parent::__construct($obj);
     }
 
@@ -173,7 +133,7 @@ class RecordProcessor extends AbstractEntity
 
     /**
      * @param string $creator
-     * @return RecordProcessor
+     * @return RecordActor
      */
     public function setCreator($creator)
     {
@@ -191,7 +151,7 @@ class RecordProcessor extends AbstractEntity
 
     /**
      * @param \DateTime $createdAt
-     * @return RecordProcessor
+     * @return RecordActor
      */
     public function setCreatedAt($createdAt)
     {
@@ -209,7 +169,7 @@ class RecordProcessor extends AbstractEntity
 
     /**
      * @param string $updater
-     * @return RecordProcessor
+     * @return RecordActor
      */
     public function setUpdater($updater)
     {
@@ -227,30 +187,11 @@ class RecordProcessor extends AbstractEntity
 
     /**
      * @param \DateTime $updatedAt
-     * @return RecordProcessor
+     * @return RecordActor
      */
     public function setUpdatedAt($updatedAt)
     {
         $this->updatedAt = $updatedAt;
-        return $this;
-    }
-
-
-    /**
-     * @return Controller
-     */
-    public function getControllers()
-    {
-        return $this->controllers;
-    }
-
-    /**
-    * @param int $jointControllers
-    * @return Record
-    */
-    public function setControllers($controllers)
-    {
-        $this->controllers = $controllers;
         return $this;
     }
 }

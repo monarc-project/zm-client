@@ -10,19 +10,20 @@ namespace MonarcFO\Service;
 use MonarcCore\Service\AbstractService;
 
 /**
- * AnrRecord Recipient Category Service
+ * AnrRecord Recipient Service
  *
- * Class AnrRecordRecipientCategoryService
+ * Class AnrRecordRecipientService
  * @package MonarcFO\Service
  */
-class AnrRecordRecipientCategoryService extends AbstractService
+class AnrRecordRecipientService extends AbstractService
 {
     protected $dependencies = ['anr'];
     protected $filterColumns = ['label'];
     protected $userAnrTable;
+    protected $anrTable;
     protected $recordTable;
 
-    public function recipientCategoryWithoutRecord($recipientId, $recordId, $anrId) {
+    public function orphanRecipient($recipientId, $anrId) {
         $records = $this->recordTable->getEntityByFields(['recipients' => $recipientId, 'anr' => $anrId]);
         if(count($records) > 0) {
             return false;

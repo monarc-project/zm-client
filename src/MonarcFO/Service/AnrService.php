@@ -102,9 +102,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $SoaCliTable;
     protected $SoaCategoryCliTable;
     protected $recordCliTable;
-    protected $recordControllerCliTable;
+    protected $recordActorCliTable;
     protected $recordProcessorCliTable;
-    protected $recordRecipientCategoryCliTable;
+    protected $recordRecipientCliTable;
     protected $referentialCliTable;
     protected $measureMeasureCliTable;
 
@@ -1007,14 +1007,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             //duplicate record controllers
-            $recordControllers = $this->get('recordControllerCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $recordActors = $this->get('recordActorCliTable')->getEntityByFields(['anr' => $anr->id]);
             $controllerNewIds = [];
-            foreach ($recordControllers as $c) {
-                $newController = new \MonarcFO\Model\Entity\RecordController($c);
+            foreach ($recordActors as $c) {
+                $newController = new \MonarcFO\Model\Entity\RecordActor($c);
                 $newController->set('id', null);
                 $newController->setAnr($newAnr);
-                $this->get('recordControllerCliTable')->save($newController, false);
-                $this->get('recordControllerCliTable')->getDb()->flush();
+                $this->get('recordActorCliTable')->save($newController, false);
+                $this->get('recordActorCliTable')->getDb()->flush();
                 $controllerNewIds[$c->id] = $newController;
             }
 
@@ -1036,14 +1036,14 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $processorNewIds[$p->id] = $newProcessor;
             }
             //duplicate record recipient categories
-            $recordRecipients = $this->get('recordRecipientCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $recordRecipients = $this->get('recordRecipientCliTable')->getEntityByFields(['anr' => $anr->id]);
             $recipientNewIds = [];
             foreach ($recordRecipients as $r) {
-                $newRecipient = new \MonarcFO\Model\Entity\RecordRecipientCategory($r);
+                $newRecipient = new \MonarcFO\Model\Entity\RecordRecipient($r);
                 $newRecipient->set('id', null);
                 $newRecipient->setAnr($newAnr);
-                $this->get('recordRecipientCategoryCliTable')->save($newRecipient, false);
-                $this->get('recordRecipientCategoryCliTable')->getDb()->flush();
+                $this->get('recordRecipientCliTable')->save($newRecipient, false);
+                $this->get('recordRecipientCliTable')->getDb()->flush();
                 $recipientNewIds[$r->id] = $newRecipient;
             }
 
