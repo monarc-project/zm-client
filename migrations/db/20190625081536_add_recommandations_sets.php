@@ -72,8 +72,11 @@ class AddRecommandationsSets extends AbstractMigration
 
         //remove the id
         $table->removeColumn('id')
-            ->update();
+            ->dropForeignKey('anr_id')
+            ->save();
         $this->execute("ALTER TABLE recommandations_sets ADD PRIMARY KEY uuid_anr_id (uuid, anr_id)");
+        $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->update();
 
         //add foreign key for recommendations
         $table = $this->table('recommandations');
