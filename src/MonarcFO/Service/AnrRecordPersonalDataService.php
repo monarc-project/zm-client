@@ -31,7 +31,6 @@ class AnrRecordPersonalDataService extends AbstractService
      */
     public function createPersonalData($data)
     {
-        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         $dss = array();
         foreach ($data['dataSubjects'] as $ds) {
             if(!isset($ds['id'])) {
@@ -69,15 +68,16 @@ class AnrRecordPersonalDataService extends AbstractService
             array_push($dataCategoriesToCheck, $dc->id);
         }
 
-
         $result = $this->get('table')->delete($id);
         foreach($dataSubjectsToCheck as $ds) {
             if($this->recordDataSubjectService->orphanDataSubject($ds, $anrId)) {
+                file_put_contents('php://stderr', print_r($ds, TRUE).PHP_EOL);
                 $this->recordDataSubjectService->delete(['anr'=> $anrId, 'id' => $ds]);
             }
         }
         foreach($dataCategoriesToCheck as $dc) {
             if($this->recordDataCategoryService->orphanDataCategory($dc, $anrId)) {
+                file_put_contents('php://stderr', print_r($dc, TRUE).PHP_EOL);
                 $this->recordDataCategoryService->delete(['anr'=> $anrId, 'id' => $dc]);
             }
         }
@@ -91,7 +91,6 @@ class AnrRecordPersonalDataService extends AbstractService
      */
     public function updatePersonalData($id, $data)
     {
-        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         $entity = $this->get('table')->getEntity($id);
         $dataSubjects = array();
         foreach ($data['dataSubjects'] as $ds) {
@@ -136,15 +135,84 @@ class AnrRecordPersonalDataService extends AbstractService
     }
 
     /**
-    * Generates the array to be exported into a file when calling {#exportProcessor}
-    * @see #exportProcessor
-    * @param int $id The processor's id
-    * @param string $filename The output filename
+    * Generates the array to be exported into a file when calling {#exportPersonalData}
+    * @see #exportPersonalData
+    * @param int $id The personalData's id
     * @return array The data array that should be saved
-    * @throws \MonarcCore\Exception\Exception If the processor is not found
+    * @throws \MonarcCore\Exception\Exception If the personal data is not found
     */
     public function generateExportArray($id)
     {
+        $entity = $this->get('table')->getEntity($id);
 
+        if (!$entity) {
+            throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
+        }
+        $return = [];
+        if($entity->dataSubjects) {
+            foreach($entity->dataSubjects as $ds) {
+                $return['data_subjects'][] = $this->recordDataSubjectService->generateExportArray($ds->id);
+            }
+        }
+        if($entity->dataCategories) {
+            foreach($pd->dataCategories as $dc) {
+                $return['data_categories'][] = $this->recordDataCategoryService->generateExportArray($dc->id);
+            }
+        }
+        if ($entity->description != "") {
+            $return["description"] = $entity->description;
+        }
+        $return["retention_period"] = $entity->retentionPeriod;
+        if ($entity->retentionPeriodMode == 0) {
+            $return["retention_period_mode"] = "day";
+        } else if ($entity->retentionPeriodMode == 1){
+            $return["retention_period_mode"] = "month";
+        } else {
+            $return["retention_period_mode"] = "year";
+        }
+        if ($entity->retentionPeriodDescription != "") {
+            $return["retention_period_description"] = $entity->retentionPeriodDescription;
+        }
+        return $return;
+    }
+
+    /**
+     * Imports a record personal data from a data array. This data is generally what has been exported into a file.
+     * @param array $data The record personal data's data fields
+     * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
+     * @return bool|int The ID of the generated asset, or false if an error occurred.
+     */
+    public function importFromArray($data, $anr, $recordId)
+    {
+        $newData = [];
+        $newData['anr'] = $anr;
+        if(isset($data['data_subjects'])) {
+            foreach ($data['data_subjects'] as $ds) {
+                $dataSubject = [];
+                $dataSubject['id'] = $this->recordDataSubjectService->importFromArray($ds, $anr);
+                $newData['dataSubjects'][] = $dataSubject;
+            }
+        }
+        if(isset($data['data_categories'])) {
+            foreach ($data['data_categories'] as $dc) {
+                $dataCategory = [];
+                $dataCategory['id'] = $this->recordDataCategoryService-->importFromArray($dc, $anr);
+                $newData['dataCategories'][] = $dataCategory;
+            }
+        }
+        $newData['record'] = $recordId;
+        $id = $this->createPersonalData($newData);
+        $newData['description'] = (isset($data['description']) ? $data['description'] : '');
+        $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : '');
+        $newData['retentionPeriod'] = $data['retention_period'];
+        if ($data['retention_period_mode'] == "day") {
+            $newData["retentionPeriodMode"] = 0;
+        } else if ($data['retention_period_mode'] == "month") {
+            $newData["retentionPeriodMode"] = 1;
+        }  else {
+            $newData["retentionPeriodMode"] = 2;
+        }
+        $this->updatePersonalData($id, $newData);
+        return $id;
     }
 }

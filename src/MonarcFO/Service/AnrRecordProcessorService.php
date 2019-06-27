@@ -27,7 +27,7 @@ class AnrRecordProcessorService extends AbstractService
 
     public function deleteProcessor($id)
     {
-        $processorEntity = $this->get('table')->getEntity($id);
+        $entity = $this->get('table')->getEntity($id);
         $anrId = $entity->anr->id;
         $actorsToCheck = array();
         if($entity->dpo) {
@@ -129,27 +129,24 @@ class AnrRecordProcessorService extends AbstractService
         $return = [
             'id' => $entity->id,
             'name' => $entity->label,
-            'contact' => $entity->contact,
         ];
         if($entity->secMeasures != '') {
             $return['security_measures'] = $entity->secMeasures;
         }
-        if($entity->idThirdCountry) {
-            $return['international_transfer'] = [
-                                                    'transfer' => true,
-                                                    'identifier_third_country' => $entity->idThirdCountry,
-                                                    'data_processor_third_country' => $entity->dpoThirdCountry,
-                                                ];
+        if($entity->activities) {
+            $return['activities'] = $entity->activities;
         }
-        else {
-            $return['international_transfer'] = ['transfer' => false,];
+        if($entity->representative) {
+            $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
         }
-        foreach ($entity->controllers as $bc) {
-            $return['controllers_behalf'][] =   [
-                                                    'id' => $bc->id,
-                                                    'name' => $bc->label,
-                                                    'contact' => $bc->contact,
-                                                ];
+        if($entity->dpo) {
+            $return['data_protection_officero'] = $this->recordActorService->generateExportArray($entity->dpo->id);
+        }
+        foreach ($entity->cascadedProcessors as $cp) {
+            $return['cascaded_processors'][] = $this->recordActorService->generateExportArray($cp->id);
+        }
+        foreach ($entity->internationalTransfers as $it) {
+            $return['international_transfers'][] = $this->recordInternationalTransferService->generateExportArray($it->id);
         }
         return $return;
     }
@@ -160,5 +157,70 @@ class AnrRecordProcessorService extends AbstractService
             return false;
         }
         return true;
+    }
+
+    /**
+     * Imports a record processor from a data array. This data is generally what has been exported into a file.
+     * @param array $data The processor's data fields
+     * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
+     * @return bool|int The ID of the generated asset, or false if an error occurred.
+     */
+    public function importFromArray($data, $anr)
+    {
+        $newData = []; //new data to be updated
+        $newData['anr'] = $anr;
+        $newData['label'] = $data['name'];
+        $id = $data['id'];
+        try {
+            $processorEntity = $this->get('table')->getEntity($data['id']);
+            if ($processorEntity->get('anr')->get('id') != $anr || $processorEntity->get('label') != $data['name']) {
+                unset($data['id']);
+                $id = $this->create($newData);
+            }
+            else {
+                foreach($processorEntity->get('cascadedProcessors') as $cp) {
+                    $newData['cascadedProcessors'][] = $cp->get('id');
+                }
+                foreach($processorEntity->get('personalData') as $pd) {
+                    $newData['personalData'][] = $pd->get('id');
+                }
+                foreach($processorEntity->get('internationalTransfers') as $it) {
+                    $newData['internationalTransfers'][] = $it->get('id');
+                }
+            }
+        } catch (\MonarcCore\Exception\Exception $e) {
+            unset($data['id']);
+            $id = $this->create($newData);
+        }
+        $newData['activities'] = (isset($data['activities']) ? $data['activities'] : []);
+        $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
+        if(isset($data['representative'])) {
+            $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
+        }
+        if(isset($data['data_protection_officer'])) {
+            $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
+        }
+        if(isset($data['cascaded_processors'])) {
+            foreach ($data['cascaded_processors'] as $jc) {
+                $jointController = [];
+                $jointController['id'] = $this->recordActorService->importFromArray($jc, $anr);
+                $newData['cascadedProcessors'][] = $jointController;
+            }
+        }
+        if(isset($data['personal_data'])) {
+            foreach ($data['personal_data'] as $pd) {
+                $personalData = [];
+                $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr);
+                $newData['personalData'][] = $personalData;
+            }
+        }
+        if(isset($data['international_transfers'])) {
+            foreach ($data['international_transfers'] as $it) {
+                $internationalTransfers = [];
+                $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id, false);
+                $newData['internationalTransfers'][] = $internationalTransfers;
+            }
+        }
+        return $this->updateProcessor($id,$newData);
     }
 }

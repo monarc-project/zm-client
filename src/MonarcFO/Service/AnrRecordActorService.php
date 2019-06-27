@@ -55,4 +55,58 @@ class AnrRecordActorService extends AbstractService
         return true;
     }
 
+    /**
+    * Generates the array to be exported into a file when calling {#exportActor}
+    * @see #exportActor
+    * @param int $id The actor's id
+    * @return array The data array that should be saved
+    * @throws \MonarcCore\Exception\Exception If the actor is not found
+    */
+    public function generateExportArray($id)
+    {
+        $entity = $this->get('table')->getEntity($id);
+
+        if (!$entity) {
+            throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
+        }
+
+        $return['id'] = $entity->id;
+        $return['name'] = $entity->label;
+        if($entity->contact) {
+            $return['contact'] = $entity->contact;
+        }
+        return $return;
+    }
+
+    /**
+     * Imports a record actor from a data array. This data is generally what has been exported into a file.
+     * @param array $data The record actor's data fields
+     * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
+     * @return bool|int The ID of the generated asset, or false if an error occurred.
+     */
+    public function importFromArray($data, $anr)
+    {
+        $data['anr'] = $anr;
+        $data['label'] = $data['name'];
+        $id = $data['id'];
+        unset($data['name']);
+        try {
+            $actorEntity = $this->get('table')->getEntity($data['id']);
+            if ($actorEntity->get('anr')->get('id') != $anr || $actorEntity->get('label') != $data['label']) {
+                unset($data['id']);
+                $id = $this->create($data);
+            }
+            else if(isset($data["contact"])){
+                foreach($data["contact"] as $c) {
+                    if (!in_array($c, $actorEntity->get('contact'))) {
+                        $actorEntity->addContact($c);
+                    }
+                }
+            }
+        } catch (\MonarcCore\Exception\Exception $e) {
+            unset($data['id']);
+            $id = $this->create($data);
+        }
+        return $id;
+    }
 }

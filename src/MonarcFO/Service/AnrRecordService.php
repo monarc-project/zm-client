@@ -57,7 +57,7 @@ class AnrRecordService extends AbstractService
             array_push($recipientsToCheck, $r->id);
         }
         foreach($entity->personalData as $pd) {
-            $this->recordPersonalDataService->delete(['anr'=> $anrId, 'id' => $pd->id]);
+            $this->recordPersonalDataService->deletePersonalData(['anr'=> $anrId, 'id' => $pd->id]);
         }
         foreach($entity->internationalTransfers as $it) {
             $this->recordInternationalTransferService->delete(['anr'=> $anrId, 'id' => $it->id]);
@@ -180,7 +180,7 @@ class AnrRecordService extends AbstractService
             }
         }
         foreach($oldProcessors as $processor) {
-            if(!in_array($processor, $processors) && $this->recordProcessorService->orphanProcessor($processor, $id, $data['anr'])) {
+            if(!in_array($processor, $processors) && $this->recordProcessorService->orphanProcessor($processor, $data['anr'])) {
                 $this->recordProcessorService->deleteProcessor($processor);
             }
         }
@@ -235,66 +235,42 @@ class AnrRecordService extends AbstractService
             throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
         }
 
-        $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $entity->get('label' . $this->getLanguage()));
+        $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $entity->label);
 
         $return = [
             'type' => 'record',
             'id' => $entity->id,
-            'name' => $entity->get('label' . $this->getLanguage()),
-            'controller' => [
-                                'id' => $entity->controller->id,
-                                'name' => $entity->controller->label,
-                                'contact' => $entity->controller->contact,
-                            ],
-            'erasure' => strftime("%d-%m-%Y", $entity->erasure->getTimeStamp()),
+            'name' => $entity->label,
         ];
-        if($entity->purposes != '') {
+        if($entity->controller) {
+            $return['controller'] = $this->recordActorService->generateExportArray($entity->controller->id);
+        }
+        if($entity->representative) {
+            $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
+        }
+        if($entity->dpo) {
+            $return['data_protection_officer'] = $this->recordActorService->generateExportArray($entity->dpo->id);
+        }
+        if($entity->purposes) {
             $return['purposes'] = $entity->purposes;
-        }
-        if($entity->description != '') {
-            $return['description'] = $entity->description;
-        }
-        if($entity->representative != '') {
-            $return['representative'] = $entity->representative;
-        }
-        if($entity->dpo != '') {
-            $return['data_processor'] = $entity->dpo;
         }
         if($entity->secMeasures != '') {
             $return['security_measures'] = $entity->secMeasures;
         }
-        if($entity->dataSubjects) {
-            $return['data_subjects'] = $entity->dataSubjects;
-        }
-        if($entity->personalData != '') {
-            $return['personal_data'] = $entity->personalData;
-        }
-        if($entity->idThirdCountry) {
-            $return['international_transfer'] = [
-                                                    'transfer' => true,
-                                                    'identifier_third_country' => $entity->idThirdCountry,
-                                                    'data_processor_third_country' => $entity->dpoThirdCountry,
-                                                ];
-        }
-        else {
-            $return['international_transfer'] = ['transfer' => false,];
-        }
         foreach ($entity->jointControllers as $jc) {
-            $return['joint_controllers'][] =[
-                                                'id' => $jc->id,
-                                                'name' => $jc->label,
-                                                'contact' => $jc->contact,
-                                            ];
+            $return['joint_controllers'][] = $this->recordActorService->generateExportArray($jc->id);
         }
-        foreach ($entity->recipients as $rc) {
-            $return['recipients'][] =   [
-                                            'id' => $rc->id,
-                                            'name' => $rc->label,
-                                        ];
+        foreach ($entity->personalData as $pd) {
+            $return['personal_data'][] = $this->recordPersonalDataService->generateExportArray($pd->id);
         }
-        $processorService = $this->get('recordProcessorService');
+        foreach ($entity->recipients as $r) {
+            $return['recipients'][] = $this->recordRecipientService->generateExportArray($r->id);
+        }
+        foreach ($entity->internationalTransfers as $it) {
+            $return['international_transfers'][] = $this->recordInternationalTransferService->generateExportArray($it->id);
+        }
         foreach ($entity->processors as $p) {
-            $return['processors'][] = $processorService->generateExportArray($p->id);
+            $return['processors'][] = $this->recordProcessorService->generateExportArray($p->id);
         }
         return $return;
     }
@@ -347,7 +323,7 @@ class AnrRecordService extends AbstractService
 
     /**
      * Imports a record from a data array. This data is generally what has been exported into a file.
-     * @param array $data The asset's data fields
+     * @param array $data The record's data fields
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
@@ -356,106 +332,56 @@ class AnrRecordService extends AbstractService
         if(isset($data['type']) && $data['type'] == 'record')
         {
             $newData = [];
-            $newData['anr'] =  $this->anrTable->getEntity($anr);
-            $newData['label1'] = $data['name'];
-            $newData['label2'] = $data['name'];
-            $newData['label3'] = $data['name'];
-            $newData['label4'] = $data['name'];
-            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
-            $newData['description'] = (isset($data['description']) ? $data['description'] : '');
-            $newData['representative'] = (isset($data['representative']) ? $data['representative'] : '');
-            $newData['dpo'] = (isset($data['data_processor']) ? $data['data_processor'] : '');
+            $newData['anr'] = $anr;
+            $newData['label'] = $data['name'];
+            $id = $this->create($newData);
+            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : []);
             $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
-            $newData['erasure'] = (new \DateTime('@' .strtotime($data['erasure'])))->format('Y-m-d\TH:i:s.u\Z');
-            $newData['dataSubjects'] = (isset($data['data_subjects']) ? $data['data_subjects'] : []);
-            $newData['personalData'] = (isset($data['personal_data']) ? $data['personal_data'] : '');
-            if($data['international_transfer']['transfer'] == true) {
-                $newData['idThirdCountry'] = $data['international_transfer']['identifier_third_country'];
-                $newData['dpoThirdCountry'] = $data['international_transfer']['data_processor_third_country'];
-            } else {
-                $newData['idThirdCountry'] = '';
-                $newData['dpoThirdCountry'] = '';
+            if(isset($data['controller'])) {
+                $newData['controller']["id"] = $this->recordActorService->importFromArray($data['controller'], $anr);
             }
-            unset($data['international_transfer']);
-            $data['controller']['label'] = $data['controller']['name'];
-            unset($data['controller']['name']);
-            try {
-                $controllerEntity = $this->actorTable->getEntity($data['controller']['id']);
-                if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $data['controller']['label'] || $controllerEntity->get('contact') != $data['controller']['contact']) {
-                    unset($data['controller']['id']);
-                }
-            } catch (\MonarcCore\Exception\Exception $e) {
-                unset($data['controller']['id']);
+            if(isset($data['representative'])) {
+                $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
             }
-            $newData['controller'] = $data['controller'];
-            $newData['jointControllers'] = [];
-            foreach ($data['joint_controllers'] as $jc) {
-                $jc['label'] = $jc['name'];
-                unset($jc['name']);
-                try {
-                    $controllerEntity = $this->actorTable->getEntity($jc['id']);
-                    if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $jc['label'] || $controllerEntity->get('contact') != $jc['contact']) {
-                        unset($jc['id']);
-                    }
-                } catch (\MonarcCore\Exception\Exception $e) {
-                    unset($jc['id']);
-                }
-                $newData['jointControllers'][] = $jc;
+            if(isset($data['data_protection_officer'])) {
+                $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
             }
-            $newData['recipients'] = [];
-            foreach ($data['recipients'] as $r) {
-                $r['label'] = $r['name'];
-                unset($r['name']);
-                try {
-                    $recipientEntity = $this->recipientTable->getEntity($r['id']);
-                    if (!$recipientEntity || $recipientEntity->get('anr')->get('id') != $anr || $recipientEntity->get('label') != $r['label']) {
-                        unset($r['id']);
-                    }
-                } catch (\MonarcCore\Exception\Exception $e) {
-                    unset($r['id']);
+            if(isset($data['joint_controllers'])) {
+                foreach ($data['joint_controllers'] as $jc) {
+                    $jointController = [];
+                    $jointController['id'] = $this->recordActorService->importFromArray($jc, $anr);
+                    $newData['jointControllers'][] = $jointController;
                 }
-                $newData['recipients'][] = $r;
             }
-            $newData['processors'] = [];
-            foreach ($data['processors'] as $processor) {
-                $processor['label'] = $processor['name'];
-                $processor['controllers'] = $processor['controllers_behalf'];
-                unset($processor['name']);
-                unset($processor['controllers_behalf']);
-                if($processor['international_transfer']['transfer'] == true) {
-                    $processor['idThirdCountry'] = $processor['international_transfer']['identifier_third_country'];
-                    $processor['dpoThirdCountry'] = $processor['international_transfer']['data_processor_third_country'];
-                } else {
-                    $processor['idThirdCountry'] = '';
-                    $processor['dpoThirdCountry'] = '';
+            if(isset($data['personal_data'])) {
+                foreach ($data['personal_data'] as $pd) {
+                    $personalData = [];
+                    $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr, $id);
+                    $newData['personalData'][] = $personalData;
                 }
-                unset($processor['international_transfer']);
-                try {
-                    $processorEntity = $this->processorTable->getEntity($processor['id']);
-                    if ($processorEntity->get('anr')->get('id') != $anr || $processorEntity->get('label') != $processor['label'] || $processorEntity->get('contact') != $processor['contact']) {
-                        unset($processor['id']);
-                    }
-                } catch (\MonarcCore\Exception\Exception $e) {
-                    unset($processor['id']);
-                }
-                $bcs = array();
-                foreach ($processor['controllers'] as $bc) {
-                    $bc['label'] = $bc['name'];
-                    unset($bc['name']);
-                    try {
-                        $controllerEntity = $this->actorTable->getEntity($bc['id']);
-                        if ($controllerEntity->get('anr')->get('id') != $anr || $controllerEntity->get('label') != $bc['label'] || $controllerEntity->get('contact') != $bc['contact']) {
-                            unset($bc['id']);
-                        }
-                    } catch (\MonarcCore\Exception\Exception $e) {
-                        unset($bc['id']);
-                    }
-                    array_push($bcs, $bc);
-                }
-                $processor['controllers'] = $bcs;
-                $newData['processors'][] = $processor;
             }
-            return $this->createRecord($newData);
+            if(isset($data['recipients'])) {
+                foreach ($data['recipients'] as $r) {
+                    $recipient = [];
+                    $recipient['id'] = $this->recordRecipientService->importFromArray($r, $anr);
+                    $newData['recipients'][] = $recipient;
+                }
+            }
+            if(isset($data['international_transfers'])) {
+                foreach ($data['international_transfers'] as $it) {
+                    $internationalTransfers = [];
+                    $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id, true);
+                    $newData['internationalTransfers'][] = $internationalTransfers;
+                }
+            }
+            if(isset($data['processors'])) {
+                foreach ($data['processors'] as $p) {
+                    $processor = [];
+                    $processor['id'] =$this->recordProcessorService->importFromArray($p, $anr);
+                    $newData['processors'][] = $processor;
+                }
+            }
+            return $this->updateRecord($id,$newData);
         }
         return false;
     }

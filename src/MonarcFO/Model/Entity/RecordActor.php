@@ -124,6 +124,16 @@ class RecordActor extends AbstractEntity
     }
 
     /**
+    * @param int $contact
+    * @return Record
+    */
+    public function addContact($contact)
+    {
+        $this->contact[] = $contact;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getCreator()
