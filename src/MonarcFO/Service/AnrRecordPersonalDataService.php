@@ -71,13 +71,11 @@ class AnrRecordPersonalDataService extends AbstractService
         $result = $this->get('table')->delete($id);
         foreach($dataSubjectsToCheck as $ds) {
             if($this->recordDataSubjectService->orphanDataSubject($ds, $anrId)) {
-                file_put_contents('php://stderr', print_r($ds, TRUE).PHP_EOL);
                 $this->recordDataSubjectService->delete(['anr'=> $anrId, 'id' => $ds]);
             }
         }
         foreach($dataCategoriesToCheck as $dc) {
             if($this->recordDataCategoryService->orphanDataCategory($dc, $anrId)) {
-                file_put_contents('php://stderr', print_r($dc, TRUE).PHP_EOL);
                 $this->recordDataCategoryService->delete(['anr'=> $anrId, 'id' => $dc]);
             }
         }

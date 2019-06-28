@@ -29,5 +29,6 @@ class AddDeliveryModelRecordGdpr extends AbstractMigration
     {
         $table = $this->table('deliveries_models');
         $this->query('INSERT INTO deliveries_models (category, description1, path1, creator, created_at, updater, updated_at, description2, description3, description4, path2, path3, path4, editable) VALUES (6, "Registre des activités de traitement", "./deliveries/cases/FR/6.docx", NULL , NULL, NULL, NULL, "Record of processing activities", NULL, NULL, "./deliveries/cases/EN/6.docx", "./deliveries/cases/DE/6.docx", "./deliveries/cases/NE/6.docx", false);');
+        $this->query('INSERT INTO deliveries_models (category, description1, path1, creator, created_at, updater, updated_at, description2, description3, description4, path2, path3, path4, editable) VALUES (7, "Registres des activités de traitement", "./deliveries/cases/FR/7.docx", NULL , NULL, NULL, NULL, "All records of processing activities", NULL, NULL, "./deliveries/cases/EN/7.docx", "./deliveries/cases/DE/7.docx", "./deliveries/cases/NE/7.docx", false);');
     }
 }
