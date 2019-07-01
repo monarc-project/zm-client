@@ -103,6 +103,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $SoaCategoryCliTable;
     protected $recordCliTable;
     protected $recordActorCliTable;
+    protected $recordDataSubjectCliTable;
+    protected $recordDataCategoryCliTable;
+    protected $recordPersonalDataCliTable;
+    protected $recordInternationalTransferCliTable;
     protected $recordProcessorCliTable;
     protected $recordRecipientCliTable;
     protected $referentialCliTable;
@@ -1006,16 +1010,40 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('interviewCliTable')->save($newInterview,false);
             }
 
-            //duplicate record controllers
+            //duplicate record actors
             $recordActors = $this->get('recordActorCliTable')->getEntityByFields(['anr' => $anr->id]);
-            $controllerNewIds = [];
-            foreach ($recordActors as $c) {
-                $newController = new \MonarcFO\Model\Entity\RecordActor($c);
-                $newController->set('id', null);
-                $newController->setAnr($newAnr);
-                $this->get('recordActorCliTable')->save($newController, false);
+            $actorNewIds = [];
+            foreach ($recordActors as $a) {
+                $newActor = new \MonarcFO\Model\Entity\RecordActor($a);
+                $newActor->set('id', null);
+                $newActor->setAnr($newAnr);
+                $this->get('recordActorCliTable')->save($newActor, false);
                 $this->get('recordActorCliTable')->getDb()->flush();
-                $controllerNewIds[$c->id] = $newController;
+                $actorNewIds[$a->id] = $newActor;
+            }
+
+            //duplicate record data subjects
+            $recordDataSubjects = $this->get('recordDataSubjectCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $dataSubjectNewIds = [];
+            foreach ($recordDataSubjects as $ds) {
+                $newDataSubject = new \MonarcFO\Model\Entity\RecordDataSubject($ds);
+                $newDataSubject->set('id', null);
+                $newDataSubject->setAnr($newAnr);
+                $this->get('recordDataSubjectCliTable')->save($newDataSubject, false);
+                $this->get('recordDataSubjectCliTable')->getDb()->flush();
+                $dataSubjectNewIds[$ds->id] = $newDataSubject;
+            }
+
+            //duplicate record data categories
+            $recordDataCategories = $this->get('recordDataCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $dataCategoryNewIds = [];
+            foreach ($recordDataCategories as $dc) {
+                $newDataCategory = new \MonarcFO\Model\Entity\RecordDataCategory($dc);
+                $newDataCategory->set('id', null);
+                $newDataCategory->setAnr($newAnr);
+                $this->get('recordDataCategoryCliTable')->save($newDataCategory, false);
+                $this->get('recordDataCategoryCliTable')->getDb()->flush();
+                $dataCategoryNewIds[$dc->id] = $newDataCategory;
             }
 
             //duplicate record processors
@@ -1025,17 +1053,18 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newProcessor = new \MonarcFO\Model\Entity\RecordProcessor($p);
                 $newProcessor->set('id', null);
                 $newProcessor->setAnr($newAnr);
-                $behalfNewIds = [];
-                $behalfControllers = $p->getControllers();
-                foreach ($behalfControllers as $bc) {
-                    $behalfNewIds[$bc->id] = $controllerNewIds[$bc->id];
+                $cascadedProcessorNewIds = [];
+                $cascadedProcessors = $p->getCascadedProcessors();
+                foreach ($cascadedProcessors as $cp) {
+                    $cascadedProcessorNewIds[] = $actorNewIds[$cp->id];
                 }
-                $newProcessor->setControllers($behalfNewIds);
+                $newProcessor->setCascadedProcessors($cascadedProcessorNewIds);
                 $this->get('recordProcessorCliTable')->save($newProcessor, false);
                 $this->get('recordProcessorCliTable')->getDb()->flush();
                 $processorNewIds[$p->id] = $newProcessor;
             }
-            //duplicate record recipient categories
+
+            //duplicate record recipients
             $recordRecipients = $this->get('recordRecipientCliTable')->getEntityByFields(['anr' => $anr->id]);
             $recipientNewIds = [];
             foreach ($recordRecipients as $r) {
@@ -1048,23 +1077,32 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
 
             $records = $this->get('recordCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $recordNewIds = [];
             foreach ($records as $record) {
                 $newRecord = new \MonarcFO\Model\Entity\Record($record);
                 $newRecord->set('id', null);
                 $newRecord->setAnr($newAnr);
-                $newRecord->setController($controllerNewIds[$record->controller->id]);
+                if($record->controller != null) {
+                    $newRecord->setController($actorNewIds[$record->controller->id]);
+                }
+                if($record->representative != null) {
+                    $newRecord->setRepresentative($actorNewIds[$record->representative->id]);
+                }
+                if($record->dpo != null) {
+                    $newRecord->setDpo($actorNewIds[$record->dpo->id]);
+                }
 
                 $jointControllerNewIds = [];
                 $jointControllers = $record->getJointControllers();
                 foreach ($jointControllers as $jc) {
-                    $jointControllerNewIds[$jc->id] = $controllerNewIds[$jc->id];
+                    $jointControllerNewIds[] = $actorNewIds[$jc->id];
                 }
                 $newRecord->setJointControllers($jointControllerNewIds);
 
                 $processorIds = [];
                 $processors = $record->getProcessors();
                 foreach ($processors as $p) {
-                    $processorIds[$p->id] = $processorNewIds[$p->id];
+                    $processorIds[] = $processorNewIds[$p->id];
                 }
                 $newRecord->setProcessors($processorIds);
 
@@ -1077,6 +1115,50 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
                 $this->get('recordCliTable')->save($newRecord, false);
                 $this->get('recordCliTable')->getDb()->flush();
+                $recordNewIds[$record->id] = $newRecord;
+            }
+
+            //duplicate record personal data
+            $recordPersonalData = $this->get('recordPersonalDataCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $personalDataNewIds = [];
+            foreach ($recordPersonalData as $pd) {
+                $newPersonalData = new \MonarcFO\Model\Entity\RecordPersonalData($pd);
+                $newPersonalData->set('id', null);
+                $newPersonalData->setAnr($newAnr);
+                $newPersonalData->setRecord($recordNewIds[$pd->record->id]);
+                $newDataSubjectIds = [];
+                $dataSubjects = $pd->getDataSubjects();
+                foreach ($dataSubjects as $ds) {
+                    $newDataSubjectIds[] = $dataSubjectNewIds[$ds->id];
+                }
+                $newPersonalData->setDataSubjects($newDataSubjectIds);
+                $newDataCategoryIds = [];
+                $dataCategories = $pd->getDataCategories();
+                foreach ($dataCategories as $dc) {
+                    $newDataCategoryIds[] = $dataCategoryNewIds[$dc->id];
+                }
+                $newPersonalData->setDataCategories($newDataCategoryIds);
+                $this->get('recordPersonalDataCliTable')->save($newPersonalData, false);
+                $this->get('recordPersonalDataCliTable')->getDb()->flush();
+                $personalDataNewIds[$pd->id] = $newPersonalData;
+            }
+
+            //duplicate record international transfers
+            $recordInternationalTransfers = $this->get('recordInternationalTransferCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $internationalTransferNewIds = [];
+            foreach ($recordInternationalTransfers as $it) {
+                $newInternationalTransfer = new \MonarcFO\Model\Entity\RecordInternationalTransfer($it);
+                $newInternationalTransfer->set('id', null);
+                $newInternationalTransfer->setAnr($newAnr);
+                if($it->record != null) {
+                    $newInternationalTransfer->setRecord($recordNewIds[$it->record->id]);
+                }
+                if($it->processor != null) {
+                    $newInternationalTransfer->setProcessor($processorNewIds[$it->processor->id]);
+                }
+                $this->get('recordInternationalTransferCliTable')->save($newInternationalTransfer, false);
+                $this->get('recordInternationalTransferCliTable')->getDb()->flush();
+                $internationalTransferNewIds[$it->id] = $newInternationalTransfer;
             }
 
             //duplicate recommandations

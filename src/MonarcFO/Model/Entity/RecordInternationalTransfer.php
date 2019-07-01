@@ -157,6 +157,41 @@ class RecordInternationalTransfer extends AbstractEntity
     }
 
     /**
+     * @return Record
+     */
+    public function getRecord()
+    {
+        return $this->record;
+    }
+
+    /**
+    * @param int $record
+    * @return RecordInternationalTransfer
+    */
+    public function setRecord($record)
+    {
+        $this->record = $record;
+        return $this;
+    }
+
+    /**
+     * @return RecordProcessor
+     */
+    public function getProcessor()
+    {
+        return $this->processor;
+    }
+
+    /**
+    * @param int $processor
+    * @return RecordInternationalTransfer
+    */
+    public function setProcessor($processor)
+    {
+        $this->processor = $processor;
+        return $this;
+    }
+    /**
      * @return string
      */
     public function getCreator()

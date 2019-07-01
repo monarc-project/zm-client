@@ -137,7 +137,7 @@ class RecordProcessor extends AbstractEntity
 
     /**
      * @param int $id
-     * @return Record
+     * @return RecordProcessor
      */
     public function setId($id)
     {
@@ -155,7 +155,7 @@ class RecordProcessor extends AbstractEntity
 
     /**
     * @param int $anr
-    * @return Record
+    * @return RecordProcessor
     */
     public function setAnr($anr)
     {
@@ -237,20 +237,20 @@ class RecordProcessor extends AbstractEntity
 
 
     /**
-     * @return Controller
+     * @return Actor
      */
-    public function getControllers()
+    public function getCascadedProcessors()
     {
-        return $this->controllers;
+        return $this->cascadedProcessors;
     }
 
     /**
-    * @param int $jointControllers
-    * @return Record
+    * @param int $cascadedProcessors
+    * @return RecordProcessor
     */
-    public function setControllers($controllers)
+    public function setCascadedProcessors($cascadedProcessors)
     {
-        $this->controllers = $controllers;
+        $this->cascadedProcessors = $cascadedProcessors;
         return $this;
     }
 }

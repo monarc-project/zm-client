@@ -144,7 +144,7 @@ class RecordPersonalData extends AbstractEntity
 
     /**
      * @param int $id
-     * @return Record
+     * @return RecordPersonalData
      */
     public function setId($id)
     {
@@ -162,11 +162,65 @@ class RecordPersonalData extends AbstractEntity
 
     /**
     * @param int $anr
-    * @return Record
+    * @return RecordPersonalData
     */
     public function setAnr($anr)
     {
         $this->anr = $anr;
+        return $this;
+    }
+
+    /**
+     * @return Record
+     */
+    public function getRecord()
+    {
+        return $this->record;
+    }
+
+    /**
+    * @param int $record
+    * @return RecordPersonalData
+    */
+    public function setRecord($record)
+    {
+        $this->record = $record;
+        return $this;
+    }
+
+    /**
+     * @return RecordDataSubject
+     */
+    public function getDataSubjects()
+    {
+        return $this->dataSubjects;
+    }
+
+    /**
+    * @param int $dataSubjects
+    * @return RecordPersonalData
+    */
+    public function setDataSubjects($dataSubjects)
+    {
+        $this->dataSubjects = $dataSubjects;
+        return $this;
+    }
+
+    /**
+     * @return RecordDataCategory
+     */
+    public function getDataCategories()
+    {
+        return $this->dataCategories;
+    }
+
+    /**
+    * @param int $dataCategories
+    * @return RecordPersonalData
+    */
+    public function setDataCategories($dataCategories)
+    {
+        $this->dataCategories = $dataCategories;
         return $this;
     }
 
