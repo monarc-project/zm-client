@@ -162,6 +162,57 @@ class RecordProcessor extends AbstractEntity
         $this->anr = $anr;
         return $this;
     }
+    /**
+    * @return RecordActor
+    */
+    public function getRepresentative()
+    {
+        return $this->representative;
+    }
+    /**
+    * @param string $representative
+    * @return RecordProcessor
+    */
+    public function setRepresentative($representative)
+    {
+        $this->representative = $representative;
+        return $this;
+    }
+
+    /**
+    * @return RecordActor
+    */
+    public function getDpo()
+    {
+        return $this->dpo;
+    }
+    /**
+    * @param string $dpo
+    * @return RecordProcessor
+    */
+    public function setDpo($dpo)
+    {
+        $this->dpo = $dpo;
+        return $this;
+    }
+
+    /**
+     * @return Actor
+     */
+    public function getCascadedProcessors()
+    {
+        return $this->cascadedProcessors;
+    }
+
+    /**
+    * @param int $cascadedProcessors
+    * @return RecordProcessor
+    */
+    public function setCascadedProcessors($cascadedProcessors)
+    {
+        $this->cascadedProcessors = $cascadedProcessors;
+        return $this;
+    }
 
     /**
      * @return string
@@ -232,25 +283,6 @@ class RecordProcessor extends AbstractEntity
     public function setUpdatedAt($updatedAt)
     {
         $this->updatedAt = $updatedAt;
-        return $this;
-    }
-
-
-    /**
-     * @return Actor
-     */
-    public function getCascadedProcessors()
-    {
-        return $this->cascadedProcessors;
-    }
-
-    /**
-    * @param int $cascadedProcessors
-    * @return RecordProcessor
-    */
-    public function setCascadedProcessors($cascadedProcessors)
-    {
-        $this->cascadedProcessors = $cascadedProcessors;
         return $this;
     }
 }

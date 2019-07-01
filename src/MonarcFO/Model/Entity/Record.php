@@ -208,11 +208,12 @@ class Record extends AbstractEntity
     }
     /**
     * @param string $purposes
-    *
+    * @return Record
     */
     public function setPurposes($purposes)
     {
         $this->purposes = $purposes;
+        return $this;
     }
 
     /**
@@ -242,11 +243,12 @@ class Record extends AbstractEntity
     }
     /**
     * @param string $representative
-    *
+    * @return Record
     */
     public function setRepresentative($representative)
     {
         $this->representative = $representative;
+        return $this;
     }
 
     /**
@@ -258,11 +260,12 @@ class Record extends AbstractEntity
     }
     /**
     * @param string $dpo
-    *
+    * @return Record
     */
     public function setDpo($dpo)
     {
         $this->dpo = $dpo;
+        return $this;
     }
 
     /**

@@ -1053,6 +1053,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newProcessor = new \MonarcFO\Model\Entity\RecordProcessor($p);
                 $newProcessor->set('id', null);
                 $newProcessor->setAnr($newAnr);
+                if($p->representative != null) {
+                    $newProcessor->setRepresentative($actorNewIds[$p->representative->id]);
+                }
+                if($p->dpo != null) {
+                    $newProcessor->setDpo($actorNewIds[$p->dpo->id]);
+                }
                 $cascadedProcessorNewIds = [];
                 $cascadedProcessors = $p->getCascadedProcessors();
                 foreach ($cascadedProcessors as $cp) {
@@ -1075,7 +1081,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('recordRecipientCliTable')->getDb()->flush();
                 $recipientNewIds[$r->id] = $newRecipient;
             }
-
+            //duplicate record
             $records = $this->get('recordCliTable')->getEntityByFields(['anr' => $anr->id]);
             $recordNewIds = [];
             foreach ($records as $record) {
