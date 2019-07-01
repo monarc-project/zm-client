@@ -35,7 +35,7 @@ class Record extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $anr;
@@ -64,21 +64,21 @@ class Record extends AbstractEntity
     /**
      * @var \MonarcFO\Model\Entity\RecordActor
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="controller_id", referencedColumnName="id", nullable=true)
+     * @ORM\JoinColumn(name="controller_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $controller;
 
     /**
      * @var \MonarcFO\Model\Entity\RecordActor
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="representative_id", referencedColumnName="id", nullable=true)
+     * @ORM\JoinColumn(name="representative_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $representative;
 
     /**
      * @var \MonarcFO\Model\Entity\RecordActor
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="dpo_id", referencedColumnName="id", nullable=true)
+     * @ORM\JoinColumn(name="dpo_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $dpo;
 

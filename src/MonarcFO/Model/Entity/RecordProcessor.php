@@ -35,7 +35,7 @@ class RecordProcessor extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $anr;
@@ -64,14 +64,14 @@ class RecordProcessor extends AbstractEntity
     /**
      * @var \MonarcFO\Model\Entity\RecordActor
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="representative", referencedColumnName="id", nullable=true)
+     * @ORM\JoinColumn(name="representative", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $representative;
 
     /**
      * @var \MonarcFO\Model\Entity\RecordActor
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="dpo", referencedColumnName="id", nullable=true)
+     * @ORM\JoinColumn(name="dpo", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $dpo;
 

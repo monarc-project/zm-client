@@ -112,8 +112,8 @@ class AddRecordsTables extends AbstractMigration
                 ->create();
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
             $table
-                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
                 ->update();
 
             $table = $this->table('record_personal_data');
@@ -132,8 +132,8 @@ class AddRecordsTables extends AbstractMigration
                 ->create();
             $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
             $table
-                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'NO_ACTION','update' => 'RESTRICT'))
-                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+                ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
                 ->update();
 
     	$table = $this->table('record_processors');
@@ -175,14 +175,14 @@ class AddRecordsTables extends AbstractMigration
 
     	$table = $this->table('records');
         $table
-	    ->addForeignKey('controller_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-	    ->addForeignKey('dpo_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-	    ->addForeignKey('representative_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+	    ->addForeignKey('controller_id', 'record_actors', 'id', array('delete' => 'SET NULL','update' => 'RESTRICT'))
+	    ->addForeignKey('dpo_id', 'record_actors', 'id', array('delete' => 'SET NULL','update' => 'RESTRICT'))
+	    ->addForeignKey('representative_id', 'record_actors', 'id', array('delete' => 'SET NULL','update' => 'RESTRICT'))
             ->update();
 
     	$table = $this->table('record_international_transfers');
         $table
-            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 
         $table = $this->table('records_record_joint_controllers');
@@ -194,8 +194,8 @@ class AddRecordsTables extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
         $table
-            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-            ->addForeignKey('controller_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey('controller_id', 'record_actors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 
     	$table = $this->table('records_record_recipients');
@@ -207,8 +207,8 @@ class AddRecordsTables extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-            ->addForeignKey('recipient_id', 'record_recipients', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey('recipient_id', 'record_recipients', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 
     	$table = $this->table('records_record_processors');
@@ -220,8 +220,8 @@ class AddRecordsTables extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 
         $table = $this->table('record_personal_data_record_data_subjects');
@@ -233,8 +233,8 @@ class AddRecordsTables extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-            ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-            ->addForeignKey('data_subject_id', 'record_data_subjects', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey('data_subject_id', 'record_data_subjects', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 
         $table = $this->table('record_personal_data_record_data_categories');
@@ -246,8 +246,8 @@ class AddRecordsTables extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-            ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-            ->addForeignKey('data_category_id', 'record_data_categories', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey('data_category_id', 'record_data_categories', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 
 	           $table = $this->table('record_processors_record_actors');
@@ -259,8 +259,8 @@ class AddRecordsTables extends AbstractMigration
             ->create();
         $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
      	$table
-            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
-            ->addForeignKey('actor_id', 'record_actors', 'id', array('delete' => 'RESTRICT','update' => 'RESTRICT'))
+            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
+            ->addForeignKey('actor_id', 'record_actors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
     }
 }

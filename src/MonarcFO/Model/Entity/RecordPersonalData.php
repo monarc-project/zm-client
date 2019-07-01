@@ -36,7 +36,7 @@ class RecordPersonalData extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $anr;
@@ -45,7 +45,7 @@ class RecordPersonalData extends AbstractEntity
      * @var \MonarcFO\Model\Entity\Record
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Record")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false)
+     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $record;

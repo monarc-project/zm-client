@@ -35,7 +35,7 @@ class RecordInternationalTransfer extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $anr;
@@ -44,7 +44,7 @@ class RecordInternationalTransfer extends AbstractEntity
      * @var \MonarcFO\Model\Entity\Record
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Record")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
      */
     protected $record;
@@ -53,7 +53,7 @@ class RecordInternationalTransfer extends AbstractEntity
      * @var \MonarcFO\Model\Entity\RecordProcessor
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordProcessor")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="processor_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="processor_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
      */
     protected $processor;
@@ -119,7 +119,7 @@ class RecordInternationalTransfer extends AbstractEntity
         $this->documents = [];
         parent::__construct($obj);
     }
-    
+
     /**
      * @return int
      */
