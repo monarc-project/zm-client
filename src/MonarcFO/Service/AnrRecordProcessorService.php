@@ -140,7 +140,7 @@ class AnrRecordProcessorService extends AbstractService
             $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
         }
         if($entity->dpo) {
-            $return['data_protection_officero'] = $this->recordActorService->generateExportArray($entity->dpo->id);
+            $return['data_protection_officer'] = $this->recordActorService->generateExportArray($entity->dpo->id);
         }
         foreach ($entity->cascadedProcessors as $cp) {
             $return['cascaded_processors'][] = $this->recordActorService->generateExportArray($cp->id);
@@ -165,7 +165,7 @@ class AnrRecordProcessorService extends AbstractService
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
-    public function importFromArray($data, $anr)
+    public function importFromArray($data, $anr, &$actorMap = array())
     {
         $newData = []; //new data to be updated
         $newData['anr'] = $anr;
@@ -195,16 +195,26 @@ class AnrRecordProcessorService extends AbstractService
         $newData['activities'] = (isset($data['activities']) ? $data['activities'] : []);
         $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
         if(isset($data['representative'])) {
-            $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
+            if(isset($actorMap[$data['representative']['id']])) {
+                $newData['representative']["id"] = $actorMap[$data['representative']['id']];
+            } else {
+                $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
+                $actorMap[$data['representative']['id']] = $newData['representative']["id"];
+            }
         }
         if(isset($data['data_protection_officer'])) {
-            $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
+            if(isset($actorMap[$data['data_protection_officer']['id']])) {
+                $newData['dpo']["id"] = $actorMap[$data['data_protection_officer']['id']];
+            } else {
+                $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
+                $actorMap[$data['data_protection_officer']['id']] = $newData['dpo']["id"];
+            }
         }
         if(isset($data['cascaded_processors'])) {
-            foreach ($data['cascaded_processors'] as $jc) {
-                $jointController = [];
-                $jointController['id'] = $this->recordActorService->importFromArray($jc, $anr);
-                $newData['cascadedProcessors'][] = $jointController;
+            foreach ($data['cascaded_processors'] as $cp) {
+                $cascadedProcessor = [];
+                $cascadedProcessor['id'] = $this->recordActorService->importFromArray($cp, $anr);
+                $newData['cascadedProcessors'][] = $cascadedProcessor;
             }
         }
         if(isset($data['personal_data'])) {

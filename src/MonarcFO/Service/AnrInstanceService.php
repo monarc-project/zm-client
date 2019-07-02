@@ -1326,8 +1326,13 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
           }
           // import the GDPR records
           if (!empty($data['records'])) { //Data of records
+              $actorMap = array();
+              $recipientMap = array();
+              $processorMap = array();
+              $dataSubjectMap = array();
+              $dataCategoryMap = array();
               foreach ($data['records'] as $v) {
-                  $this->get('recordService')->importFromArray($v,$anr->get('id'));
+                  $this->get('recordService')->importFromArray($v,$anr->get('id'),$actorMap,$recipientMap,$processorMap,$dataSubjectMap,$dataCategoryMap);
               }
           }
           // import scales
