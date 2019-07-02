@@ -213,7 +213,12 @@ class AnrRecordProcessorService extends AbstractService
         if(isset($data['cascaded_processors'])) {
             foreach ($data['cascaded_processors'] as $cp) {
                 $cascadedProcessor = [];
-                $cascadedProcessor['id'] = $this->recordActorService->importFromArray($cp, $anr);
+                if(isset($actorMap[$cp['id']])) {
+                    $cascadedProcessor["id"] = $actorMap[$cp['id']];
+                } else {
+                    $cascadedProcessor["id"] = $this->recordActorService->importFromArray($cp, $anr);
+                    $actorMap[$cp['id']] = $cascadedProcessor["id"];
+                }
                 $newData['cascadedProcessors'][] = $cascadedProcessor;
             }
         }
