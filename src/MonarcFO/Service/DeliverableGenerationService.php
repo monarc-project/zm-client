@@ -1999,7 +1999,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText(_WT($recoRisk->responsable), $styleContentFont, $alignCenter);
                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($recoDeadline, $styleContentFont, $alignCenter);
 
-                 $previousRecoId = $recoRisk->id;
+                 $previousRecoId = $recoRisk->uuid->toString();
            }
 
        return $this->getWordXmlFromWordObject($tableWord);
