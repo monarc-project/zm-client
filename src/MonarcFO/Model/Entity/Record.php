@@ -50,7 +50,7 @@ class Record extends AbstractEntity
     /**
      * @var array
      *
-     * @ORM\Column(name="purposes", type="array", nullable=true)
+     * @ORM\Column(name="purposes", type="string", length=255, nullable=true)
      */
     protected $purposes;
 
@@ -154,7 +154,6 @@ class Record extends AbstractEntity
 
     public function __construct($obj = null)
     {
-        $this->purposes = [];
         $this->jointControllers = new ArrayCollection();
         $this->personalData = new ArrayCollection();
         $this->recipients = new ArrayCollection();

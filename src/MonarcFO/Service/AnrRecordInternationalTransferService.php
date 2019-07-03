@@ -47,7 +47,7 @@ class AnrRecordInternationalTransferService extends AbstractService
             $return["country"] = $entity->country;
         }
 
-        if($entity->documents) {
+        if($entity->documents != "") {
             $return["documents"] = $entity->documents;
         }
         return $return;

@@ -82,7 +82,7 @@ class RecordInternationalTransfer extends AbstractEntity
     /**
      * @var array
      *
-     * @ORM\Column(name="documents", type="array", nullable=true)
+     * @ORM\Column(name="documents", type="string", length=255, nullable=true)
      */
     protected $documents;
 
@@ -116,7 +116,6 @@ class RecordInternationalTransfer extends AbstractEntity
 
     public function __construct($obj = null)
     {
-        $this->documents = [];
         parent::__construct($obj);
     }
 

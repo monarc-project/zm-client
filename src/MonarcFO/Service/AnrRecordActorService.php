@@ -72,7 +72,7 @@ class AnrRecordActorService extends AbstractService
 
         $return['id'] = $entity->id;
         $return['name'] = $entity->label;
-        if($entity->contact) {
+        if($entity->contact != "") {
             $return['contact'] = $entity->contact;
         }
         return $return;
@@ -97,11 +97,7 @@ class AnrRecordActorService extends AbstractService
                 $id = $this->create($data);
             }
             else if(isset($data["contact"])){
-                foreach($data["contact"] as $c) {
-                    if (!in_array($c, $actorEntity->get('contact'))) {
-                        $actorEntity->addContact($c);
-                    }
-                }
+                $actorEntity->setContact($data["contact"]);
             }
         } catch (\MonarcCore\Exception\Exception $e) {
             unset($data['id']);

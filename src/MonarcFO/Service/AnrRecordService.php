@@ -251,7 +251,7 @@ class AnrRecordService extends AbstractService
         if($entity->dpo) {
             $return['data_protection_officer'] = $this->recordActorService->generateExportArray($entity->dpo->id);
         }
-        if($entity->purposes) {
+        if($entity->purposes != '') {
             $return['purposes'] = $entity->purposes;
         }
         if($entity->secMeasures != '') {
@@ -335,7 +335,7 @@ class AnrRecordService extends AbstractService
             $newData['anr'] = $anr;
             $newData['label'] = $data['name'];
             $id = $this->create($newData);
-            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : []);
+            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
             $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
             if(isset($data['controller'])) {
                 if(isset($actorMap[$data['controller']['id']])) {

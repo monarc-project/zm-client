@@ -32,7 +32,7 @@ class AddRecordsTables extends AbstractMigration
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('purposes', 'text', array('null' => true))
+                ->addColumn('purposes', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('controller_id', 'integer', array('null' => true, 'signed' => false))
                 ->addColumn('representative_id', 'integer', array('null' => true, 'signed' => false))
@@ -53,7 +53,7 @@ class AddRecordsTables extends AbstractMigration
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('contact', 'text', array('null' => true))
+                ->addColumn('contact', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('created_at', 'datetime', array('null' => true))
                 ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
@@ -103,7 +103,7 @@ class AddRecordsTables extends AbstractMigration
                 ->addColumn('organisation', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('country', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('documents', 'text', array('null' => true))
+                ->addColumn('documents', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('created_at', 'datetime', array('null' => true))
                 ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))

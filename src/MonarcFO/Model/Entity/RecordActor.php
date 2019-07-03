@@ -49,7 +49,7 @@ class RecordActor extends AbstractEntity
     /**
      * @var array
      *
-     * @ORM\Column(name="contact", type="array", nullable=true)
+     * @ORM\Column(name="contact", type="string", length=255, nullable=true)
      */
     protected $contact;
 
@@ -83,7 +83,6 @@ class RecordActor extends AbstractEntity
 
     public function __construct($obj = null)
     {
-        $this->contact = [];
         parent::__construct($obj);
     }
 
@@ -127,9 +126,9 @@ class RecordActor extends AbstractEntity
     * @param int $contact
     * @return Record
     */
-    public function addContact($contact)
+    public function setContact($contact)
     {
-        $this->contact[] = $contact;
+        $this->contact = $contact;
         return $this;
     }
 

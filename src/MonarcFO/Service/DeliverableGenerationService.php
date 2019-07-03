@@ -2651,24 +2651,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('label'), $styleContentFont, $alignLeft);
-        $purposes = $recordEntity->get('purposes');
-        if(count($purposes) > 0 ) {
-            $table->addRow(400);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleRowSpanCell)->addText($this->anrTranslate('Purpose(s)'), $styleHeaderFont, $alignLeft);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($purposes[0], $styleContentFont, $alignLeft);
-            array_splice($purposes,0,1);
-            foreach ($purposes as $purpose) {
-                $table->addRow(400);
-                $table->addCell(null, $styleRowContinueCell);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($purpose, $styleContentFont, $alignLeft);
-            }
-        }
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Creation date'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(($recordEntity->get('createdAt')? strftime("%d-%m-%Y", $recordEntity->get('createdAt')->getTimeStamp()) : ""), $styleContentFont, $alignLeft);
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Update date'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(($recordEntity->get('updatedAt')? strftime("%d-%m-%Y", $recordEntity->get('updatedAt')->getTimeStamp()) : ""), $styleContentFont, $alignLeft);
+        $table->addRow(400);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Purpose(s)'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('purposes'), $styleContentFont, $alignLeft);
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Security measures'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('secMeasures'), $styleContentFont, $alignLeft);
@@ -2710,7 +2701,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Controller\'s contact'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($recordEntity->get('controller')? join("\n", $recordEntity->get('controller')->get('contact')) : ""), $styleContentFont, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($recordEntity->get('controller')? $recordEntity->get('controller')->get('contact') : ""), $styleContentFont, $alignLeft);
 
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Representative\'s name'), $styleContentFontBold, $alignLeft);
@@ -2718,7 +2709,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Representative\'s contact'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($recordEntity->get('representative')? join("\n", $recordEntity->get('representative')->get('contact')) : ""), $styleContentFont, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($recordEntity->get('representative')? $recordEntity->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
 
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Data protection officer\'s name'), $styleContentFontBold, $alignLeft);
@@ -2726,7 +2717,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         $table->addRow(400);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Data protection officer\'s contact'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($recordEntity->get('dpo')? join("\n", $recordEntity->get('dpo')->get('contact')) : ""), $styleContentFont, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($recordEntity->get('dpo')? $recordEntity->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
 
         if (count($jointControllers)) {
             $table->addRow(400);
@@ -2735,7 +2726,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             foreach($jointControllers as $jc) {
                 $table->addRow(400);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($jc->get('label'), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(join("\n", $jc->get('contact')), $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText($jc->get('contact'), $styleContentFont, $alignLeft);
             }
         }
         $section->addPageBreak();
@@ -2888,7 +2879,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('organisation'), $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('description'), $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('country'), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText(join("\n", $it->get('documents')), $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('documents'), $styleContentFont, $alignLeft);
             }
         }
         $section->addPageBreak();
@@ -2938,13 +2929,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
             $table->addRow(400);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Representative\'s contact'), $styleContentFontBold, $alignLeft);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('representative')? join("\n", $p->get('representative')->get('contact')) : ""), $styleContentFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('representative')?  $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
             $table->addRow(400);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Data protection officer\'s name'), $styleContentFontBold, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
             $table->addRow(400);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($this->anrTranslate('Data protection officer\'s contact'), $styleContentFontBold, $alignLeft);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? join("\n", $p->get('dpo')->get('contact')) : ""), $styleContentFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
 
             if (count($p->get('cascadedProcessors'))) {
                 $table->addRow(400);
@@ -2953,7 +2944,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 foreach($p->get('cascadedProcessors') as $cp) {
                     $table->addRow(400);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($cp->get('label'), $styleContentFont, $alignLeft);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(join("\n", $cp->get('contact')), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText($cp->get('contact'), $styleContentFont, $alignLeft);
                 }
             }
             $section->addTextBreak(2);
@@ -2974,7 +2965,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('organisation'), $styleContentFont, $alignLeft);
                     $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('description'), $styleContentFont, $alignLeft);
                     $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('country'), $styleContentFont, $alignLeft);
-                    $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText(join("\n", $it->get('documents')), $styleContentFont, $alignLeft);
+                    $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('documents'), $styleContentFont, $alignLeft);
                 }
             }
             $section->addPageBreak();
