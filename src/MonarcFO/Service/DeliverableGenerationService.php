@@ -2738,7 +2738,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(join("\n", $jc->get('contact')), $styleContentFont, $alignLeft);
             }
         }
-        $section->addPageBreak();
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
@@ -2891,7 +2890,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText(join("\n", $it->get('documents')), $styleContentFont, $alignLeft);
             }
         }
-        $section->addPageBreak();
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
@@ -2957,7 +2955,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 }
             }
             $section->addTextBreak(2);
-            $section->addText(htmlspecialchars('Transfers'), ["bold" => true]);
+            $section->addText($this->anrTranslate('Transfers'), ["bold" => true]);
             $section->addTextBreak(1);
 
             $tableTransfers = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
@@ -2977,7 +2975,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                     $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText(join("\n", $it->get('documents')), $styleContentFont, $alignLeft);
                 }
             }
-            $section->addPageBreak();
             $result .= $this->getWordXmlFromWordObject($tableWord);
         }
 
@@ -3006,50 +3003,48 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleRowSpanCell = ['vMerge' => 'restart', 'align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleRowContinueCell = ['vMerge' => 'continue', 'align' => 'left', 'valign' => 'center', 'size' => 10];
         $result = '';
+
         foreach($recordEntities as $recordEntity) {
+
+            $tableWord = new PhpWord();
+            $section = $tableWord->addSection();
+            $tableWord->addTitleStyle(1, ['bold' => true, 'size' => 12]);
+            $section->addTitle($recordEntity->get('label'),1);
+            $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordGDPR($anr, $recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $section->addTextBreak(2);
             $tableWord->addTitleStyle(2, ['bold' => true, 'size' => 12]);
             $section->addTitle($this->anrTranslate('Actors'), 2);
-            $section->addTextBreak(1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordActors($anr, $recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $section->addTitle($this->anrTranslate('Categories of personal data'), 2);
-            $section->addTextBreak(1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordPersonalData($anr, $recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $section->addTextBreak(1);
             $section->addTitle($this->anrTranslate('Recipients'), 2);
-            $section->addTextBreak(1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordRecipients($anr, $recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $section->addTextBreak(1);
             $section->addTitle($this->anrTranslate('International transfers'), 2);
-            $section->addTextBreak(1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordInternationalTransfers($anr, $recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $section->addTitle($this->anrTranslate('Processors'), 2);
-            $section->addTextBreak(2);
+            $section->addTextBreak(1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordProcessors($anr, $recordEntity->id);
         }
-        file_put_contents('php://stderr', print_r($result, TRUE).PHP_EOL);
-
         return $result;
     }
 
