@@ -51,14 +51,11 @@ class RecordPersonalData extends AbstractEntity
     protected $record;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordDataSubject", cascade={"persist"})
-     * @ORM\JoinTable(name="record_personal_data_record_data_subjects",
-     *  joinColumns={@ORM\JoinColumn(name="personal_data_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="data_subject_id", referencedColumnName="id")}
-     * )
+     * @var string
+     *
+     * @ORM\Column(name="data_subject", type="string", length=255, nullable=true)
      */
-    protected $dataSubjects;
+    protected $dataSubject;
 
     /**
      * @var \Doctrine\Common\Collections\Collection
@@ -129,7 +126,6 @@ class RecordPersonalData extends AbstractEntity
 
     public function __construct($obj = null)
     {
-        $this->dataSubjects = new ArrayCollection();
         $this->dataCategories = new ArrayCollection();
         parent::__construct($obj);
     }
@@ -189,20 +185,20 @@ class RecordPersonalData extends AbstractEntity
     }
 
     /**
-     * @return RecordDataSubject
+     * @return string
      */
-    public function getDataSubjects()
+    public function getDataSubject()
     {
-        return $this->dataSubjects;
+        return $this->dataSubject;
     }
 
     /**
-    * @param int $dataSubjects
+    * @param string $dataSubject
     * @return RecordPersonalData
     */
-    public function setDataSubjects($dataSubjects)
+    public function setDataSubject($dataSubject)
     {
-        $this->dataSubjects = $dataSubjects;
+        $this->dataSubject = $dataSubject;
         return $this;
     }
 

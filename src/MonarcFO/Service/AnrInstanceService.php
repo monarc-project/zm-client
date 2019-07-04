@@ -1329,10 +1329,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
               $actorMap = array();
               $recipientMap = array();
               $processorMap = array();
-              $dataSubjectMap = array();
               $dataCategoryMap = array();
               foreach ($data['records'] as $v) {
-                  $this->get('recordService')->importFromArray($v,$anr->get('id'),$actorMap,$recipientMap,$processorMap,$dataSubjectMap,$dataCategoryMap);
+                  $this->get('recordService')->importFromArray($v,$anr->get('id'),$actorMap,$recipientMap,$processorMap,$dataCategoryMap);
               }
           }
           // import scales

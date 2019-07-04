@@ -18,7 +18,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
 {
     protected $name = 'record-personal-data';
-    protected $dependencies = ['anr', 'record', 'dataSubjects', 'dataCategories'];
+    protected $dependencies = ['anr', 'record', 'dataCategories'];
 
     public function getList()
     {

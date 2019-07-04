@@ -80,21 +80,6 @@ class AddRecordsTables extends AbstractMigration
                 ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
                 ->update();
 
-            $table = $this->table('record_data_subjects');
-            $table
-                ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('created_at', 'datetime', array('null' => true))
-                ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('updated_at', 'datetime', array('null' => true))
-                ->addIndex(array('anr_id'))
-                ->create();
-            $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-            $table
-                ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-                ->update();
-
             $table = $this->table('record_international_transfers');
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
@@ -120,6 +105,7 @@ class AddRecordsTables extends AbstractMigration
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
+                ->addColumn('data_subject', 'string', array('null' => false, 'limit' => 255))
                 ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('retention_period', 'integer', array('null' => true, 'limit' => 255))
                 ->addColumn('retention_period_mode', 'integer', array('null' => true, 'limit' => MysqlAdapter::INT_TINY))
@@ -140,7 +126,7 @@ class AddRecordsTables extends AbstractMigration
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
-                ->addColumn('activities', 'text', array('null' => false))
+                ->addColumn('activities', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('representative', 'integer', array('null' => true, 'signed' => false))
                 ->addColumn('dpo', 'integer', array('null' => true, 'signed' => false))
@@ -160,6 +146,7 @@ class AddRecordsTables extends AbstractMigration
         $table
             ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
             ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
+            ->addColumn('type', 'string', array('null' => true, 'limit' => 255))
             ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
             ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
             ->addColumn('created_at', 'datetime', array('null' => true))
@@ -222,19 +209,6 @@ class AddRecordsTables extends AbstractMigration
      	$table
             ->addForeignKey('record_id', 'records', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-            ->update();
-
-        $table = $this->table('record_personal_data_record_data_subjects');
-        $table
-            ->addColumn('personal_data_id', 'integer', array('null' => false, 'signed' => false))
-            ->addColumn('data_subject_id', 'integer', array('null' => false, 'signed' => false))
-            ->addIndex(array('personal_data_id'))
-            ->addIndex(array('data_subject_id'))
-            ->create();
-        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-     	$table
-            ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-            ->addForeignKey('data_subject_id', 'record_data_subjects', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 
         $table = $this->table('record_personal_data_record_data_categories');

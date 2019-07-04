@@ -121,15 +121,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                                 }
                                 else if(is_a($d, '\MonarcFO\Model\Entity\RecordPersonalData')) { //fetch more info
                                     $d = $d->getJsonArray();
-                                    $d['dataSubjects']->initialize();
-                                    if($d['dataSubjects']->count()){
-                                        $dataSubjects = $d['dataSubjects']->getSnapshot();
-                                        $d['dataSubjects'] = [];
-                                        foreach($dataSubjects as $ds){
-                                          $tempDataSubject = $ds->toArray();
-                                          $d['dataSubjects'][] = $tempDataSubject;
-                                        }
-                                    }
                                     $d['dataCategories']->initialize();
                                     if($d['dataCategories']->count()){
                                         $dataCategories = $d['dataCategories']->getSnapshot();

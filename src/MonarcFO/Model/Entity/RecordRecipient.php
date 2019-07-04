@@ -47,6 +47,13 @@ class RecordRecipient extends AbstractEntity
     protected $label;
 
     /**
+     * @var bool
+     *
+     * @ORM\Column(name="type", type="string", length=255, nullable=true)
+     */
+    protected $type;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="description", type="string", length=255, nullable=true)

@@ -50,7 +50,7 @@ class RecordProcessor extends AbstractEntity
     /**
      * @var array
      *
-     * @ORM\Column(name="activities", type="array", nullable=true)
+     * @ORM\Column(name="activities", type="string", length=255, nullable=true)
      */
     protected $activities;
 
@@ -121,7 +121,6 @@ class RecordProcessor extends AbstractEntity
 
     public function __construct($obj = null)
     {
-        $this->activities = [];
         $this->cascadedProcessors = new ArrayCollection();
         $this->internationalTransfers = new ArrayCollection();
         parent::__construct($obj);

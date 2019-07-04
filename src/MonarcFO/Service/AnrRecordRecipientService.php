@@ -48,6 +48,12 @@ class AnrRecordRecipientService extends AbstractService
         $return = [];
         $return['id'] = $entity->id;
         $return['name'] = $entity->label;
+        if ($entity->type == 0) {
+            $return["type"] = "internal";
+        } else {
+            $return["type"] = "external";
+        }
+        $return['type'] = $entity->type;
         if($entity->description != "") {
             $return['description'] = $entity->description;
         }
@@ -63,6 +69,11 @@ class AnrRecordRecipientService extends AbstractService
     {
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
+        if ($data['type'] == "internal") {
+            $newData["type"] = 0;
+        } else {
+            $newData["type"] = 1;
+        }
         $id = $data['id'];
         unset($data['name']);
         try {

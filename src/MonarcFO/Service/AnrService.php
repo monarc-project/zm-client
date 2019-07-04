@@ -103,7 +103,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
     protected $SoaCategoryCliTable;
     protected $recordCliTable;
     protected $recordActorCliTable;
-    protected $recordDataSubjectCliTable;
     protected $recordDataCategoryCliTable;
     protected $recordPersonalDataCliTable;
     protected $recordInternationalTransferCliTable;
@@ -1022,18 +1021,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $actorNewIds[$a->id] = $newActor;
             }
 
-            //duplicate record data subjects
-            $recordDataSubjects = $this->get('recordDataSubjectCliTable')->getEntityByFields(['anr' => $anr->id]);
-            $dataSubjectNewIds = [];
-            foreach ($recordDataSubjects as $ds) {
-                $newDataSubject = new \MonarcFO\Model\Entity\RecordDataSubject($ds);
-                $newDataSubject->set('id', null);
-                $newDataSubject->setAnr($newAnr);
-                $this->get('recordDataSubjectCliTable')->save($newDataSubject, false);
-                $this->get('recordDataSubjectCliTable')->getDb()->flush();
-                $dataSubjectNewIds[$ds->id] = $newDataSubject;
-            }
-
             //duplicate record data categories
             $recordDataCategories = $this->get('recordDataCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
             $dataCategoryNewIds = [];
@@ -1132,12 +1119,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newPersonalData->set('id', null);
                 $newPersonalData->setAnr($newAnr);
                 $newPersonalData->setRecord($recordNewIds[$pd->record->id]);
-                $newDataSubjectIds = [];
-                $dataSubjects = $pd->getDataSubjects();
-                foreach ($dataSubjects as $ds) {
-                    $newDataSubjectIds[] = $dataSubjectNewIds[$ds->id];
-                }
-                $newPersonalData->setDataSubjects($newDataSubjectIds);
                 $newDataCategoryIds = [];
                 $dataCategories = $pd->getDataCategories();
                 foreach ($dataCategories as $dc) {

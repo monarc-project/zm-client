@@ -2762,7 +2762,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //header if array is not empty
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Data subjects'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Data subject'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Personal data categories'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleContentFontBold, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period'), $styleContentFontBold, $alignLeft);
@@ -2771,23 +2771,19 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         if (count($personalData)) {
             foreach($personalData as $pd) {
                 $table->addRow(400);
-                $dataSubjects = '';
-                foreach ($pd->get('dataSubjects') as $ds) {
-                    $dataSubjects .= $ds->get('label') . "\n";
-                }
                 $dataCategories = '';
                 foreach ($pd->get('dataCategories') as $dc) {
                     $dataCategories .= $dc->get('label') . "\n";
                 }
                 $retentionPeriod = $pd->get('retentionPeriod');
                 if($pd->get('retentionPeriodMode') == 0) {
-                    $retentionPeriod .= 'days';
+                    $retentionPeriod .= $this->anrTranslate('day(s)');
                 } else if ($pd->get('retentionPeriodMode') == 1) {
-                    $retentionPeriod .= 'months';
+                    $retentionPeriod .= $this->anrTranslate('month(s)');
                 } else {
-                    $retentionPeriod .= 'years';
+                    $retentionPeriod .= $this->anrTranslate('year(s)');
                 }
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($dataSubjects, $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($pd->get('dataSubject'), $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($dataCategories, $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($pd->get('description'), $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($retentionPeriod, $styleContentFont, $alignLeft);
@@ -2826,14 +2822,16 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //header if array is not empty
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate('Recipient'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Recipient'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Type'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleContentFontBold, $alignLeft);
 
         if (count($recipients)) {
             foreach($recipients as $r) {
                 $table->addRow(400);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($r->get('label'), $styleContentFont, $alignLeft);
-                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText($r->get('description'), $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText($r->get('label'), $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($r->get('type')==0? $this->anrTranslate('internal'): $this->anrTranslate('external'), $styleContentFont, $alignLeft);
+                $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($r->get('description'), $styleContentFont, $alignLeft);
             }
         }
         return $this->getWordXmlFromWordObject($tableWord);
@@ -2920,7 +2918,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('label'), $styleContentFont, $alignLeft);
             $table->addRow(400);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Activities'), $styleHeaderFont, $alignLeft);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(join("\n", $p->get('activities')), $styleContentFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('activities'), $styleContentFont, $alignLeft);
             $table->addRow(400);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Security measures'), $styleHeaderFont, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('secMeasures'), $styleContentFont, $alignLeft);

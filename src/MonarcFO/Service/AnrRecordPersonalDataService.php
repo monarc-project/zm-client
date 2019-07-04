@@ -17,9 +17,8 @@ use MonarcCore\Service\AbstractService;
  */
 class AnrRecordPersonalDataService extends AbstractService
 {
-    protected $dependencies = ['anr', 'record', 'dataSubjects', 'dataCategories'];
+    protected $dependencies = ['anr', 'record', 'dataCategories'];
     protected $filterColumns = ['label'];
-    protected $recordDataSubjectService;
     protected $recordDataCategoryService;
     protected $userAnrTable;
     protected $anrTable;
@@ -31,16 +30,6 @@ class AnrRecordPersonalDataService extends AbstractService
      */
     public function createPersonalData($data)
     {
-        $dss = array();
-        foreach ($data['dataSubjects'] as $ds) {
-            if(!isset($ds['id'])) {
-                $ds['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new personal data
-                $ds['id'] = $this->recordDataSubjectService->create($ds, true);
-            }
-            array_push($dss, $ds['id']);
-        }
-        $data['dataSubjects'] = $dss;
         $dcs = array();
         foreach ($data['dataCategories'] as $dc) {
             if(!isset($dc['id'])) {
@@ -58,22 +47,12 @@ class AnrRecordPersonalDataService extends AbstractService
     {
         $personalDataEntity = $this->get('table')->getEntity($id);
         $anrId = $personalDataEntity->anr->id;
-        $dataSubjectsToCheck = array();
-        foreach($personalDataEntity->dataSubjects as $ds) {
-            array_push($dataSubjectsToCheck, $ds->id);
-        }
-
         $dataCategoriesToCheck = array();
         foreach($personalDataEntity->dataCategories as $dc) {
             array_push($dataCategoriesToCheck, $dc->id);
         }
 
         $result = $this->get('table')->delete($id);
-        foreach($dataSubjectsToCheck as $ds) {
-            if($this->recordDataSubjectService->orphanDataSubject($ds, $anrId)) {
-                $this->recordDataSubjectService->delete(['anr'=> $anrId, 'id' => $ds]);
-            }
-        }
         foreach($dataCategoriesToCheck as $dc) {
             if($this->recordDataCategoryService->orphanDataCategory($dc, $anrId)) {
                 $this->recordDataCategoryService->delete(['anr'=> $anrId, 'id' => $dc]);
@@ -90,15 +69,6 @@ class AnrRecordPersonalDataService extends AbstractService
     public function updatePersonalData($id, $data)
     {
         $entity = $this->get('table')->getEntity($id);
-        $dataSubjects = array();
-        foreach ($data['dataSubjects'] as $ds) {
-            if(!isset($ds['id'])) {
-                $ds['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new data subject
-                $ds['id'] = $this->recordDataSubjectService->create($ds, true);
-            }
-            array_push($dataSubjects, $ds['id']);
-        }
         $dataCategories = array();
         foreach ($data['dataCategories'] as $dc) {
             if(!isset($dc['id'])) {
@@ -108,22 +78,12 @@ class AnrRecordPersonalDataService extends AbstractService
             }
             array_push($dataCategories, $dc['id']);
         }
-        $data['dataSubjects'] = $dataSubjects;
         $data['dataCategories'] = $dataCategories;
-        $oldDataSubjects = array();
-        foreach( $entity->dataSubjects as $ds) {
-            array_push($oldDataSubjects, $ds->id);
-        }
         $oldDataCategories = array();
         foreach( $entity->dataCategories as $dc) {
             array_push($oldDataCategories, $dc->id);
         }
         $result = $this->update($id, $data);
-        foreach($oldDataSubjects as $ds) {
-            if(!in_array($ds, $dataSubjects) && $this->recordDataSubjectService->orphanDataSubject($ds, $data['anr'])) {
-                $this->recordDataSubjectService->delete(['anr'=> $data['anr'], 'id' => $ds]);
-            }
-        }
         foreach($oldDataCategories as $dc) {
             if(!in_array($dc, $dataCategories) && $this->recordDataCategoryService->orphanDataCategory($dc, $data['anr'])) {
                 $this->recordDataCategoryService->delete(['anr'=> $data['anr'], 'id' => $dc]);
@@ -147,10 +107,8 @@ class AnrRecordPersonalDataService extends AbstractService
             throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
         }
         $return = [];
-        if($entity->dataSubjects) {
-            foreach($entity->dataSubjects as $ds) {
-                $return['data_subjects'][] = $this->recordDataSubjectService->generateExportArray($ds->id);
-            }
+        if ($entity->dataSubject != "") {
+            $return["data_subject"] = $entity->dataSubject;
         }
         if($entity->dataCategories) {
             foreach($pd->dataCategories as $dc) {
@@ -180,22 +138,10 @@ class AnrRecordPersonalDataService extends AbstractService
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
-    public function importFromArray($data, $anr, $recordId, &$dataSubjectMap, &$dataCategoryMap)
+    public function importFromArray($data, $anr, $recordId, &$dataCategoryMap)
     {
         $newData = [];
         $newData['anr'] = $anr;
-        if(isset($data['data_subjects'])) {
-            foreach ($data['data_subjects'] as $ds) {
-                $dataSubject = [];
-                if(isset($dataSubjectMap[$ds['id']])) {
-                    $dataSubject["id"] = $dataSubjectMap[$ds['id']];
-                } else {
-                    $dataSubject["id"] = $this->recordDataSubjectService->importFromArray($ds, $anr);
-                    $dataSubjectMap[$ds['id']] = $dataSubject["id"];
-                }
-                $newData['dataSubjects'][] = $dataSubject;
-            }
-        }
         if(isset($data['data_categories'])) {
             foreach ($data['data_categories'] as $dc) {
                 $dataCategory = [];
@@ -210,6 +156,7 @@ class AnrRecordPersonalDataService extends AbstractService
         }
         $newData['record'] = $recordId;
         $id = $this->createPersonalData($newData);
+        $newData['dataSubject'] = (isset($data['data_subject']) ? $data['data_subject'] : '');
         $newData['description'] = (isset($data['description']) ? $data['description'] : '');
         $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : '');
         $newData['retentionPeriod'] = $data['retention_period'];

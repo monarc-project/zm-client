@@ -507,15 +507,6 @@ return array(
                             ),
                         ),
                     ),
-                    'record_data_subjects' => array(
-                        'type' => 'segment',
-                        'options' => array(
-                            'route' => 'record-data-subjects',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordDataSubjects',
-                            ),
-                        ),
-                    ),
                     'record_data_categories' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -929,7 +920,6 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidate' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsMeasures' => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordActors' => '\MonarcFO\Controller\ApiAnrRecordActorsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordDataSubjects' => '\MonarcFO\Controller\ApiAnrRecordDataSubjectsControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordDataCategories' => '\MonarcFO\Controller\ApiAnrRecordDataCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordInternationalTransfers' => '\MonarcFO\Controller\ApiAnrRecordInternationalTransfersControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordPersonalData' => '\MonarcFO\Controller\ApiAnrRecordPersonalDataControllerFactory',
@@ -1011,7 +1001,6 @@ return array(
             '\MonarcFO\Model\Table\RolfTagTable' => '\MonarcFO\Service\Model\Table\RolfTagServiceModelTable',
             '\MonarcFO\Model\Table\RecordActorTable' => '\MonarcFO\Service\Model\Table\RecordActorServiceModelTable',
             '\MonarcFO\Model\Table\RecordDataCategoryTable' => '\MonarcFO\Service\Model\Table\RecordDataCategoryServiceModelTable',
-            '\MonarcFO\Model\Table\RecordDataSubjectTable' => '\MonarcFO\Service\Model\Table\RecordDataSubjectServiceModelTable',
             '\MonarcFO\Model\Table\RecordInternationalTransferTable' => '\MonarcFO\Service\Model\Table\RecordInternationalTransferServiceModelTable',
             '\MonarcFO\Model\Table\RecordPersonalDataTable' => '\MonarcFO\Service\Model\Table\RecordPersonalDataServiceModelTable',
             '\MonarcFO\Model\Table\RecordProcessorTable' => '\MonarcFO\Service\Model\Table\RecordProcessorServiceModelTable',
@@ -1051,7 +1040,6 @@ return array(
             '\MonarcFO\Model\Entity\Interview' => '\MonarcFO\Service\Model\Entity\InterviewServiceModelEntity',
             '\MonarcFO\Model\Entity\RecordActor' => '\MonarcFO\Service\Model\Entity\RecordActorServiceModelEntity',
             '\MonarcFO\Model\Entity\RecordDataCategory' => '\MonarcFO\Service\Model\Entity\RecordDataCategoryServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecordDataSubject' => '\MonarcFO\Service\Model\Entity\RecordDataSubjectServiceModelEntity',
             '\MonarcFO\Model\Entity\RecordInternationalTransfer' => '\MonarcFO\Service\Model\Entity\RecordInternationalTransferServiceModelEntity',
             '\MonarcFO\Model\Entity\RecordPersonalData' => '\MonarcFO\Service\Model\Entity\RecordPersonalDataServiceModelEntity',
             '\MonarcFO\Model\Entity\RecordProcessor' => '\MonarcFO\Service\Model\Entity\RecordProcessorServiceModelEntity',
@@ -1099,7 +1087,6 @@ return array(
             '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
             '\MonarcFO\Service\AnrMeasureMeasureService' => '\MonarcFO\Service\AnrMeasureMeasureServiceFactory',
             '\MonarcFO\Service\AnrRecordActorService' => '\MonarcFO\Service\AnrRecordActorServiceFactory',
-            '\MonarcFO\Service\AnrRecordDataSubjectService' => '\MonarcFO\Service\AnrRecordDataSubjectServiceFactory',
             '\MonarcFO\Service\AnrRecordDataCategoryService' => '\MonarcFO\Service\AnrRecordDataCategoryServiceFactory',
             '\MonarcFO\Service\AnrRecordInternationalTransferService' => '\MonarcFO\Service\AnrRecordInternationalTransferServiceFactory',
             '\MonarcFO\Service\AnrRecordPersonalDataService' => '\MonarcFO\Service\AnrRecordPersonalDataServiceFactory',
@@ -1280,7 +1267,6 @@ return array(
             'monarc_api_global_client_anr/objects_categories',
             'monarc_api_global_client_anr/records',
             'monarc_api_global_client_anr/record_actors',
-            'monarc_api_global_client_anr/record_data_subjects',
             'monarc_api_global_client_anr/record_data_categories',
             'monarc_api_global_client_anr/record_international_transfers',
             'monarc_api_global_client_anr/record_personal_data',

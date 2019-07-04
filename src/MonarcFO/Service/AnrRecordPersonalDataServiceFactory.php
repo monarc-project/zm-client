@@ -21,7 +21,6 @@ class AnrRecordPersonalDataServiceFactory extends AbstractServiceFactory
         'table' => 'MonarcFO\Model\Table\RecordPersonalDataTable',
         'entity' => 'MonarcFO\Model\Entity\RecordPersonalData',
         'recordDataCategoryService' => 'MonarcFO\Service\AnrRecordDataCategoryService',
-        'recordDataSubjectService' => 'MonarcFO\Service\AnrRecordDataSubjectService',
         'userAnrTable' => 'MonarcFO\Model\Table\UserAnrTable',
         'anrTable' => 'MonarcFO\Model\Table\AnrTable',
     ];

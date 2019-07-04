@@ -55,7 +55,7 @@ class AnrRecordInternationalTransferService extends AbstractService
 
     /**
      * Imports a record international transfer from a data array. This data is generally what has been exported into a file.
-     * @param array $data The record data subject's data fields
+     * @param array $data The record international transfer's data fields
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @param int $parentId The id of the entity possessing this international transfer
      * @param bool $forRecord True if the entity possessing this international transfer is a record, false if processor
