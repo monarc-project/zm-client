@@ -2944,65 +2944,16 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Security measures'), $styleHeaderFont, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('secMeasures'), $styleContentFont, $alignLeft);
 
-            $section->addTextBreak(2);
-            $section->addText($this->anrTranslate('Actors'), ["bold" => true]);
-            $section->addTextBreak(1);
-            $tableActor = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
-            $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleContentFontBold, $alignLeft);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('representative')? $recordEntity->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('representative')? $recordEntity->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
 
-            $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $recordEntity->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $recordEntity->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
 
-            $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
-
-            $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Cascaded processors'), $styleContentFontBold, $alignLeft);
-
-            if (count($p->get('cascadedProcessors'))) {
-                $i = 0;
-                foreach( $p->get('cascadedProcessors') as $cp) {
-                    $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText($cp->get('label'), $styleContentFont, $alignLeft);
-                    $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText($cp->get('contact'), $styleContentFont, $alignLeft);
-                    if( $i = count($p->get('cascadedProcessors')) - 1) {
-                        $tableActor->addRow(400);
-                        $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell);
-                    }
-                }
-                ++$i;
-            } else {
-                $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell);
-                $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell);
-            }
-
-            $section->addTextBreak(2);
-            $section->addText($this->anrTranslate('Transfers'), ["bold" => true]);
-            $section->addTextBreak(1);
-
-            $tableTransfers = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
-            //header if array is not empty
-            $tableTransfers->addRow(400);
-            $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Organisation'), $styleContentFontBold, $alignLeft);
-            $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleContentFontBold, $alignLeft);
-            $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Country'), $styleContentFontBold, $alignLeft);
-            $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Documents'), $styleContentFontBold, $alignLeft);
-
-            if (count($p->get('internationalTransfers'))) {
-                foreach($p->get('internationalTransfers') as $it) {
-                    $tableTransfers->addRow(400);
-                    $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('organisation'), $styleContentFont, $alignLeft);
-                    $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('description'), $styleContentFont, $alignLeft);
-                    $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('country'), $styleContentFont, $alignLeft);
-                    $tableTransfers->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('documents'), $styleContentFont, $alignLeft);
-                }
-            }
             $result .= $this->getWordXmlFromWordObject($tableWord);
         }
 

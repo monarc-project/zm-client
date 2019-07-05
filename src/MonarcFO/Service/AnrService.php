@@ -1046,12 +1046,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 if($p->dpo != null) {
                     $newProcessor->setDpo($actorNewIds[$p->dpo->id]);
                 }
-                $cascadedProcessorNewIds = [];
-                $cascadedProcessors = $p->getCascadedProcessors();
-                foreach ($cascadedProcessors as $cp) {
-                    $cascadedProcessorNewIds[] = $actorNewIds[$cp->id];
-                }
-                $newProcessor->setCascadedProcessors($cascadedProcessorNewIds);
                 $this->get('recordProcessorCliTable')->save($newProcessor, false);
                 $this->get('recordProcessorCliTable')->getDb()->flush();
                 $processorNewIds[$p->id] = $newProcessor;
@@ -1137,12 +1131,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newInternationalTransfer = new \MonarcFO\Model\Entity\RecordInternationalTransfer($it);
                 $newInternationalTransfer->set('id', null);
                 $newInternationalTransfer->setAnr($newAnr);
-                if($it->record != null) {
-                    $newInternationalTransfer->setRecord($recordNewIds[$it->record->id]);
-                }
-                if($it->processor != null) {
-                    $newInternationalTransfer->setProcessor($processorNewIds[$it->processor->id]);
-                }
+                $newInternationalTransfer->setRecord($recordNewIds[$it->record->id]);
                 $this->get('recordInternationalTransferCliTable')->save($newInternationalTransfer, false);
                 $this->get('recordInternationalTransferCliTable')->getDb()->flush();
                 $internationalTransferNewIds[$it->id] = $newInternationalTransfer;

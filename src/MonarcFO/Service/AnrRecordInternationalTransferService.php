@@ -17,7 +17,7 @@ use MonarcCore\Service\AbstractService;
  */
 class AnrRecordInternationalTransferService extends AbstractService
 {
-    protected $dependencies = ['anr', 'record', 'processor'];
+    protected $dependencies = ['anr', 'record'];
     protected $filterColumns = ['label'];
     protected $userAnrTable;
     protected $anrTable;
@@ -61,14 +61,10 @@ class AnrRecordInternationalTransferService extends AbstractService
      * @param bool $forRecord True if the entity possessing this international transfer is a record, false if processor
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
-    public function importFromArray($data, $anr, $parentId, $forRecord)
+    public function importFromArray($data, $anr, $parentId)
     {
         $data['anr'] = $anr;
-        if($forRecord) {
-            $data['record'] = $parentId;
-        } else {
-            $data['processor'] = $parentId;
-        }
+        $data['record'] = $parentId;
         $id = $this->create($data);
         return $id;
     }

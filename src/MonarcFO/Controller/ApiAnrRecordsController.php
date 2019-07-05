@@ -99,24 +99,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                                     if($d['dpo']){
                                         $d['dpo'] = $d['dpo']->getJsonArray();
                                     }
-                                    $d['cascadedProcessors']->initialize();
-                                    if($d['cascadedProcessors']->count()){
-                                        $cascadedProcessors = $d['cascadedProcessors']->getSnapshot();
-                                        $d['cascadedProcessors'] = [];
-                                        foreach($cascadedProcessors as $cp){
-                                          $tempProcessor = $cp->toArray();
-                                          $d['cascadedProcessors'][] = $tempProcessor;
-                                        }
-                                    }
-                                    $d['internationalTransfers']->initialize();
-                                    if($d['internationalTransfers']->count()){
-                                        $internationalTransfers = $d['internationalTransfers']->getSnapshot();
-                                        $d['internationalTransfers'] = [];
-                                        foreach($internationalTransfers as $it){
-                                          $tempInternationalTransfer = $it->toArray();
-                                          $d['internationalTransfers'][] = $tempInternationalTransfer;
-                                        }
-                                    }
                                     $temp[] = $d;
                                 }
                                 else if(is_a($d, '\MonarcFO\Model\Entity\RecordPersonalData')) { //fetch more info

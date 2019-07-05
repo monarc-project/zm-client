@@ -15,7 +15,6 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @ORM\Table(name="record_international_transfers", indexes={
  *      @ORM\Index(name="record", columns={"record_id"}),
- *      @ORM\Index(name="processor", columns={"processor_id"})
  * })
  * @ORM\Entity
  */
@@ -44,20 +43,10 @@ class RecordInternationalTransfer extends AbstractEntity
      * @var \MonarcFO\Model\Entity\Record
      * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\Record")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
+     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $record;
-
-    /**
-     * @var \MonarcFO\Model\Entity\RecordProcessor
-     * @ORM\ManyToOne(targetEntity="MonarcFO\Model\Entity\RecordProcessor")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="processor_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
-     * })
-     */
-    protected $processor;
-
     /**
      * @var string
      *
@@ -173,23 +162,6 @@ class RecordInternationalTransfer extends AbstractEntity
         return $this;
     }
 
-    /**
-     * @return RecordProcessor
-     */
-    public function getProcessor()
-    {
-        return $this->processor;
-    }
-
-    /**
-    * @param int $processor
-    * @return RecordInternationalTransfer
-    */
-    public function setProcessor($processor)
-    {
-        $this->processor = $processor;
-        return $this;
-    }
     /**
      * @return string
      */

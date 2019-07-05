@@ -18,7 +18,7 @@ use Zend\View\Model\JsonModel;
 class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
 {
     protected $name = 'record-processors';
-    protected $dependencies = ['anr', 'representative', 'dpo', 'cascadedProcessors', 'internationalTransfers'];
+    protected $dependencies = ['anr', 'representative', 'dpo'];
 
     public function get($id)
     {

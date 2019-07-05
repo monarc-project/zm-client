@@ -48,10 +48,6 @@ class AnrRecordActorService extends AbstractService
         if(count($processors)> 0) {
             return false;
         }
-        $processors = $this->processorTable->getEntityByFields(['cascadedProcessors' => $actorId, 'anr' => $anrId]);
-        if(count($processors)> 0) {
-            return false;
-        }
         return true;
     }
 

@@ -19,6 +19,7 @@ class AnrRecordService extends AbstractService
 {
     protected $dependencies = [ 'anr', 'controller', 'representative', 'dpo', 'jointControllers',
                                 'personalData', 'internationalTransfers', 'processors', 'recipients'];
+    protected $filterColumns = [ 'label' ];
     protected $recordActorService;
     protected $recordProcessorService;
     protected $recordRecipientService;
@@ -395,7 +396,7 @@ class AnrRecordService extends AbstractService
             if(isset($data['international_transfers'])) {
                 foreach ($data['international_transfers'] as $it) {
                     $internationalTransfers = [];
-                    $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id, true);
+                    $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id);
                     $newData['internationalTransfers'][] = $internationalTransfers;
                 }
             }

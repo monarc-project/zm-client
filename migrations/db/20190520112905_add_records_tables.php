@@ -83,8 +83,7 @@ class AddRecordsTables extends AbstractMigration
             $table = $this->table('record_international_transfers');
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('record_id', 'integer', array('null' => true, 'signed' => false))
-                ->addColumn('processor_id', 'integer', array('null' => true, 'signed' => false))
+                ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('organisation', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('country', 'string', array('null' => true, 'limit' => 255))
@@ -167,11 +166,6 @@ class AddRecordsTables extends AbstractMigration
 	    ->addForeignKey('representative_id', 'record_actors', 'id', array('delete' => 'SET NULL','update' => 'RESTRICT'))
             ->update();
 
-    	$table = $this->table('record_international_transfers');
-        $table
-            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-            ->update();
-
         $table = $this->table('records_record_joint_controllers');
         $table
             ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
@@ -222,19 +216,6 @@ class AddRecordsTables extends AbstractMigration
      	$table
             ->addForeignKey('personal_data_id', 'record_personal_data', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->addForeignKey('data_category_id', 'record_data_categories', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-            ->update();
-
-	           $table = $this->table('record_processors_record_actors');
-        $table
-            ->addColumn('processor_id', 'integer', array('null' => false, 'signed' => false))
-            ->addColumn('actor_id', 'integer', array('null' => false, 'signed' => false))
-            ->addIndex(array('processor_id'))
-            ->addIndex(array('actor_id'))
-            ->create();
-        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-     	$table
-            ->addForeignKey('processor_id', 'record_processors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-            ->addForeignKey('actor_id', 'record_actors', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
     }
 }

@@ -76,22 +76,6 @@ class RecordProcessor extends AbstractEntity
     protected $dpo;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="MonarcFO\Model\Entity\RecordActor", cascade={"persist"})
-     * @ORM\JoinTable(name="record_processors_record_actors",
-     *  joinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="actor_id", referencedColumnName="id")}
-     * )
-     */
-    protected $cascadedProcessors;
-
-    /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\OneToMany(targetEntity="MonarcFO\Model\Entity\RecordInternationalTransfer", mappedBy="processor", cascade={"persist"})
-     */
-    protected $internationalTransfers;
-
-    /**
      * @var string
      *
      * @ORM\Column(name="creator", type="string", length=255, nullable=true)
@@ -121,8 +105,6 @@ class RecordProcessor extends AbstractEntity
 
     public function __construct($obj = null)
     {
-        $this->cascadedProcessors = new ArrayCollection();
-        $this->internationalTransfers = new ArrayCollection();
         parent::__construct($obj);
     }
 
@@ -192,24 +174,6 @@ class RecordProcessor extends AbstractEntity
     public function setDpo($dpo)
     {
         $this->dpo = $dpo;
-        return $this;
-    }
-
-    /**
-     * @return Actor
-     */
-    public function getCascadedProcessors()
-    {
-        return $this->cascadedProcessors;
-    }
-
-    /**
-    * @param int $cascadedProcessors
-    * @return RecordProcessor
-    */
-    public function setCascadedProcessors($cascadedProcessors)
-    {
-        $this->cascadedProcessors = $cascadedProcessors;
         return $this;
     }
 

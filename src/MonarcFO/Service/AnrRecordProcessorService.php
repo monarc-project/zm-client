@@ -17,9 +17,8 @@ use MonarcCore\Service\AbstractService;
  */
 class AnrRecordProcessorService extends AbstractService
 {
-    protected $dependencies = ['anr','representative', 'dpo', 'cascadedProcessors', 'internationalTransfers'];
+    protected $dependencies = ['anr','representative', 'dpo'];
     protected $recordActorService;
-    protected $recordInternationalTransferService;
     protected $filterColumns = ['label'];
     protected $userAnrTable;
     protected $anrTable;
@@ -36,14 +35,6 @@ class AnrRecordProcessorService extends AbstractService
         if($entity->representative) {
             array_push($actorsToCheck, $entity->representative->id);
         }
-        foreach($entity->cascadedProcessors as $cp) {
-            array_push($actorsToCheck, $cp->id);
-        }
-
-        foreach($entity->internationalTransfers as $it) {
-            $this->recordInternationalTransferService->delete(['anr'=> $anrId, 'id' => $it->id]);
-        }
-
         $result = $this->get('table')->delete($id);
         foreach($actorsToCheck as $a) {
             if($this->recordActorService->orphanActor($a, $anrId)) {
@@ -71,16 +62,6 @@ class AnrRecordProcessorService extends AbstractService
         } else {
             $data['representative'] = null;
         }
-        $cascadedProcessors = array();
-        foreach ($data['cascadedProcessors'] as $cp) {
-            array_push($cascadedProcessors, $cp['id']);
-        }
-        $data['cascadedProcessors'] = $cascadedProcessors;
-        $internationalTransfers = array();
-        foreach ($data['internationalTransfers'] as $it) {
-            array_push($internationalTransfers,$it['id']);
-        }
-        $data['internationalTransfers'] = $internationalTransfers;
 
         $oldActors = array();
         if($entity->representative && $entity->representative->id) {
@@ -89,25 +70,14 @@ class AnrRecordProcessorService extends AbstractService
         if($entity->dpo && $entity->dpo->id) {
             array_push($oldActors, $entity->dpo->id);
         }
-        foreach($entity->cascadedProcessors as $cp) {
-            array_push($oldActors, $cp->id);
-        }
-
-        foreach($entity->internationalTransfers as $it) {
-            if(!in_array($it->id, $internationalTransfers)) {
-                $this->recordInternationalTransferService->delete(['anr'=> $data['anr'], 'id' => $it->id]);
-            }
-        }
 
         $result = $this->update($id, $data);
         foreach($oldActors as $a) {
-            if(!in_array($a, $cascadedProcessors) && $a != $data['dpo'] && $a != $data['representative']
+            if($a != $data['dpo'] && $a != $data['representative']
                && $this->recordActorService->orphanActor($a, $data['anr'])) {
                 $this->recordActorService->delete(['anr'=> $data['anr'], 'id' => $a]);
             }
         }
-
-
         return $result;
     }
 
@@ -142,12 +112,6 @@ class AnrRecordProcessorService extends AbstractService
         if($entity->dpo) {
             $return['data_protection_officer'] = $this->recordActorService->generateExportArray($entity->dpo->id);
         }
-        foreach ($entity->cascadedProcessors as $cp) {
-            $return['cascaded_processors'][] = $this->recordActorService->generateExportArray($cp->id);
-        }
-        foreach ($entity->internationalTransfers as $it) {
-            $return['international_transfers'][] = $this->recordInternationalTransferService->generateExportArray($it->id);
-        }
         return $return;
     }
 
@@ -177,17 +141,6 @@ class AnrRecordProcessorService extends AbstractService
                 unset($data['id']);
                 $id = $this->create($newData);
             }
-            else {
-                foreach($processorEntity->get('cascadedProcessors') as $cp) {
-                    $newData['cascadedProcessors'][] = $cp->get('id');
-                }
-                foreach($processorEntity->get('personalData') as $pd) {
-                    $newData['personalData'][] = $pd->get('id');
-                }
-                foreach($processorEntity->get('internationalTransfers') as $it) {
-                    $newData['internationalTransfers'][] = $it->get('id');
-                }
-            }
         } catch (\MonarcCore\Exception\Exception $e) {
             unset($data['id']);
             $id = $this->create($newData);
@@ -208,32 +161,6 @@ class AnrRecordProcessorService extends AbstractService
             } else {
                 $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
                 $actorMap[$data['data_protection_officer']['id']] = $newData['dpo']["id"];
-            }
-        }
-        if(isset($data['cascaded_processors'])) {
-            foreach ($data['cascaded_processors'] as $cp) {
-                $cascadedProcessor = [];
-                if(isset($actorMap[$cp['id']])) {
-                    $cascadedProcessor["id"] = $actorMap[$cp['id']];
-                } else {
-                    $cascadedProcessor["id"] = $this->recordActorService->importFromArray($cp, $anr);
-                    $actorMap[$cp['id']] = $cascadedProcessor["id"];
-                }
-                $newData['cascadedProcessors'][] = $cascadedProcessor;
-            }
-        }
-        if(isset($data['personal_data'])) {
-            foreach ($data['personal_data'] as $pd) {
-                $personalData = [];
-                $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr);
-                $newData['personalData'][] = $personalData;
-            }
-        }
-        if(isset($data['international_transfers'])) {
-            foreach ($data['international_transfers'] as $it) {
-                $internationalTransfers = [];
-                $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id, false);
-                $newData['internationalTransfers'][] = $internationalTransfers;
             }
         }
         return $this->updateProcessor($id,$newData);
