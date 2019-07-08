@@ -2928,11 +2928,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
         $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
-        $result = '';
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
         foreach ($processors as $p) {
             //create section
-            $tableWord = new PhpWord();
-            $section = $tableWord->addSection();
+            $section->addTextBreak(1);
+            $section->addText($p->get('label'), $styleContentFontBold);
+
             $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
             $table->addRow(400);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignLeft);
@@ -2954,10 +2956,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
 
-            $result .= $this->getWordXmlFromWordObject($tableWord);
+
         }
 
-        return $result;
+        return $this->getWordXmlFromWordObject($tableWord);
     }
 
     /**
@@ -3020,7 +3022,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $section->addTitle($this->anrTranslate('Processors'), 2);
-            $section->addTextBreak(1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordProcessors($anr, $recordEntity->id);
         }
