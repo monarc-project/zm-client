@@ -2962,13 +2962,13 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
             $tableActor->addRow(400);
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $recordEntity->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $recordEntity->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
 
             $tableActor->addRow(400);
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $recordEntity->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
