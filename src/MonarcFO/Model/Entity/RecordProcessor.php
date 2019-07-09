@@ -47,6 +47,14 @@ class RecordProcessor extends AbstractEntity
      */
     protected $label;
 
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="contact", type="string", length=255, nullable=true)
+     */
+    protected $contact;
+
     /**
      * @var array
      *

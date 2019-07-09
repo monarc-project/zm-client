@@ -103,6 +103,9 @@ class AnrRecordProcessorService extends AbstractService
         if($entity->secMeasures != '') {
             $return['security_measures'] = $entity->secMeasures;
         }
+        if($entity->contact != '') {
+            $return['contact'] = $entity->contact;
+        }
         if($entity->activities != '') {
             $return['activities'] = $entity->activities;
         }
@@ -145,6 +148,7 @@ class AnrRecordProcessorService extends AbstractService
             unset($data['id']);
             $id = $this->create($newData);
         }
+        $newData['contact'] = (isset($data['contact']) ? $data['contact'] : '');
         $newData['activities'] = (isset($data['activities']) ? $data['activities'] : '');
         $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
         if(isset($data['representative'])) {

@@ -125,6 +125,7 @@ class AddRecordsTables extends AbstractMigration
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('label', 'string', array('null' => true, 'limit' => 255))
+                ->addColumn('contact', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('activities', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('sec_measures', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('representative', 'integer', array('null' => true, 'signed' => false))
