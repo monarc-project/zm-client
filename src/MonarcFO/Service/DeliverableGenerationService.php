@@ -2653,15 +2653,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentFontBold = ['bold' => true, 'size' => 10];
-        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
-        $styleRowSpanCell = ['vMerge' => 'restart', 'align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleRowContinueCell = ['vMerge' => 'continue', 'align' => 'left', 'valign' => 'center', 'size' => 10];
-
 
         $tableWord = new PhpWord();
         $tableWord->getSettings()->setUpdateFields(true);
@@ -2669,19 +2662,19 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
         $table = $section->addTable($styleTable);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('label'), $styleContentFont, $alignLeft);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Creation date'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Creation date'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(($recordEntity->get('createdAt')? strftime("%d-%m-%Y", $recordEntity->get('createdAt')->getTimeStamp()) : ""), $styleContentFont, $alignLeft);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Update date'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Update date'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(($recordEntity->get('updatedAt')? strftime("%d-%m-%Y", $recordEntity->get('updatedAt')->getTimeStamp()) : ""), $styleContentFont, $alignLeft);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Purpose(s)'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Purpose(s)'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('purposes'), $styleContentFont, $alignLeft);
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Security measures'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Security measures'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($recordEntity->get('secMeasures'), $styleContentFont, $alignLeft);
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -2700,12 +2693,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentFontBold = ['bold' => true, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
 
         //create section
         $tableWord = new PhpWord();
@@ -2715,27 +2705,27 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //header if array is not empty
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleHeaderFont, $alignCenter);
 
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Controller'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Controller'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($recordEntity->get('controller')? $recordEntity->get('controller')->get('label') : ""), $styleContentFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($recordEntity->get('controller')? $recordEntity->get('controller')->get('contact') : ""), $styleContentFont, $alignLeft);
 
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($recordEntity->get('representative')? $recordEntity->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($recordEntity->get('representative')? $recordEntity->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
 
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleHeaderFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($recordEntity->get('dpo')? $recordEntity->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
         $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($recordEntity->get('dpo')? $recordEntity->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
 
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Joint controllers'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Joint controllers'), $styleHeaderFont, $alignLeft);
 
         if (count($jointControllers)) {
             $i = 0;
@@ -2769,12 +2759,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentFontBold = ['bold' => true, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
 
         //create section
         $tableWord = new PhpWord();
@@ -2784,11 +2771,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //header if array is not empty
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Data subject'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Personal data categories'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period description'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Data subject'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Personal data categories'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period description'), $styleHeaderFont, $alignCenter);
 
         if (count($personalData)) {
             foreach($personalData as $pd) {
@@ -2797,7 +2784,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 foreach ($pd->get('dataCategories') as $dc) {
                     $dataCategories .= $dc->get('label') . "\n";
                 }
-                $retentionPeriod = $pd->get('retentionPeriod') + ' ';
+                $retentionPeriod = $pd->get('retentionPeriod') . ' ';
                 if($pd->get('retentionPeriodMode') == 0) {
                     $retentionPeriod .= $this->anrTranslate('day(s)');
                 } else if ($pd->get('retentionPeriodMode') == 1) {
@@ -2829,12 +2816,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentFontBold = ['bold' => true, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
 
         //create section
         $tableWord = new PhpWord();
@@ -2844,9 +2828,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //header if array is not empty
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Recipient'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Type'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Recipient'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Type'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
 
         if (count($recipients)) {
             foreach($recipients as $r) {
@@ -2873,12 +2857,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentFontBold = ['bold' => true, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
 
         //create section
         $tableWord = new PhpWord();
@@ -2888,10 +2869,10 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
         //header if array is not empty
         $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Organisation'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Country'), $styleContentFontBold, $alignLeft);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Documents'), $styleContentFontBold, $alignLeft);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Organisation'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Country'), $styleHeaderFont, $alignCenter);
+        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Documents'), $styleHeaderFont, $alignCenter);
 
         if (count($internationalTransfers)) {
             foreach($internationalTransfers as $it) {
@@ -2918,15 +2899,11 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $processors = $recordEntity->get('processors');
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-        $styleContentCell = ['gridSpan' => 2, 'align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentCellSplit = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+        $styleHeaderFont = ['bold' => true, 'size' => 10];
+        $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentFontBold = ['bold' => true, 'size' => 10];
-        $styleRowSpanCell = ['gridSpan' => 2, 'vMerge' => 'restart', 'align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleRowContinueCell = ['gridSpan' => 2, 'vMerge' => 'continue', 'align' => 'left', 'valign' => 'center', 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
 
         $tableWord = new PhpWord();
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
@@ -2935,7 +2912,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         foreach ($processors as $p) {
             //create section
             $section->addTextBreak(1);
-            $section->addText($p->get('label'), $styleContentFontBold);
+            $section->addText($p->get('label'), $styleHeaderFont);
             $table = $section->addTable($styleTable);
 
             $table->addRow(400);
@@ -2952,22 +2929,23 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('secMeasures'), $styleContentFont, $alignLeft);
 
             $section->addTextBreak(1);
-            $section->addText($this->anrTranslate('Actors'), $styleContentFontBold);
-            $tableActor = $section->addTable($styleTable);
-            $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleContentFontBold, $alignLeft);
+            $section->addText($this->anrTranslate('Actors'), ["bold" => true]);
+            $tableActor = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleHeaderFont, $alignCenter);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignCenter);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleHeaderFont, $alignCenter);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleHeaderFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(_WT($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(_WT($p->get('representative')? $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
+
+            $tableActor->addRow(400);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleHeaderFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
@@ -2982,18 +2960,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
     {
         $recordTable = $this->get('recordService')->get('table');
         $recordEntities = $recordTable->getEntityByFields(['anr' => $anr->id]);
-        //css
-        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-        $styleHeaderFont = ['bold' => true, 'size' => 10];
-        $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentCellCat = ['gridSpan' => 7, 'bgcolor' => 'DBE5F1','align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleContentFont = ['bold' => false, 'size' => 10];
-        $styleContentFontBold = ['bold' => true, 'size' => 10];
-        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
-        $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
-        $styleRowSpanCell = ['vMerge' => 'restart', 'align' => 'left', 'valign' => 'center', 'size' => 10];
-        $styleRowContinueCell = ['vMerge' => 'continue', 'align' => 'left', 'valign' => 'center', 'size' => 10];
+
         $result = '';
 
         foreach($recordEntities as $recordEntity) {
