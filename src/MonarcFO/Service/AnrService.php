@@ -1060,6 +1060,9 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 if ($newRecommandationRisk->get('vulnerability')) {
                     $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->getUuid()->toString()]);
                 }
+                $newRecommandationRisk->setAnr(null);
+                $this->get('recommandationRiskCliTable')->save($newRecommandationRisk);
+                $newRecommandationRisk->setAnr($newAnr);
                 $this->get('recommandationRiskCliTable')->save($newRecommandationRisk,false);
             }
 

@@ -921,7 +921,10 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             ];
                             $rr->exchangeArray($toExchange);
                             $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRiskOp', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                            $rr->setAnr(null);
                             $this->get('recommandationRiskTable')->save($rr);
+                            $rr->setAnr($anr);
+                            $this->get('recommandationRiskTable')->save($rr, false);
                         }
                     }
                 }
