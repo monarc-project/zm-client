@@ -58,7 +58,6 @@ class AnrRecordInternationalTransferService extends AbstractService
      * @param array $data The record international transfer's data fields
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @param int $parentId The id of the entity possessing this international transfer
-     * @param bool $forRecord True if the entity possessing this international transfer is a record, false if processor
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr, $parentId)

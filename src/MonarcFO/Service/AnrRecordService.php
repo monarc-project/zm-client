@@ -30,6 +30,8 @@ class AnrRecordService extends AbstractService
     protected $actorTable;
     protected $processorTable;
     protected $recipientTable;
+    protected $personalDataTable;
+    protected $internationalTransferTable;
 
 
     public function deleteRecord($id)
@@ -189,6 +191,39 @@ class AnrRecordService extends AbstractService
     }
 
     /**
+     * Duplicates an existing record in the anr
+     * @param int $recordId The id of record to clone, either its ID or the object
+     * @return int The newly created record id
+     * @throws \MonarcCore\Exception\Exception
+     */
+    public function duplicateRecord($recordId, $newLabel)
+    {
+        $entity = $this->get('table')->getEntity($recordId);
+        $newRecord = new \MonarcFO\Model\Entity\Record($entity);
+        $newRecord->setId(null);
+        $newRecord->setUpdatedAt(null);
+        $newRecord->setLabel($newLabel);
+        $id = $this->get('table')->save($newRecord);
+        if($entity->getPersonalData()) {
+            foreach ($entity->getPersonalData() as $pd) {
+                $newPersonalData = new \MonarcFO\Model\Entity\RecordPersonalData($pd);
+                $newPersonalData->setId(null);
+                $newPersonalData->setRecord($newRecord);
+                $this->get('personalDataTable')->save($newPersonalData);
+            }
+        }
+        if($entity->getInternationalTransfers()) {
+            foreach ($entity->getInternationalTransfers() as $it) {
+                $newInternationalTransfer = new \MonarcFO\Model\Entity\RecordInternationalTransfer($it);
+                $newInternationalTransfer->setId(null);
+                $newInternationalTransfer->setRecord($newRecord);
+                $this->get('internationalTransferTable')->save($newInternationalTransfer);
+            }
+        }
+        return $id;
+    }
+
+    /**
     * Exports a Record of processing activities, optionaly encrypted, for later re-import
     * @param array $data An array with the Record 'id' and 'password' for encryption
     * @return string JSON file, optionally encrypted
@@ -335,7 +370,6 @@ class AnrRecordService extends AbstractService
             $newData = [];
             $newData['anr'] = $anr;
             $newData['label'] = $data['name'];
-            $id = $this->create($newData);
             $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
             $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
             if(isset($data['controller'])) {
@@ -374,13 +408,6 @@ class AnrRecordService extends AbstractService
                     $newData['jointControllers'][] = $jointController;
                 }
             }
-            if(isset($data['personal_data'])) {
-                foreach ($data['personal_data'] as $pd) {
-                    $personalData = [];
-                    $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr, $id, $dataCategoryMap);
-                    $newData['personalData'][] = $personalData;
-                }
-            }
             if(isset($data['recipients'])) {
                 foreach ($data['recipients'] as $r) {
                     $recipient = [];
@@ -391,13 +418,6 @@ class AnrRecordService extends AbstractService
                         $recipientMap[$r['id']] = $recipient["id"];
                     }
                     $newData['recipients'][] = $recipient;
-                }
-            }
-            if(isset($data['international_transfers'])) {
-                foreach ($data['international_transfers'] as $it) {
-                    $internationalTransfers = [];
-                    $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id);
-                    $newData['internationalTransfers'][] = $internationalTransfers;
                 }
             }
             if(isset($data['processors'])) {
@@ -412,7 +432,22 @@ class AnrRecordService extends AbstractService
                     $newData['processors'][] = $processor;
                 }
             }
-            return $this->updateRecord($id,$newData);
+            $id = $this->create($newData);
+            if(isset($data['personal_data'])) {
+                foreach ($data['personal_data'] as $pd) {
+                    $personalData = [];
+                    $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr, $id, $dataCategoryMap);
+                    $newData['personalData'][] = $personalData;
+                }
+            }
+            if(isset($data['international_transfers'])) {
+                foreach ($data['international_transfers'] as $it) {
+                    $internationalTransfers = [];
+                    $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id);
+                    $newData['internationalTransfers'][] = $internationalTransfers;
+                }
+            }
+            return $id;
         }
         return false;
     }

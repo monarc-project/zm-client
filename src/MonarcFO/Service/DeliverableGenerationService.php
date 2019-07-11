@@ -2918,7 +2918,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $processors = $recordEntity->get('processors');
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-        $styleHeaderFont = ['bold' => true, 'size' => 10];
         $styleContentCell = ['gridSpan' => 2, 'align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentCellSplit = ['align' => 'left', 'valign' => 'center', 'size' => 10];
         $styleContentFont = ['bold' => false, 'size' => 10];
@@ -2940,35 +2939,35 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table = $section->addTable($styleTable);
 
             $table->addRow(400);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('label'), $styleContentFont, $alignLeft);
             $table->addRow(400);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleContentFontBold, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('contact'), $styleContentFont, $alignLeft);
             $table->addRow(400);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Activities'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Activities'), $styleContentFontBold, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('activities'), $styleContentFont, $alignLeft);
             $table->addRow(400);
-            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Security measures'), $styleHeaderFont, $alignLeft);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Security measures'), $styleContentFontBold, $alignLeft);
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('secMeasures'), $styleContentFont, $alignLeft);
 
             $section->addTextBreak(1);
-            $section->addText($this->anrTranslate('Actors'), ["bold" => true]);
-            $tableActor = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
+            $section->addText($this->anrTranslate('Actors'), $styleContentFontBold);
+            $tableActor = $section->addTable($styleTable);
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleContentFontBold, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleContentFontBold, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleContentFontBold, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleContentFontBold, $alignLeft);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleContentFontBold, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('representative')? $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleContentFontBold, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(7.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
         }
 
         return $this->getWordXmlFromWordObject($tableWord);

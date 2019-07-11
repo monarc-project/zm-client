@@ -30,5 +30,7 @@ class AnrRecordServiceFactory extends AbstractServiceFactory
         'actorTable' => 'MonarcFO\Model\Table\RecordActorTable',
         'processorTable' => 'MonarcFO\Model\Table\RecordProcessorTable',
         'recipientTable' => 'MonarcFO\Model\Table\RecordRecipientTable',
+        'personalDataTable' => 'MonarcFO\Model\Table\RecordPersonalDataTable',
+        'internationalTransferTable' => 'MonarcFO\Model\Table\RecordInternationalTransferTable',
     ];
 }

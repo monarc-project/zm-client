@@ -73,6 +73,8 @@ return array(
     'MonarcFO\Controller\ApiAnrRecordActorsControllerFactory'                 => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordActorsControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRecordDataCategoriesController'                => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordDataCategoriesController.php',
     'MonarcFO\Controller\ApiAnrRecordDataCategoriesControllerFactory'         => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordDataCategoriesControllerFactory.php',
+    'MonarcFO\Controller\ApiAnrRecordDuplicateController'                     => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordDuplicateController.php',
+    'MonarcFO\Controller\ApiAnrRecordDuplicateControllerFactory'              => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordDuplicateControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRecordInternationalTransfersController'        => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordInternationalTransfersController.php',
     'MonarcFO\Controller\ApiAnrRecordInternationalTransfersControllerFactory' => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordInternationalTransfersControllerFactory.php',
     'MonarcFO\Controller\ApiAnrRecordPersonalDataController'                  => __DIR__ . '/src/MonarcFO/Controller/ApiAnrRecordPersonalDataController.php',

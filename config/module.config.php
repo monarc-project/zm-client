@@ -589,9 +589,17 @@ return array(
                         'type' => 'segment',
                         'options' => array(
                             'route' => 'records/import',
-                            'constraints' => array(),
                             'defaults' => array(
                                 'controller' => 'MonarcFO\Controller\ApiAnrRecordsImport',
+                            ),
+                        ),
+                    ),
+                    'record_duplicate' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records/duplicate',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordDuplicate',
                             ),
                         ),
                     ),
@@ -920,6 +928,7 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidate' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsMeasures' => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordActors' => '\MonarcFO\Controller\ApiAnrRecordActorsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordDuplicate' => '\MonarcFO\Controller\ApiAnrRecordDuplicateControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordDataCategories' => '\MonarcFO\Controller\ApiAnrRecordDataCategoriesControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordInternationalTransfers' => '\MonarcFO\Controller\ApiAnrRecordInternationalTransfersControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecordPersonalData' => '\MonarcFO\Controller\ApiAnrRecordPersonalDataControllerFactory',
@@ -1275,6 +1284,7 @@ return array(
             'monarc_api_global_client_anr/record_export',
             'monarc_api_global_client_anr/records_export',
             'monarc_api_global_client_anr/record_import',
+            'monarc_api_global_client_anr/record_duplicate',
         ),
     ),
     'activeLanguages' => array('fr'),

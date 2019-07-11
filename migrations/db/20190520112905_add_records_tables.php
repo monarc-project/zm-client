@@ -104,7 +104,7 @@ class AddRecordsTables extends AbstractMigration
             $table
                 ->addColumn('anr_id', 'integer', array('null' => false, 'signed' => false))
                 ->addColumn('record_id', 'integer', array('null' => false, 'signed' => false))
-                ->addColumn('data_subject', 'string', array('null' => false, 'limit' => 255))
+                ->addColumn('data_subject', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('description', 'string', array('null' => true, 'limit' => 255))
                 ->addColumn('retention_period', 'integer', array('null' => true, 'limit' => 255))
                 ->addColumn('retention_period_mode', 'integer', array('null' => true, 'limit' => MysqlAdapter::INT_TINY))

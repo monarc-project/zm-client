@@ -199,6 +199,15 @@ class Record extends AbstractEntity
     }
 
     /**
+    * @param TEXT_LONG $label
+    *
+    */
+    public function setlabel($label)
+    {
+        $this->label = $label;
+    }
+
+    /**
     * @return string
     */
     public function getPurposes()

@@ -111,7 +111,7 @@ class AnrRecordPersonalDataService extends AbstractService
             $return["data_subject"] = $entity->dataSubject;
         }
         if($entity->dataCategories) {
-            foreach($pd->dataCategories as $dc) {
+            foreach($entity->dataCategories as $dc) {
                 $return['data_categories'][] = $this->recordDataCategoryService->generateExportArray($dc->id);
             }
         }
