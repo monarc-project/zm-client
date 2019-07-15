@@ -1001,7 +1001,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 if(isset($toExchange['duedate']['date']))
                                   $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
                                 $aReco->setRecommandationSet($recSets[0]);
-                                file_put_contents('./err.txt', print_r($uuidRecSet, TRUE).PHP_EOL);
                                 $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
                                 $sharedData['recos'][$reco['uuid']] = $reco['uuid'];                            
                             }
