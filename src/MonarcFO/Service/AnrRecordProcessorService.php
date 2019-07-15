@@ -148,9 +148,9 @@ class AnrRecordProcessorService extends AbstractService
             unset($data['id']);
             $id = $this->create($newData);
         }
-        $newData['contact'] = (isset($data['contact']) ? $data['contact'] : '');
-        $newData['activities'] = (isset($data['activities']) ? $data['activities'] : '');
-        $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
+        $newData['contact'] = (isset($data['contact']) ? $data['contact'] : null);
+        $newData['activities'] = (isset($data['activities']) ? $data['activities'] : null);
+        $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : null);
         if(isset($data['representative'])) {
             if(isset($actorMap[$data['representative']['id']])) {
                 $newData['representative']["id"] = $actorMap[$data['representative']['id']];

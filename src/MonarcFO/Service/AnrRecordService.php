@@ -66,16 +66,19 @@ class AnrRecordService extends AbstractService
             $this->recordInternationalTransferService->delete(['anr'=> $anrId, 'id' => $it->id]);
         }
         $result = $this->get('table')->delete($id);
+        $actorsToCheck = array_unique($actorsToCheck);
         foreach($actorsToCheck as $a) {
             if($this->recordActorService->orphanActor($a, $anrId)) {
                 $this->recordActorService->delete(['anr'=> $anrId, 'id' => $a]);
             }
         }
+        $processorsToCheck = array_unique($processorsToCheck);
         foreach($processorsToCheck as $p) {
             if($this->recordProcessorService->orphanProcessor($p, $anrId)) {
                 $this->recordProcessorService->deleteProcessor($p);
             }
         }
+        $recipientsToCheck = array_unique($recipientsToCheck);
         foreach($recipientsToCheck as $r) {
             if($this->recordRecipientService->orphanRecipient($r, $anrId)) {
                 $this->recordRecipientService->delete(['anr'=> $anrId, 'id' => $r]);
@@ -243,15 +246,14 @@ class AnrRecordService extends AbstractService
 
     public function exportAll($data) {
         $recordEntities = $this->get('table')->getEntityByFields(['anr' => $data["anr"]]);
-        $exportedRecords = [];
+        $exportedRecords = ['type' => 'records'];
         foreach($recordEntities as $entity) {
-            $exportedRecords[] = $this->generateExportArray($entity->get("id"));
+            $exportedRecords['records'][] = $this->generateExportArray($entity->get("id"));
         }
         $exportedRecords = json_encode($exportedRecords);
         if (! empty($data['password'])) {
             $exportedRecords = $this->encrypt($exportedRecords, $data['password']);
         }
-
         return $exportedRecords;
     }
 
@@ -328,9 +330,10 @@ class AnrRecordService extends AbstractService
         $ids = $errors = [];
         $anr = $this->get('anrTable')->getEntity($anrId); // throws MonarcCore\Exception\Exception if invalid
 
-        foreach ($data['file'] as $f) {
-            if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
-                $file = [];
+        $f = $data['file'];
+        if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
+            $file = [];
+            if($data['fileType'] == 'json'){
                 if (empty($data['password'])) {
                     $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
                     if ($file == false) { // support legacy export which were base64 encoded
@@ -344,7 +347,177 @@ class AnrRecordService extends AbstractService
                       $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
                     }
                 }
-
+                if($file['type'] == 'records') {
+                    foreach($file['records'] as $record) {
+                        if ($record !== false && ($id = $this->importFromArray($record, $anrId)) !== false) {
+                            $ids[] = $id;
+                        } else {
+                            $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
+                        }
+                    }
+                }
+                else {
+                    if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
+                        $ids[] = $id;
+                    } else {
+                        $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
+                    }
+                }
+            }
+            else {
+                $rows = explode("\n",trim(file_get_contents($f['tmp_name'])));
+                $file['type'] = 'record';
+                for($j = 1; $j < count($rows); ++$j) {
+                    $fields = explode("\",\"",$rows[$j]);
+                    $fields[0] = substr($fields[0], 1);
+                    $fields[count($fields)-1] = substr($fields[count($fields)-1], 0, -2);
+                    if($j != 1 && trim($fields[0])) {
+                        if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
+                            $ids[] = $id;
+                        } else {
+                            $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
+                        }
+                        $file = [];
+                        $file['type'] = 'record';
+                    }
+                    if(trim($fields[0])) {
+                        $file['name'] = $fields[0];
+                    }
+                    if(trim($fields[3])) {
+                        $file['purposes'] = $fields[3];
+                    }
+                    if(trim($fields[4])) {
+                        $file['security_measures'] = $fields[4];
+                    }
+                    if(trim($fields[5])) {
+                        $file['controller'] = [];
+                        $file['controller']['id'] = $fields[5];
+                        $file['controller']['name'] = $fields[6];
+                        if(trim($fields[7])) {
+                            $file['controller']['contact'] = $fields[7];
+                        }
+                    }
+                    if(trim($fields[8])) {
+                        $file['representative'] = [];
+                        $file['representative']['id'] = $fields[8];
+                        $file['representative']['name'] = $fields[9];
+                        if(trim($fields[10])) {
+                            $file['representative']['contact'] = $fields[10];
+                        }
+                    }
+                    if(trim($fields[11])) {
+                        $file['data_protection_officer'] = [];
+                        $file['data_protection_officer']['id'] = $fields[11];
+                        $file['data_protection_officer']['name'] = $fields[12];
+                        if(trim($fields[13])) {
+                            $file['data_protection_officer']['contact'] = $fields[13];
+                        }
+                    }
+                    if(trim($fields[14])) {
+                        if( !isset($file['joint_controllers'])) {
+                            $file['joint_controllers'] = [];
+                        }
+                        $jc = [];
+                        $jc['id'] = $fields[14];
+                        $jc['name'] = $fields[15];
+                        if(trim($fields[16])) {
+                            $jc['contact'] = $fields[16];
+                        }
+                        $file['joint_controllers'][] = $jc;
+                    }
+                    if(trim($fields[21])) {
+                        if( !isset($file['personal_data'])) {
+                            $file['personal_data'] = [];
+                        }
+                        $pd = [];
+                        if(trim($fields[17])) {
+                            $pd['data_subject'] = $fields[17];
+                        }
+                        if(trim($fields[18])) {
+                            foreach(explode(", ", $fields[18]) as $dc) {
+                                $dataCategory = [];
+                                $dataCategory['name'] = $dc;
+                                $pd['data_categories'][] = $dataCategory;
+                            }
+                        }
+                        if(trim($fields[19])) {
+                            $pd['description'] = $fields[19];
+                        }
+                        if(trim($fields[20]) != "") {
+                            $pd['retention_period'] = $fields[20];
+                        }
+                        if(trim($fields[21])) {
+                            $pd['retention_period_mode'] = $fields[21];
+                        }
+                        if(trim($fields[22])) {
+                            $pd['retention_period_description'] = $fields[22];
+                        }
+                        $file['personal_data'][] = $pd;
+                    }
+                    if(trim($fields[23])) {
+                        if( !isset($file['recipients'])) {
+                            $file['recipients'] = [];
+                        }
+                        $r = [];
+                        $r['id'] = $fields[23];
+                        if(trim($fields[24])) {
+                            $r['name'] = $fields[24];
+                        }
+                        if(trim($fields[25])) {
+                            $r['type'] = $fields[25];
+                        }
+                        if(trim($fields[26])) {
+                            $r['description'] = $fields[26];
+                        }
+                        $file['recipients'][] = $r;
+                    }
+                    if(trim($fields[27]) || trim($fields[28]) || trim($fields[29]) || trim($fields[30])) {
+                        if( !isset($file['international_transfers'])) {
+                            $file['international_transfers'] = [];
+                        }
+                        $it = [];
+                        if(trim($fields[27]))
+                            $it['organisation'] = $fields[27];
+                        if(trim($fields[28]))
+                            $it['description'] = $fields[28];
+                        if(trim($fields[29]))
+                            $it['country'] = $fields[29];
+                        if(trim($fields[30]))
+                            $it['documents'] = $fields[30];
+                        $file['international_transfers'][] = $it;
+                    }
+                    if(trim($fields[31])) {
+                        if( !isset($file['processors'])) {
+                            $file['processors'] = [];
+                        }
+                        $p = [];
+                        $p['id'] = $fields[31];
+                        $p['name'] = $fields[32];
+                        if(trim($fields[33]))
+                            $p['contact'] = $fields[33];
+                        if(trim($fields[34]))
+                            $p['activities'] = $fields[34];
+                        if(trim($fields[35]))
+                            $p['security_measures'] = $fields[35];
+                        if(trim($fields[36])) {
+                            $rep = [];
+                            $rep['id'] = $fields[36];
+                            $rep['name'] = $fields[37];
+                            if(trim($fields[38]))
+                                $rep['contact'] = $fields[38];
+                            $p['representative'] = $rep;
+                        }
+                        if(trim($fields[39])) {
+                            $dpo = [];
+                            $dpo['id'] = $fields[39];
+                            $dpo['name'] = $fields[40];
+                            if(trim($fields[41]))
+                                $dpo['contact'] = $fields[41];
+                            $p['data_protection_officer'] = $dpo;
+                        }
+                        $file['processors'][] = $p;
+                    }
+                }
                 if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
                     $ids[] = $id;
                 } else {
@@ -370,8 +543,8 @@ class AnrRecordService extends AbstractService
             $newData = [];
             $newData['anr'] = $anr;
             $newData['label'] = $data['name'];
-            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
-            $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
+            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : null);
+            $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : null);
             if(isset($data['controller'])) {
                 if(isset($actorMap[$data['controller']['id']])) {
                     $newData['controller']["id"] = $actorMap[$data['controller']['id']];

@@ -22,6 +22,21 @@ class AnrRecordDataCategoryService extends AbstractService
     protected $userAnrTable;
     protected $personalDataTable;
 
+    /**
+     * Creates a data category for a processing activity if it does not exist in the anr
+     * @param array $data The data category details fields
+     * @return object The resulting data category object (entity)
+     */
+    public function createDataCategory($data)
+    {
+        $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->get('id')]);
+        file_put_contents('php://stderr', print_r(count($dc), TRUE).PHP_EOL);
+        if(count($dc)) {
+            return $dc[0]->get('id');
+        }
+        return $this->create($data, true);
+    }
+
     public function orphanDataCategory($dataCategoryId, $anrId) {
         $personalData = $this->personalDataTable->getEntityByFields(['dataCategories' => $dataCategoryId, 'anr' => $anrId]);
         if(count($personalData)> 0) {
@@ -58,8 +73,17 @@ class AnrRecordDataCategoryService extends AbstractService
      */
     public function importFromArray($data, $anr)
     {
+        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
+        if(!isset($data['id'])) {
+            $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
+            if(count($dc)) {
+                $data['id'] = $dc[0]->get('id');
+            } else {
+                $data['id'] = -1;
+            }
+        }
         $id = $data['id'];
         unset($data['name']);
         try {

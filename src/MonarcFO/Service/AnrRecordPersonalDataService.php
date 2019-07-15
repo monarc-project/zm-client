@@ -35,7 +35,7 @@ class AnrRecordPersonalDataService extends AbstractService
             if(!isset($dc['id'])) {
                 $dc['anr'] = $this->anrTable->getEntity($data['anr']);
                 // Create a new controller
-                $dc['id'] = $this->recordDataCategoryService->create($dc, true);
+                $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc, true);
             }
             array_push($dcs, $dc['id']);
         }
@@ -74,7 +74,7 @@ class AnrRecordPersonalDataService extends AbstractService
             if(!isset($dc['id'])) {
                 $dc['anr'] = $this->anrTable->getEntity($data['anr']);
                 // Create a new data category
-                $dc['id'] = $this->recordDataCategoryService->create($dc, true);
+                $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc, true);
             }
             array_push($dataCategories, $dc['id']);
         }
@@ -120,11 +120,11 @@ class AnrRecordPersonalDataService extends AbstractService
         }
         $return["retention_period"] = $entity->retentionPeriod;
         if ($entity->retentionPeriodMode == 0) {
-            $return["retention_period_mode"] = "day";
+            $return["retention_period_mode"] = "day(s)";
         } else if ($entity->retentionPeriodMode == 1){
-            $return["retention_period_mode"] = "month";
+            $return["retention_period_mode"] = "month(s)";
         } else {
-            $return["retention_period_mode"] = "year";
+            $return["retention_period_mode"] = "year(s)";
         }
         if ($entity->retentionPeriodDescription != "") {
             $return["retention_period_description"] = $entity->retentionPeriodDescription;
@@ -145,7 +145,7 @@ class AnrRecordPersonalDataService extends AbstractService
         if(isset($data['data_categories'])) {
             foreach ($data['data_categories'] as $dc) {
                 $dataCategory = [];
-                if(isset($dataCategoryMap[$dc['id']])) {
+                if(isset($dc['id']) && isset($dataCategoryMap[$dc['id']])) {
                     $dataCategory["id"] = $dataCategoryMap[$dc['id']];
                 } else {
                     $dataCategory["id"] = $this->recordDataCategoryService->importFromArray($dc, $anr);
@@ -156,13 +156,13 @@ class AnrRecordPersonalDataService extends AbstractService
         }
         $newData['record'] = $recordId;
         $id = $this->createPersonalData($newData);
-        $newData['dataSubject'] = (isset($data['data_subject']) ? $data['data_subject'] : '');
-        $newData['description'] = (isset($data['description']) ? $data['description'] : '');
-        $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : '');
+        $newData['dataSubject'] = (isset($data['data_subject']) ? $data['data_subject'] : null);
+        $newData['description'] = (isset($data['description']) ? $data['description'] : null);
+        $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : null);
         $newData['retentionPeriod'] = $data['retention_period'];
-        if ($data['retention_period_mode'] == "day") {
+        if ($data['retention_period_mode'] == "day(s)") {
             $newData["retentionPeriodMode"] = 0;
-        } else if ($data['retention_period_mode'] == "month") {
+        } else if ($data['retention_period_mode'] == "month(s)") {
             $newData["retentionPeriodMode"] = 1;
         }  else {
             $newData["retentionPeriodMode"] = 2;
