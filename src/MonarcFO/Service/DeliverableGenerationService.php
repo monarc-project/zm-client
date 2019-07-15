@@ -1165,9 +1165,12 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                         $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
                         $asc = array_reverse($instanceTable->getAscendance($instance));
 
-                        $path = $anr->get('label' . $this->currentLangAnrIndex);
+                        $path = null;
                         foreach ($asc as $a) {
-                            $path .= ' > ' . $a['name' . $this->currentLangAnrIndex];
+                          $path .= $a['name' . $this->currentLangAnrIndex];
+                          if (end($asc) !== $a) {
+                            $path .= ' > ';
+                          }
                         }
                         $mem_risks[$key] = [
                             'ctx' => $path,
@@ -1370,11 +1373,15 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             if (!isset($lst[$r['id']])) {
                 $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
                 $asc = array_reverse($instanceTable->getAscendance($instance));
-                $path = $anr->get('label' . $this->currentLangAnrIndex);
+                $path = null;
 
                 foreach ($asc as $a) {
-                    $path .= ' > ' . $a['name' . $this->currentLangAnrIndex];
+                  $path .= $a['name' . $this->currentLangAnrIndex];
+                  if (end($asc) !== $a) {
+                    $path .= ' > ';
+                  }
                 }
+
                 $lst[$r['id']] = [
                     'path' => $path,
                     'parent' =>$r['parent'],
@@ -1383,12 +1390,14 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 ];
 
                 if (!empty($instance->root->id) && !isset($lst[$r['parent']]) && ($r['parent'] != $instance->root->id)) {
-                    $path = '';
                     $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['parent']]));
                     $asc = array_reverse($instanceTable->getAscendance($instance));
-                    $path = $anr->get('label' . $this->currentLangAnrIndex);
+                    $path = null;
                     foreach ($asc as $a) {
-                        $path .= ' > ' . $a['name' . $this->currentLangAnrIndex];
+                      $path .= $a['name' . $this->currentLangAnrIndex];
+                      if (end($asc) !== $a) {
+                        $path .= ' > ';
+                      }
                     }
                     $lst[$r['parent']] = [
                       'path' => $path,
