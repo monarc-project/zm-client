@@ -1623,6 +1623,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         /** @var AnrRecommandationRiskService $recommandationService */
         $recommandationRiskService = $this->recommandationRiskService;
         $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->id);
+        $instanceTable = $this->get('instanceService')->get('table');
 
         //oder by recommandation position asc and importance desc
         $recosRisks = [];
@@ -1760,27 +1761,40 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
                 $KindOfTreatment = $recoRisk->instanceRisk->kindOfMeasure;
 
-						switch ($KindOfTreatment) {
+                if (empty($recoRisk->objectGlobal->uuid)) {
+                  $path = null;
+                  $asc = array_reverse($instanceTable->getAscendance($recoRisk->instance));
+                  foreach ($asc as $a) {
+                    $path .= $a['name' . $this->currentLangAnrIndex];
+                    if (end($asc) !== $a) {
+                      $path .= ' > ';
+                    }
+                  }
+                }else {
+                  $path = $recoRisk->instance->{'name' . $anr->language} . ' (' . $this->anrTranslate('Global') . ')';
+                }
 
-   					case 1:
-        					$Treatment = "Reduction";
-        					break;
-    					case 2;
-        					$Treatment = "Denied";
-        					break;
-    					case 3:
-        					$Treatment = "Accepted";
-        					break;
-        				case 4:
-        					$Treatment = "Shared";
-        					break;
-    					default:
-        					$Treatment = "Not treated";
-						}
+    						switch ($KindOfTreatment) {
+
+       					case 1:
+            					$Treatment = "Reduction";
+            					break;
+        					case 2;
+            					$Treatment = "Denied";
+            					break;
+        					case 3:
+            					$Treatment = "Accepted";
+            					break;
+            				case 4:
+            					$Treatment = "Shared";
+            					break;
+        					default:
+            					$Treatment = "Not treated";
+    						}
 
                 if ($continue) {
                     $table->addRow(400);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($recoRisk->instance->{'name' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($path), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->threat->{'label' . $anr->language}), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->vulnerability->{'label' . $anr->language}), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRisk->comment), $styleContentFont, $alignLeft);
@@ -1808,6 +1822,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         /** @var AnrRecommandationRiskService $recommandationService */
         $recommandationRiskService = $this->recommandationRiskService;
         $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->id);
+        $instanceTable = $this->get('instanceService')->get('table');
 
         //oder by recommandation position asc and importance desc
         $recosRisks = [];
@@ -1890,26 +1905,39 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
                 $KindOfTreatment = $recoRisk->instanceRiskOp->kindOfMeasure;
 
-						switch ($KindOfTreatment) {
+                if (empty($recoRisk->objectGlobal->uuid)) {
+                  $path = null;
+                  $asc = array_reverse($instanceTable->getAscendance($recoRisk->instance));
+                  foreach ($asc as $a) {
+                    $path .= $a['name' . $this->currentLangAnrIndex];
+                    if (end($asc) !== $a) {
+                      $path .= ' > ';
+                    }
+                  }
+                }else {
+                  $path = $recoRisk->instance->{'name' . $anr->language} . ' (' . $this->anrTranslate('Global') . ')';
+                }
 
-   					case 1:
-        					$Treatment = "Reduction";
-        					break;
-    					case 2;
-        					$Treatment = "Denied";
-        					break;
-    					case 3:
-        					$Treatment = "Accepted";
-        					break;
-        				case 4:
-        					$Treatment = "Shared";
-        					break;
-    					default:
-        					$Treatment = "Not treated";
-						}
+    						switch ($KindOfTreatment) {
+
+       					case 1:
+            					$Treatment = "Reduction";
+            					break;
+        					case 2;
+            					$Treatment = "Denied";
+            					break;
+        					case 3:
+            					$Treatment = "Accepted";
+            					break;
+            				case 4:
+            					$Treatment = "Shared";
+            					break;
+        					default:
+            					$Treatment = "Not treated";
+    						}
 
                     $table->addRow(400);
-                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($recoRisk->instance->{'name' . $anr->language}), $styleContentFont, $alignLeft);
+                    $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($path), $styleContentFont, $alignLeft);
 						        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(12.20), $styleContentCell)->addText(_WT($recoRisk->instanceRiskOp->{'riskCacheLabel' . $anr->language}), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRiskOp->comment), $styleContentFont, $alignLeft);
                     $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(2.10), $styleContentCellNetRisk)->addText($recoRisk->instanceRiskOp->cacheNetRisk, $styleContentFontBold, $alignCenter);
