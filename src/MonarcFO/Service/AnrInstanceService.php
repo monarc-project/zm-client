@@ -364,6 +364,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 }
 
                 //Recommandations Sets
+                $uuidRecSet = '';
                 if (!empty($data['recSets'])){
                     foreach ($data['recSets'] as $recSet_UUID => $recSet_array) {
                         // check if the recommendation set is not already present in the analysis
@@ -375,6 +376,31 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                             $sharedData['recSets'][$recSet_UUID] = $this->get('recommandationSetTable')->save($newRecommandationSet);
                         }
                     }
+                }
+                //2.8.3
+                else if (version_compare($monarc_version, "2.8.2")==-1){
+                    $recommandationsSets = $this->get('recommandationSetTable')
+                                                ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
+                    if(!empty($recommandationsSets)){
+                        $uuidRecSet = $recommandationsSets[0]->uuid->toString();
+                    }
+                    else{
+                        $toExchange = [
+                        'anr' => $anr->get('id'),
+                        'label1' => 'Recommandations importées',
+                        'label2' => 'Imported recommendations',
+                        'label3' => 'Importierte empfehlungen',
+                        'label4' => 'Geïmporteerde aanbevelingen',
+                        ];
+                        $class = $this->get('recommandationSetTable')->getClass();
+                        $rS = new $class();
+                        $rS->setDbAdapter($this->get('recommandationSetTable')->getDb());
+                        $rS->setLanguage($this->getLanguage());
+                        $rS->exchangeArray($toExchange);
+                        $this->setDependencies($rS, ['anr']);
+                        $uuidRecSet = $this->get('recommandationSetTable')->save($rS);
+                    }
+                    
                 }
 
                 //Recommandations unlinked to a recommandation risk
@@ -555,9 +581,18 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         }
 
                         // Recommandations
-                        if (!empty($data['recos'][$risk['id']])) {
+                        if (!empty($data['recos'][$risk['id']])) {           
                             foreach ($data['recos'][$risk['id']] as $reco) {
-                            $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
+                                //2.8.3
+                                if (version_compare($monarc_version, "2.8.2")==-1){
+                                    unset($reco['id']);
+                                    $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
+                                    if(!empty($recs)){
+                                        $reco['uuid'] = $recs[0]->get('uuid')->toString();
+                                    }
+                                    $reco['recommandationSet'] = $uuidRecSet;
+                                }
+                                $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
                                 // La recommandation
                                 if (isset($sharedData['recos'][$reco['uuid']])) { // Cette recommandation a déjà été gérée dans cet import
                                     if ($risk['kindOfMeasure'] != \MonarcCore\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
@@ -566,7 +601,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                             $pos = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
                                             $aReco->set('position', $pos);
                                             $aReco->setRecommandationSet($recSets[0]);
-                                            $this->get('recommandationTable')->save($aReco);
+                                            $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
                                         }
                                     }
                                 } else {
@@ -595,7 +630,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     $this->setDependencies($aReco, ['anr']);
                                     if(isset($toExchange['duedate']['date']))
                                       $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));          
-                                    $sharedData['recos'][$reco['uuid']] = $this->get('recommandationTable')->save($aReco);
+                                    $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
+                                    $sharedData['recos'][$reco['uuid']] = $reco['uuid'];
                                 }
 
                                 // Le lien recommandation <-> risk
@@ -692,7 +728,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 if (!empty($brotherRecoRisks)) {
                                       foreach ($brotherRecoRisks as $brr) {
                                             $RecoCreated= $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
-                                              'recommandation' => ['anr' => $anr->id, 'uuid' => $brr->recommandation->uuid->toString()],
+                                              'recommandation' => ['anr' => $anr->id, 'uuid' => is_string($brr->recommandation->uuid)?$brr->recommandation->uuid:$brr->recommandation->uuid->toString()],
                                               'instance' => $instanceId,
                                               'instanceRisk' => $r->get('id')]);
 
@@ -814,6 +850,64 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                 $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutF';
                 $toApproximate[\MonarcCore\Model\Entity\Scale::TYPE_IMPACT][] = 'brutP';
                 $k=0;
+
+                //Recommandations Sets
+                $uuidRecSet = '';
+                if (!empty($data['recSets'])){
+                    foreach ($data['recSets'] as $recSet_UUID => $recSet_array) {
+                        // check if the recommendation set is not already present in the analysis
+                        $recommandationsSets = $this->get('recommandationSetTable')
+                                                ->getEntityByFields(['anr' => $anr->id, 'uuid' => $recSet_UUID]);
+                        if (empty($recommandationsSets)) {
+                            $newRecommandationSet = new \MonarcFO\Model\Entity\RecommandationSet($recSet_array);
+                            $newRecommandationSet->setAnr($anr);
+                            $sharedData['recSets'][$recSet_UUID] = $this->get('recommandationSetTable')->save($newRecommandationSet);
+                        }
+                    }
+                }
+                //2.8.3
+                else if (version_compare($monarc_version, "2.8.2")==-1){
+                    $recommandationsSets = $this->get('recommandationSetTable')
+                                                ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
+                    if(!empty($recommandationsSets)){
+                        $uuidRecSet = $recommandationsSets[0]->uuid->toString();
+                    }
+                    else{
+                        $toExchange = [
+                        'anr' => $anr->get('id'),
+                        'label1' => 'Recommandations importées',
+                        'label2' => 'Imported recommendations',
+                        'label3' => 'Importierte empfehlungen',
+                        'label4' => 'Geïmporteerde aanbevelingen',
+                        ];
+                        $class = $this->get('recommandationSetTable')->getClass();
+                        $rS = new $class();
+                        $rS->setDbAdapter($this->get('recommandationSetTable')->getDb());
+                        $rS->setLanguage($this->getLanguage());
+                        $rS->exchangeArray($toExchange);
+                        $this->setDependencies($rS, ['anr']);
+                        $uuidRecSet = $this->get('recommandationSetTable')->save($rS);
+                    }
+                    
+                }
+
+                //Recommandations unlinked to a recommandation risk
+                if(!empty($data['recs'])){
+                    foreach ($data['recs'] as $rec_UUID => $rec_array) {
+                        // check if the recommendation is not already present in the analysis
+                        $recommandations = $this->get('recommandationTable')
+                                                ->getEntityByFields(['anr' => $anr->id, 'uuid' => $rec_UUID]);
+                        if (empty($recommandations)) {
+                            $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $rec_array['recommandationSet']]);
+                            $newRecommandation = new \MonarcFO\Model\Entity\Recommandation($rec_array);
+                            $newRecommandation->setAnr($anr);
+                            $newRecommandation->setRecommandationSet($recSets[0]);
+                            $sharedData['recs'][$rec_UUID] = $this->get('recommandationTable')->save($newRecommandation);
+                        }
+
+                    }
+                }
+
                 foreach ($data['risksop'] as $ro) {
                     // faut penser à actualiser l'anr_id, l'instance_id, l'object_id. Le risk_id quant à lui n'est pas repris dans l'export, on s'en moque donc
                     $class = $this->get('instanceRiskOpService')->get('table')->getClass();
@@ -858,6 +952,15 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     // Recommandations
                     if ($include_eval && !empty($data['recosop'][$ro['id']]) && !empty($idRiskOp)) {
                         foreach ($data['recosop'][$ro['id']] as $reco) {
+                            //2.8.3
+                            if (version_compare($monarc_version, "2.8.2")==-1){
+                                unset($reco['id']);
+                                $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
+                                if(!empty($recs)){
+                                    $reco['uuid'] = $recs[0]->get('uuid')->toString();
+                                }
+                                $reco['recommandationSet'] = $uuidRecSet;
+                            }
                             $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
                             // La recommandation
                             if (isset($sharedData['recos'][$reco['uuid']])) {
@@ -868,7 +971,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                         $pos = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
                                         $aReco->set('position', $pos);
                                         $aReco->setRecommandationSet($recSets[0]);
-                                        $this->get('recommandationTable')->save($aReco);
+                                        $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
                                     }
                                 }
                             } else {
@@ -898,7 +1001,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                 if(isset($toExchange['duedate']['date']))
                                   $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
                                 $aReco->setRecommandationSet($recSets[0]);
-                                $sharedData['recos'][$reco['uuid']] = $this->get('recommandationTable')->save($aReco);
+                                file_put_contents('./err.txt', print_r($uuidRecSet, TRUE).PHP_EOL);
+                                $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
+                                $sharedData['recos'][$reco['uuid']] = $reco['uuid'];                            
                             }
 
                             // Le lien recommandation <-> risk
