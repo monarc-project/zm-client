@@ -73,7 +73,6 @@ class AnrRecordDataCategoryService extends AbstractService
      */
     public function importFromArray($data, $anr)
     {
-        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
         if(!isset($data['id'])) {

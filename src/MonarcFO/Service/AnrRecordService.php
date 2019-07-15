@@ -333,7 +333,7 @@ class AnrRecordService extends AbstractService
         $f = $data['file'];
         if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
             $file = [];
-            if($data['fileType'] == 'json'){
+            if($data['fileType'] == 'json' || $data['fileType'] == 'bin'){
                 if (empty($data['password'])) {
                     $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
                     if ($file == false) { // support legacy export which were base64 encoded
@@ -370,7 +370,7 @@ class AnrRecordService extends AbstractService
                 for($j = 1; $j < count($rows); ++$j) {
                     $fields = explode("\",\"",$rows[$j]);
                     $fields[0] = substr($fields[0], 1);
-                    $fields[count($fields)-1] = substr($fields[count($fields)-1], 0, -2);
+                    $fields[count($fields)-1] = substr($fields[count($fields)-1], 0, -3);
                     if($j != 1 && trim($fields[0])) {
                         if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
                             $ids[] = $id;
