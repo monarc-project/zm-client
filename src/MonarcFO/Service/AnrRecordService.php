@@ -389,36 +389,44 @@ class AnrRecordService extends AbstractService
                     if(trim($fields[4])) {
                         $file['security_measures'] = $fields[4];
                     }
-                    if(trim($fields[5])) {
+                    if(trim($fields[6])) {
                         $file['controller'] = [];
-                        $file['controller']['id'] = $fields[5];
+                        if(trim($fields[5])) {
+                            $file['controller']['id'] = $fields[5];
+                        }
                         $file['controller']['name'] = $fields[6];
                         if(trim($fields[7])) {
                             $file['controller']['contact'] = $fields[7];
                         }
                     }
-                    if(trim($fields[8])) {
+                    if(trim($fields[9])) {
                         $file['representative'] = [];
-                        $file['representative']['id'] = $fields[8];
+                        if(trim($fields[8])) {
+                            $file['representative']['id'] = $fields[8];
+                        }
                         $file['representative']['name'] = $fields[9];
                         if(trim($fields[10])) {
                             $file['representative']['contact'] = $fields[10];
                         }
                     }
-                    if(trim($fields[11])) {
+                    if(trim($fields[12])) {
                         $file['data_protection_officer'] = [];
-                        $file['data_protection_officer']['id'] = $fields[11];
+                        if(trim($fields[11])) {
+                            $file['data_protection_officer']['id'] = $fields[11];
+                        }
                         $file['data_protection_officer']['name'] = $fields[12];
                         if(trim($fields[13])) {
                             $file['data_protection_officer']['contact'] = $fields[13];
                         }
                     }
-                    if(trim($fields[14])) {
+                    if(trim($fields[15])) {
                         if( !isset($file['joint_controllers'])) {
                             $file['joint_controllers'] = [];
                         }
                         $jc = [];
-                        $jc['id'] = $fields[14];
+                        if(trim($fields[14])) {
+                            $jc['id'] = $fields[14];
+                        }
                         $jc['name'] = $fields[15];
                         if(trim($fields[16])) {
                             $jc['contact'] = $fields[16];
@@ -454,12 +462,14 @@ class AnrRecordService extends AbstractService
                         }
                         $file['personal_data'][] = $pd;
                     }
-                    if(trim($fields[23])) {
+                    if(trim($fields[23]) || trim($fields[24]) || trim($fields[25]) || trim($fields[26])) {
                         if( !isset($file['recipients'])) {
                             $file['recipients'] = [];
                         }
                         $r = [];
-                        $r['id'] = $fields[23];
+                        if(trim($fields[23])) {
+                            $r['id'] = $fields[23];
+                        }
                         if(trim($fields[24])) {
                             $r['name'] = $fields[24];
                         }
@@ -486,12 +496,14 @@ class AnrRecordService extends AbstractService
                             $it['documents'] = $fields[30];
                         $file['international_transfers'][] = $it;
                     }
-                    if(trim($fields[31])) {
+                    if(trim($fields[32])) {
                         if( !isset($file['processors'])) {
                             $file['processors'] = [];
                         }
                         $p = [];
-                        $p['id'] = $fields[31];
+                        if(trim($fields[31])) {
+                            $p['id'] = $fields[31];
+                        }
                         $p['name'] = $fields[32];
                         if(trim($fields[33]))
                             $p['contact'] = $fields[33];
@@ -499,17 +511,21 @@ class AnrRecordService extends AbstractService
                             $p['activities'] = $fields[34];
                         if(trim($fields[35]))
                             $p['security_measures'] = $fields[35];
-                        if(trim($fields[36])) {
+                        if(trim($fields[37])) {
                             $rep = [];
-                            $rep['id'] = $fields[36];
+                            if(trim($fields[36])) {
+                                $rep['id'] = $fields[36];
+                            }
                             $rep['name'] = $fields[37];
                             if(trim($fields[38]))
                                 $rep['contact'] = $fields[38];
                             $p['representative'] = $rep;
                         }
-                        if(trim($fields[39])) {
+                        if(trim($fields[40])) {
                             $dpo = [];
-                            $dpo['id'] = $fields[39];
+                            if(trim($fields[39])) {
+                                $dpo['id'] = $fields[39];
+                            }
                             $dpo['name'] = $fields[40];
                             if(trim($fields[41]))
                                 $dpo['contact'] = $fields[41];
