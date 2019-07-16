@@ -70,9 +70,9 @@ class AnrRecordRecipientService extends AbstractService
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
         if ($data['type'] == "internal") {
-            $newData["type"] = 0;
+            $data["type"] = 0;
         } else {
-            $newData["type"] = 1;
+            $data["type"] = 1;
         }
         $id = $data['id'];
         unset($data['name']);
