@@ -156,9 +156,9 @@ class AnrRecordPersonalDataService extends AbstractService
         }
         $newData['record'] = $recordId;
         $id = $this->createPersonalData($newData);
-        $newData['dataSubject'] = (isset($data['data_subject']) ? $data['data_subject'] : null);
-        $newData['description'] = (isset($data['description']) ? $data['description'] : null);
-        $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : null);
+        $newData['dataSubject'] = (isset($data['data_subject']) ? $data['data_subject'] : '');
+        $newData['description'] = (isset($data['description']) ? $data['description'] : '');
+        $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : '');
         $newData['retentionPeriod'] = $data['retention_period'];
         if ($data['retention_period_mode'] == "day(s)") {
             $newData["retentionPeriodMode"] = 0;

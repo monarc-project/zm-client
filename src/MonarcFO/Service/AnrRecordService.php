@@ -543,8 +543,8 @@ class AnrRecordService extends AbstractService
             $newData = [];
             $newData['anr'] = $anr;
             $newData['label'] = $data['name'];
-            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : null);
-            $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : null);
+            $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
+            $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
             if(isset($data['controller'])) {
                 if(isset($actorMap[$data['controller']['id']])) {
                     $newData['controller']["id"] = $actorMap[$data['controller']['id']];
