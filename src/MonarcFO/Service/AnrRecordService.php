@@ -533,7 +533,7 @@ class AnrRecordService extends AbstractService
                     $file['processors'][] = $p;
                 }
             }
-            if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
+            if ($file !== false && $file['name'] && ($id = $this->importFromArray($file, $anrId)) !== false) {
                 $ids[] = $id;
             } else {
                 $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
