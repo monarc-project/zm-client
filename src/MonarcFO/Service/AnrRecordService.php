@@ -520,14 +520,14 @@ class AnrRecordService extends AbstractService
                             $rep['contact'] = $row['data processor representative contact'];
                         $p['representative'] = $rep;
                     }
-                    if(trim($row['data processor data procetection officer name'])) {
+                    if(trim($row['data processor data protection officer name'])) {
                         $dpo = [];
-                        if(trim($row['data processor data procetection officer id'])) {
-                            $dpo['id'] = $row['data processor data procetection officer id'];
+                        if(trim($row['data processor data protection officer id'])) {
+                            $dpo['id'] = $row['data processor data protection officer id'];
                         }
-                        $dpo['name'] = $row['data processor data procetection officer name'];
-                        if(trim($row['data processor data procetection officer contact']))
-                            $dpo['contact'] = $row['data processor data procetection officer contact'];
+                        $dpo['name'] = $row['data processor data protection officer name'];
+                        if(trim($row['data processor data protection officer contact']))
+                            $dpo['contact'] = $row['data processor data protection officer contact'];
                         $p['data_protection_officer'] = $dpo;
                     }
                     $file['processors'][] = $p;
