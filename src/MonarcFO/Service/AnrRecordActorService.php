@@ -84,6 +84,9 @@ class AnrRecordActorService extends AbstractService
     {
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
+        if(!isset($data['id'])){
+            $data['id'] = -1;
+        }
         $id = $data['id'];
         unset($data['name']);
         try {

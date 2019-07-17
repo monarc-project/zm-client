@@ -137,6 +137,9 @@ class AnrRecordProcessorService extends AbstractService
         $newData = []; //new data to be updated
         $newData['anr'] = $anr;
         $newData['label'] = $data['name'];
+        if(!isset($data['id'])){
+            $data['id'] = -1;
+        }
         $id = $data['id'];
         try {
             $processorEntity = $this->get('table')->getEntity($data['id']);

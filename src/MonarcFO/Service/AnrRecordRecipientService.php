@@ -53,7 +53,6 @@ class AnrRecordRecipientService extends AbstractService
         } else {
             $return["type"] = "external";
         }
-        $return['type'] = $entity->type;
         if($entity->description != "") {
             $return['description'] = $entity->description;
         }
@@ -73,6 +72,9 @@ class AnrRecordRecipientService extends AbstractService
             $data["type"] = 0;
         } else {
             $data["type"] = 1;
+        }
+        if(!isset($data['id'])){
+            $data['id'] = -1;
         }
         $id = $data['id'];
         unset($data['name']);
