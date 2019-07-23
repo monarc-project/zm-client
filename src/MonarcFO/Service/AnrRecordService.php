@@ -277,7 +277,6 @@ class AnrRecordService extends AbstractService
 
         $return = [
             'type' => 'record',
-            'id' => $entity->id,
             'name' => $entity->label,
         ];
         if($entity->controller) {
@@ -370,7 +369,6 @@ class AnrRecordService extends AbstractService
             $file['type'] = 'record';
             foreach($array as $key => $row) {
                 if($key != 0 && trim($row["name"])) {
-                    file_put_contents('php://stderr', print_r($file, TRUE).PHP_EOL);
                     if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
                         $ids[] = $id;
                     } else {
@@ -390,9 +388,6 @@ class AnrRecordService extends AbstractService
                 }
                 if(trim($row['controller name'])) {
                     $file['controller'] = [];
-                    if(trim($row['controller id'])) {
-                        $file['controller']['id'] = $row['controller id'];
-                    }
                     $file['controller']['name'] = $row['controller name'];
                     if(trim($row['controller contact'])) {
                         $file['controller']['contact'] = $row['controller contact'];
@@ -400,9 +395,6 @@ class AnrRecordService extends AbstractService
                 }
                 if(trim($row['representative name'])) {
                     $file['representative'] = [];
-                    if(trim($row['representative id'])) {
-                        $file['representative']['id'] =$row['representative id'];
-                    }
                     $file['representative']['name'] = $row['representative name'];
                     if(trim($row['representative contact'])) {
                         $file['representative']['contact'] = $row['representative contact'];
@@ -410,9 +402,6 @@ class AnrRecordService extends AbstractService
                 }
                 if(trim($row['data protection officer name'])) {
                     $file['data_protection_officer'] = [];
-                    if(trim($row['data protection officer id'])) {
-                        $file['data_protection_officer']['id'] =$row['data protection officer id'];
-                    }
                     $file['data_protection_officer']['name'] = $row['data protection officer name'];
                     if(trim($row['data protection officer contact'])) {
                         $file['data_protection_officer']['contact'] = $row['data protection officer contact'];
@@ -423,9 +412,6 @@ class AnrRecordService extends AbstractService
                         $file['joint_controllers'] = [];
                     }
                     $jc = [];
-                    if(trim($row['joint controllers id'])) {
-                        $jc['id'] = $row['joint controllers id'];
-                    }
                     $jc['name'] = $row['joint controllers name'];
                     if(trim($row['joint controllers contact'])) {
                         $jc['contact'] = $row['joint controllers contact'];
@@ -461,14 +447,11 @@ class AnrRecordService extends AbstractService
                     }
                     $file['personal_data'][] = $pd;
                 }
-                if(trim($row['data recipient id']) || trim($row['data recipient']) || trim($row['data recipient type']) || trim($row['description'])) {
+                if(trim($row['data recipient']) || trim($row['data recipient type']) || trim($row['description'])) {
                     if( !isset($file['recipients'])) {
                         $file['recipients'] = [];
                     }
                     $r = [];
-                    if(trim($row['data recipient id'])) {
-                        $r['id'] = $row['data recipient id'];
-                    }
                     if(trim($row['data recipient'])) {
                         $r['name'] = $row['data recipient'];
                     }
@@ -500,9 +483,6 @@ class AnrRecordService extends AbstractService
                         $file['processors'] = [];
                     }
                     $p = [];
-                    if(trim($row['data processor id'])) {
-                        $p['id'] = $row['data processor id'];
-                    }
                     $p['name'] = $row['data processor name'];
                     if(trim($row['data processor contact']))
                         $p['contact'] = $row['data processor contact'];
@@ -512,9 +492,6 @@ class AnrRecordService extends AbstractService
                         $p['security_measures'] = $row['data processor security measures'];
                     if(trim($row['data processor representative name'])) {
                         $rep = [];
-                        if(trim($row['data processor representative id'])) {
-                            $rep['id'] = $row['data processor representative id'];
-                        }
                         $rep['name'] = $row['data processor representative name'];
                         if(trim($row['data processor representative contact']))
                             $rep['contact'] = $row['data processor representative contact'];
@@ -522,9 +499,6 @@ class AnrRecordService extends AbstractService
                     }
                     if(trim($row['data processor data protection officer name'])) {
                         $dpo = [];
-                        if(trim($row['data processor data protection officer id'])) {
-                            $dpo['id'] = $row['data processor data protection officer id'];
-                        }
                         $dpo['name'] = $row['data processor data protection officer name'];
                         if(trim($row['data processor data protection officer contact']))
                             $dpo['contact'] = $row['data processor data protection officer contact'];
@@ -549,7 +523,7 @@ class AnrRecordService extends AbstractService
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
-    public function importFromArray($data, $anr, &$actorMap = array(), &$recipientMap = array(), &$processorMap = array(), &$dataCategoryMap = array())
+    public function importFromArray($data, $anr)
     {
         if(isset($data['type']) && $data['type'] == 'record')
         {
@@ -559,62 +533,32 @@ class AnrRecordService extends AbstractService
             $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
             $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
             if(isset($data['controller'])) {
-                if(isset($actorMap[$data['controller']['id']])) {
-                    $newData['controller']["id"] = $actorMap[$data['controller']['id']];
-                } else {
-                    $newData['controller']["id"] = $this->recordActorService->importFromArray($data['controller'], $anr);
-                    $actorMap[$data['controller']['id']] = $newData['controller']["id"];
-                }
+                $newData['controller']["id"] = $this->recordActorService->importFromArray($data['controller'], $anr);
             }
             if(isset($data['representative'])) {
-                if(isset($actorMap[$data['representative']['id']])) {
-                    $newData['representative']["id"] = $actorMap[$data['representative']['id']];
-                } else {
-                    $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
-                    $actorMap[$data['representative']['id']] = $newData['representative']["id"];
-                }
+                $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
             }
             if(isset($data['data_protection_officer'])) {
-                if(isset($actorMap[$data['data_protection_officer']['id']])) {
-                    $newData['dpo']["id"] = $actorMap[$data['data_protection_officer']['id']];
-                } else {
-                    $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
-                    $actorMap[$data['data_protection_officer']['id']] = $newData['dpo']["id"];
-                }
+                $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
             }
             if(isset($data['joint_controllers'])) {
                 foreach ($data['joint_controllers'] as $jc) {
                     $jointController = [];
-                    if(isset($actorMap[$jc['id']])) {
-                        $jointController["id"] = $actorMap[$jc['id']];
-                    } else {
-                        $jointController["id"] = $this->recordActorService->importFromArray($jc, $anr);
-                        $actorMap[$jc['id']] = $jointController["id"];
-                    }
+                    $jointController["id"] = $this->recordActorService->importFromArray($jc, $anr);
                     $newData['jointControllers'][] = $jointController;
                 }
             }
             if(isset($data['recipients'])) {
                 foreach ($data['recipients'] as $r) {
                     $recipient = [];
-                    if(isset($recipientMap[$r['id']])) {
-                        $recipient["id"] = $recipientMap[$r['id']];
-                    } else {
-                        $recipient["id"] = $this->recordRecipientService->importFromArray($r, $anr);
-                        $recipientMap[$r['id']] = $recipient["id"];
-                    }
+                    $recipient["id"] = $this->recordRecipientService->importFromArray($r, $anr);
                     $newData['recipients'][] = $recipient;
                 }
             }
             if(isset($data['processors'])) {
                 foreach ($data['processors'] as $p) {
                     $processor = [];
-                    if(isset($processorMap[$p['id']])) {
-                        $processor["id"] = $processorMap[$p['id']];
-                    } else {
-                        $processor["id"] = $this->recordProcessorService->importFromArray($p, $anr, $actorMap);
-                        $processorMap[$p['id']] = $processor["id"];
-                    }
+                    $processor["id"] = $this->recordProcessorService->importFromArray($p, $anr);
                     $newData['processors'][] = $processor;
                 }
             }
@@ -622,7 +566,7 @@ class AnrRecordService extends AbstractService
             if(isset($data['personal_data'])) {
                 foreach ($data['personal_data'] as $pd) {
                     $personalData = [];
-                    $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr, $id, $dataCategoryMap);
+                    $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr, $id);
                     $newData['personalData'][] = $personalData;
                 }
             }

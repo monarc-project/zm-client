@@ -97,7 +97,6 @@ class AnrRecordProcessorService extends AbstractService
             throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
         }
         $return = [
-            'id' => $entity->id,
             'name' => $entity->label,
         ];
         if($entity->secMeasures != '') {
@@ -132,43 +131,30 @@ class AnrRecordProcessorService extends AbstractService
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
-    public function importFromArray($data, $anr, &$actorMap = array())
+    public function importFromArray($data, $anr)
     {
         $newData = []; //new data to be updated
         $newData['anr'] = $anr;
         $newData['label'] = $data['name'];
-        if(!isset($data['id'])){
-            $data['id'] = -1;
-        }
-        $id = $data['id'];
+        $newData['contact'] = (isset($data['contact']) ? $data['contact'] : '');
+        unset($data['name']);
         try {
-            $processorEntity = $this->get('table')->getEntity($data['id']);
-            if ($processorEntity->get('anr')->get('id') != $anr || $processorEntity->get('label') != $data['name']) {
-                unset($data['id']);
+            $processorEntity = $this->get('table')->getEntityByFields(['label' => $newData['label'], 'contact' => $newData['contact'], 'anr' => $anr]);
+            if (count($processorEntity)) {
+                $id = $processorEntity[0]->get('id');
+            } else {
                 $id = $this->create($newData);
             }
         } catch (\MonarcCore\Exception\Exception $e) {
-            unset($data['id']);
             $id = $this->create($newData);
         }
-        $newData['contact'] = (isset($data['contact']) ? $data['contact'] : '');
         $newData['activities'] = (isset($data['activities']) ? $data['activities'] : '');
         $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
         if(isset($data['representative'])) {
-            if(isset($actorMap[$data['representative']['id']])) {
-                $newData['representative']["id"] = $actorMap[$data['representative']['id']];
-            } else {
-                $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
-                $actorMap[$data['representative']['id']] = $newData['representative']["id"];
-            }
+            $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
         }
         if(isset($data['data_protection_officer'])) {
-            if(isset($actorMap[$data['data_protection_officer']['id']])) {
-                $newData['dpo']["id"] = $actorMap[$data['data_protection_officer']['id']];
-            } else {
-                $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
-                $actorMap[$data['data_protection_officer']['id']] = $newData['dpo']["id"];
-            }
+            $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
         }
         return $this->updateProcessor($id,$newData);
     }

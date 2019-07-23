@@ -65,8 +65,6 @@ class AnrRecordActorService extends AbstractService
         if (!$entity) {
             throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
         }
-
-        $return['id'] = $entity->id;
         $return['name'] = $entity->label;
         if($entity->contact != "") {
             $return['contact'] = $entity->contact;
@@ -84,22 +82,16 @@ class AnrRecordActorService extends AbstractService
     {
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
-        if(!isset($data['id'])){
-            $data['id'] = -1;
-        }
-        $id = $data['id'];
+        $data['contact'] = (isset($data['contact']) ? $data['contact'] : '');
         unset($data['name']);
         try {
-            $actorEntity = $this->get('table')->getEntity($data['id']);
-            if ($actorEntity->get('anr')->get('id') != $anr || $actorEntity->get('label') != $data['label']) {
-                unset($data['id']);
+            $actorEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'contact' => $data['contact'], 'anr' => $anr]);
+            if (count($actorEntity)) {
+                $id = $actorEntity[0]->get('id');
+            } else {
                 $id = $this->create($data);
             }
-            else if(isset($data["contact"])){
-                $actorEntity->setContact($data["contact"]);
-            }
         } catch (\MonarcCore\Exception\Exception $e) {
-            unset($data['id']);
             $id = $this->create($data);
         }
         return $id;

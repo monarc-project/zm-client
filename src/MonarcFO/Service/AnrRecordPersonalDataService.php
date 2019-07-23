@@ -138,19 +138,14 @@ class AnrRecordPersonalDataService extends AbstractService
      * @param \MonarcFO\Model\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
-    public function importFromArray($data, $anr, $recordId, &$dataCategoryMap)
+    public function importFromArray($data, $anr, $recordId)
     {
         $newData = [];
         $newData['anr'] = $anr;
         if(isset($data['data_categories'])) {
             foreach ($data['data_categories'] as $dc) {
                 $dataCategory = [];
-                if(isset($dc['id']) && isset($dataCategoryMap[$dc['id']])) {
-                    $dataCategory["id"] = $dataCategoryMap[$dc['id']];
-                } else {
-                    $dataCategory["id"] = $this->recordDataCategoryService->importFromArray($dc, $anr);
-                    $dataCategoryMap[$dc['id']] = $dataCategory["id"];
-                }
+                $dataCategory["id"] = $this->recordDataCategoryService->importFromArray($dc, $anr);
                 $newData['dataCategories'][] = $dataCategory;
             }
         }

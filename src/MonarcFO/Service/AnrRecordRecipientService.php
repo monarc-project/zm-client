@@ -46,7 +46,6 @@ class AnrRecordRecipientService extends AbstractService
         }
 
         $return = [];
-        $return['id'] = $entity->id;
         $return['name'] = $entity->label;
         if ($entity->type == 0) {
             $return["type"] = "internal";
@@ -68,24 +67,22 @@ class AnrRecordRecipientService extends AbstractService
     {
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
+        unset($data['name']);
         if ($data['type'] == "internal") {
-            $data["type"] = 0;
+            $data['type'] = 0;
         } else {
-            $data["type"] = 1;
-        }
-        if(!isset($data['id'])){
-            $data['id'] = -1;
+            $data['type'] = 1;
         }
         $id = $data['id'];
-        unset($data['name']);
+        $data['description'] = (isset($data['description']) ? $data['description'] : '');
         try {
-            $recipientEntity = $this->get('table')->getEntity($data['id']);
-            if ($recipientEntity->get('anr')->get('id') != $anr || $recipientEntity->get('label') != $data['label'] || $recipientEntity->get('description') != $data['description']) {
-                unset($data['id']);
+            $recipientEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'type' => $data['type'], 'description' => $data['description'], 'anr' => $anr]);
+            if (count($recipientEntity)) {
+                $id = $recipientEntity[0]->get('id');
+            } else {
                 $id = $this->create($data);
             }
         } catch (\MonarcCore\Exception\Exception $e) {
-            unset($data['id']);
             $id = $this->create($data);
         }
         return $id;

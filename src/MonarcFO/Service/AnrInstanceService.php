@@ -1136,10 +1136,15 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         }
                       } else { // Match Multichoice responses
                         $replace = ["[","]"];
-                        $OriginQc = preg_split("/[,]/",str_replace($replace,"",$data['method']['questions'][$pos]['response']));
+                        $OriginQc = [];
+                        if(trim($data['method']['questions'][$pos]['response'])) {
+                            $OriginQc = preg_split("/[,]/",str_replace($replace,"",$data['method']['questions'][$pos]['response']));
+                        }
                         $NewQcIds = null;
 
                         foreach ($OriginQc as $qc ) {
+                          file_put_contents('php://stderr', print_r($qc, TRUE).PHP_EOL);
+                          file_put_contents('php://stderr', print_r($data['method']['questionChoice'], TRUE).PHP_EOL);
                           $DestQc[$qc] = $data['method']['questionChoice'][$qc];
                           $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
                           foreach ($questionChoices as $qc) {
@@ -1326,12 +1331,8 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
           }
           // import the GDPR records
           if (!empty($data['records'])) { //Data of records
-              $actorMap = array();
-              $recipientMap = array();
-              $processorMap = array();
-              $dataCategoryMap = array();
               foreach ($data['records'] as $v) {
-                  $this->get('recordService')->importFromArray($v,$anr->get('id'),$actorMap,$recipientMap,$processorMap,$dataCategoryMap);
+                  $this->get('recordService')->importFromArray($v,$anr->get('id'));
               }
           }
           // import scales
@@ -1368,7 +1369,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                           $maxScaleImpDest
                       ));
                   }
-                $this->refreshImpactsInherited($anr->id,$instance->parent->id,$instance);
+                $this->refreshImpactsInherited($anr->id, $instance->parent? $instance->parent->id: 0,$instance);
               }
               //Impacts & Consequences
               foreach ($consequences as $conseq) {

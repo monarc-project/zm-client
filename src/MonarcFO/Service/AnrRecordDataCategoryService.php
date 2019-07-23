@@ -30,7 +30,6 @@ class AnrRecordDataCategoryService extends AbstractService
     public function createDataCategory($data)
     {
         $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->get('id')]);
-        file_put_contents('php://stderr', print_r(count($dc), TRUE).PHP_EOL);
         if(count($dc)) {
             return $dc[0]->get('id');
         }
@@ -60,7 +59,6 @@ class AnrRecordDataCategoryService extends AbstractService
             throw new \MonarcCore\Exception\Exception('Entity `id` not found.');
         }
 
-        $return['id']= $entity->id;
         $return['name']= $entity->label;
         return $return;
     }
@@ -75,24 +73,15 @@ class AnrRecordDataCategoryService extends AbstractService
     {
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
-        if(!isset($data['id'])) {
-            $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
-            if(count($dc)) {
-                $data['id'] = $dc[0]->get('id');
-            } else {
-                $data['id'] = -1;
-            }
-        }
-        $id = $data['id'];
         unset($data['name']);
         try {
-            $dataCategoryEntity = $this->get('table')->getEntity($data['id']);
-            if ($dataCategoryEntity->get('anr')->get('id') != $anr || $dataCategoryEntity->get('label') != $data['label']) {
-                unset($data['id']);
+            $dataCategoryEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
+            if (count($dataCategoryEntity)) {
+                $id =  $dataCategoryEntity[0]->get('id');
+            } else {
                 $id = $this->create($data);
             }
         } catch (\MonarcCore\Exception\Exception $e) {
-            unset($data['id']);
             $id = $this->create($data);
         }
         return $id;
