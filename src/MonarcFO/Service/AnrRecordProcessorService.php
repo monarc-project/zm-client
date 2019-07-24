@@ -81,6 +81,21 @@ class AnrRecordProcessorService extends AbstractService
         return $result;
     }
 
+    public function deleteActivityAndSecMeasure($processorId, $recordId) {
+        $entity = $this->get('table')->getEntity($processorId);
+        $activities = $entity->getActivities();
+        unset($activities[$recordId]);
+        $entity->setActivities($activities);
+        $secMeasures = $entity->getSecMeasures();
+        unset($secMeasures[$recordId]);
+        $entity->setSecMeasures($secMeasures);
+        $data = [];
+        $data['activities'] = $entity->get('activities');
+        $data['secMeasures'] = $entity->get('secMeasures');
+        $result = $this->patch($processorId, $data);
+        return $result;
+    }
+
     /**
     * Generates the array to be exported into a file when calling {#exportProcessor}
     * @see #exportProcessor
@@ -89,7 +104,7 @@ class AnrRecordProcessorService extends AbstractService
     * @return array The data array that should be saved
     * @throws \MonarcCore\Exception\Exception If the processor is not found
     */
-    public function generateExportArray($id)
+    public function generateExportArray($id, $recordId)
     {
         $entity = $this->get('table')->getEntity($id);
 
@@ -99,14 +114,14 @@ class AnrRecordProcessorService extends AbstractService
         $return = [
             'name' => $entity->label,
         ];
-        if($entity->secMeasures != '') {
-            $return['security_measures'] = $entity->secMeasures;
-        }
         if($entity->contact != '') {
             $return['contact'] = $entity->contact;
         }
-        if($entity->activities != '') {
-            $return['activities'] = $entity->activities;
+        if($entity->activities && isset($entity->activities[$recordId])) {
+            $return['activities'] = $entity->activities[$recordId];
+        }
+        if($entity->secMeasures && isset($entity->activities[$recordId])) {
+            $return['security_measures'] = $entity->secMeasures[$recordId];
         }
         if($entity->representative) {
             $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
@@ -148,8 +163,13 @@ class AnrRecordProcessorService extends AbstractService
         } catch (\MonarcCore\Exception\Exception $e) {
             $id = $this->create($newData);
         }
-        $newData['activities'] = (isset($data['activities']) ? $data['activities'] : '');
-        $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
+        if (count($processorEntity)) {
+            $newData['activities'] = $processorEntity[0]->getActivities();
+            $newData['secMeasures'] = $processorEntity[0]->getSecMeasures();
+        } else {
+            $newData['activities'] = [];
+            $newData['secMeasures'] = [];
+        }
         if(isset($data['representative'])) {
             $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
         }
@@ -157,5 +177,20 @@ class AnrRecordProcessorService extends AbstractService
             $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
         }
         return $this->updateProcessor($id,$newData);
+    }
+
+    public function importActivityAndSecMeasures($data, $processorId, $recordId) {
+        $entity = $this->get('table')->getEntity($processorId);
+        $activities = $entity->getActivities();
+        $activities[$recordId] = (isset($data['activities']) ? $data['activities'] : '');
+        $entity->setActivities($activities);
+        $secMeasures = $entity->getSecMeasures();
+        $secMeasures[$recordId] = (isset($data['security_measures']) ? $data['security_measures'] : '');
+        $entity->setSecMeasures($secMeasures);
+        $newData = [];
+        $newData['activities'] = $entity->getActivities();
+        $newData['secMeasures'] = $entity->getSecMeasures();
+        $result = $this->patch($processorId, $newData);
+        return $result;
     }
 }

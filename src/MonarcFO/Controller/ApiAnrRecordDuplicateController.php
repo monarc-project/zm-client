@@ -28,7 +28,6 @@ class ApiAnrRecordDuplicateController extends \MonarcCore\Controller\AbstractCon
     {
         /** @var AnrRecordService $service */
         $service = $this->getService();
-        file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
         if (!isset($data['record'])) {
             throw new \MonarcCore\Exception\Exception('Record missing', 412);
         }

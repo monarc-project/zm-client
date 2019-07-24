@@ -58,14 +58,14 @@ class RecordProcessor extends AbstractEntity
     /**
      * @var array
      *
-     * @ORM\Column(name="activities", type="string", length=255, nullable=true)
+     * @ORM\Column(name="activities", type="array", length=255, nullable=false)
      */
     protected $activities;
 
     /**
-     * @var string
+     * @var array
      *
-     * @ORM\Column(name="sec_measures", type="string", length=255, nullable=true)
+     * @ORM\Column(name="sec_measures", type="array", length=255, nullable=false)
      */
     protected $secMeasures;
 
@@ -113,6 +113,8 @@ class RecordProcessor extends AbstractEntity
 
     public function __construct($obj = null)
     {
+        $this->activities = [];
+        $this->secMeasures = [];
         parent::__construct($obj);
     }
 
@@ -182,6 +184,40 @@ class RecordProcessor extends AbstractEntity
     public function setDpo($dpo)
     {
         $this->dpo = $dpo;
+        return $this;
+    }
+
+    /**
+    * @return array
+    */
+    public function getActivities()
+    {
+        return $this->activities;
+    }
+    /**
+    * @param array $activities
+    * @return RecordProcessor
+    */
+    public function setActivities($activities)
+    {
+        $this->activities = $activities;
+        return $this;
+    }
+
+    /**
+    * @return array
+    */
+    public function getSecMeasures()
+    {
+        return $this->secMeasures;
+    }
+    /**
+    * @param array $secMeasures
+    * @return RecordProcessor
+    */
+    public function setSecMeasures($secMeasures)
+    {
+        $this->secMeasures = $secMeasures;
         return $this;
     }
 

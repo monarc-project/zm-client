@@ -76,6 +76,8 @@ class AnrRecordService extends AbstractService
         foreach($processorsToCheck as $p) {
             if($this->recordProcessorService->orphanProcessor($p, $anrId)) {
                 $this->recordProcessorService->deleteProcessor($p);
+            } else {
+                $this->recordProcessorService->deleteActivityAndSecMeasure($p, $id);
             }
         }
         $recipientsToCheck = array_unique($recipientsToCheck);
@@ -96,6 +98,30 @@ class AnrRecordService extends AbstractService
     public function updateRecord($id, $data)
     {
         $entity = $this->get('table')->getEntity($id);
+
+        // keep entities on old object to delete orphans
+        $oldActors = array();
+        if($entity->controller && $entity->controller->id) {
+            array_push($oldActors, $entity->controller->id);
+        }
+        if($entity->representative && $entity->representative->id) {
+            array_push($oldActors, $entity->representative->id);
+        }
+        if($entity->dpo && $entity->dpo->id) {
+            array_push($oldActors, $entity->dpo->id);
+        }
+        foreach($entity->jointControllers as $js) {
+            array_push($oldActors, $js->id);
+        }
+        $oldRecipients = array();
+        foreach( $entity->recipients as $r) {
+            array_push($oldRecipients, $r->id);
+        }
+        $oldProcessors = array();
+        foreach( $entity->processors as $p) {
+            array_push($oldProcessors, $p->id);
+        }
+
         if(isset($data['controller']['id'])) {
             $data['controller'] = $data['controller']['id'];
         } else {
@@ -137,30 +163,6 @@ class AnrRecordService extends AbstractService
         }
         $data['processors'] = $processors;
 
-
-        // keep entities on old object to delete orphans
-        $oldActors = array();
-        if($entity->controller && $entity->controller->id) {
-            array_push($oldActors, $entity->controller->id);
-        }
-        if($entity->representative && $entity->representative->id) {
-            array_push($oldActors, $entity->representative->id);
-        }
-        if($entity->dpo && $entity->dpo->id) {
-            array_push($oldActors, $entity->dpo->id);
-        }
-        foreach($entity->jointControllers as $js) {
-            array_push($oldActors, $js->id);
-        }
-        $oldRecipients = array();
-        foreach( $entity->recipients as $r) {
-            array_push($oldRecipients, $r->id);
-        }
-        $oldProcessors = array();
-        foreach( $entity->processors as $p) {
-            array_push($oldProcessors, $p->id);
-        }
-
         foreach($entity->personalData as $pd) {
             if(!in_array($pd->id, $personalData)) {
                 $this->recordPersonalDataService->deletePersonalData(['anr'=> $data['anr'], 'id' => $pd->id]);
@@ -188,6 +190,8 @@ class AnrRecordService extends AbstractService
         foreach($oldProcessors as $processor) {
             if(!in_array($processor, $processors) && $this->recordProcessorService->orphanProcessor($processor, $data['anr'])) {
                 $this->recordProcessorService->deleteProcessor($processor);
+            } else if (!in_array($processor, $processors)) {
+                $this->recordProcessorService->deleteActivityAndSecMeasure($processor, $id);
             }
         }
         return $result;
@@ -207,6 +211,16 @@ class AnrRecordService extends AbstractService
         $newRecord->setUpdatedAt(null);
         $newRecord->setLabel($newLabel);
         $id = $this->get('table')->save($newRecord);
+        if($entity->getProcessors()) {
+            foreach ($entity->getProcessors() as $p) {
+                $data = [];
+                $activities = $p->getActivities();
+                $data["activities"] = $activities[$recordId];
+                $secMeasures = $p->getSecMeasures();
+                $data["security_measures"] = $secMeasures[$recordId];
+                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($data, $p->getId(), $id);
+            }
+        }
         if($entity->getPersonalData()) {
             foreach ($entity->getPersonalData() as $pd) {
                 $newPersonalData = new \MonarcFO\Model\Entity\RecordPersonalData($pd);
@@ -307,7 +321,7 @@ class AnrRecordService extends AbstractService
             $return['international_transfers'][] = $this->recordInternationalTransferService->generateExportArray($it->id);
         }
         foreach ($entity->processors as $p) {
-            $return['processors'][] = $this->recordProcessorService->generateExportArray($p->id);
+            $return['processors'][] = $this->recordProcessorService->generateExportArray($p->id, $id);
         }
         return $return;
     }
@@ -555,14 +569,21 @@ class AnrRecordService extends AbstractService
                     $newData['recipients'][] = $recipient;
                 }
             }
+            $createdProcessors = [];
             if(isset($data['processors'])) {
                 foreach ($data['processors'] as $p) {
                     $processor = [];
                     $processor["id"] = $this->recordProcessorService->importFromArray($p, $anr);
+                    $createdProcessors[$processor["id"]] = $p;
                     $newData['processors'][] = $processor;
                 }
             }
             $id = $this->create($newData);
+            if(isset($data['processors'])) {
+                foreach ($createdProcessors as $processorId => $p) {
+                    $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($p, $processorId, $id);
+                }
+            }
             if(isset($data['personal_data'])) {
                 foreach ($data['personal_data'] as $pd) {
                     $personalData = [];

@@ -94,6 +94,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         // export
         'instanceService' => '\MonarcFO\Service\AnrInstanceService',
         'recordService' => '\MonarcFO\Service\AnrRecordService',
+        'recordProcessorService' => '\MonarcFO\Service\AnrRecordProcessorService',
 
     ];
 }

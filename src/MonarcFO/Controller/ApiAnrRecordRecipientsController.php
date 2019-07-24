@@ -31,7 +31,6 @@ class ApiAnrRecordRecipientsController extends ApiAnrAbstractController
         }
         $data['anr'] = $anrId;
         $id = $this->getService()->create($data);
-        file_put_contents('php://stderr', print_r($id, TRUE).PHP_EOL);
 
         return new JsonModel([
             'status' => 'ok',

@@ -113,6 +113,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
     protected $instanceService;
     protected $recordService;
+    protected $recordProcessorService;
 
     /**
      * @inheritdoc
@@ -1040,6 +1041,10 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newProcessor = new \MonarcFO\Model\Entity\RecordProcessor($p);
                 $newProcessor->set('id', null);
                 $newProcessor->setAnr($newAnr);
+                $activities = [];
+                $newProcessor->setActivities($activities);
+                $secMeasures = [];
+                $newProcessor->setSecMeasures($secMeasures);
                 if($p->representative != null) {
                     $newProcessor->setRepresentative($actorNewIds[$p->representative->id]);
                 }
@@ -1103,6 +1108,19 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $this->get('recordCliTable')->save($newRecord, false);
                 $this->get('recordCliTable')->getDb()->flush();
                 $recordNewIds[$record->id] = $newRecord;
+            }
+
+            foreach ($recordProcessors as $p) {
+                $data = [];
+                $activities = $p->getActivities();
+                foreach($activities as $recordId => $value) {
+                    $data["activities"][$recordNewIds[$recordId]->getId()] = $value;
+                }
+                $secMeasures = $p->getSecMeasures();
+                foreach($secMeasures as $recordId => $value) {
+                    $data["secMeasures"][$recordNewIds[$recordId]->getId()] = $value;
+                }
+                $this->recordProcessorService->patch($processorNewIds[$p->id]->getId(), $data);
             }
 
             //duplicate record personal data
