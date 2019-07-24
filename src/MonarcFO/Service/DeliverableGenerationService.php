@@ -1705,7 +1705,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
           $impacts = ['c', 'i', 'd'];
           foreach ($risksByTreatment as $r) {
-            file_put_contents('php://stderr', print_r($r , TRUE).PHP_EOL);
             foreach ($impacts as $impact) {
               $risk = $r[$impact .'_risk'];
               $bgcolor = 'FFBC1C';
@@ -1754,7 +1753,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             }
 
             $tableRiskInfo->addRow(400);
-            $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($path, $styleContentFont, $alignCenter);
+            $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($path, $styleContentFont, $alignLeft);
             $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['c_impact'], $styleContentFont, $alignCenter);
             $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['i_impact'], $styleContentFont, $alignCenter);
             $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['d_impact'], $styleContentFont, $alignCenter);
@@ -1858,7 +1857,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
               }
 
               $tableRiskOp->addRow(400);
-              $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($path, $styleContentFont, $alignCenter);
+              $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($path, $styleContentFont, $alignLeft);
               $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(_WT($r['label' . $anr->language]), $styleContentFont, $alignLeft);
               if ($anr->showRolfBrut == 1) {
                 $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($r['brutProb'], $styleContentFont, $alignCenter);
@@ -2591,6 +2590,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
    {
       /** @var SoaService $soaService */
       $soaService = $this->soaService;
+      $instanceTable = $this->get('instanceService')->get('table');
       $filterMeasures['r.anr'] = $anr->id;
       $filterMeasures['r.uuid']= $referential;
       $measureService = $this->measureService;
@@ -2790,8 +2790,22 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                       $Treatment = "Not treated";
               }
 
+              $instance = $instanceTable->getEntity($r['instance']);
+              if ($instance->object->scope === 1) {
+                $path = null;
+                $asc = array_reverse($instanceTable->getAscendance($instance));
+                foreach ($asc as $a) {
+                  $path .= $a['name' . $this->currentLangAnrIndex];
+                  if (end($asc) !== $a) {
+                    $path .= ' > ';
+                  }
+                }
+              }else {
+                $path = $instance->{'name' . $anr->language} . ' (' . $this->anrTranslate('Global') . ')';
+              }
+
               $tableRiskInfo->addRow(400);
-              $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($r['instanceName' . $anr->language], $styleContentFont, $alignCenter);
+              $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($path, $styleContentFont, $alignLeft);
               $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['c_impact'], $styleContentFont, $alignCenter);
               $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['i_impact'], $styleContentFont, $alignCenter);
               $tableRiskInfo->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['d_impact'], $styleContentFont, $alignCenter);
@@ -2849,8 +2863,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                   }
                 }
 
+                $path = null;
+                $instance = $instanceTable->getEntity($r['instanceInfos']['id']);
+                $asc = array_reverse($instanceTable->getAscendance($instance));
+                foreach ($asc as $a) {
+                  $path .= $a['name' . $this->currentLangAnrIndex];
+                  if (end($asc) !== $a) {
+                    $path .= ' > ';
+                  }
+                }
+
                 $tableRiskOp->addRow(400);
-                $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($r['instanceInfos']['name' . $anr->language], $styleContentFont, $alignCenter);
+                $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($path, $styleContentFont, $alignLeft);
                 $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(_WT($r['label' . $anr->language]), $styleContentFont, $alignLeft);
                 if ($anr->showRolfBrut == 1) {
                   $tableRiskOp->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($r['brutProb'], $styleContentFont, $alignCenter);
