@@ -81,7 +81,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         // Filter out duplicate global objects
         $knownGlobObjId = $objectCache = [];
 
-        if (isset($filterAnd['recommandation'])) {
+        if (isset($filterAnd['r.uuid']) && isset($filterAnd['r.anr'])) {
             return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
                 $instance = $this->instanceTable->getEntity($in['instance']);
                 $objId = $instance->object->uuid->toString();
@@ -99,8 +99,6 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                 }
             });
         } else {
-
-
             return $recosRisks;
         }
     }
