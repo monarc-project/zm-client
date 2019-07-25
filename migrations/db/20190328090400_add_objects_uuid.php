@@ -115,6 +115,13 @@ class AddObjectsUuid extends AbstractMigration
           }
         }
 
+      $multiples = $this->query('SELECT   COUNT(*) AS number, uuid,anr_id FROM objects GROUP BY uuid,anr_id HAVING   COUNT(*) > 1')->fetchAll();
+       foreach($multiples as $multiple){
+         $bad_objects=$this->query('SELECT * FROM objects where uuid="'.$multiple['uuid'].'" and anr_id ='.$multiple['anr_id'])->fetchAll();
+         for ($i=1; $i <$multiple['number'] ; $i++) {
+           $this->execute('UPDATE objects SET uuid ="" WHERE id='.$bad_objects[$i]['id']);
+         }
+       }
       $unUUIDpdo = $this->query('select uuid,id from objects' .' WHERE uuid ='.'"'.'"');
       $unUUIDrows = $unUUIDpdo->fetchAll();
 
@@ -184,8 +191,9 @@ class AddObjectsUuid extends AbstractMigration
             ->update();
 
       $table = $this->table('objects');
-      $table->removeColumn('id')
-            ->dropForeignKey('anr_id')
+
+      $table->dropForeignKey('anr_id')
+            ->removeColumn('id')
             ->save();
       $this->execute("ALTER TABLE objects ADD PRIMARY KEY uuid_anr_id (anr_id,uuid)");
 
