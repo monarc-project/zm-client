@@ -86,6 +86,7 @@ class RecordPersonalData extends AbstractEntity
      *
      * @ORM\Column(name="retention_period_mode", type="smallint", options={"default":0})
      */
+     // 0 for day(s), 1 for month(s) and 2 for year(s)
     protected $retentionPeriodMode = 0;
 
 

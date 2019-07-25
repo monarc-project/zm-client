@@ -51,6 +51,7 @@ class RecordRecipient extends AbstractEntity
      *
      * @ORM\Column(name="type", type="string", length=255, nullable=true)
      */
+     // 0 for internal recipients and 1 for external recipients
     protected $type;
 
     /**
