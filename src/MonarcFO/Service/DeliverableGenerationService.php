@@ -3097,17 +3097,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
-        $table = $section->addTable($styleTable);
-
-        //header if array is not empty
-        $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Data subject'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Personal data categories'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period description'), $styleHeaderFont, $alignCenter);
 
         if (count($personalData)) {
+            $table = $section->addTable($styleTable);
+
+            //header if array is not empty
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Data subject'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Personal data categories'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleHeaderCell)->addText($this->anrTranslate('Retention period description'), $styleHeaderFont, $alignCenter);
+
             foreach($personalData as $pd) {
                 $table->addRow(400);
                 $dataCategories = '';
@@ -3128,6 +3129,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($retentionPeriod, $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($pd->get('retentionPeriodDescription'), $styleContentFont, $alignLeft);
             }
+        } else {
+            $section->addText($this->anrTranslate('No category of personal data is found for this record'), $styleContentFont);
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3154,21 +3157,23 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
-        $table = $section->addTable($styleTable);
-
-        //header if array is not empty
-        $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Recipient'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Type'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
-
         if (count($recipients)) {
+            $table = $section->addTable($styleTable);
+
+            //header if array is not empty
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Recipient'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Type'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
+
             foreach($recipients as $r) {
                 $table->addRow(400);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText($r->get('label'), $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText($r->get('type')==0? $this->anrTranslate('internal'): $this->anrTranslate('external'), $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($r->get('description'), $styleContentFont, $alignLeft);
             }
+        } else {
+            $section->addText($this->anrTranslate('No recipient is found for this record'), $styleContentFont);
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3195,16 +3200,16 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
-        $table = $section->addTable($styleTable);
-
-        //header if array is not empty
-        $table->addRow(400);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Organisation'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Country'), $styleHeaderFont, $alignCenter);
-        $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Documents'), $styleHeaderFont, $alignCenter);
-
         if (count($internationalTransfers)) {
+            $table = $section->addTable($styleTable);
+
+            //header if array is not empty
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Organisation'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Description'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Country'), $styleHeaderFont, $alignCenter);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleHeaderCell)->addText($this->anrTranslate('Documents'), $styleHeaderFont, $alignCenter);
+
             foreach($internationalTransfers as $it) {
                 $table->addRow(400);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('organisation'), $styleContentFont, $alignLeft);
@@ -3212,6 +3217,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('country'), $styleContentFont, $alignLeft);
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('documents'), $styleContentFont, $alignLeft);
             }
+        } else {
+            $section->addText($this->anrTranslate('No international transfer is found for this record'), $styleContentFont);
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3238,7 +3245,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $tableWord = new PhpWord();
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
         $section = $tableWord->addSection();
-
+        if(count($processors) < 1) {
+            $section->addText($this->anrTranslate('No processor is found for this record'), $styleContentFont);
+        }
         foreach ($processors as $p) {
             //create section
             $section->addTextBreak(1);
@@ -3277,7 +3286,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
         }
-
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
