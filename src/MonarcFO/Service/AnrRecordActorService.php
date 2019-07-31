@@ -85,7 +85,7 @@ class AnrRecordActorService extends AbstractService
         $data['contact'] = (isset($data['contact']) ? $data['contact'] : '');
         unset($data['name']);
         try {
-            $actorEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'contact' => $data['contact'], 'anr' => $anr]);
+            $actorEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
             if (count($actorEntity)) {
                 $id = $actorEntity[0]->get('id');
             } else {

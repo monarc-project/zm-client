@@ -154,7 +154,7 @@ class AnrRecordProcessorService extends AbstractService
         $newData['contact'] = (isset($data['contact']) ? $data['contact'] : '');
         unset($data['name']);
         try {
-            $processorEntity = $this->get('table')->getEntityByFields(['label' => $newData['label'], 'contact' => $newData['contact'], 'anr' => $anr]);
+            $processorEntity = $this->get('table')->getEntityByFields(['label' => $newData['label'], 'anr' => $anr]);
             if (count($processorEntity)) {
                 $id = $processorEntity[0]->get('id');
             } else {
