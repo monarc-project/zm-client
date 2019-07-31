@@ -155,9 +155,9 @@ class AnrRecordPersonalDataService extends AbstractService
         $newData['description'] = (isset($data['description']) ? $data['description'] : '');
         $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : '');
         $newData['retentionPeriod'] = $data['retention_period'];
-        if ($data['retention_period_mode'] == "day(s)") {
+        if (substr($data['retention_period_mode'], 0, 3) == "day") {
             $newData["retentionPeriodMode"] = 0;
-        } else if ($data['retention_period_mode'] == "month(s)") {
+        } else if (substr($data['retention_period_mode'], 0, 3) == "mon") {
             $newData["retentionPeriodMode"] = 1;
         }  else {
             $newData["retentionPeriodMode"] = 2;
