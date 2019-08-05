@@ -37,11 +37,31 @@ class AddRecommandationsUuid extends AbstractMigration
             ->addColumn('status', 'integer', array('after' => 'comment','null' => true, 'default' => '1', 'limit' => MysqlAdapter::INT_TINY))
             ->update();
 
+        //normally it can't have the same code number in the same anr
+        $distinctRecoPdo = $this->query('select distinct code, description from recommandations where code !="" and description !="" and code is not null and description is not null');
+        $distinctRecoRows = $distinctRecoPdo->fetchAll();
+
+        foreach ($distinctRecoRows as $key => $value) {
+          $uniqid = Uuid::uuid4();
+          $recosPDO = $this->query('select id,anr_id from recommandations' . ' WHERE code ="'.$value['code']. '" and description ="'.$value['description'].'"');
+          $recos = $recosPDO->fetchAll();
+          $updatable=true;
+          foreach ($recos as $k => $v) {
+            foreach ($recos as $j => $d) {
+              if($v['anr_id']==$d['anr_id'] && $v['id']!= $d['id']) //if there is a possibility of duplicate don't update the value
+                $updatable = false;
+            }
+            if($updatable)
+              $this->execute('UPDATE recommandations SET uuid =' . '"' . $uniqid . '"' . ' WHERE id =' . $v['id']);
+            $updatable = true;
+          }
+        }
+
         $unUUIDpdo = $this->query('select uuid,id from recommandations' . ' WHERE uuid =' . '"' . '"');
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
         foreach ($unUUIDrows as $key => $value) {
-            $this->execute('UPDATE recommandations SET uuid =' . '"' . Uuid::uuid4() . '"' . ' WHERE id =' . $value['id']); //manage recommandations which are not default
+            $this->execute('UPDATE recommandations SET uuid =' . '"' . Uuid::uuid4() . '"' . ' WHERE id =' . $value['id']); //manage recommandations which are not processed before
         }
 
         $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
