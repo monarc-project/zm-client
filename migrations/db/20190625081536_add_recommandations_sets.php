@@ -82,7 +82,6 @@ class AddRecommandationsSets extends AbstractMigration
         $table = $this->table('recommandations');
         $table
             ->addColumn('recommandation_set_uuid', 'uuid', ['after' => 'anr_id'])
-            ->addIndex(['recommandation_set_uuid', 'code', 'anr_id'], ['unique' => true]) // we can't have 2 times the same code for the same set
             ->dropForeignKey('anr_id')
             ->update();
 
@@ -90,10 +89,25 @@ class AddRecommandationsSets extends AbstractMigration
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
         foreach ($unUUIDrows as $key => $value) {
-            $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . 'b1c26f12-7ba3-11e9-8f9e-2a86e4085a59' . '"' . ' WHERE code =' . '"' . $value['code'] . '"'); //manage recommandations which are not default
+            $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . 'b1c26f12-7ba3-11e9-8f9e-2a86e4085a59' . '"' . ' WHERE code =' . '"' . $value['code'] . '"'); //seta default set
         }
 
+          //select duplicates[code,anr,set]
+          $duplicates = $this->query('select *
+                                      from recommandations t
+                                        WHERE code in
+                                          (select code from recommandations r
+                                          where t.anr_id = r.anr_id
+                                          and STRCMP(r.recommandation_set_uuid,t.recommandation_set_uuid)=0
+                                          group by code having count(*)>1)')
+                              ->fetchAll();
+          foreach ($duplicates as $key => $value) {
+              $this->execute('UPDATE recommandations SET code ="' .$value['code'].' #'. substr(uniqid(),-5) .
+                '" WHERE code =' . '"' . $value['code'] . '" and uuid="'.$value['uuid'].'" and recommandation_set_uuid="'.$value['recommandation_set_uuid'] .'" and anr_id='.$value['anr_id']);
+          }
+
         $table
+            ->addIndex(['recommandation_set_uuid', 'code', 'anr_id'], ['unique' => true]) // we can't have 2 times the same code for the same set
             ->addForeignKey(['recommandation_set_uuid', 'anr_id'], 'recommandations_sets', ['uuid', 'anr_id'], array('delete' => 'CASCADE', 'update' => 'RESTRICT'))
             ->update();
     }
