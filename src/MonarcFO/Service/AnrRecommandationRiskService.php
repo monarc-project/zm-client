@@ -73,8 +73,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                     $recoRisk['recommandation']->duedate = date('d-m-Y', $recoRisk['recommandation']->duedate);
                 }
 
-                $recoRisk['recommandation']->recommandationSet->anr = $recoRisk['anr']->id; 
-                $recosRisks[$key]['recommandation'] = $recoRisk['recommandation'];         
+                $recoRisk['recommandation']->recommandationSet->anr = $recoRisk['anr']->id;
+                $recosRisks[$key]['recommandation'] = $recoRisk['recommandation'];
             }
         }
 
@@ -247,7 +247,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
         if(empty($bros) && $pos > 0){ // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
-            
+
             $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
             foreach($recos as $r){
                 $r->set('position',$r->get('position')-1);
@@ -279,6 +279,8 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         // Retrieve recommandations
         /** @var RecommandationTable $recommandationTable */
         $recommandationTable = $this->get('recommandationTable');
+        $instanceTable = $this->get('anrInstanceService')->get('table');
+        $lang = $this->anrTable->getEntity($anrId)->language;
         $recommandations = $recommandationTable->getEntityByFields(['anr' => $anrId], ['position' => 'ASC', 'importance' => 'DESC']);
 
         foreach ($recommandations as $key => $recommandation) {
@@ -293,9 +295,12 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $risksToUnset = [];
             foreach ($recommandationsRisks as $recommandationRisk) {
                 if ($recommandationRisk->recommandation->uuid == $recommandation->uuid) {
+                    $path = null;
+                    $isGlobal = true;
                     // Retrieve instance risk associated, if any
                     if ($recommandationRisk->instanceRisk && $recommandationRisk->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
                         $instanceRisk = $recommandationRisk->instanceRisk;
+
                         if (is_object($instanceRisk->asset)) {
                             $instanceRisk->asset = $instanceRisk->asset->getJsonArray();
                         }
@@ -305,7 +310,23 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
                         if (is_object($instanceRisk->vulnerability)) {
                             $instanceRisk->vulnerability = $instanceRisk->vulnerability->getJsonArray();
                         }
+
+                        if (empty($recommandationRisk->objectGlobal->uuid)) {
+                          $asc = array_reverse($instanceTable->getAscendance($instanceRisk->instance));
+                          foreach ($asc as $a) {
+                            $isGlobal = false;
+                            $path .= $a['name' . $lang];
+                            if (end($asc) !== $a) {
+                              $path .= ' > ';
+                            }
+                          }
+                        }else {
+                          $path = $recommandationRisk->instance->{'name' . $lang};
+                        }
+
                         $riskData = $instanceRisk->getJsonArray();
+                        $riskData['path'] = $path;
+                        $riskData['isGlobal'] = $isGlobal;
                         $riskData['instance'] = $this->instanceTable->getEntity($riskData['instance'])->getJsonArray();
                         $recommandations[$key]['risks'][] = $riskData;
                         $nbRisks++;
@@ -313,7 +334,23 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
                     // Retrieve instance risk op associated, if any
                     if ($recommandationRisk->instanceRiskOp && $recommandationRisk->instanceRiskOp->kindOfMeasure != InstanceRiskOp::KIND_NOT_TREATED) {
+
+                        if (empty($recommandationRisk->objectGlobal->uuid)) {
+                          $asc = array_reverse($instanceTable->getAscendance($recommandationRisk->instanceRiskOp->instance));
+                          foreach ($asc as $a) {
+                            $isGlobal = false;
+                            $path .= $a['name' . $lang];
+                            if (end($asc) !== $a) {
+                              $path .= ' > ';
+                            }
+                          }
+                        }else {
+                          $path = $recommandationRisk->instance->{'name' . $lang};
+                        }
+
                         $data = $recommandationRisk->instanceRiskOp->getJsonArray();
+                        $data['path'] = $path;
+                        $sata['isGlobal'] = $isGlobal;
                         $instance = $recommandationRisk->instanceRiskOp->instance->getJsonArray();
                         unset($instance['__initializer__']);
                         unset($instance['__cloner__']);

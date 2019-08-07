@@ -307,7 +307,7 @@ class AnrRiskOpService extends \MonarcCore\Service\AbstractService
               'brutL' => 'L' . " (" . $translate->translate('Inherent risk', $lang) . ")",
               'brutF' => 'F' . " (" . $translate->translate('Inherent risk', $lang) . ")",
               'brutF' => 'P' . " (" . $translate->translate('Inherent risk', $lang) . ")",
-              'cacheBrutRisk' => $translate->translate('Current risk', $lang) . " (" . $translate->translate('Inherent risk', $lang) . ")",
+              'cacheBrutRisk' => $translate->translate('Inherent risk', $lang),
               ];
           }
           else {
