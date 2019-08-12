@@ -81,12 +81,21 @@ class AnrServiceFactory extends AbstractServiceFactory
         'questionChoiceCliTable' => 'MonarcFO\Model\Table\QuestionChoiceTable',
         'SoaCliTable' => 'MonarcFO\Model\Table\SoaTable',
         'SoaCategoryCliTable' => 'MonarcFO\Model\Table\SoaCategoryTable',
+        'recordCliTable' => 'MonarcFO\Model\Table\RecordTable',
+        'recordActorCliTable' => 'MonarcFO\Model\Table\RecordActorTable',
+        'recordDataCategoryCliTable' => 'MonarcFO\Model\Table\RecordDataCategoryTable',
+        'recordPersonalDataCliTable' => 'MonarcFO\Model\Table\RecordPersonalDataTable',
+        'recordInternationalTransferCliTable' => 'MonarcFO\Model\Table\RecordInternationalTransferTable',
+        'recordProcessorCliTable' => 'MonarcFO\Model\Table\RecordProcessorTable',
+        'recordRecipientCliTable' => 'MonarcFO\Model\Table\RecordRecipientTable',
         'referentialCliTable' => 'MonarcFO\Model\Table\ReferentialTable',
         'measureMeasureCliTable' => 'MonarcFO\Model\Table\MeasureMeasureTable',
 
 
         // export
         'instanceService' => '\MonarcFO\Service\AnrInstanceService',
+        'recordService' => '\MonarcFO\Service\AnrRecordService',
+        'recordProcessorService' => '\MonarcFO\Service\AnrRecordProcessorService',
 
     ];
 }

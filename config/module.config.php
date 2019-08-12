@@ -479,7 +479,138 @@ return array(
                                 'id' => '[a-f0-9-]*',
                             ),
                             'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsSets',
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsSets'),
+                            ),
+                    ),
+                    'recommandations_measures' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'recommandations-measures[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsMeasures',
+                            ),
+                        ),
+                    ),
+                    'records' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecords',
+                            ),
+                        ),
+                    ),
+                    'record_actors' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'record-actors[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordActors',
+                            ),
+                        ),
+                    ),
+                    'record_data_categories' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'record-data-categories',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordDataCategories',
+                            ),
+                        ),
+                    ),
+                    'record_international_transfers' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'record-international-transfers[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordInternationalTransfers',
+                            ),
+                        ),
+                    ),
+                    'record_personal_data' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'record-personal-data[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordPersonalData',
+                            ),
+                        ),
+                    ),
+                    'record_processors' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'record-processors[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordProcessors',
+                            ),
+                        ),
+                    ),
+                    'record_recipients' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'record-recipients[/:id]',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordRecipients',
+                            ),
+                        ),
+                    ),
+                    'record_export' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records/:id/export',
+                            'constraints' => array(
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordsExport',
+                            ),
+                        ),
+                    ),
+                    'records_export' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records/export',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordsExport',
+                            ),
+                        ),
+                    ),
+                    'record_import' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records/import',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordsImport',
+                            ),
+                        ),
+                    ),
+                    'record_duplicate' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => 'records/duplicate',
+                            'defaults' => array(
+                                'controller' => 'MonarcFO\Controller\ApiAnrRecordDuplicate',
                             ),
                         ),
                     ),
@@ -807,6 +938,17 @@ return array(
             '\MonarcFO\Controller\ApiAnrRecommandationsRisks' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidate' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory',
             '\MonarcFO\Controller\ApiAnrRecommandationsSets' => '\MonarcFO\Controller\ApiAnrRecommandationsSetsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecommandationsMeasures' => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordActors' => '\MonarcFO\Controller\ApiAnrRecordActorsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordDuplicate' => '\MonarcFO\Controller\ApiAnrRecordDuplicateControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordDataCategories' => '\MonarcFO\Controller\ApiAnrRecordDataCategoriesControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordInternationalTransfers' => '\MonarcFO\Controller\ApiAnrRecordInternationalTransfersControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordPersonalData' => '\MonarcFO\Controller\ApiAnrRecordPersonalDataControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordProcessors' => '\MonarcFO\Controller\ApiAnrRecordProcessorsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordRecipients' => '\MonarcFO\Controller\ApiAnrRecordRecipientsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecords' => '\MonarcFO\Controller\ApiAnrRecordsControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordsExport' => '\MonarcFO\Controller\ApiAnrRecordsExportControllerFactory',
+            '\MonarcFO\Controller\ApiAnrRecordsImport' => '\MonarcFO\Controller\ApiAnrRecordsImportControllerFactory',
             '\MonarcFO\Controller\ApiAnrTreatmentPlan' => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
             '\MonarcFO\Controller\ApiSoa' => '\MonarcFO\Controller\ApiSoaControllerFactory',
             '\MonarcFO\Controller\ApiSoaCategory' => '\MonarcFO\Controller\ApiSoaCategoryControllerFactory',
@@ -878,6 +1020,13 @@ return array(
             '\MonarcFO\Model\Table\PasswordTokenTable' => '\MonarcFO\Service\Model\Table\PasswordTokenServiceModelTable',
             '\MonarcFO\Model\Table\RolfRiskTable' => '\MonarcFO\Service\Model\Table\RolfRiskServiceModelTable',
             '\MonarcFO\Model\Table\RolfTagTable' => '\MonarcFO\Service\Model\Table\RolfTagServiceModelTable',
+            '\MonarcFO\Model\Table\RecordActorTable' => '\MonarcFO\Service\Model\Table\RecordActorServiceModelTable',
+            '\MonarcFO\Model\Table\RecordDataCategoryTable' => '\MonarcFO\Service\Model\Table\RecordDataCategoryServiceModelTable',
+            '\MonarcFO\Model\Table\RecordInternationalTransferTable' => '\MonarcFO\Service\Model\Table\RecordInternationalTransferServiceModelTable',
+            '\MonarcFO\Model\Table\RecordPersonalDataTable' => '\MonarcFO\Service\Model\Table\RecordPersonalDataServiceModelTable',
+            '\MonarcFO\Model\Table\RecordProcessorTable' => '\MonarcFO\Service\Model\Table\RecordProcessorServiceModelTable',
+            '\MonarcFO\Model\Table\RecordRecipientTable' => '\MonarcFO\Service\Model\Table\RecordRecipientServiceModelTable',
+            '\MonarcFO\Model\Table\RecordTable' => '\MonarcFO\Service\Model\Table\RecordServiceModelTable',
             '\MonarcFO\Model\Table\ReferentialTable' => '\MonarcFO\Service\Model\Table\ReferentialServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationTable' => '\MonarcFO\Service\Model\Table\RecommandationServiceModelTable',
             '\MonarcFO\Model\Table\RecommandationHistoricTable' => '\MonarcFO\Service\Model\Table\RecommandationHistoricServiceModelTable',
@@ -911,6 +1060,13 @@ return array(
             '\MonarcFO\Model\Entity\InstanceRisk' => '\MonarcFO\Service\Model\Entity\InstanceRiskServiceModelEntity',
             '\MonarcFO\Model\Entity\InstanceRiskOp' => '\MonarcFO\Service\Model\Entity\InstanceRiskOpServiceModelEntity',
             '\MonarcFO\Model\Entity\Interview' => '\MonarcFO\Service\Model\Entity\InterviewServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordActor' => '\MonarcFO\Service\Model\Entity\RecordActorServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordDataCategory' => '\MonarcFO\Service\Model\Entity\RecordDataCategoryServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordInternationalTransfer' => '\MonarcFO\Service\Model\Entity\RecordInternationalTransferServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordPersonalData' => '\MonarcFO\Service\Model\Entity\RecordPersonalDataServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordProcessor' => '\MonarcFO\Service\Model\Entity\RecordProcessorServiceModelEntity',
+            '\MonarcFO\Model\Entity\RecordRecipient' => '\MonarcFO\Service\Model\Entity\RecordRecipientServiceModelEntity',
+            '\MonarcFO\Model\Entity\Record' => '\MonarcFO\Service\Model\Entity\RecordServiceModelEntity',
             '\MonarcFO\Model\Entity\Referential' => '\MonarcFO\Service\Model\Entity\ReferentialServiceModelEntity',
             '\MonarcFO\Model\Entity\Measure' => '\MonarcFO\Service\Model\Entity\MeasureServiceModelEntity',
             '\MonarcFO\Model\Entity\MeasureMeasure' => '\MonarcFO\Service\Model\Entity\MeasureMeasureServiceModelEntity',
@@ -953,6 +1109,13 @@ return array(
             '\MonarcFO\Service\AnrInterviewService' => '\MonarcFO\Service\AnrInterviewServiceFactory',
             '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
             '\MonarcFO\Service\AnrMeasureMeasureService' => '\MonarcFO\Service\AnrMeasureMeasureServiceFactory',
+            '\MonarcFO\Service\AnrRecordActorService' => '\MonarcFO\Service\AnrRecordActorServiceFactory',
+            '\MonarcFO\Service\AnrRecordDataCategoryService' => '\MonarcFO\Service\AnrRecordDataCategoryServiceFactory',
+            '\MonarcFO\Service\AnrRecordInternationalTransferService' => '\MonarcFO\Service\AnrRecordInternationalTransferServiceFactory',
+            '\MonarcFO\Service\AnrRecordPersonalDataService' => '\MonarcFO\Service\AnrRecordPersonalDataServiceFactory',
+            '\MonarcFO\Service\AnrRecordProcessorService' => '\MonarcFO\Service\AnrRecordProcessorServiceFactory',
+            '\MonarcFO\Service\AnrRecordRecipientService' => '\MonarcFO\Service\AnrRecordRecipientServiceFactory',
+            '\MonarcFO\Service\AnrRecordService' => '\MonarcFO\Service\AnrRecordServiceFactory',
             '\MonarcFO\Service\AnrReferentialService' => '\MonarcFO\Service\AnrReferentialServiceFactory',
             '\MonarcFO\Service\SoaService' => '\MonarcFO\Service\SoaServiceFactory',
             '\MonarcFO\Service\SoaCategoryService' => '\MonarcFO\Service\SoaCategoryServiceFactory',
@@ -1128,6 +1291,17 @@ return array(
             'monarc_api_global_client_anr/recommandations_sets',
             'monarc_api_global_client_anr/treatment_plan',
             'monarc_api_global_client_anr/objects_categories',
+            'monarc_api_global_client_anr/records',
+            'monarc_api_global_client_anr/record_actors',
+            'monarc_api_global_client_anr/record_data_categories',
+            'monarc_api_global_client_anr/record_international_transfers',
+            'monarc_api_global_client_anr/record_personal_data',
+            'monarc_api_global_client_anr/record_processors',
+            'monarc_api_global_client_anr/record_recipients',
+            'monarc_api_global_client_anr/record_export',
+            'monarc_api_global_client_anr/records_export',
+            'monarc_api_global_client_anr/record_import',
+            'monarc_api_global_client_anr/record_duplicate',
         ),
     ),
     'activeLanguages' => array('fr'),
