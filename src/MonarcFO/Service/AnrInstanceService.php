@@ -104,7 +104,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
         return [$ids, $errors];
     }
-    
+
     /**
      * Imports an instance from an exported data (json) array.
      * @see #importFromFile
@@ -401,7 +401,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $this->setDependencies($rS, ['anr']);
                         $uuidRecSet = $this->get('recommandationSetTable')->save($rS);
                     }
-                    
+
                 }
 
                 //Recommandations unlinked to a recommandation risk
@@ -582,7 +582,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         }
 
                         // Recommandations
-                        if (!empty($data['recos'][$risk['id']])) {           
+                        if (!empty($data['recos'][$risk['id']])) {
                             foreach ($data['recos'][$risk['id']] as $reco) {
                                 //2.8.3
                                 if (version_compare($monarc_version, "2.8.2")==-1){
@@ -630,7 +630,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                     $aReco->setRecommandationSet($recSets[0]);
                                     $this->setDependencies($aReco, ['anr']);
                                     if(isset($toExchange['duedate']['date']))
-                                      $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));          
+                                      $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
                                     $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
                                     $sharedData['recos'][$reco['uuid']] = $reco['uuid'];
                                 }
@@ -889,7 +889,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $this->setDependencies($rS, ['anr']);
                         $uuidRecSet = $this->get('recommandationSetTable')->save($rS);
                     }
-                    
+
                 }
 
                 //Recommandations unlinked to a recommandation risk
@@ -1003,7 +1003,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                   $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
                                 $aReco->setRecommandationSet($recSets[0]);
                                 $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
-                                $sharedData['recos'][$reco['uuid']] = $reco['uuid'];                            
+                                $sharedData['recos'][$reco['uuid']] = $reco['uuid'];
                             }
 
                             // Le lien recommandation <-> risk
@@ -1209,8 +1209,6 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $NewQcIds = null;
 
                         foreach ($OriginQc as $qc ) {
-                          file_put_contents('php://stderr', print_r($qc, TRUE).PHP_EOL);
-                          file_put_contents('php://stderr', print_r($data['method']['questionChoice'], TRUE).PHP_EOL);
                           $DestQc[$qc] = $data['method']['questionChoice'][$qc];
                           $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
                           foreach ($questionChoices as $qc) {
