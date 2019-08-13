@@ -442,7 +442,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
             }
         }
 
-        // try {
+        try {
             // duplicate anr
             $newAnr = new \MonarcFO\Model\Entity\Anr($anr);
             $newAnr->setId(null);
@@ -749,7 +749,7 @@ class AnrService extends \MonarcCore\Service\AbstractService
                   try{
                     $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
                     $measure->AddOpRisk($newRolfRisk);
-                  }catch (\MonarcCore\Exception\Exception $e) { } //needed if the measures don't exist in the client ANR
+                  } catch (\MonarcCore\Exception\Exception $e) { } //needed if the measures don't exist in the client ANR
                 }
                 $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
@@ -1223,12 +1223,12 @@ class AnrService extends \MonarcCore\Service\AbstractService
 
             $this->setUserCurrentAnr($newAnr->get('id'));
 
-        // } catch (\Exception $e) {
-        //     if (is_integer($id)) {
-        //         $anrCliTable->delete($id);
-        //     }
-        //     throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
-        // }
+        } catch (\Exception $e) {
+            if (is_integer($id)) {
+                $anrCliTable->delete($id);
+            }
+            throw new  \MonarcCore\Exception\Exception('Error during analysis creation', 412);
+        }
 
         return $newAnr->get('id');
     }
