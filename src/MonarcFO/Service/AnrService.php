@@ -510,7 +510,6 @@ class AnrService extends \MonarcCore\Service\AbstractService
                 $newAsset = new \MonarcFO\Model\Entity\Asset($asset);
                 $newAsset->setAnr($newAnr);
                 $this->get('assetCliTable')->save($newAsset, false);
-                // file_put_contents('php://stderr', print_r($asset->getUuid()->toString(), TRUE).PHP_EOL);
                 $assetsNewIds[$asset->getUuid()->toString()] = $newAsset;
             }
 
