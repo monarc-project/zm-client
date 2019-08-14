@@ -3272,19 +3272,19 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableActor = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleHeaderFont, $alignCenter);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignCenter);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleHeaderFont, $alignCenter);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Actor'), $styleHeaderFont, $alignCenter);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Name'), $styleHeaderFont, $alignCenter);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Contact'), $styleHeaderFont, $alignCenter);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleHeaderFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(_WT($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(_WT($p->get('representative')? $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Representative'), $styleHeaderFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($p->get('representative')? $p->get('representative')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($p->get('representative')? $p->get('representative')->get('contact') : ""), $styleContentFont, $alignLeft);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleHeaderFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
-            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleHeaderFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
+            $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3305,9 +3305,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $tableWord->addTitleStyle(1, ['bold' => true, 'size' => 12]);
+            /*$tableWord->addTitleStyle(1, ['bold' => true, 'size' => 12]);
             $section->addTitle($recordEntity->get('label'),1);
-            $result .= $this->getWordXmlFromWordObject($tableWord);
+            $result .= $this->getWordXmlFromWordObject($tableWord);*/
             $result .= $this->generateTableRecordGDPR($anr, $recordEntity->id);
             //create section
             $tableWord = new PhpWord();
