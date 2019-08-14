@@ -404,7 +404,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
                 }
 
-                //Recommandations unlinked to a recommandation risk
+                // Recommandations unlinked to a recommandation risk
                 if(!empty($data['recs'])){
                     foreach ($data['recs'] as $rec_UUID => $rec_array) {
                         // check if the recommendation is not already present in the analysis
@@ -412,6 +412,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                 ->getEntityByFields(['anr' => $anr->id, 'uuid' => $rec_UUID]);
                         if (empty($recommandations)) {
                             $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $rec_array['recommandationSet']]);
+                            if ($rec_array['duedate']) {
+                                $rec_array['duedate'] = new DateTime($rec_array['duedate']['date']);
+                            }
                             $newRecommandation = new \MonarcFO\Model\Entity\Recommandation($rec_array);
                             $newRecommandation->setAnr($anr);
                             $newRecommandation->setRecommandationSet($recSets[0]);
@@ -892,7 +895,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
 
                 }
 
-                //Recommandations unlinked to a recommandation risk
+                // Recommandations unlinked to a recommandation risk
                 if(!empty($data['recs'])){
                     foreach ($data['recs'] as $rec_UUID => $rec_array) {
                         // check if the recommendation is not already present in the analysis
@@ -900,6 +903,9 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                                                 ->getEntityByFields(['anr' => $anr->id, 'uuid' => $rec_UUID]);
                         if (empty($recommandations)) {
                             $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $rec_array['recommandationSet']]);
+                            if ($rec_array['duedate']) {
+                                $rec_array['duedate'] = new DateTime($rec_array['duedate']['date']);
+                            }
                             $newRecommandation = new \MonarcFO\Model\Entity\Recommandation($rec_array);
                             $newRecommandation->setAnr($anr);
                             $newRecommandation->setRecommandationSet($recSets[0]);
