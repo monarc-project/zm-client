@@ -3250,7 +3250,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         }
         foreach ($processors as $p) {
             //create section
-            $section->addTextBreak(1);
             $section->addText($p->get('label'), $styleHeaderFont);
             $table = $section->addTable($styleTable);
 
@@ -3285,6 +3284,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleHeaderFont, $alignLeft);
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
+            $section->addTextBreak(1);
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3305,9 +3305,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
 
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            /*$tableWord->addTitleStyle(1, ['bold' => true, 'size' => 12]);
+            $tableWord->addTitleStyle(1, ['bold' => true, 'size' => 12]);
             $section->addTitle($recordEntity->get('label'),1);
-            $result .= $this->getWordXmlFromWordObject($tableWord);*/
+            $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordGDPR($anr, $recordEntity->id);
             //create section
             $tableWord = new PhpWord();
