@@ -3092,6 +3092,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentFont = ['bold' => false, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $cellTitle = ['borderColor' => 'FFFFFF', 'borderSize' => 0];
 
         //create section
         $tableWord = new PhpWord();
@@ -3130,7 +3131,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(3.60), $styleContentCell)->addText($pd->get('retentionPeriodDescription'), $styleContentFont, $alignLeft);
             }
         } else {
-            $section->addText($this->anrTranslate('No category of personal data is found for this record'), $styleContentFont);
+            $table = $section->addTable($styleTable);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $cellTitle)->addText($this->anrTranslate('No category of personal data'), $styleContentFont, $alignLeft );
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3152,6 +3155,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentFont = ['bold' => false, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $cellTitle = ['borderColor' => 'FFFFFF', 'borderSize' => 0];
 
         //create section
         $tableWord = new PhpWord();
@@ -3173,7 +3177,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(8.00), $styleContentCell)->addText($r->get('description'), $styleContentFont, $alignLeft);
             }
         } else {
-            $section->addText($this->anrTranslate('No recipient is found for this record'), $styleContentFont);
+            $table = $section->addTable($styleTable);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $cellTitle)->addText($this->anrTranslate('No recipient'), $styleContentFont, $alignLeft );
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3195,6 +3201,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentFont = ['bold' => false, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $cellTitle = ['borderColor' => 'FFFFFF', 'borderSize' => 0];
 
         //create section
         $tableWord = new PhpWord();
@@ -3218,7 +3225,9 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
                 $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(4.50), $styleContentCell)->addText($it->get('documents'), $styleContentFont, $alignLeft);
             }
         } else {
-            $section->addText($this->anrTranslate('No international transfer is found for this record'), $styleContentFont);
+            $table = $section->addTable($styleTable);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $cellTitle)->addText($this->anrTranslate('No international transfer'), $styleContentFont, $alignLeft );
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3241,16 +3250,18 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
         $styleContentFont = ['bold' => false, 'size' => 10];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $cellTitle = ['borderColor' => 'FFFFFF', 'borderSize' => 0];
 
         $tableWord = new PhpWord();
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
         $section = $tableWord->addSection();
         if(count($processors) < 1) {
-            $section->addText($this->anrTranslate('No processor is found for this record'), $styleContentFont);
+            $table = $section->addTable($styleTable);
+            $table->addRow(400);
+            $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $cellTitle)->addText($this->anrTranslate('No processor'), $styleContentFont, $alignLeft );
         }
         foreach ($processors as $p) {
             //create section
-            $section->addTextBreak(1);
             $section->addText($p->get('label'), $styleHeaderFont);
             $table = $section->addTable($styleTable);
 
@@ -3268,7 +3279,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $table->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText($p->get('secMeasures')[$recordId], $styleContentFont, $alignLeft);
 
             $section->addTextBreak(1);
-            $section->addText($this->anrTranslate('Actors'), ["bold" => true]);
+            $section->addText($this->anrTranslate('Actors'), $styleHeaderFont);
             $tableActor = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
             $tableActor->addRow(400);
@@ -3285,6 +3296,8 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Data protection officer'), $styleHeaderFont, $alignLeft);
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('label') : ""), $styleContentFont, $alignLeft);
             $tableActor->addCell(\PhpOffice\Common\Font::centimeterSizeToTwips(10.00), $styleContentCell)->addText(($p->get('dpo')? $p->get('dpo')->get('contact') : ""), $styleContentFont, $alignLeft);
+
+            $section->addTextBreak(1);
         }
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3338,7 +3351,6 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $section->addTitle($this->anrTranslate('Processors'), 2);
-            $section->addTextBreak(1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordProcessors($anr, $recordEntity->id);
         }
