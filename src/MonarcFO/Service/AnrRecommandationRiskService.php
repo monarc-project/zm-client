@@ -63,7 +63,7 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         foreach ($recosRisks as $key => $recoRisk) {
 
             if (!empty($recoRisk['recommandation'])) {
-                if (empty($recoRisk['recommandation']->duedate) || $recoRisk['recommandation']->duedate == '0000-00-00') {
+                if (empty($recoRisk['recommandation']->duedate) || $recoRisk['recommandation']->duedate == '1970-01-01 00:00:00') {
                 } else {
                     if ($recoRisk['recommandation']->duedate instanceof \DateTime) {
                         $recoRisk['recommandation']->duedate = $recoRisk['recommandation']->duedate->getTimestamp();
@@ -83,16 +83,18 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
 
         if (isset($filterAnd['r.uuid']) && isset($filterAnd['r.anr'])) {
             return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
+                if (!isset($knownGlobObjId[$objId][$in['threat']])) {
+                    return true;
+                }
+
                 $instance = $this->instanceTable->getEntity($in['instance']);
                 $objId = $instance->object->uuid->toString();
 
                 if (!isset($knownGlobObjId[$objId][$in['threat']->uuid->toString()][$in['vulnerability']->uuid->toString()])) {
                     $objectCache[$objId] = $instance->object;
-
                     if ($instance->object->scope == 2) { // SCOPE_GLOBAL
                         $knownGlobObjId[$objId][$in['threat']->uuid->toString()][$in['vulnerability']->uuid->toString()] = $objId;
                     }
-
                     return true;
                 } else {
                     return false;
