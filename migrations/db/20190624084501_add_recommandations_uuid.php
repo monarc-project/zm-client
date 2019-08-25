@@ -57,7 +57,7 @@ class AddRecommandationsUuid extends AbstractMigration
           }
         }
 
-        $unUUIDpdo = $this->query('select uuid,id from recommandations' . ' WHERE uuid =' . '"' . '"');
+        $unUUIDpdo = $this->query('select uuid,id from recommandations WHERE uuid = ""');
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
         foreach ($unUUIDrows as $key => $value) {
