@@ -1,6 +1,8 @@
 <?php
-namespace MonarcFO;
+namespace Monarc\FrontOffice;
 
+use Monarc\FrontOffice\Model\Table\SnapshotTable;
+use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Permissions\Rbac\Rbac;
@@ -27,21 +29,6 @@ class Module
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
-    }
-
-    public function getAutoloaderConfig()
-    {
-        return array(
-            // ./vendor/bin/classmap_generator.php --library module/MonarcFO/src/MonarcFO -w -s -o module/MonarcFO/autoload_classmap.php
-            'Zend\Loader\ClassMapAutoloader' => array(
-                __DIR__ . '/autoload_classmap.php',
-            ),
-            /*'Zend\Loader\StandardAutoloader' => array(
-                'namespaces' => array(
-                    __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__,
-                ),
-            ),*/
-        );
     }
 
     public function getServiceConfig()
@@ -168,11 +155,11 @@ class Module
 
         //retrieve connected user
         $sm = $e->getApplication()->getServiceManager();
-        $connectedUserService = $sm->get('\MonarcCore\Service\ConnectedUserService');
+        $connectedUserService = $sm->get('\Monarc\Core\Service\ConnectedUserService');
         $connectedUser = $connectedUserService->getConnectedUser();
 
         //retrieve user roles
-        $userRoleService = $sm->get('\MonarcCore\Service\UserRoleService');
+        $userRoleService = $sm->get('\Monarc\Core\Service\UserRoleService');
         $userRoles = $userRoleService->getList(1, 25, null, $connectedUser['id']);
 
         $roles = [];
@@ -201,17 +188,17 @@ class Module
                     if(empty($anrid)){
                         break; // pas besoin d'aller plus loin
                     }else{
-                        $lk = current($sm->get('MonarcFO\Model\Table\UserAnrTable')->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser['id']]));
+                        $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser['id']]));
                         if(empty($lk)){
                             // On doit tester si c'est un snapshot, dans ce cas, on autorise l'accès mais en READ-ONLY
                             if($e->getRequest()->getMethod() != 'GET' && !$this->authorizedPost($route,$e->getRequest()->getMethod())){
                                 break; // même si c'est un snapshot, on n'autorise que du GET
                             }
-                            $snap = current($sm->get('MonarcFO\Model\Table\SnapshotTable')->getEntityByFields(['anr'=>$anrid]));
+                            $snap = current($sm->get(SnapshotTable::class)->getEntityByFields(['anr'=>$anrid]));
                             if(empty($snap)){
                                 break; // ce n'est pas un snapshot
                             }
-                            $lk = current($sm->get('MonarcFO\Model\Table\UserAnrTable')->getEntityByFields(['anr'=>$snap->get('anrReference')->get('id'),'user'=>$connectedUser['id']]));
+                            $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$snap->get('anrReference')->get('id'),'user'=>$connectedUser['id']]));
                             if(empty($lk)){
                                 break; // l'user n'avait de toute façon pas accès à l'anr dont est issue ce snapshot
                             }
@@ -242,6 +229,7 @@ class Module
         }
 
     }
+
     private function authorizedPost($route, $method){
         return $method == 'POST' &&
                 ($route == 'monarc_api_global_client_anr/export' || // export ANR
