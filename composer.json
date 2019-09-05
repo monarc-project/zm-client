@@ -9,7 +9,7 @@
         {"name": "Thomas Metois", "email": "thomas@netlor.fr"}
     ],
     "require": {
-        "php": "^7.1",
+        "php": "^7.2",
         "ext-intl": "*",
         "ext-imagick": "*",
         "robmorgan/phinx": "^0.11.1",
