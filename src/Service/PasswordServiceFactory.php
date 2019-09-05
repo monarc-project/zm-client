@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractServiceFactory;
 
 /**
+ * TODO: should be possible to burn this class after constructor injection, it duplicates the Core one.
  * Proxy class to instantiate Monarc\Core's PasswordService, with Monarc\FrontOffice's services
  * @package Monarc\FrontOffice\Service
  */
@@ -23,7 +24,6 @@ class PasswordServiceFactory extends AbstractServiceFactory
         'userTable' => 'Monarc\FrontOffice\Model\Table\UserTable',
         'userService' => 'Monarc\FrontOffice\Service\UserService',
         'mailService' => 'Monarc\FrontOffice\Service\MailService',
-        'securityService' => 'Monarc\Core\Service\SecurityService',
         'configService' => 'Monarc\Core\Service\ConfigService'
     ];
 }

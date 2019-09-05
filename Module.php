@@ -160,7 +160,10 @@ class Module
 
         //retrieve user roles
         $userRoleService = $sm->get('\Monarc\Core\Service\UserRoleService');
-        $userRoles = $userRoleService->getList(1, 25, null, $connectedUser['id']);
+        $userRoles = [];
+        if (!empty($connectedUser['id'])) {
+            $userRoles = $userRoleService->getList(1, 25, null, $connectedUser['id']);
+        }
 
         $roles = [];
         $isSuperAdmin = false;
