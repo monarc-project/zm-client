@@ -11,14 +11,15 @@ use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
-use Monarc\FrontOffice\Service\AbstractService;
+use Monarc\Core\Model\AbstractService;
+use Monarc\Core\Model\Entity\User;
 
 /**
  * This class is the service that handles snapshots. Snapshots are backups of ANRs at a specific point in time, and
  * may be consulted or restored at any time.
  * @package Monarc\FrontOffice\Service
  */
-class SnapshotService extends \Monarc\Core\Service\AbstractService
+class SnapshotService extends AbstractService
 {
     protected $dependencies = ['anr', 'anrReference'];
     protected $filterColumns = [];
@@ -112,11 +113,12 @@ class SnapshotService extends \Monarc\Core\Service\AbstractService
                 throw new \Monarc\Core\Exception\Exception('Anr id error', 412);
             }
 
+            /** @var User $connectedUser */
             $connectedUser = $this->get('table')->getConnectedUser();
 
             /** @var UserAnrTable $userAnrTable */
             $userAnrTable = $this->get('userAnrTable');
-            $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser['id'], 'anr' => $anrId]);
+            $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser->getId(), 'anr' => $anrId]);
             $rwd = 0;
             foreach ($rights as $right) {
                 if ($right->rwd == 1) {

@@ -7,16 +7,18 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Model\Entity\User;
+
 
 /**
  * This class is the service that handles risks within an ANR.
  * @package Monarc\FrontOffice\Service
  */
-class AnrRiskService extends \Monarc\Core\Service\AbstractService
+class AnrRiskService extends AbstractService
 {
     protected $filterColumns = [];
     protected $dependencies = ['anr', 'vulnerability', 'threat', 'instance', 'asset'];
@@ -145,11 +147,12 @@ class AnrRiskService extends \Monarc\Core\Service\AbstractService
             throw new \Monarc\Core\Exception\Exception('Anr id error', 412);
         }
 
+        /** @var User $connectedUser */
         $connectedUser = $this->get('table')->getConnectedUser();
 
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
-        $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser['id'], 'anr' => $anrId]);
+        $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser->getId(), 'anr' => $anrId]);
         $rwd = 0;
         foreach ($rights as $right) {
             if ($right->rwd == 1) {

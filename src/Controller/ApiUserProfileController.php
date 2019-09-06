@@ -7,7 +7,10 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\AbstractController;
+use Monarc\Core\Model\Entity\User;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\UserProfileService;
+use Zend\Mvc\Controller\AbstractRestfulController;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -16,22 +19,18 @@ use Zend\View\Model\JsonModel;
  * Class ApiUserProfileController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiUserProfileController extends AbstractController
+class ApiUserProfileController extends AbstractRestfulController
 {
-    protected $connectedUser;
+    /** @var User */
+    private $connectedUser;
 
-    /**
-     * ApiUserProfileController constructor.
-     * @param \Monarc\Core\Service\AbstractServiceFactory $services
-     */
-    public function __construct($services)
+    /** @var UserProfileService */
+    private $userProfileService;
+
+    public function __construct(UserProfileService $userProfileService, ConnectedUserService $connectedUserService)
     {
-        if (!empty($services['service'])) {
-            $this->service = $services['service'];
-        }
-        if (!empty($services['connectedUser'])) {
-            $this->connectedUser = $services['connectedUser'];
-        }
+        $this->userProfileService = $userProfileService;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
     /**
@@ -39,9 +38,11 @@ class ApiUserProfileController extends AbstractController
      */
     public function getList()
     {
-        $user = $this->connectedUser->getConnectedUser();
-        unset($user['password']);
-        return new JsonModel($user);
+        $userData = $this->connectedUser->toArray();
+        unset($userData['password']);
+
+        // TODO: We need to use normalizer for the response fields filtering out.
+        return new JsonModel($userData);
     }
 
     /**
@@ -49,7 +50,7 @@ class ApiUserProfileController extends AbstractController
      */
     public function patchList($data)
     {
-        return new JsonModel($this->getService()->update($this->connectedUser->getConnectedUser(), $data));
+        return new JsonModel($this->userProfileService->update($this->connectedUser->toArray(), $data));
     }
 
     /**
@@ -57,39 +58,7 @@ class ApiUserProfileController extends AbstractController
      */
     public function replaceList($data)
     {
-        return new JsonModel($this->getService()->update($this->connectedUser->getConnectedUser(), $data));
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
+        return new JsonModel($this->userProfileService->update($this->connectedUser->toArray(), $data));
     }
 
     /**
@@ -97,14 +66,6 @@ class ApiUserProfileController extends AbstractController
      */
     public function deleteList($id)
     {
-        return new JsonModel($this->getService()->delete($this->connectedUser->getConnectedUser()['id']));
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function create($data)
-    {
-        return $this->methodNotAllowed();
+        return new JsonModel($this->userProfileService->delete($this->connectedUser->getId()));
     }
 }
