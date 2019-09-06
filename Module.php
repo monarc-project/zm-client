@@ -161,8 +161,8 @@ class Module
         //retrieve user roles
         $userRoleService = $sm->get('\Monarc\Core\Service\UserRoleService');
         $userRoles = [];
-        if (!empty($connectedUser['id'])) {
-            $userRoles = $userRoleService->getList(1, 25, null, $connectedUser['id']);
+        if (!empty($connectedUser->getId())) {
+            $userRoles = $userRoleService->getList(1, 25, null, $connectedUser->getId());
         }
 
         $roles = [];
@@ -191,7 +191,7 @@ class Module
                     if(empty($anrid)){
                         break; // pas besoin d'aller plus loin
                     }else{
-                        $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser['id']]));
+                        $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser->getId()]));
                         if(empty($lk)){
                             // On doit tester si c'est un snapshot, dans ce cas, on autorise l'accès mais en READ-ONLY
                             if($e->getRequest()->getMethod() != 'GET' && !$this->authorizedPost($route,$e->getRequest()->getMethod())){
@@ -201,7 +201,7 @@ class Module
                             if(empty($snap)){
                                 break; // ce n'est pas un snapshot
                             }
-                            $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$snap->get('anrReference')->get('id'),'user'=>$connectedUser['id']]));
+                            $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$snap->get('anrReference')->get('id'),'user'=>$connectedUser->getId()]));
                             if(empty($lk)){
                                 break; // l'user n'avait de toute façon pas accès à l'anr dont est issue ce snapshot
                             }
