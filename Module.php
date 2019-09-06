@@ -1,6 +1,7 @@
 <?php
 namespace Monarc\FrontOffice;
 
+use Monarc\Core\Model\Entity\User;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Zend\Mvc\ModuleRouteListener;
@@ -155,13 +156,15 @@ class Module
 
         //retrieve connected user
         $sm = $e->getApplication()->getServiceManager();
-        $connectedUserService = $sm->get('\Monarc\Core\Service\ConnectedUserService');
-        $connectedUser = $connectedUserService->getConnectedUser();
 
         //retrieve user roles
         $userRoleService = $sm->get('\Monarc\Core\Service\UserRoleService');
         $userRoles = [];
-        if (!empty($connectedUser->getId())) {
+
+        $connectedUserService = $sm->get('\Monarc\Core\Service\ConnectedUserService');
+        $connectedUser = $connectedUserService->getConnectedUser();
+
+        if ($connectedUser instanceof User) {
             $userRoles = $userRoleService->getList(1, 25, null, $connectedUser->getId());
         }
 
