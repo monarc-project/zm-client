@@ -897,7 +897,7 @@ return [
         'factories' => [
             Controller\ApiAdminPasswordsController::class => Controller\ApiAdminPasswordsControllerFactory::class,
             Controller\ApiAdminUsersController::class => Controller\ApiAdminUsersControllerFactory::class,
-            Controller\ApiAdminUsersRolesController::class => Controller\ApiAdminUsersRolesControllerFactory::class,
+            Controller\ApiAdminUsersRolesController::class => AutowireFactory::class,
             Controller\ApiAdminUsersRightsController::class => Controller\ApiAdminUsersRightsControllerFactory::class,
             Controller\ApiAnrController::class => Controller\ApiAnrControllerFactory::class,
             Controller\ApiGuidesController::class => Controller\ApiGuidesControllerFactory::class,

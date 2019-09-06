@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\FrontOffice\Service\UserRoleService;
+use Zend\Mvc\Controller\AbstractRestfulController;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -15,9 +17,17 @@ use Zend\View\Model\JsonModel;
  * Class ApiAdminUsersRolesController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiAdminUsersRolesController extends \Monarc\Core\Controller\AbstractController
+class ApiAdminUsersRolesController extends AbstractRestfulController
 {
     protected $name = 'roles';
+
+    /** @var UserRoleService */
+    private $userRoleService;
+
+    public function __construct(UserRoleService $userRoleService)
+    {
+        $this->userRoleService = $userRoleService;
+    }
 
     /**
      * @inheritdoc
@@ -27,7 +37,7 @@ class ApiAdminUsersRolesController extends \Monarc\Core\Controller\AbstractContr
         $request = $this->getRequest();
         $token = $request->getHeader('token');
 
-        $currentUserRoles = $this->getService()->getByUserToken($token);
+        $currentUserRoles = $this->userRoleService->getByUserToken($token);
 
         return new JsonModel($currentUserRoles);
     }
@@ -37,43 +47,11 @@ class ApiAdminUsersRolesController extends \Monarc\Core\Controller\AbstractContr
      */
     public function get($id)
     {
-        $userRoles = $this->getService()->getByUserId($id);
+        $userRoles = $this->userRoleService->getByUserId($id);
 
         return new JsonModel([
             'count' => count($userRoles),
             $this->name => $userRoles
         ]);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function create($data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
     }
 }
