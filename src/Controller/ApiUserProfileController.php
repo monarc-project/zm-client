@@ -21,8 +21,8 @@ use Zend\View\Model\JsonModel;
  */
 class ApiUserProfileController extends AbstractRestfulController
 {
-    /** @var User */
-    private $connectedUser;
+    /** @var ConnectedUserService */
+    private $connectedUserService;
 
     /** @var UserProfileService */
     private $userProfileService;
@@ -30,7 +30,7 @@ class ApiUserProfileController extends AbstractRestfulController
     public function __construct(UserProfileService $userProfileService, ConnectedUserService $connectedUserService)
     {
         $this->userProfileService = $userProfileService;
-        $this->connectedUser = $connectedUserService->getConnectedUser();
+        $this->connectedUserService = $connectedUserService;
     }
 
     /**
@@ -38,7 +38,7 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function getList()
     {
-        $userData = $this->connectedUser->toArray();
+        $userData = $this->connectedUserService->getConnectedUser()->toArray();
         unset($userData['password']);
 
         // TODO: We need to use normalizer for the response fields filtering out.
@@ -50,7 +50,9 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function patchList($data)
     {
-        return new JsonModel($this->userProfileService->update($this->connectedUser->toArray(), $data));
+        return new JsonModel(
+            $this->userProfileService->update($this->connectedUserService->getConnectedUser()->toArray(), $data)
+        );
     }
 
     /**
@@ -58,7 +60,9 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function replaceList($data)
     {
-        return new JsonModel($this->userProfileService->update($this->connectedUser->toArray(), $data));
+        return new JsonModel(
+            $this->userProfileService->update($this->connectedUserService->getConnectedUser()->toArray(), $data)
+        );
     }
 
     /**
@@ -66,6 +70,8 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function deleteList($id)
     {
-        return new JsonModel($this->userProfileService->delete($this->connectedUser->getId()));
+        return new JsonModel(
+            $this->userProfileService->delete($this->connectedUserService->getConnectedUser()->getId())
+        );
     }
 }

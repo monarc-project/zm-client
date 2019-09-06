@@ -20,6 +20,6 @@ class UserAnrTable extends AbstractEntityTable
 {
     public function __construct(DbCli $dbCli, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbCli, UserAnr::class, $connectedUserService->getConnectedUser());
+        parent::__construct($dbCli, UserAnr::class, $connectedUserService);
     }
 }

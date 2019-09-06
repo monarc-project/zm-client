@@ -20,6 +20,6 @@ class UserRoleTable extends CoreUserRoleTable
 {
     public function __construct(DbCli $dbCli, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbCli, UserRole::class, $connectedUserService->getConnectedUser());
+        parent::__construct($dbCli, UserRole::class, $connectedUserService);
     }
 }

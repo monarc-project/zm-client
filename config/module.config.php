@@ -910,7 +910,7 @@ return [
             Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
             Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
             Controller\ApiUserPasswordController::class => Controller\ApiUserPasswordControllerFactory::class,
-            Controller\ApiUserProfileController::class => Controller\ApiUserProfileControllerFactory::class,
+            Controller\ApiUserProfileController::class => AutowireFactory::class,
             Controller\ApiAnrAssetsController::class => Controller\ApiAnrAssetsControllerFactory::class,
             Controller\ApiAnrAmvsController::class => Controller\ApiAnrAmvsControllerFactory::class,
             Controller\ApiAnrReferentialsController::class => Controller\ApiAnrReferentialsControllerFactory::class,
