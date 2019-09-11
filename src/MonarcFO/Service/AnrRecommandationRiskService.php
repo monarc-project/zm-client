@@ -82,27 +82,32 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
         $knownGlobObjId = $objectCache = [];
 
         if (isset($filterAnd['r.uuid']) && isset($filterAnd['r.anr'])) {
-            return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
-                if (!isset($knownGlobObjId[$objId][$in['threat']])) {
+            return array_filter($recosRisks, function ($recoRisk) use (&$knownGlobObjId, &$objectCache) {
+                $vulnerability = $recoRisk['vulnerability'];
+                $threat = $recoRisk['threat'];
+                if ($recoRisk['instanceRiskOp'] instanceof InstanceRiskOp
+                    || $vulnerability === null
+                    || $threat === null
+                ) {
                     return true;
                 }
 
-                $instance = $this->instanceTable->getEntity($in['instance']);
+                $instance = $this->instanceTable->getEntity($recoRisk['instance']);
                 $objId = $instance->object->uuid->toString();
 
-                if (!isset($knownGlobObjId[$objId][$in['threat']->uuid->toString()][$in['vulnerability']->uuid->toString()])) {
+                if (!isset($knownGlobObjId[$objId][$threat->uuid->toString()][$vulnerability->uuid->toString()])) {
                     $objectCache[$objId] = $instance->object;
                     if ($instance->object->scope == 2) { // SCOPE_GLOBAL
-                        $knownGlobObjId[$objId][$in['threat']->uuid->toString()][$in['vulnerability']->uuid->toString()] = $objId;
+                        $knownGlobObjId[$objId][$threat->uuid->toString()][$vulnerability->uuid->toString()] = $objId;
                     }
                     return true;
-                } else {
-                    return false;
                 }
+
+                return false;
             });
-        } else {
-            return $recosRisks;
         }
+
+        return $recosRisks;
     }
 
     /**
