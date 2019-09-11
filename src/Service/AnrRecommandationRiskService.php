@@ -82,27 +82,32 @@ class AnrRecommandationRiskService extends \Monarc\Core\Service\AbstractService
         $knownGlobObjId = $objectCache = [];
 
         if (isset($filterAnd['r.uuid']) && isset($filterAnd['r.anr'])) {
-            return array_filter($recosRisks, function ($in) use (&$knownGlobObjId, &$objectCache) {
-                if (!isset($knownGlobObjId[$objId][$in['threat']])) {
+            return array_filter($recosRisks, function ($recoRisk) use (&$knownGlobObjId, &$objectCache) {
+                $vulnerability = $recoRisk['vulnerability'];
+                $threat = $recoRisk['threat'];
+                if ($recoRisk['instanceRiskOp'] instanceof InstanceRiskOp
+                    || $vulnerability === null
+                    || $threat === null
+                ) {
                     return true;
                 }
 
-                $instance = $this->instanceTable->getEntity($in['instance']);
+                $instance = $this->instanceTable->getEntity($recoRisk['instance']);
                 $objId = $instance->object->uuid->toString();
 
-                if (!isset($knownGlobObjId[$objId][$in['threat']->uuid->toString()][$in['vulnerability']->uuid->toString()])) {
+                if (!isset($knownGlobObjId[$objId][$threat->uuid->toString()][$vulnerability->uuid->toString()])) {
                     $objectCache[$objId] = $instance->object;
                     if ($instance->object->scope == 2) { // SCOPE_GLOBAL
-                        $knownGlobObjId[$objId][$in['threat']->uuid->toString()][$in['vulnerability']->uuid->toString()] = $objId;
+                        $knownGlobObjId[$objId][$threat->uuid->toString()][$vulnerability->uuid->toString()] = $objId;
                     }
                     return true;
-                } else {
-                    return false;
                 }
+
+                return false;
             });
-        } else {
-            return $recosRisks;
         }
+
+        return $recosRisks;
     }
 
     /**
@@ -880,11 +885,11 @@ class AnrRecommandationRiskService extends \Monarc\Core\Service\AbstractService
             $table->delete($recommandationRisk->id);
         }
 
-        // Update brother's recommandation position if necessary
+        // Update brother's recommendation position if necessary
         $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
         if(empty($bros)){ // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
-            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>(int)$reco->get('position')]],['position'=>'ASC']);
             foreach($recos as $r){
                 $r->set('position',$r->get('position')-1);
                 $this->get('recommandationTable')->save($r,false);
