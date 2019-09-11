@@ -880,11 +880,11 @@ class AnrRecommandationRiskService extends \MonarcCore\Service\AbstractService
             $table->delete($recommandationRisk->id);
         }
 
-        // Update brother's recommandation position if necessary
+        // Update brother's recommendation position if necessary
         $bros = current($table->getEntityByFields(['anr' => $idAnr,'recommandation'=>$idReco, 'id'=>['op'=>'!=', 'value'=>$id]]));
         if(empty($bros)){ // is last recorisk
             $reco = $this->get('recommandationTable')->getEntity($idReco);
-            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>$reco->get('position')]],['position'=>'ASC']);
+            $recos = $this->get('recommandationTable')->getEntityByFields(['anr'=>$reco->get('anr')->get('id'), 'position' => ['op' => '>', 'value'=>(int)$reco->get('position')]],['position'=>'ASC']);
             foreach($recos as $r){
                 $r->set('position',$r->get('position')-1);
                 $this->get('recommandationTable')->save($r,false);
