@@ -3301,7 +3301,7 @@ class DeliverableGenerationService extends \MonarcCore\Service\AbstractService
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(1, ['bold' => true, 'size' => 12]);
-            $section->addTitle($recordEntity->get('label'),1);
+            $section->addTitle(_WT($recordEntity->get('label')),1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordGDPR($anr, $recordEntity->id);
             //create section
