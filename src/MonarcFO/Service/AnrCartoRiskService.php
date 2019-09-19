@@ -106,7 +106,7 @@ class AnrCartoRiskService extends \MonarcCore\Service\AbstractService
             foreach ($scales as $scale) {
                 if (isset($this->listScales[$scale->get('type')])) {
                     for ($i = $scale->get('min'); $i <= $scale->get('max'); $i++) {
-                        $this->listScales[$scale->get('type')][$i] = $i;
+                        array_push($this->listScales[$scale->get('type')],$i);
                     }
                 }
             }
