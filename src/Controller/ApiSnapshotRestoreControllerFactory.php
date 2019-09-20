@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiSnapshotRestoreControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\SnapshotService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\SnapshotService';
 }

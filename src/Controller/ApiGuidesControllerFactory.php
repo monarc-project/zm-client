@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiGuidesControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\Core\Service\GuideService';
+    protected $serviceName = 'Monarc\Core\Service\GuideService';
 }

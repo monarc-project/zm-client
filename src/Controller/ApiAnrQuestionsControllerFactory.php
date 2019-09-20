@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrQuestionsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrQuestionService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrQuestionService';
 }

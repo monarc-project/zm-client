@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrRolfTagsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrRolfTagService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrRolfTagService';
 }

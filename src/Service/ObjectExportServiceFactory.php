@@ -18,16 +18,16 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
     protected $class = "\\Monarc\Core\\Service\\ObjectExportService";
 
     protected $ressources = [
-        'table' => '\Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'entity' => '\Monarc\FrontOffice\Model\Entity\MonarcObject',
+        'table' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'entity' => 'Monarc\FrontOffice\Model\Entity\MonarcObject',
         'assetExportService' => 'Monarc\FrontOffice\Service\AssetExportService',
         'objectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectService',
-        'categoryTable' => '\Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
+        'categoryTable' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
         'assetService' => 'Monarc\FrontOffice\Service\AnrAssetService',
-        'anrObjectCategoryTable' => '\Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable',
-        'rolfTagTable' => '\Monarc\FrontOffice\Model\Table\RolfTagTable',
-        'rolfRiskTable' => '\Monarc\FrontOffice\Model\Table\RolfRiskTable',
-        'measureTable' => '\Monarc\FrontOffice\Model\Table\MeasureTable',
+        'anrObjectCategoryTable' => 'Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable',
+        'rolfTagTable' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
+        'rolfRiskTable' => 'Monarc\FrontOffice\Model\Table\RolfRiskTable',
+        'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
         'configService' => 'Monarc\Core\Service\ConfigService',
     ];
 }

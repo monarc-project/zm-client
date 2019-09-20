@@ -284,7 +284,7 @@ class Recommandation extends AbstractEntity
             if (!$partial) {
                 $validatorsCode = [
                     [
-                        'name' => '\Monarc\Core\Validator\UniqueCode',
+                        'name' => 'Monarc\Core\Validator\UniqueCode',
                         'options' => [
                             'entity' => $this
                         ],

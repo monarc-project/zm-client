@@ -27,7 +27,7 @@ class AnrRecommandationRiskServiceFactory extends AbstractServiceFactory
         'recommandationHistoricEntity' => 'Monarc\FrontOffice\Model\Entity\RecommandationHistoric',
         'anrService' => 'Monarc\FrontOffice\Service\AnrService',
         'anrInstanceService' => 'Monarc\FrontOffice\Service\AnrInstanceService',
-        'instanceTable' => '\Monarc\FrontOffice\Model\Table\InstanceTable',
-        'MonarcObjectTable' => '\Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
+        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
     ];
 }

@@ -14,5 +14,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiDeliveriesModelsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\Core\Service\DeliveriesModelsService';
+    protected $serviceName = 'Monarc\Core\Service\DeliveriesModelsService';
 }

@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiModelVerifyLanguageControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrService';
 }

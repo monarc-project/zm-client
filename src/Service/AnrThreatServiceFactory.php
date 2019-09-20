@@ -22,6 +22,6 @@ class AnrThreatServiceFactory extends AbstractServiceFactory
         'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
         'themeTable' => 'Monarc\FrontOffice\Model\Table\ThemeTable',
         'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'instanceRiskService' => '\Monarc\FrontOffice\Service\AnrInstanceRiskService',
+        'instanceRiskService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskService',
     ];
 }

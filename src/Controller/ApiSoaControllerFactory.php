@@ -17,7 +17,7 @@
 class ApiSoaControllerFactory extends AbstractControllerFactory
 {
 
-    protected $serviceName = '\Monarc\FrontOffice\Service\SoaService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\SoaService';
 
 
 }

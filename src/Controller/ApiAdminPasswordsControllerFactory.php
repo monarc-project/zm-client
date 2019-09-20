@@ -13,6 +13,6 @@ namespace Monarc\FrontOffice\Controller;
  */
 class ApiAdminPasswordsControllerFactory extends \Monarc\Core\Controller\AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\PasswordService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\PasswordService';
 }
 

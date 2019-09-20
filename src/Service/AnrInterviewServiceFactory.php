@@ -16,8 +16,8 @@ use Monarc\Core\Service\AbstractServiceFactory;
 class AnrInterviewServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => '\Monarc\FrontOffice\Model\Table\InterviewTable',
-        'entity' => '\Monarc\FrontOffice\Model\Entity\Interview',
+        'table' => 'Monarc\FrontOffice\Model\Table\InterviewTable',
+        'entity' => 'Monarc\FrontOffice\Model\Entity\Interview',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
         'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
     ];

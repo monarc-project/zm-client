@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrInstancesConsequencesControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrInstanceConsequenceService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrInstanceConsequenceService';
 }

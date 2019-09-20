@@ -15,6 +15,6 @@ namespace Monarc\FrontOffice\Controller;
  */
 class ApiAnrControllerFactory extends \Monarc\Core\Controller\AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrService';
 }
 

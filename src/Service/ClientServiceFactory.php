@@ -16,7 +16,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
 class ClientServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => '\Monarc\FrontOffice\Model\Table\ClientTable',
-        'entity' => '\Monarc\FrontOffice\Model\Entity\Client',
+        'table' => 'Monarc\FrontOffice\Model\Table\ClientTable',
+        'entity' => 'Monarc\FrontOffice\Model\Entity\Client',
     ];
 }

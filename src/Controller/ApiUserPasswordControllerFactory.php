@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiUserPasswordControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\PasswordService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\PasswordService';
 }

@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiClientsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\ClientService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\ClientService';
 }

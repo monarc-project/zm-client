@@ -17,5 +17,5 @@ use \Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrInstancesRisksControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrInstanceRiskService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrInstanceRiskService';
 }

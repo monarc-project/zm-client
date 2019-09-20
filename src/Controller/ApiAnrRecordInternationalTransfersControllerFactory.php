@@ -16,5 +16,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrRecordInternationalTransfersControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrRecordInternationalTransferService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrRecordInternationalTransferService';
 }

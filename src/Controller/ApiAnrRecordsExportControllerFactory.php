@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrRecordsExportControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrRecordService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrRecordService';
 }

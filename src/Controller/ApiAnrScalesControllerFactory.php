@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrScalesControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrScaleService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrScaleService';
 }

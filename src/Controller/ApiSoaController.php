@@ -88,7 +88,7 @@ class ApiSoaController extends  ApiAnrAbstractController
             }
             $entity['measure']->rolfRisks = $riskOpService->getRisksOp($anrId, null, ['rolfRisks' => $rolfRisks, 'limit' => -1 ,'order'=>'cacheNetRisk', 'order_direction' => 'desc']);
             $entity['measure']->amvs = $riskService->getRisks($anrId, null, ['amvs' => $amvs, 'limit' => -1, 'order'=>'maxRisk', 'order_direction' => 'desc']);
-            $this->formatDependencies($entities[$key], $this->dependencies, '\Monarc\FrontOffice\Model\Entity\Measure', ['category','referential']);
+            $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['category','referential']);
           }
       }
       return new JsonModel([
@@ -111,7 +111,7 @@ class ApiSoaController extends  ApiAnrAbstractController
        }
 
        if (count($this->dependencies)) {
-           $this->formatDependencies($entity, $this->dependencies, '\Monarc\FrontOffice\Model\Entity\Measure', ['category','referential']);
+           $this->formatDependencies($entity, $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['category','referential']);
        }
 
        return new JsonModel($entity);

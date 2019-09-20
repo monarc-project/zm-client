@@ -15,5 +15,5 @@ namespace Monarc\FrontOffice\Controller;
  */
 class ApiGuidesItemsControllerFactory extends \Monarc\Core\Controller\AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\Core\Service\GuideItemService';
+    protected $serviceName = 'Monarc\Core\Service\GuideItemService';
 }

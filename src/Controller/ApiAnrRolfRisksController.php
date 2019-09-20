@@ -26,7 +26,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         $entity = $this->getService()->getEntity($id);
 
         if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies, '\Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
+            $this->formatDependencies($entity, $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
         }
 
         return new JsonModel($entity);
@@ -50,7 +50,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         foreach ($rolfRisks as $key => $rolfRisk) {
 
             if (count($this->dependencies)) {
-                    $this->formatDependencies($rolfRisks[$key], $this->dependencies, '\Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
+                    $this->formatDependencies($rolfRisks[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
             }
 
             $rolfRisk['tags']->initialize();

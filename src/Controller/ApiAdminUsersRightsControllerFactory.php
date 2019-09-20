@@ -13,6 +13,6 @@ namespace Monarc\FrontOffice\Controller;
  */
 class ApiAdminUsersRightsControllerFactory extends \Monarc\Core\Controller\AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\UserAnrService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\UserAnrService';
 }
 

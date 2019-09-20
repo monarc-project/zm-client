@@ -68,7 +68,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         foreach($dependencies as $dependency) {
             if (!empty($entity[$dependency])) {
                 if (is_object($entity[$dependency])) {
-                    if (is_a($entity[$dependency], '\Monarc\Core\Model\Entity\AbstractEntity')) {
+                    if (is_a($entity[$dependency], 'Monarc\Core\Model\Entity\AbstractEntity')) {
                         if(is_a($entity[$dependency], $EntityDependency)){ //fetch more info
                           $entity[$dependency] = $entity[$dependency]->getJsonArray();
                             if(!empty($subField)){
@@ -91,7 +91,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                             $$dependency = $entity[$dependency]->getSnapshot();
                             $temp = [];
                             foreach($$dependency as $d){
-                                if(is_a($d, '\Monarc\FrontOffice\Model\Entity\RecordProcessor')) { //fetch more info
+                                if(is_a($d, 'Monarc\FrontOffice\Model\Entity\RecordProcessor')) { //fetch more info
                                     $d = $d->getJsonArray();
                                     if($d['representative']){
                                         $d['representative'] = $d['representative']->getJsonArray();
@@ -101,7 +101,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                                     }
                                     $temp[] = $d;
                                 }
-                                else if(is_a($d, '\Monarc\FrontOffice\Model\Entity\RecordPersonalData')) { //fetch more info
+                                else if(is_a($d, 'Monarc\FrontOffice\Model\Entity\RecordPersonalData')) { //fetch more info
                                     $d = $d->getJsonArray();
                                     $d['dataCategories']->initialize();
                                     if($d['dataCategories']->count()){
@@ -118,7 +118,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
 
                                     $temp[] = $d;
                                 }
-                                else if(is_a($d, '\Monarc\Core\Model\Entity\AbstractEntity')){
+                                else if(is_a($d, 'Monarc\Core\Model\Entity\AbstractEntity')){
                                     $temp[] = $d->getJsonArray();
                                 }else{
                                     $temp[] = $d;
@@ -128,7 +128,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                         }
                     }else if (is_array($entity[$dependency])) {
                         foreach($entity[$dependency] as $key => $value) {
-                            if (is_a($entity[$dependency][$key], '\Monarc\Core\Model\Entity\AbstractEntity')) {
+                            if (is_a($entity[$dependency][$key], 'Monarc\Core\Model\Entity\AbstractEntity')) {
                                 $entity[$dependency][$key] = $entity[$dependency][$key]->getJsonArray();
                                 unset($entity[$dependency][$key]['__initializer__']);
                                 unset($entity[$dependency][$key]['__cloner__']);

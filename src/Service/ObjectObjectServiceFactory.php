@@ -18,13 +18,13 @@ class ObjectObjectServiceFactory extends AbstractServiceFactory
     protected $class = "\\Monarc\Core\\Service\\ObjectObjectService";
 
     protected $ressources = [
-        'table' => '\Monarc\FrontOffice\Model\Table\ObjectObjectTable',
-        'entity' => '\Monarc\FrontOffice\Model\Entity\ObjectObject',
-        'anrTable' => '\Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => '\Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'instanceTable' => '\Monarc\FrontOffice\Model\Table\InstanceTable',
-        'MonarcObjectTable' => '\Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'childTable' => '\Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'fatherTable' => '\Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'table' => 'Monarc\FrontOffice\Model\Table\ObjectObjectTable',
+        'entity' => 'Monarc\FrontOffice\Model\Entity\ObjectObject',
+        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
+        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
+        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'childTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'fatherTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
     ];
 }

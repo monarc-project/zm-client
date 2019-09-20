@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrDeliverableControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\DeliverableGenerationService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\DeliverableGenerationService';
 }

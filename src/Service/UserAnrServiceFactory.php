@@ -16,9 +16,9 @@ use Monarc\Core\Service\AbstractServiceFactory;
 class UserAnrServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => '\Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'entity' => '\Monarc\FrontOffice\Model\Entity\UserAnr',
-        'anrTable' => '\Monarc\FrontOffice\Model\Table\AnrTable',
-        'userTable' => '\Monarc\FrontOffice\Model\Table\UserTable',
+        'table' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'entity' => 'Monarc\FrontOffice\Model\Entity\UserAnr',
+        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
+        'userTable' => 'Monarc\FrontOffice\Model\Table\UserTable',
     ];
 }

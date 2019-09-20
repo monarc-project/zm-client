@@ -18,10 +18,10 @@ class ObjectCategoryServiceFactory extends AbstractServiceFactory
     protected $class = "\\Monarc\Core\\Service\\ObjectCategoryService";
 
     protected $ressources = [
-        'table' => '\Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
-        'entity' => '\Monarc\FrontOffice\Model\Entity\ObjectCategory',
-        'anrObjectCategoryTable' => '\Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable',
-        'MonarcObjectTable' => '\Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'table' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
+        'entity' => 'Monarc\FrontOffice\Model\Entity\ObjectCategory',
+        'anrObjectCategoryTable' => 'Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable',
+        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
         'rootTable' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
         'parentTable' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',

@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiDashboardAnrCartoRisksControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrCartoRiskService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrCartoRiskService';
 }

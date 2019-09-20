@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrRecommandationsHistoricsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrRecommandationHistoricService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrRecommandationHistoricService';
 }

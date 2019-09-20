@@ -74,7 +74,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies, '\Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
+                $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
             }
         }
 
@@ -97,7 +97,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
       $entity = $this->getService()->getEntity($id);
 
         if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies, '\Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
+            $this->formatDependencies($entity, $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
         }
 
         // Find out the entity's implicitPosition and previous

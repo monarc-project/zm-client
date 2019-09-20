@@ -15,5 +15,5 @@ namespace Monarc\FrontOffice\Controller;
  */
 class ApiSnapshotControllerFactory extends \Monarc\Core\Controller\AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\SnapshotService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\SnapshotService';
 }

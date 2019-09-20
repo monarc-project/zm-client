@@ -16,5 +16,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrRecordActorsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrRecordActorService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrRecordActorService';
 }

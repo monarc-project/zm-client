@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrRecommandationsRisksValidateControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrRecommandationRiskService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrRecommandationRiskService';
 }

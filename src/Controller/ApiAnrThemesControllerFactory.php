@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrThemesControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrThemeService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrThemeService';
 }

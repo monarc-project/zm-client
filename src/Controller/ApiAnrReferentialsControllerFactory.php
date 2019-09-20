@@ -16,5 +16,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrReferentialsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrReferentialService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrReferentialService';
 }

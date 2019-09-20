@@ -17,6 +17,6 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiSoaCategoryControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\SoaCategoryService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\SoaCategoryService';
 
 }

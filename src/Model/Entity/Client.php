@@ -134,7 +134,7 @@ class Client extends AbstractEntity
             $validators = [];
             if (!$partial) {
                 $validators[] = [
-                    'name' => '\Monarc\FrontOffice\Validator\UniqueClientProxyAlias',
+                    'name' => 'Monarc\FrontOffice\Validator\UniqueClientProxyAlias',
                     'options' => [
                         'adapter' => $this->getDbAdapter(),
                         'id' => $this->get('id'),

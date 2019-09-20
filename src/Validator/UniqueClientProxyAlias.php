@@ -35,7 +35,7 @@ class UniqueClientProxyAlias extends AbstractValidator
         if (empty($this->options['adapter'])) {
             return false;
         } else {
-            $res = $this->options['adapter']->getRepository('\Monarc\FrontOffice\Model\Entity\Client')->findOneByProxyAlias($value);
+            $res = $this->options['adapter']->getRepository('Monarc\FrontOffice\Model\Entity\Client')->findOneByProxyAlias($value);
             if (!empty($res) && $this->options['id'] != $res->get('id')) {
                 $this->error(self::ALREADYUSED);
                 return false;

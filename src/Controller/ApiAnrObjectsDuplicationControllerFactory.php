@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrObjectsDuplicationControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\ObjectService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\ObjectService';
 }

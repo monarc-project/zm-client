@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrInstancesImportControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrInstanceService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrInstanceService';
 }

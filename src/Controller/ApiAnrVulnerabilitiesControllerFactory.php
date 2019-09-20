@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrVulnerabilitiesControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrVulnerabilityService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrVulnerabilityService';
 }

@@ -17,6 +17,6 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrInterviewsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\AnrInterviewService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\AnrInterviewService';
 }
 

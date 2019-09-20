@@ -17,5 +17,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrLibraryCategoryControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = '\Monarc\FrontOffice\Service\ObjectCategoryService';
+    protected $serviceName = 'Monarc\FrontOffice\Service\ObjectCategoryService';
 }

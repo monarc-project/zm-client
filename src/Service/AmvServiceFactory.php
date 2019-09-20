@@ -21,12 +21,12 @@ class AmvServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\AmvTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\Amv',
-        'anrTable' => '\Monarc\FrontOffice\Model\Table\AnrTable',
-        'assetTable' => '\Monarc\FrontOffice\Model\Table\AssetTable',
-        'instanceTable' => 'Monarc\Core\Model\Table\InstanceTable',
-        'measureTable' => '\Monarc\FrontOffice\Model\Table\MeasureTable',
-        'threatTable' => '\Monarc\FrontOffice\Model\Table\ThreatTable',
-        'vulnerabilityTable' => '\Monarc\FrontOffice\Model\Table\VulnerabilityTable',
+        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
+        'assetTable' => 'Monarc\FrontOffice\Model\Table\AssetTable',
+        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
+        'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
+        'threatTable' => 'Monarc\FrontOffice\Model\Table\ThreatTable',
+        'vulnerabilityTable' => 'Monarc\FrontOffice\Model\Table\VulnerabilityTable',
 
     ];
 }
