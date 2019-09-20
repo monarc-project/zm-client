@@ -7,7 +7,10 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Delivery;
 
 /**
  * Class DeliveryTable
@@ -15,12 +18,8 @@ use Monarc\Core\Model\Table\AbstractEntityTable;
  */
 class DeliveryTable extends AbstractEntityTable
 {
-    /**
-     * DeliveryTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\Delivery');
+        parent::__construct($dbService, Delivery::class, $connectedUserService);
     }
 }

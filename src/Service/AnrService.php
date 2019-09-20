@@ -7,10 +7,10 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Model;
 use Monarc\Core\Model\Entity\User as CoreUser;
+use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Table\ModelTable;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
@@ -20,12 +20,11 @@ use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 use Monarc\FrontOffice\Model\Entity\RecommandationHistoric;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\User;
+use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\ClientTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
-use Monarc\FrontOffice\Model\Table\UserRoleTable;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Threat;
@@ -123,22 +122,10 @@ class AnrService extends \Monarc\Core\Service\AbstractService
         /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
 
-        /** @var CoreUser $connectedUser */
+        /** @var UserSuperClass $connectedUser */
         $connectedUser = $userCliTable->getConnectedUser();
 
-        // Retrieve roles for connected user
-        /** @var UserRoleTable $userRoleTable */
-        $userRoleTable = $this->get('userRoleTable');
-        $userRoles = $userRoleTable->getEntityByFields(['user' => $connectedUser->getId()]);
-
-        // Verify if connected user is admin
-        $isSuperAdmin = false;
-        foreach ($userRoles as $userRole) {
-            if ($userRole->role == 'superadminfo') {
-                $isSuperAdmin = true;
-                break;
-            }
-        }
+        $isSuperAdmin = $connectedUser->hasRole(UserRole::SUPER_ADMIN_FO);
 
         // Retrieve connected user anrs
         $filterAnd['id'] = [];
@@ -172,10 +159,14 @@ class AnrService extends \Monarc\Core\Service\AbstractService
             $filterAnd
         );
 
-        $user = $userCliTable->get($connectedUser->getId());
+        /** @var User $user */
+        $user = $userCliTable->findById($connectedUser->getId());
         foreach ($anrs as &$anr) {
             //verify if this is the last current user's anr
-            $anr['isCurrentAnr'] = (isset($user['currentAnr']) && $anr['id'] == $user['currentAnr']->get('id'))?1:0;
+            $anr['isCurrentAnr'] = 0;
+            if ($user->getCurrentAnr() !== null && $anr['id'] === $user->getCurrentAnr()->getId()) {
+                $anr['isCurrentAnr'] = 1;
+            }
 
             $lk = current($this->get('userAnrCliTable')->getEntityByFields([
                 'user' => $connectedUser->getId(),
@@ -224,7 +215,7 @@ class AnrService extends \Monarc\Core\Service\AbstractService
             $anr['rwd'] = 0;
             $anr['snapshotParent'] = $anrSnapshot->get('anrReference')->get('id');
         } else {
-            /** @var ClientTable $userCliTable */
+            /** @var UserTable $userCliTable */
             $userCliTable = $this->get('userCliTable');
 
             /** @var CoreUser $connectedUser */
@@ -479,7 +470,7 @@ class AnrService extends \Monarc\Core\Service\AbstractService
             if (!$isSnapshot && !$isSnapshotCloning) { // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
                 //add user to anr
                 $userCliTable = $this->get('userCliTable');
-                $user = $userCliTable->getEntity($connectedUser->getId());
+                $user = $userCliTable->findById($connectedUser->getId());
                 $userAnr = new \Monarc\FrontOffice\Model\Entity\UserAnr();
                 $userAnr->set('id', null);
                 $userAnr->setUser($user);
@@ -1256,12 +1247,12 @@ class AnrService extends \Monarc\Core\Service\AbstractService
 
         //retrieve connected user information
         /** @var User $user */
-        $user = $userCliTable->getEntity($connectedUser->getId());
+        $user = $userCliTable->findById($connectedUser->getId());
 
         //record last anr to user
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');
-        $user->set('currentAnr', $anrCliTable->getEntity($anrId));
+        $user->setCurrentAnr($anrCliTable->getEntity($anrId));
         $userCliTable->save($user);
     }
 

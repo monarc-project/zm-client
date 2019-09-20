@@ -32,15 +32,15 @@ class ApiModelsController extends AbstractController
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
         $isGeneric = $this->params()->fromQuery('isGeneric');
-        $status = strval($this->params()->fromQuery('status', \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE));
+        $status = (string)$this->params()->fromQuery('status', \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE);
 
         $service = $this->getService();
         switch ($status) {
-            case strval(\Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE):
+            case (string)\Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE:
                 $filterAnd = ['status' => \Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE];
                 break;
             default:
-            case strval(\Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE):
+            case (string)\Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE:
                 $filterAnd = ['status' => \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE];
                 break;
             case 'all':

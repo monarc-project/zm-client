@@ -8,6 +8,9 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Record;
 
 /**
  * Class RecordTable
@@ -15,12 +18,8 @@ use Monarc\Core\Model\Table\AbstractEntityTable;
  */
 class RecordTable extends AbstractEntityTable
 {
-    /**
-     * RecordTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\Record');
+        parent::__construct($dbService, Record::class, $connectedUserService);
     }
 }

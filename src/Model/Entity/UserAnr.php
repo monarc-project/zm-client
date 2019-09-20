@@ -30,10 +30,8 @@ class UserAnr extends AbstractEntity
     /**
      * @var \Monarc\FrontOffice\Model\Entity\User
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\User", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
-     * })
+     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\User", cascade={"persist"}, inversedBy="anrs")
+     * @ORM\JoinColumn(nullable=false)
      */
     protected $user;
 
@@ -48,7 +46,7 @@ class UserAnr extends AbstractEntity
     protected $anr;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="rwd", type="smallint", nullable=true, options={"unsigned":true, "default":1})
      */

@@ -7,21 +7,39 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Db;
+use Monarc\Core\Model\Table\PasswordTokenTable;
+use Monarc\Core\Model\Table\UserTable as CoreUserTable;
+use Monarc\Core\Model\Table\UserTokenTable;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\User;
 
 /**
+ * TODO: this class will be removed when we get rid of the AbstractEntityTable inheritance.
+ * this class is used only to redefine entity class and used for abstract generic methods,
+ * but our goal to avoid the generic code style and make it simple.
+ *
  * Class UserTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class UserTable extends \Monarc\Core\Model\Table\UserTable
+class UserTable extends CoreUserTable
 {
-    /**
-     * UserTable constructor.
-     * @param Db $dbService
-     */
-    public function __construct(Db $dbService)
+    public function __construct(
+        DbCli $dbService,
+        ConnectedUserService $connectedUserService,
+        UserTokenTable $userTokenTable,
+        PasswordTokenTable $passwordTokenTable
+    ) {
+        parent::__construct(
+            $dbService,
+            $connectedUserService,
+            $userTokenTable,
+            $passwordTokenTable
+        );
+    }
+
+    public function getEntityClass(): string
     {
-        parent::__construct($dbService, User::class);
+        return User::class;
     }
 }

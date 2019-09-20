@@ -75,7 +75,6 @@ class AnrServiceFactory extends AbstractServiceFactory
         'themeCliTable' => 'Monarc\FrontOffice\Model\Table\ThemeTable',
         'userCliTable' => 'Monarc\FrontOffice\Model\Table\UserTable',
         'userAnrCliTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'userRoleTable' => 'Monarc\FrontOffice\Model\Table\UserRoleTable',
         'vulnerabilityCliTable' => 'Monarc\FrontOffice\Model\Table\VulnerabilityTable',
         'questionCliTable' => 'Monarc\FrontOffice\Model\Table\QuestionTable',
         'questionChoiceCliTable' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',

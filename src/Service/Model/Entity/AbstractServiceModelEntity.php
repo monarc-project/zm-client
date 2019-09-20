@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Service\Model\Entity;
 
-use Monarc\Core\Model\DbCli;
+use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Zend\Http\PhpEnvironment\Request;
-use Zend\Mvc\Router\Http\TreeRouteStack;
-use Zend\Mvc\Router\RouteMatch;
+use Zend\Router\Http\TreeRouteStack;
+use Zend\Router\RouteMatch;
 
 /**
  * Class AbstractServiceModelEntity
@@ -37,7 +37,7 @@ abstract class AbstractServiceModelEntity extends \Monarc\Core\Service\Model\Ent
 
                 if ($anrId) {
                     /** @var AnrTable $anrTable */
-                    $anrTable = $sm->get('\Monarc\FrontOffice\Model\Table\AnrTable');
+                    $anrTable = $sm->get(AnrTable::class);
                     $anr = $anrTable->getEntity($anrId);
 
                     if ($anr->get('language')) {

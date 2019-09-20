@@ -7,18 +7,18 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Instance;
+
 /**
  * Class InstanceTable
  * @package Monarc\FrontOffice\Model\Table
  */
 class InstanceTable extends \Monarc\Core\Model\Table\InstanceTable
 {
-    /**
-     * InstanceTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\Instance');
+        parent::__construct($dbService, Instance::class, $connectedUserService);
     }
 }

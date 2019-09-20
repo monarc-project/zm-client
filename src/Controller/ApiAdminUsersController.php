@@ -7,7 +7,10 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Service\UserService;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
+use Monarc\FrontOffice\Service\UserService;
+use Zend\Mvc\Controller\AbstractRestfulController;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -16,9 +19,19 @@ use Zend\View\Model\JsonModel;
  * Class ApiAdminUsersController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiAdminUsersController extends \Monarc\Core\Controller\AbstractController
+class ApiAdminUsersController extends AbstractRestfulController
 {
-    protected $name = 'users';
+    /** @var CreateUserInputValidator */
+    private $createUserInputValidator;
+
+    /** @var UserService */
+    private $userService;
+
+    public function __construct(CreateUserInputValidator $createUserInputValidator, UserService $userService)
+    {
+        $this->createUserInputValidator = $createUserInputValidator;
+        $this->userService = $userService;
+    }
 
     /**
      * @inheritdoc
@@ -29,24 +42,14 @@ class ApiAdminUsersController extends \Monarc\Core\Controller\AbstractController
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-        $status = $this->params()->fromQuery('status');
-        if (is_null($status)) {
-            $status = 1;
-        }
-        $filterAnd = ($status == "all") ? null : ['status' => (int) $status] ;
-
-        $service = $this->getService();
-
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
+        $status = $this->params()->fromQuery('status', 1);
+        $filterAnd = $status === 'all'
+            ? null
+            : ['status' => (int)$status];
 
         return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
+            'count' => $this->userService->getFilteredCount($filter, $filterAnd),
+            'users' => $this->userService->getList($page, $limit, $order, $filter, $filterAnd)
         ));
     }
 
@@ -55,15 +58,19 @@ class ApiAdminUsersController extends \Monarc\Core\Controller\AbstractController
      */
     public function create($data)
     {
-        /** @var UserService $service */
-        $service = $this->getService();
+        if (!$this->createUserInputValidator->isValid($data)) {
+            throw new Exception(
+                'Data validation errors: [ ' . json_encode($this->createUserInputValidator->getErrorMessages()),
+                400
+            );
+                // TODO: make it on the application level to throw a particular exception interface and process in Module.
+    //            return new JsonModel([
+    //                'httpStatus' => 400,
+    //                'errors' => $this->createUserInputValidator->getErrorMessages(),
+    //            ]);
+        }
 
-        // Security: Don't allow changing role, password, status and history fields. To clean later.
-        if (isset($data['salt'])) unset($data['salt']);
-        if (isset($data['dateStart'])) unset($data['dateStart']);
-        if (isset($data['dateEnd'])) unset($data['dateEnd']);
-
-        $service->create($data);
+        $this->userService->create($this->createUserInputValidator->getValidData());
 
         return new JsonModel(['status' => 'ok']);
     }
@@ -73,21 +80,37 @@ class ApiAdminUsersController extends \Monarc\Core\Controller\AbstractController
      */
     public function update($id, $data)
     {
-        /** @var UserService $service */
-        $service = $this->getService();
-
+        // TODO: The request data filtration is responsibility of the sanitization layer + validation should be applied.
         // Security: Don't allow changing role, password, status and history fields. To clean later.
-        if (isset($data['status'])) unset($data['status']);
-        if (isset($data['id'])) unset($data['id']);
-        if (isset($data['salt'])) unset($data['salt']);
-        if (isset($data['updatedAt'])) unset($data['updatedAt']);
-        if (isset($data['updater'])) unset($data['updater']);
-        if (isset($data['createdAt'])) unset($data['createdAt']);
-        if (isset($data['creator'])) unset($data['creator']);
-        if (isset($data['dateStart'])) unset($data['dateStart']);
-        if (isset($data['dateEnd'])) unset($data['dateEnd']);
+        if (isset($data['status'])) {
+            unset($data['status']);
+        }
+        if (isset($data['id'])) {
+            unset($data['id']);
+        }
+        if (isset($data['salt'])) {
+            unset($data['salt']);
+        }
+        if (isset($data['updatedAt'])) {
+            unset($data['updatedAt']);
+        }
+        if (isset($data['updater'])) {
+            unset($data['updater']);
+        }
+        if (isset($data['createdAt'])) {
+            unset($data['createdAt']);
+        }
+        if (isset($data['creator'])) {
+            unset($data['creator']);
+        }
+        if (isset($data['dateStart'])) {
+            unset($data['dateStart']);
+        }
+        if (isset($data['dateEnd'])) {
+            unset($data['dateEnd']);
+        }
 
-        $service->update($id, $data);
+        $this->userService->update($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
@@ -97,15 +120,28 @@ class ApiAdminUsersController extends \Monarc\Core\Controller\AbstractController
      */
     public function get($id)
     {
-        /** @var UserService $service */
-        $service = $this->getService();
-        $entity = $service->getCompleteUser($id);
+        return new JsonModel($this->userService->getCompleteUser($id));
+    }
 
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
-        }
+    /**
+     * @inheritdoc
+     */
+    public function delete($id)
+    {
+        $this->userService->delete($id);
 
-        return new JsonModel($entity);
+        $this->getResponse()->setStatusCode(204);
+
+        return new JsonModel();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function patch($id, $data)
+    {
+        $this->userService->patch($id, $data);
+
+        return new JsonModel(array('status' => 'ok'));
     }
 }
-

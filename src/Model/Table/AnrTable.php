@@ -7,7 +7,11 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
+use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 
 /**
  * Class AnrTable
@@ -15,12 +19,22 @@ use Monarc\Core\Model\Table\AbstractEntityTable;
  */
 class AnrTable extends AbstractEntityTable
 {
-    /**
-     * AnrTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\Anr');
+        parent::__construct($dbService, Anr::class, $connectedUserService);
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     */
+    public function findById(int $anrId): Anr
+    {
+        /** @var Anr|null $anr */
+        $anr = $this->getRepository()->find($anrId);
+        if ($anr === null) {
+            throw new EntityNotFoundException(sprintf('Anr with id "%d" was not found', $anrId));
+        }
+
+        return $anr;
     }
 }

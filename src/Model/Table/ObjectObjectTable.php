@@ -7,18 +7,19 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Table\ObjectObjectTable as CoreObjectObjectTable;
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\ObjectObject;
+
 /**
  * Class ObjectObjectTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class ObjectObjectTable extends \Monarc\Core\Model\Table\ObjectObjectTable
+class ObjectObjectTable extends CoreObjectObjectTable
 {
-    /**
-     * ObjectObjectTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\ObjectObject');
+        parent::__construct($dbService, ObjectObject::class, $connectedUserService);
     }
 }

@@ -7,19 +7,19 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
+
 /**
  * Class InstanceRiskTable
  * @package Monarc\FrontOffice\Model\Table
  */
 class InstanceRiskTable extends \Monarc\Core\Model\Table\InstanceRiskTable
 {
-    /**
-     * InstanceRiskTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\InstanceRisk');
+        parent::__construct($dbService, InstanceRisk::class, $connectedUserService);
     }
 
     /**

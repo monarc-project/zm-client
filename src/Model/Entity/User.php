@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\UserRoleSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 
 /**
@@ -19,12 +21,70 @@ use Monarc\Core\Model\Entity\UserSuperClass;
 class User extends UserSuperClass
 {
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr|null
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="current_anr_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $currentAnr;
+
+    /**
+     * @var ArrayCollection
+     *
+     * @ORM\OneToMany(targetEntity="UserAnr", orphanRemoval=true, mappedBy="user")
+     */
+    protected $anrs;
+
+    public function __construct(array $data)
+    {
+        parent::__construct($data);
+
+        $this->anrs = new ArrayCollection();
+        if (!empty($data['anrs'])) {
+            $this->setAnrs($data['anrs']);
+        }
+        if (isset($data['currentAnr'])) {
+            $this->currentAnr = $data['currentAnr'];
+        }
+    }
+
+    public function getCurrentAnr(): ?Anr
+    {
+        return $this->currentAnr;
+    }
+
+    public function setCurrentAnr(Anr $currentAnr): self
+    {
+        $this->currentAnr = $currentAnr;
+
+        return $this;
+    }
+
+    public function getAnrs(): array
+    {
+        return $this->anrs->toArray();
+    }
+
+    public function setAnrs(array $anrs): self
+    {
+        $this->anrs = new ArrayCollection();
+        foreach ($anrs as $anr) {
+            // TODO: after refactoring we can use: $this->anrs->add(new UserAnr($anr));
+            $userAnr = (new UserAnr())
+                ->setAnr($anr['anr'])
+                ->setUser($this)
+                ->setRwd($anr['rwd']);
+
+            $this->anrs->add($userAnr);
+        }
+
+        return $this;
+    }
+
+    protected function createRole(string $role): UserRoleSuperClass
+    {
+        return new UserRole($this, $role);
+    }
 }

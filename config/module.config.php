@@ -2,12 +2,15 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
 use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\Entity;
-use Monarc\Frontoffice\Service;
+use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Validator\UniqueClientProxyAlias;
 use Zend\Di\Container\AutowireFactory;
+use Zend\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 
 return [
     'router' => [
@@ -896,7 +899,7 @@ return [
     'controllers' => [
         'factories' => [
             Controller\ApiAdminPasswordsController::class => Controller\ApiAdminPasswordsControllerFactory::class,
-            Controller\ApiAdminUsersController::class => Controller\ApiAdminUsersControllerFactory::class,
+            Controller\ApiAdminUsersController::class => AutowireFactory::class,
             Controller\ApiAdminUsersRolesController::class => AutowireFactory::class,
             Controller\ApiAdminUsersRightsController::class => Controller\ApiAdminUsersRightsControllerFactory::class,
             Controller\ApiAnrController::class => Controller\ApiAnrControllerFactory::class,
@@ -992,57 +995,60 @@ return [
     'service_manager' => [
         'invokables' => [
             Entity\UserAnr::class => Entity\UserAnr::class,
-            Entity\UserRole::class => Entity\UserRole::class,
+
+            //validators
+            UniqueClientProxyAlias::class => UniqueClientProxyAlias::class,
         ],
         'factories' => [
-            // TODO: refactor the strange relation between Table and ServiceModelTable, the same for entities.
-            '\Monarc\FrontOffice\Model\Table\AmvTable' => '\Monarc\FrontOffice\Service\Model\Table\AmvServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable' => '\Monarc\FrontOffice\Service\Model\Table\AnrObjectCategoryServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\AnrTable' => '\Monarc\FrontOffice\Service\Model\Table\AnrServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\AssetTable' => '\Monarc\FrontOffice\Service\Model\Table\AssetServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ClientTable' => '\Monarc\FrontOffice\Service\Model\Table\ClientServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\DeliveryTable' => '\Monarc\FrontOffice\Service\Model\Table\DeliveryServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\InstanceTable' => '\Monarc\FrontOffice\Service\Model\Table\InstanceServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\InstanceConsequenceTable' => '\Monarc\FrontOffice\Service\Model\Table\InstanceConsequenceServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\InstanceRiskTable' => '\Monarc\FrontOffice\Service\Model\Table\InstanceRiskServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\InstanceRiskOpTable' => '\Monarc\FrontOffice\Service\Model\Table\InstanceRiskOpServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\InterviewTable' => '\Monarc\FrontOffice\Service\Model\Table\InterviewServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\MeasureTable' => '\Monarc\FrontOffice\Service\Model\Table\MeasureServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\MeasureMeasureTable' => '\Monarc\FrontOffice\Service\Model\Table\MeasureMeasureServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\MonarcObjectTable' => '\Monarc\FrontOffice\Service\Model\Table\MonarcObjectServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ObjectCategoryTable' => '\Monarc\FrontOffice\Service\Model\Table\ObjectCategoryServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ObjectObjectTable' => '\Monarc\FrontOffice\Service\Model\Table\ObjectObjectServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\PasswordTokenTable' => '\Monarc\FrontOffice\Service\Model\Table\PasswordTokenServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RolfRiskTable' => '\Monarc\FrontOffice\Service\Model\Table\RolfRiskServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RolfTagTable' => '\Monarc\FrontOffice\Service\Model\Table\RolfTagServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecordActorTable' => '\Monarc\FrontOffice\Service\Model\Table\RecordActorServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecordDataCategoryTable' => '\Monarc\FrontOffice\Service\Model\Table\RecordDataCategoryServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecordInternationalTransferTable' => '\Monarc\FrontOffice\Service\Model\Table\RecordInternationalTransferServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecordPersonalDataTable' => '\Monarc\FrontOffice\Service\Model\Table\RecordPersonalDataServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecordProcessorTable' => '\Monarc\FrontOffice\Service\Model\Table\RecordProcessorServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecordRecipientTable' => '\Monarc\FrontOffice\Service\Model\Table\RecordRecipientServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecordTable' => '\Monarc\FrontOffice\Service\Model\Table\RecordServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ReferentialTable' => '\Monarc\FrontOffice\Service\Model\Table\ReferentialServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecommandationTable' => '\Monarc\FrontOffice\Service\Model\Table\RecommandationServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecommandationHistoricTable' => '\Monarc\FrontOffice\Service\Model\Table\RecommandationHistoricServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecommandationRiskTable' => '\Monarc\FrontOffice\Service\Model\Table\RecommandationRiskServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\RecommandationSetTable' => '\Monarc\FrontOffice\Service\Model\Table\RecommandationSetServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ScaleTable' => '\Monarc\FrontOffice\Service\Model\Table\ScaleServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ScaleCommentTable' => '\Monarc\FrontOffice\Service\Model\Table\ScaleCommentServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable' => '\Monarc\FrontOffice\Service\Model\Table\ScaleImpactTypeServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\SnapshotTable' => '\Monarc\FrontOffice\Service\Model\Table\SnapshotServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\SoaTable' => '\Monarc\FrontOffice\Service\Model\Table\SoaServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\SoaCategoryTable' => '\Monarc\FrontOffice\Service\Model\Table\SoaCategoryServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ThemeTable' => '\Monarc\FrontOffice\Service\Model\Table\ThemeServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\ThreatTable' => '\Monarc\FrontOffice\Service\Model\Table\ThreatServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\UserTable' => '\Monarc\FrontOffice\Service\Model\Table\UserServiceModelTable',
+            DbCli::class => Service\Model\DbCliFactory::class,
+
+            Table\AmvTable::class => AutowireFactory::class,
+            Table\AnrObjectCategoryTable::class => AutowireFactory::class,
+            Table\AnrTable::class => AutowireFactory::class,
+            Table\AssetTable::class => AutowireFactory::class,
+            Table\ClientTable::class => AutowireFactory::class,
+            Table\InstanceTable::class => AutowireFactory::class,
+            Table\DeliveryTable::class => AutowireFactory::class,
+            Table\InstanceConsequenceTable::class => AutowireFactory::class,
+            Table\InstanceRiskTable::class => AutowireFactory::class,
+            Table\InstanceRiskOpTable::class => AutowireFactory::class,
+            Table\InterviewTable::class => AutowireFactory::class,
+            Table\MeasureTable::class => AutowireFactory::class,
+            Table\MeasureMeasureTable::class => AutowireFactory::class,
+            Table\MonarcObjectTable::class => AutowireFactory::class,
+            Table\ObjectCategoryTable::class => AutowireFactory::class,
+            Table\ObjectObjectTable::class => AutowireFactory::class,
+            Table\PasswordTokenTable::class => AutowireFactory::class,
+            Table\RolfRiskTable::class => AutowireFactory::class,
+            Table\RolfTagTable::class => AutowireFactory::class,
+            Table\RecordActorTable::class => AutowireFactory::class,
+            Table\RecordDataCategoryTable::class => AutowireFactory::class,
+            Table\RecordInternationalTransferTable::class => AutowireFactory::class,
+            Table\RecordPersonalDataTable::class => AutowireFactory::class,
+            Table\RecordProcessorTable::class => AutowireFactory::class,
+            Table\RecordRecipientTable::class => AutowireFactory::class,
+            Table\RecordTable::class => AutowireFactory::class,
+            Table\ReferentialTable::class => AutowireFactory::class,
+            Table\RecommandationTable::class => AutowireFactory::class,
+            Table\RecommandationHistoricTable::class => AutowireFactory::class,
+            Table\RecommandationRiskTable::class => AutowireFactory::class,
+            Table\RecommandationSetTable::class => AutowireFactory::class,
+            Table\ScaleTable::class => AutowireFactory::class,
+            Table\ScaleCommentTable::class => AutowireFactory::class,
+            Table\ScaleImpactTypeTable::class => AutowireFactory::class,
+            Table\SnapshotTable::class => AutowireFactory::class,
+            Table\SoaTable::class => AutowireFactory::class,
+            Table\SoaCategoryTable::class => AutowireFactory::class,
+            Table\ThemeTable::class => AutowireFactory::class,
+            Table\ThreatTable::class => AutowireFactory::class,
+            Table\UserTable::class => AutowireFactory::class,
             Table\UserAnrTable::class => AutowireFactory::class,
-            Table\UserRoleTable::class => AutowireFactory::class,
-            '\Monarc\FrontOffice\Model\Table\VulnerabilityTable' => '\Monarc\FrontOffice\Service\Model\Table\VulnerabilityServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\QuestionTable' => '\Monarc\FrontOffice\Service\Model\Table\QuestionServiceModelTable',
-            '\Monarc\FrontOffice\Model\Table\QuestionChoiceTable' => '\Monarc\FrontOffice\Service\Model\Table\QuestionChoiceServiceModelTable',
+            Table\VulnerabilityTable::class => AutowireFactory::class,
+            Table\QuestionTable::class => AutowireFactory::class,
+            Table\QuestionChoiceTable::class => AutowireFactory::class,
 
             //entities
+            // TODO: refactor the strange relation between Table and ServiceModelTable, the same for entities.
             '\Monarc\FrontOffice\Model\Entity\Amv' => '\Monarc\FrontOffice\Service\Model\Entity\AmvServiceModelEntity',
             '\Monarc\FrontOffice\Model\Entity\Anr' => '\Monarc\FrontOffice\Service\Model\Entity\AnrServiceModelEntity',
             '\Monarc\FrontOffice\Model\Entity\AnrObjectCategory' => '\Monarc\FrontOffice\Service\Model\Entity\AnrObjectCategoryServiceModelEntity',
@@ -1082,7 +1088,8 @@ return [
             '\Monarc\FrontOffice\Model\Entity\SoaCategory' => '\Monarc\FrontOffice\Service\Model\Entity\SoaCategoryServiceModelEntity',
             '\Monarc\FrontOffice\Model\Entity\Theme' => '\Monarc\FrontOffice\Service\Model\Entity\ThemeServiceModelEntity',
             '\Monarc\FrontOffice\Model\Entity\Threat' => '\Monarc\FrontOffice\Service\Model\Entity\ThreatServiceModelEntity',
-            '\Monarc\FrontOffice\Model\Entity\User' => '\Monarc\FrontOffice\Service\Model\Entity\UserServiceModelEntity',
+            // TODO: normally non of them is needed.
+            // '\Monarc\FrontOffice\Model\Entity\User' => '\Monarc\FrontOffice\Service\Model\Entity\UserServiceModelEntity',
             '\Monarc\FrontOffice\Model\Entity\Vulnerability' => '\Monarc\FrontOffice\Service\Model\Entity\VulnerabilityServiceModelEntity',
             '\Monarc\FrontOffice\Model\Entity\Question' => '\Monarc\FrontOffice\Service\Model\Entity\QuestionServiceModelEntity',
             '\Monarc\FrontOffice\Model\Entity\QuestionChoice' => '\Monarc\FrontOffice\Service\Model\Entity\QuestionChoiceServiceModelEntity',
@@ -1091,7 +1098,7 @@ return [
             '\Monarc\FrontOffice\Service\AnrService' => '\Monarc\FrontOffice\Service\AnrServiceFactory',
             '\Monarc\FrontOffice\Service\AnrCoreService' => '\Monarc\FrontOffice\Service\AnrCoreServiceFactory',
             '\Monarc\FrontOffice\Service\SnapshotService' => '\Monarc\FrontOffice\Service\SnapshotServiceFactory',
-            '\Monarc\FrontOffice\Service\UserService' => '\Monarc\FrontOffice\Service\UserServiceFactory',
+            Service\UserService::class => ReflectionBasedAbstractFactory::class,
             '\Monarc\FrontOffice\Service\UserAnrService' => '\Monarc\FrontOffice\Service\UserAnrServiceFactory',
             Service\UserRoleService::class => AutowireFactory::class,
             '\Monarc\FrontOffice\Service\AnrAssetService' => '\Monarc\FrontOffice\Service\AnrAssetServiceFactory',
@@ -1124,7 +1131,6 @@ return [
             '\Monarc\FrontOffice\Service\ObjectCategoryService' => '\Monarc\FrontOffice\Service\ObjectCategoryServiceFactory',
             '\Monarc\FrontOffice\Service\ObjectObjectService' => '\Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
             '\Monarc\FrontOffice\Service\PasswordService' => '\Monarc\FrontOffice\Service\PasswordServiceFactory',
-            '\Monarc\FrontOffice\Service\MailService' => '\Monarc\FrontOffice\Service\MailServiceFactory',
             '\Monarc\FrontOffice\Service\ModelService' => '\Monarc\FrontOffice\Service\ModelServiceFactory',
             '\Monarc\FrontOffice\Service\AnrLibraryService' => '\Monarc\FrontOffice\Service\AnrLibraryServiceFactory',
             '\Monarc\FrontOffice\Service\AnrRecommandationService' => '\Monarc\FrontOffice\Service\AnrRecommandationServiceFactory',
@@ -1148,8 +1154,7 @@ return [
             '\Monarc\FrontOffice\Service\AssetExportService' => '\Monarc\FrontOffice\Service\AssetExportServiceFactory',
             '\Monarc\FrontOffice\Service\DeliverableGenerationService' => '\Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
 
-            //validators
-            UniqueClientProxyAlias::class => UniqueClientProxyAlias::class,
+            CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
         ],
     ],
 
@@ -1160,7 +1165,8 @@ return [
                 'cache' => 'array',
                 'paths' => [
                     __DIR__ . '/../src/Model/Entity',
-                    __DIR__ . '/../../Core/src/Model/Entity',
+                    __DIR__ . '/../../core/src/Model/Entity',
+                    __DIR__ . '/../../frontoffice/src/Model/Entity',
                 ],
             ],
             'orm_cli' => [
@@ -1180,7 +1186,7 @@ return [
     ],
     'roles' => [
         // Super Admin : Gestion des droits des utilisateurs uniquement (Carnet d’adresses)
-        'superadminfo' => [
+        Entity\UserRole::SUPER_ADMIN_FO => [
             'monarc_api_doc_models',
             'monarc_api_admin_users',
             'monarc_api_admin_users_roles',
@@ -1198,7 +1204,7 @@ return [
             'monarc_api_global_client_anr/carto_risks',
         ],
         // Utilisateur : Accès RWD par analyse
-        'userfo' => [
+        Entity\UserRole::USER_FO => [
             'monarc_api_doc_models',
             'monarc_api_models',
             'monarc_api_referentials',

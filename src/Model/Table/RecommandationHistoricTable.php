@@ -7,7 +7,10 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\RecommandationHistoric;
 
 /**
  * Class RecommandationHistoricTable
@@ -15,12 +18,8 @@ use Monarc\Core\Model\Table\AbstractEntityTable;
  */
 class RecommandationHistoricTable extends AbstractEntityTable
 {
-    /**
-     * RecommandationHistoricTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\RecommandationHistoric');
+        parent::__construct($dbService, RecommandationHistoric::class, $connectedUserService);
     }
 }

@@ -12,7 +12,7 @@ use \Monarc\Core\Service\AbstractServiceFactory;
 /**
  * Anr Instance Consequence Service Factory
  *
- * Class AnrInstanceConsequenceServiceFactory
+ * Class AnrCoreServiceFactory
  * @package Monarc\FrontOffice\Service
  */
 class AnrCoreServiceFactory extends AbstractServiceFactory

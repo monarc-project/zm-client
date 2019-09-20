@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\User;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserProfileService;
@@ -33,16 +34,22 @@ class ApiUserProfileController extends AbstractRestfulController
         $this->connectedUserService = $connectedUserService;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getList()
     {
-        $userData = $this->connectedUserService->getConnectedUser()->toArray();
-        unset($userData['password']);
+        $connectedUser = $this->connectedUserService->getConnectedUser();
+        if ($connectedUser === null) {
+            throw new Exception('You are not authorized to do this action', 412);
+        }
 
         // TODO: We need to use normalizer for the response fields filtering out.
-        return new JsonModel($userData);
+        return new JsonModel([
+            'id' => $connectedUser->getId(),
+            'firstname' => $connectedUser->getFirstname(),
+            'lastname' => $connectedUser->getLastname(),
+            'email' => $connectedUser->getEmail(),
+            'status' => $connectedUser->getStatus(),
+            'role' => $connectedUser->getRoles(),
+        ]);
     }
 
     /**
@@ -51,7 +58,7 @@ class ApiUserProfileController extends AbstractRestfulController
     public function patchList($data)
     {
         return new JsonModel(
-            $this->userProfileService->update($this->connectedUserService->getConnectedUser()->toArray(), $data)
+            $this->userProfileService->update($this->connectedUserService->getConnectedUser(), $data)
         );
     }
 
@@ -61,7 +68,7 @@ class ApiUserProfileController extends AbstractRestfulController
     public function replaceList($data)
     {
         return new JsonModel(
-            $this->userProfileService->update($this->connectedUserService->getConnectedUser()->toArray(), $data)
+            $this->userProfileService->update($this->connectedUserService->getConnectedUser(), $data)
         );
     }
 
@@ -70,8 +77,10 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function deleteList($id)
     {
-        return new JsonModel(
-            $this->userProfileService->delete($this->connectedUserService->getConnectedUser()->getId())
-        );
+        $this->userProfileService->delete($this->connectedUserService->getConnectedUser());
+
+        $this->getResponse()->setStatusCode(204);
+
+        return new JsonModel();
     }
 }

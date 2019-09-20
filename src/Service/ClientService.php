@@ -20,16 +20,6 @@ class ClientService extends AbstractService
     protected $forbiddenFields = ['model_id'];
 
     /**
-     * Get Total Count
-     *
-     * @return mixed
-     */
-    public function getTotalCount()
-    {
-        return $this->table->count();
-    }
-
-    /**
      * Get Filtered Count
      *
      * @param null $filter

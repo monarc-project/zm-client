@@ -7,7 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Db;
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\PasswordToken;
 
 /**
@@ -16,12 +17,8 @@ use Monarc\FrontOffice\Model\Entity\PasswordToken;
  */
 class PasswordTokenTable extends \Monarc\Core\Model\Table\PasswordTokenTable
 {
-    /**
-     * PasswordTokenTable constructor.
-     * @param Db $dbService
-     */
-    public function __construct(Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, PasswordToken::class);
+        parent::__construct($dbService, PasswordToken::class, $connectedUserService);
     }
 }

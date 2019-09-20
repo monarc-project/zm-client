@@ -27,8 +27,7 @@ class RemoveCategoriesColumnFromOperationalRisks extends AbstractMigration
      */
     public function change()
     {
-        $this->dropTable('rolf_risks_categories');
-        $this->dropTable('rolf_categories');
-
+        $this->table('rolf_risks_categories')->drop()->save();
+        $this->table('rolf_categories')->drop()->save();
     }
 }

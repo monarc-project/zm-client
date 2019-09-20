@@ -7,8 +7,14 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
-use Monarc\FrontOffice\Model\Table\UserRoleTable;
+use DateTime;
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Service\UserService as CoreUserService;
+use Monarc\FrontOffice\Model\Entity\User;
+use Monarc\FrontOffice\Model\Entity\UserRole;
+use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserTable;
 
 /**
@@ -16,25 +22,44 @@ use Monarc\FrontOffice\Model\Table\UserTable;
  * Monarc\Core parent.
  * @package Monarc\Core\Service
  */
-class UserService extends \Monarc\Core\Service\UserService
+class UserService extends CoreUserService
 {
-    protected $userAnrTable;
-    protected $userRoleTable;
-    protected $userAnrService;
-    protected $userRoleService;
-    protected $anrTable;
-    protected $snapshotCliTable;
-
     /**
      * The list of fields deleted during a GET
      * @var array
      */
     protected $forbiddenFields = ['password'];
 
+    /** @var UserAnrService */
+    private $userAnrService;
 
-    protected function filterGetFields(&$entity, $forbiddenFields = false)
+    /** @var AnrTable */
+    private $anrTable;
+
+    /** @var SnapshotTable */
+    private $snapshotTable;
+
+    public function __construct(
+        UserTable $userTable,
+        array $config,
+        UserAnrService $userAnrService,
+        AnrTable $anrTable,
+        SnapshotTable $snapshotTable
+    ) {
+        parent::__construct($userTable, $config);
+
+        $this->userAnrService = $userAnrService;
+        $this->anrTable = $anrTable;
+        $this->snapshotTable = $snapshotTable;
+    }
+
+    // TODO: remove me.
+    protected function filterGetFields(&$entity, $forbiddenFields = [])
     {
-        $forbiddenFields = (!$forbiddenFields) ? $this->forbiddenFields : $forbiddenFields;
+        if (empty($forbiddenFields)) {
+            $forbiddenFields = $this->forbiddenFields;
+        }
+
         foreach ($entity as $id => $user) {
             foreach($entity[$id] as $key => $value){
                 if (in_array($key, $forbiddenFields)) {
@@ -49,11 +74,8 @@ class UserService extends \Monarc\Core\Service\UserService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        //retrieve user's list
-        /** @var UserTable $table */
-        $table = $this->get('table');
-        $users = $table->fetchAllFiltered(
-            array_keys($this->get('entity')->getJsonArray()),
+        $users = $this->userTable->fetchAllFiltered(
+            ['id', 'status', 'firstname', 'lastname', 'email', 'language', 'roles'],
             $page,
             $limit,
             $this->parseFrontendOrder($order),
@@ -61,40 +83,27 @@ class UserService extends \Monarc\Core\Service\UserService
             $filterAnd
         );
 
-
-
-        //retrieve role for each users
-        /** @var UserRoleTable $userRoleTable */
-        $userRoleTable = $this->get('userRoleTable');
-        $usersRoles = $userRoleTable->fetchAllObject();
-        foreach ($users as $key => $user) {
-            foreach ($usersRoles as $userRole) {
-                if ($user['id'] == $userRole->user->id) {
-                    $users[$key]['roles'][] = $userRole->role;
-                }
-            }
-        }
-
         //retrieve anr access for each users
-        /** @var UserAnrTable $userAnrTable */
-        $userAnrTable = $this->get('userAnrTable');
-        $usersAnrs = $userAnrTable->fetchAllObject();
-        foreach ($users as $key => $user) {
-            foreach ($usersAnrs as $userAnr) {
-                if ($user['id'] == $userAnr->user->id) {
-                    $anr = [
-                        'id' => $userAnr->anr->id,
-                        'label1' => $userAnr->anr->label1,
-                        'label2' => $userAnr->anr->label2,
-                        'label3' => $userAnr->anr->label3,
-                        'label4' => $userAnr->anr->label4,
-                        'rwd' => $userAnr->rwd,
-                    ];
-                    $users[$key]['anrs'][] = $anr;
-                }
-            }
-        }
+//        $userAnrTable = $this->get('userAnrTable');
+//        $usersAnrs = $userAnrTable->fetchAllObject();
+//        foreach ($users as $key => $user) {
+//            foreach ($usersAnrs as $userAnr) {
+//                if ($user['id'] == $userAnr->user->id) {
+//                    $anr = [
+//                        'id' => $userAnr->anr->id,
+//                        'label1' => $userAnr->anr->label1,
+//                        'label2' => $userAnr->anr->label2,
+//                        'label3' => $userAnr->anr->label3,
+//                        'label4' => $userAnr->anr->label4,
+//                        'rwd' => $userAnr->rwd,
+//                    ];
+//                    $users[$key]['anrs'][] = $anr;
+//                }
+//            }
+//        }
+
         $this->filterGetFields($users);
+
         return $users;
     }
 
@@ -105,31 +114,20 @@ class UserService extends \Monarc\Core\Service\UserService
      */
     public function getCompleteUser($id)
     {
-        //retrieve user information
-        /** @var UserTable $table */
-        $table = $this->get('table');
-        $user = $table->get($id);
-
-        //retrieve user roles
-        /** @var UserRoleTable $userRoleTable */
-        $userRoleTable = $this->get('userRoleTable');
-        $usersRoles = $userRoleTable->getEntityByFields(['user' => $id]);
-        foreach ($usersRoles as $userRole) {
-            $user['role'][] = $userRole->role;
-        }
+        /** @var User $user */
+        $user = $this->userTable->findById($id);
 
         //retrieve anr that are not snapshots
-        /** @var SnapshotTable $snapshotCliTable */
-        $snapshotCliTable = $this->get('snapshotCliTable');
-        $snapshots = $snapshotCliTable->fetchAll();
-        $anrsSnapshots = [0];
+        $snapshots = $this->snapshotTable->fetchAll();
+        $anrsSnapshots = [];
         foreach ($snapshots as $snapshot) {
             $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
         }
-        $anrs = $this->get('anrTable')->getEntityByFields(['id' => ['op' => 'NOT IN', 'value' => $anrsSnapshots]]);
-        $user['anrs'] = [];
+
+        $anrs = $this->anrTable->getEntityByFields(['id' => ['op' => 'NOT IN', 'value' => $anrsSnapshots]]);
+        $anrsData = [];
         foreach ($anrs as $a) {
-            $user['anrs'][$a->get('id')] = [
+            $anrsData[$a->get('id')] = [
                 'id' => $a->get('id'),
                 'label1' => $a->get('label1'),
                 'label2' => $a->get('label2'),
@@ -139,199 +137,206 @@ class UserService extends \Monarc\Core\Service\UserService
             ];
         }
 
-        //retrieve user access
-        /** @var UserAnrTable $userAnrTable */
-        $userAnrTable = $this->get('userAnrTable');
-        $usersAnrs = $userAnrTable->getEntityByFields(['user' => $user['id']]);
-        foreach ($usersAnrs as $userAnr) {
-            if (isset($user['anrs'][$userAnr->get('anr')->get('id')])) {
-                $user['anrs'][$userAnr->get('anr')->get('id')]['rwd'] = $userAnr->get('rwd');
+        // TODO: should be: $user->getAnrs();, but the relation needs to be fixed.
+        foreach ($user->getAnrs() as $userAnr) {
+            if (isset($anrsData[$userAnr->get('anr')->get('id')])) {
+                $anrsData[$userAnr->get('anr')->get('id')]['rwd'] = $userAnr->get('rwd');
             }
         }
-        $user['anrs'] = array_values($user['anrs']);
 
-        // fields we never want to return
-        unset($user['password']);
+        // TODO: replace with normalization layer.
+        return [
+            'id' => $user->getId(),
+            'status' => $user->getStatus(),
+            'firstname' => $user->getFirstname(),
+            'lastname' => $user->getLastname(),
+            'email' => $user->getEmail(),
+            'language' => $user->getLanguage(),
+            'role' => $user->getRoles(),
+            'anrs' => array_values($anrsData),
+        ];
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    public function create(array $data): UserSuperClass
+    {
+        if (empty($data['language'])) {
+            $data['language'] = $this->defaultLanguageIndex;
+        }
+        if (empty($data['creator'])) {
+            $data['creator'] = $this->userTable->getConnectedUser()->getFirstname() . ' '
+                . $this->userTable->getConnectedUser()->getLastname();
+        }
+
+        if (isset($data['anrs'])) {
+            $anrs = [];
+            foreach ($data['anrs'] as $anr) {
+                $anrs[] = [
+                    'anr' => $this->anrTable->findById($anr['id']),
+                    'rwd' => $this->anrTable->findById($anr['rwd']),
+                ];
+            }
+            $data['anrs'] = $anrs;
+        }
+
+        $user = new User($data);
+        $this->userTable->saveEntity($user);
+
+//        //give anr access to user
+//        if (isset($data['anrs'])) {
+//            /** @var SnapshotTable $snapshotCliTable */
+//            $snapshotCliTable = $this->get('snapshotCliTable');
+//            $snapshots = $snapshotCliTable->fetchAll();
+//
+//            $anrsSnapshots = [0];
+//            foreach ($snapshots as $snapshot) {
+//                $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
+//            }
+//            foreach ($data['anrs'] as $anr) {
+//                if (!isset($anrsSnapshots[$anr['id']])) {
+//                    $dataAnr = [
+//                        'user' => $user->getId(),
+//                        'anr' => $anr['id'],
+//                        'rwd' => $anr['rwd'],
+//                    ];
+//                    /** @var UserAnrService $userAnrService */
+//                    $userAnrService = $this->get('userAnrService');
+//                    $userAnrService->create($dataAnr);
+//                }
+//            }
+//        }
 
         return $user;
     }
 
-
-    /**
-     * @inheritdoc
-     */
-    public function create($data, $last = true)
+    public function update(int $userId, array $data): UserSuperClass
     {
-        //create user
-        $user = $this->get('entity');
-        $data['status'] = 1;
-        if (empty($data['language'])) {
-            $data['language'] = $this->getLanguage();
-        }
-        $user->exchangeArray($data);
-        /** @var UserTable $table */
-        $table = $this->get('table');
-        $id = $table->save($user);
+        /** @var User $user */
+        $user = $this->getUpdatedUser($userId, $data);
 
-        //associate role to user
-        if (isset($data['role'])) {
-            $i = 1;
-            $nbRoles = count($data['role']);
-            foreach ($data['role'] as $role) {
-                $dataUserRole = [
-                    'user' => $id,
-                    'role' => $role,
-                ];
-                /** @var UserRoleService $userRoleService */
-                $userRoleService = $this->get('userRoleService');
-                $userRoleService->create($dataUserRole, ($i == $nbRoles));
-                $i++;
-            }
-        }
+        $this->verifySystemUserUpdate($user, $data);
 
-        //give anr access to user
-        if (isset($data['anrs'])) {
-            /** @var SnapshotTable $snapshotCliTable */
-            $snapshotCliTable = $this->get('snapshotCliTable');
-            $snapshots = $snapshotCliTable->fetchAll();
-
-            $anrsSnapshots = [0];
-            foreach ($snapshots as $snapshot) {
-                $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
-            }
-            foreach ($data['anrs'] as $anr) {
-                if (!isset($anrsSnapshots[$anr['id']])) {
-                    $dataAnr = [
-                        'user' => $id,
-                        'anr' => $anr['id'],
-                        'rwd' => $anr['rwd'],
-                    ];
-                    /** @var UserAnrService $userAnrService */
-                    $userAnrService = $this->get('userAnrService');
-                    $userAnrService->create($dataAnr);
-                }
-            }
-        }
-
-        return $id;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        $this->verifyAuthorizedAction($id, $data);
-
-        $user = $this->get('table')->getEntity($id);
-
-        if (isset($data['role'])) {
-            $this->manageRoles($user, $data);
-        }
-
-        $this->updateUserAnr($id, $data);
+        $this->updateUserAnr($user, $data);
 
         if (isset($data['dateEnd'])) {
-            $data['dateEnd'] = new \DateTime($data['dateEnd']);
+            $data['dateEnd'] = new DateTime($data['dateEnd']);
         }
 
         if (isset($data['dateStart'])) {
-            $data['dateStart'] = new \DateTime($data['dateStart']);
+            $data['dateStart'] = new DateTime($data['dateStart']);
         }
 
-        return parent::update($id, $data);
-    }
+        $this->userTable->saveEntity($user);
 
+        return $user;
+    }
 
     /**
      * @inheritdoc
      */
-    public function patch($id, $data)
+    public function patch($userId, $data): UserSuperClass
     {
         if (isset($data['password'])) {
             $this->validatePassword($data);
         }
 
-        $user = $this->get('table')->getEntity($id);
+        $user = $this->getUpdatedUser($userId, $data);
 
-        if (isset($data['role'])) {
-            $this->manageRoles($user, $data);
+        $this->verifySystemUserUpdate($user, $data);
+
+        if (isset($data['password'])) {
+            $user->setPassword($data['password']);
         }
 
-        $this->verifyAuthorizedAction($id, $data);
-
-        $this->updateUserAnr($id, $data);
+        $this->updateUserAnr($user, $data);
 
         if (isset($data['dateEnd'])) {
-            $data['dateEnd'] = new \DateTime($data['dateEnd']);
+            $data['dateEnd'] = new DateTime($data['dateEnd']);
         }
 
         if (isset($data['dateStart'])) {
-            $data['dateStart'] = new \DateTime($data['dateStart']);
+            $data['dateStart'] = new DateTime($data['dateStart']);
         }
 
-        return parent::patch($id, $data);
+        $this->userTable->saveEntity($user);
+
+        return $user;
     }
 
     /**
      * @inheritdoc
      */
-    public function delete($id)
+    public function delete($userId)
     {
-        $this->verifyAuthorizedAction($id, null);
+        $user = $this->userTable->findById($userId);
+        if ($user->isSystemUser()) {
+            throw new Exception('You can not remove the "System" user', 412);
+        }
 
-        return parent::delete($id);
+        $this->userTable->deleteEntity($user);
     }
 
     /**
      * Checks whether or not a specific action is authorized or not for the specified user id
-     * @param int $id The user ID
-     * @param array $data The action information array
-     * @throws \Monarc\Core\Exception\Exception If the user is not found, or if the action is invalid
      */
-    public function verifyAuthorizedAction($id, $data)
+    private function verifySystemUserUpdate(User $user, array $data = [])
     {
+        /*
+         * We just need to validate if the System created user instead.
+        */
+        if ($user->isSystemUser()) {
+            if (!empty($data['role']) && !in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
+                throw new Exception('You can not remove admin role from the "System" user', 412);
+            }
+
+            if (isset($data['status']) && $data['status'] === User::STATUS_INACTIVE) {
+                throw new Exception('You can not deactivate the "System" user', 412);
+            }
+        }
+
         //retrieve user status (admin or not)
-        /** @var UserRoleTable $userRoleTable */
-        $isAdmin = false;
-        $userRoleTable = $this->get('userRoleTable');
-        $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
-        foreach ($userRoles as $userRole) {
-            if ($userRole->role == \Monarc\FrontOffice\Model\Entity\UserRole::SUPER_ADMIN_FO) {
-                $isAdmin = true;
-                break;
-            }
-        }
-
-        if ($isAdmin) {
-            /** @var \Monarc\FrontOffice\Model\Table\UserTable $userTable */
-            $userTable = $this->get('table');
-            $user = $userTable->getEntity($id);
-
-            //retrieve number of admin users
-            $nbActivateAdminUser = 0;
-            $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => \Monarc\FrontOffice\Model\Entity\UserRole::SUPER_ADMIN_FO, 'user'=>['op'=>'!=','value'=>$id]]);
-            foreach ($adminUsersRoles as $adminUsersRole) {
-                if (($adminUsersRole->user->status) && (is_null($adminUsersRole->user->dateEnd))) {
-                    $nbActivateAdminUser++;
-                }
-            }
-
-            //verify if status, dateEnd and role can be changed or user be deactivated
-            if (
-                ((($user->status) && (isset($data['status'])) && (!$data['status'])) //change status 1 -> 0
-                 ||
-                 ((is_null($user->dateEnd)) && (isset($data['dateEnd']))) //change dateEnd null -> date
-                 ||
-                 ((isset($data['role'])) && (!in_array('superadminfo', $data['role']))) //delete superadminfo role
-                 ||
-                 (is_null($data))) //delete superadminfo role
-                 &&
-                 $nbActivateAdminUser <= 1 //verify if this is not the last superadminfo and verify date_end
-            ) {
-                throw new \Monarc\Core\Exception\Exception('You can not deactivate, delete or change role of the last admin', 412);
-            }
-        }
+//        /** @var UserRoleTable $userRoleTable */
+//        $isAdmin = false;
+//        $userRoleTable = $this->get('userRoleTable');
+//        $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
+//        foreach ($userRoles as $userRole) {
+//            if ($userRole->role == \Monarc\FrontOffice\Model\Entity\UserRole::SUPER_ADMIN_FO) {
+//                $isAdmin = true;
+//                break;
+//            }
+//
+//        if ($isAdmin) {
+//            /** @var \Monarc\FrontOffice\Model\Table\UserTable $userTable */
+//            $userTable = $this->get('table');
+//            $user = $userTable->getEntity($id);
+//
+//            //retrieve number of admin users
+//            $nbActivateAdminUser = 0;
+//            $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => UserRole::SUPER_ADMIN_FO, 'user'=>['op'=>'!=','value'=>$id]]);
+//            foreach ($adminUsersRoles as $adminUsersRole) {
+//                if (($adminUsersRole->user->status) && (is_null($adminUsersRole->user->dateEnd))) {
+//                    $nbActivateAdminUser++;
+//                }
+//            }
+//
+//            //verify if status, dateEnd and role can be changed or user be deactivated
+//            if (
+//                ((($user->status) && (isset($data['status'])) && (!$data['status'])) //change status 1 -> 0
+//                    ||
+//                    ((is_null($user->dateEnd)) && (isset($data['dateEnd']))) //change dateEnd null -> date
+//                    ||
+//                    ((isset($data['role'])) && (!in_array('superadminfo', $data['role']))) //delete superadminfo role
+//                    ||
+//                    (is_null($data))) //delete superadminfo role
+//                &&
+//                $nbActivateAdminUser <= 1 //verify if this is not the last superadminfo and verify date_end
+//            ) {
+//                throw new Exception('You can not deactivate, delete or change role of the last admin', 412);
+//            }
+//        }
     }
 
     /**
@@ -339,14 +344,12 @@ class UserService extends \Monarc\Core\Service\UserService
      * @param int $id The user ID
      * @param array $data An array of ANRs in the 'anrs' key that the user may access
      */
-    public function updateUserAnr($id, $data)
+    public function updateUserAnr(User $user, $data)
     {
         if (isset($data['anrs'])) {
 
             //retieve current user anrs
-            /** @var UserAnrTable $userAnrTable */
-            $userAnrTable = $this->get('userAnrTable');
-            $userAnrs = $userAnrTable->getEntityByFields(['user' => $id]);
+            $userAnrs = $user->getAnrs();
             $currentUserAnrs = [];
             foreach ($userAnrs as $userAnr) {
                 $currentUserAnrs[$userAnr->anr->id] = [
@@ -358,34 +361,31 @@ class UserService extends \Monarc\Core\Service\UserService
             //retrieve new anrs for user that are not snapshots
             $futureUserAnrs = [];
             foreach ($data['anrs'] as $userAnr) {
-                $futureUserAnrs[$userAnr['id']] = intval($userAnr['rwd']);
+                $futureUserAnrs[$userAnr['id']] = (int)$userAnr['rwd'];
             }
-            /** @var SnapshotTable $snapshotCliTable */
-            $snapshotCliTable = $this->get('snapshotCliTable');
-            $snapshots = $snapshotCliTable->fetchAll();
+
+            $snapshots = $this->snapshotTable->fetchAll();
             foreach ($snapshots as $snapshot) {
                 unset($futureUserAnrs[$snapshot['anr']->id]);
             }
 
             //add new anr access to user
-            /** @var UserAnrService $userAnrService */
-            $userAnrService = $this->get('userAnrService');
             foreach ($futureUserAnrs as $key => $futureUserAnr) {
                 if (!isset($currentUserAnrs[$key])) {
-                    $userAnrService->create([
-                        'user' => $id,
+                    $this->userAnrService->create([
+                        'user' => $user->getId(),
                         'anr' => $key,
                         'rwd' => $futureUserAnr,
                     ]);
-                } else if ($currentUserAnrs[$key]['rwd'] != $futureUserAnrs[$key]) {
-                    $userAnrService->patch($currentUserAnrs[$key]['id'], ['rwd' => $futureUserAnrs[$key]]);
+                } elseif ($currentUserAnrs[$key]['rwd'] !== $futureUserAnrs[$key]) {
+                    $this->userAnrService->patch($currentUserAnrs[$key]['id'], ['rwd' => $futureUserAnrs[$key]]);
                 }
             }
 
             //delete old anrs access to user
             foreach ($currentUserAnrs as $key => $currentUserAnr) {
                 if (!isset($futureUserAnrs[$key])) {
-                    $userAnrService->delete($currentUserAnr['id']);
+                    $this->userAnrService->delete($currentUserAnr['id']);
                 }
             }
         }

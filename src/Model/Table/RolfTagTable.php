@@ -8,6 +8,9 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\RolfTag;
 
 /**
  * Class RolfTagTable
@@ -15,12 +18,8 @@ use Monarc\Core\Model\Table\AbstractEntityTable;
  */
 class RolfTagTable extends AbstractEntityTable
 {
-    /**
-     * RolfTagTable constructor.
-     * @param \Monarc\Core\Model\Db $dbService
-     */
-    public function __construct(\Monarc\Core\Model\Db $dbService)
+    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, '\Monarc\FrontOffice\Model\Entity\RolfTag');
+        parent::__construct($dbService, RolfTag::class, $connectedUserService);
     }
 }

@@ -2,8 +2,11 @@
 namespace Monarc\FrontOffice;
 
 use Monarc\Core\Model\Entity\User;
+use Monarc\Core\Model\Entity\UserRole;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Service\UserRoleService;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Permissions\Rbac\Rbac;
@@ -151,34 +154,18 @@ class Module
      * @param MvcEvent $e
      * @return \Zend\Stdlib\ResponseInterface
      */
-    public function checkRbac(MvcEvent $e) {
+    public function checkRbac(MvcEvent $e)
+    {
         $route = $e->getRouteMatch()->getMatchedRouteName();
-
-        //retrieve connected user
         $sm = $e->getApplication()->getServiceManager();
 
-        //retrieve user roles
-        $userRoleService = $sm->get('\Monarc\Core\Service\UserRoleService');
-        $userRoles = [];
-
-        $connectedUserService = $sm->get('\Monarc\Core\Service\ConnectedUserService');
+        /** @var ConnectedUserService $connectedUserService */
+        $connectedUserService = $sm->get(ConnectedUserService::class);
         $connectedUser = $connectedUserService->getConnectedUser();
 
-        if ($connectedUser instanceof User) {
-            $userRoles = $userRoleService->getList(1, 25, null, $connectedUser->getId());
-        }
-
-        $roles = [];
-        $isSuperAdmin = false;
-        foreach($userRoles as $userRole) {
-            $roles[] = $userRole['role'];
-            if ($userRole['role'] == 'superadminfo') {
-                $isSuperAdmin = true;
-            }
-        }
-
-        if (empty($roles)) {
-            $roles[] = 'guest';
+        $roles[] = 'guest';
+        if ($connectedUser !== null) {
+            $roles = $connectedUser->getRoles();
         }
 
         $isGranted = false;

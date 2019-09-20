@@ -7,9 +7,9 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 
 /**
