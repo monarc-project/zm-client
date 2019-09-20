@@ -493,6 +493,7 @@ return [
                                 'controller' => Controller\ApiAnrRecommandationsSetsController::class,
                             ],
                         ],
+                    ],
                     'records' => [
                         'type' => 'segment',
                         'options' => [
@@ -706,7 +707,8 @@ return [
                                 'controller' => Controller\ApiSoaController::class,
                             ],
                         ],
-                    ], 'soacategory' => [
+                    ],
+                    'soacategory' => [
                         'type' => 'segment',
                         'options' => [
                             'route' => 'soacategory[/:id]',
@@ -717,7 +719,7 @@ return [
                                 'controller' => Controller\ApiSoaCategoryController::class,
                             ],
                         ],
-                        ],
+                    ],
                     'instance' => [
                         'type' => 'segment',
                         'options' => [
@@ -854,42 +856,41 @@ return [
                             ],
                         ],
                     ],
+                ],
+            ],
+            'monarc_api_doc_models' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/deliveriesmodels[/:id]',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiDeliveriesModelsController::class,
                     ],
                 ],
-                'monarc_api_doc_models' => [
-                    'type' => 'segment',
-                    'options' => [
-                        'route' => '/api/deliveriesmodels[/:id]',
-                        'constraints' => [
-                            'id' => '[0-9]+',
-                        ],
-                        'defaults' => [
-                            'controller' => Controller\ApiDeliveriesModelsController::class,
-                        ],
+            ],
+            'monarc_api_user_password' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/user/password/:id',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiUserPasswordController::class,
                     ],
                 ],
-                'monarc_api_user_password' => [
-                    'type' => 'segment',
-                    'options' => [
-                        'route' => '/api/user/password/:id',
-                        'constraints' => [
-                            'id' => '[0-9]+',
-                        ],
-                        'defaults' => [
-                            'controller' => Controller\ApiUserPasswordController::class,
-                        ],
+            ],
+            'monarc_api_model_verify_language' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/model-verify-language/:id',
+                    'constraints' => [
+                        'id' => '[0-9]+',
                     ],
-                ],
-                'monarc_api_model_verify_language' => [
-                    'type' => 'segment',
-                    'options' => [
-                        'route' => '/api/model-verify-language/:id',
-                        'constraints' => [
-                            'id' => '[0-9]+',
-                        ],
-                        'defaults' => [
-                            'controller' => Controller\ApiModelVerifyLanguageController::class,
-                        ],
+                    'defaults' => [
+                        'controller' => Controller\ApiModelVerifyLanguageController::class,
                     ],
                 ],
             ],

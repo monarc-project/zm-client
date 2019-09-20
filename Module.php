@@ -1,12 +1,9 @@
 <?php
 namespace Monarc\FrontOffice;
 
-use Monarc\Core\Model\Entity\User;
-use Monarc\Core\Model\Entity\UserRole;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
-use Monarc\FrontOffice\Service\UserRoleService;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Permissions\Rbac\Rbac;
