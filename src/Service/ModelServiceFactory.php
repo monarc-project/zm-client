@@ -21,11 +21,11 @@ class ModelServiceFactory extends AbstractServiceFactory
         'table' => 'Monarc\Core\Model\Table\ModelTable',
         'entity' => 'Monarc\Core\Model\Entity\Model',
         'anrService' => 'Monarc\Core\Service\AnrService',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'amvTable' => 'Monarc\FrontOffice\Model\Table\AmvTable',
+        'anrTable' => 'Monarc\Core\Model\Table\AnrTable',
+        'instanceRiskTable' => 'Monarc\Core\Model\Table\InstanceRiskTable',
+        'instanceRiskOpTable' => 'Monarc\Core\Model\Table\InstanceRiskOpTable',
+        'MonarcObjectTable' => 'Monarc\Core\Model\Table\MonarcObjectTable',
+        'amvTable' => 'Monarc\Core\Model\Table\AmvTable',
         'clientTable' => 'Monarc\FrontOffice\Model\Table\ClientTable'
     ];
 }

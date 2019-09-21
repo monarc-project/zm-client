@@ -19,6 +19,11 @@ class MonarcObjectTable extends \Monarc\Core\Model\Table\MonarcObjectTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, MonarcObject::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return MonarcObject::class;
     }
 }

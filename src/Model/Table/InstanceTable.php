@@ -19,6 +19,11 @@ class InstanceTable extends \Monarc\Core\Model\Table\InstanceTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, Instance::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return Instance::class;
     }
 }

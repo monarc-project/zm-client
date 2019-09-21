@@ -20,6 +20,11 @@ class ObjectObjectTable extends CoreObjectObjectTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, ObjectObject::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return ObjectObject::class;
     }
 }

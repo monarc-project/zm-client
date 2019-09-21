@@ -19,6 +19,11 @@ class PasswordTokenTable extends \Monarc\Core\Model\Table\PasswordTokenTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, PasswordToken::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return PasswordToken::class;
     }
 }

@@ -19,7 +19,12 @@ class InstanceRiskOpTable extends \Monarc\Core\Model\Table\InstanceRiskOpTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, InstanceRiskOp::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return InstanceRiskOp::class;
     }
 
     /**

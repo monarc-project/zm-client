@@ -17,7 +17,7 @@ class AnrAssetCommonServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'entity' => 'Monarc\Core\Model\Entity\Asset',
-        'table' => 'Monarc\FrontOffice\Model\Table\AssetTable',
+        'table' => 'Monarc\Core\Model\Table\AssetTable',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
         'amvTable' => 'Monarc\CoreModel\Table\AmvTable',
         'clientity' => 'Monarc\FrontOffice\Model\Entity\Asset',

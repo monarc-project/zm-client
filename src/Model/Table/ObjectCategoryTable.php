@@ -20,6 +20,11 @@ class ObjectCategoryTable extends AbstractEntityTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, ObjectCategory::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return ObjectCategory::class;
     }
 }
