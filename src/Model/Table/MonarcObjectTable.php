@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Table\MonarcObjectTable as CoreMonarcObjectTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
@@ -15,7 +16,7 @@ use Monarc\FrontOffice\Model\Entity\MonarcObject;
  * Class MonarcObjectTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class MonarcObjectTable extends \Monarc\Core\Model\Table\MonarcObjectTable
+class MonarcObjectTable extends CoreMonarcObjectTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {

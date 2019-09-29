@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
@@ -15,7 +16,7 @@ use Monarc\FrontOffice\Model\Entity\InstanceRisk;
  * Class InstanceRiskTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class InstanceRiskTable extends \Monarc\Core\Model\Table\InstanceRiskTable
+class InstanceRiskTable extends CoreInstanceRiskTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
