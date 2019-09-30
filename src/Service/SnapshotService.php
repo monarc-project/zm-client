@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
-use Monarc\Core\Model\AbstractService;
 use Monarc\Core\Model\Entity\User;
 
 /**
