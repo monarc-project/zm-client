@@ -1253,7 +1253,7 @@ class AnrService extends \Monarc\Core\Service\AbstractService
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');
         $user->setCurrentAnr($anrCliTable->getEntity($anrId));
-        $userCliTable->save($user);
+        $userCliTable->saveEntity($user);
     }
 
     /**
