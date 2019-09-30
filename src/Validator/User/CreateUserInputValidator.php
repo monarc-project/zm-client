@@ -127,6 +127,14 @@ class CreateUserInputValidator extends AbstractMonarcInputValidator
                 ],
             ],
             [
+                'name' => 'anrs',
+                'required' => false,
+                'type' => ArrayInput::class,
+                'validators' => [
+                    // TODO: create AnrValidator.
+                ],
+            ],
+            [
                 'name' => 'language',
                 'allowEmpty' => true,
                 'continueIfEmpty' => true,
