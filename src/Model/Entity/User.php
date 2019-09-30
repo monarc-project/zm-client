@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\UserRoleSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
@@ -31,19 +32,19 @@ class User extends UserSuperClass
     protected $currentAnr;
 
     /**
-     * @var ArrayCollection
+     * @var ArrayCollection|UserAnr[]
      *
-     * @ORM\OneToMany(targetEntity="UserAnr", orphanRemoval=true, mappedBy="user")
+     * @ORM\OneToMany(targetEntity="UserAnr", orphanRemoval=true, mappedBy="user", cascade={"persist"})
      */
-    protected $anrs;
+    protected $userAnrs;
 
     public function __construct(array $data)
     {
         parent::__construct($data);
 
-        $this->anrs = new ArrayCollection();
-        if (!empty($data['anrs'])) {
-            $this->setAnrs($data['anrs']);
+        $this->userAnrs = new ArrayCollection();
+        if (!empty($data['userAnrs'])) {
+            $this->setUserAnrs($data['userAnrs']);
         }
         if (isset($data['currentAnr'])) {
             $this->currentAnr = $data['currentAnr'];
@@ -62,22 +63,34 @@ class User extends UserSuperClass
         return $this;
     }
 
-    public function getAnrs(): array
+    /**
+     * @return ArrayCollection|UserAnr[]
+     */
+    public function getUserAnrs(): Collection
     {
-        return $this->anrs->toArray();
+        return $this->userAnrs;
     }
 
-    public function setAnrs(array $anrs): self
+    public function getUserAnrByAnrId(int $anrId): ?UserAnr
     {
-        $this->anrs = new ArrayCollection();
-        foreach ($anrs as $anr) {
-            // TODO: after refactoring we can use: $this->anrs->add(new UserAnr($anr));
-            $userAnr = (new UserAnr())
-                ->setAnr($anr['anr'])
-                ->setUser($this)
-                ->setRwd($anr['rwd']);
+        foreach ($this->userAnrs as $userAnr) {
+            if ($userAnr->getId() === $anrId) {
+                return $userAnr;
+            }
+        }
 
-            $this->anrs->add($userAnr);
+        return null;
+    }
+
+    /**
+     * @param array|UserAnr[] $userAnrs
+     */
+    public function setUserAnrs(array $userAnrs): self
+    {
+        $this->userAnrs = new ArrayCollection();
+        foreach ($userAnrs as $userAnr) {
+            $this->userAnrs->add($userAnr);
+            $userAnr->setUser($this);
         }
 
         return $this;

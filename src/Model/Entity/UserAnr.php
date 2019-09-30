@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use DateTime;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -30,7 +31,7 @@ class UserAnr extends AbstractEntity
     /**
      * @var \Monarc\FrontOffice\Model\Entity\User
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\User", cascade={"persist"}, inversedBy="anrs")
+     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\User", cascade={"persist"}, inversedBy="userAnrs")
      * @ORM\JoinColumn(nullable=false)
      */
     protected $user;
@@ -60,7 +61,7 @@ class UserAnr extends AbstractEntity
     protected $creator;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="created_at", type="datetime", nullable=true)
      */
@@ -74,11 +75,16 @@ class UserAnr extends AbstractEntity
     protected $updater;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="updated_at", type="datetime", nullable=true)
      */
     protected $updatedAt;
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
 
     /**
      * @return \Monarc\FrontOffice\Model\Entity\User
@@ -117,7 +123,7 @@ class UserAnr extends AbstractEntity
     }
 
     /**
-     * @return smallint
+     * @return int
      */
     public function getRwd()
     {
@@ -125,12 +131,40 @@ class UserAnr extends AbstractEntity
     }
 
     /**
-     * @param smallint $rwd
+     * @param int $rwd
      * @return UserAnr
      */
     public function setRwd($rwd)
     {
         $this->rwd = $rwd;
+        return $this;
+    }
+
+    public function setCreator(string $creator): self
+    {
+        $this->creator = $creator;
+
+        return $this;
+    }
+
+    public function setCreatedAt(DateTime $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function setUpdater(string $updater): self
+    {
+        $this->updater = $updater;
+
+        return $this;
+    }
+
+    public function setUpdatedAt(DateTime $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
         return $this;
     }
 

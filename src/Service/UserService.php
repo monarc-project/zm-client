@@ -10,8 +10,10 @@ namespace Monarc\FrontOffice\Service;
 use DateTime;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserService as CoreUserService;
 use Monarc\FrontOffice\Model\Entity\User;
+use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
@@ -39,18 +41,23 @@ class UserService extends CoreUserService
     /** @var SnapshotTable */
     private $snapshotTable;
 
+    /** @var ConnectedUserService */
+    private $connectedUserService;
+
     public function __construct(
         UserTable $userTable,
         array $config,
         UserAnrService $userAnrService,
         AnrTable $anrTable,
-        SnapshotTable $snapshotTable
+        SnapshotTable $snapshotTable,
+        ConnectedUserService $connectedUserService
     ) {
         parent::__construct($userTable, $config);
 
         $this->userAnrService = $userAnrService;
         $this->anrTable = $anrTable;
         $this->snapshotTable = $snapshotTable;
+        $this->connectedUserService = $connectedUserService;
     }
 
     // TODO: remove me.
@@ -83,6 +90,7 @@ class UserService extends CoreUserService
             $filterAnd
         );
 
+        // TODO: Not sure why do we need t have list of ANRs on users list.
         //retrieve anr access for each users
 //        $userAnrTable = $this->get('userAnrTable');
 //        $usersAnrs = $userAnrTable->fetchAllObject();
@@ -137,8 +145,7 @@ class UserService extends CoreUserService
             ];
         }
 
-        // TODO: should be: $user->getAnrs();, but the relation needs to be fixed.
-        foreach ($user->getAnrs() as $userAnr) {
+        foreach ($user->getUserAnrs() as $userAnr) {
             if (isset($anrsData[$userAnr->get('anr')->get('id')])) {
                 $anrsData[$userAnr->get('anr')->get('id')]['rwd'] = $userAnr->get('rwd');
             }
@@ -172,42 +179,20 @@ class UserService extends CoreUserService
         }
 
         if (isset($data['anrs'])) {
-            $anrs = [];
+
             foreach ($data['anrs'] as $anr) {
-                $anrs[] = [
-                    'anr' => $this->anrTable->findById($anr['id']),
-                    'rwd' => $this->anrTable->findById($anr['rwd']),
-                ];
+                $anrEntity = $this->anrTable->findById($anr['id']);
+
+                $data['userAnrs'][] = (new UserAnr())
+                    ->setAnr($anrEntity)
+                    ->setRwd($anr['rwd'])
+                    ->setCreator($data['creator'])
+                    ->setCreatedAt(new DateTime());
             }
-            $data['anrs'] = $anrs;
         }
 
         $user = new User($data);
         $this->userTable->saveEntity($user);
-
-//        //give anr access to user
-//        if (isset($data['anrs'])) {
-//            /** @var SnapshotTable $snapshotCliTable */
-//            $snapshotCliTable = $this->get('snapshotCliTable');
-//            $snapshots = $snapshotCliTable->fetchAll();
-//
-//            $anrsSnapshots = [0];
-//            foreach ($snapshots as $snapshot) {
-//                $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
-//            }
-//            foreach ($data['anrs'] as $anr) {
-//                if (!isset($anrsSnapshots[$anr['id']])) {
-//                    $dataAnr = [
-//                        'user' => $user->getId(),
-//                        'anr' => $anr['id'],
-//                        'rwd' => $anr['rwd'],
-//                    ];
-//                    /** @var UserAnrService $userAnrService */
-//                    $userAnrService = $this->get('userAnrService');
-//                    $userAnrService->create($dataAnr);
-//                }
-//            }
-//        }
 
         return $user;
     }
@@ -296,47 +281,6 @@ class UserService extends CoreUserService
                 throw new Exception('You can not deactivate the "System" user', 412);
             }
         }
-
-        //retrieve user status (admin or not)
-//        /** @var UserRoleTable $userRoleTable */
-//        $isAdmin = false;
-//        $userRoleTable = $this->get('userRoleTable');
-//        $userRoles = $userRoleTable->getEntityByFields(['user' => $id]);
-//        foreach ($userRoles as $userRole) {
-//            if ($userRole->role == \Monarc\FrontOffice\Model\Entity\UserRole::SUPER_ADMIN_FO) {
-//                $isAdmin = true;
-//                break;
-//            }
-//
-//        if ($isAdmin) {
-//            /** @var \Monarc\FrontOffice\Model\Table\UserTable $userTable */
-//            $userTable = $this->get('table');
-//            $user = $userTable->getEntity($id);
-//
-//            //retrieve number of admin users
-//            $nbActivateAdminUser = 0;
-//            $adminUsersRoles = $userRoleTable->getEntityByFields(['role' => UserRole::SUPER_ADMIN_FO, 'user'=>['op'=>'!=','value'=>$id]]);
-//            foreach ($adminUsersRoles as $adminUsersRole) {
-//                if (($adminUsersRole->user->status) && (is_null($adminUsersRole->user->dateEnd))) {
-//                    $nbActivateAdminUser++;
-//                }
-//            }
-//
-//            //verify if status, dateEnd and role can be changed or user be deactivated
-//            if (
-//                ((($user->status) && (isset($data['status'])) && (!$data['status'])) //change status 1 -> 0
-//                    ||
-//                    ((is_null($user->dateEnd)) && (isset($data['dateEnd']))) //change dateEnd null -> date
-//                    ||
-//                    ((isset($data['role'])) && (!in_array('superadminfo', $data['role']))) //delete superadminfo role
-//                    ||
-//                    (is_null($data))) //delete superadminfo role
-//                &&
-//                $nbActivateAdminUser <= 1 //verify if this is not the last superadminfo and verify date_end
-//            ) {
-//                throw new Exception('You can not deactivate, delete or change role of the last admin', 412);
-//            }
-//        }
     }
 
     /**
@@ -348,46 +292,30 @@ class UserService extends CoreUserService
     {
         if (isset($data['anrs'])) {
 
-            //retieve current user anrs
-            $userAnrs = $user->getAnrs();
-            $currentUserAnrs = [];
-            foreach ($userAnrs as $userAnr) {
-                $currentUserAnrs[$userAnr->anr->id] = [
-                    'id' => $userAnr->id,
-                    'rwd' => $userAnr->rwd
-                ];
-            }
+            $userAnrs = [];
+            foreach ($data['anrs'] as $anr) {
+                $connectedUserName = $this->connectedUserService->getConnectedUser()->getFirstname()
+                    . ' ' . $this->connectedUserService->getConnectedUser()->getLastname();
+                $userAnr = $user->getUserAnrByAnrId($anr['id']);
+                if ($userAnr !== null) {
+                    $userAnrs[] = $userAnr
+                        ->setRwd($anr['rwd'])
+                        ->setUpdater($connectedUserName)
+                        ->setUpdatedAt(new DateTime());
+                } else {
+                    $anrEntity = $this->anrTable->findById($anr['id']);
 
-            //retrieve new anrs for user that are not snapshots
-            $futureUserAnrs = [];
-            foreach ($data['anrs'] as $userAnr) {
-                $futureUserAnrs[$userAnr['id']] = (int)$userAnr['rwd'];
-            }
-
-            $snapshots = $this->snapshotTable->fetchAll();
-            foreach ($snapshots as $snapshot) {
-                unset($futureUserAnrs[$snapshot['anr']->id]);
-            }
-
-            //add new anr access to user
-            foreach ($futureUserAnrs as $key => $futureUserAnr) {
-                if (!isset($currentUserAnrs[$key])) {
-                    $this->userAnrService->create([
-                        'user' => $user->getId(),
-                        'anr' => $key,
-                        'rwd' => $futureUserAnr,
-                    ]);
-                } elseif ($currentUserAnrs[$key]['rwd'] !== $futureUserAnrs[$key]) {
-                    $this->userAnrService->patch($currentUserAnrs[$key]['id'], ['rwd' => $futureUserAnrs[$key]]);
+                    $userAnrs[] = (new UserAnr())
+                        ->setAnr($anrEntity)
+                        ->setRwd($anr['rwd'])
+                        ->setCreator($connectedUserName)
+                        ->setCreatedAt(new DateTime());
                 }
             }
 
-            //delete old anrs access to user
-            foreach ($currentUserAnrs as $key => $currentUserAnr) {
-                if (!isset($futureUserAnrs[$key])) {
-                    $this->userAnrService->delete($currentUserAnr['id']);
-                }
-            }
+            $user->setUserAnrs($userAnrs);
+
+            $this->userTable->saveEntity($user);
         }
     }
 }
