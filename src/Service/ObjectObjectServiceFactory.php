@@ -34,7 +34,7 @@ class ObjectObjectServiceFactory extends AbstractServiceFactory
     {
         $objectObjectService = parent::__invoke($container, $requestedName, $options);
 
-        $objectObjectService->setEventManager($container->get('EventManager'));
+        $objectObjectService->setSharedManager($container->get('EventManager')->getSharedManager());
 
         return $objectObjectService;
     }
