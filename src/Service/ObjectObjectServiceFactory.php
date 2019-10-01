@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Interop\Container\ContainerInterface;
 use Monarc\Core\Service\AbstractServiceFactory;
 
 /**
@@ -27,4 +28,14 @@ class ObjectObjectServiceFactory extends AbstractServiceFactory
         'childTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
         'fatherTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
     ];
+
+    // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        $objectObjectService = parent::__invoke($container, $requestedName, $options);
+
+        $objectObjectService->setEventManager($container->get('EventManager'));
+
+        return $objectObjectService;
+    }
 }
