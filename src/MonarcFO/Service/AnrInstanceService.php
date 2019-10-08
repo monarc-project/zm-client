@@ -379,7 +379,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     }
                 }
                 //2.8.3
-                else if (version_compare($monarc_version, "2.8.2")==-1){
+                else if (version_compare($monarc_version, "2.8.4")==-1){
                     $recommandationsSets = $this->get('recommandationSetTable')
                                                 ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
                     if(!empty($recommandationsSets)){
@@ -588,7 +588,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         if (!empty($data['recos'][$risk['id']])) {
                             foreach ($data['recos'][$risk['id']] as $reco) {
                                 //2.8.3
-                                if (version_compare($monarc_version, "2.8.2")==-1){
+                                if (version_compare($monarc_version, "2.8.4")==-1){
                                     unset($reco['id']);
                                     $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
                                     if(!empty($recs)){
@@ -870,7 +870,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     }
                 }
                 //2.8.3
-                else if (version_compare($monarc_version, "2.8.2")==-1){
+                else if (version_compare($monarc_version, "2.8.4")==-1){
                     $recommandationsSets = $this->get('recommandationSetTable')
                                                 ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
                     if(!empty($recommandationsSets)){
@@ -960,7 +960,7 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                     if ($include_eval && !empty($data['recosop'][$ro['id']]) && !empty($idRiskOp)) {
                         foreach ($data['recosop'][$ro['id']] as $reco) {
                             //2.8.3
-                            if (version_compare($monarc_version, "2.8.2")==-1){
+                            if (version_compare($monarc_version, "2.8.4")==-1){
                                 unset($reco['id']);
                                 $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
                                 if(!empty($recs)){
