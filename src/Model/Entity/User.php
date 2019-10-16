@@ -74,7 +74,7 @@ class User extends UserSuperClass
     public function getUserAnrByAnrId(int $anrId): ?UserAnr
     {
         foreach ($this->userAnrs as $userAnr) {
-            if ($userAnr->getId() === $anrId) {
+            if ($userAnr->getAnr()->getId() === $anrId) {
                 return $userAnr;
             }
         }
@@ -92,6 +92,13 @@ class User extends UserSuperClass
             $this->userAnrs->add($userAnr);
             $userAnr->setUser($this);
         }
+
+        return $this;
+    }
+
+    public function addUserAnr(UserAnr $userAnr): self
+    {
+        $this->userAnrs->add($userAnr);
 
         return $this;
     }

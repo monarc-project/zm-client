@@ -32,9 +32,6 @@ class UserService extends CoreUserService
      */
     protected $forbiddenFields = ['password'];
 
-    /** @var UserAnrService */
-    private $userAnrService;
-
     /** @var AnrTable */
     private $anrTable;
 
@@ -54,7 +51,6 @@ class UserService extends CoreUserService
     ) {
         parent::__construct($userTable, $config);
 
-        $this->userAnrService = $userAnrService;
         $this->anrTable = $anrTable;
         $this->snapshotTable = $snapshotTable;
         $this->connectedUserService = $connectedUserService;
@@ -89,26 +85,6 @@ class UserService extends CoreUserService
             $this->parseFrontendFilter($filter, $this->filterColumns),
             $filterAnd
         );
-
-        // TODO: Not sure why do we need t have list of ANRs on users list.
-        //retrieve anr access for each users
-//        $userAnrTable = $this->get('userAnrTable');
-//        $usersAnrs = $userAnrTable->fetchAllObject();
-//        foreach ($users as $key => $user) {
-//            foreach ($usersAnrs as $userAnr) {
-//                if ($user['id'] == $userAnr->user->id) {
-//                    $anr = [
-//                        'id' => $userAnr->anr->id,
-//                        'label1' => $userAnr->anr->label1,
-//                        'label2' => $userAnr->anr->label2,
-//                        'label3' => $userAnr->anr->label3,
-//                        'label4' => $userAnr->anr->label4,
-//                        'rwd' => $userAnr->rwd,
-//                    ];
-//                    $users[$key]['anrs'][] = $anr;
-//                }
-//            }
-//        }
 
         $this->filterGetFields($users);
 
@@ -186,8 +162,7 @@ class UserService extends CoreUserService
                 $data['userAnrs'][] = (new UserAnr())
                     ->setAnr($anrEntity)
                     ->setRwd($anr['rwd'])
-                    ->setCreator($data['creator'])
-                    ->setCreatedAt(new DateTime());
+                    ->setCreator($data['creator']);
             }
         }
 
@@ -298,22 +273,21 @@ class UserService extends CoreUserService
                     . ' ' . $this->connectedUserService->getConnectedUser()->getLastname();
                 $userAnr = $user->getUserAnrByAnrId($anr['id']);
                 if ($userAnr !== null) {
-                    $userAnrs[] = $userAnr
+                    $userAnr
                         ->setRwd($anr['rwd'])
-                        ->setUpdater($connectedUserName)
-                        ->setUpdatedAt(new DateTime());
+                        ->setUpdater($connectedUserName);
                 } else {
                     $anrEntity = $this->anrTable->findById($anr['id']);
 
-                    $userAnrs[] = (new UserAnr())
-                        ->setAnr($anrEntity)
-                        ->setRwd($anr['rwd'])
-                        ->setCreator($connectedUserName)
-                        ->setCreatedAt(new DateTime());
+                    $user->addUserAnr(
+                        (new UserAnr())
+                            ->setAnr($anrEntity)
+                            ->setRwd($anr['rwd'])
+                            ->setCreator($connectedUserName)
+                            ->setCreatedAt(new DateTime())
+                    );
                 }
             }
-
-            $user->setUserAnrs($userAnrs);
 
             $this->userTable->saveEntity($user);
         }

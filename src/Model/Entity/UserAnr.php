@@ -10,15 +10,20 @@ namespace Monarc\FrontOffice\Model\Entity;
 use DateTime;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\Traits;
 
 /**
  * User Anr
  *
  * @ORM\Table(name="users_anrs")
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class UserAnr extends AbstractEntity
 {
+    use Traits\CreateEntityTrait;
+    use Traits\UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -52,34 +57,6 @@ class UserAnr extends AbstractEntity
      * @ORM\Column(name="rwd", type="smallint", nullable=true, options={"unsigned":true, "default":1})
      */
     protected $rwd = 1;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
 
     public function getId(): int
     {
@@ -140,34 +117,6 @@ class UserAnr extends AbstractEntity
         return $this;
     }
 
-    public function setCreator(string $creator): self
-    {
-        $this->creator = $creator;
-
-        return $this;
-    }
-
-    public function setCreatedAt(DateTime $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function setUpdater(string $updater): self
-    {
-        $this->updater = $updater;
-
-        return $this;
-    }
-
-    public function setUpdatedAt(DateTime $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
     public function getInputFilter($partial = false)
     {
         if (!$this->inputFilter) {
@@ -195,6 +144,7 @@ class UserAnr extends AbstractEntity
                 ],
             ]);
         }
+
         return $this->inputFilter;
     }
 }
