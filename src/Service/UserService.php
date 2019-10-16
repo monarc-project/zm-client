@@ -284,7 +284,6 @@ class UserService extends CoreUserService
                             ->setAnr($anrEntity)
                             ->setRwd($anr['rwd'])
                             ->setCreator($connectedUserName)
-                            ->setCreatedAt(new DateTime())
                     );
                 }
             }
