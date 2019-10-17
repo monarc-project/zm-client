@@ -27,6 +27,7 @@ class SnapshotService extends AbstractService
     protected $filterColumns = [];
     protected $anrTable;
     protected $userAnrTable;
+    protected $anrService;
 
     /**
      * @inheritdoc
