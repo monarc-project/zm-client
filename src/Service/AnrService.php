@@ -12,6 +12,7 @@ use Monarc\Core\Model\Entity\Model;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Table\ModelTable;
+use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Interview;
@@ -31,13 +32,11 @@ use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
 use Monarc\FrontOffice\Model\Table\UserTable;
 
-
-
 /**
  * This class is the service that handles ANR CRUD operations, and various actions on them.
  * @package Monarc\FrontOffice\Service
  */
-class AnrService extends \Monarc\Core\Service\AbstractService
+class AnrService extends AbstractService
 {
     protected $amvTable;
     protected $anrTable;
@@ -240,10 +239,10 @@ class AnrService extends \Monarc\Core\Service\AbstractService
     /**
      * Creates a new ANR from a model which is located inside the common database.
      * @param array $data Data coming from the API
-     * @return int The newly created ANR id
+     * @return Anr The newly created ANR id
      * @throws \Monarc\Core\Exception\Exception If the source model is not found
      */
-    public function createFromModelToClient($data)
+    public function createFromModelToClient($data): Anr
     {
         //retrieve model information
         /** @var ModelTable $modelTable */
@@ -394,14 +393,17 @@ class AnrService extends \Monarc\Core\Service\AbstractService
      * @param int|AnrSuperClass $anr The ANR to clone, either its ID or the object
      * @param string $source The source, either MonarcObject::SOURCE_CLIENT or MonarcObject::SOURCE_COMMON
      * @param Model|null $model The source common model, or null if none
-     * @return int The newly created ANR id
+     * @return Anr The newly created ANR
      * @throws \Monarc\Core\Exception\Exception
      */
-    public function duplicateAnr($anr, $source = MonarcObject::SOURCE_CLIENT,
-                                    $model = null,
-                                    $data = [], $isSnapshot = false,
-                                    $isSnapshotCloning = false)
-    {
+    public function duplicateAnr(
+        $anr,
+        $source = MonarcObject::SOURCE_CLIENT,
+        $model = null,
+        $data = [],
+        $isSnapshot = false,
+        $isSnapshotCloning = false
+    ): Anr {
         // This may take a lot of time on huge ANRs, so ignore the time limit
         ini_set('max_execution_time', 0);
 
@@ -444,12 +446,13 @@ class AnrService extends \Monarc\Core\Service\AbstractService
 
         try {
             // duplicate anr
-            $newAnr = new \Monarc\FrontOffice\Model\Entity\Anr($anr);
+            $newAnr = new Anr($anr);
             $newAnr->setId(null);
             $newAnr->setObjects(null);
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
             $newAnr->setReferentials(null);
+            $newAnr->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
             if (!empty($model) && is_object($model)) {
                 $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
                 $newAnr->set('cacheModelIsScalesUpdatable', $model->isScalesUpdatable);
@@ -1229,7 +1232,7 @@ class AnrService extends \Monarc\Core\Service\AbstractService
             throw new  \Monarc\Core\Exception\Exception('Error during analysis creation', 412);
         }
 
-        return $newAnr->get('id');
+        return $newAnr;
     }
 
     /**

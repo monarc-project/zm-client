@@ -19,35 +19,36 @@ use Monarc\Core\Model\Entity\AnrSuperClass;
 class Anr extends AnrSuperClass
 {
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="language", type="integer", options={"unsigned":true, "default":1})
      */
     protected $language = 1;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="model_id", type="integer", options={"unsigned":true, "default":0})
      */
     protected $model = '0';
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="model_impacts", type="smallint", options={"unsigned":true, "default":0})
      */
     protected $modelImpacts = '0';
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="cache_model_is_scales_updatable", type="smallint", options={"unsigned":true, "default":0})
      */
     protected $cacheModelIsScalesUpdatable = '0';
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Referential
+     * TODO: should be: Referential[]|ArrayCollection
+     * @var Referential
      *
      * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Referential", mappedBy="anr", cascade={"persist"})
      */
@@ -68,5 +69,4 @@ class Anr extends AnrSuperClass
     {
         return $this->referentials;
     }
-
 }
