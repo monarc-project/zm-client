@@ -9,17 +9,22 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\Traits;
 
 /**
  * Snapshot
  *
  * @ORM\Table(name="snapshots")
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Snapshot extends AbstractEntity
 {
+    use Traits\CreateEntityTrait;
+    use Traits\UpdateEntityTrait;
+
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -28,9 +33,9 @@ class Snapshot extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
@@ -38,9 +43,9 @@ class Snapshot extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_reference_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
@@ -48,181 +53,65 @@ class Snapshot extends AbstractEntity
     protected $anrReference;
 
     /**
-     * @var text
+     * @var string
      *
      * @ORM\Column(name="comment", type="text", length=255, nullable=true)
      */
     protected $comment;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
-
-    /**
      * @return int
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @param int $id
-     * @return Snapshot
-     */
-    public function setId($id)
+    public function setId(int $id): self
     {
         $this->id = $id;
+
         return $this;
     }
 
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
     /**
      * @param Anr $anr
+     *
      * @return Snapshot
      */
-    public function setAnr($anr)
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
-    /**
-     * @return Anr
-     */
-    public function getAnrReference()
+    public function getAnrReference(): ?Anr
     {
         return $this->anrReference;
     }
 
-    /**
-     * @param Anr $anrReference
-     * @return Snapshot
-     */
-    public function setAnrReference($anrReference)
+    public function setAnrReference($anrReference): self
     {
         $this->anrReference = $anrReference;
+
         return $this;
     }
 
-    /**
-     * @return text
-     */
-    public function getComment()
+    public function getComment(): ?string
     {
         return $this->comment;
     }
 
-    /**
-     * @param text $comment
-     * @return Snapshot
-     */
-    public function setComment($comment)
+    public function setComment(string $comment): self
     {
         $this->comment = $comment;
-        return $this;
-    }
 
-    /**
-     * @return string
-     */
-    public function getCreator()
-    {
-        return $this->creator;
-    }
-
-    /**
-     * @param string $creator
-     * @return Snapshot
-     */
-    public function setCreator($creator)
-    {
-        $this->creator = $creator;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getCreatedAt()
-    {
-        return $this->createdAt;
-    }
-
-    /**
-     * @param \DateTime $createdAt
-     * @return Snapshot
-     */
-    public function setCreatedAt($createdAt)
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdater()
-    {
-        return $this->updater;
-    }
-
-    /**
-     * @param string $updater
-     * @return Snapshot
-     */
-    public function setUpdater($updater)
-    {
-        $this->updater = $updater;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getUpdatedAt()
-    {
-        return $this->updatedAt;
-    }
-
-    /**
-     * @param \DateTime $updatedAt
-     * @return Snapshot
-     */
-    public function setUpdatedAt($updatedAt)
-    {
-        $this->updatedAt = $updatedAt;
         return $this;
     }
 }
