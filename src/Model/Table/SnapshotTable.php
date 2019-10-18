@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -21,5 +22,16 @@ class SnapshotTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Snapshot::class, $connectedUserService);
+    }
+
+    /**
+     * TODO: move it to an abstract table class (also rename the method to save) when we remove AbstractEntityTable.
+     * @throws ORMException
+     */
+    public function saveEntity(Snapshot $snapshot): void
+    {
+        // TODO: EntityManager has to be injected instead of the db class, db class will be removed at all.
+        $this->db->getEntityManager()->persist($snapshot);
+        $this->db->getEntityManager()->flush();
     }
 }

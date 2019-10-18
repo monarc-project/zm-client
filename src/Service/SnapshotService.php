@@ -7,10 +7,11 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Entity\Snapshot;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\Core\Model\Entity\User;
@@ -50,20 +51,31 @@ class SnapshotService extends AbstractService
     }
 
     /**
-     * @inheritdoc
+     * @throws ORMException
+     * @throws Exception
      */
-    public function create($data, $last = true)
+    public function create($data, $last = true): int
     {
         // duplicate anr and create snapshot record with new id
         /** @var AnrService $anrService */
         $anrService = $this->get('anrService');
         $newAnr = $anrService->duplicateAnr($data['anr'], MonarcObject::SOURCE_CLIENT, null, [], true);
 
-        $data['anrReference'] = $data['anr'];
-        $data['anr'] = $newAnr->getId();
-        $data['creator'] = $newAnr->getCreator();
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        /** @var SnapshotTable $snapshotTable */
+        $snapshotTable = $this->get('table');
 
-        return parent::create($data);
+        // TODO: Refactor this service and AnrService to be able to pass snapshot data in the constructor.
+        $snapshot = (new Snapshot())
+            ->setAnr($newAnr)
+            ->setAnrReference($anrTable->findById($data['anr']))
+            ->setCreator($newAnr->getCreator())
+            ->setComment($data['comment']);
+
+        $snapshotTable->saveEntity($snapshot);
+
+        return $snapshot->getId();
     }
 
     /**

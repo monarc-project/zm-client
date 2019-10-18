@@ -7,19 +7,17 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
-use Monarc\FrontOffice\Model\Entity\RecommandationSet;
-
 
 /**
  * Recommandation
  *
  * @ORM\Table(name="recommandations", indexes={
  *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
- *      @ORM\Index(name="anr_id_2", columns={"anr_id"},
- *      @ORM\Index(name="recommandation_set_uuid", columns={"recommandation_set_uuid", "code", "anr_id"},)
- * )
+ *      @ORM\Index(name="anr_id_2", columns={"anr_id"}),
+ *      @ORM\Index(name="recommandation_set_uuid", columns={"recommandation_set_uuid", "code", "anr_id"})
  * })
  * @ORM\Entity
  */
@@ -34,9 +32,9 @@ class Recommandation extends AbstractEntity
     protected $uuid;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -45,9 +43,9 @@ class Recommandation extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\RecommandationSet
+     * @var RecommandationSet
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RecommandationSet", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="RecommandationSet", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="recommandation_set_uuid", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -70,14 +68,14 @@ class Recommandation extends AbstractEntity
     protected $description;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="importance", type="smallint", options={"unsigned":true, "default":0}, nullable=true)
      */
     protected $importance = 0;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":1}, nullable=true)
      */
@@ -91,7 +89,7 @@ class Recommandation extends AbstractEntity
     protected $comment;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="status", type="smallint", options={"unsigned":true, "default":1})
      */
@@ -105,14 +103,14 @@ class Recommandation extends AbstractEntity
     protected $responsable;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="duedate", type="datetime", nullable=true)
      */
     protected $duedate;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="counter_treated", type="smallint", options={"unsigned":true, "default":0})
      */
@@ -140,7 +138,7 @@ class Recommandation extends AbstractEntity
     protected $creator;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="created_at", type="datetime", nullable=true)
      */
@@ -154,7 +152,7 @@ class Recommandation extends AbstractEntity
     protected $updater;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="updated_at", type="datetime", nullable=true)
      */
@@ -168,13 +166,10 @@ class Recommandation extends AbstractEntity
         return $this->uuid;
     }
 
-    /**
-     * @param int $id
-     * @return Asset
-     */
-    public function setUuid($id)
+    public function setUuid($id): self
     {
         $this->uuid = $id;
+
         return $this;
     }
 
@@ -186,33 +181,22 @@ class Recommandation extends AbstractEntity
         return $this->anr;
     }
 
-    /**
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr
-     * @return Scale
-     */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
-
-    /**
-     * @return Date
-     */
-    public function getDueDate()
+    public function getDueDate(): ?DateTime
     {
         return $this->duedate;
     }
 
-
-    /**
-     * @param DateTime date
-     * @return Scale
-     */
-    public function setDueDate($date)
+    public function setDueDate(DateTime $date): self
     {
         $this->duedate = $date;
+
         return $this;
     }
 
@@ -226,15 +210,16 @@ class Recommandation extends AbstractEntity
 
     /**
      * @param RecommandationSet $recommandationSet
-     * @return Recommandation
      */
-    public function setRecommandationSet($recommandationSet)
+    public function setRecommandationSet($recommandationSet): self
     {
         $this->recommandationSet = $recommandationSet;
+
         return $this;
     }
 
-    public function getFiltersForService(){
+    public function getFiltersForService()
+    {
         $filterJoin = [
             [
                 'as' => 'r',
@@ -253,6 +238,7 @@ class Recommandation extends AbstractEntity
             'r.anr',
             'r.code',
         ];
+
         return [$filterJoin,$filterLeft,$filtersCol];
     }
 

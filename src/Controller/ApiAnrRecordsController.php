@@ -88,7 +88,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                     }else if(get_class($entity[$dependency]) == 'Doctrine\ORM\PersistentCollection') {
                         $entity[$dependency]->initialize();
                         if($entity[$dependency]->count()){
-                            $$dependency = $entity[$dependency]->getSnapshot();
+                            $dependency = $entity[$dependency]->getSnapshot();
                             $temp = [];
                             foreach($$dependency as $d){
                                 if(is_a($d, 'Monarc\FrontOffice\Model\Entity\RecordProcessor')) { //fetch more info
