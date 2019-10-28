@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\RolfRiskSuperclass;
+use Monarc\Core\Model\Entity\RolfRiskSuperClass;
 
 /**
  * Rolf Risk
@@ -18,7 +18,7 @@ use Monarc\Core\Model\Entity\RolfRiskSuperclass;
  * })
  * @ORM\Entity
  */
-class RolfRisk extends RolfRiskSuperclass
+class RolfRisk extends RolfRiskSuperClass
 {
 
     /**

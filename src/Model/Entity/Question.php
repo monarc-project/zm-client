@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\QuestionSuperclass;
+use Monarc\Core\Model\Entity\QuestionSuperClass;
 
 /**
  * Question
@@ -16,7 +16,7 @@ use Monarc\Core\Model\Entity\QuestionSuperclass;
  * @ORM\Table(name="questions")
  * @ORM\Entity
  */
-class Question extends QuestionSuperclass
+class Question extends QuestionSuperClass
 {
     /**
      * @var \Monarc\FrontOffice\Model\Entity\Anr

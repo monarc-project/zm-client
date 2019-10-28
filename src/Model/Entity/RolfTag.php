@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\RolfTagSuperclass;
+use Monarc\Core\Model\Entity\RolfTagSuperClass;
 
 /**
  * Rolf Tag
@@ -18,7 +18,7 @@ use Monarc\Core\Model\Entity\RolfTagSuperclass;
  * })
  * @ORM\Entity
  */
-class RolfTag extends RolfTagSuperclass
+class RolfTag extends RolfTagSuperClass
 {
     /**
      * @var \Monarc\FrontOffice\Model\Entity\Anr

@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\ThemeSuperclass;
+use Monarc\Core\Model\Entity\ThemeSuperClass;
 
 /**
  * Theme
@@ -18,7 +18,7 @@ use Monarc\Core\Model\Entity\ThemeSuperclass;
  * })
  * @ORM\Entity
  */
-class Theme extends ThemeSuperclass
+class Theme extends ThemeSuperClass
 {
     /**
      * @var \Monarc\FrontOffice\Model\Entity\Anr

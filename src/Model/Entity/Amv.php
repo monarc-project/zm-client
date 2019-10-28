@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\AmvSuperclass;
+use Monarc\Core\Model\Entity\AmvSuperClass;
 use Zend\Validator\Uuid;
 
 /**
@@ -22,7 +22,7 @@ use Zend\Validator\Uuid;
  * })
  * @ORM\Entity
  */
-class Amv extends AmvSuperclass
+class Amv extends AmvSuperClass
 {
 
     /**

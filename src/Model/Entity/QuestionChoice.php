@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\QuestionChoiceSuperclass;
+use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 
 /**
  * Question Choice
@@ -19,7 +19,7 @@ use Monarc\Core\Model\Entity\QuestionChoiceSuperclass;
  * })
  * @ORM\Entity
  */
-class QuestionChoice extends QuestionChoiceSuperclass
+class QuestionChoice extends QuestionChoiceSuperClass
 {
     /**
      * @var \Monarc\FrontOffice\Model\Entity\Question
