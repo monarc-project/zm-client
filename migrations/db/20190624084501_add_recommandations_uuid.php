@@ -43,7 +43,9 @@ class AddRecommandationsUuid extends AbstractMigration
 
         foreach ($distinctRecoRows as $key => $value) {
           $uniqid = Uuid::uuid4();
-          $recosPDO = $this->query('select id,anr_id from recommandations' . ' WHERE code ="'.$value['code']. '" and description ="'.$value['description'].'"');
+          $quotedCode = $this->quote($value['code']);
+          $quotedDescription = $this->quote($value['description']);
+          $recosPDO = $this->query('select id,anr_id from recommandations' . ' WHERE code ="'.$quotedCode. '" and description ="'.$quotedDescription.'"');
           $recos = $recosPDO->fetchAll();
           $updatable=true;
           foreach ($recos as $k => $v) {
