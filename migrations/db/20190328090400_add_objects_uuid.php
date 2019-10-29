@@ -110,12 +110,13 @@ class AddObjectsUuid extends AbstractMigration
               }else if ($val['language']==3 && $value['name3']=='Mitarbeiter' && $value['name2']=='Employees'){
                 $this->execute('UPDATE objects SET uuid =' .'"96e69e5c-513c-11e9-ac8c-0800277f0571"'.' WHERE name3 ='.'"Mitarbeiter" AND name2 = "Employees" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
               }else {
-              $this->execute('UPDATE objects SET uuid =' .'"'.$key.'"'.' WHERE name'.$val['language'].' ='.'"'.$value['name'.$val['language']] .'" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+              $quotedName = $this->quote($value['name'.$val['language']]);
+              $this->execute('UPDATE objects SET uuid =' .'"'.$key.'"'.' WHERE name'.$val['language'].' ='.'"'. $quotedName .'" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
             }
           }
         }
 
-      $multiples = $this->query('SELECT   COUNT(*) AS number, uuid,anr_id FROM objects GROUP BY uuid,anr_id HAVING   COUNT(*) > 1')->fetchAll();
+      $multiples = $this->query('SELECT COUNT(*) AS number, uuid,anr_id FROM objects GROUP BY uuid, anr_id HAVING COUNT(*) > 1')->fetchAll();
        foreach($multiples as $multiple){
          $bad_objects=$this->query('SELECT * FROM objects where uuid="'.$multiple['uuid'].'" and anr_id ='.$multiple['anr_id'])->fetchAll();
          for ($i=1; $i <$multiple['number'] ; $i++) {
