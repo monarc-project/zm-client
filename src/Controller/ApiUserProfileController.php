@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\User;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserProfileService;
 use Zend\Mvc\Controller\AbstractRestfulController;
@@ -57,9 +56,10 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function patchList($data)
     {
-        return new JsonModel(
-            $this->userProfileService->update($this->connectedUserService->getConnectedUser(), $data)
-        );
+        $this->userProfileService->update($this->connectedUserService->getConnectedUser(), $data);
+
+        // Replace to return the updated object.
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
@@ -67,9 +67,10 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function replaceList($data)
     {
-        return new JsonModel(
-            $this->userProfileService->update($this->connectedUserService->getConnectedUser(), $data)
-        );
+        $this->userProfileService->update($this->connectedUserService->getConnectedUser(), $data);
+
+        // Replace to return the updated object.
+        return new JsonModel(['status' => 'ok']);
     }
 
     /**
