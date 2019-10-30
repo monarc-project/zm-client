@@ -4,6 +4,7 @@ namespace Monarc\FrontOffice;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Zend\Console\Request;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Permissions\Rbac\Rbac;
@@ -14,7 +15,7 @@ class Module
 {
     public function onBootstrap(MvcEvent $e)
     {
-        if(!$e->getRequest() instanceof \Zend\Console\Request){
+        if (!$e->getRequest() instanceof Request) {
             $eventManager = $e->getApplication()->getEventManager();
             $moduleRouteListener = new ModuleRouteListener();
             $moduleRouteListener->attach($eventManager);
@@ -30,24 +31,6 @@ class Module
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
-    }
-
-    public function getServiceConfig()
-    {
-        return array(
-            'invokables' => array(
-            ),
-            'factories' => array(
-            ),
-        );
-    }
-
-
-    public function getValidatorConfig(){
-        return array(
-            'invokables' => array(
-            ),
-        );
     }
 
     public function onDispatchError($e)

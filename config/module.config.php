@@ -1049,7 +1049,7 @@ return [
             Table\QuestionChoiceTable::class => AutowireFactory::class,
 
             //entities
-            // TODO: refactor the strange relation between Table and ServiceModelTable, the same for entities.
+            // TODO: the goal is to remove all of the mapping and create new entity in the code.
             'Monarc\FrontOffice\Model\Entity\Amv' => 'Monarc\FrontOffice\Service\Model\Entity\AmvServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Anr' => 'Monarc\FrontOffice\Service\Model\Entity\AnrServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\AnrObjectCategory' => 'Monarc\FrontOffice\Service\Model\Entity\AnrObjectCategoryServiceModelEntity',
@@ -1089,8 +1089,6 @@ return [
             'Monarc\FrontOffice\Model\Entity\SoaCategory' => 'Monarc\FrontOffice\Service\Model\Entity\SoaCategoryServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Theme' => 'Monarc\FrontOffice\Service\Model\Entity\ThemeServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Threat' => 'Monarc\FrontOffice\Service\Model\Entity\ThreatServiceModelEntity',
-            // TODO: normally non of them is needed.
-            // 'Monarc\FrontOffice\Model\Entity\User' => 'Monarc\FrontOffice\Service\Model\Entity\UserServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Vulnerability' => 'Monarc\FrontOffice\Service\Model\Entity\VulnerabilityServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Question' => 'Monarc\FrontOffice\Service\Model\Entity\QuestionServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\QuestionChoice' => 'Monarc\FrontOffice\Service\Model\Entity\QuestionChoiceServiceModelEntity',
