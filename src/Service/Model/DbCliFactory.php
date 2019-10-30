@@ -6,7 +6,7 @@ use Interop\Container\ContainerInterface;
 use Monarc\FrontOffice\Model\DbCli;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
-class DbCliFactory  implements FactoryInterface
+class DbCliFactory implements FactoryInterface
 {
     /**
      * @inheritDoc
