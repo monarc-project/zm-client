@@ -204,7 +204,7 @@ class AddObjectsUuid extends AbstractMigration
        foreach($multiples as $multiple){
          $bad_objects=$this->query('SELECT * FROM objects where uuid="'.$multiple['uuid'].'" and anr_id='.$multiple['anr_id'])->fetchAll();
          for ($i=1; $i <$multiple['number'] ; $i++) {
-           $this->execute('UPDATE objects SET uuid="'.Uuid::uuid4().'"');
+           $this->execute('UPDATE objects SET uuid="'.Uuid::uuid4().'" where uuid="'.$multiple['uuid'].'" and rolf_tag_id is null');
          }
        }
 
