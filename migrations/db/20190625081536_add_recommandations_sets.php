@@ -87,12 +87,12 @@ class AddRecommandationsSets extends AbstractMigration
             ->dropForeignKey('anr_id')
             ->update();
 
-        $unUUIDpdo = $this->query('select uuid, code from recommandations' . ' WHERE recommandation_set_uuid =' . '"' . '"');
+        $unUUIDpdo = $this->query('select uuid, code from recommandations WHERE recommandation_set_uuid =' . '""');
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
         foreach ($unUUIDrows as $key => $value) {
             $quotedCode = $conn->quote($value['code']);
-            $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . 'b1c26f12-7ba3-11e9-8f9e-2a86e4085a59' . '"' . ' WHERE code =' . '"' . $quotedCode . '"'); //seta default set
+            $this->execute('UPDATE recommandations SET recommandation_set_uuid ="b1c26f12-7ba3-11e9-8f9e-2a86e4085a59" WHERE code ='.$quotedCode); //set a default set
         }
 
           //select duplicates[code,anr,set]
@@ -105,7 +105,7 @@ class AddRecommandationsSets extends AbstractMigration
                                           group by code having count(*)>1)')
                               ->fetchAll();
           foreach ($duplicates as $key => $value) {
-              $quotedCode = $conn->quote($value['code']);
+              $quotedCode = $this->quote($value['code']);
               $this->execute('UPDATE recommandations SET code ="' .$quotedCode.' #'. substr(uniqid(),-5) .
                 '" WHERE code =' . '"' . $quotedCode . '" and uuid="'.$value['uuid'].'" and recommandation_set_uuid="'.$value['recommandation_set_uuid'] .'" and anr_id='.$value['anr_id']);
           }
