@@ -95,107 +95,107 @@ class AddObjectsUuid extends AbstractMigration
             "96e6a39d-513c-11e9-ac8c-0800277f0571" => ["asset" => "d2023c8f-44d1-11e9-a78c-0800277f0571", "name1" => "Sous-traitance en cascade", "name2" => "Subcontracting in cascade", "name3" => "Untervergabe in Kaskade", "name4" => "Meervoudige onderaanneming"],
             "96e6a3b4-513c-11e9-ac8c-0800277f0571" => ["asset" => "d2023c8f-44d1-11e9-a78c-0800277f0571", "name1" => "Transfert hors UE", "name2" => "Transfer outside EU", "name3" => "Übertragung außerhalb EU", "name4" => "Doorgifte buiten EU"]);
         // Migration for table objects -- Modify the data
-        // $table = $this->table('objects');
-        // $table
-        //     ->addColumn('uuid', 'uuid',array('after' => 'id'))
-        //     ->addIndex(array('uuid'))
-        //     ->update();
-        // $anrList = $this->query('select id,language from anrs')->fetchAll();
-        //
-        // foreach ($anrList as $index => $val)//for fetch the language of the analysis
-        // {
-        //     foreach ($data as $key => $value) { //fill the uuid only for objects created by cases
-        //         if($val['language']==3 && $value['name3']=='Mitarbeiter' && $value['name2']=='Employee'){
-        //             $this->execute('UPDATE objects SET uuid =' .'"96e69e3b-513c-11e9-ac8c-0800277f0571"'.' WHERE name3 ='.'"Mitarbeiter" AND name2 = "Employee" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
-        //         }else if ($val['language']==3 && $value['name3']=='Mitarbeiter' && $value['name2']=='Employees'){
-        //             $this->execute('UPDATE objects SET uuid =' .'"96e69e5c-513c-11e9-ac8c-0800277f0571"'.' WHERE name3 ='.'"Mitarbeiter" AND name2 = "Employees" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
-        //         }else {
-        //             $quotedName = $conn->quote($value['name'.$val['language']]);
-        //             $this->execute('UPDATE objects SET uuid =' .'"'.$key.'"'.' WHERE name'.$val['language'].' ='.'"'. $quotedName .'" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
-        //         }
-        //     }
-        // }
-        //
-        // $multiples = $this->query('SELECT COUNT(*) AS number, uuid,anr_id FROM objects GROUP BY uuid, anr_id HAVING COUNT(*) > 1')->fetchAll();
-        // foreach($multiples as $multiple){
-        //     $bad_objects=$this->query('SELECT * FROM objects where uuid="'.$multiple['uuid'].'" and anr_id ='.$multiple['anr_id'])->fetchAll();
-        //     for ($i=1; $i <$multiple['number'] ; $i++) {
-        //         $this->execute('UPDATE objects SET uuid ="" WHERE id='.$bad_objects[$i]['id']);
-        //     }
-        // }
-        // $unUUIDpdo = $this->query('select uuid,id from objects' .' WHERE uuid ='.'"'.'"');
-        // $unUUIDrows = $unUUIDpdo->fetchAll();
-        //
-        // foreach ($unUUIDrows as $key => $value) {
-        //     $this->execute('UPDATE objects SET uuid =' .'"'.Uuid::uuid4().'"'.' WHERE id ='.$value['id']); //manage objects which are not in common
-        // }
-        //
-        // $table = $this->table('anrs_objects'); //set the stufff for anrs_objects
-        // $table->dropForeignKey('object_id')
-        //     ->addColumn('object_uuid', 'uuid',array('after' => 'id'))
-        //     ->addColumn('anr_id2', 'integer', array('null' => true, 'signed' => false))
-        //     ->update();
-        // $this->execute('UPDATE anrs_objects A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
-        // $this->execute('UPDATE anrs_objects A SET A.anr_id2 = A.anr_id');
-        // $table->removeColumn('object_id')
-        //     ->renameColumn('object_uuid','object_id')
-        //     ->update();
-        //
-        // $table = $this->table('instances'); //set the stufff for instances
-        // $table->dropForeignKey('object_id')
-        //     ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
-        //     ->update();
-        // $this->execute('UPDATE instances A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
-        // $table->removeColumn('object_id')
-        //     ->renameColumn('object_uuid','object_id')
-        //     ->update();
-        //
-        // $table = $this->table('instances_risks_op'); //set the stufff for instances_risks_op
-        // $table->dropForeignKey('object_id')
-        //     ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
-        //     ->update();
-        // $this->execute('UPDATE instances_risks_op A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
-        // $table->removeColumn('object_id')
-        //     ->renameColumn('object_uuid','object_id')
-        //     ->update();
-        //
-        // $table = $this->table('instances_consequences'); //set the stufff for instances_risks_op
-        // $table->dropForeignKey('object_id')
-        // ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
-        // ->update();
-        // $this->execute('UPDATE instances_consequences A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
-        // $table->removeColumn('object_id')
-        //     ->renameColumn('object_uuid','object_id')
-        //     ->update();
-        //
-        // $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
-        // $table->dropForeignKey('object_global_id')
-        //     ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
-        //     ->update();
-        // $this->execute('UPDATE recommandations_risks A,objects B SET A.object_uuid = B.uuid where B.id=A.object_global_id');
-        // $table->removeColumn('object_global_id')
-        //     ->renameColumn('object_uuid','object_global_id')
-        //     ->update();
-        //
-        // $table = $this->table('objects_objects'); //set the stufff for objects_objects
-        // $table->dropForeignKey('father_id')
-        //     ->dropForeignKey('child_id')
-        //     ->addColumn('father_uuid', 'uuid',array('after' => 'id', 'null' => true))
-        //     ->addColumn('child_uuid', 'uuid',array('after' => 'id', 'null' => true))
-        //     ->update();
-        // $this->execute('UPDATE objects_objects A,objects B SET A.father_uuid = B.uuid where B.id=A.father_id and A.father_id is not null');
-        // $this->execute('UPDATE objects_objects A,objects B SET A.child_uuid = B.uuid where B.id=A.child_id and A.child_id is not null');
-        // $table->removeColumn('father_id')
-        //     ->removeColumn('child_id')
-        //     ->renameColumn('father_uuid','father_id')
-        //     ->renameColumn('child_uuid','child_id')
-        //     ->update();
-        //
-        // $table = $this->table('objects');
-        //
-        // $table->dropForeignKey('anr_id')
-        //     ->removeColumn('id')
-        //     ->save();
+        $table = $this->table('objects');
+        $table
+            ->addColumn('uuid', 'uuid',array('after' => 'id'))
+            ->addIndex(array('uuid'))
+            ->update();
+        $anrList = $this->query('select id,language from anrs')->fetchAll();
+
+        foreach ($anrList as $index => $val)//for fetch the language of the analysis
+        {
+            foreach ($data as $key => $value) { //fill the uuid only for objects created by cases
+                if($val['language']==3 && $value['name3']=='Mitarbeiter' && $value['name2']=='Employee'){
+                    $this->execute('UPDATE objects SET uuid =' .'"96e69e3b-513c-11e9-ac8c-0800277f0571"'.' WHERE name3 ='.'"Mitarbeiter" AND name2 = "Employee" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+                }else if ($val['language']==3 && $value['name3']=='Mitarbeiter' && $value['name2']=='Employees'){
+                    $this->execute('UPDATE objects SET uuid =' .'"96e69e5c-513c-11e9-ac8c-0800277f0571"'.' WHERE name3 ='.'"Mitarbeiter" AND name2 = "Employees" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+                }else {
+                    $quotedName = $conn->quote($value['name'.$val['language']]);
+                    $this->execute('UPDATE objects SET uuid =' .'"'.$key.'"'.' WHERE name'.$val['language'].' ='.'"'. $quotedName .'" AND anr_id ='.'"'.$val['id'] .'"'.'AND asset_id ='.'"'.$value['asset'] .'"');
+                }
+            }
+        }
+
+        $multiples = $this->query('SELECT COUNT(*) AS number, uuid,anr_id FROM objects GROUP BY uuid, anr_id HAVING COUNT(*) > 1')->fetchAll();
+        foreach($multiples as $multiple){
+            $bad_objects=$this->query('SELECT * FROM objects where uuid="'.$multiple['uuid'].'" and anr_id ='.$multiple['anr_id'])->fetchAll();
+            for ($i=1; $i <$multiple['number'] ; $i++) {
+                $this->execute('UPDATE objects SET uuid ="" WHERE id='.$bad_objects[$i]['id']);
+            }
+        }
+        $unUUIDpdo = $this->query('select uuid,id from objects' .' WHERE uuid ='.'"'.'"');
+        $unUUIDrows = $unUUIDpdo->fetchAll();
+
+        foreach ($unUUIDrows as $key => $value) {
+            $this->execute('UPDATE objects SET uuid =' .'"'.Uuid::uuid4().'"'.' WHERE id ='.$value['id']); //manage objects which are not in common
+        }
+
+        $table = $this->table('anrs_objects'); //set the stufff for anrs_objects
+        $table->dropForeignKey('object_id')
+            ->addColumn('object_uuid', 'uuid',array('after' => 'id'))
+            ->addColumn('anr_id2', 'integer', array('null' => true, 'signed' => false))
+            ->update();
+        $this->execute('UPDATE anrs_objects A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
+        $this->execute('UPDATE anrs_objects A SET A.anr_id2 = A.anr_id');
+        $table->removeColumn('object_id')
+            ->renameColumn('object_uuid','object_id')
+            ->update();
+
+        $table = $this->table('instances'); //set the stufff for instances
+        $table->dropForeignKey('object_id')
+            ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
+            ->update();
+        $this->execute('UPDATE instances A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
+        $table->removeColumn('object_id')
+            ->renameColumn('object_uuid','object_id')
+            ->update();
+
+        $table = $this->table('instances_risks_op'); //set the stufff for instances_risks_op
+        $table->dropForeignKey('object_id')
+            ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
+            ->update();
+        $this->execute('UPDATE instances_risks_op A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
+        $table->removeColumn('object_id')
+            ->renameColumn('object_uuid','object_id')
+            ->update();
+
+        $table = $this->table('instances_consequences'); //set the stufff for instances_risks_op
+        $table->dropForeignKey('object_id')
+        ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
+        ->update();
+        $this->execute('UPDATE instances_consequences A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
+        $table->removeColumn('object_id')
+            ->renameColumn('object_uuid','object_id')
+            ->update();
+
+        $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
+        $table->dropForeignKey('object_global_id')
+            ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
+            ->update();
+        $this->execute('UPDATE recommandations_risks A,objects B SET A.object_uuid = B.uuid where B.id=A.object_global_id');
+        $table->removeColumn('object_global_id')
+            ->renameColumn('object_uuid','object_global_id')
+            ->update();
+
+        $table = $this->table('objects_objects'); //set the stufff for objects_objects
+        $table->dropForeignKey('father_id')
+            ->dropForeignKey('child_id')
+            ->addColumn('father_uuid', 'uuid',array('after' => 'id', 'null' => true))
+            ->addColumn('child_uuid', 'uuid',array('after' => 'id', 'null' => true))
+            ->update();
+        $this->execute('UPDATE objects_objects A,objects B SET A.father_uuid = B.uuid where B.id=A.father_id and A.father_id is not null');
+        $this->execute('UPDATE objects_objects A,objects B SET A.child_uuid = B.uuid where B.id=A.child_id and A.child_id is not null');
+        $table->removeColumn('father_id')
+            ->removeColumn('child_id')
+            ->renameColumn('father_uuid','father_id')
+            ->renameColumn('child_uuid','child_id')
+            ->update();
+
+        $table = $this->table('objects');
+
+        $table->dropForeignKey('anr_id')
+            ->removeColumn('id')
+            ->save();
 
         $this->execute("DELETE FROM objects where anr_id not in (select id from anrs)");
         $multiples = $this->query('SELECT COUNT(*) AS number, uuid,anr_id FROM objects GROUP BY uuid, anr_id HAVING COUNT(*) > 1')->fetchAll();
