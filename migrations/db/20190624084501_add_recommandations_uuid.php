@@ -30,6 +30,8 @@ class AddRecommandationsUuid extends AbstractMigration
      */
     public function change()
     {
+        $conn = $this->getAdapter()->getConnection();
+
         // Migration for table recommandations -- Modify the data
         $table = $this->table('recommandations');
         $table
@@ -43,8 +45,8 @@ class AddRecommandationsUuid extends AbstractMigration
 
         foreach ($distinctRecoRows as $key => $value) {
           $uniqid = Uuid::uuid4();
-          $quotedCode = $this->quote($value['code']);
-          $quotedDescription = $this->quote($value['description']);
+          $quotedCode = $conn->quote($value['code']);
+          $quotedDescription = $conn->quote($value['description']);
           $recosPDO = $this->query('select id,anr_id from recommandations' . ' WHERE code ="'.$quotedCode. '" and description ="'.$quotedDescription.'"');
           $recos = $recosPDO->fetchAll();
           $updatable=true;

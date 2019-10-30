@@ -30,6 +30,8 @@ class AddRecommandationsSets extends AbstractMigration
      */
     public function change()
     {
+        $conn = $this->getAdapter()->getConnection();
+
         $table = $this->table('recommandations_sets');
         $table
             ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
@@ -89,7 +91,7 @@ class AddRecommandationsSets extends AbstractMigration
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
         foreach ($unUUIDrows as $key => $value) {
-            $quotedCode = $this->quote($value['code']);
+            $quotedCode = $conn->quote($value['code']);
             $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . 'b1c26f12-7ba3-11e9-8f9e-2a86e4085a59' . '"' . ' WHERE code =' . '"' . $quotedCode . '"'); //seta default set
         }
 
@@ -103,7 +105,7 @@ class AddRecommandationsSets extends AbstractMigration
                                           group by code having count(*)>1)')
                               ->fetchAll();
           foreach ($duplicates as $key => $value) {
-              $quotedCode = $this->quote($value['code']);
+              $quotedCode = $conn->quote($value['code']);
               $this->execute('UPDATE recommandations SET code ="' .$quotedCode.' #'. substr(uniqid(),-5) .
                 '" WHERE code =' . '"' . $quotedCode . '" and uuid="'.$value['uuid'].'" and recommandation_set_uuid="'.$value['recommandation_set_uuid'] .'" and anr_id='.$value['anr_id']);
           }
