@@ -227,19 +227,6 @@ class UserService extends CoreUserService
     }
 
     /**
-     * @inheritdoc
-     */
-    public function delete($userId)
-    {
-        $user = $this->userTable->findById($userId);
-        if ($user->isSystemUser()) {
-            throw new Exception('You can not remove the "System" user', 412);
-        }
-
-        $this->userTable->deleteEntity($user);
-    }
-
-    /**
      * Checks whether or not a specific action is authorized or not for the specified user id
      */
     private function verifySystemUserUpdate(User $user, array $data = [])
