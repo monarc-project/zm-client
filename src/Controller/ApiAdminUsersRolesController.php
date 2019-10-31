@@ -19,8 +19,6 @@ use Zend\View\Model\JsonModel;
  */
 class ApiAdminUsersRolesController extends AbstractRestfulController
 {
-    protected $name = 'roles';
-
     /** @var UserRoleService */
     private $userRoleService;
 
@@ -34,8 +32,7 @@ class ApiAdminUsersRolesController extends AbstractRestfulController
      */
     public function getList()
     {
-        $request = $this->getRequest();
-        $token = $request->getHeader('token');
+        $token = $this->getRequest()->getHeader('token');
 
         $currentUserRoles = $this->userRoleService->getByUserToken($token);
 
@@ -51,7 +48,7 @@ class ApiAdminUsersRolesController extends AbstractRestfulController
 
         return new JsonModel([
             'count' => count($userRoles),
-            $this->name => $userRoles
+            'roles' => $userRoles
         ]);
     }
 }
