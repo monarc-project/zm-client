@@ -508,20 +508,22 @@ class AnrInstanceService extends \MonarcCore\Service\InstanceService
                         $r->setLanguage($this->getLanguage());
                         $r->exchangeArray($toExchange);
                         $this->setDependencies($r, ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']);
-                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r,false);
+                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
                         $r->set('id', $idRisk);
-                    } else {
-                        $tuuid = Uuid::isValid($risk['threat'])?$risk['threat']:$sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
-                        $vuuid = Uuid::isValid($risk['vulnerability'])?$risk['vulnerability']:$sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
-                        $r = current($this->get('instanceRiskService')->get('table')->getEntityByFields([
-                            'anr' => $anr->get('id'),
-                            'instance' => $instanceId,
-                            'asset' => $obj ? ['anr' => $anr->get('id'), 'uuid' => is_string($obj->get('asset')->get('uuid'))?$obj->get('asset')->get('uuid'):$obj->get('asset')->get('uuid')->toString()] : null,
-                            'threat' => ['anr' => $anr->get('id'), 'uuid' => $tuuid],
-                            'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $vuuid]
-                        ]));
-                        if($r == false)$r = null;
+
                     }
+
+                    $tuuid = Uuid::isValid($risk['threat'])?$risk['threat']:$sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
+                    $vuuid = Uuid::isValid($risk['vulnerability'])?$risk['vulnerability']:$sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
+
+                    $r = current($this->get('instanceRiskService')->get('table')->getEntityByFields([
+                        'anr' => $anr->get('id'),
+                        'instance' => $instanceId,
+                        'asset' => $obj ? ['anr' => $anr->get('id'), 'uuid' => is_string($obj->get('asset')->get('uuid'))?$obj->get('asset')->get('uuid'):$obj->get('asset')->get('uuid')->toString()] : null,
+                        'threat' => ['anr' => $anr->get('id'), 'uuid' => $tuuid],
+                        'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $vuuid]
+                    ]));
+                    if($r == false)$r = null;
 
                     if (!empty($r) && $include_eval) {
                         $r->set('threatRate', $this->approximate(
