@@ -64,7 +64,7 @@ class UserService extends CoreUserService
         }
 
         foreach ($entity as $id => $user) {
-            foreach($entity[$id] as $key => $value){
+            foreach ($entity[$id] as $key => $value) {
                 if (in_array($key, $forbiddenFields)) {
                     unset($entity[$id][$key]);
                 }
