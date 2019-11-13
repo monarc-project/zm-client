@@ -30,6 +30,8 @@ class AddRecommandationsSets extends AbstractMigration
      */
     public function change()
     {
+        $conn = $this->getAdapter()->getConnection();
+
         $table = $this->table('recommandations_sets');
         $table
             ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
@@ -85,11 +87,12 @@ class AddRecommandationsSets extends AbstractMigration
             ->dropForeignKey('anr_id')
             ->update();
 
-        $unUUIDpdo = $this->query('select uuid, code from recommandations' . ' WHERE recommandation_set_uuid =' . '"' . '"');
+        $unUUIDpdo = $this->query('select uuid, code from recommandations WHERE recommandation_set_uuid =' . '""');
         $unUUIDrows = $unUUIDpdo->fetchAll();
 
         foreach ($unUUIDrows as $key => $value) {
-            $this->execute('UPDATE recommandations SET recommandation_set_uuid =' . '"' . 'b1c26f12-7ba3-11e9-8f9e-2a86e4085a59' . '"' . ' WHERE code =' . '"' . $value['code'] . '"'); //seta default set
+            $quotedCode = $conn->quote($value['code']);
+            $this->execute('UPDATE recommandations SET recommandation_set_uuid ="b1c26f12-7ba3-11e9-8f9e-2a86e4085a59" WHERE code ='.$quotedCode); //set a default set
         }
 
           //select duplicates[code,anr,set]
@@ -102,8 +105,9 @@ class AddRecommandationsSets extends AbstractMigration
                                           group by code having count(*)>1)')
                               ->fetchAll();
           foreach ($duplicates as $key => $value) {
-              $this->execute('UPDATE recommandations SET code ="' .$value['code'].' #'. substr(uniqid(),-5) .
-                '" WHERE code =' . '"' . $value['code'] . '" and uuid="'.$value['uuid'].'" and recommandation_set_uuid="'.$value['recommandation_set_uuid'] .'" and anr_id='.$value['anr_id']);
+              $quotedCode = $this->quote($value['code']);
+              $this->execute('UPDATE recommandations SET code ="' .$quotedCode.' #'. substr(uniqid(),-5) .
+                '" WHERE code =' . '"' . $quotedCode . '" and uuid="'.$value['uuid'].'" and recommandation_set_uuid="'.$value['recommandation_set_uuid'] .'" and anr_id='.$value['anr_id']);
           }
 
         $table

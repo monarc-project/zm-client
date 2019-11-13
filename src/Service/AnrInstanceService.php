@@ -379,7 +379,7 @@ class AnrInstanceService extends \Monarc\Core\Service\InstanceService
                     }
                 }
                 //2.8.3
-                else if (version_compare($monarc_version, "2.8.2")==-1){
+                else if (version_compare($monarc_version, "2.8.4")==-1){
                     $recommandationsSets = $this->get('recommandationSetTable')
                                                 ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
                     if(!empty($recommandationsSets)){
@@ -508,20 +508,22 @@ class AnrInstanceService extends \Monarc\Core\Service\InstanceService
                         $r->setLanguage($this->getLanguage());
                         $r->exchangeArray($toExchange);
                         $this->setDependencies($r, ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']);
-                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r,false);
+                        $idRisk = $this->get('instanceRiskService')->get('table')->save($r);
                         $r->set('id', $idRisk);
-                    } else {
-                        $tuuid = Uuid::isValid($risk['threat'])?$risk['threat']:$sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
-                        $vuuid = Uuid::isValid($risk['vulnerability'])?$risk['vulnerability']:$sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
-                        $r = current($this->get('instanceRiskService')->get('table')->getEntityByFields([
-                            'anr' => $anr->get('id'),
-                            'instance' => $instanceId,
-                            'asset' => $obj ? ['anr' => $anr->get('id'), 'uuid' => is_string($obj->get('asset')->get('uuid'))?$obj->get('asset')->get('uuid'):$obj->get('asset')->get('uuid')->toString()] : null,
-                            'threat' => ['anr' => $anr->get('id'), 'uuid' => $tuuid],
-                            'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $vuuid]
-                        ]));
-                        if($r == false)$r = null;
+
                     }
+
+                    $tuuid = Uuid::isValid($risk['threat'])?$risk['threat']:$sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
+                    $vuuid = Uuid::isValid($risk['vulnerability'])?$risk['vulnerability']:$sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
+
+                    $r = current($this->get('instanceRiskService')->get('table')->getEntityByFields([
+                        'anr' => $anr->get('id'),
+                        'instance' => $instanceId,
+                        'asset' => $obj ? ['anr' => $anr->get('id'), 'uuid' => is_string($obj->get('asset')->get('uuid'))?$obj->get('asset')->get('uuid'):$obj->get('asset')->get('uuid')->toString()] : null,
+                        'threat' => ['anr' => $anr->get('id'), 'uuid' => $tuuid],
+                        'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $vuuid]
+                    ]));
+                    if($r == false)$r = null;
 
                     if (!empty($r) && $include_eval) {
                         $r->set('threatRate', $this->approximate(
@@ -588,7 +590,7 @@ class AnrInstanceService extends \Monarc\Core\Service\InstanceService
                         if (!empty($data['recos'][$risk['id']])) {
                             foreach ($data['recos'][$risk['id']] as $reco) {
                                 //2.8.3
-                                if (version_compare($monarc_version, "2.8.2")==-1){
+                                if (version_compare($monarc_version, "2.8.4")==-1){
                                     unset($reco['id']);
                                     $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
                                     if(!empty($recs)){
@@ -870,7 +872,7 @@ class AnrInstanceService extends \Monarc\Core\Service\InstanceService
                     }
                 }
                 //2.8.3
-                else if (version_compare($monarc_version, "2.8.2")==-1){
+                else if (version_compare($monarc_version, "2.8.4")==-1){
                     $recommandationsSets = $this->get('recommandationSetTable')
                                                 ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
                     if(!empty($recommandationsSets)){
@@ -960,7 +962,7 @@ class AnrInstanceService extends \Monarc\Core\Service\InstanceService
                     if ($include_eval && !empty($data['recosop'][$ro['id']]) && !empty($idRiskOp)) {
                         foreach ($data['recosop'][$ro['id']] as $reco) {
                             //2.8.3
-                            if (version_compare($monarc_version, "2.8.2")==-1){
+                            if (version_compare($monarc_version, "2.8.4")==-1){
                                 unset($reco['id']);
                                 $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
                                 if(!empty($recs)){

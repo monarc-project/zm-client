@@ -6,13 +6,18 @@
  */
 
 namespace Monarc\FrontOffice\Service;
+
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Service\MeasureService;
+
 /**
  * This class is the service that handles measures in use within an ANR. Inherits its behavior from its Monarc\Core
  * parent class MeasureService
  * @see \Monarc\Core\Service\MeasureService
  * @package Monarc\FrontOffice\Service
  */
-class AnrMeasureService extends \Monarc\Core\Service\MeasureService
+class AnrMeasureService extends MeasureService
 {
     protected $table;
     protected $entity;
@@ -32,13 +37,12 @@ class AnrMeasureService extends \Monarc\Core\Service\MeasureService
      */
     public function create($data, $last = true)
     {
-        try{
-          $uuid = \Monarc\Core\Service\AbstractService::create($data, $last);
-        }
-        catch(\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) // we check if the uuid id already existing
-        {
-          unset($data['uuid']); //if the uuid exist create a new one
-          $uuid = \Monarc\Core\Service\AbstractService::create($data, $last)->toString();
+        try {
+            $uuid = AbstractService::create($data, $last);
+        } catch(UniqueConstraintViolationException $e) {
+            // we check if the uuid id already exists
+            unset($data['uuid']); //if the uuid exist create a new one
+            $uuid = AbstractService::create($data, $last);
         }
         $table = $this->get('table');
         $SoaClass = $this->get('SoaEntity');
@@ -49,6 +53,6 @@ class AnrMeasureService extends \Monarc\Core\Service\MeasureService
         $SoaEntity = new $SoaClass();
         $SoaEntity->setMeasure($measure);
         $SoaEntity->setAnr($anr);
-        $SoaTable->save($SoaEntity,$last);
+        $SoaTable->save($SoaEntity, $last);
     }
 }
