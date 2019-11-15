@@ -8,16 +8,18 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Ramsey\Uuid\Uuid;
-use \DateTime;
+use DateTime;
+
 /**
  * This class is the service that handles instances in use within an ANR. Inherits most of the behavior from its
  * Monarc\Core parent class.
  * @package Monarc\FrontOffice\Service
  */
-class AnrInstanceService extends \Monarc\Core\Service\InstanceService
+class AnrInstanceService extends InstanceService
 {
     /** @var UserAnrTable */
     protected $userAnrTable;

@@ -7,7 +7,11 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use \Monarc\Core\Service\AbstractServiceFactory;
+use Interop\Container\ContainerInterface;
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\InstanceConsequenceService;
+use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Proxy factory class to instantiate Monarc\Core's InstanceConsequenceService using Monarc\FrontOffice's services
@@ -15,15 +19,25 @@ use \Monarc\Core\Service\AbstractServiceFactory;
  */
 class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\InstanceConsequenceService";
+    protected $class = InstanceConsequenceService::class;
 
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\InstanceConsequenceTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\InstanceConsequence',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'scaleTable' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
-        'scaleImpactTypeTable' => 'Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable',
+        'table' => Table\InstanceConsequenceTable::class,
+        'entity' => InstanceConsequence::class,
+        'anrTable' => Table\AnrTable::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'MonarcObjectTable' => Table\MonarcObjectTable::class,
+        'scaleTable' => Table\ScaleTable::class,
+        'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
     ];
+
+    // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        $objectObjectService = parent::__invoke($container, $requestedName, $options);
+
+        $objectObjectService->setSharedManager($container->get('EventManager')->getSharedManager());
+
+        return $objectObjectService;
+    }
 }
