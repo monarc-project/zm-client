@@ -9,6 +9,9 @@ namespace Monarc\FrontOffice\Service;
 
 use Interop\Container\ContainerInterface;
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\ObjectObjectService;
+use Monarc\FrontOffice\Model\Entity\ObjectObject;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Proxy class to instantiate Monarc\Core's ObjectObjectService, with Monarc\FrontOffice's services
@@ -16,17 +19,17 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class ObjectObjectServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\ObjectObjectService";
+    protected $class = ObjectObjectService::class;
 
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\ObjectObjectTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\ObjectObject',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'childTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'fatherTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'table' => Table\ObjectObjectTable::class,
+        'entity' => ObjectObject::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'MonarcObjectTable' => Table\MonarcObjectTable::class,
+        'childTable' => Table\MonarcObjectTable::class,
+        'fatherTable' => Table\MonarcObjectTable::class,
     ];
 
     // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.

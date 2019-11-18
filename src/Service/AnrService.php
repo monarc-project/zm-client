@@ -59,8 +59,8 @@ use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
 use Monarc\FrontOffice\Model\Table\UserTable;
-use MonarcFO\Model\Entity\Record;
-use MonarcFO\Model\Entity\RecordRecipient;
+use Monarc\FrontOffice\Model\Entity\Record;
+use Monarc\FrontOffice\Model\Entity\RecordRecipient;
 
 /**
  * This class is the service that handles ANR CRUD operations, and various actions on them.

@@ -7,7 +7,13 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use \Monarc\Core\Service\AbstractServiceFactory;
+use Interop\Container\ContainerInterface;
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\TranslateService;
+use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Factory class attached to AnrInstanceService
@@ -17,47 +23,57 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         // Tables & Entities
-        'table' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Instance',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'assetTable' => 'Monarc\FrontOffice\Model\Table\AssetTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'amvTable' => 'Monarc\FrontOffice\Model\Table\AmvTable',
-        'objectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'scaleTable' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
-        'scaleCommentTable' => 'Monarc\FrontOffice\Model\Table\ScaleCommentTable',
-        'scaleImpactTypeTable' => 'Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable',
-        'instanceConsequenceTable' => 'Monarc\FrontOffice\Model\Table\InstanceConsequenceTable',
-        'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'instanceConsequenceEntity' => 'Monarc\FrontOffice\Model\Entity\InstanceConsequence',
-        'recommandationRiskTable' => 'Monarc\FrontOffice\Model\Table\RecommandationRiskTable',
-        'recommandationTable' => 'Monarc\FrontOffice\Model\Table\RecommandationTable',
-        'recommandationSetTable' => 'Monarc\FrontOffice\Model\Table\RecommandationSetTable',
-        'questionTable' => 'Monarc\FrontOffice\Model\Table\QuestionTable',
-        'questionChoiceTable' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',
-        'threatTable' => 'Monarc\FrontOffice\Model\Table\ThreatTable',
-        'interviewTable' => 'Monarc\FrontOffice\Model\Table\InterviewTable',
-        'themeTable' => 'Monarc\FrontOffice\Model\Table\ThemeTable',
-        'deliveryTable' => 'Monarc\FrontOffice\Model\Table\DeliveryTable',
-        'referentialTable' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
-        'soaCategoryTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
-        'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
-        'measureMeasureTable' => 'Monarc\FrontOffice\Model\Table\MeasureMeasureTable',
-        'soaTable' => 'Monarc\FrontOffice\Model\Table\SoaTable',
+        'table' => Table\InstanceTable::class,
+        'entity' => Instance::class,
+        'anrTable' => Table\AnrTable::class,
+        'assetTable' => Table\AssetTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'amvTable' => Table\AmvTable::class,
+        'objectTable' => Table\MonarcObjectTable::class,
+        'scaleTable' => Table\ScaleTable::class,
+        'scaleCommentTable' => Table\ScaleCommentTable::class,
+        'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
+        'instanceConsequenceTable' => Table\InstanceConsequenceTable::class,
+        'instanceRiskTable' => Table\InstanceRiskTable::class,
+        'instanceConsequenceEntity' => InstanceConsequence::class,
+        'recommandationRiskTable' => Table\RecommandationRiskTable::class,
+        'recommandationTable' => Table\RecommandationTable::class,
+        'recommandationSetTable' => Table\RecommandationSetTable::class,
+        'questionTable' => Table\QuestionTable::class,
+        'questionChoiceTable' => Table\QuestionChoiceTable::class,
+        'threatTable' => Table\ThreatTable::class,
+        'interviewTable' => Table\InterviewTable::class,
+        'themeTable' => Table\ThemeTable::class,
+        'deliveryTable' => Table\DeliveryTable::class,
+        'referentialTable' => Table\ReferentialTable::class,
+        'soaCategoryTable' => Table\SoaCategoryTable::class,
+        'measureTable' => Table\MeasureTable::class,
+        'measureMeasureTable' => Table\MeasureMeasureTable::class,
+        'soaTable' => Table\SoaTable::class,
 
         // Services
-        'instanceConsequenceService' => 'Monarc\FrontOffice\Service\AnrInstanceConsequenceService',
-        'instanceRiskService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskService',
-        'instanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpService',
-        'objectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectService',
-        'translateService' => 'Monarc\Core\Service\TranslateService',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'recordService' => 'Monarc\FrontOffice\Service\AnrRecordService',
-        'configService' => 'Monarc\Core\Service\ConfigService',
+        'instanceConsequenceService' => AnrInstanceConsequenceService::class,
+        'instanceRiskService' => AnrInstanceRiskService::class,
+        'instanceRiskOpService' => AnrInstanceRiskOpService::class,
+        'objectObjectService' => ObjectObjectService::class,
+        'translateService' => TranslateService::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'recordService' => AnrRecordService::class,
+        'configService' => ConfigService::class,
 
         // Export (Services)
-        'objectExportService' => 'Monarc\FrontOffice\Service\ObjectExportService',
-        'amvService' => 'Monarc\FrontOffice\Service\AmvService',
-        'scaleCommentService' => 'Monarc\FrontOffice\Service\AnrScaleCommentService',
+        'objectExportService' => ObjectExportService::class,
+        'amvService' => AmvService::class,
+        'scaleCommentService' => AnrScaleCommentService::class,
     ];
+
+    // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        $objectObjectService = parent::__invoke($container, $requestedName, $options);
+
+        $objectObjectService->setSharedManager($container->get('EventManager')->getSharedManager());
+
+        return $objectObjectService;
+    }
 }
