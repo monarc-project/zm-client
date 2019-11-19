@@ -899,7 +899,7 @@ return [
 
     'controllers' => [
         'factories' => [
-            Controller\ApiAdminPasswordsController::class => Controller\ApiAdminPasswordsControllerFactory::class,
+            Controller\ApiAdminPasswordsController::class => AutowireFactory::class,
             Controller\ApiAdminUsersController::class => AutowireFactory::class,
             Controller\ApiAdminUsersRolesController::class => AutowireFactory::class,
             Controller\ApiAdminUsersRightsController::class => Controller\ApiAdminUsersRightsControllerFactory::class,
@@ -913,7 +913,7 @@ return [
             Controller\ApiModelsController::class => Controller\ApiModelsControllerFactory::class,
             Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
             Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
-            Controller\ApiUserPasswordController::class => Controller\ApiUserPasswordControllerFactory::class,
+            Controller\ApiUserPasswordController::class => AutowireFactory::class,
             Controller\ApiUserProfileController::class => AutowireFactory::class,
             Controller\ApiAnrAssetsController::class => Controller\ApiAnrAssetsControllerFactory::class,
             Controller\ApiAnrAmvsController::class => Controller\ApiAnrAmvsControllerFactory::class,
@@ -1129,7 +1129,6 @@ return [
             'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
             'Monarc\FrontOffice\Service\ObjectCategoryService' => 'Monarc\FrontOffice\Service\ObjectCategoryServiceFactory',
             'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
-            'Monarc\FrontOffice\Service\PasswordService' => 'Monarc\FrontOffice\Service\PasswordServiceFactory',
             'Monarc\FrontOffice\Service\ModelService' => 'Monarc\FrontOffice\Service\ModelServiceFactory',
             'Monarc\FrontOffice\Service\AnrLibraryService' => 'Monarc\FrontOffice\Service\AnrLibraryServiceFactory',
             'Monarc\FrontOffice\Service\AnrRecommandationService' => 'Monarc\FrontOffice\Service\AnrRecommandationServiceFactory',
