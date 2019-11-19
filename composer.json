@@ -1,7 +1,6 @@
 {
     "name": "monarc/frontoffice",
-    "type": "library",
-    "description": "Frontoffice for Monarc project",
+    "description": "Frontoffice for monarc/monarc application",
     "authors": [
         {"name": "Cyril Rouyer", "email": "cyril@netlor.fr"},
         {"name": "Guillaume Lesniak", "email": "guillaume@netlor.fr"},
@@ -10,11 +9,25 @@
         {"name": "Thomas Metois", "email": "thomas@netlor.fr"}
     ],
     "require": {
-        "php": ">=5.5",
+        "php": "^7.1",
         "ext-intl": "*",
-        "ext-imagick": "*"
+        "ext-imagick": "*",
+        "doctrine/doctrine-orm-module": "^2.1",
+        "monarc/core": "~2.9",
+        "monarc/phpword": "^1.0",
+        "robmorgan/phinx": "^0.11.1",
+        "zendframework/zend-di": "^3.1",
+        "zendframework/zend-mvc": "^3.1",
+        "zendframework/zend-mvc-console": "^1.2",
+        "zendframework/zend-permissions-rbac": "^3.0"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-master",
+        "zendframework/zend-component-installer": "^2.1"
     },
     "autoload": {
-        "psr-0": {"MonarcFO\\":"/"}
+        "psr-4": {
+            "Monarc\\FrontOffice\\": "/src"
+        }
     }
 }

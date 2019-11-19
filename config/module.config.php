@@ -1,1195 +1,1191 @@
 <?php
-namespace MonarcFO;
 
-return array(
-    'router' => array(
-        'routes' => array(
-            'monarc_api_admin_users_roles' => array(
+use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
+use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Service;
+use Monarc\FrontOffice\Validator\UniqueClientProxyAlias;
+use Zend\Di\Container\AutowireFactory;
+use Zend\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+
+return [
+    'router' => [
+        'routes' => [
+            'monarc_api_admin_users_roles' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/users-roles[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAdminUsersRoles',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiAdminUsersRolesController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_admin_users_rights' => array(
+            'monarc_api_admin_users_rights' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/users-rights[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAdminUsersRights',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiAdminUsersRightsController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_admin_users' => array(
+            'monarc_api_admin_users' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/users[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAdminUsers',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiAdminUsersController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_client' => array(
+            'monarc_api_client' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/client[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiClients',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiClientsController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_models' => array(
+            'monarc_api_models' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/models[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiModels',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiModelsController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_referentials' => array(
+            'monarc_api_referentials' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/referentials[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiReferentials',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiReferentialsController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_duplicate_client_anr' => array(
+            'monarc_api_duplicate_client_anr' => [
                 'type' => 'literal',
-                'options' => array(
+                'options' => [
                     'route' => '/api/client-duplicate-anr',
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiDuplicateAnr',
-                    ),
-                ),
-            ),
+                    'defaults' => [
+                        'controller' => Controller\ApiDuplicateAnrController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_config' => array(
+            'monarc_api_config' => [
                 'type' => 'literal',
-                'options' => array(
+                'options' => [
                     'route' => '/api/config',
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiConfig',
-                    ),
-                ),
-            ),
+                    'defaults' => [
+                        'controller' => Controller\ApiConfigController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_user_profile' => array(
+            'monarc_api_user_profile' => [
                 'type' => 'literal',
-                'options' => array(
+                'options' => [
                     'route' => '/api/user/profile',
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiUserProfile',
-                    ),
-                ),
-            ),
-            'monarc_api_admin_passwords' => array(
+                    'defaults' => [
+                        'controller' => Controller\ApiUserProfileController::class,
+                    ],
+                ],
+            ],
+            'monarc_api_admin_passwords' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/admin/passwords',
-                    'constraints' => array(),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAdminPasswords',
-                    ),
-                ),
-            ),
+                    'constraints' => [],
+                    'defaults' => [
+                        'controller' => Controller\ApiAdminPasswordsController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_client_anr' => array(
+            'monarc_api_client_anr' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/client-anr[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiAnr',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiAnrController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_guides' => array(
+            'monarc_api_guides' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/guides[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiGuides',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiGuidesController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_guides_items' => array(
+            'monarc_api_guides_items' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/guides-items[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiGuidesItems',
-                    ),
-                ),
-            ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiGuidesItemsController::class,
+                    ],
+                ],
+            ],
 
-            'monarc_api_global_client_anr' => array(
+            'monarc_api_global_client_anr' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/client-anr/:anrid/',
-                    'constraints' => array(
+                    'constraints' => [
                         'anrid' => '[0-9]+',
-                    ),
-                ),
+                    ],
+                ],
                 'may_terminate' => false,
-                'child_routes' => array(
-                    'export' => array(
+                'child_routes' => [
+                    'export' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'export',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrExport',
-                            ),
-                        ),
-                    ),
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrExportController::class,
+                            ],
+                        ],
+                    ],
 
-                    'assets' => array(
+                    'assets' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'assets[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrAssets',
-                            ),
-                        ),
-                    ),
-                    'amvs' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrAssetsController::class,
+                            ],
+                        ],
+                    ],
+                    'amvs' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'amvs[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrAmvs',
-                            ),
-                        ),
-                    ),
-                    'referentials' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrAmvsController::class,
+                            ],
+                        ],
+                    ],
+                    'referentials' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'referentials[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrReferentials',
-                            ),
-                        ),
-                    ),
-                    'measures' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrReferentialsController::class,
+                            ],
+                        ],
+                    ],
+                    'measures' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'measures[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrMeasures',
-                            ),
-                        ),
-                    ),
-                    'measuresmeasures' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrMeasuresController::class,
+                            ],
+                        ],
+                    ],
+                    'measuresmeasures' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'measuresmeasures[/:id]',
-                            'constraints' => array(
-                              'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrMeasuresMeasures',
-                            ),
-                        ),
-                    ),
-                    'threats' => array(
+                            'constraints' => [
+                                'id' => '[a-f0-9-]*',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrMeasuresMeasuresController::class,
+                            ],
+                        ],
+                    ],
+                    'threats' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'threats[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrThreats',
-                            ),
-                        ),
-                    ),
-                    'themes' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrThreatsController::class,
+                            ],
+                        ],
+                    ],
+                    'themes' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'themes[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrThemes',
-                            ),
-                        ),
-                    ),
-                    'vulnerabilities' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrThemesController::class,
+                            ],
+                        ],
+                    ],
+                    'vulnerabilities' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'vulnerabilities[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrVulnerabilities',
-                            ),
-                        ),
-                    ),
-                    'rolf_tags' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrVulnerabilitiesController::class,
+                            ],
+                        ],
+                    ],
+                    'rolf_tags' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'rolf-tags[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRolfTags',
-                            ),
-                        ),
-                    ),
-                    'rolf_risks' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRolfTagsController::class,
+                            ],
+                        ],
+                    ],
+                    'rolf_risks' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'rolf-risks[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRolfRisks',
-                            ),
-                        ),
-                    ),
-                    'objects' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRolfRisksController::class,
+                            ],
+                        ],
+                    ],
+                    'objects' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'objects[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrObjects',
-                            ),
-                        ),
-                    ),
-                    'objects_parents' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrObjectsController::class,
+                            ],
+                        ],
+                    ],
+                    'objects_parents' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'objects/:id/parents',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrObject',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrObjectController::class,
                                 'action' => 'parents'
-                            ),
-                        ),
-                    ),
-                    'objects_export' => array(
+                            ],
+                        ],
+                    ],
+                    'objects_export' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'objects/:id/export',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsExport',
-                            ),
-                        ),
-                    ),
-                    'objects_import' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrObjectsExportController::class,
+                            ],
+                        ],
+                    ],
+                    'objects_import' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'objects/import[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsImport',
-                            ),
-                        ),
-                    ),
-                    'interviews' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrObjectsImportController::class,
+                            ],
+                        ],
+                    ],
+                    'interviews' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'interviews[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrInterviews',
-                            ),
-                        ),
-                    ),
-                    'scales' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrInterviewsController::class,
+                            ],
+                        ],
+                    ],
+                    'scales' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'scales[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrScales',
-                            ),
-                        ),
-                    ),
-                    'scales_types' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrScalesController::class,
+                            ],
+                        ],
+                    ],
+                    'scales_types' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'scales-types[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrScalesTypes',
-                            ),
-                        ),
-                    ),
-                    'scales_comments' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrScalesTypesController::class,
+                            ],
+                        ],
+                    ],
+                    'scales_comments' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'scales/:scaleid/comments[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
                                 'scaleid' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrScalesComments',
-                            ),
-                        ),
-                    ),
-                    'questions' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrScalesCommentsController::class,
+                            ],
+                        ],
+                    ],
+                    'questions' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'questions[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrQuestions',
-                            ),
-                        ),
-                    ),
-                    'questions_choices' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrQuestionsController::class,
+                            ],
+                        ],
+                    ],
+                    'questions_choices' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'questions-choices[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrQuestionsChoices',
-                            ),
-                        ),
-                    ),
-                    'recommandations' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrQuestionsChoicesController::class,
+                            ],
+                        ],
+                    ],
+                    'recommandations' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'recommandations[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandations',
-                            ),
-                        ),
-                    ),
-                    'recommandations_historics' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecommandationsController::class,
+                            ],
+                        ],
+                    ],
+                    'recommandations_historics' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'recommandations-historics[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsHistorics',
-                            ),
-                        ),
-                    ),
-                    'recommandations_risks' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecommandationsHistoricsController::class,
+                            ],
+                        ],
+                    ],
+                    'recommandations_risks' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'recommandations-risks[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsRisks',
-                            ),
-                        ),
-                    ),
-                    'recommandations_risks_validate' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecommandationsRisksController::class,
+                            ],
+                        ],
+                    ],
+                    'recommandations_risks_validate' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'recommandations-risks[/:id]/validate',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsRisksValidate',
-                            ),
-                        ),
-                    ),
-                    'recommandations_sets' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecommandationsRisksValidateController::class,
+                            ],
+                        ],
+                    ],
+                    'recommandations_sets' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'recommandations-sets[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsSets'),
-                            ),
-                    ),
-                    'recommandations_measures' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecommandationsSetsController::class,
+                            ],
+                        ],
+                    ],
+                    'records' => [
                         'type' => 'segment',
-                        'options' => array(
-                            'route' => 'recommandations-measures[/:id]',
-                            'constraints' => array(
-                                'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecommandationsMeasures',
-                            ),
-                        ),
-                    ),
-                    'records' => array(
-                        'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'records[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecords',
-                            ),
-                        ),
-                    ),
-                    'record_actors' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordsController::class,
+                            ],
+                        ],
+                    ],
+                    'record_actors' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'record-actors[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordActors',
-                            ),
-                        ),
-                    ),
-                    'record_data_categories' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordActorsController::class,
+                            ],
+                        ],
+                    ],
+                    'record_data_categories' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'record-data-categories',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordDataCategories',
-                            ),
-                        ),
-                    ),
-                    'record_international_transfers' => array(
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordDataCategoriesController::class,
+                            ],
+                        ],
+                    ],
+                    'record_international_transfers' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'record-international-transfers[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordInternationalTransfers',
-                            ),
-                        ),
-                    ),
-                    'record_personal_data' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordInternationalTransfersController::class,
+                            ],
+                        ],
+                    ],
+                    'record_personal_data' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'record-personal-data[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordPersonalData',
-                            ),
-                        ),
-                    ),
-                    'record_processors' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordPersonalDataController::class,
+                            ],
+                        ],
+                    ],
+                    'record_processors' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'record-processors[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordProcessors',
-                            ),
-                        ),
-                    ),
-                    'record_recipients' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordProcessorsController::class,
+                            ],
+                        ],
+                    ],
+                    'record_recipients' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'record-recipients[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordRecipients',
-                            ),
-                        ),
-                    ),
-                    'record_export' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordRecipientsController::class,
+                            ],
+                        ],
+                    ],
+                    'record_export' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'records/:id/export',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordsExport',
-                            ),
-                        ),
-                    ),
-                    'records_export' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordsExportController::class,
+                            ],
+                        ],
+                    ],
+                    'records_export' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'records/export',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordsExport',
-                            ),
-                        ),
-                    ),
-                    'record_import' => array(
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordsExportController::class,
+                            ],
+                        ],
+                    ],
+                    'record_import' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'records/import',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordsImport',
-                            ),
-                        ),
-                    ),
-                    'record_duplicate' => array(
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordsImportController::class,
+                            ],
+                        ],
+                    ],
+                    'record_duplicate' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'records/duplicate',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRecordDuplicate',
-                            ),
-                        ),
-                    ),
-                    'carto_risks' => array(
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRecordDuplicateController::class,
+                            ],
+                        ],
+                    ],
+                    'carto_risks' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'carto-risks-dashboard[/:type]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'type' => 'all|real|targeted',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiDashboardAnrCartoRisks',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiDashboardAnrCartoRisksController::class,
                                 'type' => 'all',
-                            ),
-                        ),
-                    ),
-                    'risks' => array(
+                            ],
+                        ],
+                    ],
+                    'risks' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'risks[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRisks',
-                            ),
-                        ),
-                    ),
-                    'dashboard' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRisksController::class,
+                            ],
+                        ],
+                    ],
+                    'dashboard' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'risks-dashboard[/:id]',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiDashboardAnrRisks',
-                            ),
-                        ),
-                    ),
-                    'risks_op' => array(
+                            'defaults' => [
+                                'controller' => Controller\ApiDashboardAnrRisksController::class,
+                            ],
+                        ],
+                    ],
+                    'risks_op' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'risksop[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrRisksOp',
-                            ),
-                        ),
-                    ),
-                    'library' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRisksOpController::class,
+                            ],
+                        ],
+                    ],
+                    'library' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'library[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[a-f0-9-]*',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrLibrary',
-                            ),
-                        ),
-                    ),
-                    'library_category' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrLibraryController::class,
+                            ],
+                        ],
+                    ],
+                    'library_category' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'library-category[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrLibraryCategory',
-                            ),
-                        ),
-                    ),
-                    'treatment_plan' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrLibraryCategoryController::class,
+                            ],
+                        ],
+                    ],
+                    'treatment_plan' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'treatment-plan[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrTreatmentPlan',
-                            ),
-                        ),
-                    ),
-                    'soa' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrTreatmentPlanController::class,
+                            ],
+                        ],
+                    ],
+                    'soa' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'soa[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiSoa',
-                            ),
-                        ),
-                    ),'soacategory' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiSoaController::class,
+                            ],
+                        ],
+                    ],
+                    'soacategory' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'soacategory[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiSoaCategory',
-                            ),
-                        ),
-                    ),
-                    'instance' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiSoaCategoryController::class,
+                            ],
+                        ],
+                    ],
+                    'instance' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'instances[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrInstances',
-                            ),
-                        ),
-                    ),
-                    'instance_export' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrInstancesController::class,
+                            ],
+                        ],
+                    ],
+                    'instance_export' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'instances/:id/export',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesExport',
-                            ),
-                        ),
-                    ),
-                    'instance_import' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrInstancesExportController::class,
+                            ],
+                        ],
+                    ],
+                    'instance_import' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'instances/import',
-                            'constraints' => array(),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesImport',
-                            ),
-                        ),
-                    ),
-                    'instance_risk' => array(
+                            'constraints' => [],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrInstancesImportController::class,
+                            ],
+                        ],
+                    ],
+                    'instance_risk' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'instances-risks[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesRisks',
-                            ),
-                        ),
-                    ),
-                    'instance_risk_op' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrInstancesRisksController::class,
+                            ],
+                        ],
+                    ],
+                    'instance_risk_op' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'instances-oprisks[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesRisksOp',
-                            ),
-                        ),
-                    ),
-                    'instance_consequences' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrInstancesRisksOpController::class,
+                            ],
+                        ],
+                    ],
+                    'instance_consequences' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'instances-consequences[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrInstancesConsequences',
-                            ),
-                        ),
-                    ),
-                    'objects_categories' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrInstancesConsequencesController::class,
+                            ],
+                        ],
+                    ],
+                    'objects_categories' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'objects-categories[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsCategories',
-                            ),
-                        ),
-                    ),
-                    'snapshot' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrObjectsCategoriesController::class,
+                            ],
+                        ],
+                    ],
+                    'snapshot' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'snapshot[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiSnapshot',
-                            ),
-                        ),
-                    ),
-                    'snapshot_restore' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiSnapshotController::class,
+                            ],
+                        ],
+                    ],
+                    'snapshot_restore' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'restore-snapshot/:id',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiSnapshotRestore',
-                            ),
-                        ),
-                    ),
-                    'deliverable' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiSnapshotRestoreController::class,
+                            ],
+                        ],
+                    ],
+                    'deliverable' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'deliverable[/:id]',
-                            'constraints' => array(
+                            'constraints' => [
                                 'id' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrDeliverable',
-                            ),
-                        ),
-                    ),
-                    'objects_objects' => array(
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrDeliverableController::class,
+                            ],
+                        ],
+                    ],
+                    'objects_objects' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'objects-objects[/:id]',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsObjects',
-                            ),
-                        ),
-                    ),
-                    'objects_duplication' => array(
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrObjectsObjectsController::class,
+                            ],
+                        ],
+                    ],
+                    'objects_duplication' => [
                         'type' => 'segment',
-                        'options' => array(
+                        'options' => [
                             'route' => 'objects-duplication',
-                            'defaults' => array(
-                                'controller' => 'MonarcFO\Controller\ApiAnrObjectsDuplication',
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-            'monarc_api_doc_models' => array(
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrObjectsDuplicationController::class,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'monarc_api_doc_models' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/deliveriesmodels[/:id]',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiDeliveriesModels',
-                    ),
-                ),
-            ),
-            'monarc_api_user_password' => array(
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiDeliveriesModelsController::class,
+                    ],
+                ],
+            ],
+            'monarc_api_user_password' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/user/password/:id',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiUserPassword',
-                    ),
-                ),
-            ),
-            'monarc_api_model_verify_language' => array(
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiUserPasswordController::class,
+                    ],
+                ],
+            ],
+            'monarc_api_model_verify_language' => [
                 'type' => 'segment',
-                'options' => array(
+                'options' => [
                     'route' => '/api/model-verify-language/:id',
-                    'constraints' => array(
+                    'constraints' => [
                         'id' => '[0-9]+',
-                    ),
-                    'defaults' => array(
-                        'controller' => 'MonarcFO\Controller\ApiModelVerifyLanguage',
-                    ),
-                ),
-            ),
-        ),
-    ),
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiModelVerifyLanguageController::class,
+                    ],
+                ],
+            ],
+        ],
+    ],
 
-    'controllers' => array(
-        'invokables' => array(),
-        'factories' => array(
-            '\MonarcFO\Controller\ApiAdminPasswords' => '\MonarcFO\Controller\ApiAdminPasswordsControllerFactory',
-            '\MonarcFO\Controller\ApiAdminRoles' => '\MonarcFO\Controller\ApiAdminRolesControllerFactory',
-            '\MonarcFO\Controller\ApiAdminUsers' => '\MonarcFO\Controller\ApiAdminUsersControllerFactory',
-            '\MonarcFO\Controller\ApiAdminUsersRoles' => '\MonarcFO\Controller\ApiAdminUsersRolesControllerFactory',
-            '\MonarcFO\Controller\ApiAdminUsersRights' => '\MonarcFO\Controller\ApiAdminUsersRightsControllerFactory',
-            '\MonarcFO\Controller\ApiAnr' => '\MonarcFO\Controller\ApiAnrControllerFactory',
-            '\MonarcFO\Controller\ApiGuides' => '\MonarcFO\Controller\ApiGuidesControllerFactory',
-            '\MonarcFO\Controller\ApiGuidesItems' => '\MonarcFO\Controller\ApiGuidesItemsControllerFactory',
-            '\MonarcFO\Controller\ApiSnapshot' => '\MonarcFO\Controller\ApiSnapshotControllerFactory',
-            '\MonarcFO\Controller\ApiSnapshotRestore' => '\MonarcFO\Controller\ApiSnapshotRestoreControllerFactory',
-            '\MonarcFO\Controller\ApiConfig' => '\MonarcFO\Controller\ApiConfigControllerFactory',
-            '\MonarcFO\Controller\ApiClients' => '\MonarcFO\Controller\ApiClientsControllerFactory',
-            '\MonarcFO\Controller\ApiModels' => '\MonarcFO\Controller\ApiModelsControllerFactory',
-            '\MonarcFO\Controller\ApiReferentials' => '\MonarcFO\Controller\ApiReferentialsControllerFactory',
-            '\MonarcFO\Controller\ApiDuplicateAnr' => '\MonarcFO\Controller\ApiDuplicateAnrControllerFactory',
-            '\MonarcFO\Controller\ApiUserPassword' => '\MonarcFO\Controller\ApiUserPasswordControllerFactory',
-            '\MonarcFO\Controller\ApiUserProfile' => '\MonarcFO\Controller\ApiUserProfileControllerFactory',
-            '\MonarcFO\Controller\ApiAnrAssets' => '\MonarcFO\Controller\ApiAnrAssetsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrAmvs' => '\MonarcFO\Controller\ApiAnrAmvsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrReferentials' => '\MonarcFO\Controller\ApiAnrReferentialsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrMeasures' => '\MonarcFO\Controller\ApiAnrMeasuresControllerFactory',
-            '\MonarcFO\Controller\ApiAnrMeasuresMeasures' => '\MonarcFO\Controller\ApiAnrMeasuresMeasuresControllerFactory',
-            '\MonarcFO\Controller\ApiAnrObjects' => '\MonarcFO\Controller\ApiAnrObjectsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrObjectsObjects' => '\MonarcFO\Controller\ApiAnrObjectsObjectsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrObjectsDuplication' => '\MonarcFO\Controller\ApiAnrObjectsDuplicationControllerFactory',
-            '\MonarcFO\Controller\ApiAnrObject' => '\MonarcFO\Controller\ApiAnrObjectControllerFactory',
-            '\MonarcFO\Controller\ApiAnrQuestions' => '\MonarcFO\Controller\ApiAnrQuestionsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrQuestionsChoices' => '\MonarcFO\Controller\ApiAnrQuestionsChoicesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrThreats' => '\MonarcFO\Controller\ApiAnrThreatsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrThemes' => '\MonarcFO\Controller\ApiAnrThemesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrVulnerabilities' => '\MonarcFO\Controller\ApiAnrVulnerabilitiesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRolfTags' => '\MonarcFO\Controller\ApiAnrRolfTagsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRolfRisks' => '\MonarcFO\Controller\ApiAnrRolfRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrInterviews' => '\MonarcFO\Controller\ApiAnrInterviewsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecommandations' => '\MonarcFO\Controller\ApiAnrRecommandationsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecommandationsHistorics' => '\MonarcFO\Controller\ApiAnrRecommandationsHistoricsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecommandationsRisks' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidate' => '\MonarcFO\Controller\ApiAnrRecommandationsRisksValidateControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecommandationsSets' => '\MonarcFO\Controller\ApiAnrRecommandationsSetsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecommandationsMeasures' => '\MonarcFO\Controller\ApiAnrRecommandationsMeasuresControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordActors' => '\MonarcFO\Controller\ApiAnrRecordActorsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordDuplicate' => '\MonarcFO\Controller\ApiAnrRecordDuplicateControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordDataCategories' => '\MonarcFO\Controller\ApiAnrRecordDataCategoriesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordInternationalTransfers' => '\MonarcFO\Controller\ApiAnrRecordInternationalTransfersControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordPersonalData' => '\MonarcFO\Controller\ApiAnrRecordPersonalDataControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordProcessors' => '\MonarcFO\Controller\ApiAnrRecordProcessorsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordRecipients' => '\MonarcFO\Controller\ApiAnrRecordRecipientsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecords' => '\MonarcFO\Controller\ApiAnrRecordsControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordsExport' => '\MonarcFO\Controller\ApiAnrRecordsExportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRecordsImport' => '\MonarcFO\Controller\ApiAnrRecordsImportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrTreatmentPlan' => '\MonarcFO\Controller\ApiAnrTreatmentPlanControllerFactory',
-            '\MonarcFO\Controller\ApiSoa' => '\MonarcFO\Controller\ApiSoaControllerFactory',
-            '\MonarcFO\Controller\ApiSoaCategory' => '\MonarcFO\Controller\ApiSoaCategoryControllerFactory',
-            '\MonarcFO\Controller\ApiAnrScales' => '\MonarcFO\Controller\ApiAnrScalesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrScalesTypes' => '\MonarcFO\Controller\ApiAnrScalesTypesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrScalesComments' => '\MonarcFO\Controller\ApiAnrScalesCommentsControllerFactory',
-            '\MonarcFO\Controller\ApiDashboardAnrCartoRisks' => '\MonarcFO\Controller\ApiDashboardAnrCartoRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRisks' => '\MonarcFO\Controller\ApiAnrRisksControllerFactory',
-            '\MonarcFO\Controller\ApiDashboardAnrRisks' => '\MonarcFO\Controller\ApiDashboardAnrRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrRisksOp' => '\MonarcFO\Controller\ApiAnrRisksOpControllerFactory',
-            '\MonarcFO\Controller\ApiAnrLibrary' => '\MonarcFO\Controller\ApiAnrLibraryControllerFactory',
-            '\MonarcFO\Controller\ApiAnrLibraryCategory' => '\MonarcFO\Controller\ApiAnrLibraryCategoryControllerFactory',
-            '\MonarcFO\Controller\ApiAnrInstances' => '\MonarcFO\Controller\ApiAnrInstancesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrInstancesRisks' => '\MonarcFO\Controller\ApiAnrInstancesRisksControllerFactory',
-            '\MonarcFO\Controller\ApiAnrInstancesRisksOp' => '\MonarcFO\Controller\ApiAnrInstancesRisksOpControllerFactory',
-            '\MonarcFO\Controller\ApiAnrInstancesImport' => '\MonarcFO\Controller\ApiAnrInstancesImportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrInstancesExport' => '\MonarcFO\Controller\ApiAnrInstancesExportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrObjectsCategories' => '\MonarcFO\Controller\ApiAnrObjectsCategoriesControllerFactory',
-            '\MonarcFO\Controller\ApiAnrObjectsExport' => '\MonarcFO\Controller\ApiAnrObjectsExportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrObjectsImport' => '\MonarcFO\Controller\ApiAnrObjectsImportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrDeliverable' => '\MonarcFO\Controller\ApiAnrDeliverableControllerFactory',
-            '\MonarcFO\Controller\ApiAnrExport' => '\MonarcFO\Controller\ApiAnrExportControllerFactory',
-            '\MonarcFO\Controller\ApiAnrInstancesConsequences' => '\MonarcFO\Controller\ApiAnrInstancesConsequencesControllerFactory',
-            '\MonarcFO\Controller\ApiModelVerifyLanguage' => '\MonarcFO\Controller\ApiModelVerifyLanguageControllerFactory',
-            '\MonarcFO\Controller\ApiDeliveriesModels'          => '\MonarcFO\Controller\ApiDeliveriesModelsControllerFactory',
-        ),
-    ),
+    'controllers' => [
+        'factories' => [
+            Controller\ApiAdminPasswordsController::class => Controller\ApiAdminPasswordsControllerFactory::class,
+            Controller\ApiAdminUsersController::class => AutowireFactory::class,
+            Controller\ApiAdminUsersRolesController::class => AutowireFactory::class,
+            Controller\ApiAdminUsersRightsController::class => Controller\ApiAdminUsersRightsControllerFactory::class,
+            Controller\ApiAnrController::class => Controller\ApiAnrControllerFactory::class,
+            Controller\ApiGuidesController::class => Controller\ApiGuidesControllerFactory::class,
+            Controller\ApiGuidesItemsController::class => Controller\ApiGuidesItemsControllerFactory::class,
+            Controller\ApiSnapshotController::class => Controller\ApiSnapshotControllerFactory::class,
+            Controller\ApiSnapshotRestoreController::class => Controller\ApiSnapshotRestoreControllerFactory::class,
+            Controller\ApiConfigController::class => AutowireFactory::class,
+            Controller\ApiClientsController::class => Controller\ApiClientsControllerFactory::class,
+            Controller\ApiModelsController::class => Controller\ApiModelsControllerFactory::class,
+            Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
+            Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
+            Controller\ApiUserPasswordController::class => Controller\ApiUserPasswordControllerFactory::class,
+            Controller\ApiUserProfileController::class => AutowireFactory::class,
+            Controller\ApiAnrAssetsController::class => Controller\ApiAnrAssetsControllerFactory::class,
+            Controller\ApiAnrAmvsController::class => Controller\ApiAnrAmvsControllerFactory::class,
+            Controller\ApiAnrReferentialsController::class => Controller\ApiAnrReferentialsControllerFactory::class,
+            Controller\ApiAnrMeasuresController::class => Controller\ApiAnrMeasuresControllerFactory::class,
+            Controller\ApiAnrMeasuresMeasuresController::class => Controller\ApiAnrMeasuresMeasuresControllerFactory::class,
+            Controller\ApiAnrObjectsController::class => Controller\ApiAnrObjectsControllerFactory::class,
+            Controller\ApiAnrObjectsObjectsController::class => Controller\ApiAnrObjectsObjectsControllerFactory::class,
+            Controller\ApiAnrObjectsDuplicationController::class => Controller\ApiAnrObjectsDuplicationControllerFactory::class,
+            Controller\ApiAnrObjectController::class => Controller\ApiAnrObjectControllerFactory::class,
+            Controller\ApiAnrQuestionsController::class => Controller\ApiAnrQuestionsControllerFactory::class,
+            Controller\ApiAnrQuestionsChoicesController::class => Controller\ApiAnrQuestionsChoicesControllerFactory::class,
+            Controller\ApiAnrThreatsController::class => Controller\ApiAnrThreatsControllerFactory::class,
+            Controller\ApiAnrThemesController::class => Controller\ApiAnrThemesControllerFactory::class,
+            Controller\ApiAnrVulnerabilitiesController::class => Controller\ApiAnrVulnerabilitiesControllerFactory::class,
+            Controller\ApiAnrRolfTagsController::class => Controller\ApiAnrRolfTagsControllerFactory::class,
+            Controller\ApiAnrRolfRisksController::class => Controller\ApiAnrRolfRisksControllerFactory::class,
+            Controller\ApiAnrInterviewsController::class => Controller\ApiAnrInterviewsControllerFactory::class,
+            Controller\ApiAnrRecommandationsController::class => Controller\ApiAnrRecommandationsControllerFactory::class,
+            Controller\ApiAnrRecommandationsHistoricsController::class => Controller\ApiAnrRecommandationsHistoricsControllerFactory::class,
+            Controller\ApiAnrRecommandationsRisksController::class => Controller\ApiAnrRecommandationsRisksControllerFactory::class,
+            Controller\ApiAnrRecommandationsRisksValidateController::class => Controller\ApiAnrRecommandationsRisksValidateControllerFactory::class,
+            Controller\ApiAnrRecommandationsSetsController::class => Controller\ApiAnrRecommandationsSetsControllerFactory::class,
+            Controller\ApiAnrRecordActorsController::class => Controller\ApiAnrRecordActorsControllerFactory::class,
+            Controller\ApiAnrRecordDuplicateController::class => Controller\ApiAnrRecordDuplicateControllerFactory::class,
+            Controller\ApiAnrRecordDataCategoriesController::class => Controller\ApiAnrRecordDataCategoriesControllerFactory::class,
+            Controller\ApiAnrRecordInternationalTransfersController::class => Controller\ApiAnrRecordInternationalTransfersControllerFactory::class,
+            Controller\ApiAnrRecordPersonalDataController::class => Controller\ApiAnrRecordPersonalDataControllerFactory::class,
+            Controller\ApiAnrRecordProcessorsController::class => Controller\ApiAnrRecordProcessorsControllerFactory::class,
+            Controller\ApiAnrRecordRecipientsController::class => Controller\ApiAnrRecordRecipientsControllerFactory::class,
+            Controller\ApiAnrRecordsController::class => Controller\ApiAnrRecordsControllerFactory::class,
+            Controller\ApiAnrRecordsExportController::class => Controller\ApiAnrRecordsExportControllerFactory::class,
+            Controller\ApiAnrRecordsImportController::class => Controller\ApiAnrRecordsImportControllerFactory::class,
+            Controller\ApiAnrTreatmentPlanController::class => Controller\ApiAnrTreatmentPlanControllerFactory::class,
+            Controller\ApiSoaController::class => Controller\ApiSoaControllerFactory::class,
+            Controller\ApiSoaCategoryController::class => Controller\ApiSoaCategoryControllerFactory::class,
+            Controller\ApiAnrScalesController::class => Controller\ApiAnrScalesControllerFactory::class,
+            Controller\ApiAnrScalesTypesController::class => Controller\ApiAnrScalesTypesControllerFactory::class,
+            Controller\ApiAnrScalesCommentsController::class => Controller\ApiAnrScalesCommentsControllerFactory::class,
+            Controller\ApiDashboardAnrCartoRisksController::class => Controller\ApiDashboardAnrCartoRisksControllerFactory::class,
+            Controller\ApiAnrRisksController::class => Controller\ApiAnrRisksControllerFactory::class,
+            Controller\ApiDashboardAnrRisksController::class => Controller\ApiDashboardAnrRisksControllerFactory::class,
+            Controller\ApiAnrRisksOpController::class => Controller\ApiAnrRisksOpControllerFactory::class,
+            Controller\ApiAnrLibraryController::class => Controller\ApiAnrLibraryControllerFactory::class,
+            Controller\ApiAnrLibraryCategoryController::class => Controller\ApiAnrLibraryCategoryControllerFactory::class,
+            Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
+            Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
+            Controller\ApiAnrInstancesRisksOpController::class => Controller\ApiAnrInstancesRisksOpControllerFactory::class,
+            Controller\ApiAnrInstancesImportController::class => Controller\ApiAnrInstancesImportControllerFactory::class,
+            Controller\ApiAnrInstancesExportController::class => Controller\ApiAnrInstancesExportControllerFactory::class,
+            Controller\ApiAnrObjectsCategoriesController::class => Controller\ApiAnrObjectsCategoriesControllerFactory::class,
+            Controller\ApiAnrObjectsExportController::class => Controller\ApiAnrObjectsExportControllerFactory::class,
+            Controller\ApiAnrObjectsImportController::class => Controller\ApiAnrObjectsImportControllerFactory::class,
+            Controller\ApiAnrDeliverableController::class => Controller\ApiAnrDeliverableControllerFactory::class,
+            Controller\ApiAnrExportController::class => Controller\ApiAnrExportControllerFactory::class,
+            Controller\ApiAnrInstancesConsequencesController::class => Controller\ApiAnrInstancesConsequencesControllerFactory::class,
+            Controller\ApiModelVerifyLanguageController::class => Controller\ApiModelVerifyLanguageControllerFactory::class,
+            Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
+        ],
+    ],
 
-    'view_manager' => array(
+    'view_manager' => [
         'display_not_found_reason' => true,
         'display_exceptions' => true,
         'doctype' => 'HTML5',
         'not_found_template' => 'error/404',
         'exception_template' => 'error/index',
-        'strategies' => array(
-            'viewJsonStrategy'
-        ),
-        'template_map' => array(
+        'strategies' => [
+            'ViewJsonStrategy'
+        ],
+        'template_map' => [
             'monarc-fo/index/index' => __DIR__ . '/../view/layout/layout.phtml',
             'error/404' => __DIR__ . '/../view/layout/layout.phtml',
-        ),
-        'template_path_stack' => array(
+        ],
+        'template_path_stack' => [
             __DIR__ . '/../view',
-        ),
-    ),
+        ],
+    ],
 
-    'service_manager' => array(
-        'invokables' => array(),
-        'factories' => array(
-            '\MonarcCli\Model\Db' => '\MonarcFO\Service\Model\DbCliFactory',
-
-            //tables
-            '\MonarcFO\Model\Table\AmvTable' => '\MonarcFO\Service\Model\Table\AmvServiceModelTable',
-            '\MonarcFO\Model\Table\AnrObjectCategoryTable' => '\MonarcFO\Service\Model\Table\AnrObjectCategoryServiceModelTable',
-            '\MonarcFO\Model\Table\AnrTable' => '\MonarcFO\Service\Model\Table\AnrServiceModelTable',
-            '\MonarcFO\Model\Table\AssetTable' => '\MonarcFO\Service\Model\Table\AssetServiceModelTable',
-            '\MonarcFO\Model\Table\ClientTable' => '\MonarcFO\Service\Model\Table\ClientServiceModelTable',
-            '\MonarcFO\Model\Table\DeliveryTable' => '\MonarcFO\Service\Model\Table\DeliveryServiceModelTable',
-            '\MonarcFO\Model\Table\InstanceTable' => '\MonarcFO\Service\Model\Table\InstanceServiceModelTable',
-            '\MonarcFO\Model\Table\InstanceConsequenceTable' => '\MonarcFO\Service\Model\Table\InstanceConsequenceServiceModelTable',
-            '\MonarcFO\Model\Table\InstanceRiskTable' => '\MonarcFO\Service\Model\Table\InstanceRiskServiceModelTable',
-            '\MonarcFO\Model\Table\InstanceRiskOpTable' => '\MonarcFO\Service\Model\Table\InstanceRiskOpServiceModelTable',
-            '\MonarcFO\Model\Table\InterviewTable' => '\MonarcFO\Service\Model\Table\InterviewServiceModelTable',
-            '\MonarcFO\Model\Table\MeasureTable' => '\MonarcFO\Service\Model\Table\MeasureServiceModelTable',
-            '\MonarcFO\Model\Table\MeasureMeasureTable' => '\MonarcFO\Service\Model\Table\MeasureMeasureServiceModelTable',
-            '\MonarcFO\Model\Table\MonarcObjectTable' => '\MonarcFO\Service\Model\Table\MonarcObjectServiceModelTable',
-            '\MonarcFO\Model\Table\ObjectCategoryTable' => '\MonarcFO\Service\Model\Table\ObjectCategoryServiceModelTable',
-            '\MonarcFO\Model\Table\ObjectObjectTable' => '\MonarcFO\Service\Model\Table\ObjectObjectServiceModelTable',
-            '\MonarcFO\Model\Table\PasswordTokenTable' => '\MonarcFO\Service\Model\Table\PasswordTokenServiceModelTable',
-            '\MonarcFO\Model\Table\RolfRiskTable' => '\MonarcFO\Service\Model\Table\RolfRiskServiceModelTable',
-            '\MonarcFO\Model\Table\RolfTagTable' => '\MonarcFO\Service\Model\Table\RolfTagServiceModelTable',
-            '\MonarcFO\Model\Table\RecordActorTable' => '\MonarcFO\Service\Model\Table\RecordActorServiceModelTable',
-            '\MonarcFO\Model\Table\RecordDataCategoryTable' => '\MonarcFO\Service\Model\Table\RecordDataCategoryServiceModelTable',
-            '\MonarcFO\Model\Table\RecordInternationalTransferTable' => '\MonarcFO\Service\Model\Table\RecordInternationalTransferServiceModelTable',
-            '\MonarcFO\Model\Table\RecordPersonalDataTable' => '\MonarcFO\Service\Model\Table\RecordPersonalDataServiceModelTable',
-            '\MonarcFO\Model\Table\RecordProcessorTable' => '\MonarcFO\Service\Model\Table\RecordProcessorServiceModelTable',
-            '\MonarcFO\Model\Table\RecordRecipientTable' => '\MonarcFO\Service\Model\Table\RecordRecipientServiceModelTable',
-            '\MonarcFO\Model\Table\RecordTable' => '\MonarcFO\Service\Model\Table\RecordServiceModelTable',
-            '\MonarcFO\Model\Table\ReferentialTable' => '\MonarcFO\Service\Model\Table\ReferentialServiceModelTable',
-            '\MonarcFO\Model\Table\RecommandationTable' => '\MonarcFO\Service\Model\Table\RecommandationServiceModelTable',
-            '\MonarcFO\Model\Table\RecommandationHistoricTable' => '\MonarcFO\Service\Model\Table\RecommandationHistoricServiceModelTable',
-            '\MonarcFO\Model\Table\RecommandationRiskTable' => '\MonarcFO\Service\Model\Table\RecommandationRiskServiceModelTable',
-            '\MonarcFO\Model\Table\RecommandationSetTable' => '\MonarcFO\Service\Model\Table\RecommandationSetServiceModelTable',
-            '\MonarcFO\Model\Table\ScaleTable' => '\MonarcFO\Service\Model\Table\ScaleServiceModelTable',
-            '\MonarcFO\Model\Table\ScaleCommentTable' => '\MonarcFO\Service\Model\Table\ScaleCommentServiceModelTable',
-            '\MonarcFO\Model\Table\ScaleImpactTypeTable' => '\MonarcFO\Service\Model\Table\ScaleImpactTypeServiceModelTable',
-            '\MonarcFO\Model\Table\SnapshotTable' => '\MonarcFO\Service\Model\Table\SnapshotServiceModelTable',
-            '\MonarcFO\Model\Table\SoaTable' => '\MonarcFO\Service\Model\Table\SoaServiceModelTable',
-            '\MonarcFO\Model\Table\SoaCategoryTable' => '\MonarcFO\Service\Model\Table\SoaCategoryServiceModelTable',
-            '\MonarcFO\Model\Table\ThemeTable' => '\MonarcFO\Service\Model\Table\ThemeServiceModelTable',
-            '\MonarcFO\Model\Table\ThreatTable' => '\MonarcFO\Service\Model\Table\ThreatServiceModelTable',
-            '\MonarcFO\Model\Table\UserTable' => '\MonarcFO\Service\Model\Table\UserServiceModelTable',
-            '\MonarcFO\Model\Table\UserAnrTable' => '\MonarcFO\Service\Model\Table\UserAnrServiceModelTable',
-            '\MonarcFO\Model\Table\UserRoleTable' => '\MonarcFO\Service\Model\Table\UserRoleServiceModelTable',
-            '\MonarcFO\Model\Table\UserTokenTable' => '\MonarcFO\Service\Model\Table\UserTokenServiceModelTable',
-            '\MonarcFO\Model\Table\VulnerabilityTable' => '\MonarcFO\Service\Model\Table\VulnerabilityServiceModelTable',
-            '\MonarcFO\Model\Table\QuestionTable' => '\MonarcFO\Service\Model\Table\QuestionServiceModelTable',
-            '\MonarcFO\Model\Table\QuestionChoiceTable' => '\MonarcFO\Service\Model\Table\QuestionChoiceServiceModelTable',
-
-            //entities
-            '\MonarcFO\Model\Entity\Amv' => '\MonarcFO\Service\Model\Entity\AmvServiceModelEntity',
-            '\MonarcFO\Model\Entity\Anr' => '\MonarcFO\Service\Model\Entity\AnrServiceModelEntity',
-            '\MonarcFO\Model\Entity\AnrObjectCategory' => '\MonarcFO\Service\Model\Entity\AnrObjectCategoryServiceModelEntity',
-            '\MonarcFO\Model\Entity\Asset' => '\MonarcFO\Service\Model\Entity\AssetServiceModelEntity',
-            '\MonarcFO\Model\Entity\Client' => '\MonarcFO\Service\Model\Entity\ClientServiceModelEntity',
-            '\MonarcFO\Model\Entity\Delivery' => '\MonarcFO\Service\Model\Entity\DeliveryServiceModelEntity',
-            '\MonarcFO\Model\Entity\Instance' => '\MonarcFO\Service\Model\Entity\InstanceServiceModelEntity',
-            '\MonarcFO\Model\Entity\InstanceConsequence' => '\MonarcFO\Service\Model\Entity\InstanceConsequenceServiceModelEntity',
-            '\MonarcFO\Model\Entity\InstanceRisk' => '\MonarcFO\Service\Model\Entity\InstanceRiskServiceModelEntity',
-            '\MonarcFO\Model\Entity\InstanceRiskOp' => '\MonarcFO\Service\Model\Entity\InstanceRiskOpServiceModelEntity',
-            '\MonarcFO\Model\Entity\Interview' => '\MonarcFO\Service\Model\Entity\InterviewServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecordActor' => '\MonarcFO\Service\Model\Entity\RecordActorServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecordDataCategory' => '\MonarcFO\Service\Model\Entity\RecordDataCategoryServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecordInternationalTransfer' => '\MonarcFO\Service\Model\Entity\RecordInternationalTransferServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecordPersonalData' => '\MonarcFO\Service\Model\Entity\RecordPersonalDataServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecordProcessor' => '\MonarcFO\Service\Model\Entity\RecordProcessorServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecordRecipient' => '\MonarcFO\Service\Model\Entity\RecordRecipientServiceModelEntity',
-            '\MonarcFO\Model\Entity\Record' => '\MonarcFO\Service\Model\Entity\RecordServiceModelEntity',
-            '\MonarcFO\Model\Entity\Referential' => '\MonarcFO\Service\Model\Entity\ReferentialServiceModelEntity',
-            '\MonarcFO\Model\Entity\Measure' => '\MonarcFO\Service\Model\Entity\MeasureServiceModelEntity',
-            '\MonarcFO\Model\Entity\MeasureMeasure' => '\MonarcFO\Service\Model\Entity\MeasureMeasureServiceModelEntity',
-            '\MonarcFO\Model\Entity\MonarcObject' => '\MonarcFO\Service\Model\Entity\MonarcObjectServiceModelEntity',
-            '\MonarcFO\Model\Entity\ObjectCategory' => '\MonarcFO\Service\Model\Entity\ObjectCategoryServiceModelEntity',
-            '\MonarcFO\Model\Entity\ObjectObject' => '\MonarcFO\Service\Model\Entity\ObjectObjectServiceModelEntity',
-            '\MonarcFO\Model\Entity\PasswordToken' => '\MonarcFO\Service\Model\Entity\PasswordTokenServiceModelEntity',
-            '\MonarcFO\Model\Entity\RolfRisk' => '\MonarcFO\Service\Model\Entity\RolfRiskServiceModelEntity',
-            '\MonarcFO\Model\Entity\RolfTag' => '\MonarcFO\Service\Model\Entity\RolfTagServiceModelEntity',
-            '\MonarcFO\Model\Entity\Recommandation' => '\MonarcFO\Service\Model\Entity\RecommandationServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecommandationHistoric' => '\MonarcFO\Service\Model\Entity\RecommandationHistoricServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecommandationRisk' => '\MonarcFO\Service\Model\Entity\RecommandationRiskServiceModelEntity',
-            '\MonarcFO\Model\Entity\RecommandationSet' => '\MonarcFO\Service\Model\Entity\RecommandationSetServiceModelEntity',
-            '\MonarcFO\Model\Entity\Scale' => '\MonarcFO\Service\Model\Entity\ScaleServiceModelEntity',
-            '\MonarcFO\Model\Entity\ScaleComment' => '\MonarcFO\Service\Model\Entity\ScaleCommentServiceModelEntity',
-            '\MonarcFO\Model\Entity\ScaleImpactType' => '\MonarcFO\Service\Model\Entity\ScaleImpactTypeServiceModelEntity',
-            '\MonarcFO\Model\Entity\Snapshot' => '\MonarcFO\Service\Model\Entity\SnapshotServiceModelEntity',
-            '\MonarcFO\Model\Entity\Soa' => '\MonarcFO\Service\Model\Entity\SoaServiceModelEntity',
-            '\MonarcFO\Model\Entity\SoaCategory' => '\MonarcFO\Service\Model\Entity\SoaCategoryServiceModelEntity',
-            '\MonarcFO\Model\Entity\Theme' => '\MonarcFO\Service\Model\Entity\ThemeServiceModelEntity',
-            '\MonarcFO\Model\Entity\Threat' => '\MonarcFO\Service\Model\Entity\ThreatServiceModelEntity',
-            '\MonarcFO\Model\Entity\User' => '\MonarcFO\Service\Model\Entity\UserServiceModelEntity',
-            '\MonarcFO\Model\Entity\UserAnr' => '\MonarcFO\Service\Model\Entity\UserAnrServiceModelEntity',
-            '\MonarcFO\Model\Entity\UserRole' => '\MonarcFO\Service\Model\Entity\UserRoleServiceModelEntity',
-            '\MonarcFO\Model\Entity\UserToken' => '\MonarcFO\Service\Model\Entity\UserTokenServiceModelEntity',
-            '\MonarcFO\Model\Entity\Vulnerability' => '\MonarcFO\Service\Model\Entity\VulnerabilityServiceModelEntity',
-            '\MonarcFO\Model\Entity\Question' => '\MonarcFO\Service\Model\Entity\QuestionServiceModelEntity',
-            '\MonarcFO\Model\Entity\QuestionChoice' => '\MonarcFO\Service\Model\Entity\QuestionChoiceServiceModelEntity',
-
-            //services
-            '\MonarcFO\Service\AnrService' => '\MonarcFO\Service\AnrServiceFactory',
-            '\MonarcFO\Service\AnrCoreService' => '\MonarcFO\Service\AnrCoreServiceFactory',
-            '\MonarcFO\Service\SnapshotService' => '\MonarcFO\Service\SnapshotServiceFactory',
-            '\MonarcFO\Service\UserService' => '\MonarcFO\Service\UserServiceFactory',
-            '\MonarcFO\Service\UserAnrService' => '\MonarcFO\Service\UserAnrServiceFactory',
-            '\MonarcFO\Service\UserRoleService' => '\MonarcFO\Service\UserRoleServiceFactory',
-            '\MonarcFO\Service\AnrAssetService' => '\MonarcFO\Service\AnrAssetServiceFactory',
-            '\MonarcFO\Service\AnrAssetCommonService' => '\MonarcFO\Service\AnrAssetCommonServiceFactory',
-            '\MonarcFO\Service\AnrAmvService' => '\MonarcFO\Service\AnrAmvServiceFactory',
-            '\MonarcFO\Service\AnrInterviewService' => '\MonarcFO\Service\AnrInterviewServiceFactory',
-            '\MonarcFO\Service\AnrMeasureService' => '\MonarcFO\Service\AnrMeasureServiceFactory',
-            '\MonarcFO\Service\AnrMeasureMeasureService' => '\MonarcFO\Service\AnrMeasureMeasureServiceFactory',
-            '\MonarcFO\Service\AnrRecordActorService' => '\MonarcFO\Service\AnrRecordActorServiceFactory',
-            '\MonarcFO\Service\AnrRecordDataCategoryService' => '\MonarcFO\Service\AnrRecordDataCategoryServiceFactory',
-            '\MonarcFO\Service\AnrRecordInternationalTransferService' => '\MonarcFO\Service\AnrRecordInternationalTransferServiceFactory',
-            '\MonarcFO\Service\AnrRecordPersonalDataService' => '\MonarcFO\Service\AnrRecordPersonalDataServiceFactory',
-            '\MonarcFO\Service\AnrRecordProcessorService' => '\MonarcFO\Service\AnrRecordProcessorServiceFactory',
-            '\MonarcFO\Service\AnrRecordRecipientService' => '\MonarcFO\Service\AnrRecordRecipientServiceFactory',
-            '\MonarcFO\Service\AnrRecordService' => '\MonarcFO\Service\AnrRecordServiceFactory',
-            '\MonarcFO\Service\AnrReferentialService' => '\MonarcFO\Service\AnrReferentialServiceFactory',
-            '\MonarcFO\Service\SoaService' => '\MonarcFO\Service\SoaServiceFactory',
-            '\MonarcFO\Service\SoaCategoryService' => '\MonarcFO\Service\SoaCategoryServiceFactory',
-            '\MonarcFO\Service\AnrQuestionService' => '\MonarcFO\Service\AnrQuestionServiceFactory',
-            '\MonarcFO\Service\AnrQuestionChoiceService' => '\MonarcFO\Service\AnrQuestionChoiceServiceFactory',
-            '\MonarcFO\Service\AnrThreatService' => '\MonarcFO\Service\AnrThreatServiceFactory',
-            '\MonarcFO\Service\AnrThemeService' => '\MonarcFO\Service\AnrThemeServiceFactory',
-            '\MonarcFO\Service\AnrVulnerabilityService' => '\MonarcFO\Service\AnrVulnerabilityServiceFactory',
-            '\MonarcFO\Service\AnrRolfTagService' => '\MonarcFO\Service\AnrRolfTagServiceFactory',
-            '\MonarcFO\Service\AnrRolfRiskService' => '\MonarcFO\Service\AnrRolfRiskServiceFactory',
-            '\MonarcFO\Service\AmvService' => '\MonarcFO\Service\AmvServiceFactory',
-            '\MonarcFO\Service\AssetService' => '\MonarcFO\Service\AssetServiceFactory',
-            '\MonarcFO\Service\ClientService' => '\MonarcFO\Service\ClientServiceFactory',
-            '\MonarcFO\Service\ObjectService' => '\MonarcFO\Service\ObjectServiceFactory',
-            '\MonarcFO\Service\ObjectCategoryService' => '\MonarcFO\Service\ObjectCategoryServiceFactory',
-            '\MonarcFO\Service\ObjectObjectService' => '\MonarcFO\Service\ObjectObjectServiceFactory',
-            '\MonarcFO\Service\PasswordService' => '\MonarcFO\Service\PasswordServiceFactory',
-            '\MonarcFO\Service\MailService' => '\MonarcFO\Service\MailServiceFactory',
-            '\MonarcFO\Service\ModelService' => '\MonarcFO\Service\ModelServiceFactory',
-            '\MonarcFO\Service\AnrLibraryService' => '\MonarcFO\Service\AnrLibraryServiceFactory',
-            '\MonarcFO\Service\AnrRecommandationService' => '\MonarcFO\Service\AnrRecommandationServiceFactory',
-            '\MonarcFO\Service\AnrRecommandationHistoricService' => '\MonarcFO\Service\AnrRecommandationHistoricServiceFactory',
-            '\MonarcFO\Service\AnrRecommandationRiskService' => '\MonarcFO\Service\AnrRecommandationRiskServiceFactory',
-            '\MonarcFO\Service\AnrRecommandationSetService' => '\MonarcFO\Service\AnrRecommandationSetServiceFactory',
-            '\MonarcFO\Service\AnrScaleService' => '\MonarcFO\Service\AnrScaleServiceFactory',
-            '\MonarcFO\Service\AnrScaleTypeService' => '\MonarcFO\Service\AnrScaleTypeServiceFactory',
-            '\MonarcFO\Service\AnrScaleCommentService' => '\MonarcFO\Service\AnrScaleCommentServiceFactory',
-            '\MonarcFO\Service\AnrCheckStartedService' => '\MonarcFO\Service\AnrCheckStartedServiceFactory',
-            '\MonarcFO\Service\AnrCartoRiskService' => '\MonarcFO\Service\AnrCartoRiskServiceFactory',
-            '\MonarcFO\Service\AnrRiskService' => '\MonarcFO\Service\AnrRiskServiceFactory',
-            '\MonarcFO\Service\AnrObjectService' => '\MonarcFO\Service\AnrObjectServiceFactory',
-            '\MonarcFO\Service\AnrInstanceConsequenceService' => '\MonarcFO\Service\AnrInstanceConsequenceServiceFactory',
-            '\MonarcFO\Service\AnrInstanceRiskOpService' => '\MonarcFO\Service\AnrInstanceRiskOpServiceFactory',
-            '\MonarcFO\Service\AnrInstanceRiskService' => '\MonarcFO\Service\AnrInstanceRiskServiceFactory',
-            '\MonarcFO\Service\AnrInstanceService' => '\MonarcFO\Service\AnrInstanceServiceFactory',
-            '\MonarcFO\Service\AnrRiskOpService' => '\MonarcFO\Service\AnrRiskOpServiceFactory',
-            '\MonarcFO\Service\AnrObjectCategoryService' => '\MonarcFO\Service\AnrObjectCategoryServiceFactory',
-            '\MonarcFO\Service\ObjectExportService' => '\MonarcFO\Service\ObjectExportServiceFactory',
-            '\MonarcFO\Service\AssetExportService' => '\MonarcFO\Service\AssetExportServiceFactory',
-            '\MonarcFO\Service\DeliverableGenerationService' => '\MonarcFO\Service\DeliverableGenerationServiceFactory',
+    'service_manager' => [
+        'invokables' => [
+            Entity\UserAnr::class => Entity\UserAnr::class,
 
             //validators
-            '\MonarcFO\Validator\UniqueClientProxyAlias' => '\MonarcFO\Validator\UniqueClientProxyAlias',
-        ),
-    ),
+            UniqueClientProxyAlias::class => UniqueClientProxyAlias::class,
+        ],
+        'factories' => [
+            DbCli::class => Service\Model\DbCliFactory::class,
 
-    'doctrine' => array(
-        'driver' => array(
-            'Monarc_cli_driver' => array(
-                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
+            Table\AmvTable::class => AutowireFactory::class,
+            Table\AnrObjectCategoryTable::class => AutowireFactory::class,
+            Table\AnrTable::class => AutowireFactory::class,
+            Table\AssetTable::class => AutowireFactory::class,
+            Table\ClientTable::class => AutowireFactory::class,
+            Table\InstanceTable::class => AutowireFactory::class,
+            Table\DeliveryTable::class => AutowireFactory::class,
+            Table\InstanceConsequenceTable::class => AutowireFactory::class,
+            Table\InstanceRiskTable::class => AutowireFactory::class,
+            Table\InstanceRiskOpTable::class => AutowireFactory::class,
+            Table\InterviewTable::class => AutowireFactory::class,
+            Table\MeasureTable::class => AutowireFactory::class,
+            Table\MeasureMeasureTable::class => AutowireFactory::class,
+            Table\MonarcObjectTable::class => AutowireFactory::class,
+            Table\ObjectCategoryTable::class => AutowireFactory::class,
+            Table\ObjectObjectTable::class => AutowireFactory::class,
+            Table\PasswordTokenTable::class => AutowireFactory::class,
+            Table\RolfRiskTable::class => AutowireFactory::class,
+            Table\RolfTagTable::class => AutowireFactory::class,
+            Table\RecordActorTable::class => AutowireFactory::class,
+            Table\RecordDataCategoryTable::class => AutowireFactory::class,
+            Table\RecordInternationalTransferTable::class => AutowireFactory::class,
+            Table\RecordPersonalDataTable::class => AutowireFactory::class,
+            Table\RecordProcessorTable::class => AutowireFactory::class,
+            Table\RecordRecipientTable::class => AutowireFactory::class,
+            Table\RecordTable::class => AutowireFactory::class,
+            Table\ReferentialTable::class => AutowireFactory::class,
+            Table\RecommandationTable::class => AutowireFactory::class,
+            Table\RecommandationHistoricTable::class => AutowireFactory::class,
+            Table\RecommandationRiskTable::class => AutowireFactory::class,
+            Table\RecommandationSetTable::class => AutowireFactory::class,
+            Table\ScaleTable::class => AutowireFactory::class,
+            Table\ScaleCommentTable::class => AutowireFactory::class,
+            Table\ScaleImpactTypeTable::class => AutowireFactory::class,
+            Table\SnapshotTable::class => AutowireFactory::class,
+            Table\SoaTable::class => AutowireFactory::class,
+            Table\SoaCategoryTable::class => AutowireFactory::class,
+            Table\ThemeTable::class => AutowireFactory::class,
+            Table\ThreatTable::class => AutowireFactory::class,
+            Table\UserTable::class => AutowireFactory::class,
+            Table\UserAnrTable::class => AutowireFactory::class,
+            Table\VulnerabilityTable::class => AutowireFactory::class,
+            Table\QuestionTable::class => AutowireFactory::class,
+            Table\QuestionChoiceTable::class => AutowireFactory::class,
+
+            //entities
+            // TODO: the goal is to remove all of the mapping and create new entity in the code.
+            'Monarc\FrontOffice\Model\Entity\Amv' => 'Monarc\FrontOffice\Service\Model\Entity\AmvServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Anr' => 'Monarc\FrontOffice\Service\Model\Entity\AnrServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\AnrObjectCategory' => 'Monarc\FrontOffice\Service\Model\Entity\AnrObjectCategoryServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Asset' => 'Monarc\FrontOffice\Service\Model\Entity\AssetServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Client' => 'Monarc\FrontOffice\Service\Model\Entity\ClientServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Delivery' => 'Monarc\FrontOffice\Service\Model\Entity\DeliveryServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Instance' => 'Monarc\FrontOffice\Service\Model\Entity\InstanceServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\InstanceConsequence' => 'Monarc\FrontOffice\Service\Model\Entity\InstanceConsequenceServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\InstanceRisk' => 'Monarc\FrontOffice\Service\Model\Entity\InstanceRiskServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\InstanceRiskOp' => 'Monarc\FrontOffice\Service\Model\Entity\InstanceRiskOpServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Interview' => 'Monarc\FrontOffice\Service\Model\Entity\InterviewServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecordActor' => 'Monarc\FrontOffice\Service\Model\Entity\RecordActorServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecordDataCategory' => 'Monarc\FrontOffice\Service\Model\Entity\RecordDataCategoryServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecordInternationalTransfer' => 'Monarc\FrontOffice\Service\Model\Entity\RecordInternationalTransferServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecordPersonalData' => 'Monarc\FrontOffice\Service\Model\Entity\RecordPersonalDataServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecordProcessor' => 'Monarc\FrontOffice\Service\Model\Entity\RecordProcessorServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecordRecipient' => 'Monarc\FrontOffice\Service\Model\Entity\RecordRecipientServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Record' => 'Monarc\FrontOffice\Service\Model\Entity\RecordServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Referential' => 'Monarc\FrontOffice\Service\Model\Entity\ReferentialServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Measure' => 'Monarc\FrontOffice\Service\Model\Entity\MeasureServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\MeasureMeasure' => 'Monarc\FrontOffice\Service\Model\Entity\MeasureMeasureServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\MonarcObject' => 'Monarc\FrontOffice\Service\Model\Entity\MonarcObjectServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\ObjectCategory' => 'Monarc\FrontOffice\Service\Model\Entity\ObjectCategoryServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\ObjectObject' => 'Monarc\FrontOffice\Service\Model\Entity\ObjectObjectServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\PasswordToken' => 'Monarc\FrontOffice\Service\Model\Entity\PasswordTokenServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RolfRisk' => 'Monarc\FrontOffice\Service\Model\Entity\RolfRiskServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RolfTag' => 'Monarc\FrontOffice\Service\Model\Entity\RolfTagServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Recommandation' => 'Monarc\FrontOffice\Service\Model\Entity\RecommandationServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecommandationHistoric' => 'Monarc\FrontOffice\Service\Model\Entity\RecommandationHistoricServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecommandationRisk' => 'Monarc\FrontOffice\Service\Model\Entity\RecommandationRiskServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\RecommandationSet' => 'Monarc\FrontOffice\Service\Model\Entity\RecommandationSetServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Scale' => 'Monarc\FrontOffice\Service\Model\Entity\ScaleServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\ScaleComment' => 'Monarc\FrontOffice\Service\Model\Entity\ScaleCommentServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\ScaleImpactType' => 'Monarc\FrontOffice\Service\Model\Entity\ScaleImpactTypeServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Snapshot' => 'Monarc\FrontOffice\Service\Model\Entity\SnapshotServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Soa' => 'Monarc\FrontOffice\Service\Model\Entity\SoaServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\SoaCategory' => 'Monarc\FrontOffice\Service\Model\Entity\SoaCategoryServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Theme' => 'Monarc\FrontOffice\Service\Model\Entity\ThemeServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Threat' => 'Monarc\FrontOffice\Service\Model\Entity\ThreatServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Vulnerability' => 'Monarc\FrontOffice\Service\Model\Entity\VulnerabilityServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\Question' => 'Monarc\FrontOffice\Service\Model\Entity\QuestionServiceModelEntity',
+            'Monarc\FrontOffice\Model\Entity\QuestionChoice' => 'Monarc\FrontOffice\Service\Model\Entity\QuestionChoiceServiceModelEntity',
+
+            // TODO: replace to autowiring.
+            'Monarc\FrontOffice\Service\AnrService' => 'Monarc\FrontOffice\Service\AnrServiceFactory',
+            'Monarc\FrontOffice\Service\AnrCoreService' => 'Monarc\FrontOffice\Service\AnrCoreServiceFactory',
+            'Monarc\FrontOffice\Service\SnapshotService' => 'Monarc\FrontOffice\Service\SnapshotServiceFactory',
+            Service\UserService::class => ReflectionBasedAbstractFactory::class,
+            'Monarc\FrontOffice\Service\UserAnrService' => 'Monarc\FrontOffice\Service\UserAnrServiceFactory',
+            Service\UserRoleService::class => AutowireFactory::class,
+            'Monarc\FrontOffice\Service\AnrAssetService' => 'Monarc\FrontOffice\Service\AnrAssetServiceFactory',
+            'Monarc\FrontOffice\Service\AnrAssetCommonService' => 'Monarc\FrontOffice\Service\AnrAssetCommonServiceFactory',
+            'Monarc\FrontOffice\Service\AnrAmvService' => 'Monarc\FrontOffice\Service\AnrAmvServiceFactory',
+            'Monarc\FrontOffice\Service\AnrInterviewService' => 'Monarc\FrontOffice\Service\AnrInterviewServiceFactory',
+            'Monarc\FrontOffice\Service\AnrMeasureService' => 'Monarc\FrontOffice\Service\AnrMeasureServiceFactory',
+            'Monarc\FrontOffice\Service\AnrMeasureMeasureService' => 'Monarc\FrontOffice\Service\AnrMeasureMeasureServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecordActorService' => 'Monarc\FrontOffice\Service\AnrRecordActorServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecordDataCategoryService' => 'Monarc\FrontOffice\Service\AnrRecordDataCategoryServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecordInternationalTransferService' => 'Monarc\FrontOffice\Service\AnrRecordInternationalTransferServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecordPersonalDataService' => 'Monarc\FrontOffice\Service\AnrRecordPersonalDataServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecordProcessorService' => 'Monarc\FrontOffice\Service\AnrRecordProcessorServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecordRecipientService' => 'Monarc\FrontOffice\Service\AnrRecordRecipientServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecordService' => 'Monarc\FrontOffice\Service\AnrRecordServiceFactory',
+            'Monarc\FrontOffice\Service\AnrReferentialService' => 'Monarc\FrontOffice\Service\AnrReferentialServiceFactory',
+            'Monarc\FrontOffice\Service\SoaService' => 'Monarc\FrontOffice\Service\SoaServiceFactory',
+            'Monarc\FrontOffice\Service\SoaCategoryService' => 'Monarc\FrontOffice\Service\SoaCategoryServiceFactory',
+            'Monarc\FrontOffice\Service\AnrQuestionService' => 'Monarc\FrontOffice\Service\AnrQuestionServiceFactory',
+            'Monarc\FrontOffice\Service\AnrQuestionChoiceService' => 'Monarc\FrontOffice\Service\AnrQuestionChoiceServiceFactory',
+            'Monarc\FrontOffice\Service\AnrThreatService' => 'Monarc\FrontOffice\Service\AnrThreatServiceFactory',
+            'Monarc\FrontOffice\Service\AnrThemeService' => 'Monarc\FrontOffice\Service\AnrThemeServiceFactory',
+            'Monarc\FrontOffice\Service\AnrVulnerabilityService' => 'Monarc\FrontOffice\Service\AnrVulnerabilityServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRolfTagService' => 'Monarc\FrontOffice\Service\AnrRolfTagServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRolfRiskService' => 'Monarc\FrontOffice\Service\AnrRolfRiskServiceFactory',
+            'Monarc\FrontOffice\Service\AmvService' => 'Monarc\FrontOffice\Service\AmvServiceFactory',
+            'Monarc\FrontOffice\Service\AssetService' => 'Monarc\FrontOffice\Service\AssetServiceFactory',
+            'Monarc\FrontOffice\Service\ClientService' => 'Monarc\FrontOffice\Service\ClientServiceFactory',
+            'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
+            'Monarc\FrontOffice\Service\ObjectCategoryService' => 'Monarc\FrontOffice\Service\ObjectCategoryServiceFactory',
+            'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
+            'Monarc\FrontOffice\Service\PasswordService' => 'Monarc\FrontOffice\Service\PasswordServiceFactory',
+            'Monarc\FrontOffice\Service\ModelService' => 'Monarc\FrontOffice\Service\ModelServiceFactory',
+            'Monarc\FrontOffice\Service\AnrLibraryService' => 'Monarc\FrontOffice\Service\AnrLibraryServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecommandationService' => 'Monarc\FrontOffice\Service\AnrRecommandationServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecommandationHistoricService' => 'Monarc\FrontOffice\Service\AnrRecommandationHistoricServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecommandationRiskService' => 'Monarc\FrontOffice\Service\AnrRecommandationRiskServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRecommandationSetService' => 'Monarc\FrontOffice\Service\AnrRecommandationSetServiceFactory',
+            'Monarc\FrontOffice\Service\AnrScaleService' => 'Monarc\FrontOffice\Service\AnrScaleServiceFactory',
+            'Monarc\FrontOffice\Service\AnrScaleTypeService' => 'Monarc\FrontOffice\Service\AnrScaleTypeServiceFactory',
+            'Monarc\FrontOffice\Service\AnrScaleCommentService' => 'Monarc\FrontOffice\Service\AnrScaleCommentServiceFactory',
+            'Monarc\FrontOffice\Service\AnrCheckStartedService' => 'Monarc\FrontOffice\Service\AnrCheckStartedServiceFactory',
+            'Monarc\FrontOffice\Service\AnrCartoRiskService' => 'Monarc\FrontOffice\Service\AnrCartoRiskServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRiskService' => 'Monarc\FrontOffice\Service\AnrRiskServiceFactory',
+            'Monarc\FrontOffice\Service\AnrObjectService' => 'Monarc\FrontOffice\Service\AnrObjectServiceFactory',
+            'Monarc\FrontOffice\Service\AnrInstanceConsequenceService' => 'Monarc\FrontOffice\Service\AnrInstanceConsequenceServiceFactory',
+            'Monarc\FrontOffice\Service\AnrInstanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpServiceFactory',
+            'Monarc\FrontOffice\Service\AnrInstanceRiskService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskServiceFactory',
+            'Monarc\FrontOffice\Service\AnrInstanceService' => 'Monarc\FrontOffice\Service\AnrInstanceServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRiskOpService' => 'Monarc\FrontOffice\Service\AnrRiskOpServiceFactory',
+            'Monarc\FrontOffice\Service\AnrObjectCategoryService' => 'Monarc\FrontOffice\Service\AnrObjectCategoryServiceFactory',
+            'Monarc\FrontOffice\Service\ObjectExportService' => 'Monarc\FrontOffice\Service\ObjectExportServiceFactory',
+            'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
+            'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
+
+            CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
+        ],
+    ],
+
+    'doctrine' => [
+        'driver' => [
+            'Monarc_cli_driver' => [
+                'class' => AnnotationDriver::class,
                 'cache' => 'array',
-                'paths' => array(
-                    __DIR__ . '/../src/MonarcFO/Model/Entity',
-                    __DIR__ . '/../../MonarcCore/src/MonarcCore/Model/Entity',
-                ),
-            ),
-            'orm_cli' => array(
-                'class' => 'Doctrine\ORM\Mapping\Driver\DriverChain',
-                'drivers' => array(
-                    'MonarcFO\Model\Entity' => 'Monarc_cli_driver',
-                ),
-            ),
-        ),
-    ),
+                'paths' => [
+                    __DIR__ . '/../src/Model/Entity',
+                    __DIR__ . '/../../core/src/Model/Entity',
+                    __DIR__ . '/../../frontoffice/src/Model/Entity',
+                ],
+            ],
+            'orm_cli' => [
+                'class' => MappingDriverChain::class,
+                'drivers' => [
+                    'Monarc\FrontOffice\Model\Entity' => 'Monarc_cli_driver',
+                ],
+            ],
+        ],
+    ],
 
     // Placeholder for console routes
-    'console' => array(
-        'router' => array(
-            'routes' => array(),
-        ),
-    ),
-    'roles' => array(
+    'console' => [
+        'router' => [
+            'routes' => [],
+        ],
+    ],
+    'roles' => [
         // Super Admin : Gestion des droits des utilisateurs uniquement (Carnet d’adresses)
-        'superadminfo' => array(
+        Entity\UserRole::SUPER_ADMIN_FO => [
             'monarc_api_doc_models',
             'monarc_api_admin_users',
             'monarc_api_admin_users_roles',
@@ -1205,9 +1201,9 @@ return array(
             'monarc_api_user_profile',
             'monarc_api_anr_carto_risks',
             'monarc_api_global_client_anr/carto_risks',
-        ),
+        ],
         // Utilisateur : Accès RWD par analyse
-        'userfo' => array(
+        Entity\UserRole::USER_FO => [
             'monarc_api_doc_models',
             'monarc_api_models',
             'monarc_api_referentials',
@@ -1302,7 +1298,7 @@ return array(
             'monarc_api_global_client_anr/records_export',
             'monarc_api_global_client_anr/record_import',
             'monarc_api_global_client_anr/record_duplicate',
-        ),
-    ),
-    'activeLanguages' => array('fr'),
-);
+        ],
+    ],
+    'activeLanguages' => ['fr'],
+];
