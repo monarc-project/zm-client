@@ -155,7 +155,6 @@ class UserService extends CoreUserService
         }
 
         if (isset($data['anrs'])) {
-
             foreach ($data['anrs'] as $anr) {
                 $anrEntity = $this->anrTable->findById($anr['id']);
 

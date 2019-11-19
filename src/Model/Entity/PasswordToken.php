@@ -13,20 +13,9 @@ use Monarc\Core\Model\Entity\PasswordTokenSuperClass;
 /**
  * Password Token
  *
- * @ORM\Table(name="passwords_tokens", indexes={
- *      @ORM\Index(name="user_id", columns={"user_id"})
- * }), uniqueConstraints={@ORM\UniqueConstraint(name="token", columns={"token"})}
+ * @ORM\Table(name="passwords_tokens")
  * @ORM\Entity
  */
 class PasswordToken extends PasswordTokenSuperClass
 {
-    /**
-     * @var \Monarc\Core\Model\Entity\User
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\User", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $user;
 }
