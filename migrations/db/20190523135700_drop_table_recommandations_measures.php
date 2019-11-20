@@ -27,6 +27,6 @@ class DropTableRecommandationsMeasures extends AbstractMigration
      */
     public function change()
     {
-        $this->table('recommandations_measures')->drop();
+        $this->table('recommandations_measures')->drop()->update();
     }
 }

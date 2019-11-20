@@ -56,15 +56,16 @@ class AddMeasuresRisks extends AbstractMigration
       $table->dropForeignKey('measure1_id')
             ->dropForeignKey('measure2_id')
             ->dropForeignKey('measure3_id')
-            ->save();
+            ->update();
       $table->removeColumn('measure1_id')
             ->removeColumn('measure2_id')
             ->removeColumn('measure3_id')
-            ->save();
+            ->update();
       //simplify the management of the SOA categories
       $table = $this->table('soacategory');
       $table->removeIndex(['anr_id','code'])
-            ->removeColumn('code')
-            ->save();
+            ->update();
+      $table->removeColumn('code')
+            ->update();
     }
 }

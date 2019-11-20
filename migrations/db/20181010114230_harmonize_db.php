@@ -49,8 +49,14 @@ class HarmonizeDb extends AbstractMigration
         $table
             ->changeColumn('anr_id', 'integer', array('null' => true, 'signed' => false,'after' => 'id'))
             ->changeColumn('reference', 'string', array('null' => true, 'limit' => 255, 'after' => 'anr_id'))
+            ->update();
+        $table
             ->renameColumn('reference','code')
+            ->update();
+        $table
             ->addIndex(array('anr_id','code'),array('unique'=>true))
+            ->update();
+        $table
             ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
 

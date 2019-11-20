@@ -172,9 +172,7 @@ class AddMeasuresUuid extends AbstractMigration
 
 
       $table = $this->table('measures_measures'); //set the stufff for measures_measures
-      $table->dropForeignKey('father_id')
-            ->dropForeignKey('child_id')
-            ->addColumn('father_uuid', 'uuid',array('after' => 'id'))
+      $table->addColumn('father_uuid', 'uuid',array('after' => 'id'))
             ->addColumn('child_uuid', 'uuid',array('after' => 'id'))
             ->update();
       $this->execute('UPDATE measures_measures MM,measures M SET MM.father_uuid = M.uuid where M.id=MM.father_id');
@@ -211,13 +209,13 @@ class AddMeasuresUuid extends AbstractMigration
       $table = $this->table('measures_measures');
       $table->removeColumn('id')
             ->dropForeignKey('anr_id')
-            ->save();
+            ->update();
       $this->execute("ALTER TABLE measures_measures ADD PRIMARY KEY child_id_father_id_anr_id (child_id, father_id, anr_id)");
 
       $table = $this->table('measures');
       $table->removeColumn('id')
             ->dropForeignKey('anr_id')
-            ->save();
+            ->update();
       $this->execute("ALTER TABLE measures ADD PRIMARY KEY uuid_anr_id (uuid, anr_id)");
 
       /* SET the foreign keys */

@@ -75,7 +75,7 @@ class AddRecommandationsSets extends AbstractMigration
         //remove the id
         $table->removeColumn('id')
             ->dropForeignKey('anr_id')
-            ->save();
+            ->update();
         $this->execute("ALTER TABLE recommandations_sets ADD PRIMARY KEY uuid_anr_id (uuid, anr_id)");
         $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
@@ -84,7 +84,6 @@ class AddRecommandationsSets extends AbstractMigration
         $table = $this->table('recommandations');
         $table
             ->addColumn('recommandation_set_uuid', 'uuid', ['after' => 'anr_id'])
-            ->dropForeignKey('anr_id')
             ->update();
 
         $unUUIDpdo = $this->query('select uuid, code from recommandations WHERE recommandation_set_uuid =' . '""');
