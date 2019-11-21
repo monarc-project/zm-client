@@ -33,5 +33,7 @@
         "psr-4": {
             "Monarc\\FrontOffice\\": "/src"
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
