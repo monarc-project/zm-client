@@ -7,9 +7,17 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
 use Zend\View\Model\JsonModel;
 
 /**
+ * TODO: Refactor me.
+ *  - remove the inheritance from ApiAnrAbstractController (not needed).
+ *  - list endpoints results with normalizer (or temporary directly here) to get rid of formatDependencies magic.
+ * TODO: Refactor the controller and related Frontend:
+ *  - multiple requests
+ *  - call backend only when filed is edited (recipients, processors, etc).
+ *
  * Api Anr Records Controller
  *
  * Class ApiAnrRecordsController
@@ -19,13 +27,13 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
 {
     protected $name = 'records';
     protected $dependencies = [ 'anr', 'controller', 'representative', 'dpo', 'jointControllers',
-                                'personalData', 'internationalTransfers', 'processors', 'recipients'];
+        'personalData', 'internationalTransfers', 'processors', 'recipients'];
 
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
@@ -53,10 +61,10 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         $entity = $this->getService()->getEntity(['id' => $id]);
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids are different', 412);
+        if (!$entity['anr'] || $entity['anr']->get('id') !== $anrId) {
+            throw new Exception('Anr ids are different', 412);
         }
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
@@ -64,23 +72,24 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         return new JsonModel($entity);
     }
 
-    public function formatDependencies(&$entity, $dependencies, $EntityDependency = "", $subField = []) {
+    public function formatDependencies(&$entity, $dependencies, $EntityDependency = "", $subField = [])
+    {
         foreach($dependencies as $dependency) {
             if (!empty($entity[$dependency])) {
                 if (is_object($entity[$dependency])) {
                     if (is_a($entity[$dependency], 'Monarc\Core\Model\Entity\AbstractEntity')) {
                         if(is_a($entity[$dependency], $EntityDependency)){ //fetch more info
-                          $entity[$dependency] = $entity[$dependency]->getJsonArray();
+                            $entity[$dependency] = $entity[$dependency]->getJsonArray();
                             if(!empty($subField)){
-                              foreach ($subField as $key => $value){
-                                $entity[$dependency][$value] = $entity[$dependency][$value] ? $entity[$dependency][$value]->getJsonArray() : [];
-                                unset($entity[$dependency][$value]['__initializer__']);
-                                unset($entity[$dependency][$value]['__cloner__']);
-                                unset($entity[$dependency][$value]['__isInitialized__']);
-                              }
+                                foreach ($subField as $key => $value){
+                                    $entity[$dependency][$value] = $entity[$dependency][$value] ? $entity[$dependency][$value]->getJsonArray() : [];
+                                    unset($entity[$dependency][$value]['__initializer__']);
+                                    unset($entity[$dependency][$value]['__cloner__']);
+                                    unset($entity[$dependency][$value]['__isInitialized__']);
+                                }
                             }
                         }else {
-                          $entity[$dependency] = $entity[$dependency]->getJsonArray();
+                            $entity[$dependency] = $entity[$dependency]->getJsonArray();
                         }
                         unset($entity[$dependency]['__initializer__']);
                         unset($entity[$dependency]['__cloner__']);
@@ -88,9 +97,9 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                     }else if(get_class($entity[$dependency]) == 'Doctrine\ORM\PersistentCollection') {
                         $entity[$dependency]->initialize();
                         if($entity[$dependency]->count()){
-                            $dependency = $entity[$dependency]->getSnapshot();
+                            $dependencySnapshot = $entity[$dependency]->getSnapshot();
                             $temp = [];
-                            foreach($$dependency as $d){
+                            foreach($dependencySnapshot as $d){
                                 if(is_a($d, 'Monarc\FrontOffice\Model\Entity\RecordProcessor')) { //fetch more info
                                     $d = $d->getJsonArray();
                                     if($d['representative']){
@@ -108,8 +117,8 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                                         $dataCategories = $d['dataCategories']->getSnapshot();
                                         $d['dataCategories'] = [];
                                         foreach($dataCategories as $dc){
-                                          $tempDataCategory = $dc->toArray();
-                                          $d['dataCategories'][] = $tempDataCategory;
+                                            $tempDataCategory = $dc->toArray();
+                                            $d['dataCategories'][] = $tempDataCategory;
                                         }
                                     }
                                     if($d['record']){
@@ -145,7 +154,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -159,7 +168,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -175,7 +184,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 

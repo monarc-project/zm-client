@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use DateTime;
+use Doctrine\Common\Collections\Collection;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -31,9 +33,9 @@ class Record extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
@@ -62,28 +64,28 @@ class Record extends AbstractEntity
     protected $secMeasures;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\RecordActor
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RecordActor", cascade={"persist"})
+     * @var RecordActor
+     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="controller_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $controller;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\RecordActor
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RecordActor", cascade={"persist"})
+     * @var RecordActor
+     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="representative_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $representative;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\RecordActor
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RecordActor", cascade={"persist"})
+     * @var RecordActor
+     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="dpo_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $dpo;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
+     * @var Collection|RecordActor[]
      * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RecordActor", cascade={"persist"})
      * @ORM\JoinTable(name="records_record_joint_controllers",
      *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
@@ -93,14 +95,14 @@ class Record extends AbstractEntity
     protected $jointControllers;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RecordPersonalData", mappedBy="record", cascade={"persist"})
+     * @var Collection|RecordPersonalData[]
+     * @ORM\OneToMany(targetEntity="RecordPersonalData", mappedBy="record", cascade={"persist"})
      */
     protected $personalData;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RecordRecipient", cascade={"persist"})
+     * @var Collection|RecordRecipient[]
+     * @ORM\ManyToMany(targetEntity="RecordRecipient", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinTable(name="records_record_recipients",
      *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="recipient_id", referencedColumnName="id")}
@@ -109,14 +111,14 @@ class Record extends AbstractEntity
     protected $recipients;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RecordInternationalTransfer", mappedBy="record", cascade={"persist", "remove"})
+     * @var Collection|RecordInternationalTransfer[]
+     * @ORM\OneToMany(targetEntity="RecordInternationalTransfer", mappedBy="record", cascade={"persist", "remove"})
      */
     protected $internationalTransfers;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RecordProcessor", cascade={"persist"})
+     * @var Collection|RecordProcessor[]
+     * @ORM\ManyToMany(targetEntity="RecordProcessor", cascade={"persist"})
      * @ORM\JoinTable(name="records_record_processors",
      *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")}
@@ -132,7 +134,7 @@ class Record extends AbstractEntity
     protected $creator;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="created_at", type="datetime", nullable=true)
      */
@@ -146,7 +148,7 @@ class Record extends AbstractEntity
     protected $updater;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
      * @ORM\Column(name="updated_at", type="datetime", nullable=true)
      */
@@ -159,6 +161,7 @@ class Record extends AbstractEntity
         $this->recipients = new ArrayCollection();
         $this->internationalTransfers = new ArrayCollection();
         $this->processors = new ArrayCollection();
+
         parent::__construct($obj);
     }
 
@@ -189,9 +192,9 @@ class Record extends AbstractEntity
     }
 
     /**
-    * @param int $anr
-    * @return Record
-    */
+     * @param int $anr
+     * @return Record
+     */
     public function setAnr($anr)
     {
         $this->anr = $anr;
@@ -199,25 +202,25 @@ class Record extends AbstractEntity
     }
 
     /**
-    * @param TEXT_LONG $label
-    *
-    */
+     * @param string $label
+     *
+     */
     public function setlabel($label)
     {
         $this->label = $label;
     }
 
     /**
-    * @return string
-    */
+     * @return array
+     */
     public function getPurposes()
     {
         return $this->purposes;
     }
     /**
-    * @param string $purposes
-    * @return Record
-    */
+     * @param string $purposes
+     * @return Record
+     */
     public function setPurposes($purposes)
     {
         $this->purposes = $purposes;
@@ -243,16 +246,16 @@ class Record extends AbstractEntity
     }
 
     /**
-    * @return RecordActor
-    */
+     * @return RecordActor
+     */
     public function getRepresentative()
     {
         return $this->representative;
     }
     /**
-    * @param string $representative
-    * @return Record
-    */
+     * @param string $representative
+     * @return Record
+     */
     public function setRepresentative($representative)
     {
         $this->representative = $representative;
@@ -260,106 +263,91 @@ class Record extends AbstractEntity
     }
 
     /**
-    * @return RecordActor
-    */
+     * @return RecordActor
+     */
     public function getDpo()
     {
         return $this->dpo;
     }
     /**
-    * @param string $dpo
-    * @return Record
-    */
+     * @param string $dpo
+     * @return Record
+     */
     public function setDpo($dpo)
     {
         $this->dpo = $dpo;
         return $this;
     }
 
-    /**
-     * @return RecordActor
-     */
     public function getJointControllers()
     {
         return $this->jointControllers;
     }
 
     /**
-    * @param int $jointControllers
-    * @return Record
-    */
+     * @param int $jointControllers
+     * @return Record
+     */
     public function setJointControllers($jointControllers)
     {
         $this->jointControllers = $jointControllers;
         return $this;
     }
 
-    /**
-     * @return RecordPersonalData
-     */
     public function getPersonalData()
     {
         return $this->personalData;
     }
 
     /**
-    * @param int $personalData
-    * @return Record
-    */
+     * @param int $personalData
+     * @return Record
+     */
     public function setPersonalData($personalData)
     {
         $this->personalData = $personalData;
         return $this;
     }
 
-    /**
-     * @return RecordInternationalTransfer
-     */
     public function getInternationalTransfers()
     {
         return $this->internationalTransfers;
     }
 
     /**
-    * @param int $internationalTransfers
-    * @return Record
-    */
+     * @param int $internationalTransfers
+     * @return Record
+     */
     public function setInternationalTransfers($internationalTransfers)
     {
         $this->internationalTransfers = $internationalTransfers;
         return $this;
     }
 
-    /**
-     * @return RecordProcessor
-     */
     public function getProcessors()
     {
         return $this->processors;
     }
 
     /**
-    * @param int $processors
-    * @return Record
-    */
+     * @param int $processors
+     * @return Record
+     */
     public function setProcessors($processors)
     {
         $this->processors = $processors;
         return $this;
     }
 
-    /**
-     * @return RecordRecipient
-     */
     public function getRecipients()
     {
         return $this->recipients;
     }
 
     /**
-    * @param int $recipients
-    * @return Record
-    */
+     * @param int $recipients
+     * @return Record
+     */
     public function setRecipients($recipients)
     {
         $this->recipients = $recipients;
@@ -413,7 +401,7 @@ class Record extends AbstractEntity
     }
 
     /**
-     * @return \DateTime
+     * @return DateTime
      */
     public function getCreatedAt()
     {
@@ -421,7 +409,7 @@ class Record extends AbstractEntity
     }
 
     /**
-     * @param \DateTime $createdAt
+     * @param DateTime $createdAt
      * @return Record
      */
     public function setCreatedAt($createdAt)
@@ -449,7 +437,7 @@ class Record extends AbstractEntity
     }
 
     /**
-     * @return \DateTime
+     * @return DateTime
      */
     public function getUpdatedAt()
     {
@@ -457,7 +445,7 @@ class Record extends AbstractEntity
     }
 
     /**
-     * @param \DateTime $updatedAt
+     * @param DateTime $updatedAt
      * @return Record
      */
     public function setUpdatedAt($updatedAt)

@@ -3592,7 +3592,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
 
     /**
        * Generates a single-level array from multilevel array
-       * @param multi_level_array $$multi_level_array
+       * @param multi_level_array $multi_level_array
        * @return array
        */
     protected function single_level_array($multi_level_array){
