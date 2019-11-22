@@ -19,7 +19,7 @@ class AnrAssetCommonServiceFactory extends AbstractServiceFactory
         'entity' => 'Monarc\Core\Model\Entity\Asset',
         'table' => 'Monarc\Core\Model\Table\AssetTable',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'amvTable' => 'Monarc\CoreModel\Table\AmvTable',
+        'amvTable' => 'Monarc\Core\Model\Table\AmvTable',
         'clientity' => 'Monarc\FrontOffice\Model\Entity\Asset',
         'clitable' => 'Monarc\FrontOffice\Model\Table\AssetTable',
         'coreServiceAsset' => 'Monarc\Core\Service\AssetService',
