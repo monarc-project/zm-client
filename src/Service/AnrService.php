@@ -509,6 +509,7 @@ class AnrService extends AbstractService
                 $userAnr->setUser($user);
                 $userAnr->setAnr($newAnr);
                 $userAnr->setRwd(1);
+                $userAnr->setCreator($user->getFirstname() . ' ' . $user->getLastname());
                 $this->get('userAnrCliTable')->save($userAnr, false);
             }
 
@@ -1124,7 +1125,7 @@ class AnrService extends AbstractService
                 $recordRecipients = $this->get('recordRecipientCliTable')->getEntityByFields(['anr' => $anr->id]);
                 $recipientNewIds = [];
                 foreach ($recordRecipients as $r) {
-                    $newRecipient = new \Monarc\FrontOffice\Model\Entity\RecordRecipient($r);
+                    $newRecipient = new RecordRecipient($r);
                     $newRecipient->set('id', null);
                     $newRecipient->setAnr($newAnr);
                     $this->get('recordRecipientCliTable')->save($newRecipient, false);

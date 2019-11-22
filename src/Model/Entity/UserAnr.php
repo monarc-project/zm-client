@@ -7,10 +7,11 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
-use DateTime;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Traits;
+use Monarc\Core\Model\Entity\UserSuperClass;
 
 /**
  * User Anr
@@ -63,57 +64,39 @@ class UserAnr extends AbstractEntity
         return $this->id;
     }
 
-    /**
-     * @return \Monarc\FrontOffice\Model\Entity\User
-     */
-    public function getUser()
+    public function getUser(): UserSuperClass
     {
         return $this->user;
     }
 
-    /**
-     * @param \Monarc\FrontOffice\Model\Entity\User $user
-     * @return UserAnr
-     */
-    public function setUser($user)
+    public function setUser(UserSuperClass $user): self
     {
         $this->user = $user;
+
         return $this;
     }
 
-    /**
-     * @return \Monarc\FrontOffice\Model\Entity\Anr
-     */
-    public function getAnr()
+    public function getAnr(): AnrSuperClass
     {
         return $this->anr;
     }
 
-    /**
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr
-     * @return UserAnr
-     */
-    public function setAnr($anr)
+    public function setAnr(AnrSuperClass $anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getRwd()
+    public function getRwd(): int
     {
         return $this->rwd;
     }
 
-    /**
-     * @param int $rwd
-     * @return UserAnr
-     */
-    public function setRwd($rwd)
+    public function setRwd(int $rwd): self
     {
         $this->rwd = $rwd;
+
         return $this;
     }
 

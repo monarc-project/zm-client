@@ -89,8 +89,7 @@ class User extends UserSuperClass
     {
         $this->userAnrs = new ArrayCollection();
         foreach ($userAnrs as $userAnr) {
-            $this->userAnrs->add($userAnr);
-            $userAnr->setUser($this);
+            $this->addUserAnr($userAnr);
         }
 
         return $this;
@@ -99,6 +98,7 @@ class User extends UserSuperClass
     public function addUserAnr(UserAnr $userAnr): self
     {
         $this->userAnrs->add($userAnr);
+        $userAnr->setUser($this);
 
         return $this;
     }
