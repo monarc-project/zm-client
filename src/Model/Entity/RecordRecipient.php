@@ -68,34 +68,6 @@ class RecordRecipient extends AbstractEntity
     protected $description;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
-
-    /**
      * @return int
      */
     public function getId()
@@ -105,11 +77,11 @@ class RecordRecipient extends AbstractEntity
 
     /**
      * @param int $id
-     * @return Record
      */
-    public function setId($id)
+    public function setId($id): self
     {
         $this->id = $id;
+
         return $this;
     }
 
@@ -122,12 +94,12 @@ class RecordRecipient extends AbstractEntity
     }
 
     /**
-    * @param int $anr
-    * @return Record
+    * @param Anr $anr
     */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 }

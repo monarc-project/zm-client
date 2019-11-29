@@ -10,6 +10,8 @@ namespace Monarc\FrontOffice\Model\Entity;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
+use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * Recommandation
@@ -20,9 +22,13 @@ use Monarc\Core\Model\Entity\AbstractEntity;
  *      @ORM\Index(name="recommandation_set_uuid", columns={"recommandation_set_uuid", "code", "anr_id"})
  * })
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Recommandation extends AbstractEntity
 {
+    use CreateEntityTrait;
+    use UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -129,34 +135,6 @@ class Recommandation extends AbstractEntity
      * @ORM\Column(name="token_import", type="string", length=255, nullable=true)
      */
     protected $tokenImport;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
 
     /**
      * @return int

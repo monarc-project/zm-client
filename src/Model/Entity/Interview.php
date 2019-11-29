@@ -9,15 +9,21 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
+use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * Interview
  *
  * @ORM\Table(name="interviews")
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Interview extends AbstractEntity
 {
+    use CreateEntityTrait;
+    use UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -57,34 +63,6 @@ class Interview extends AbstractEntity
      * @ORM\Column(name="content", type="string", length=255, nullable=true)
      */
     protected $content;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
 
     /**
      * @return int
@@ -173,78 +151,6 @@ class Interview extends AbstractEntity
     public function setContent($content)
     {
         $this->content = $content;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCreator()
-    {
-        return $this->creator;
-    }
-
-    /**
-     * @param string $creator
-     * @return Interview
-     */
-    public function setCreator($creator)
-    {
-        $this->creator = $creator;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getCreatedAt()
-    {
-        return $this->createdAt;
-    }
-
-    /**
-     * @param \DateTime $createdAt
-     * @return Interview
-     */
-    public function setCreatedAt($createdAt)
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdater()
-    {
-        return $this->updater;
-    }
-
-    /**
-     * @param string $updater
-     * @return Interview
-     */
-    public function setUpdater($updater)
-    {
-        $this->updater = $updater;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getUpdatedAt()
-    {
-        return $this->updatedAt;
-    }
-
-    /**
-     * @param \DateTime $updatedAt
-     * @return Interview
-     */
-    public function setUpdatedAt($updatedAt)
-    {
-        $this->updatedAt = $updatedAt;
         return $this;
     }
 

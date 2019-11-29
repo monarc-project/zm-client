@@ -95,41 +95,12 @@ class RecordPersonalData extends AbstractEntity
      // 0 for day(s), 1 for month(s) and 2 for year(s)
     protected $retentionPeriodMode = 0;
 
-
     /**
      * @var string
      *
      * @ORM\Column(name="retention_period_description", type="string", length=255, nullable=false)
      */
     protected $retentionPeriodDescription;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
 
     public function __construct($obj = null)
     {

@@ -52,35 +52,6 @@ class RecordDataCategory extends AbstractEntity
      */
     protected $label;
 
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
-
     /**
      * @return int
      */

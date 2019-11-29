@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
-use DateTime;
 use Doctrine\Common\Collections\Collection;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -131,34 +130,6 @@ class Record extends AbstractEntity
      * )
      */
     protected $processors;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
 
     public function __construct($obj = null)
     {
