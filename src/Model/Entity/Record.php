@@ -12,6 +12,8 @@ use Doctrine\Common\Collections\Collection;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
+use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * Record
@@ -20,9 +22,13 @@ use Doctrine\ORM\Mapping as ORM;
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  * })
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Record extends AbstractEntity
 {
+    use CreateEntityTrait;
+    use UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -380,77 +386,5 @@ class Record extends AbstractEntity
     public function addProcessor($processor)
     {
         $this->processors->add($processor);
-    }
-
-    /**
-     * @return string
-     */
-    public function getCreator()
-    {
-        return $this->creator;
-    }
-
-    /**
-     * @param string $creator
-     * @return Record
-     */
-    public function setCreator($creator)
-    {
-        $this->creator = $creator;
-        return $this;
-    }
-
-    /**
-     * @return DateTime
-     */
-    public function getCreatedAt()
-    {
-        return $this->createdAt;
-    }
-
-    /**
-     * @param DateTime $createdAt
-     * @return Record
-     */
-    public function setCreatedAt($createdAt)
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdater()
-    {
-        return $this->updater;
-    }
-
-    /**
-     * @param string $updater
-     * @return Record
-     */
-    public function setUpdater($updater)
-    {
-        $this->updater = $updater;
-        return $this;
-    }
-
-    /**
-     * @return DateTime
-     */
-    public function getUpdatedAt()
-    {
-        return $this->updatedAt;
-    }
-
-    /**
-     * @param DateTime $updatedAt
-     * @return Record
-     */
-    public function setUpdatedAt($updatedAt)
-    {
-        $this->updatedAt = $updatedAt;
-        return $this;
     }
 }
