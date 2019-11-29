@@ -303,9 +303,9 @@ class AnrService extends AbstractService
 
         // search for referentials to unlink from the anr
         foreach ($anr->getReferentials() as $referential) {
-            if (! in_array($referential->getuuid()->toString(), $uuid_array) ) {
+            if (! in_array($referential->getUuid()->toString(), $uuid_array) ) {
                 $this->get('referentialCliTable')->delete(['anr' => $anr->id,
-                                    'uuid' => $referential->getuuid()->toString()]);
+                                    'uuid' => $referential->getUuid()->toString()]);
             }
         }
 
@@ -353,22 +353,22 @@ class AnrService extends AbstractService
                     $data = [];
                     if ( count($this->get('measureMeasureCliTable')
                          ->getEntityByFields(['anr' => $anr->id,
-                         'father' => $measure->getuuid()->toString(),
-                         'child' => $measureLinked->getuuid()->toString()])) == 0 ) {
+                         'father' => $measure->getUuid()->toString(),
+                         'child' => $measureLinked->getUuid()->toString()])) == 0 ) {
 
-                        $data['father'] = $measure->getuuid()->toString();
-                        $data['child'] = $measureLinked->getuuid()->toString();
+                        $data['father'] = $measure->getUuid()->toString();
+                        $data['child'] = $measureLinked->getUuid()->toString();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                     }
                     if ( count($this->get('measureMeasureCliTable')
                          ->getEntityByFields(['anr' => $anr->id,
-                         'father' => $measureLinked->getuuid()->toString(),
-                         'child' => $measure->getuuid()->toString()])) == 0 ) {
+                         'father' => $measureLinked->getUuid()->toString(),
+                         'child' => $measure->getUuid()->toString()])) == 0 ) {
 
-                        $data['father'] = $measureLinked->getuuid()->toString();
-                        $data['child'] = $measure->getuuid()->toString();
+                        $data['father'] = $measureLinked->getUuid()->toString();
+                        $data['child'] = $measure->getUuid()->toString();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
@@ -742,7 +742,6 @@ class AnrService extends AbstractService
                 $newAmv->setMeasures(null);
                 foreach ($amv->getMeasures() as $measure) {
                     if (isset($measuresNewIds[$measure->getUuid()->toString()])) {
-                        //array_push($new_measures, $measuresNewIds[$measure->getuuid()->toString()]);
                         $this->get('measureCliTable')->getEntity(['anr'=> $newAnr->id, 'uuid'=>$measure->getUuid()->toString()])->addAmv($newAmv);
                     }
                 }
@@ -1335,9 +1334,9 @@ class AnrService extends AbstractService
             $this->getParentsCategoryIds($category->parent, $categoriesIds);
 
             return $categoriesIds;
-        } else {
-            return [];
         }
+
+        return [];
     }
 
     /**
@@ -1351,7 +1350,7 @@ class AnrService extends AbstractService
     {
         if ($value <= $anr->get('seuil1')) {
             return $classes[0];
-        } else if ($value <= $anr->get('seuil2')) {
+        } elseif ($value <= $anr->get('seuil2')) {
             return $classes[1];
         } else {
             return $classes[2];
@@ -1363,7 +1362,7 @@ class AnrService extends AbstractService
     {
         if ($value <= $anr->get('seuilRolf1')) {
             return $classes[0];
-        } else if ($value <= $anr->get('seuilRolf2')) {
+        } elseif ($value <= $anr->get('seuilRolf2')) {
             return $classes[1];
         } else {
             return $classes[2];
@@ -1379,7 +1378,7 @@ class AnrService extends AbstractService
         $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
         foreach ($snapshots as $s) {
             if (!empty($s)) {
-              $this->get('table')->delete($s->get('anr')->get('id'), false);
+                $this->get('table')->delete($s->get('anr')->get('id'), false);
             }
         }
 
