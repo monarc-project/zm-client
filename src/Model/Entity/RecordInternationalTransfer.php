@@ -9,6 +9,8 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
+use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordInternationalTransfer
@@ -17,9 +19,13 @@ use Doctrine\ORM\Mapping as ORM;
  *      @ORM\Index(name="record", columns={"record_id"}),
  * })
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class RecordInternationalTransfer extends AbstractEntity
 {
+    use CreateEntityTrait;
+    use UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -159,78 +165,6 @@ class RecordInternationalTransfer extends AbstractEntity
     public function setRecord($record)
     {
         $this->record = $record;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCreator()
-    {
-        return $this->creator;
-    }
-
-    /**
-     * @param string $creator
-     * @return RecordInternationalTransfer
-     */
-    public function setCreator($creator)
-    {
-        $this->creator = $creator;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getCreatedAt()
-    {
-        return $this->createdAt;
-    }
-
-    /**
-     * @param \DateTime $createdAt
-     * @return RecordInternationalTransfer
-     */
-    public function setCreatedAt($createdAt)
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdater()
-    {
-        return $this->updater;
-    }
-
-    /**
-     * @param string $updater
-     * @return RecordInternationalTransfer
-     */
-    public function setUpdater($updater)
-    {
-        $this->updater = $updater;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getUpdatedAt()
-    {
-        return $this->updatedAt;
-    }
-
-    /**
-     * @param \DateTime $updatedAt
-     * @return RecordInternationalTransfer
-     */
-    public function setUpdatedAt($updatedAt)
-    {
-        $this->updatedAt = $updatedAt;
         return $this;
     }
 }

@@ -9,6 +9,8 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
+use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordActor
@@ -17,9 +19,13 @@ use Doctrine\ORM\Mapping as ORM;
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  * })
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class RecordActor extends AbstractEntity
 {
+    use CreateEntityTrait;
+    use UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -129,78 +135,6 @@ class RecordActor extends AbstractEntity
     public function setContact($contact)
     {
         $this->contact = $contact;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCreator()
-    {
-        return $this->creator;
-    }
-
-    /**
-     * @param string $creator
-     * @return RecordActor
-     */
-    public function setCreator($creator)
-    {
-        $this->creator = $creator;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getCreatedAt()
-    {
-        return $this->createdAt;
-    }
-
-    /**
-     * @param \DateTime $createdAt
-     * @return RecordActor
-     */
-    public function setCreatedAt($createdAt)
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdater()
-    {
-        return $this->updater;
-    }
-
-    /**
-     * @param string $updater
-     * @return RecordActor
-     */
-    public function setUpdater($updater)
-    {
-        $this->updater = $updater;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getUpdatedAt()
-    {
-        return $this->updatedAt;
-    }
-
-    /**
-     * @param \DateTime $updatedAt
-     * @return RecordActor
-     */
-    public function setUpdatedAt($updatedAt)
-    {
-        $this->updatedAt = $updatedAt;
         return $this;
     }
 }
