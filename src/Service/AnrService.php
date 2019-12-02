@@ -399,7 +399,7 @@ class AnrService extends AbstractService
                                       'code' => $rolfRisk_common->code]);
                   if (count($risk_cli)) {
                     //$risk_cli = $risk_cli[0];
-                      $newMeasure->AddOpRisk($risk_cli[0]);
+                      $newMeasure->addOpRisk($risk_cli[0]);
                   }
                 }
                 array_push($measuresNewIds, $newMeasure);
@@ -784,7 +784,7 @@ class AnrService extends AbstractService
                 foreach ($rolfRisk->measures as $m) {
                   try{
                     $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
-                    $measure->AddOpRisk($newRolfRisk);
+                    $measure->addOpRisk($newRolfRisk);
                   } catch (Exception $e) { } //needed if the measures don't exist in the client ANR
                 }
                 $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
