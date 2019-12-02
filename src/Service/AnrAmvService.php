@@ -191,7 +191,9 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
      */
     public function create($data, $last = true)
     {
-        $amv = new Amv();
+        $class = $this->get('entity');
+        /** @var Amv $amv */
+        $amv = new $class();
         $amv->setLanguage($this->getLanguage());
         $amv->setDbAdapter($this->get('table')->getDb());
 
