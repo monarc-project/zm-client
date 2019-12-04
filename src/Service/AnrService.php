@@ -292,29 +292,37 @@ class AnrService extends AbstractService
      * @param array $data Data coming from the API
      * @return int
      */
-    public function updateReferentials($data) {
-      // This may take a lot of time on huge referentials, so ignore the time limit
-      ini_set('max_execution_time', 0);
+    public function updateReferentials($data)
+    {
+        // TODO: the goal is to remove such cases. Temporary unlimited.
+        // This may take a lot of time on huge referential.
+        ini_set('max_execution_time', 0);
 
         $anrTable = $this->get('anrCliTable');
         $anr = $anrTable->getEntity($data['id']);
-        $uuid_array = array_map(function($referential) { return $referential['uuid']; },
-                                    $data['referentials']);
+        $uuidArray = array_map(
+            function ($referential) {
+                return $referential['uuid'];
+            },
+            $data['referentials']
+        );
 
         // search for referentials to unlink from the anr
         foreach ($anr->getReferentials() as $referential) {
-            if (! in_array($referential->getUuid()->toString(), $uuid_array) ) {
-                $this->get('referentialCliTable')->delete(['anr' => $anr->id,
-                                    'uuid' => $referential->getUuid()->toString()]);
+            if (!in_array($referential->getUuid()->toString(), $uuidArray, true)) {
+                $this->get('referentialCliTable')->delete([
+                    'anr' => $anr->id,
+                    'uuid' => $referential->getUuid()->toString()
+                ]);
             }
         }
 
         // link new referentials to an ANR
-        foreach ($uuid_array as $uuid) {
+        foreach ($uuidArray as $uuid) {
             // check if referential already linked to the anr
             $referentials = $this->get('referentialCliTable')
-                                ->getEntityByFields(['anr' => $anr->id,
-                                                    'uuid' => $uuid]);
+                ->getEntityByFields(['anr' => $anr->id,
+                    'uuid' => $uuid]);
             if (! empty($referentials)) {
                 // if referential already linked to the anr, go to next iteration
                 continue;
@@ -345,36 +353,37 @@ class AnrService extends AbstractService
             $measuresNewIds = [];
             foreach ($measures as $measure) {
                 // duplicate and link the measures to the current referential
-                $newMeasure = new Measure($measure);
-                $newMeasure->setAnr($anr);
-                $newMeasure->setReferential($newReferential);
-                $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
+                $newMeasure = (new Measure($measure))
+                    ->setAnr($anr)
+                    ->setReferential($newReferential)
+                    ->setCategory($categoryNewIds[$measure->category->id]);
                 foreach ($newMeasure->getMeasuresLinked() as $measureLinked) {
                     $data = [];
-                    if ( count($this->get('measureMeasureCliTable')
-                         ->getEntityByFields(['anr' => $anr->id,
-                         'father' => $measure->getUuid()->toString(),
-                         'child' => $measureLinked->getUuid()->toString()])) == 0 ) {
-
-                        $data['father'] = $measure->getUuid()->toString();
+                    if (!count($this->get('measureMeasureCliTable')->getEntityByFields([
+                        'anr' => $anr->id,
+                        'father' => $measure->getUuid()->toString(),
+                        'child' => $measureLinked->getUuid()->toString()
+                    ]))) {
+                        $data['father'] = $newMeasure->getUuid()->toString();
                         $data['child'] = $measureLinked->getUuid()->toString();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                     }
-                    if ( count($this->get('measureMeasureCliTable')
-                         ->getEntityByFields(['anr' => $anr->id,
-                         'father' => $measureLinked->getUuid()->toString(),
-                         'child' => $measure->getUuid()->toString()])) == 0 ) {
 
+                    if (!count($this->get('measureMeasureCliTable')->getEntityByFields([
+                        'anr' => $anr->id,
+                        'father' => $measureLinked->getUuid()->toString(),
+                        'child' => $newMeasure->getUuid()->toString()
+                    ]))) {
                         $data['father'] = $measureLinked->getUuid()->toString();
-                        $data['child'] = $measure->getUuid()->toString();
+                        $data['child'] = $newMeasure->getUuid()->toString();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                     }
                 }
-                $newMeasure->setMeasuresLinked(null);
+                $newMeasure->setMeasuresLinked(new ArrayCollection());
                 $amvs = $newMeasure->getAmvs();
                 $rolfRisks = $newMeasure->getRolfRisks();
                 $newMeasure->amvs = new ArrayCollection;
@@ -392,17 +401,17 @@ class AnrService extends AbstractService
                     }
                 }
                 foreach ($rolfRisks as $rolfRisk_common) {
-                  // match the risks from common with risks from cli
-                  $risk_cli = $this->get('rolfRiskCliTable')
-                                      ->getEntityByFields(['anr' => $anr->id,
-                                      'label'.$this->getLanguage() => $rolfRisk_common->get('label'.$this->getLanguage()),
-                                      'code' => $rolfRisk_common->code]);
-                  if (count($risk_cli)) {
-                    //$risk_cli = $risk_cli[0];
-                      $newMeasure->addOpRisk($risk_cli[0]);
-                  }
+                    // match the risks from common with risks from cli
+                    $risk_cli = $this->get('rolfRiskCliTable')
+                        ->getEntityByFields(['anr' => $anr->id,
+                            'label'.$this->getLanguage() => $rolfRisk_common->get('label'.$this->getLanguage()),
+                            'code' => $rolfRisk_common->code]);
+                    if (count($risk_cli)) {
+                        //$risk_cli = $risk_cli[0];
+                        $newMeasure->addOpRisk($risk_cli[0]);
+                    }
                 }
-                array_push($measuresNewIds, $newMeasure);
+                $measuresNewIds[] = $newMeasure;
 
                 $newSoa = new Soa();
                 $newSoa->set('id', null);
@@ -434,7 +443,8 @@ class AnrService extends AbstractService
         $isSnapshot = false,
         $isSnapshotCloning = false
     ): Anr {
-        // This may take a lot of time on huge ANRs, so ignore the time limit
+        // TODO: the goal is to remove such cases. Temporary unlimited.
+        // This may take a lot of time on huge ANRs.
         ini_set('max_execution_time', 0);
 
         if (is_int($anr)) {
@@ -482,7 +492,6 @@ class AnrService extends AbstractService
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
             $newAnr->setReferentials(null);
-            $newAnr->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
             if (!empty($model) && is_object($model)) {
                 $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
                 $newAnr->set('cacheModelIsScalesUpdatable', $model->isScalesUpdatable);
@@ -509,7 +518,6 @@ class AnrService extends AbstractService
                 $userAnr->setUser($user);
                 $userAnr->setAnr($newAnr);
                 $userAnr->setRwd(1);
-                $userAnr->setCreator($user->getFirstname() . ' ' . $user->getLastname());
                 $this->get('userAnrCliTable')->save($userAnr, false);
             }
 
@@ -623,34 +631,31 @@ class AnrService extends AbstractService
                     }
                     $newReferential->setCategories($categoryNewIds);
 
-                    $new_measures = [];
                     foreach ($measures as $measure) {
                         // duplicate and link the measures to the current referential
-                        $newMeasure = new Measure($measure);
-                        $newMeasure->setAnr($newAnr);
-                        $newMeasure->amvs = new ArrayCollection;
-                        $newMeasure->rolfRisks = new ArrayCollection;
-                        $newMeasure->setReferential($newReferential);
-                        $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                        foreach ($newMeasure->getMeasuresLinked() as $measureLinked) {
-                            $data = [];
-                            $data['father'] = $measure->getUuid()->toString();
-                            $data['child'] = $measureLinked->getUuid()->toString();
-                            $newMeasureMeasure = new MeasureMeasure($data);
-                            $newMeasureMeasure->setAnr($newAnr);
+                        $newMeasure = (new Measure($measure))
+                            ->setAnr($newAnr)
+                            ->setAmvs(new ArrayCollection())
+                            ->setRolfRisks(new ArrayCollection())
+                            ->setMeasuresLinked(new ArrayCollection())
+                            ->setReferential($newReferential)
+                            ->setCategory($categoryNewIds[$measure->category->id]);
+                        foreach ($measure->getMeasuresLinked() as $measureLinked) {
+                            $newMeasureMeasure = (new MeasureMeasure([
+                                'father' => $measure->getUuid()->toString(),
+                                'child' => $measureLinked->getUuid()->toString(),
+                            ]))->setAnr($newAnr);
                             $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
-
                         }
-                        $newMeasure->setMeasuresLinked(null);
                         $measuresNewIds[$measure->getUuid()->toString()] = $newMeasure;
-                        array_push($new_measures, $newMeasure);
                     }
                     //$newReferential->setMeasures(null);
                     $this->get('referentialCliTable')->save($newReferential, false);
                     $this->get('referentialCliTable')->getDb()->flush();
                 }
             } else { // copy from an existing anr (or a snapshot)
-                $referentials = $this->get('referentialCliTable')->getEntityByFields(['anr' => $anr->id]);
+                $referentialTable = $this->get('referentialCliTable');
+                $referentials = $referentialTable->getEntityByFields(['anr' => $anr->id]);
                 foreach ($referentials as $referential) {
                     // duplicate referentials
                     $measures = $referential->getMeasures();
@@ -671,23 +676,23 @@ class AnrService extends AbstractService
                     }
                     $newReferential->setCategories($categoryNewIds);
 
-                    $new_measures = [];
+                    $newMeasures = [];
                     foreach ($measures as $measure) {
                         // duplicate and link the measures to the current referential
-                        $newMeasure = new Measure($measure);
-                        $newMeasure->setAnr($newAnr);
-                        $newMeasure->setReferential($newReferential);
-                        $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                        $newMeasure->setMeasuresLinked(null);
-                        $newMeasure->amvs = new ArrayCollection;
-                        $newMeasure->rolfRisks = new ArrayCollection;
+                        $newMeasure = (new Measure($measure))
+                            ->setAnr($newAnr)
+                            ->setReferential($newReferential)
+                            ->setCategory($categoryNewIds[$measure->category->id])
+                            ->setMeasuresLinked(new ArrayCollection())
+                            ->setAmvs(new ArrayCollection())
+                            ->setRolfRisks(new ArrayCollection());
                         $measuresNewIds[$measure->getUuid()->toString()] = $newMeasure;
-                        array_push($new_measures, $newMeasure);
+                        $newMeasures[] = $newMeasure;
                     }
-                    $newReferential->setMeasures($new_measures);
+                    $newReferential->setMeasures($newMeasures);
 
-                    $this->get('referentialCliTable')->save($newReferential, false);
-                    $this->get('referentialCliTable')->getDb()->flush();
+                    $referentialTable->save($newReferential, false);
+                    $referentialTable->getDb()->flush();
                 }
 
                 // duplicate measures-measures
@@ -742,7 +747,7 @@ class AnrService extends AbstractService
                 $newAmv->setMeasures(null);
                 foreach ($amv->getMeasures() as $measure) {
                     if (isset($measuresNewIds[$measure->getUuid()->toString()])) {
-                        $this->get('measureCliTable')->getEntity(['anr'=> $newAnr->id, 'uuid'=>$measure->getUuid()->toString()])->addAmv($newAmv);
+                        $measuresNewIds[$measure->getUuid()->toString()]->addAmv($newAmv);
                     }
                 }
                 $this->get('amvCliTable')->save($newAmv, false);
@@ -782,10 +787,10 @@ class AnrService extends AbstractService
                 //link the measures
 
                 foreach ($rolfRisk->measures as $m) {
-                  try{
-                    $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
-                    $measure->addOpRisk($newRolfRisk);
-                  } catch (Exception $e) { } //needed if the measures don't exist in the client ANR
+                    try{
+                        $measure = $this->get('measureCliTable')->getEntity(['anr'=>$newAnr->id,'uuid'=>$m->uuid]);
+                        $measure->addOpRisk($newRolfRisk);
+                    } catch (Exception $e) { } //needed if the measures don't exist in the client ANR
                 }
                 $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
@@ -1087,14 +1092,14 @@ class AnrService extends AbstractService
                 }
 
                 //duplicate record data categories
-                $recordDataCategories = $this->get('recordDataCategoryCliTable')->getEntityByFields(['anr' => $anr->id]);
+                $recordDataCategoryTable = $this->get('recordDataCategoryCliTable');
+                $recordDataCategories = $recordDataCategoryTable->getEntityByFields(['anr' => $anr->id]);
                 $dataCategoryNewIds = [];
                 foreach ($recordDataCategories as $dc) {
                     $newDataCategory = new RecordDataCategory($dc);
                     $newDataCategory->set('id', null);
                     $newDataCategory->setAnr($newAnr);
-                    $this->get('recordDataCategoryCliTable')->save($newDataCategory, false);
-                    $this->get('recordDataCategoryCliTable')->getDb()->flush();
+                    $recordDataCategoryTable->save($newDataCategory, true);
                     $dataCategoryNewIds[$dc->id] = $newDataCategory;
                 }
 
@@ -1223,20 +1228,20 @@ class AnrService extends AbstractService
                 $recommandationsNewIds = [];
                 $recommandationsSets = $this->get('recommandationSetCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($recommandationsSets as $recommandationSet) {
-                      $recommandations = $recommandationSet->getRecommandations();
-                      $recommandationSet->setRecommandations(null);
-                      $newRecommandationSet = new RecommandationSet($recommandationSet);
-                      $newRecommandationSet->setAnr($newAnr);
+                    $recommandations = $recommandationSet->getRecommandations();
+                    $recommandationSet->setRecommandations(null);
+                    $newRecommandationSet = new RecommandationSet($recommandationSet);
+                    $newRecommandationSet->setAnr($newAnr);
 
-                      foreach ($recommandations as $recommandation) {
-                          $newRecommandation = new Recommandation($recommandation);
-                          $newRecommandation->setAnr($newAnr);
-                          $newRecommandation->setRecommandationSet($newRecommandationSet);
-                          $this->get('recommandationCliTable')->save($newRecommandation,false);
-                          $recommandationsNewIds[$recommandation->uuid->toString()] = $newRecommandation;
-                      }
-                      $newRecommandationSet->setRecommandations($recommandationsNewIds);
-                      $this->get('recommandationSetCliTable')->save($newRecommandationSet, false);
+                    foreach ($recommandations as $recommandation) {
+                        $newRecommandation = new Recommandation($recommandation);
+                        $newRecommandation->setAnr($newAnr);
+                        $newRecommandation->setRecommandationSet($newRecommandationSet);
+                        $this->get('recommandationCliTable')->save($newRecommandation,false);
+                        $recommandationsNewIds[$recommandation->uuid->toString()] = $newRecommandation;
+                    }
+                    $newRecommandationSet->setRecommandations($recommandationsNewIds);
+                    $this->get('recommandationSetCliTable')->save($newRecommandationSet, false);
                 }
 
                 //duplicate recommandations historics

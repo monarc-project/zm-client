@@ -102,7 +102,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
             $data = array($data);
         }
 
-        $created_objects = array();
+        $created_objects = [];
         foreach ($data as $key => $new_data) {
             $new_data['anr'] = $anrId;
             if(isset($new_data['referential'])){
@@ -126,12 +126,12 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
             }
 
             $id = $this->getService()->create($new_data);
-            array_push($created_objects, $id);
+            $created_objects[] = $id;
         }
 
         return new JsonModel([
             'status' => 'ok',
-            'id' => count($created_objects)==1 ? $created_objects[0]: $created_objects,
+            'id' => count($created_objects) == 1 ? $created_objects[0]: $created_objects,
         ]);
     }
 

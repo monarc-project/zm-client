@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
+
 /**
  * This class is the service that handles assets in use within an ANR.
  * @package Monarc\FrontOffice\Service
@@ -448,7 +450,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                   $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
                                   $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
                                   $newMeasure->amvs =  new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
-                                  $newMeasure->setMeasuresLinked(null); //old analysis can't have measuresLinked
+                                  $newMeasure->setMeasuresLinked(new ArrayCollection()); //old analysis can't have measuresLinked
                                   $this->get('measureTable')->save($newMeasure,false);
                                   $newSoa = new \Monarc\FrontOffice\Model\Entity\Soa();
                                   $newSoa->setAnr($anr);

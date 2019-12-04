@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\MeasureMeasureSuperClass;
+use Ramsey\Uuid\Uuid;
 
 /**
  * MeasureMeasure
@@ -20,29 +21,32 @@ use Monarc\Core\Model\Entity\MeasureMeasureSuperClass;
  */
 class MeasureMeasure extends MeasureMeasureSuperClass
 {
-
-  /**
-   * @var \Monarc\FrontOffice\Model\Entity\Measure
-   * @ORM\Id
-   * @ORM\Column(name="father_id",type="uuid", nullable=true)
-   */
-  protected $father;
-
-  /**
-   * @var \Monarc\FrontOffice\Model\Entity\Measure
-   * @ORM\Id
-   * @ORM\Column(name="child_id",type="uuid", nullable=true)
-   */
-  protected $child;
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
+     *
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr",)
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $anr;
+
+    /**
+     * @var Uuid|string
+     *
+     * @ORM\Id
+     * @ORM\Column(name="father_id", type="uuid", nullable=true)
+     */
+    protected $father;
+
+    /**
+     * @var Uuid|string
+     *
+     * @ORM\Id
+     * @ORM\Column(name="child_id", type="uuid", nullable=true)
+     */
+    protected $child;
 
     /**
      * @return Anr
@@ -54,11 +58,11 @@ class MeasureMeasure extends MeasureMeasureSuperClass
 
     /**
      * @param Anr $anr
-     * @return MeasureMeasure
      */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 }

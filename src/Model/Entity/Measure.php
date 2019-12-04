@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\MeasureSuperClass;
 
@@ -32,6 +33,70 @@ class Measure extends MeasureSuperClass
      * })
      */
     protected $anr;
+
+    /**
+     * @var ArrayCollection|Amv[]
+     *
+     * @ORM\ManyToMany(targetEntity="Amv", inversedBy="measures", fetch="EAGER")
+     * @ORM\JoinTable(name="measures_amvs",
+     *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
+     * },
+     *  inverseJoinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")
+     * },
+     * )
+     */
+    protected $amvs;
+
+    /**
+     * @var ArrayCollection|RolfRisk[]
+     *
+     * @ORM\ManyToMany(targetEntity="RolfRisk", inversedBy="measures", cascade={"persist"})
+     * @ORM\JoinTable(name="measures_rolf_risks",
+     *  inverseJoinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
+     *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
+     * },
+     * )
+     */
+    protected $rolfRisks;
+
+    /**
+     * @var SoaCategory
+     *
+     * @ORM\ManyToOne(targetEntity="SoaCategory", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="soacategory_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $category;
+
+    /**
+     * @var Referential
+     *
+     * @ORM\ManyToOne(targetEntity="Referential", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
+     *    @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     * })
+     */
+    protected $referential;
+
+    /**
+     * @var ArrayCollection|Measure[]
+     *
+     * @ORM\ManyToMany(targetEntity="Measure", inversedBy="measures", cascade={"persist"})
+     * @ORM\JoinTable(name="measures_measures",
+     *   joinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uuid"),
+     *      @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
+     *   },
+     *   inverseJoinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
+     *   }
+     * )
+     */
+    protected $measuresLinked;
 
     /**
      * @return Anr

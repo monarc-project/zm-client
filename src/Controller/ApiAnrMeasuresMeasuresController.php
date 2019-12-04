@@ -6,11 +6,10 @@
  */
 
 namespace Monarc\FrontOffice\Controller;
+
 use Zend\View\Model\JsonModel;
 
 /**
- * Api ANR MeasuresMeasures Controller
- *
  * Class ApiAnrMeasuresMeasuresController
  * @package Monarc\FrontOffice\Controller
  */
@@ -28,6 +27,7 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
         if (empty($anrId)) {
             throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
         }
+
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
@@ -37,10 +37,10 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
         $filterAnd = ['anr' => $anrId];
 
         if ($fatherId) {
-          $filterAnd['father'] = $fatherId;
+            $filterAnd['father'] = $fatherId;
         }
         if ($childId) {
-          $filterAnd['child'] = $childId;
+            $filterAnd['child'] = $childId;
         }
 
         $service = $this->getService();
@@ -60,14 +60,16 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
 
     public function deleteList($data)
     {
-        if($data==null) //we delete one measuremeasure
-        {
-          $anrId = (int)$this->params()->fromRoute('anrid');
-          $fatherId = $this->params()->fromQuery('father');
-          $childId = $this->params()->fromQuery('child');
-          $this->getService()->delete(['anr'=>$anrId, 'father'=>$fatherId, 'child'=>$childId]);
-          return new JsonModel(['status' => 'ok']);
-        }else
-          return parent::deleteList($data);
+        if ($data === null) { //we delete one measuremeasure
+            $anrId = (int)$this->params()->fromRoute('anrid');
+            $fatherId = $this->params()->fromQuery('father');
+            $childId = $this->params()->fromQuery('child');
+
+            $this->getService()->delete(['anr' => $anrId, 'father' => $fatherId, 'child' => $childId]);
+
+            return new JsonModel(['status' => 'ok']);
+        }
+
+        return parent::deleteList($data);
     }
 }
