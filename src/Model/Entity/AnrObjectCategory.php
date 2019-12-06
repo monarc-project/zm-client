@@ -9,15 +9,21 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
+use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * Anr Object Category
  *
  * @ORM\Table(name="anrs_objects_categories")
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class AnrObjectCategory extends AbstractEntity
 {
+    use CreateEntityTrait;
+    use UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -48,40 +54,11 @@ class AnrObjectCategory extends AbstractEntity
     protected $category;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":0})
      */
     protected $position = 0;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
-
 
     /**
      * @return int
@@ -93,11 +70,11 @@ class AnrObjectCategory extends AbstractEntity
 
     /**
      * @param int $id
-     * @return Model
      */
-    public function setId($id)
+    public function setId($id): self
     {
         $this->id = $id;
+
         return $this;
     }
 
@@ -111,11 +88,11 @@ class AnrObjectCategory extends AbstractEntity
 
     /**
      * @param Anr $anr
-     * @return AnrObjectCategory
      */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
@@ -134,6 +111,7 @@ class AnrObjectCategory extends AbstractEntity
     public function setCategory($category)
     {
         $this->category = $category;
+
         return $this;
     }
 

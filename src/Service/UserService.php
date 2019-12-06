@@ -44,7 +44,6 @@ class UserService extends CoreUserService
     public function __construct(
         UserTable $userTable,
         array $config,
-        UserAnrService $userAnrService,
         AnrTable $anrTable,
         SnapshotTable $snapshotTable,
         ConnectedUserService $connectedUserService
@@ -91,15 +90,10 @@ class UserService extends CoreUserService
         return $users;
     }
 
-    /**
-     * Retrieves a complete user profile, including ANRs and permissions
-     * @param int $id User's ID
-     * @return array User information
-     */
-    public function getCompleteUser($id)
+    public function getCompleteUser(int $userId): array
     {
         /** @var User $user */
-        $user = $this->userTable->findById($id);
+        $user = $this->userTable->findById($userId);
 
         //retrieve anr that are not snapshots
         $snapshots = $this->snapshotTable->fetchAll();
@@ -202,6 +196,7 @@ class UserService extends CoreUserService
             $this->validatePassword($data);
         }
 
+        /** @var User $user */
         $user = $this->getUpdatedUser($userId, $data);
 
         $this->verifySystemUserUpdate($user, $data);
@@ -244,16 +239,9 @@ class UserService extends CoreUserService
         }
     }
 
-    /**
-     * Updates the access permissions to ANRs for the specified user ID
-     * @param int $id The user ID
-     * @param array $data An array of ANRs in the 'anrs' key that the user may access
-     */
-    public function updateUserAnr(User $user, $data)
+    public function updateUserAnr(User $user, array $data): void
     {
         if (isset($data['anrs'])) {
-
-            $userAnrs = [];
             foreach ($data['anrs'] as $anr) {
                 $connectedUserName = $this->connectedUserService->getConnectedUser()->getFirstname()
                     . ' ' . $this->connectedUserService->getConnectedUser()->getLastname();

@@ -7,9 +7,11 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AmvSuperClass;
-use Zend\Validator\Uuid;
+use Monarc\Core\Model\Entity\MeasureSuperClass;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Amv
@@ -26,16 +28,18 @@ class Amv extends AmvSuperClass
 {
 
     /**
-     * @var integer
+     * @var Uuid
      *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
      * @ORM\Id
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
      */
     protected $uuid;
+
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
+     *
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })
@@ -43,9 +47,9 @@ class Amv extends AmvSuperClass
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Asset
+     * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Asset", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -54,9 +58,9 @@ class Amv extends AmvSuperClass
     protected $asset;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Threat
+     * @var Threat
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Threat", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Threat", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -65,9 +69,9 @@ class Amv extends AmvSuperClass
     protected $threat;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Vulnerability
+     * @var Vulnerability
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Vulnerability", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -76,26 +80,18 @@ class Amv extends AmvSuperClass
     protected $vulnerability;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Measure", mappedBy="amvs", )
-     * @ORM\JoinTable(name="measures_amvs",
-     *  joinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")}
-     * )
+     * @var ArrayCollection|MeasureSuperClass[]
+     *
+     * @ORM\ManyToMany(targetEntity="Measure", mappedBy="amvs")
      */
     protected $measures;
-
-    protected $parameters = array(
-        'implicitPosition' => array(
-            'field' => 'asset',
-        ),
-    );
 
     public function getInputFilter($partial = false)
     {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
         }
+
         return $this->inputFilter;
     }
 }

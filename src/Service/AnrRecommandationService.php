@@ -92,6 +92,7 @@ class AnrRecommandationService extends AbstractService
         }
 
         $this->updateRecoPosition($id, $data);
+
         parent::patch($id, $data);
     }
 
@@ -115,6 +116,7 @@ class AnrRecommandationService extends AbstractService
         }
 
         $this->updateRecoPosition($id, $data);
+
         parent::update($id, $data);
     }
 

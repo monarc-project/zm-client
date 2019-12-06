@@ -9,6 +9,8 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
+use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * Delivery
@@ -17,9 +19,13 @@ use Monarc\Core\Model\Entity\AbstractEntity;
  *      @ORM\Index(name="anr", columns={"anr_id"})
  * })
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Delivery extends AbstractEntity
 {
+    use CreateEntityTrait;
+    use UpdateEntityTrait;
+
     /**
      * @var integer
      *
@@ -40,14 +46,14 @@ class Delivery extends AbstractEntity
     protected $anr;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="typedoc", type="smallint", options={"unsigned":true, "default":1})
      */
     protected $typedoc = 1;
 
     /**
-     * @var text
+     * @var string
      *
      * @ORM\Column(name="name", type="text", length=255, nullable=true)
      */
@@ -61,66 +67,38 @@ class Delivery extends AbstractEntity
     protected $version;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="status", type="smallint", options={"unsigned":true, "default":0})
      */
     protected $status = 0;
 
     /**
-     * @var text
+     * @var string
      *
      * @ORM\Column(name="classification", type="text", length=255, nullable=true)
      */
     protected $classification;
 
     /**
-     * @var text
+     * @var string
      *
      * @ORM\Column(name="resp_customer", type="text", length=255, nullable=true)
      */
     protected $respCustomer;
 
     /**
-     * @var text
+     * @var string
      *
      * @ORM\Column(name="resp_smile", type="text", length=255, nullable=true)
      */
     protected $respSmile;
     /**
-     * @var text
+     * @var string
      *
      * @ORM\Column(name="summary_eval_risk", type="text", length=255, nullable=true)
      */
     protected $summaryEvalRisk;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="creator", type="string", length=255, nullable=true)
-     */
-    protected $creator;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    protected $createdAt;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="updater", type="string", length=255, nullable=true)
-     */
-    protected $updater;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
-     */
-    protected $updatedAt;
 
     /**
      * @return Anr

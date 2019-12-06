@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
 
 /**
  * AnrMeasureMeasureService Service
@@ -23,46 +25,50 @@ class AnrMeasureMeasureService extends AbstractService
     protected $userAnrTable;
     protected $measureEntity;
     protected $measureTable;
-    protected $dependencies = ['category' ,'anr'];
-    protected $forbiddenFields = [];
+    protected $dependencies = ['category', 'anr'];
+    protected $forbiddenFields;
 
-    public function create($data, $last=true)
+    public function create($data, $last = true)
     {
-        $id = null;
-        if ($data['father'] == $data['child']) {
-            throw new \Monarc\Core\Exception\Exception("You cannot add yourself as a component", 412);
+        if ($data['father'] === $data['child']) {
+            throw new Exception('You cannot add a component to itself', 412);
         }
-        $measureTable = $this->get('measureTable');
+
         $anrTable = $this->get('anrTable');
         $measureMeasureTable = $this->get('table');
-        $measuresMeasures = $measureMeasureTable->getEntityByFields(['anr' => $data['anr'],'child' => $data['child']['uuid'] , 'father' => $data['father']['uuid']]);
+        $measuresMeasures = $measureMeasureTable->getEntityByFields([
+            'anr' => $data['anr'],
+            'child' => $data['child']['uuid'],
+            'father' => $data['father']['uuid']
+        ]);
 
-        if (count($measuresMeasures)) { // the linkk already exist
-            throw new \Monarc\Core\Exception\Exception('This component already exist for this object', 412);
-        }else {
-            $anr = $anrTable->getEntity($data['anr']);
-            $class = $this->get('entity');
-            $entity = new $class();
-            $entity->setLanguage($this->getLanguage());
-            $entity->setDbAdapter($this->get('table')->getDb());
-            $entity->setAnr($anr);
-            $entity->setFather($data['father']['uuid']);
-            $entity->setChild($data['child']['uuid']);
-            $measureMeasureTable->save($entity, false);
-            $entity2 = clone $entity; //make the save in the other way
-            $entity2->setFather($data['child']['uuid']);
-            $entity2->setChild($data['father']['uuid']);
-            $measureMeasureTable->save($entity2);
+        if (!empty($measuresMeasures)) { // the linkk already exist
+            throw new Exception('This component already exist for this object', 412);
         }
-        return $id;
+
+        $anr = $anrTable->getEntity($data['anr']);
+
+        /** @var MeasureMeasure $measureMeasure */
+        $measureMeasure = $this->get('entity');
+        $measureMeasure->setAnr($anr);
+        $measureMeasure->setFather($data['father']['uuid']);
+        $measureMeasure->setChild($data['child']['uuid']);
+        $measureMeasureTable->save($measureMeasure, false);
+        $measureMeasureReversed = clone $measureMeasure;
+        $measureMeasureReversed->setFather($data['child']['uuid']);
+        $measureMeasureReversed->setChild($data['father']['uuid']);
+        $measureMeasureTable->save($measureMeasureReversed);
+
+        return null;
     }
 
     public function delete($id)
     {
-      $measureTable = $this->get('measureTable');
-      $father = $measureTable->getEntity(['uuid'=>$id['father'],'anr'=>$id['anr']]);
-      $child = $measureTable->getEntity(['uuid'=>$id['child'],'anr'=>$id['anr']]);
-      $father->deleteLinkedMeasure($child);
-      $measureTable->save($father);
+        $measureTable = $this->get('measureTable');
+        $father = $measureTable->getEntity(['uuid' => $id['father'], 'anr' => $id['anr']]);
+        $child = $measureTable->getEntity(['uuid' => $id['child'], 'anr' => $id['anr']]);
+        $father->deleteLinkedMeasure($child);
+
+        $measureTable->save($father);
     }
 }

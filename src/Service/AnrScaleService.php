@@ -40,9 +40,9 @@ class AnrScaleService extends \Monarc\Core\Service\ScaleService
         $anrId = isset($data['anr']) ? $data['anr'] : null;
         if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             return parent::create($data,$last);
-        } else {
-            throw new \Monarc\Core\Exception\Exception('Scale is not editable', 412);
         }
+
+        throw new \Monarc\Core\Exception\Exception('Scale is not editable', 412);
     }
 
     /**
@@ -53,9 +53,9 @@ class AnrScaleService extends \Monarc\Core\Service\ScaleService
         $anrId = isset($data['anr']) ? $data['anr'] : null;
         if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             return parent::patch($id, $data);
-        } else {
-            throw new \Monarc\Core\Exception\Exception('Scale is not editable', 412);
         }
+
+        throw new \Monarc\Core\Exception\Exception('Scale is not editable', 412);
     }
 
     /**
@@ -66,8 +66,8 @@ class AnrScaleService extends \Monarc\Core\Service\ScaleService
         $anrId = isset($data['anr']) ? $data['anr'] : null;
         if ($this->get('AnrCheckStartedService')->canChange($anrId)) {
             return \Monarc\Core\Service\AbstractService::patch($id, $data);
-        } else {
-            throw new \Monarc\Core\Exception\Exception('Scale is not editable', 412);
         }
+
+        throw new \Monarc\Core\Exception\Exception('Scale is not editable', 412);
     }
 }

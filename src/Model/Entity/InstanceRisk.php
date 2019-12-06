@@ -25,17 +25,6 @@ use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
  */
 class InstanceRisk extends InstanceRiskSuperClass
 {
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
     /**
      * @var \Monarc\FrontOffice\Model\Entity\Amv
      *
