@@ -23,19 +23,9 @@ use Monarc\Core\Model\Entity\ObjectObjectSuperClass;
 class ObjectObject extends ObjectObjectSuperClass
 {
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\MonarcObject
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\MonarcObject", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="father_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -44,9 +34,9 @@ class ObjectObject extends ObjectObjectSuperClass
     protected $father;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\MonarcObject
+     * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\MonarcObject", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="child_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
