@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 
@@ -23,7 +24,6 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
  */
 class MonarcObject extends ObjectSuperClass
 {
-
     /**
     * @var integer
     *
@@ -33,9 +33,10 @@ class MonarcObject extends ObjectSuperClass
     protected $uuid;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
+     *
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", )
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -43,43 +44,27 @@ class MonarcObject extends ObjectSuperClass
     protected $anr;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", inversedBy="objects", cascade={"persist"})
+     * @var ArrayCollection|Anr[]
+     *
+     * @ORM\ManyToMany(targetEntity="Anr", inversedBy="objects", cascade={"persist"})
      * @ORM\JoinTable(name="anrs_objects",
-     *  joinColumns={@ORM\JoinColumn(name="object_id", referencedColumnName="uuid"),@ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")},
+     *  joinColumns={
+     *     @ORM\JoinColumn(name="object_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")
+     *  },
      *  inverseJoinColumns={@ORM\JoinColumn(name="anr_id", referencedColumnName="id")}
      * )
      */
     protected $anrs;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\ObjectCategory
+     * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\ObjectCategory", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="object_category_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $category;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Asset
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
-     *    @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $asset;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\RolfTag
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RolfTag", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="rolf_tag_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $rolfTag;
 }
