@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -27,25 +28,24 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-        $status = $this->params()->fromQuery('status');
+        $status = $this->params()->fromQuery('status', 1);
         $referential = $this->params()->fromQuery('referential');
 
-        $filterAnd = [];
-        if (is_null($status)) {
-            $status = 1;
-        }
-        $filterAnd = ($status == "all") ? null : ['status' => (int) $status] ;
         $filterAnd = ['anr' => $anrId];
+        if ($status === 'all') {
+            $filterAnd['status'] = (int)$status;
+        }
+
         if ($referential) {
-          $filterAnd['r.anr']=$anrId;
-          $filterAnd['r.uuid']= $referential;
-         }
+            $filterAnd['r.anr'] = $anrId;
+            $filterAnd['r.uuid'] = $referential;
+        }
 
         $service = $this->getService();
 
@@ -61,5 +61,4 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
             $this->name => $entities
         ));
     }
-
 }
