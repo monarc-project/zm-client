@@ -24,7 +24,6 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
  */
 class MonarcObject extends ObjectSuperClass
 {
-
     /**
     * @var integer
     *
@@ -34,7 +33,18 @@ class MonarcObject extends ObjectSuperClass
     protected $uuid;
 
     /**
-     * @var ArrayCollection
+     * @var Anr
+     *
+     * @ORM\Id
+     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $anr;
+
+    /**
+     * @var ArrayCollection|Anr[]
      *
      * @ORM\ManyToMany(targetEntity="Anr", inversedBy="objects", cascade={"persist"})
      * @ORM\JoinTable(name="anrs_objects",
