@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 
 /**
@@ -21,5 +22,16 @@ class RecommandationTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Recommandation::class, $connectedUserService);
+    }
+
+    public function getMaxPositionByAnr(Anr $anr): int
+    {
+        return (int)$this->getRepository()
+            ->createQueryBuilder('r')
+            ->select('MAX(r.position)')
+            ->where('r.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

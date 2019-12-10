@@ -7,9 +7,14 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use DateTime;
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Entity\Recommandation;
+use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
-use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
+use Throwable;
 
 /**
  * This class is the service that handles recommendations within an ANR.
@@ -41,8 +46,11 @@ class AnrRecommandationService extends AbstractService
 
         foreach ($recos as $key => $reco) {
             $recos[$key]['timerColor'] = $this->getDueDateColor($reco['duedate']);
-            $recos[$key]['counterTreated'] = ($reco['counterTreated'] == 0) ? 'COMING' : '_SMILE_IN_PROGRESS (<span>' . $reco['counterTreated'] . '</span>)';
+            $recos[$key]['counterTreated'] = $reco['counterTreated'] === 0
+                ? 'COMING'
+                : '_SMILE_IN_PROGRESS (<span>' . $reco['counterTreated'] . '</span>)';
         }
+
         return $recos;
     }
 
@@ -51,25 +59,29 @@ class AnrRecommandationService extends AbstractService
      */
     public function create($data, $last = true)
     {
+        /** @var RecommandationTable $recommendationTable */
+        $recommendationTable = $this->get('table');
+
         $class = $this->get('entity');
+        /** @var Recommandation $entity */
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
-        $entity->setDbAdapter($this->get('table')->getDb());
-        $entity->anr = $data['anr'];
+        $entity->setDbAdapter($recommendationTable->getDb());
 
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($entity, $dependencies);
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anr = $anrTable->findById($data['anr']);
 
-        $data['position'] = null;
+        $entity->setAnr($data['anr']);
+
+        $data['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
+
         $entity->exchangeArray($data);
 
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
+        $dependencies = property_exists($this, 'dependencies') ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
-        /** @var RecommandationTable $table */
-        $table = $this->get('table');
-
-        return $table->save($entity, $last);
+        return $recommendationTable->save($entity, $last);
     }
 
     /**
@@ -77,23 +89,7 @@ class AnrRecommandationService extends AbstractService
      */
     public function patch($id, $data)
     {
-        if (!empty($data['duedate'])) {
-            try {
-                $data['duedate'] = new \DateTime($data['duedate']);
-            } catch (Exception $e) {
-                throw new \Monarc\Core\Exception\Exception('Invalid date format', 412);
-            }
-        }elseif(isset($data['duedate'])){
-            $data['duedate'] = null;
-        }
-
-        if(empty($data['recommandationSet'])){
-            $data['recommandationSet'] = $this->get('table')->getEntity($id)->get('recommandationSet');
-        }
-
-        $this->updateRecoPosition($id, $data);
-
-        parent::patch($id, $data);
+        parent::patch($id, $this->prepareUpdateData($id, $data));
     }
 
     /**
@@ -101,23 +97,7 @@ class AnrRecommandationService extends AbstractService
      */
     public function update($id, $data)
     {
-        if (!empty($data['duedate'])) {
-            try {
-                $data['duedate'] = new \DateTime($data['duedate']);
-            } catch (Exception $e) {
-                throw new \Monarc\Core\Exception\Exception('Invalid date format', 412);
-            }
-        }elseif(isset($data['duedate'])){
-            $data['duedate'] = null;
-        }
-
-        if(empty($data['recommandationSet'])){
-            $data['recommandationSet'] = $this->get('table')->getEntity($id)->get('recommandationSet');
-        }
-
-        $this->updateRecoPosition($id, $data);
-
-        parent::update($id, $data);
+        parent::update($id, $this->prepareUpdateData($id, $data));
     }
 
     /**
@@ -125,75 +105,84 @@ class AnrRecommandationService extends AbstractService
      * @param int $id The recommendation composite ID [anr, uuid]
      * @param array $data The positionning data (implicitPosition field, and previous)
      */
-    public function updateRecoPosition($id, &$data){
-        if(!empty($data['implicitPosition'])){
+    private function updatePosition($id, $data): array
+    {
+        if (!empty($data['implicitPosition'])) {
             $entity = $this->get('table')->getEntity($id);
-            if($entity->get('position') > 0){
+            if ($entity->get('position') > 0) {
                 switch ($data['implicitPosition']) {
-                    case \Monarc\Core\Model\Entity\AbstractEntity::IMP_POS_START:
+                    case AbstractEntity::IMP_POS_START:
                         $data['position'] = 1;
                         $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
                             ->select()
-                            ->where('bro.anr = :anrid')
-                            ->setParameter(':anrid', $entity->get('anr')->get('id'))
-                            ->andWhere('bro.uuid != :uuid')
-                            ->setParameter(':uuid', $entity->get('uuid'))
+                            ->where('bro.anr = :anr')
+                            ->setParameter(':anr', $entity->get('anr'))
+                            ->andWhere('bro.uuid <> :uuid')
+                            ->setParameter(':uuid', (string)$entity->get('uuid'))
                             ->andWhere('bro.position <= :pos')
                             ->setParameter(':pos', $entity->get('position'))
                             ->andWhere('bro.position IS NOT NULL')
                             ->getQuery()
                             ->getResult();
-                        foreach($bros as $b){
-                            $b->set('position',$b->get('position')+1);
-                            $this->get('table')->save($b,false);
+                        foreach ($bros as $b) {
+                            $b->set('position', $b->get('position') + 1);
+                            $this->get('table')->save($b, false);
                         }
                         break;
-                    case \Monarc\Core\Model\Entity\AbstractEntity::IMP_POS_END:
+                    case AbstractEntity::IMP_POS_END:
                         $pos = $this->get('table')->getRepository()->createQueryBuilder('bro')
                             ->select('MAX(bro.position)')
-                            ->where('bro.anr = :anrid')
-                            ->setParameter(':anrid', $entity->get('anr')->get('id'))
+                            ->where('bro.anr = :anr')
+                            ->setParameter(':anr', $entity->get('anr'))
                             ->andWhere('bro.position IS NOT NULL')
                             ->getQuery()->getSingleScalarResult();
                         $data['position'] = $pos;
                         $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
                             ->select()
-                            ->where('bro.anr = :anrid')
-                            ->setParameter(':anrid', $entity->get('anr')->get('id'))
-                            ->andWhere('bro.uuid != :uuid')
-                            ->setParameter(':uuid', $entity->get('uuid'))
+                            ->where('bro.anr = :anr')
+                            ->setParameter(':anr', $entity->get('anr'))
+                            ->andWhere('bro.uuid <> :uuid')
+                            ->setParameter(':uuid', (string)$entity->get('uuid'))
                             ->andWhere('bro.position >= :pos')
                             ->setParameter(':pos', $entity->get('position'))
                             ->andWhere('bro.position IS NOT NULL')
                             ->getQuery()
                             ->getResult();
-                        foreach($bros as $b){
-                            $b->set('position',$b->get('position')-1);
-                            $this->get('table')->save($b,false);
+                        foreach ($bros as $b) {
+                            $b->set('position', $b->get('position') - 1);
+                            $this->get('table')->save($b, false);
                         }
                         break;
-                    case \Monarc\Core\Model\Entity\AbstractEntity::IMP_POS_AFTER:
-                        if(!empty($data['previous'])){
-                            $prev = $this->get('table')->getEntity(['anr' => $entity->get('anr')->get('id'), 'uuid'=> $data['previous']]);
-                            if($prev && $prev->get('position') > 0 && $prev->get('anr')->get('id') == $entity->get('anr')->get('id')){
-                                $data['position'] = $prev->get('position')+($entity->get('position') > $prev->get('position')?1:0);
+                    case AbstractEntity::IMP_POS_AFTER:
+                        if (!empty($data['previous'])) {
+                            $prev = $this->get('table')->getEntity([
+                                'anr' => $entity->get('anr')->getId(),
+                                'uuid' => $data['previous']
+                            ]);
+                            if ($prev && $prev->get('position') > 0
+                                && $prev->get('anr')->getId() === $entity->get('anr')->getId()
+                            ) {
+                                $data['position'] = $prev->get('position')
+                                    + ($entity->get('position') > $prev->get('position') ? 1 : 0);
                                 $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
                                     ->select()
-                                    ->where('bro.anr = :anrid')
-                                    ->setParameter(':anrid', $entity->get('anr')->get('id'))
-                                    ->andWhere('bro.uuid != :uuid')
-                                    ->setParameter(':uuid', $entity->get('uuid'))
-                                    ->andWhere('bro.position '.($entity->get('position')>$data['position']?'>':'<').'= :pos1')
+                                    ->where('bro.anr = :anr')
+                                    ->setParameter(':anr', $entity->get('anr'))
+                                    ->andWhere('bro.uuid <> :uuid')
+                                    ->setParameter(':uuid', (string)$entity->get('uuid'))
+                                    ->andWhere('bro.position '
+                                        . ($entity->get('position') > $data['position'] ? '>' : '<') . '= :pos1')
                                     ->setParameter(':pos1', $data['position'])
-                                    ->andWhere('bro.position '.($entity->get('position')>$data['position']?'<':'>').' :pos2')
+                                    ->andWhere('bro.position '
+                                        . ($entity->get('position') > $data['position'] ? '<' : '>') . ' :pos2')
                                     ->setParameter(':pos2', $entity->get('position'))
                                     ->andWhere('bro.position IS NOT NULL')
                                     ->getQuery()
                                     ->getResult();
                                 $val = $entity->get('position') > $data['position'] ? 1 : -1;
-                                foreach($bros as $b){
-                                    $b->set('position',$b->get('position')+$val);
-                                    $this->get('table')->save($b,false);
+                                foreach ($bros as $b) {
+                                    $b->set('position', $b->get('position') + $val);
+                                    $this->get('table')->save($b, false);
                                 }
                             }
                         }
@@ -203,8 +192,9 @@ class AnrRecommandationService extends AbstractService
                 }
             }
         }
-        unset($data['implicitPosition']);
-        unset($data['previous']);
+        unset($data['implicitPosition'], $data['previous']);
+
+        return $data;
     }
 
 
@@ -221,7 +211,7 @@ class AnrRecommandationService extends AbstractService
             return 'no-date';
         } else {
             $now = time();
-            if ($dueDate instanceof \DateTime) {
+            if ($dueDate instanceof DateTime) {
                 $dueDate = $dueDate->getTimestamp();
             } else {
                 $dueDate = strtotime($dueDate);
@@ -239,5 +229,26 @@ class AnrRecommandationService extends AbstractService
                 }
             }
         }
+    }
+
+    private function prepareUpdateData($id, $data): array
+    {
+        if (!isset($data['duedate'])) {
+            $data['duedate'] = null;
+        }
+
+        if ($data['duedate'] !== null) {
+            try {
+                $data['duedate'] = new DateTime($data['duedate']);
+            } catch (Throwable $e) {
+                throw new Exception('Invalid date format', 412);
+            }
+        }
+
+        if (empty($data['recommandationSet'])) {
+            $data['recommandationSet'] = $this->get('table')->getEntity($id)->get('recommandationSet');
+        }
+
+        return $this->updatePosition($id, $data);
     }
 }
