@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrRecommandationService;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -29,21 +31,17 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
         $limit = $this->params()->fromQuery('limit');
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-        $status = $this->params()->fromQuery('status');
+        $status = $this->params()->fromQuery('status', 1);
         $recommandationSet = $this->params()->fromQuery('recommandationSet');
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];
 
-        if (is_null($status)) {
-            $status = 1;
-        }
-
-        if (!is_null($status) && $status != 'all') {
+        if ($status !== 'all') {
             $filterAnd['status'] = $status;
         }
 
@@ -74,10 +72,12 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
         $newId = ['anr' => $anrId, 'uuid' => $id];
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
-        if (!isset($data['anr'])) $data['anr'] = $anrId;
+        if (!isset($data['anr'])) {
+            $data['anr'] = $anrId;
+        }
 
         $this->getService()->update($newId, $data);
 
@@ -90,10 +90,12 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
         $newId = ['anr' => $anrId, 'uuid' => $id];
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
-        if (!isset($data['anr'])) $data['anr'] = $anrId;
+        if (!isset($data['anr'])) {
+            $data['anr'] = $anrId;
+        }
 
         $this->getService()->patch($newId, $data);
 
@@ -106,28 +108,27 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
     public function create($data)
     {
         if (isset($data['mass'])) {
-            unset($data['mass']);
-            unset($data['anr']);
-            $obj = array();
+            unset($data['mass'], $data['anr']);
+            $obj = [];
             foreach ($data as $value) {
                 if (empty($value['anr'])) {
-                    throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+                    throw new Exception('Anr id missing', 412);
                 }
-                array_push($obj, $this->getService()->create($value));
+                $obj[] = $this->getService()->create($value);
             }
-            return new JsonModel([
-                'status' => 'ok',
-                'id' => $obj
-            ]);
-        } else {
-            if (empty($data['anr'])) {
-                throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-            }
-            $obj = $this->getService()->create($data);
             return new JsonModel([
                 'status' => 'ok',
                 'id' => $obj
             ]);
         }
+
+        if (empty($data['anr'])) {
+            throw new Exception('Anr id missing', 412);
+        }
+        $obj = $this->getService()->create($data);
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $obj
+        ]);
     }
 }
