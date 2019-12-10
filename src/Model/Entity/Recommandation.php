@@ -85,7 +85,7 @@ class Recommandation extends AbstractEntity
      *
      * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":1}, nullable=true)
      */
-    protected $position = null;
+    protected $position = 1;
 
     /**
      * @var string

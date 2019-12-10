@@ -95,32 +95,6 @@ class UserService extends CoreUserService
         /** @var User $user */
         $user = $this->userTable->findById($userId);
 
-        //retrieve anr that are not snapshots
-        $snapshots = $this->snapshotTable->fetchAll();
-        $anrsSnapshots = [];
-        foreach ($snapshots as $snapshot) {
-            $anrsSnapshots[$snapshot['anr']->id] = $snapshot['anr']->id;
-        }
-
-        $anrs = $this->anrTable->getEntityByFields(['id' => ['op' => 'NOT IN', 'value' => $anrsSnapshots]]);
-        $anrsData = [];
-        foreach ($anrs as $a) {
-            $anrsData[$a->get('id')] = [
-                'id' => $a->get('id'),
-                'label1' => $a->get('label1'),
-                'label2' => $a->get('label2'),
-                'label3' => $a->get('label3'),
-                'label4' => $a->get('label4'),
-                'rwd' => -1,
-            ];
-        }
-
-        foreach ($user->getUserAnrs() as $userAnr) {
-            if (isset($anrsData[$userAnr->get('anr')->get('id')])) {
-                $anrsData[$userAnr->get('anr')->get('id')]['rwd'] = $userAnr->get('rwd');
-            }
-        }
-
         // TODO: replace with normalization layer.
         return [
             'id' => $user->getId(),
@@ -130,7 +104,7 @@ class UserService extends CoreUserService
             'email' => $user->getEmail(),
             'language' => $user->getLanguage(),
             'role' => $user->getRoles(),
-            'anrs' => array_values($anrsData),
+            'anrs' => $this->anrTable->fetchAnrsExcludeSnapshotsWithUserRights($userId),
         ];
     }
 
@@ -242,6 +216,7 @@ class UserService extends CoreUserService
     public function updateUserAnr(User $user, array $data): void
     {
         if (isset($data['anrs'])) {
+            $userAnrs = [];
             foreach ($data['anrs'] as $anr) {
                 $connectedUserName = $this->connectedUserService->getConnectedUser()->getFirstname()
                     . ' ' . $this->connectedUserService->getConnectedUser()->getLastname();
@@ -252,15 +227,15 @@ class UserService extends CoreUserService
                         ->setUpdater($connectedUserName);
                 } else {
                     $anrEntity = $this->anrTable->findById($anr['id']);
-
-                    $user->addUserAnr(
-                        (new UserAnr())
-                            ->setAnr($anrEntity)
-                            ->setRwd($anr['rwd'])
-                            ->setCreator($connectedUserName)
-                    );
+                    $userAnr = (new UserAnr())
+                        ->setAnr($anrEntity)
+                        ->setRwd($anr['rwd'])
+                        ->setCreator($connectedUserName);
                 }
+                $userAnrs[] = $userAnr;
             }
+
+            $user->setUserAnrs($userAnrs);
 
             $this->userTable->saveEntity($user);
         }
