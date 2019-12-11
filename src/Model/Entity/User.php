@@ -103,6 +103,15 @@ class User extends UserSuperClass
         return $this;
     }
 
+    public function removeUserAnr(UserAnr $userAnr): self
+    {
+        if ($this->userAnrs->contains($userAnr)) {
+            $this->userAnrs->removeElement($userAnr);
+        }
+
+        return $this;
+    }
+
     protected function createRole(string $role): UserRoleSuperClass
     {
         return new UserRole($this, $role);
