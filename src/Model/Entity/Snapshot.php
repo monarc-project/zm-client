@@ -53,7 +53,7 @@ class Snapshot extends AbstractEntity
     protected $anrReference;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="comment", type="text", length=255, nullable=true)
      */
@@ -108,7 +108,7 @@ class Snapshot extends AbstractEntity
         return $this->comment;
     }
 
-    public function setComment(string $comment): self
+    public function setComment(?string $comment): self
     {
         $this->comment = $comment;
 
