@@ -7,8 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Table\AnrObjectCategoryTable as CoreAnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 
@@ -16,10 +16,15 @@ use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
  * Class AnrObjectCategoryTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class AnrObjectCategoryTable extends AbstractEntityTable
+class AnrObjectCategoryTable extends CoreAnrObjectCategoryTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, AnrObjectCategory::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return AnrObjectCategory::class;
     }
 }
