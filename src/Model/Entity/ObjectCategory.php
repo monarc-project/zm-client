@@ -13,43 +13,9 @@ use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 /**
  * Object Category
  *
- * @ORM\Table(name="objects_categories", indexes={
- *      @ORM\Index(name="root_id", columns={"root_id"}),
- *      @ORM\Index(name="parent_id", columns={"parent_id"}),
- *      @ORM\Index(name="position", columns={"position"}),
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- * })
+ * @ORM\Table(name="objects_categories")
  * @ORM\Entity
  */
 class ObjectCategory extends ObjectCategorySuperClass
 {
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\ObjectCategory
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\ObjectCategory", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="root_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $root;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\ObjectCategory
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\ObjectCategory", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="parent_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $parent;
 }
