@@ -138,8 +138,9 @@ class AddObjectsUuid extends AbstractMigration
         $this->execute('UPDATE anrs_objects A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
         $this->execute('UPDATE anrs_objects A SET A.anr_id2 = A.anr_id');
         $table->removeColumn('object_id')
-            ->renameColumn('object_uuid','object_id')
-            ->update();
+              ->update();
+        $table->renameColumn('object_uuid','object_id')
+              ->update();
 
         $table = $this->table('instances'); //set the stufff for instances
         $table->dropForeignKey('object_id')
@@ -147,8 +148,9 @@ class AddObjectsUuid extends AbstractMigration
             ->update();
         $this->execute('UPDATE instances A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
         $table->removeColumn('object_id')
-            ->renameColumn('object_uuid','object_id')
-            ->update();
+              ->update();
+        $table->renameColumn('object_uuid','object_id')
+              ->update();
 
         $table = $this->table('instances_risks_op'); //set the stufff for instances_risks_op
         $table->dropForeignKey('object_id')
@@ -156,26 +158,29 @@ class AddObjectsUuid extends AbstractMigration
             ->update();
         $this->execute('UPDATE instances_risks_op A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
         $table->removeColumn('object_id')
-            ->renameColumn('object_uuid','object_id')
-            ->update();
+              ->update();
+        $table->renameColumn('object_uuid','object_id')
+              ->update();
 
         $table = $this->table('instances_consequences'); //set the stufff for instances_risks_op
         $table->dropForeignKey('object_id')
-        ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
-        ->update();
+              ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
+              ->update();
         $this->execute('UPDATE instances_consequences A,objects B SET A.object_uuid = B.uuid where B.id=A.object_id');
         $table->removeColumn('object_id')
-            ->renameColumn('object_uuid','object_id')
-            ->update();
+              ->update();
+        $table->renameColumn('object_uuid','object_id')
+              ->update();
 
         $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
         $table->dropForeignKey('object_global_id')
-            ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
-            ->update();
+              ->addColumn('object_uuid', 'uuid',array('after' => 'id', 'null' => true))
+              ->update();
         $this->execute('UPDATE recommandations_risks A,objects B SET A.object_uuid = B.uuid where B.id=A.object_global_id');
         $table->removeColumn('object_global_id')
-            ->renameColumn('object_uuid','object_global_id')
-            ->update();
+              ->update();
+        $table->renameColumn('object_uuid','object_global_id')
+              ->update();
 
         $table = $this->table('objects_objects'); //set the stufff for objects_objects
         $table->dropForeignKey('father_id')
@@ -186,10 +191,13 @@ class AddObjectsUuid extends AbstractMigration
         $this->execute('UPDATE objects_objects A,objects B SET A.father_uuid = B.uuid where B.id=A.father_id and A.father_id is not null');
         $this->execute('UPDATE objects_objects A,objects B SET A.child_uuid = B.uuid where B.id=A.child_id and A.child_id is not null');
         $table->removeColumn('father_id')
-            ->removeColumn('child_id')
-            ->renameColumn('father_uuid','father_id')
-            ->renameColumn('child_uuid','child_id')
-            ->update();
+              ->update();
+        $table->removeColumn('child_id')
+              ->update();
+        $table->renameColumn('father_uuid','father_id')
+              ->update();
+        $table->renameColumn('child_uuid','child_id')
+              ->update();
 
         $table = $this->table('objects');
 

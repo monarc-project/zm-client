@@ -85,7 +85,8 @@ class AddThreatsUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE amvs A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
       $table->removeColumn('threat_id')
-            ->renameColumn('threat_uuid','threat_id')
+            ->update();
+      $table->renameColumn('threat_uuid','threat_id')
             ->update();
 
       $table = $this->table('instances_risks'); //set the stufff for instances_risks
@@ -94,7 +95,8 @@ class AddThreatsUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE instances_risks A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
       $table->removeColumn('threat_id')
-            ->renameColumn('threat_uuid','threat_id')
+            ->update();
+      $table->renameColumn('threat_uuid','threat_id')
             ->update();
 
       $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
@@ -104,12 +106,14 @@ class AddThreatsUuid extends AbstractMigration
       $this->execute('UPDATE recommandations_risks A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
       $this->execute('UPDATE recommandations_risks A SET A.threat_uuid = NULL where A.threat_id is null ');
       $table->removeColumn('threat_id')
-            ->renameColumn('threat_uuid','threat_id')
+            ->update();
+      $table->renameColumn('threat_uuid','threat_id')
             ->update();
 
       $table = $this->table('threats');
       $table->removeColumn('id')
-            ->dropForeignKey('anr_id')
+            ->update();
+      $table->dropForeignKey('anr_id')
             ->save();
       $this->execute("ALTER TABLE threats ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 

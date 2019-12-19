@@ -761,7 +761,8 @@ class AddVulnerabilitiesUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE amvs A,vulnerabilities B SET A.vulnerability_uuid = B.uuid where B.id=A.vulnerability_id');
       $table->removeColumn('vulnerability_id')
-            ->renameColumn('vulnerability_uuid','vulnerability_id')
+            ->update();
+      $table->renameColumn('vulnerability_uuid','vulnerability_id')
             ->update();
 
       $table = $this->table('instances_risks'); //set the stufff for instances_risks
@@ -770,7 +771,8 @@ class AddVulnerabilitiesUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE instances_risks A,vulnerabilities B SET A.vulnerability_uuid = B.uuid where B.id=A.vulnerability_id');
       $table->removeColumn('vulnerability_id')
-            ->renameColumn('vulnerability_uuid','vulnerability_id')
+            ->update();
+      $table->renameColumn('vulnerability_uuid','vulnerability_id')
             ->update();
 
       $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
@@ -780,7 +782,8 @@ class AddVulnerabilitiesUuid extends AbstractMigration
       $this->execute('UPDATE recommandations_risks A,vulnerabilities B SET A.vulnerability_uuid = B.uuid where B.id=A.vulnerability_id');
       $this->execute('UPDATE recommandations_risks A SET A.vulnerability_uuid = NULL where A.vulnerability_id is null');
       $table->removeColumn('vulnerability_id')
-            ->renameColumn('vulnerability_uuid','vulnerability_id')
+            ->update();
+      $table->renameColumn('vulnerability_uuid','vulnerability_id')
             ->update();
 
       $table = $this->table('vulnerabilities');

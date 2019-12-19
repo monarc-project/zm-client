@@ -166,8 +166,11 @@ class AddMeasuresUuid extends AbstractMigration
             ->addColumn('measure_uuid', 'uuid',array('after' => 'id'))
             ->update();
       $this->execute('UPDATE measures_amvs MA,measures M SET MA.measure_uuid = M.uuid where M.id=MA.measure_id');
+      $table = $this->table('measures_amvs');
       $table->removeColumn('measure_id')
-            ->renameColumn('measure_uuid','measure_id')
+            ->update();
+      $table = $this->table('measures_amvs');
+      $table->renameColumn('measure_uuid','measure_id')
             ->update();
 
 
@@ -178,9 +181,12 @@ class AddMeasuresUuid extends AbstractMigration
       $this->execute('UPDATE measures_measures MM,measures M SET MM.father_uuid = M.uuid where M.id=MM.father_id');
       $this->execute('UPDATE measures_measures MM,measures M SET MM.child_uuid = M.uuid where M.id=MM.child_id');
       $table->removeColumn('father_id')
-            ->renameColumn('father_uuid','father_id')
-            ->removeColumn('child_id')
-            ->renameColumn('child_uuid','child_id')
+            ->update();
+      $table->renameColumn('father_uuid','father_id')
+            ->update();
+      $table->removeColumn('child_id')
+            ->update();
+      $table->renameColumn('child_uuid','child_id')
             ->update();
       $table->addForeignKey('father_id', 'measures', 'uuid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
             ->addForeignKey('child_id', 'measures', 'uuid', ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
@@ -192,7 +198,8 @@ class AddMeasuresUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE recommandations_measures MA,measures M SET MA.measure_uuid = M.uuid where M.id=MA.measure_id');
       $table->removeColumn('measure_id')
-            ->renameColumn('measure_uuid','measure_id')
+            ->update();
+      $table->renameColumn('measure_uuid','measure_id')
             ->update();
 
       $table = $this->table('soa'); //set the stufff for soa
@@ -202,7 +209,8 @@ class AddMeasuresUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE soa MA,measures M SET MA.measure_uuid = M.uuid where M.id=MA.measure_id');
       $table->removeColumn('measure_id')
-            ->renameColumn('measure_uuid','measure_id')
+            ->update();
+      $table->renameColumn('measure_uuid','measure_id')
             ->update();
 
       // MODIFY STRUCTURE of concerning table

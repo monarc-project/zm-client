@@ -97,7 +97,8 @@ class AddAssetsUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE amvs A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
       $table->removeColumn('asset_id')
-            ->renameColumn('asset_uuid','asset_id')
+            ->update();
+      $table->renameColumn('asset_uuid','asset_id')
             ->update();
 
       $table = $this->table('instances'); //set the stufff for instances
@@ -106,7 +107,8 @@ class AddAssetsUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE instances A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
       $table->removeColumn('asset_id')
-            ->renameColumn('asset_uuid','asset_id')
+            ->update();
+      $table->renameColumn('asset_uuid','asset_id')
             ->update();
 
       $table = $this->table('instances_risks'); //set the stufff for instances_risks
@@ -115,7 +117,8 @@ class AddAssetsUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE instances_risks A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
       $table->removeColumn('asset_id')
-            ->renameColumn('asset_uuid','asset_id')
+            ->update();
+      $table->renameColumn('asset_uuid','asset_id')
             ->update();
 
       $table = $this->table('objects'); //set the stufff for objects
@@ -124,7 +127,8 @@ class AddAssetsUuid extends AbstractMigration
             ->update();
       $this->execute('UPDATE objects A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
       $table->removeColumn('asset_id')
-            ->renameColumn('asset_uuid','asset_id')
+            ->update();
+      $table->renameColumn('asset_uuid','asset_id')
             ->update();
 
       $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
@@ -134,7 +138,8 @@ class AddAssetsUuid extends AbstractMigration
       $this->execute('UPDATE recommandations_risks A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id and A.asset_id is not null');
       $this->execute('UPDATE recommandations_risks A SET A.asset_uuid = NULL where A.asset_id is null');
       $table->removeColumn('asset_id')
-            ->renameColumn('asset_uuid','asset_id')
+            ->update();
+      $table->renameColumn('asset_uuid','asset_id')
             ->update();
 
       $table = $this->table('assets');

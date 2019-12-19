@@ -74,8 +74,9 @@ class AddRecommandationsUuid extends AbstractMigration
             ->update();
         $this->execute('UPDATE recommandations_risks A,recommandations B SET A.recommandation_uuid = B.uuid where B.id=A.recommandation_id');
         $table->removeColumn('recommandation_id')
-            ->renameColumn('recommandation_uuid', 'recommandation_id')
-            ->update();
+              ->update();
+        $table->renameColumn('recommandation_uuid', 'recommandation_id')
+              ->update();
 
         //remove the id
         $table = $this->table('recommandations');
