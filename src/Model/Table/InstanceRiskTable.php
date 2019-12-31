@@ -7,9 +7,12 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\InstanceSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 
 /**
@@ -29,10 +32,9 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     }
 
     /**
-     * @param $anrId
-     * @return bool
+     * @param Anr|int $anrId
      */
-    public function started($anrId)
+    public function started($anrId): bool
     {
         $qb = $this->getRepository()->createQueryBuilder('t');
         $res = $qb->select('COUNT(t.id)')
@@ -44,5 +46,42 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ))->getQuery()->getSingleScalarResult();
 
         return $res > 0;
+    }
+
+    public function findByInstanceAndInstanceRiskRelations(
+        InstanceSuperClass $instance,
+        InstanceRiskSuperClass $instanceRisk
+    ) {
+        $queryBuilder = $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->where('ir.instance = :instance')
+            ->setParameter('instance', $instance);
+
+        if ($instanceRisk->getAmv() !== null) {
+            $queryBuilder
+                ->innerJoin('ir.amv', 'amv')
+                ->andWhere('amv.uuid = :amv_uuid')
+                ->andWhere('amv.anr = :amv_anr')
+                ->setParameter('amv_uuid', $instanceRisk->getAmv()->getUuid())
+                ->setParameter('amv_anr', $instanceRisk->getAmv()->getAnr());
+        }
+
+        $queryBuilder
+            ->innerJoin('ir.threat', 'thr')
+            ->innerJoin('ir.vulnerability', 'vuln')
+            ->andWhere('thr.uuid = :threat_uuid')
+            ->andWhere('thr.anr = :threat_anr')
+            ->andWhere('vuln.uuid = :vulnerability_uuid')
+            ->andWhere('vuln.anr = :vulnerability_anr')
+            ->setParameter('threat_uuid', $instanceRisk->getThreat()->getUuid())
+            ->setParameter('threat_anr', $instanceRisk->getThreat()->getAnr())
+            ->setParameter('vulnerability_uuid', $instanceRisk->getVulnerability()->getUuid())
+            ->setParameter('vulnerability_anr', $instanceRisk->getVulnerability()->getAnr());
+
+        if ($instanceRisk->isSpecific()) {
+            $queryBuilder->andWhere('ir.specific = ' . InstanceRiskSuperClass::TYPE_SPECIFIC);
+        }
+
+        return $queryBuilder->getQuery()->getResult();
     }
 }
