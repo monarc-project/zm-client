@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 
@@ -26,9 +27,9 @@ use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 class InstanceRisk extends InstanceRiskSuperClass
 {
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Amv
+     * @var Amv
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Amv", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Amv", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -37,9 +38,9 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $amv;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Asset
+     * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -48,9 +49,9 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $asset;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Threat
+     * @var Threat
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Threat", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Threat", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -59,9 +60,9 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $threat;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Vulnerability
+     * @var Vulnerability
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Vulnerability", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -70,12 +71,19 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $vulnerability;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Instance
+     * @var Instance
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $instance;
+
+    /**
+     * @var ArrayCollection|RecommandationRisk[]
+     *
+     * @ORM\OneToMany(targetEntity="RecommandationRisk", mappedBy="instanceRisk", cascade={"persist", "remove"})
+     */
+    protected $recommendationRisks;
 }

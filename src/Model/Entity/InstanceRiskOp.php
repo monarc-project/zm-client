@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 
@@ -64,4 +65,11 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
      * })
      */
     protected $rolfRisk;
+
+    /**
+     * @var ArrayCollection|RecommandationRisk[]
+     *
+     * @ORM\OneToMany(targetEntity="RecommandationRisk", mappedBy="instanceRiskOp", cascade={"persist", "remove"})
+     */
+    protected $recommendationRisks;
 }

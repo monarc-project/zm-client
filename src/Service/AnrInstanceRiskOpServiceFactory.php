@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use \Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Proxy factory class to instantiate Monarc\Core's InstanceRiskOpService using Monarc\FrontOffice's services
@@ -15,18 +17,18 @@ use \Monarc\Core\Service\AbstractServiceFactory;
  */
 class AnrInstanceRiskOpServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\InstanceRiskOpService";
+    protected $class = AnrInstanceRiskOpService::class;
 
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\InstanceRiskOp',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'rolfRiskTable' => 'Monarc\FrontOffice\Model\Table\RolfRiskTable',
-        'rolfTagTable' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
-        'scaleTable' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
-        'recommandationTable' => 'Monarc\FrontOffice\Model\Table\RecommandationTable',
+        'table' => Table\InstanceRiskOpTable::class,
+        'entity' => InstanceRiskOp::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'MonarcObjectTable' => Table\MonarcObjectTable::class,
+        'rolfRiskTable' => Table\RolfRiskTable::class,
+        'rolfTagTable' => Table\RolfTagTable::class,
+        'scaleTable' => Table\ScaleTable::class,
+        'recommandationTable' => Table\RecommandationTable::class,
     ];
 }
