@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 
@@ -47,15 +48,14 @@ class Anr extends AnrSuperClass
     protected $cacheModelIsScalesUpdatable = '0';
 
     /**
-     * TODO: should be: Referential[]|ArrayCollection
-     * @var Referential
+     * @var Referential[]|ArrayCollection
      *
      * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Referential", mappedBy="anr", cascade={"persist"})
      */
     protected $referentials;
 
     /**
-    * @param Referential $referentials
+    * @param Referential[]|ArrayCollection $referentials
     */
     public function setReferentials($referentials)
     {
@@ -63,7 +63,7 @@ class Anr extends AnrSuperClass
     }
 
     /**
-    * @return Referential
+    * @return Referential[]
     */
     public function getReferentials()
     {

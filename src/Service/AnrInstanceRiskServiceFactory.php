@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use \Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Proxy factory class to instantiate Monarc\Core's InstanceRiskService using Monarc\FrontOffice's services
@@ -15,21 +17,21 @@ use \Monarc\Core\Service\AbstractServiceFactory;
  */
 class AnrInstanceRiskServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\InstanceRiskService";
+    protected $class = AnrInstanceRiskService::class;
 
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\InstanceRisk',
-        'amvTable' => 'Monarc\FrontOffice\Model\Table\AmvTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'assetTable' => 'Monarc\FrontOffice\Model\Table\AssetTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'scaleTable' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
-        'threatTable' => 'Monarc\FrontOffice\Model\Table\ThreatTable',
-        'vulnerabilityTable' => 'Monarc\FrontOffice\Model\Table\VulnerabilityTable',
-        'recommandationTable' => 'Monarc\FrontOffice\Model\Table\RecommandationTable',
-        'recommandationRiskTable' => 'Monarc\FrontOffice\Model\Table\RecommandationRiskTable',
+        'table' => Table\InstanceRiskTable::class,
+        'entity' => InstanceRisk::class,
+        'amvTable' => Table\AmvTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'assetTable' => Table\AssetTable::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'MonarcObjectTable' => Table\MonarcObjectTable::class,
+        'scaleTable' => Table\ScaleTable::class,
+        'threatTable' => Table\ThreatTable::class,
+        'vulnerabilityTable' => Table\VulnerabilityTable::class,
+        'recommandationTable' => Table\RecommandationTable::class,
+        'recommandationRiskTable' => Table\RecommandationRiskTable::class,
     ];
 }
