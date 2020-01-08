@@ -319,7 +319,7 @@ class AnrRecommandationRiskService extends \Monarc\Core\Service\AbstractService
                         }
 
                         if (empty($recommandationRisk->objectGlobal->uuid)) {
-                          $asc = array_reverse($instanceTable->getAscendance($instanceRisk->instance));
+                          $asc = $instanceTable->getAscendance($instanceRisk->instance);
                           foreach ($asc as $a) {
                             $isGlobal = false;
                             $path .= $a['name' . $lang];
@@ -343,7 +343,7 @@ class AnrRecommandationRiskService extends \Monarc\Core\Service\AbstractService
                     if ($recommandationRisk->instanceRiskOp && $recommandationRisk->instanceRiskOp->kindOfMeasure != InstanceRiskOp::KIND_NOT_TREATED) {
 
                         if (empty($recommandationRisk->objectGlobal->uuid)) {
-                          $asc = array_reverse($instanceTable->getAscendance($recommandationRisk->instanceRiskOp->instance));
+                          $asc = $instanceTable->getAscendance($recommandationRisk->instanceRiskOp->instance);
                           foreach ($asc as $a) {
                             $isGlobal = false;
                             $path .= $a['name' . $lang];
