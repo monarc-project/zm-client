@@ -15,7 +15,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class ObjectExportServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\ObjectExportService";
+    protected $class = ObjectExportService::class;
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',

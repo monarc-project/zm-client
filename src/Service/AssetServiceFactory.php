@@ -15,7 +15,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class AssetServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\AssetService";
+    protected $class = AssetService::class;
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\AssetTable',

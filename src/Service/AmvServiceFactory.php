@@ -16,7 +16,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class AmvServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\AmvService";
+    protected $class = AmvService::class;
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\AmvTable',

@@ -15,7 +15,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class ModelServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\ModelService";
+    protected $class = ModelService::class;
 
     protected $ressources = [
         'table' => 'Monarc\Core\Model\Table\ModelTable',

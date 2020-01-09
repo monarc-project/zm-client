@@ -15,7 +15,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class AnrQuestionChoiceServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\QuestionChoiceService";
+    protected $class = AnrQuestionChoiceService::class;
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',

@@ -7,6 +7,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractControllerFactory;
+use Monarc\Core\Service\DeliveriesModelsService;
 
 /**
  * Factory class attached to ApiDeliveriesModelsController
@@ -14,5 +15,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiDeliveriesModelsControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = 'Monarc\Core\Service\DeliveriesModelsService';
+    protected $serviceName = DeliveriesModelsService::class;
 }

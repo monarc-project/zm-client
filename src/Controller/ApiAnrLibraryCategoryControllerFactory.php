@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractControllerFactory;
+use Monarc\FrontOffice\Service\AnrObjectCategoryService;
 
 /**
  * Api Anr Library Controller Factory
@@ -17,5 +18,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrLibraryCategoryControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = 'Monarc\FrontOffice\Service\ObjectCategoryService';
+    protected $serviceName = AnrObjectCategoryService::class;
 }

@@ -9,10 +9,14 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
+ * TODO: The entity is exactly the same as on the Core side, we can create a superclass for this.
+ *
  * Anr Object Category
  *
  * @ORM\Table(name="anrs_objects_categories")
@@ -34,9 +38,9 @@ class AnrObjectCategory extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var AnrSuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -44,9 +48,9 @@ class AnrObjectCategory extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\ObjectCategory
+     * @var ObjectCategorySuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\ObjectCategory", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="ObjectCategory", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_category_id", referencedColumnName="id", nullable=true)
      * })
@@ -87,7 +91,7 @@ class AnrObjectCategory extends AbstractEntity
     }
 
     /**
-     * @param Anr $anr
+     * @param AnrSuperClass $anr
      */
     public function setAnr($anr): self
     {
@@ -97,7 +101,7 @@ class AnrObjectCategory extends AbstractEntity
     }
 
     /**
-     * @return ObjectCategory
+     * @return ObjectCategorySuperClass
      */
     public function getCategory()
     {
@@ -105,7 +109,7 @@ class AnrObjectCategory extends AbstractEntity
     }
 
     /**
-     * @param ObjectCategory $category
+     * @param ObjectCategorySuperClass $category
      * @return AnrObjectCategory
      */
     public function setCategory($category)
