@@ -15,7 +15,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class AssetExportServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\AssetExportService";
+    protected $class = AssetExportService::class;
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\AssetTable',

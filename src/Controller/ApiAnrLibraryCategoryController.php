@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractController;
-use Monarc\Core\Service\ObjectCategoryService;
+use Monarc\FrontOffice\Service\AnrObjectCategoryService;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -30,7 +30,7 @@ class ApiAnrLibraryCategoryController extends AbstractController
 
         $data['anr'] = $anrId;
 
-        /** @var ObjectCategoryService $service */
+        /** @var AnrObjectCategoryService $service */
         $service = $this->getService();
         $service->patchLibraryCategory($id, $data);
 
@@ -75,6 +75,5 @@ class ApiAnrLibraryCategoryController extends AbstractController
     public function delete($id)
     {
         return $this->methodNotAllowed();
-
     }
 }

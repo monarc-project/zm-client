@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use \Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Entity\ObjectCategory;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Proxy class to instantiate Monarc\Core's ObjectCategoryService, with Monarc\FrontOffice's services
@@ -15,16 +17,14 @@ use \Monarc\Core\Service\AbstractServiceFactory;
  */
 class AnrObjectCategoryServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\ObjectCategoryService";
+    protected $class = AnrObjectCategoryService::class;
 
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\ObjectCategory',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'anrObjectCategoryTable' => 'Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'rootTable' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
-        'parentTable' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
+        'table' => Table\ObjectCategoryTable::class,
+        'entity' => ObjectCategory::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'anrObjectCategoryTable' => Table\AnrObjectCategoryTable::class,
+        'monarcObjectTable' => Table\MonarcObjectTable::class,
+        'anrTable' => Table\AnrTable::class,
     ];
 }

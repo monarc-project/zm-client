@@ -1127,7 +1127,6 @@ return [
             'Monarc\FrontOffice\Service\AssetService' => 'Monarc\FrontOffice\Service\AssetServiceFactory',
             'Monarc\FrontOffice\Service\ClientService' => 'Monarc\FrontOffice\Service\ClientServiceFactory',
             'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
-            'Monarc\FrontOffice\Service\ObjectCategoryService' => 'Monarc\FrontOffice\Service\ObjectCategoryServiceFactory',
             'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
             'Monarc\FrontOffice\Service\ModelService' => 'Monarc\FrontOffice\Service\ModelServiceFactory',
             'Monarc\FrontOffice\Service\AnrLibraryService' => 'Monarc\FrontOffice\Service\AnrLibraryServiceFactory',

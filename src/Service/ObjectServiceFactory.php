@@ -15,7 +15,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class ObjectServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\ObjectService";
+    protected $class = ObjectService::class;
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',

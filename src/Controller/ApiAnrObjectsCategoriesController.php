@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\FrontOffice\Service\AnrObjectCategoryService;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -34,7 +35,7 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
         $filter = $this->params()->fromQuery('filter');
         $lock = $this->params()->fromQuery('lock') == "false" ? false : true;
 
-        /** @var ObjectCategoryService $service */
+        /** @var AnrObjectCategoryService $service */
         $service = $this->getService();
 
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -63,7 +64,7 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
 
         $objectCategories = $service->getListSpecific($page, $limit, $order, $filter, $filterAnd);
 
-        $fields = ['id', 'label1', 'label2', 'label3', 'label4', 'position'];;
+        $fields = ['id', 'label1', 'label2', 'label3', 'label4', 'position'];
 
         if ($parentId > 0 && $lock) {
             $recursiveArray = $this->getCleanFields($objectCategories, $fields);

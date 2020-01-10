@@ -15,7 +15,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
  */
 class AnrLibraryServiceFactory extends AbstractServiceFactory
 {
-    protected $class = "\\Monarc\Core\\Service\\AnrObjectService";
+    protected $class = AnrLibraryService::class;
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
