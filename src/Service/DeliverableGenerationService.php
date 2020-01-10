@@ -1208,7 +1208,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
                     $key = "i-" . $r['id'];
                     if (!isset($mem_risks[$key])) {
                         $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
-                        $asc = array_reverse($instanceTable->getAscendance($instance));
+                        $asc = $instanceTable->getAscendance($instance);
 
                         $path = null;
                         foreach ($asc as $a) {
@@ -1415,7 +1415,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
         foreach ($result as $r) {
             if (!isset($lst[$r['id']])) {
                 $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['id']]));
-                $asc = array_reverse($instanceTable->getAscendance($instance));
+                $asc = $instanceTable->getAscendance($instance);
                 $path = null;
 
                 foreach ($asc as $a) {
@@ -1434,7 +1434,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
 
                 if (!empty($instance->root->id) && !isset($lst[$r['parent']]) && ($r['parent'] != $instance->root->id)) {
                     $instance = current($instanceTable->getEntityByFields(['anr' => $anr->id, 'id' => $r['parent']]));
-                    $asc = array_reverse($instanceTable->getAscendance($instance));
+                    $asc = $instanceTable->getAscendance($instance);
                     $path = null;
                     foreach ($asc as $a) {
                       $path .= $a['name' . $this->currentLangAnrIndex];
@@ -1786,7 +1786,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
             $instance = $instanceTable->getEntity($r['instance']);
             if ($instance->object->scope === 1) {
               $path = null;
-              $asc = array_reverse($instanceTable->getAscendance($instance));
+              $asc = $instanceTable->getAscendance($instance);
               foreach ($asc as $a) {
                 $path .= $a['name' . $this->currentLangAnrIndex];
                 if (end($asc) !== $a) {
@@ -1893,7 +1893,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
 
               $path = null;
               $instance = $instanceTable->getEntity($r['instanceInfos']['id']);
-              $asc = array_reverse($instanceTable->getAscendance($instance));
+              $asc = $instanceTable->getAscendance($instance);
               foreach ($asc as $a) {
                 $path .= $a['name' . $this->currentLangAnrIndex];
                 if (end($asc) !== $a) {
@@ -2085,7 +2085,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
 
                 if (empty($recoRisk->objectGlobal->uuid)) {
                   $path = null;
-                  $asc = array_reverse($instanceTable->getAscendance($recoRisk->instance));
+                  $asc = $instanceTable->getAscendance($recoRisk->instance);
                   foreach ($asc as $a) {
                     $path .= $a['name' . $this->currentLangAnrIndex];
                     if (end($asc) !== $a) {
@@ -2229,7 +2229,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
 
                 if (empty($recoRisk->objectGlobal->uuid)) {
                   $path = null;
-                  $asc = array_reverse($instanceTable->getAscendance($recoRisk->instance));
+                  $asc = $instanceTable->getAscendance($recoRisk->instance);
                   foreach ($asc as $a) {
                     $path .= $a['name' . $this->currentLangAnrIndex];
                     if (end($asc) !== $a) {
@@ -2838,7 +2838,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
               $instance = $instanceTable->getEntity($r['instance']);
               if ($instance->object->scope === 1) {
                 $path = null;
-                $asc = array_reverse($instanceTable->getAscendance($instance));
+                $asc = $instanceTable->getAscendance($instance);
                 foreach ($asc as $a) {
                   $path .= $a['name' . $this->currentLangAnrIndex];
                   if (end($asc) !== $a) {
@@ -2910,7 +2910,7 @@ class DeliverableGenerationService extends \Monarc\Core\Service\AbstractService
 
                 $path = null;
                 $instance = $instanceTable->getEntity($r['instanceInfos']['id']);
-                $asc = array_reverse($instanceTable->getAscendance($instance));
+                $asc = $instanceTable->getAscendance($instance);
                 foreach ($asc as $a) {
                   $path .= $a['name' . $this->currentLangAnrIndex];
                   if (end($asc) !== $a) {
