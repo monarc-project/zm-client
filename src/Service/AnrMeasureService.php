@@ -23,8 +23,8 @@ class AnrMeasureService extends MeasureService
     protected $entity;
     protected $anrTable;
     protected $userAnrTable;
-    protected $SoaEntity;
-    protected $SoaTable;
+    protected $soaEntity;
+    protected $soaTable;
     protected $dependencies = ['category' ,'anr', 'referential', 'measuresLinked', 'rolfRisks'];
     protected $forbiddenFields = [];
 
@@ -45,8 +45,8 @@ class AnrMeasureService extends MeasureService
             $uuid = AbstractService::create($data, $last);
         }
         $table = $this->get('table');
-        $SoaClass = $this->get('SoaEntity');
-        $SoaTable = $this->get('SoaTable');
+        $SoaClass = $this->get('soaEntity');
+        $SoaTable = $this->get('soaTable');
         $anrTable = $this->get('anrTable');
         $measure = $table->getEntity(['uuid' =>$uuid,'anr'=>$data['anr']]);
         $anr = $anrTable->getEntity($data['anr']);

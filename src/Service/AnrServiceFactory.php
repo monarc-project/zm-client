@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Table\SoaTable;
 
 /**
  * Factory class attached to AnrService
@@ -43,8 +44,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'vulnerabilityTable' => 'Monarc\Core\Model\Table\VulnerabilityTable',
         'questionTable' => 'Monarc\Core\Model\Table\QuestionTable',
         'questionChoiceTable' => 'Monarc\Core\Model\Table\QuestionChoiceTable',
-        'SoaTable' => 'Monarc\Core\Model\Table\SoaTable',
-        'SoaCategoryTable' => 'Monarc\Core\Model\Table\SoaCategoryTable',
+        'soaCategoryTable' => 'Monarc\Core\Model\Table\SoaCategoryTable',
         'referentialTable' => 'Monarc\Core\Model\Table\ReferentialTable',
 
         //fo
@@ -78,8 +78,8 @@ class AnrServiceFactory extends AbstractServiceFactory
         'vulnerabilityCliTable' => 'Monarc\FrontOffice\Model\Table\VulnerabilityTable',
         'questionCliTable' => 'Monarc\FrontOffice\Model\Table\QuestionTable',
         'questionChoiceCliTable' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',
-        'SoaCliTable' => 'Monarc\FrontOffice\Model\Table\SoaTable',
-        'SoaCategoryCliTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
+        'soaTable' => SoaTable::class,
+        'soaCategoryCliTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
         'recordCliTable' => 'Monarc\FrontOffice\Model\Table\RecordTable',
         'recordActorCliTable' => 'Monarc\FrontOffice\Model\Table\RecordActorTable',
         'recordDataCategoryCliTable' => 'Monarc\FrontOffice\Model\Table\RecordDataCategoryTable',

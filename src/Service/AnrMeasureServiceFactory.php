@@ -20,9 +20,8 @@ class AnrMeasureServiceFactory extends AbstractServiceFactory
         'table' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
         'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'SoaEntity' => 'Monarc\FrontOffice\Model\Entity\Soa',
-        'SoaTable' => 'Monarc\FrontOffice\Model\Table\SoaTable',
-        'categoryTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
-        // 'category' => 'Monarc\FrontOffice\Model\Entity\Category'
+        'soaEntity' => 'Monarc\FrontOffice\Model\Entity\Soa',
+        'soaTable' => 'Monarc\FrontOffice\Model\Table\SoaTable',
+        'soaCategoryTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
     ];
 }

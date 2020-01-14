@@ -91,8 +91,8 @@ class AnrService extends AbstractService
     protected $vulnerabilityTable;
     protected $questionTable;
     protected $questionChoiceTable;
-    protected $SoaTable;
-    protected $SoaCategoryTable;
+    protected $soaTable;
+    protected $soaCategoryTable;
     protected $referentialTable;
 
 
@@ -127,8 +127,7 @@ class AnrService extends AbstractService
     protected $vulnerabilityCliTable;
     protected $questionCliTable;
     protected $questionChoiceCliTable;
-    protected $SoaCliTable;
-    protected $SoaCategoryCliTable;
+    protected $soaCategoryCliTable;
     protected $recordCliTable;
     protected $recordActorCliTable;
     protected $recordDataCategoryCliTable;
@@ -338,7 +337,7 @@ class AnrService extends AbstractService
 
             // duplicate categories
             $categoryNewIds = [];
-            $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
+            $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
             foreach ($category as $cat) {
                 $newCategory = new SoaCategory($cat);
                 $newCategory->set('id', null);
@@ -417,7 +416,7 @@ class AnrService extends AbstractService
                 $newSoa->set('id', null);
                 $newSoa->setAnr($anr);
                 $newSoa->setMeasure($newMeasure);
-                $this->get('SoaCliTable')->save($newSoa, false);
+                $this->get('soaTable')->save($newSoa, false);
             }
             $newReferential->setMeasures($measuresNewIds);
 
@@ -620,7 +619,7 @@ class AnrService extends AbstractService
 
                     // duplicate categories
                     $categoryNewIds = [];
-                    $category = $this->get('SoaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
+                    $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
                     foreach ($category as $cat) {
                         $newCategory = new SoaCategory($cat);
                         $newCategory->set('id', null);
@@ -711,16 +710,16 @@ class AnrService extends AbstractService
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($value);
-                    $this->get('SoaCliTable')->save($newSoa, false);
+                    $this->get('soaTable')->save($newSoa, false);
                 }
             } else {
-                $soas = $this->get('SoaCliTable')->getEntityByFields(['anr' => $anr->id]);
+                $soas = $this->get('soaTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($soas as $soa) {
                     $newSoa = new Soa($soa);
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($measuresNewIds[$soa->measure->getUuid()->toString()]);
-                    $this->get('SoaCliTable')->save($newSoa, false);
+                    $this->get('soaTable')->save($newSoa, false);
                 }
             }
 
