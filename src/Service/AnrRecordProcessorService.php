@@ -118,10 +118,10 @@ class AnrRecordProcessorService extends AbstractService
             $return['contact'] = $entity->contact;
         }
         if($entity->activities && isset($entity->activities[$recordId])) {
-            $return['activities'] = $entity->activities[$recordId];
+            $return['activities'] = $entity->activities;
         }
         if($entity->secMeasures && isset($entity->activities[$recordId])) {
-            $return['security_measures'] = $entity->secMeasures[$recordId];
+            $return['security_measures'] = $entity->secMeasures;
         }
         if($entity->representative) {
             $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
