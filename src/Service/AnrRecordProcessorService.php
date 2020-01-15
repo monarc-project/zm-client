@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
 
 /**
@@ -102,14 +103,14 @@ class AnrRecordProcessorService extends AbstractService
     * @param int $id The processor's id
     * @param string $filename The output filename
     * @return array The data array that should be saved
-    * @throws \Monarc\Core\Exception\Exception If the processor is not found
+    * @throws Exception If the processor is not found
     */
     public function generateExportArray($id, $recordId)
     {
         $entity = $this->get('table')->getEntity($id);
 
         if (!$entity) {
-            throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
+            throw new Exception('Entity `id` not found.');
         }
         $return = [
             'name' => $entity->label,
@@ -117,10 +118,10 @@ class AnrRecordProcessorService extends AbstractService
         if($entity->contact != '') {
             $return['contact'] = $entity->contact;
         }
-        if($entity->activities && isset($entity->activities[$recordId])) {
+        if($entity->activities) {
             $return['activities'] = $entity->activities;
         }
-        if($entity->secMeasures && isset($entity->activities[$recordId])) {
+        if($entity->secMeasures) {
             $return['security_measures'] = $entity->secMeasures;
         }
         if($entity->representative) {
@@ -160,7 +161,7 @@ class AnrRecordProcessorService extends AbstractService
             } else {
                 $id = $this->create($newData);
             }
-        } catch (\Monarc\Core\Exception\Exception $e) {
+        } catch (Exception $e) {
             $id = $this->create($newData);
         }
         if (count($processorEntity)) {
