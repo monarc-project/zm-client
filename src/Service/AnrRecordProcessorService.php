@@ -167,8 +167,8 @@ class AnrRecordProcessorService extends AbstractService
             $newData['activities'] = $processorEntity[0]->getActivities();
             $newData['secMeasures'] = $processorEntity[0]->getSecMeasures();
         } else {
-            $newData['activities'] = [];
-            $newData['secMeasures'] = [];
+            $newData['activities'] = '';
+            $newData['secMeasures'] = '';
         }
         if(isset($data['representative'])) {
             $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
@@ -181,12 +181,8 @@ class AnrRecordProcessorService extends AbstractService
 
     public function importActivityAndSecMeasures($data, $processorId, $recordId) {
         $entity = $this->get('table')->getEntity($processorId);
-        $activities = $entity->getActivities();
-        $activities[$recordId] = (isset($data['activities']) ? $data['activities'] : '');
-        $entity->setActivities($activities);
-        $secMeasures = $entity->getSecMeasures();
-        $secMeasures[$recordId] = (isset($data['security_measures']) ? $data['security_measures'] : '');
-        $entity->setSecMeasures($secMeasures);
+        $entity->setActivities($data['activities']);
+        $entity->setSecMeasures($data['security_measures']);
         $newData = [];
         $newData['activities'] = $entity->getActivities();
         $newData['secMeasures'] = $entity->getSecMeasures();
