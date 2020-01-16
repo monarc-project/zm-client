@@ -219,7 +219,6 @@ class UserService extends CoreUserService
         }
     }
 
-
     public function updateUserAnr(User $user, array $data): void
     {
         $connectedUserName = $this->connectedUserService->getConnectedUser()->getFirstname()
@@ -227,20 +226,20 @@ class UserService extends CoreUserService
         if (isset($data['anrs'])) {
             $assignedAnrIds = array_map('intval', array_column($data['anrs'], 'id'));
             foreach ($user->getUserAnrs() as $userAnr) {
-                $allowedAnrKey = array_search($userAnr->getAnr()->getId(), $assignedAnrIds, true);
-                if ($allowedAnrKey === false) {
+                $assignedAnrKey = array_search($userAnr->getAnr()->getId(), $assignedAnrIds, true);
+                if ($assignedAnrKey === false) {
                     $user->removeUserAnr($userAnr);
                 } else {
                     $userAnr
-                        ->setRwd($data['anrs'][$allowedAnrKey]['rwd'])
+                        ->setRwd($data['anrs'][$assignedAnrKey]['rwd'])
                         ->setUpdater($connectedUserName);
-                    unset($data['anrs'][$allowedAnrKey]);
+                    unset($data['anrs'][$assignedAnrKey]);
                 }
             }
             foreach ($data['anrs'] as $anr) {
                 $user->addUserAnr(
                     (new UserAnr())
-                        ->setAnr($user->getUserAnrByAnrId($anr['id']))
+                        ->setAnr($this->anrTable->findById($anr['id']))
                         ->setRwd($anr['rwd'])
                         ->setCreator($connectedUserName)
                 );
