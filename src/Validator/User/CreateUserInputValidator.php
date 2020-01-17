@@ -80,6 +80,23 @@ class CreateUserInputValidator extends AbstractMonarcInputValidator
                 ],
             ],
             [
+                'name' => 'password',
+                'required' => false,
+                'filters' => [
+                    [
+                        'name' => StringTrim::class,
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => StringLength::class,
+                        'options' => [
+                            'min' => 9,
+                        ]
+                    ],
+                ],
+            ],
+            [
                 'name' => 'email',
                 'required' => true,
                 'filters' => [
