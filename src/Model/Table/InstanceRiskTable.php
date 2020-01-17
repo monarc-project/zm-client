@@ -7,6 +7,9 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AmvSuperClass;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
@@ -83,5 +86,23 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         }
 
         return $queryBuilder->getQuery()->getResult();
+    }
+
+
+    /**
+     * @throws Exception
+     * @return InstanceRisk[]
+     */
+    public function findByAmv(AmvSuperClass $amv)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->innerJoin('ir.amv', 'amv')
+            ->where('amv.uuid = :amv_uuid')
+            ->andWhere('amv.anr = :amv_anr')
+            ->setParameter('amv_uuid', $amv->getUuid())
+            ->setParameter('amv_anr', $amv->getAnr())
+            ->getQuery()
+            ->getResult();
     }
 }
