@@ -54,6 +54,20 @@ return [
                 ],
             ],
 
+            'monarc_api_admin_user_reset_password' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/users/:id/resetPassword',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiAdminUsersController::class,
+                        'action' => 'resetPassword'
+                    ],
+                ],
+            ],
+
             'monarc_api_client' => [
                 'type' => 'segment',
                 'options' => [
@@ -122,6 +136,7 @@ return [
                     ],
                 ],
             ],
+
             'monarc_api_admin_passwords' => [
                 'type' => 'segment',
                 'options' => [
@@ -1188,6 +1203,7 @@ return [
             'monarc_api_admin_users',
             'monarc_api_admin_users_roles',
             'monarc_api_admin_users_rights',
+            'monarc_api_admin_user_reset_password',
             'monarc_api_user_password',
             'monarc_api_user_profile',
             'monarc_api_client_anr',
