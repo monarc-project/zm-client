@@ -8,6 +8,11 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\TranslateService;
+use Monarc\Core\Service\DeliveriesModelsService;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Entity\Delivery;
+use Monarc\FrontOffice\Service;
 
 /**
  * Factory class attached to DeliverableGenerationService
@@ -16,30 +21,30 @@ use Monarc\Core\Service\AbstractServiceFactory;
 class DeliverableGenerationServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Delivery',
-        'table' => 'Monarc\FrontOffice\Model\Table\DeliveryTable',
-        'deliveryModelService' => 'Monarc\Core\Service\DeliveriesModelsService',
-        'clientTable' => 'Monarc\FrontOffice\Model\Table\ClientTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'scaleService' => 'Monarc\FrontOffice\Service\AnrScaleService',
-        'scaleTypeService' => 'Monarc\FrontOffice\Service\AnrScaleTypeService',
-        'scaleCommentService' => 'Monarc\FrontOffice\Service\AnrScaleCommentService',
-        'questionService' => 'Monarc\FrontOffice\Service\AnrQuestionService',
-        'questionChoiceService' => 'Monarc\FrontOffice\Service\AnrQuestionChoiceService',
-        'interviewService' => 'Monarc\FrontOffice\Service\AnrInterviewService',
-        'threatService' => 'Monarc\FrontOffice\Service\AnrThreatService',
-        'instanceService' => 'Monarc\FrontOffice\Service\AnrInstanceService',
-        'recommandationService' => 'Monarc\FrontOffice\Service\AnrRecommandationService',
-        'recommandationRiskService' => 'Monarc\FrontOffice\Service\AnrRecommandationRiskService',
-        'recommandationHistoricService' => 'Monarc\FrontOffice\Service\AnrRecommandationHistoricService',
-        'cartoRiskService' => 'Monarc\FrontOffice\Service\AnrCartoRiskService',
-        'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
-        'soaService' => 'Monarc\FrontOffice\Service\SoaService',
-        'measureService' => 'Monarc\FrontOffice\Service\AnrMeasureService',
-        'riskOpService' => 'Monarc\FrontOffice\Service\AnrRiskOpService',
-        'riskService' => 'Monarc\FrontOffice\Service\AnrRiskService',
-        'recordService' => 'Monarc\FrontOffice\Service\AnrRecordService',
-        'translateService' => 'Monarc\Core\Service\TranslateService',
+        'entity' => Delivery::class,
+        'table' => Table\DeliveryTable::class,
+        'deliveryModelService' => DeliveriesModelsService::class,
+        'clientTable' => Table\ClientTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'scaleService' => Service\AnrScaleService::class,
+        'scaleTypeService' => Service\AnrScaleTypeService::class,
+        'scaleCommentService' => Service\AnrScaleCommentService::class,
+        'questionService' => Service\AnrQuestionService::class,
+        'questionChoiceService' => Service\AnrQuestionChoiceService::class,
+        'interviewService' => Service\AnrInterviewService::class,
+        'threatService' => Service\AnrThreatService::class,
+        'instanceService' => Service\AnrInstanceService::class,
+        'recommandationService' => Service\AnrRecommandationService::class,
+        'recommandationRiskService' => Service\AnrRecommandationRiskService::class,
+        'recommandationHistoricService' => Service\AnrRecommandationHistoricService::class,
+        'cartoRiskService' => Service\AnrCartoRiskService::class,
+        'instanceRiskTable' => Table\InstanceRiskTable::class,
+        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
+        'soaService' => Service\SoaService::class,
+        'measureService' => Service\AnrMeasureService::class,
+        'riskOpService' => Service\AnrRiskOpService::class,
+        'riskService' => Service\AnrRiskService::class,
+        'recordService' => Service\AnrRecordService::class,
+        'translateService' => TranslateService::class,
     ];
 }
