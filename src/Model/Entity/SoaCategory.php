@@ -51,9 +51,8 @@ class SoaCategory extends SoaCategorySuperClass
 
     /**
     * @param Anr $anr
-    * @return Category
     */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
         return $this;

@@ -59,7 +59,7 @@ class RecordPersonalData extends AbstractEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="data_subject", type="string", length=255, nullable=true)
+     * @ORM\Column(name="data_subject", type="text", nullable=true)
      */
     protected $dataSubject;
 
@@ -76,7 +76,7 @@ class RecordPersonalData extends AbstractEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="description", type="string", length=255, nullable=true)
+     * @ORM\Column(name="description", type="text", nullable=true)
      */
     protected $description;
 
@@ -88,7 +88,7 @@ class RecordPersonalData extends AbstractEntity
     protected $retentionPeriod = 0;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="retention_period_mode", type="smallint", options={"default":0})
      */

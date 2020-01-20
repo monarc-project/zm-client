@@ -61,16 +61,16 @@ class RecordProcessor extends AbstractEntity
     protected $contact;
 
     /**
-     * @var array
+     * @var string
      *
-     * @ORM\Column(name="activities", type="array", length=255, nullable=false)
+     * @ORM\Column(name="activities", type="text", nullable=true)
      */
     protected $activities;
 
     /**
-     * @var array
+     * @var string
      *
-     * @ORM\Column(name="sec_measures", type="array", length=255, nullable=false)
+     * @ORM\Column(name="sec_measures", type="text", nullable=true)
      */
     protected $secMeasures;
 
@@ -87,13 +87,6 @@ class RecordProcessor extends AbstractEntity
      * @ORM\JoinColumn(name="dpo", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $dpo;
-
-    public function __construct($obj = null)
-    {
-        $this->activities = [];
-        $this->secMeasures = [];
-        parent::__construct($obj);
-    }
 
     /**
      * @return int
@@ -165,14 +158,14 @@ class RecordProcessor extends AbstractEntity
     }
 
     /**
-    * @return array
+    * @return string
     */
     public function getActivities()
     {
         return $this->activities;
     }
     /**
-    * @param array $activities
+    * @param string $activities
     * @return RecordProcessor
     */
     public function setActivities($activities)
@@ -182,14 +175,14 @@ class RecordProcessor extends AbstractEntity
     }
 
     /**
-    * @return array
+    * @return string
     */
     public function getSecMeasures()
     {
         return $this->secMeasures;
     }
     /**
-    * @param array $secMeasures
+    * @param string $secMeasures
     * @return RecordProcessor
     */
     public function setSecMeasures($secMeasures)

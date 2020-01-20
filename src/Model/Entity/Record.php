@@ -57,14 +57,14 @@ class Record extends AbstractEntity
     /**
      * @var array
      *
-     * @ORM\Column(name="purposes", type="string", length=255, nullable=true)
+     * @ORM\Column(name="purposes", type="text", nullable=true)
      */
     protected $purposes;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="sec_measures", type="string", length=255, nullable=true)
+     * @ORM\Column(name="sec_measures", type="text", nullable=true)
      */
     protected $secMeasures;
 

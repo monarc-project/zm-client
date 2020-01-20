@@ -55,7 +55,7 @@ class Snapshot extends AbstractEntity
     /**
      * @var string|null
      *
-     * @ORM\Column(name="comment", type="text", length=255, nullable=true)
+     * @ORM\Column(name="comment", type="text", nullable=true)
      */
     protected $comment;
 
