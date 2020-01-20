@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
 
 /**
@@ -102,14 +103,14 @@ class AnrRecordProcessorService extends AbstractService
     * @param int $id The processor's id
     * @param string $filename The output filename
     * @return array The data array that should be saved
-    * @throws \Monarc\Core\Exception\Exception If the processor is not found
+    * @throws Exception If the processor is not found
     */
     public function generateExportArray($id, $recordId)
     {
         $entity = $this->get('table')->getEntity($id);
 
         if (!$entity) {
-            throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
+            throw new Exception('Entity `id` not found.');
         }
         $return = [
             'name' => $entity->label,
@@ -117,11 +118,11 @@ class AnrRecordProcessorService extends AbstractService
         if($entity->contact != '') {
             $return['contact'] = $entity->contact;
         }
-        if($entity->activities && isset($entity->activities[$recordId])) {
-            $return['activities'] = $entity->activities[$recordId];
+        if($entity->activities) {
+            $return['activities'] = $entity->activities;
         }
-        if($entity->secMeasures && isset($entity->activities[$recordId])) {
-            $return['security_measures'] = $entity->secMeasures[$recordId];
+        if($entity->secMeasures) {
+            $return['security_measures'] = $entity->secMeasures;
         }
         if($entity->representative) {
             $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
@@ -160,15 +161,15 @@ class AnrRecordProcessorService extends AbstractService
             } else {
                 $id = $this->create($newData);
             }
-        } catch (\Monarc\Core\Exception\Exception $e) {
+        } catch (Exception $e) {
             $id = $this->create($newData);
         }
         if (count($processorEntity)) {
             $newData['activities'] = $processorEntity[0]->getActivities();
             $newData['secMeasures'] = $processorEntity[0]->getSecMeasures();
         } else {
-            $newData['activities'] = [];
-            $newData['secMeasures'] = [];
+            $newData['activities'] = '';
+            $newData['secMeasures'] = '';
         }
         if(isset($data['representative'])) {
             $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
@@ -181,12 +182,8 @@ class AnrRecordProcessorService extends AbstractService
 
     public function importActivityAndSecMeasures($data, $processorId, $recordId) {
         $entity = $this->get('table')->getEntity($processorId);
-        $activities = $entity->getActivities();
-        $activities[$recordId] = (isset($data['activities']) ? $data['activities'] : '');
-        $entity->setActivities($activities);
-        $secMeasures = $entity->getSecMeasures();
-        $secMeasures[$recordId] = (isset($data['security_measures']) ? $data['security_measures'] : '');
-        $entity->setSecMeasures($secMeasures);
+        $entity->setActivities($data['activities']);
+        $entity->setSecMeasures($data['security_measures']);
         $newData = [];
         $newData['activities'] = $entity->getActivities();
         $newData['secMeasures'] = $entity->getSecMeasures();

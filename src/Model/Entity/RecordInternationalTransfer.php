@@ -63,7 +63,7 @@ class RecordInternationalTransfer extends AbstractEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="description", type="string", length=255, nullable=true)
+     * @ORM\Column(name="description", type="text", nullable=true)
      */
     protected $description;
 
@@ -75,7 +75,7 @@ class RecordInternationalTransfer extends AbstractEntity
     protected $country;
 
     /**
-     * @var array
+     * @var string
      *
      * @ORM\Column(name="documents", type="string", length=255, nullable=true)
      */

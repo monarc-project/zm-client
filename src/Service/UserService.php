@@ -11,6 +11,7 @@ use DateTime;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\PasswordService;
 use Monarc\Core\Service\UserService as CoreUserService;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
@@ -38,6 +39,9 @@ class UserService extends CoreUserService
     /** @var SnapshotTable */
     private $snapshotTable;
 
+    /** @var PasswordService */
+    private $passwordService;
+
     /** @var ConnectedUserService */
     private $connectedUserService;
 
@@ -46,13 +50,15 @@ class UserService extends CoreUserService
         array $config,
         AnrTable $anrTable,
         SnapshotTable $snapshotTable,
-        ConnectedUserService $connectedUserService
+        ConnectedUserService $connectedUserService,
+        PasswordService $passwordService
     ) {
         parent::__construct($userTable, $config);
 
         $this->anrTable = $anrTable;
         $this->snapshotTable = $snapshotTable;
         $this->connectedUserService = $connectedUserService;
+        $this->passwordService = $passwordService;
     }
 
     // TODO: remove me.
@@ -167,7 +173,7 @@ class UserService extends CoreUserService
     public function patch($userId, $data): UserSuperClass
     {
         if (isset($data['password'])) {
-            $this->validatePassword($data);
+            $this->passwordService->changePasswordWithoutOldPassword($data['id'], $data['password']);
         }
 
         /** @var User $user */
@@ -215,30 +221,28 @@ class UserService extends CoreUserService
 
     public function updateUserAnr(User $user, array $data): void
     {
+        $connectedUserName = $this->connectedUserService->getConnectedUser()->getFirstname()
+            . ' ' . $this->connectedUserService->getConnectedUser()->getLastname();
         if (isset($data['anrs'])) {
-            $allowedAnrIds = array_map('intval', array_column($data['anrs'], 'id'));
+            $assignedAnrIds = array_map('intval', array_column($data['anrs'], 'id'));
             foreach ($user->getUserAnrs() as $userAnr) {
-                if (!in_array($userAnr->getAnr()->getId(), $allowedAnrIds, true)) {
+                $assignedAnrKey = array_search($userAnr->getAnr()->getId(), $assignedAnrIds, true);
+                if ($assignedAnrKey === false) {
                     $user->removeUserAnr($userAnr);
+                } else {
+                    $userAnr
+                        ->setRwd($data['anrs'][$assignedAnrKey]['rwd'])
+                        ->setUpdater($connectedUserName);
+                    unset($data['anrs'][$assignedAnrKey]);
                 }
             }
             foreach ($data['anrs'] as $anr) {
-                $connectedUserName = $this->connectedUserService->getConnectedUser()->getFirstname()
-                    . ' ' . $this->connectedUserService->getConnectedUser()->getLastname();
-                $userAnr = $user->getUserAnrByAnrId($anr['id']);
-                if ($userAnr !== null) {
-                    $userAnr
+                $user->addUserAnr(
+                    (new UserAnr())
+                        ->setAnr($this->anrTable->findById($anr['id']))
                         ->setRwd($anr['rwd'])
-                        ->setUpdater($connectedUserName);
-                } else {
-                    $anrEntity = $this->anrTable->findById($anr['id']);
-                    $user->addUserAnr(
-                        (new UserAnr())
-                            ->setAnr($anrEntity)
-                            ->setRwd($anr['rwd'])
-                            ->setCreator($connectedUserName)
-                    );
-                }
+                        ->setCreator($connectedUserName)
+                );
             }
 
             $this->userTable->saveEntity($user);

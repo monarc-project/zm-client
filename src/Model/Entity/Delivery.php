@@ -55,7 +55,7 @@ class Delivery extends AbstractEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="name", type="text", length=255, nullable=true)
+     * @ORM\Column(name="name", type="text", nullable=true)
      */
     protected $name;
 
@@ -96,7 +96,7 @@ class Delivery extends AbstractEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="summary_eval_risk", type="text", length=255, nullable=true)
+     * @ORM\Column(name="summary_eval_risk", type="text", nullable=true)
      */
     protected $summaryEvalRisk;
 

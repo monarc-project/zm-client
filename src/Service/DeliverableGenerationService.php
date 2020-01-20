@@ -3395,11 +3395,12 @@ class DeliverableGenerationService extends AbstractService
         $tableWord = new PhpWord();
         $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
         $section = $tableWord->addSection();
-        if (count($processors) < 1) {
-            $table = $section->addTable($styleTable);
-            $table->addRow(400);
+        $table = $section->addTable($styleTable);
+        $table->addRow(400);
+        if(count($processors) < 1) {
             $table->addCell(Font::centimeterSizeToTwips(10.00), $cellTitle)->addText($this->anrTranslate('No processor'), $styleContentFont, $alignLeft);
         }
+
         foreach ($processors as $p) {
             //create section
             $section->addText(_WT($p->get('label')), $styleHeaderFont);
@@ -3413,10 +3414,10 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(_WT($p->get('contact')), $styleContentFont, $alignLeft);
             $table->addRow(400);
             $table->addCell(Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Activities'), $styleHeaderFont, $alignLeft);
-            $table->addCell(Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(_WT($p->get('1196')[$recordId]), $styleContentFont, $alignLeft);
+            $table->addCell(Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(_WT($p->get('activities')), $styleContentFont, $alignLeft);
             $table->addRow(400);
             $table->addCell(Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Security measures'), $styleHeaderFont, $alignLeft);
-            $table->addCell(Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(_WT($p->get('secMeasures')[$recordId]), $styleContentFont, $alignLeft);
+            $table->addCell(Font::centimeterSizeToTwips(14.00), $styleContentCell)->addText(_WT($p->get('secMeasures')), $styleContentFont, $alignLeft);
 
             $section->addTextBreak(1);
             $section->addText($this->anrTranslate('Actors'), $styleHeaderFont);
