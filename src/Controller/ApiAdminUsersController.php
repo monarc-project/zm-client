@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Service\PasswordService;
 use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
 use Monarc\FrontOffice\Service\UserService;
 use Zend\Mvc\Controller\AbstractRestfulController;
@@ -27,10 +28,14 @@ class ApiAdminUsersController extends AbstractRestfulController
     /** @var UserService */
     private $userService;
 
-    public function __construct(CreateUserInputValidator $createUserInputValidator, UserService $userService)
+    /** @var PasswordService */
+    private $passwordService;
+
+    public function __construct(CreateUserInputValidator $createUserInputValidator, UserService $userService, PasswordService $passwordService)
     {
         $this->createUserInputValidator = $createUserInputValidator;
         $this->userService = $userService;
+        $this->passwordService = $passwordService;
     }
 
     /**
@@ -120,6 +125,18 @@ class ApiAdminUsersController extends AbstractRestfulController
      */
     public function get($id)
     {
+        return new JsonModel($this->userService->getCompleteUser($id));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function resetPasswordAction()
+    {
+        $id = $this->params()->fromRoute('id');
+
+        $this->passwordService->resetPassword($id);
+
         return new JsonModel($this->userService->getCompleteUser($id));
     }
 
