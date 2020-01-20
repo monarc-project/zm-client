@@ -26,7 +26,6 @@ use Ramsey\Uuid\Uuid;
  */
 class Amv extends AmvSuperClass
 {
-
     /**
      * @var Uuid
      *
@@ -82,7 +81,7 @@ class Amv extends AmvSuperClass
     /**
      * @var ArrayCollection|MeasureSuperClass[]
      *
-     * @ORM\ManyToMany(targetEntity="Measure", mappedBy="amvs")
+     * @ORM\ManyToMany(targetEntity="Measure", mappedBy="amvs", cascade={"persist"})
      */
     protected $measures;
 

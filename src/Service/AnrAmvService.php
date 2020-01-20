@@ -7,12 +7,18 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AmvSuperClass;
+use Monarc\Core\Service\AmvService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Table\AmvTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\MeasureTable;
 use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
+use Monarc\FrontOffice\Model\Table\ThreatTable;
+use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -21,7 +27,7 @@ use Ramsey\Uuid\Uuid;
  * @see \Monarc\FrontOffice\Model\Table\AmvTable
  * @package Monarc\FrontOffice\Service
  */
-class AnrAmvService extends \Monarc\Core\Service\AmvService
+class AnrAmvService extends AmvService
 {
     protected $anrTable;
     protected $userAnrTable;
@@ -42,7 +48,7 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
     {
-        list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
+        list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();
 
         return $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
@@ -61,7 +67,7 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
      */
     public function getFilteredCount($filter = null, $filterAnd = null)
     {
-        list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
+        list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();
 
         return $this->get('table')->countFiltered(
             $this->parseFrontendFilter($filter, $filtersCol),
@@ -76,63 +82,77 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
      */
     public function update($id, $data)
     {
-        /** @var Amv $amv */
-        $amv = $this->get('table')->getEntity($id);
-        if (!$amv) {
-            throw new \Monarc\Core\Exception\Exception('Entity does not exist', 412);
-        }
-        if ($amv->get('anr')->get('id') != $data['anr']) {
-            throw new \Monarc\Core\Exception\Exception('Anr id error', 412);
-        }
-
-        $data['asset'] =['anr' => $amv->get('asset')->get('anr')->get('id'),'uuid' => $amv->get('asset')->get('uuid')->toString()]; // asset can not be changed
-
-        $this->filterPostFields($data, $amv);
-
-        $amv->setDbAdapter($this->get('table')->getDb());
-        $amv->setLanguage($this->getLanguage());
-
+        // TODO: validate/filter the data before, in the controller.
         if (empty($data)) {
-            throw new \Monarc\Core\Exception\Exception('Data missing', 412);
+            throw new Exception('Data missing', 412);
+        }
+        if ($id['anr'] !== $data['anr']) {
+            throw new Exception('Anr Id doesn\'t match Amv related Anr Id', 412);
         }
 
-        //manage the measures separatly because it's the slave of the relation amv<-->measures
-        foreach ($data['measures'] as $measure) {
-            $measureEntity =  $this->get('measureTable')->getEntity($measure);
-            $measureEntity->addAmv($amv);
-        }
+        /** @var AmvTable $amvTable */
+        $amvTable = $this->get('table');
+        /** @var Amv $amv */
+        $amv = $amvTable->findByUuidAndAnrId($id['uuid'], (int)$id['anr']);
 
-        foreach ($amv->measures as $m) {
-            if(false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
-              $m->deleteAmv($amv);
+        $linkedMeasuresUuids = array_column($data['measures'], 'uuid');
+        foreach ($amv->getMeasures() as $measure) {
+            $linkedMeasuresUuidKey = array_search((string)$measure->getUuid(), $linkedMeasuresUuids, true);
+            if ($linkedMeasuresUuidKey === false) {
+                $amv->removeMeasure($measure);
+                continue;
             }
+
+            unset($data['measures'][$linkedMeasuresUuidKey]);
         }
-        unset($data['measures']);
-        if($amv->changeUuid($data)) //check if we need a new uuid
-          $data['uuid'] = Uuid::uuid4()->toString();
-        $amv->exchangeArray($data);
-
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($amv, $dependencies);
-
-        $amv->setUpdater(
-            $this->getConnectedUser()->getFirstname() . ' ' . $this->getConnectedUser()->getLastname()
-        );
-
-        //update instance risk associated
-        $i = 1;
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('instanceRiskTable');
-        $instancesRisks = $instanceRiskTable->getEntityByFields(['amv' => $id]);
-        $nbInstancesRisks = count($instancesRisks);
-        foreach ($instancesRisks as $instanceRisk) {
-            $instanceRisk->threat = $amv->threat;
-            $instanceRisk->vulnerability = $amv->vulnerability;
-            $instanceRiskTable->save($instanceRisk, ($i == $nbInstancesRisks));
-            $i++;
+        /** @var MeasureTable $measureTable */
+        $measureTable = $this->get('measureTable');
+        foreach ($data['measures'] as $measure) {
+            $amv->addMeasure($measureTable->getEntity($measure));
         }
 
-        return $this->get('table')->save($amv);
+        $amv->setUpdater($this->getConnectedUser()->getFirstname() . ' ' . $this->getConnectedUser()->getLastname());
+
+        if ($this->isThreatChanged($data, $amv) || $this->isVulnerabilityChanged($data, $amv)) {
+            $newAmv = (new Amv())
+                ->setUuid(Uuid::uuid4())
+                ->setAnr($amv->getAnr())
+                ->setAsset($amv->getAsset())
+                ->setThreat($amv->getThreat())
+                ->setVulnerability($amv->getVulnerability())
+                ->setMeasures($amv->getMeasures())
+                ->setPosition($amv->getPosition())
+                ->setStatus($amv->getStatus())
+                ->setCreator($amv->getUpdater());
+
+            if ($this->isThreatChanged($data, $amv)) {
+                /** @var ThreatTable $threatTable */
+                $threatTable = $this->get('threatTable');
+                $threat = $threatTable->findByAnrAndUuid($amv->getAnr(), $data['threat']);
+                $newAmv->setThreat($threat);
+            }
+            if ($this->isVulnerabilityChanged($data, $amv)) {
+                /** @var VulnerabilityTable $vulnerabilityTable */
+                $vulnerabilityTable = $this->get('vulnerabilityTable');
+                $vulnerability = $vulnerabilityTable->findByAnrAndUuid($amv->getAnr(), $data['vulnerability']);
+                $newAmv->setVulnerability($vulnerability);
+            }
+
+            /** @var InstanceRisk[] $instancesRisks */
+            /** @var InstanceRiskTable $instanceRiskTable */
+            $instanceRiskTable = $this->get('instanceRiskTable');
+            $instancesRisks = $instanceRiskTable->findByAmv($amv);
+            foreach ($instancesRisks as $instanceRisk) {
+                $instanceRisk->setThreat($newAmv->getThreat());
+                $instanceRisk->setVulnerability($newAmv->getVulnerability());
+                $instanceRisk->setAmv($newAmv);
+            }
+
+            $amvTable->deleteEntity($amv, false);
+            $amv = $newAmv;
+        }
+
+        return $amvTable->saveEntity($amv);
     }
 
     /**
@@ -143,14 +163,14 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
         /** @var Amv $amv */
         $amv = $this->get('table')->getEntity($id);
         if (!$amv) {
-            throw new \Monarc\Core\Exception\Exception('Entity does not exist', 412);
+            throw new Exception('Entity does not exist', 412);
         }
         if ($amv->get('anr')->get('id') != $data['anr']) {
-            throw new \Monarc\Core\Exception\Exception('Anr id error', 412);
+            throw new Exception('Anr id error', 412);
         }
 
         // on ne permet pas de modifier l'asset
-        $data['asset'] =['anr' => $amv->get('asset')->get('anr')->get('id'),'uuid' => $amv->get('asset')->get('uuid')->toString()]; // asset can not be changed
+        $data['asset'] = ['anr' => $amv->get('asset')->get('anr')->get('id'), 'uuid' => $amv->get('asset')->get('uuid')->toString()]; // asset can not be changed
 
         $amv->setLanguage($this->getLanguage());
 
@@ -159,20 +179,20 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
                 $data[$dependency] = $amv->$dependency->id;
             }
         }
-        if(isset($data['measures'])){
-          //manage the measures separatly because it's the slave of the relation amv<-->measures
-          foreach ($data['measures'] as $measure) {
-              $measureEntity =  $this->get('measureTable')->getEntity($measure);
-              $measureEntity->addAmv($amv);
-          }
+        if (isset($data['measures'])) {
+            //manage the measures separatly because it's the slave of the relation amv<-->measures
+            foreach ($data['measures'] as $measure) {
+                $measureEntity = $this->get('measureTable')->getEntity($measure);
+                $measureEntity->addAmv($amv);
+            }
 
-          foreach ($amv->measures as $m) {
-              if(false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'),true)){
-                $m->deleteAmv($amv);
-              }
-          }
-          unset($data['measures']);
-      }
+            foreach ($amv->measures as $m) {
+                if (false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'), true)) {
+                    $m->$anr->removeAmv($amv);
+                }
+            }
+            unset($data['measures']);
+        }
 
         $amv->exchangeArray($data, true);
 
@@ -199,7 +219,7 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
 
         //manage the measures separatly because it's the slave of the relation amv<-->measures
         foreach ($data['measures'] as $measure) {
-            $measureEntity =  $this->get('measureTable')->getEntity($measure);
+            $measureEntity = $this->get('measureTable')->getEntity($measure);
             $measureEntity->addAmv($amv);
         }
         unset($data['measures']);
@@ -244,5 +264,15 @@ class AnrAmvService extends \Monarc\Core\Service\AmvService
         }
 
         return $id;
+    }
+
+    protected function isThreatChanged(array $data, AmvSuperClass $amv): bool
+    {
+        return (string)$amv->getThreat()->getUuid() !== $data['threat'];
+    }
+
+    protected function isVulnerabilityChanged(array $data, AmvSuperClass $amv): bool
+    {
+        return (string)$amv->getVulnerability()->getUuid() !== $data['vulnerability'];
     }
 }
