@@ -75,6 +75,4 @@ class Instance extends InstanceSuperClass
      * })
      */
     protected $parent;
-
-    protected $ascendance;
 }
