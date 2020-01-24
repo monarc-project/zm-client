@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\Core\Service\AbstractService;
@@ -76,14 +78,20 @@ class AnrRiskService extends AbstractService
         $data['specific'] = 1;
 
         // Check that we don't already have a risk with this vuln/threat/instance combo
-        $entity = $this->getList(0,10,null,null,['anr' => $data['anr'],'th.anr' => $data['anr'],'v.anr' => $data['anr'], 'v.uuid' => $data['vulnerability']['uuid'], 'th.uuid' => $data['threat']['uuid'],'i.id' => $data['instance'] ]);
-        //$entity = $this->instanceRiskTable->getEntityByFields(['anr' => $data['anr'], 'vulnerability' => $data['vulnerability'], 'threat' => $data['threat'], 'instance' => $data['instance']]);
-
-        if ($entity) {
+        $entity = $this->getList(0, 1, null, null, [
+            'anr' => $data['anr'],
+            'th.anr' => $data['anr'],
+            'v.anr' => $data['anr'],
+            'v.uuid' => $data['vulnerability']['uuid'],
+            'th.uuid' => $data['threat']['uuid'],
+            'i.id' => $data['instance']
+        ]);
+        if (!empty($entity)) {
             throw new \Monarc\Core\Exception\Exception("This risk already exists in this instance", 412);
         }
 
         $class = $this->get('entity');
+        /** @var InstanceRisk $entity */
         $entity = new $class();
         $entity->setLanguage($this->getLanguage());
         $entity->setDbAdapter($this->get('table')->getDb());
@@ -102,8 +110,18 @@ class AnrRiskService extends AbstractService
         $id = $table->save($entity, $last);
 
         //if global object, save risk of all instance of global object for this anr
-        if ($entity->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
-            $brothers = $instanceTable->getEntityByFields(['anr' => $entity->anr->id, 'object' => ['anr' => $entity->anr->id, 'uuid' => $entity->instance->object->uuid->toString()], 'id' => ['op' => '!=', 'value' => $instance->id]]);
+        if ($entity->getInstance()->getObject()->getScope() === MonarcObject::SCOPE_GLOBAL) {
+            $brothers = $instanceTable->getEntityByFields([
+                'anr' => $entity->getAnr()->getId(),
+                'object' => [
+                    'anr' => $entity->getAnr()->getId(),
+                    'uuid' => (string)$entity->getInstance()->getObject()->getUuid()
+                ],
+                'id' => [
+                    'op' => '!=',
+                    'value' => $instance->id,
+                ]
+            ]);
             $i = 1;
             $nbBrothers = count($brothers);
             foreach ($brothers as $brother) {

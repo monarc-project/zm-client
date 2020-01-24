@@ -30,7 +30,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
 
-        /** @var InstanceService $service */
+        /** @var AnrInstanceService $service */
         $service = $this->getService();
         $instances = $service->findByAnr($anrId);
         return new JsonModel([
