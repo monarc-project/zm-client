@@ -63,11 +63,5 @@ class FixTextFieldsConsistency extends AbstractMigration
                 CHANGE `synth_act` `synth_act` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL;
             '
         );
-        $this->execute(
-            'update record_processors set
-                `activities` = SUBSTRING(IF(SUBSTRING_INDEX(`activities`, \':"\', -1)=\'a:0:{}\', \'\', SUBSTRING_INDEX(`activities`, \':"\', -1)), 1, CHARACTER_LENGTH(SUBSTRING_INDEX(`activities`, \':"\', -1)) - 3),
-                `sec_measures` = SUBSTRING(IF(SUBSTRING_INDEX(`sec_measures`, \':"\', -1)=\'a:0:{}\', \'\', SUBSTRING_INDEX(`sec_measures`, \':"\', -1)), 1, CHARACTER_LENGTH(SUBSTRING_INDEX(`sec_measures`, \':"\', -1)) - 3)
-            where `activities` LIKE \'{%}\' OR `sec_measures` LIKE \'{%}\';'
-        );
     }
 }
