@@ -1240,100 +1240,97 @@ class DeliverableGenerationService extends AbstractService
 
         $mem_risks = $globalObject = [];
         $instanceTable = $this->get('instanceService')->get('table');
-        $maxLevelDeep = 0;
+        $maxLevelDeep = 1;
 
         foreach ($result as $r) {
-            $objectUuidString = (string)$r['oid'];
-            $threatUuidString = (string)$r['mid'];
-            $vulnerabilityUuidString = (string)$r['vid'];
-            if (!isset($globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString])) {
-                $key = null;
-                if ($r['scope'] == ObjectSuperClass::SCOPE_GLOBAL) {
-                    $key = "o-" . $objectUuidString;
-                    if (!isset($mem_risks[$key])) {
-                        $mem_risks[$key] = [
-                            'ctx' => $r['name'] . ' (' . $this->anrTranslate('Global') . ')',
-                            'global' => true,
-                            'risks' => [],
-                        ];
+          $objectUuidString = (string)$r['oid'];
+          $threatUuidString = (string)$r['mid'];
+          $vulnerabilityUuidString = (string)$r['vid'];
+          if (!isset($globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString])) {
+            $key = null;
+            if ($r['scope'] == ObjectSuperClass::SCOPE_GLOBAL) {
+                $key = "o-" . $objectUuidString;
+                if (!isset($mem_risks[$key])) {
+                    $mem_risks[$key] = [
+                        'ctx' => $r['name'] . ' (' . $this->anrTranslate('Global') . ')',
+                        'global' => true,
+                        'risks' => [],
+                    ];
+                }
+                $globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString] = $objectUuidString;
+            } else {
+                $key = "i-" . $r['id'];
+                if (!isset($mem_risks[$key])) {
+                    $instance = current($instanceTable->getEntityByFields(['anr' => $anr->getId(), 'id' => $r['id']]));
+                    $asc = $instanceTable->getAscendance($instance);
+                    $levelTree = count($asc);
+
+                    if ($levelTree > $maxLevelDeep) {
+                      $maxLevelDeep = $levelTree;
                     }
-                    $globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString] = $objectUuidString;
-                } else {
-                    $key = "i-" . $r['id'];
-                    if (!isset($mem_risks[$key])) {
-                        $instance = current($instanceTable->getEntityByFields(['anr' => $anr->getId(), 'id' => $r['id']]));
-                        $asc = $instanceTable->getAscendance($instance);
-                        $levelTree = count($asc);
 
-                        if ($levelTree > $maxLevelDeep) {
-                          $maxLevelDeep = $levelTree;
+                    $path = null;
+                    foreach ($asc as $a) {
+                        $path .= $a['name' . $this->currentLangAnrIndex];
+                        if (end($asc) !== $a) {
+                            $path .= ' > ';
                         }
+                    }
 
-                        $path = null;
-                        foreach ($asc as $a) {
-                            $path .= $a['name' . $this->currentLangAnrIndex];
-                            if (end($asc) !== $a) {
-                                $path .= ' > ';
-                            }
-                        }
-                        if ($r['id'] == 19645) {
-                          file_put_contents('php://stderr', print_r($path , TRUE).PHP_EOL);
-                        }
+                    $mem_risks[$key] = [
+                        'tree' => $asc,
+                        'ctx' => $path,
+                        'global' => false,
+                        'risks' => [],
+                    ];
 
-                        $mem_risks[$key] = [
-                            'tree' => $asc,
-                            'ctx' => $path,
-                            'global' => false,
-                            'risks' => [],
-                        ];
+                    for ($i=0; $i < $levelTree - 2 ; $i++) {
+                      if (!empty($instance->root->id) && !isset($mem_risks["i-" . $instance->parent->id]) && ($instance->parent->id != $instance->root->id)) {
+                          $parentId = $instance->parent->id;
+                          $instance = current($instanceTable->getEntityByFields(['anr' => $anr->getId(), 'id' => $parentId]));
+                          $asc = $instanceTable->getAscendance($instance);
 
-                        for ($i=0; $i < $levelTree - 2 ; $i++) {
-                          if (!empty($instance->root->id) && !isset($mem_risks["i-" . $instance->parent->id]) && ($instance->parent->id != $instance->root->id)) {
-                              $parentId = $instance->parent->id;
-                              $instance = current($instanceTable->getEntityByFields(['anr' => $anr->getId(), 'id' => $parentId]));
-                              $asc = $instanceTable->getAscendance($instance);
-
-                              $path = null;
-                              foreach ($asc as $a) {
-                                  $path .= $a['name' . $this->currentLangAnrIndex];
-                                  if (end($asc) !== $a) {
-                                      $path .= ' > ';
-                                  }
+                          $path = null;
+                          foreach ($asc as $a) {
+                              $path .= $a['name' . $this->currentLangAnrIndex];
+                              if (end($asc) !== $a) {
+                                  $path .= ' > ';
                               }
-
-                              $mem_risks["i-" . $parentId] = [
-                                  'tree' => $asc,
-                                  'ctx' => $path,
-                                  'global' => false,
-                                  'risks' => [],
-                              ];
-                          }else {
-                            break;
                           }
-                        }
+
+                          $mem_risks["i-" . $parentId] = [
+                              'tree' => $asc,
+                              'ctx' => $path,
+                              'global' => false,
+                              'risks' => [],
+                          ];
+                      }else {
+                        break;
+                      }
                     }
                 }
-
-                $mem_risks[$key]['risks'][] = [
-                    'impactC' => $r['impactC'],
-                    'impactI' => $r['impactI'],
-                    'impactA' => $r['impactA'],
-                    'm' => $r['mlabel'],
-                    'threatC' => $r['threatC'],
-                    'threatI' => $r['threatI'],
-                    'threatA' => $r['threatA'],
-                    'threatRate' => $r['threatRate'],
-                    'v' => $r['vlabel'],
-                    'comment' => $r['comment'],
-                    'vulRate' => $r['vulnerabilityRate'],
-                    'riskC' => $r['riskC'],
-                    'riskI' => $r['riskI'],
-                    'riskA' => $r['riskD'],
-                    'kindOfMeasure' => $r['kindOfMeasure'],
-                    'targetRisk' => $r['cacheTargetedRisk']
-
-                ];
             }
+
+            $mem_risks[$key]['risks'][] = [
+                'impactC' => $r['impactC'],
+                'impactI' => $r['impactI'],
+                'impactA' => $r['impactA'],
+                'm' => $r['mlabel'],
+                'threatC' => $r['threatC'],
+                'threatI' => $r['threatI'],
+                'threatA' => $r['threatA'],
+                'threatRate' => $r['threatRate'],
+                'v' => $r['vlabel'],
+                'comment' => $r['comment'],
+                'vulRate' => $r['vulnerabilityRate'],
+                'riskC' => $r['riskC'],
+                'riskI' => $r['riskI'],
+                'riskA' => $r['riskD'],
+                'kindOfMeasure' => $r['kindOfMeasure'],
+                'targetRisk' => $r['cacheTargetedRisk']
+
+            ];
+          }
         }
         $ctx = array_column($mem_risks, 'ctx');
         $global = array_column($mem_risks, 'global');
@@ -1342,187 +1339,187 @@ class DeliverableGenerationService extends AbstractService
 
 
         if (!empty($mem_risks)) {
+          $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
+          $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+          $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
+          $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
+          $styleContentFont = ['bold' => false, 'size' => 10];
+          $styleContentFontBold = ['bold' => true, 'size' => 10];
+          $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+          $cellColSpan2 = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+          $cellColSpan13 = ['gridSpan' => 13, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
+          $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => '444444', 'align' => 'center', 'Alignment' => 'center'];
+          $cellRowContinue = ['vMerge' => 'continue', 'valign' => 'center', 'bgcolor' => '444444'];
+          $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
+          $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
 
-            $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
-            $styleHeaderCell = ['valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
-            $styleHeader2Font = ['color' => 'FFFFFF', 'size' => 10];
-            $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 10];
-            $styleContentFont = ['bold' => false, 'size' => 10];
-            $styleContentFontBold = ['bold' => true, 'size' => 10];
-            $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
-            $cellColSpan2 = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
-            $cellColSpan13 = ['gridSpan' => 13, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-            $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => '444444', 'align' => 'center', 'Alignment' => 'center'];
-            $cellRowContinue = ['vMerge' => 'continue', 'valign' => 'center', 'bgcolor' => '444444'];
-            $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
-            $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
+          $impacts = ['C', 'I', 'A'];
 
-            $impacts = ['C', 'I', 'A'];
+          $tableWord = new PhpWord();
+          $section = $tableWord->addSection();
+          $maxLevelDeep = ($maxLevelDeep <= 4 ? $maxLevelDeep : 4);
+          for ($i=0; $i < $maxLevelDeep + 1 ; $i++) {
+            $tableWord->addTitleStyle($i + 3,['size' => 12,  'bold' => true]);
+          }
 
-            $tableWord = new PhpWord();
-            $section = $tableWord->addSection();
-            $maxLevelDeep = ($maxLevelDeep <= 4 ? $maxLevelDeep : 4);
-            for ($i=0; $i < $maxLevelDeep ; $i++) {
-              $tableWord->addTitleStyle($i + 3,['size' => 12,  'bold' => true]);
-            }
+          $maxLevelTitle = ($maxLevelDeep == 1 ? $maxLevelDeep : $maxLevelDeep - 1);
+          $title = array_fill(0,$maxLevelDeep,null);
 
-            $maxLevelTitle = $maxLevelDeep - 1;
-            $title = array_fill(0,$maxLevelDeep,null);
+          if (in_array('true',$global)) {
             $section->addTitle($this->anrTranslate('Global assets'),3);
+          }
 
-            foreach ($mem_risks as $data) {
-              if (empty($data['tree'])) {
-                $section->addTitle($data['ctx'],4);
-                $table = $section->addTable($styleTable);
-                $table->addRow(400, ['tblHeader' => true]);
-                $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Impact'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(5.70), $cellColSpan2)->addText($this->anrTranslate('Threat'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(10.70), $cellColSpan)->addText($this->anrTranslate('Vulnerability'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Current risk'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeader2Font, $alignCenter);
+          foreach ($mem_risks as $data) {
+            if (empty($data['tree'])) {
+              $section->addTitle($data['ctx'],4);
+              $table = $section->addTable($styleTable);
+              $table->addRow(400, ['tblHeader' => true]);
+              $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Impact'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(5.70), $cellColSpan2)->addText($this->anrTranslate('Threat'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(10.70), $cellColSpan)->addText($this->anrTranslate('Vulnerability'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Current risk'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeader2Font, $alignCenter);
 
-                $table->addRow(400, ['tblHeader' => true]);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Prob.'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Qualif.'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
-                $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
-                //$table->addRow(400);
-                //$table->addCell(Font::centimeterSizeToTwips(19.00), $cellColSpan13)->addText(_WT($data['ctx']), $styleContentFontBold, $alignLeft);
-              }else {
-                for ($i = 0; $i < count($data['tree']); $i++) {
-                  if($title[$i] != $data['tree'][$i]['id'] && $i <= $maxLevelTitle - 1) {
-                    $section->addTitle($data['tree'][$i]['name' . $this->currentLangAnrIndex],$i + 3);
-                    $title[$i] = $data['tree'][$i]['id'];
-                    if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
-                      $data['risks'] = true;
-                    }
-                    if ($i == count($data['tree']) - 1 && !empty($data['risks'])) {
-                      $section->addTextBreak();
-                      $table = $section->addTable($styleTable);
-                      $table->addRow(400, ['tblHeader' => true]);
-                      $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Impact'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(5.70), $cellColSpan2)->addText($this->anrTranslate('Threat'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(10.70), $cellColSpan)->addText($this->anrTranslate('Vulnerability'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Current risk'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeader2Font, $alignCenter);
+              $table->addRow(400, ['tblHeader' => true]);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Prob.'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Qualif.'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
+              $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+              $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+            }else {
+              for ($i = 0; $i < count($data['tree']); $i++) {
+                if($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id']) {
+                  $section->addTitle($data['tree'][$i]['name' . $this->currentLangAnrIndex],$i + 3);
+                  $title[$i] = $data['tree'][$i]['id'];
+                  if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
+                    $data['risks'] = true;
+                  }
+                  if ($i == count($data['tree']) - 1 && !empty($data['risks'])) {
+                    $section->addTextBreak();
+                    $table = $section->addTable($styleTable);
+                    $table->addRow(400, ['tblHeader' => true]);
+                    $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Impact'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(5.70), $cellColSpan2)->addText($this->anrTranslate('Threat'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(10.70), $cellColSpan)->addText($this->anrTranslate('Vulnerability'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Current risk'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeader2Font, $alignCenter);
 
-                      $table->addRow(400, ['tblHeader' => true]);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Prob.'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Qualif.'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
-                      $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
-                      $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
-                      $table->addRow(400);
-                      $table->addCell(Font::centimeterSizeToTwips(19.00), $cellColSpan13)->addText(_WT($data['ctx']), $styleContentFontBold, $alignLeft);
-                    }
+                    $table->addRow(400, ['tblHeader' => true]);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Prob.'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Label'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('Qualif.'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('C', $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText('I', $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleHeaderCell)->addText($this->anrTranslate('A'), $styleHeader2Font, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
+                    $table->addCell(Font::centimeterSizeToTwips(1.00), $cellRowContinue);
                   }
                 }
               }
+            }
 
-              if (!empty($data['risks'])) {
-                    foreach ($data['risks'] as $r) {
-                        foreach ($impacts as $impact) {
-                            $risk = $r['risk' . ucfirst($impact)];
-                            $bgcolor = 'FFBC1C';
-                            if ($r['threat' . ucfirst($impact)] == 0) {
-                                $bgcolor = 'E7E6E6';
-                                $r['risk' . ucfirst($impact)] = null;
+            if (!empty($data['risks']) && $data['risks'] !== true) {
+                  if ($data['global'] == false) {
+                    $table = $section->addTable($styleTable);
+                    $table->addRow(400);
+                    $table->addCell(Font::centimeterSizeToTwips(19.00), $cellColSpan13)->addText(_WT($data['ctx']), $styleContentFontBold, $alignLeft);
+                  }
+                  foreach ($data['risks'] as $r) {
+                    foreach ($impacts as $impact) {
+                        $risk = $r['risk' . ucfirst($impact)];
+                        $bgcolor = 'FFBC1C';
+                        if ($r['threat' . ucfirst($impact)] == 0) {
+                            $bgcolor = 'E7E6E6';
+                            $r['risk' . ucfirst($impact)] = null;
+                        } else {
+                            if ($risk == -1) {
+                                $bgcolor = '';
+                                $r['risk' . ucfirst($impact)] = "-";
                             } else {
-                                if ($risk == -1) {
-                                    $bgcolor = '';
-                                    $r['risk' . ucfirst($impact)] = "-";
+                                if ($risk <= $anr->seuil1) {
+                                    $bgcolor = 'D6F107';
                                 } else {
-                                    if ($risk <= $anr->seuil1) {
-                                        $bgcolor = 'D6F107';
-                                    } else {
-                                        if ($risk > $anr->seuil2) {
-                                            $bgcolor = 'FD661F';
-                                        }
+                                    if ($risk > $anr->seuil2) {
+                                        $bgcolor = 'FD661F';
                                     }
                                 }
                             }
-                            ${'styleContentCell' . ucfirst($impact)} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
                         }
-
-                        $bgcolor = 'FFBC1C';
-                        if ($r['targetRisk'] == -1) {
-                            $bgcolor = '';
-                            $r['targetRisk'] = "-";
-                        } else {
-                            if ($r['targetRisk'] <= $anr->seuil1) {
-                                $bgcolor = 'D6F107';
-                            } else {
-                                if ($r['targetRisk'] > $anr->seuil2) {
-                                    $bgcolor = 'FD661F';
-                                }
-                            }
-                        }
-                        $styleContentCellTargetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
-
-                        foreach ($r as $key => $value) {
-                            if ($value == -1) {
-                                $r[$key] = '-';
-                            }
-                        }
-
-                        switch ($r['kindOfMeasure']) {
-
-                            case 1:
-                                $Treatment = "Reduction";
-                                break;
-                            case 2;
-                                $Treatment = "Denied";
-                                break;
-                            case 3:
-                                $Treatment = "Accepted";
-                                break;
-                            case 4:
-                                $Treatment = "Shared";
-                                break;
-                            default:
-                                $Treatment = "Not treated";
-                        }
-
-                        $table = $section->addTable($styleTable);
-                        $table->addRow(400);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['impactC'], $styleContentFont, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['impactI'], $styleContentFont, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['impactA'], $styleContentFont, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($r['m']), $styleContentFont, $alignLeft);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['threatRate'], $styleContentFont, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($r['v']), $styleContentFont, $alignLeft);
-                        $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['vulRate'], $styleContentFont, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellC)->addText($r['riskC'], $styleContentFontBold, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellI)->addText($r['riskI'], $styleContentFontBold, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellA)->addText($r['riskA'], $styleContentFontBold, $alignCenter);
-                        $table->addCell(Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($this->anrTranslate($Treatment), $styleContentFont, $alignLeft);
-                        $table->addCell(Font::centimeterSizeToTwips(1.00), $styleContentCellTargetRisk)->addText($r['targetRisk'], $styleContentFontBold, $alignCenter);
-
+                        ${'styleContentCell' . ucfirst($impact)} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
                     }
-                }
-            }
 
-            return $this->getWordXmlFromWordObject($tableWord);
+                    $bgcolor = 'FFBC1C';
+                    if ($r['targetRisk'] == -1) {
+                        $bgcolor = '';
+                        $r['targetRisk'] = "-";
+                    } else {
+                        if ($r['targetRisk'] <= $anr->seuil1) {
+                            $bgcolor = 'D6F107';
+                        } else {
+                            if ($r['targetRisk'] > $anr->seuil2) {
+                                $bgcolor = 'FD661F';
+                            }
+                        }
+                    }
+                    $styleContentCellTargetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
+
+                    foreach ($r as $key => $value) {
+                        if ($value == -1) {
+                            $r[$key] = '-';
+                        }
+                    }
+
+                    switch ($r['kindOfMeasure']) {
+                        case 1:
+                            $Treatment = "Reduction";
+                            break;
+                        case 2;
+                            $Treatment = "Denied";
+                            break;
+                        case 3:
+                            $Treatment = "Accepted";
+                            break;
+                        case 4:
+                            $Treatment = "Shared";
+                            break;
+                        default:
+                            $Treatment = "Not treated";
+                    }
+
+                    $table->addRow(400);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['impactC'], $styleContentFont, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['impactI'], $styleContentFont, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['impactA'], $styleContentFont, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($r['m']), $styleContentFont, $alignLeft);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['threatRate'], $styleContentFont, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($r['v']), $styleContentFont, $alignLeft);
+                    $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCell)->addText($r['vulRate'], $styleContentFont, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellC)->addText($r['riskC'], $styleContentFontBold, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellI)->addText($r['riskI'], $styleContentFontBold, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellA)->addText($r['riskA'], $styleContentFontBold, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(1.00), $styleContentCell)->addText($this->anrTranslate($Treatment), $styleContentFont, $alignLeft);
+                    $table->addCell(Font::centimeterSizeToTwips(1.00), $styleContentCellTargetRisk)->addText($r['targetRisk'], $styleContentFontBold, $alignCenter);
+
+                  }
+              }
+          }
+          return $this->getWordXmlFromWordObject($tableWord);
         } else {
             return '';
         }
@@ -1569,7 +1566,7 @@ class DeliverableGenerationService extends AbstractService
             ->getQuery()->getResult();
         $lst = [];
         $instanceTable = $this->get('instanceService')->get('table');
-        $maxLevelDeep = 0;
+        $maxLevelDeep = 1;
 
         foreach ($result as $r) {
           if (!isset($lst[$r['id']])) {
@@ -1690,12 +1687,13 @@ class DeliverableGenerationService extends AbstractService
               $tableWord->addTitleStyle($i + 3,['size' => 12,  'bold' => true]);
             }
 
-            $maxLevelTitle = $maxLevelDeep - 1;
+            $maxLevelTitle = ($maxLevelDeep == 1 ? $maxLevelDeep : $maxLevelDeep - 1);
+
             $title = array_fill(0,$maxLevelDeep,null);
 
             foreach ($lst as $data) {
               for ($i = 0; $i < count($data['tree']); $i++) {
-                if($title[$i] != $data['tree'][$i]['id'] && $i <= $maxLevelTitle - 1) {
+                if($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id'] ) {
                   $section->addTitle($data['tree'][$i]['name' . $this->currentLangAnrIndex],$i + 3);
                   $title[$i] = $data['tree'][$i]['id'];
                   if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
