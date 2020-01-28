@@ -176,12 +176,6 @@ class DeliverableGenerationService extends AbstractService
             throw new \Monarc\Core\Exception\Exception("Model `id` not found");
         }
 
-        // Load the ANR
-        $anr = $this->anrTable->getEntity($anrId);
-        if (!$anr) {
-            throw new \Monarc\Core\Exception\Exception("Anr `id` not found");
-        }
-
         $delivery = $this->get('entity');
 
         $data['respCustomer'] = $data['consultants'];
@@ -201,6 +195,7 @@ class DeliverableGenerationService extends AbstractService
         //find the right model
         $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
         $pathLang = '';
+        $anr = $this->anrTable->findById($anrId);
         switch ($anr->getLanguage()) {
             case 1:
                 $pathLang = $model->path1;

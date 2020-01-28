@@ -69,4 +69,16 @@ class Anr extends AnrSuperClass
     {
         return $this->referentials;
     }
+
+    public function setLanguage($language): self
+    {
+        $this->language = $language;
+
+        return $this;
+    }
+
+    public function getLanguage(): int
+    {
+        return $this->language;
+    }
 }
