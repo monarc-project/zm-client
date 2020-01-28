@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
 
 /**
@@ -35,26 +36,23 @@ class AnrRecordRecipientService extends AbstractService
     * @see #exportRecipient
     * @param int $id The recipient's id
     * @return array The data array that should be saved
-    * @throws \Monarc\Core\Exception\Exception If the recipient is not found
+    * @throws Exception If the recipient is not found
     */
     public function generateExportArray($id)
     {
         $entity = $this->get('table')->getEntity($id);
 
         if (!$entity) {
-            throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
+            throw new Exception('Entity `id` not found.');
         }
 
         $return = [];
         $return['name'] = $entity->label;
-        if ($entity->type == 0) {
-            $return["type"] = "internal";
-        } else {
-            $return["type"] = "external";
-        }
-        if($entity->description != "") {
+        $return['type'] = $entity->type === 0 ? 'internal' : 'external';
+        if (empty($entity->description)) {
             $return['description'] = $entity->description;
         }
+
         return $return;
     }
     /**
@@ -68,23 +66,24 @@ class AnrRecordRecipientService extends AbstractService
         $data['anr'] = $anr;
         $data['label'] = $data['name'];
         unset($data['name']);
-        if ($data['type'] == "internal") {
-            $data['type'] = 0;
-        } else {
-            $data['type'] = 1;
-        }
-        $id = $data['id'];
-        $data['description'] = (isset($data['description']) ? $data['description'] : '');
+        $data['type'] = $data['type'] === 'internal' ? 0 : 1;
+        $data['description'] = $data['description'] ?? '';
         try {
-            $recipientEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'type' => $data['type'], 'description' => $data['description'], 'anr' => $anr]);
+            $recipientEntity = $this->get('table')->getEntityByFields([
+                'label' => $data['label'],
+                'type' => $data['type'],
+                'description' => $data['description'],
+                'anr' => $anr
+            ]);
             if (count($recipientEntity)) {
                 $id = $recipientEntity[0]->get('id');
             } else {
                 $id = $this->create($data);
             }
-        } catch (\Monarc\Core\Exception\Exception $e) {
+        } catch (Exception $e) {
             $id = $this->create($data);
         }
+
         return $id;
     }
 }

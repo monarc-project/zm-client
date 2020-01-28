@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\MonarcObject;
+use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 use Monarc\Core\Model\Entity\Scale;
 use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
@@ -1206,38 +1207,40 @@ class AnrInstanceService extends InstanceService
                       }
                     }
 
-                    $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->id]);
+                    $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->getId()]);
 
                     for ($pos=1; $pos <= $nbQuestions; $pos++) {
-                    foreach ($questions as $q) {
-                      if ($q->multichoice == 0){
-                        if ($q->get('label' . $this->getLanguage()) == $data['method']['questions'][$pos]['label' . $this->getLanguage()] && $pos <= $nbQuestions) {
-                          $q->response = $data['method']['questions'][$pos]['response'];
-                          $this->get('questionTable')->save($q,($pos == $nbQuestions));
-                          $pos++;
+                        foreach ($questions as $q) {
+                            if (!$q->multichoice) {
+                                if ($q->get('label' . $this->getLanguage()) == $data['method']['questions'][$pos]['label' . $this->getLanguage()] && $pos <= $nbQuestions) {
+                                    $q->response = $data['method']['questions'][$pos]['response'];
+                                    $this->get('questionTable')->save($q, $pos === $nbQuestions);
+                                    $pos++;
+                                }
+                            } else { // Match Multichoice responses
+                                $originQuestionChoices = [];
+                                $response = $data['method']['questions'][$pos]['response'] ?? '';
+                                if (trim($response, '[]')) {
+                                    $originQuestionChoices = explode(',', trim($response), '[]');
+                                }
+                                $questionChoicesIds = [];
+                                foreach ($originQuestionChoices as $originQuestionChoice) {
+                                    /** @var QuestionChoiceSuperClass[] $questionChoices */
+                                    $questionChoices = $this->get('questionChoiceTable')->getEntityByFields([
+                                        'anr' => $anr->getId(),
+                                        'label' . $this->getLanguage() => $data['method']['questionChoice'][$originQuestionChoice]['label' . $this->getLanguage()]
+                                    ]);
+                                    foreach ($questionChoices as $questionChoice) {
+                                        $questionChoicesIds[] = $questionChoice->getId();
+                                    }
+                                }
+                                $q->response = '['. implode(',', $questionChoicesIds) . ']';
+                                $this->get('questionTable')->save($q, $pos === $nbQuestions);
+                                $pos++;
+                            }
                         }
-                      } else { // Match Multichoice responses
-                        $replace = ["[","]"];
-                        $OriginQc = [];
-                        if(trim($data['method']['questions'][$pos]['response'])) {
-                            $OriginQc = preg_split("/[,]/",str_replace($replace,"",$data['method']['questions'][$pos]['response']));
-                        }
-                        $NewQcIds = null;
-
-                        foreach ($OriginQc as $qc ) {
-                          $DestQc[$qc] = $data['method']['questionChoice'][$qc];
-                          $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->id , 'label' . $this->getLanguage() => $DestQc[$qc]['label' . $this->getLanguage()]]);
-                          foreach ($questionChoices as $qc) {
-                            $NewQcIds .= $qc->get('id') . ",";
-                          }
-                        }
-                        $q->response = "[". substr($NewQcIds,0,-1) . "]";
-                        $this->get('questionTable')->save($q,($pos == $nbQuestions));
-                        $pos++;
-                      }
                     }
-                  }
-              }
+                }
               if (!empty($data['method']['threats'])) { // Evaluation of threats
                     foreach ($data['method']['threats'] as $tId => $v) {
                       if (!empty($data['method']['threats'][$tId]['theme'])) {

@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Entity\RecordProcessor;
 
 /**
  * AnrRecord Processor Service
@@ -180,14 +181,20 @@ class AnrRecordProcessorService extends AbstractService
         return $this->updateProcessor($id,$newData);
     }
 
-    public function importActivityAndSecMeasures($data, $processorId, $recordId) {
+    public function importActivityAndSecMeasures($data, $processorId)
+    {
+        /** @var RecordProcessor $entity */
         $entity = $this->get('table')->getEntity($processorId);
-        $entity->setActivities($data['activities']);
-        $entity->setSecMeasures($data['security_measures']);
-        $newData = [];
-        $newData['activities'] = $entity->getActivities();
-        $newData['secMeasures'] = $entity->getSecMeasures();
-        $result = $this->patch($processorId, $newData);
-        return $result;
+        if (isset($data['activities'])) {
+            $entity->setActivities($data['activities']);
+        }
+        if (isset($data['security_measures'])) {
+            $entity->setSecMeasures($data['security_measures']);
+        }
+
+        return $this->patch($processorId, [
+            'activities' => $entity->getActivities(),
+            'security_measures' => $entity->getSecMeasures(),
+        ]);
     }
 }

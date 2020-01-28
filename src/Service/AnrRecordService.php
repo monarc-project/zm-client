@@ -223,7 +223,7 @@ class AnrRecordService extends AbstractService
                 $data["activities"] = $activities[$recordId];
                 $secMeasures = $p->getSecMeasures();
                 $data["security_measures"] = $secMeasures[$recordId];
-                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($data, $p->getId(), $id);
+                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($data, $p->getId());
             }
         }
         if($entity->getPersonalData()) {
@@ -542,24 +542,22 @@ class AnrRecordService extends AbstractService
         $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
         $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
         if(isset($data['controller'])) {
-            $newData['controller']["id"] = $this->recordActorService->importFromArray($data['controller'], $anr);
+            $newData['controller'] = $this->recordActorService->importFromArray($data['controller'], $anr);
         }
         if(isset($data['representative'])) {
-            $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
+            $newData['representative'] = $this->recordActorService->importFromArray($data['representative'], $anr);
         }
         if(isset($data['data_protection_officer'])) {
-            $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
+            $newData['dpo'] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
         }
         if(isset($data['joint_controllers'])) {
             foreach ($data['joint_controllers'] as $jc) {
-                $jointController = [];
                 $jointController["id"] = $this->recordActorService->importFromArray($jc, $anr);
                 $newData['jointControllers'][] = $jointController;
             }
         }
         if(isset($data['recipients'])) {
             foreach ($data['recipients'] as $r) {
-                $recipient = [];
                 $recipient["id"] = $this->recordRecipientService->importFromArray($r, $anr);
                 $newData['recipients'][] = $recipient;
             }
@@ -567,7 +565,6 @@ class AnrRecordService extends AbstractService
         $createdProcessors = [];
         if(isset($data['processors'])) {
             foreach ($data['processors'] as $p) {
-                $processor = [];
                 $processor["id"] = $this->recordProcessorService->importFromArray($p, $anr);
                 $createdProcessors[$processor["id"]] = $p;
                 $newData['processors'][] = $processor;
@@ -576,19 +573,17 @@ class AnrRecordService extends AbstractService
         $id = $this->create($newData);
         if(isset($data['processors'])) {
             foreach ($createdProcessors as $processorId => $p) {
-                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($p, $processorId, $id);
+                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($p, $processorId);
             }
         }
         if(isset($data['personal_data'])) {
             foreach ($data['personal_data'] as $pd) {
-                $personalData = [];
                 $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr, $id);
                 $newData['personalData'][] = $personalData;
             }
         }
         if(isset($data['international_transfers'])) {
             foreach ($data['international_transfers'] as $it) {
-                $internationalTransfers = [];
                 $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id);
                 $newData['internationalTransfers'][] = $internationalTransfers;
             }
