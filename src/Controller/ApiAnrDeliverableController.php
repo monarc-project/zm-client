@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\AbstractController;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\DeliverableGenerationService;
+use Zend\Mvc\Controller\AbstractRestfulController;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -16,24 +18,24 @@ use Zend\View\Model\JsonModel;
  * Class ApiAnrDeliverableController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiAnrDeliverableController extends AbstractController
+class ApiAnrDeliverableController extends AbstractRestfulController
 {
-    protected $name = 'deliverable';
+    /** @var DeliverableGenerationService */
+    private $deliverableGenerationService;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(DeliverableGenerationService $deliverableGenerationService)
+    {
+        $this->deliverableGenerationService = $deliverableGenerationService;
+    }
+
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
         $data['anr'] = $anrId;
 
         $typeDoc = $data['typedoc'];
         if (empty($typeDoc)) {
-            throw new \Monarc\Core\Exception\Exception('Document type missing', 412);
+            throw new Exception('Document type missing', 412);
         }
 
         $params = [
@@ -53,7 +55,8 @@ class ApiAnrDeliverableController extends AbstractController
         ];
 
         // Generate the DOCX file
-        $filePath = $this->getService()->generateDeliverableWithValues($anrId, $typeDoc, $params, $data);
+        $filePath = $this->deliverableGenerationService
+            ->generateDeliverableWithValues($anrId, $typeDoc, $params, $data);
 
         if (file_exists($filePath)) {
             $response = $this->getResponse();
@@ -67,25 +70,19 @@ class ApiAnrDeliverableController extends AbstractController
                 ->addHeaderLine('Content-Disposition', 'attachment; filename="deliverable.docx"');
 
             return $this->response;
-        } else {
-            throw new \Monarc\Core\Exception\Exception("Generated file not found: " . $filePath);
         }
+
+        throw new Exception('Generated file not found: ' . $filePath);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-
-        $result = [
-            'delivery' => $this->getService()->getLastDeliveries($anrId, $id),
-        ];
-        return new JsonModel($result);
+        return new JsonModel([
+            'delivery' => $this->deliverableGenerationService->getLastDeliveries(
+                (int)$this->params()->fromRoute('anrid'),
+                $id
+            ),
+        ]);
     }
 
     /**
@@ -93,47 +90,11 @@ class ApiAnrDeliverableController extends AbstractController
      */
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-
-        $result = [
-            'models' => $this->getService()->getDeliveryModels(),
-            'delivery' => $this->getService()->getLastDeliveries($anrId),
-        ];
-        return new JsonModel($result);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function deleteList($data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
+        return new JsonModel([
+            'models' => $this->deliverableGenerationService->getDeliveryModels(),
+            'delivery' => $this->deliverableGenerationService->getLastDeliveries(
+                (int)$this->params()->fromRoute('anrid')
+            ),
+        ]);
     }
 }
