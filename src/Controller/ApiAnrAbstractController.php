@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
+use Ramsey\Uuid\Uuid;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -28,7 +30,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];
@@ -63,8 +65,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
         $class = $this->getService()->get('entity');
         $entity = new $class();
         $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
-        if (count($ids) == 2 && \Ramsey\Uuid\Uuid::isValid($id) && in_array("anr", $ids) && in_array("uuid", $ids)) //TO improve check if the key is (uuid, anr_id)
-        {
+        if (\count($ids) === 2 && empty(array_diff(['uuid', 'anr'], $ids)) && Uuid::isValid($id)) {
             $identifier['uuid'] = $id;
             $identifier['anr'] = $anrId;
         } else {
@@ -73,11 +74,8 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
 
         $entity = $this->getService()->getEntity($identifier);
 
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids diffence', 412);
+        if (!$entity['anr'] || $entity['anr']->get('id') !== $anrId) {
+            throw new Exception('Anr ids diffence', 412);
         }
 
         if (count($this->dependencies)) {
@@ -93,9 +91,6 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
 
         if (array_keys($data) !== range(0, count($data) - 1)) {
             # if $data is an associative array
@@ -146,7 +141,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -167,7 +162,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
         }
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -200,7 +195,6 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
     public function deleteList($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $ids = [];
 
         $class = $this->getService()->get('entity');
         $entity = new $class();
