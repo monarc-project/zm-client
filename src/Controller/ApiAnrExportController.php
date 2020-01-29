@@ -29,7 +29,7 @@ class ApiAnrExportController extends AbstractRestfulController
     public function create($data)
     {
         if (empty($data['id'])) {
-            $data['id'] = (int)$this->params()->fromRoute('anrid')
+            $data['id'] = (int)$this->params()->fromRoute('anrid');
         }
 
         $output = $this->anrCoreService->exportAnr($data);
