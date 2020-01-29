@@ -19,6 +19,7 @@ class AnrRecordPersonalDataService extends AbstractService
 {
     protected $dependencies = ['anr', 'record', 'dataCategories'];
     protected $filterColumns = ['label'];
+    /** @var AnrRecordDataCategoryService */
     protected $recordDataCategoryService;
     protected $userAnrTable;
     protected $anrTable;
@@ -30,26 +31,28 @@ class AnrRecordPersonalDataService extends AbstractService
      */
     public function createPersonalData($data)
     {
-        $dcs = array();
-        foreach ($data['dataCategories'] as $dc) {
-            if(!isset($dc['id'])) {
-                $dc['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new controller
-                $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc, true);
+        $dataCategories = [];
+        if (!empty($data['dataCategories'])) {
+            foreach ($data['dataCategories'] as $dataCategory) {
+                if (!isset($dataCategory['id'])) {
+                    $dc['anr'] = $this->anrTable->getEntity($data['anr']);
+                    $dc['id'] = $this->recordDataCategoryService->createDataCategory($dataCategory);
+                }
+                $dataCategories[] = $dataCategory['id'];
             }
-            array_push($dcs, $dc['id']);
         }
-        $data['dataCategories'] = $dcs;
-        return $this->create($data, true);
+        $data['dataCategories'] = $dataCategories;
+
+        return $this->create($data);
     }
 
     public function deletePersonalData($id)
     {
         $personalDataEntity = $this->get('table')->getEntity($id);
         $anrId = $personalDataEntity->anr->id;
-        $dataCategoriesToCheck = array();
+        $dataCategoriesToCheck = [];
         foreach($personalDataEntity->dataCategories as $dc) {
-            array_push($dataCategoriesToCheck, $dc->id);
+            $dataCategoriesToCheck[] = $dc->id;
         }
 
         $result = $this->get('table')->delete($id);
@@ -69,24 +72,27 @@ class AnrRecordPersonalDataService extends AbstractService
     public function updatePersonalData($id, $data)
     {
         $entity = $this->get('table')->getEntity($id);
-        $dataCategories = array();
-        foreach ($data['dataCategories'] as $dc) {
-            if(!isset($dc['id'])) {
-                $dc['anr'] = $this->anrTable->getEntity($data['anr']);
-                // Create a new data category
-                $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc, true);
+        $dataCategories = [];
+        if (!empty($data['dataCategories'])) {
+            foreach ($data['dataCategories'] as $dc) {
+                if (!isset($dc['id'])) {
+                    $dc['anr'] = $this->anrTable->getEntity($data['anr']);
+                    $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc);
+                }
+                $dataCategories[] = $dc['id'];
             }
-            array_push($dataCategories, $dc['id']);
         }
         $data['dataCategories'] = $dataCategories;
-        $oldDataCategories = array();
-        foreach( $entity->dataCategories as $dc) {
-            array_push($oldDataCategories, $dc->id);
+        $oldDataCategories = [];
+        foreach ($entity->dataCategories as $dc) {
+            $oldDataCategories[] = $dc->id;
         }
         $result = $this->update($id, $data);
         foreach($oldDataCategories as $dc) {
-            if(!in_array($dc, $dataCategories) && $this->recordDataCategoryService->orphanDataCategory($dc, $data['anr'])) {
-                $this->recordDataCategoryService->delete(['anr'=> $data['anr'], 'id' => $dc]);
+            if(!in_array($dc, $dataCategories)
+                && $this->recordDataCategoryService->orphanDataCategory($dc, $data['anr'])
+            ) {
+                $this->recordDataCategoryService->delete(['anr' => $data['anr'], 'id' => $dc]);
             }
         }
         return $result;

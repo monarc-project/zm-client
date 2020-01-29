@@ -43,26 +43,26 @@ class AnrRecordService extends AbstractService
     {
         $entity = $this->get('table')->getEntity($id);
         $anrId = $entity->anr->id;
-        $actorsToCheck = array();
-        $processorsToCheck = array();
-        $recipientsToCheck = array();
+        $actorsToCheck = [];
+        $processorsToCheck = [];
+        $recipientsToCheck = [];
         if($entity->controller) {
-            array_push($actorsToCheck, $entity->controller->id);
+            $actorsToCheck[] = $entity->controller->id;
         }
         if($entity->dpo) {
-            array_push($actorsToCheck, $entity->dpo->id);
+            $actorsToCheck[] = $entity->dpo->id;
         }
         if($entity->representative) {
-            array_push($actorsToCheck, $entity->representative->id);
+            $actorsToCheck[] = $entity->representative->id;
         }
         foreach($entity->jointControllers as $jc) {
-            array_push($actorsToCheck, $jc->id);
+            $actorsToCheck[] = $jc->id;
         }
         foreach($entity->processors as $p) {
-            array_push($processorsToCheck, $p->id);
+            $processorsToCheck[] = $p->id;
         }
         foreach($entity->recipients as $r) {
-            array_push($recipientsToCheck, $r->id);
+            $recipientsToCheck[] = $r->id;
         }
         foreach($entity->personalData as $pd) {
             $this->recordPersonalDataService->deletePersonalData(['anr'=> $anrId, 'id' => $pd->id]);
@@ -107,24 +107,24 @@ class AnrRecordService extends AbstractService
         // keep entities on old object to delete orphans
         $oldActors = array();
         if($entity->controller && $entity->controller->id) {
-            array_push($oldActors, $entity->controller->id);
+            $oldActors[] = $entity->controller->id;
         }
         if($entity->representative && $entity->representative->id) {
-            array_push($oldActors, $entity->representative->id);
+            $oldActors[] = $entity->representative->id;
         }
         if($entity->dpo && $entity->dpo->id) {
-            array_push($oldActors, $entity->dpo->id);
+            $oldActors[] = $entity->dpo->id;
         }
         foreach($entity->jointControllers as $js) {
-            array_push($oldActors, $js->id);
+            $oldActors[] = $js->id;
         }
         $oldRecipients = array();
         foreach( $entity->recipients as $r) {
-            array_push($oldRecipients, $r->id);
+            $oldRecipients[] = $r->id;
         }
         $oldProcessors = array();
         foreach( $entity->processors as $p) {
-            array_push($oldProcessors, $p->id);
+            $oldProcessors[] = $p->id;
         }
 
         if(isset($data['controller']['id'])) {
@@ -144,27 +144,27 @@ class AnrRecordService extends AbstractService
         }
         $jointControllers = array();
         foreach ($data['jointControllers'] as $jc) {
-            array_push($jointControllers, $jc['id']);
+            $jointControllers[] = $jc['id'];
         }
         $data['jointControllers'] = $jointControllers;
         $personalData = array();
         foreach ($data['personalData'] as $pd) {
-            array_push($personalData,$pd['id']);
+            $personalData[] = $pd['id'];
         }
         $data['personalData'] = $personalData;
         $recipients = array();
         foreach ($data['recipients'] as $recipient) {
-            array_push($recipients,$recipient['id']);
+            $recipients[] = $recipient['id'];
         }
         $data['recipients'] = $recipients;
         $internationalTransfers = array();
         foreach ($data['internationalTransfers'] as $it) {
-            array_push($internationalTransfers,$it['id']);
+            $internationalTransfers[] = $it['id'];
         }
         $data['internationalTransfers'] = $internationalTransfers;
         $processors = array();
         foreach ($data['processors'] as $processor) {
-            array_push($processors,$processor['id']);
+            $processors[] = $processor['id'];
         }
         $data['processors'] = $processors;
 
@@ -223,7 +223,7 @@ class AnrRecordService extends AbstractService
                 $data["activities"] = $activities[$recordId];
                 $secMeasures = $p->getSecMeasures();
                 $data["security_measures"] = $secMeasures[$recordId];
-                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($data, $p->getId(), $id);
+                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($data, $p->getId());
             }
         }
         if($entity->getPersonalData()) {
@@ -383,7 +383,7 @@ class AnrRecordService extends AbstractService
                     if ($file !== false && ($id = $this->importFromArray($file, $anrId)) !== false) {
                         $ids[] = $id;
                     } else {
-                        $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
+                        $errors[] = 'The file "' . $row['name'] . '" can\'t be imported';
                     }
                     $file = [];
                     $file['type'] = 'record';
@@ -541,54 +541,49 @@ class AnrRecordService extends AbstractService
         $newData['label'] = $data['name'];
         $newData['purposes'] = (isset($data['purposes']) ? $data['purposes'] : '');
         $newData['secMeasures'] = (isset($data['security_measures']) ? $data['security_measures'] : '');
-        if(isset($data['controller'])) {
-            $newData['controller']["id"] = $this->recordActorService->importFromArray($data['controller'], $anr);
+        if (isset($data['controller'])) {
+            $newData['controller'] = $this->recordActorService->importFromArray($data['controller'], $anr);
         }
-        if(isset($data['representative'])) {
-            $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
+        if (isset($data['representative'])) {
+            $newData['representative'] = $this->recordActorService->importFromArray($data['representative'], $anr);
         }
-        if(isset($data['data_protection_officer'])) {
-            $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
+        if (isset($data['data_protection_officer'])) {
+            $newData['dpo'] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
         }
-        if(isset($data['joint_controllers'])) {
+        if (isset($data['joint_controllers'])) {
             foreach ($data['joint_controllers'] as $jc) {
-                $jointController = [];
                 $jointController["id"] = $this->recordActorService->importFromArray($jc, $anr);
                 $newData['jointControllers'][] = $jointController;
             }
         }
-        if(isset($data['recipients'])) {
+        if (isset($data['recipients'])) {
             foreach ($data['recipients'] as $r) {
-                $recipient = [];
                 $recipient["id"] = $this->recordRecipientService->importFromArray($r, $anr);
                 $newData['recipients'][] = $recipient;
             }
         }
         $createdProcessors = [];
-        if(isset($data['processors'])) {
+        if (isset($data['processors'])) {
             foreach ($data['processors'] as $p) {
-                $processor = [];
                 $processor["id"] = $this->recordProcessorService->importFromArray($p, $anr);
                 $createdProcessors[$processor["id"]] = $p;
                 $newData['processors'][] = $processor;
             }
         }
         $id = $this->create($newData);
-        if(isset($data['processors'])) {
+        if (isset($data['processors'])) {
             foreach ($createdProcessors as $processorId => $p) {
-                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($p, $processorId, $id);
+                $processor["id"] = $this->recordProcessorService->importActivityAndSecMeasures($p, $processorId);
             }
         }
-        if(isset($data['personal_data'])) {
+        if (isset($data['personal_data'])) {
             foreach ($data['personal_data'] as $pd) {
-                $personalData = [];
                 $personalData['id'] = $this->recordPersonalDataService->importFromArray($pd, $anr, $id);
                 $newData['personalData'][] = $personalData;
             }
         }
-        if(isset($data['international_transfers'])) {
+        if (isset($data['international_transfers'])) {
             foreach ($data['international_transfers'] as $it) {
-                $internationalTransfers = [];
                 $internationalTransfers['id'] = $this->recordInternationalTransferService->importFromArray($it, $anr, $id);
                 $newData['internationalTransfers'][] = $internationalTransfers;
             }

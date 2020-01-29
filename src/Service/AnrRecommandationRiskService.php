@@ -736,7 +736,6 @@ class AnrRecommandationRiskService extends \Monarc\Core\Service\AbstractService
         $recoHistoTable = $this->get('recommandationHistoricTable');
         $lang = $this->anrTable->getEntity($anr)->language;
 
-
         $histo = [
             'final' => $final,
             'implComment' => $data['comment'],
@@ -764,7 +763,6 @@ class AnrRecommandationRiskService extends \Monarc\Core\Service\AbstractService
             'riskColorAfter' => ($final)
                 ?  ((($instanceRisk->get('cacheTargetedRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheTargetedRisk')) : ''))
                 : (($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : ''),
-
         ];
 
         $class = $this->get('recommandationHistoricEntity');

@@ -57,7 +57,6 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceRiskOpService' => AnrInstanceRiskOpService::class,
         'objectObjectService' => ObjectObjectService::class,
         'translateService' => TranslateService::class,
-        'instanceTable' => Table\InstanceTable::class,
         'recordService' => AnrRecordService::class,
         'configService' => ConfigService::class,
 

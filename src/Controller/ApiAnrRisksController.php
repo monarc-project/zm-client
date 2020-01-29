@@ -7,6 +7,9 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\FrontOffice\Service\AnrRiskService;
+use Zend\Http\Response;
+use Zend\Mvc\Controller\AbstractRestfulController;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -15,108 +18,108 @@ use Zend\View\Model\JsonModel;
  * Class ApiAnrRisksController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiAnrRisksController extends ApiAnrAbstractController
+class ApiAnrRisksController extends AbstractRestfulController
 {
-    protected $name = 'risks';
+    /** @var AnrRiskService */
+    private $anrRiskService;
 
-    protected $dependencies = [];
+    public function __construct(AnrRiskService $anrRiskService)
+    {
+        $this->anrRiskService = $anrRiskService;
+    }
 
-    /**
-     * @inheritdoc
-     */
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $params = $this->parseParams();
+        $params = $this->prepareParams();
 
         if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv; charset=utf-8');
-            die($this->getService()->getCsvRisks($anrId, ['id' => $id], $params));
-        } else {
-            $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
+            /** @var Response $response */
+            $response = $this->getResponse();
+            $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
+            $response->setContent($this->anrRiskService->getCsvRisks($anrId, ['id' => $id], $params));
 
-            return new JsonModel([
-                'count' => count($lst),
-                $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
-            ]);
+            return $response;
         }
+
+        $risks = $this->anrRiskService->getRisks($anrId, ['id' => $id], $params);
+
+        return new JsonModel([
+            'count' => \count($risks),
+            'risks' => $params['limit'] > 0
+                ? \array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit'])
+                : $risks,
+        ]);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $params = $this->parseParams();
+        $params = $this->prepareParams();
 
         if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv; charset=utf-8');
-            die($this->getService()->getCsvRisks($anrId, null, $params));
-        } else {
-            $lst = $this->getService()->getRisks($anrId, null, $params);
-            return new JsonModel([
-                'count' => count($lst),
-                $this->name => $params['limit'] > 0 ? array_slice($lst, ($params['page'] - 1) * $params['limit'], $params['limit']) : $lst,
-            ]);
+            /** @var Response $response */
+            $response = $this->getResponse();
+            $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
+            $response->setContent($this->anrRiskService->getCsvRisks($anrId, null, $params));
+
+            return $response;
         }
+
+        $risks = $this->anrRiskService->getRisks($anrId, null, $params);
+
+        return new JsonModel([
+            'count' => \count($risks),
+            'risks' => $params['limit'] > 0
+                ? \array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit'])
+                : $risks,
+        ]);
     }
 
-    /**
-     * Helper function to parse query parameters
-     * @return array The sorted parameters
-     */
-    protected function parseParams()
+    public function create($data)
     {
-        $keywords = trim($this->params()->fromQuery("keywords", ''));
-        $kindOfMeasure = $this->params()->fromQuery("kindOfMeasure");
-        $order = $this->params()->fromQuery("order", "maxRisk");
-        $order_direction = $this->params()->fromQuery("order_direction", "desc");
-        $thresholds = $this->params()->fromQuery("thresholds");
-        $page = $this->params()->fromQuery("page", 1);
-        $limit = $this->params()->fromQuery("limit", 50);
-        $amvs = $this->params()->fromQuery("amvs");
+        $params = [
+            'anr' => (int)$this->params()->fromRoute('anrid'),
+            'instance' => $data['instance'],
+            'specific' => $data['specific'],
+            'threat' => [
+                'uuid' => $data['threat'],
+                'anr' => $data['anrId'],
+            ],
+            'vulnerability' => [
+                'uuid' => $data['vulnerability'],
+                'anr' => $data['anrId'],
+            ],
+        ];
+
+        $id = $this->anrRiskService->create($params);
+
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $id,
+        ]);
+    }
+
+    public function delete($id)
+    {
+        $this->anrRiskService->deleteFromAnr($id, (int)$this->params()->fromRoute('anrid'));
+
+        return new JsonModel(['status' => 'ok']);
+    }
+
+    protected function prepareParams(): array
+    {
+        $params = $this->params();
 
         return [
-            'keywords' => $keywords,
-            'kindOfMeasure' => $kindOfMeasure,
-            'order' => $order,
-            'order_direction' => $order_direction,
-            'thresholds' => $thresholds,
-            'page' => $page,
-            'limit' => $limit,
-            'amvs' => $amvs
+            'keywords' => trim($params->fromQuery('keywords', '')),
+            'kindOfMeasure' => $params->fromQuery('kindOfMeasure'),
+            'order' => $params->fromQuery('order', 'maxRisk'),
+            'order_direction' => $params->fromQuery('order_direction', 'desc'),
+            'thresholds' => $params->fromQuery('thresholds'),
+            'page' => $params->fromQuery('page', 1),
+            'limit' => $params->fromQuery('limit', 50),
+            'amvs' => $params->fromQuery('amvs')
         ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function deleteList($data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        $this->methodNotAllowed();
     }
 }

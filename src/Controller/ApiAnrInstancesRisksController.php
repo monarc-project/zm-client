@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -27,11 +28,11 @@ class ApiAnrInstancesRisksController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
-        $id = $this->getService()->updateFromRiskTable($id, $data);
+        $id = $this->getService()->updateFromRiskTable((int)$id, $data);
 
         $entity = $this->getService()->getEntity($id);
 

@@ -969,7 +969,7 @@ return [
             Controller\ApiAnrScalesTypesController::class => Controller\ApiAnrScalesTypesControllerFactory::class,
             Controller\ApiAnrScalesCommentsController::class => Controller\ApiAnrScalesCommentsControllerFactory::class,
             Controller\ApiDashboardAnrCartoRisksController::class => Controller\ApiDashboardAnrCartoRisksControllerFactory::class,
-            Controller\ApiAnrRisksController::class => Controller\ApiAnrRisksControllerFactory::class,
+            Controller\ApiAnrRisksController::class => AutowireFactory::class,
             Controller\ApiDashboardAnrRisksController::class => Controller\ApiDashboardAnrRisksControllerFactory::class,
             Controller\ApiAnrRisksOpController::class => Controller\ApiAnrRisksOpControllerFactory::class,
             Controller\ApiAnrLibraryController::class => Controller\ApiAnrLibraryControllerFactory::class,

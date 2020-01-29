@@ -30,7 +30,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
 
-        /** @var InstanceService $service */
+        /** @var AnrInstanceService $service */
         $service = $this->getService();
         $instances = $service->findByAnr($anrId);
         return new JsonModel([
@@ -72,19 +72,19 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        /** @var InstanceService $service */
+        /** @var AnrInstanceService $service */
         $service = $this->getService();
         $entity = $service->getEntityByIdAndAnr($id, $anrId);
         $params = $this->parseParams();
         if ($this->params()->fromQuery('csv', false)) {
             header('Content-Type: text/csv');
             die($this->getService()->getCsvRisksOp($anrId, $entity, $params));
-          }
+        }
         if ($this->params()->fromQuery('csvInfoInst', false)) {
             header('Content-Type: text/csv');
             die($this->getService()->getCsvRisks($anrId, $id, $params));
-          }
-        if (count($this->dependencies)) {
+        }
+        if (\count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
 

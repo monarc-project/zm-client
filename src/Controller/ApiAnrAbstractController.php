@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
+use Ramsey\Uuid\Uuid;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -28,7 +30,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];
@@ -57,27 +59,23 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
      */
     public function get($id)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      $identifier=[];
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $identifier = [];
 
-       $class = $this->getService()->get('entity');
-       $entity = new $class();
-       $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
-       if(count($ids)==2 && \Ramsey\Uuid\Uuid::isValid($id) && in_array("anr", $ids) && in_array("uuid", $ids)) //TO improve check if the key is (uuid, anr_id)
-       {
-         $identifier['uuid'] = $id;
-         $identifier['anr'] = $anrId;
-       }else {
-         $identifier = $id;
-       }
+        $class = $this->getService()->get('entity');
+        $entity = new $class();
+        $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
+        if (\count($ids) === 2 && empty(array_diff(['uuid', 'anr'], $ids)) && Uuid::isValid($id)) {
+            $identifier['uuid'] = $id;
+            $identifier['anr'] = $anrId;
+        } else {
+            $identifier = $id;
+        }
 
         $entity = $this->getService()->getEntity($identifier);
 
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids diffence', 412);
+        if (!$entity['anr'] || $entity['anr']->get('id') !== $anrId) {
+            throw new Exception('Anr ids diffence', 412);
         }
 
         if (count($this->dependencies)) {
@@ -93,9 +91,6 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
 
         if (array_keys($data) !== range(0, count($data) - 1)) {
             # if $data is an associative array
@@ -105,24 +100,24 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
         $created_objects = [];
         foreach ($data as $key => $new_data) {
             $new_data['anr'] = $anrId;
-            if(isset($new_data['referential'])){
-               $new_data['referential'] = ['uuid' => $new_data['referential'], 'anr'=>$anrId];
+            if (isset($new_data['referential'])) {
+                $new_data['referential'] = ['uuid' => $new_data['referential'], 'anr' => $anrId];
             }
-            if(isset($new_data['threat']) && !is_array($new_data['threat'])){
-               $new_data['threat'] = ['uuid' => $new_data['threat'], 'anr'=>$anrId];
+            if (isset($new_data['threat']) && !is_array($new_data['threat'])) {
+                $new_data['threat'] = ['uuid' => $new_data['threat'], 'anr' => $anrId];
             }
-            if(isset($new_data['vulnerability']) && !is_array($new_data['vulnerability'])){
-               $new_data['vulnerability'] = ['uuid' => $new_data['vulnerability'], 'anr'=>$anrId];
+            if (isset($new_data['vulnerability']) && !is_array($new_data['vulnerability'])) {
+                $new_data['vulnerability'] = ['uuid' => $new_data['vulnerability'], 'anr' => $anrId];
             }
-            if(isset($new_data['asset']) && !is_array($new_data['asset'])){
-               $new_data['asset'] = ['uuid' => $new_data['asset'], 'anr'=>$anrId];
+            if (isset($new_data['asset']) && !is_array($new_data['asset'])) {
+                $new_data['asset'] = ['uuid' => $new_data['asset'], 'anr' => $anrId];
             }
-            if(isset($new_data['amv']) && !is_array($new_data['amv'])){
-               $new_data['amv'] = ['uuid' => $new_data['amv'], 'anr'=>$anrId];
+            if (isset($new_data['amv']) && !is_array($new_data['amv'])) {
+                $new_data['amv'] = ['uuid' => $new_data['amv'], 'anr' => $anrId];
             }
             if (isset($new_data['father']) && isset($new_data['child'])) {
-              $new_data['father'] = ['anr' => $anrId, 'uuid' => $new_data['father']];
-              $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
+                $new_data['father'] = ['anr' => $anrId, 'uuid' => $new_data['father']];
+                $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
             }
 
             $id = $this->getService()->create($new_data);
@@ -131,7 +126,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
 
         return new JsonModel([
             'status' => 'ok',
-            'id' => count($created_objects) == 1 ? $created_objects[0]: $created_objects,
+            'id' => count($created_objects) == 1 ? $created_objects[0] : $created_objects,
         ]);
     }
 
@@ -140,12 +135,13 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
      */
     public function update($id, $data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
-      if(count($identifier)>1 && in_array('anr',$identifier) && in_array('uuid',$identifier) && !is_array($id))
-          $id = ['uuid' => $id, 'anr' => $anrId];
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
+        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+            $id = ['uuid' => $id, 'anr' => $anrId];
+        }
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -161,11 +157,12 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
-        if(count($identifier)>1 && in_array('anr',$identifier) && in_array('uuid',$identifier) && !is_array($id))
+        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
             $id = ['uuid' => $id, 'anr' => $anrId];
+        }
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -179,16 +176,17 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
      */
     public function delete($id)
     {
-      $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if(count($identifier)>1 && in_array('anr',$identifier) && in_array('uuid',$identifier) && !is_array($id))
-        $id = ['uuid' => $id, 'anr' => $anrId];
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+            $id = ['uuid' => $id, 'anr' => $anrId];
+        }
 
         if ($this->getService()->deleteFromAnr($id, $anrId)) {
             return new JsonModel(['status' => 'ok']);
-        } else {
-            return new JsonModel(['status' => 'ok']); // Todo : may be add error message
         }
+
+        return new JsonModel(['status' => 'ok']); // Todo : may be add error message
     }
 
     /**
@@ -196,41 +194,45 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
      */
     public function deleteList($data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      $ids=[];
+        $anrId = (int)$this->params()->fromRoute('anrid');
 
-       $class = $this->getService()->get('entity');
-       $entity = new $class();
-       $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
-       if(count($ids)>1){
-          foreach ($data as $key => $value) {
-            if(count($ids)>1 && in_array('anr',$ids) && in_array('uuid',$ids) && !is_array($value))
-              $data[$key] = ['uuid' => $value, 'anr' => $anrId];
-          }
+        $class = $this->getService()->get('entity');
+        $entity = new $class();
+        $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
+        if (count($ids) > 1) {
+            foreach ($data as $key => $value) {
+                if (count($ids) > 1 && in_array('anr', $ids) && in_array('uuid', $ids) && !is_array($value)) {
+                    $data[$key] = ['uuid' => $value, 'anr' => $anrId];
+                }
+            }
         }
 
         if ($this->getService()->deleteListFromAnr($data, $anrId)) {
             return new JsonModel(['status' => 'ok']);
-        } else {
-            return new JsonModel(['status' => 'ok']); // Todo: may be add error message
         }
+
+        return new JsonModel(['status' => 'ok']); // Todo: may be add error message
     }
 
     /**
-    * Function who put in all records of an array the anr_id
-    * @param Array  list of uuid for which one we want a composite id [uuid,anrid]
-    * @return Array The correct list of composite id
-    */
+     * Function who put in all records of an array the anr_id
+     *
+     * @param Array  list of uuid for which one we want a composite id [uuid,anrid]
+     *
+     * @return Array The correct list of composite id
+     */
     public function addAnrId($input)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      $withId = array();
-      if(is_array($input)){
-        foreach ($input as $item) {
-              $withId[] = ['uuid'=>$item, 'anr'=> $anrId];
-          }
-        return $withId;
-      }else
-        return ['uuid'=>$input, 'anr'=> $anrId];
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $withId = array();
+        if (is_array($input)) {
+            foreach ($input as $item) {
+                $withId[] = ['uuid' => $item, 'anr' => $anrId];
+            }
+
+            return $withId;
+        }
+
+        return ['uuid' => $input, 'anr' => $anrId];
     }
 }
