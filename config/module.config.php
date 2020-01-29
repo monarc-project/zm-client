@@ -983,7 +983,7 @@ return [
             Controller\ApiAnrObjectsExportController::class => Controller\ApiAnrObjectsExportControllerFactory::class,
             Controller\ApiAnrObjectsImportController::class => Controller\ApiAnrObjectsImportControllerFactory::class,
             Controller\ApiAnrDeliverableController::class => AutowireFactory::class,
-            Controller\ApiAnrExportController::class => Controller\ApiAnrExportControllerFactory::class,
+            Controller\ApiAnrExportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesConsequencesController::class => Controller\ApiAnrInstancesConsequencesControllerFactory::class,
             Controller\ApiModelVerifyLanguageController::class => Controller\ApiModelVerifyLanguageControllerFactory::class,
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
