@@ -4,7 +4,7 @@ namespace Monarc\FrontOffice;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
-use Zend\Console\Request;
+use Zend\Http\Request;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Permissions\Rbac\Rbac;
@@ -15,7 +15,7 @@ class Module
 {
     public function onBootstrap(MvcEvent $e)
     {
-        if (!$e->getRequest() instanceof Request) {
+        if ($e->getRequest() instanceof Request) {
             $eventManager = $e->getApplication()->getEventManager();
             $moduleRouteListener = new ModuleRouteListener();
             $moduleRouteListener->attach($eventManager);
@@ -200,7 +200,6 @@ class Module
 
             return $response;
         }
-
     }
 
     private function authorizedPost($route, $method){
