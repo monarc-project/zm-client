@@ -6,7 +6,6 @@ define('PROJECT_ROOT', __DIR__ . '/../../../../');
 require PROJECT_ROOT . 'vendor/autoload.php';
 
 use Monarc\FrontOffice\Command\CreateUsersCommand;
-use Monarc\FrontOffice\Command\DuplicateAnrCommand;
 use Symfony\Component\Console\Application as ConsoleApp;
 use Zend\Mvc\Application as ZendApp;
 
@@ -16,6 +15,5 @@ $zendApp = ZendApp::init($appConfig);
 $consoleApp = new ConsoleApp();
 
 $consoleApp->add($zendApp->getServiceManager()->get(CreateUsersCommand::class));
-$consoleApp->add($zendApp->getServiceManager()->get(DuplicateAnrCommand::class));
 
 $consoleApp->run();
