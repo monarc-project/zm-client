@@ -60,8 +60,8 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
                 'threat' => $id,
             ];
 
-            // If qualification is not forced, retrieve only inherited instance risks
-            if ((!isset($data['forceQualification'])) || $data['forceQualification'] == 0) {
+            // If qualification is not forced, retrieve only inherited instance risksx
+            if (!isset($data['forceQualification']) || $data['forceQualification'] === 0) {
                 $filter['mh'] = 1;
             }
 
@@ -69,24 +69,22 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
             $instanceRiskTable = $this->get('instanceRiskTable');
             $instancesRisks = $instanceRiskTable->getEntityByFields($filter);
 
-            $i = 1;
-            $nbInstancesRisks = count($instancesRisks);
-            foreach ($instancesRisks as $instanceRisk) {
+            /** @var InstanceRiskService $instanceRiskService */
+            $instanceRiskService = $this->get('instanceRiskService');
+
+            $nbInstancesRisks = \count($instancesRisks);
+            foreach ($instancesRisks as $i => $instanceRisk) {
                 $instanceRisk->threatRate = $data['qualification'];
 
                 // If qualification is forced, instances risks become inherited
-                if ((isset($data['forceQualification'])) && $data['forceQualification'] == 1) {
+                if (isset($data['forceQualification']) && $data['forceQualification'] === 1) {
                     $instanceRisk->mh = 1;
                 }
 
-                $instanceRiskTable->save($instanceRisk, ($i == $nbInstancesRisks));
+                $instanceRiskTable->saveEntity($instanceRisk, ($i + 1) === $nbInstancesRisks);
 
-                /** @var InstanceRiskService $instanceRiskService */
-                $instanceRiskService = $this->get('instanceRiskService');
-                $instanceRiskService->updateRisks($instanceRisk->id);
+                $instanceRiskService->updateRisks($instanceRisk);
                 $instanceRiskService->updateRecoRisks($instanceRisk);
-
-                $i++;
             }
         }
     }

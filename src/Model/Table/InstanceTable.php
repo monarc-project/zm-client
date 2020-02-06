@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Table\InstanceTable as CoreInstanceTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
@@ -26,5 +28,23 @@ class InstanceTable extends CoreInstanceTable
     public function getEntityClass(): string
     {
         return Instance::class;
+    }
+
+    /**
+     * @return Instance[]
+     */
+    public function findByAnrAndObject(AnrSuperClass $anr, ObjectSuperClass $object)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('i')
+            ->innerJoin('i.object', 'obj')
+            ->where('i.anr = :anr')
+            ->andWhere('obj.uuid = :obj_uuid')
+            ->andWhere('obj.anr = :obj_anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('obj_uuid', $object->getUuid())
+            ->setParameter('obj_anr', $object->getAnr())
+            ->getQuery()
+            ->getResult();
     }
 }

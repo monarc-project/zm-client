@@ -14,12 +14,6 @@ class AdminUserInit extends AbstractSeed
      */
     public function run()
     {
-        $pathLocal = getcwd()."/config/autoload/local.php";
-        $localConf = array();
-        if(file_exists($pathLocal)){
-            $localConf = require $pathLocal;
-        }
-
         //create client
         $dataClient = [
             'creator' => 'System',

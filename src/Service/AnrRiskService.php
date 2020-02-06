@@ -15,7 +15,6 @@ use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Model\Entity\User;
 
-
 /**
  * This class is the service that handles risks within an ANR.
  * @package Monarc\FrontOffice\Service
@@ -133,21 +132,6 @@ class AnrRiskService extends AbstractService
         }
 
         return $id;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function deleteInstanceRisks($instanceId, $anrId)
-    {
-        $risks = $this->getInstanceRisks($instanceId, $anrId);
-        $table = $this->get('table');
-        $i = 1;
-        $nb = count($risks);
-        foreach ($risks as $r) {
-            $table->delete($r->id, ($i == $nb));
-            $i++;
-        }
     }
 
     /**
