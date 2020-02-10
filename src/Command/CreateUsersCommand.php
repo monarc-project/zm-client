@@ -12,10 +12,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class CreateUsersCommand extends Command
 {
-    private const DEFAULT_PASSWORD = 'Password1234!';
-
     protected static $defaultName = 'monarc:create-users';
 
+    /** @var UserTable */
     private $userTable;
 
     public function __construct(UserTable $userTable)
@@ -29,7 +28,7 @@ class CreateUsersCommand extends Command
     {
         $this
             ->addArgument('numberOfUsers', InputArgument::REQUIRED, 'Number of users')
-            ->addArgument('password', InputArgument::OPTIONAL, 'Password is set to each user', self::DEFAULT_PASSWORD)
+            ->addArgument('password', InputArgument::REQUIRED, 'Password is set to each user')
             ->addArgument('namesPrefix', InputArgument::OPTIONAL, 'Names prefix', 'user_');
     }
 
@@ -43,7 +42,7 @@ class CreateUsersCommand extends Command
                 'firstname' => 'First name ' . $userNum,
                 'lastname' => 'Last name ' . $userNum,
                 'email' => $usernamePrefix . '@monarc.lu',
-                'password' => self::DEFAULT_PASSWORD,
+                'password' => $input->getArgument('password'),
                 'creator' => 'admin',
                 'language' => 2,
                 'role' => [UserRole::USER_FO],
