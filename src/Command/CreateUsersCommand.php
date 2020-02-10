@@ -29,11 +29,21 @@ class CreateUsersCommand extends Command
         $this
             ->addArgument('numberOfUsers', InputArgument::REQUIRED, 'Number of users')
             ->addArgument('password', InputArgument::REQUIRED, 'Password is set to each user')
+            ->addArgument(
+                'language',
+                InputArgument::OPTIONAL,
+                'Users language number 1(fr), 2(en)[default], 3(de), 4(dutch)',
+                2
+            )
             ->addArgument('namesPrefix', InputArgument::OPTIONAL, 'Names prefix', 'user_');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $usersLang = \in_array((int)$input->getArgument('language'), [1, 2, 3, 4], true)
+            ? (int)$input->getArgument('language')
+            : 2;
+
         for ($userNum = 1; $userNum <= (int)$input->getArgument('numberOfUsers'); $userNum++) {
             $userNamePostfix = $userNum < 10 ? '0' . $userNum : $userNum;
             $usernamePrefix = $input->getArgument('namesPrefix') . $userNamePostfix;
@@ -44,7 +54,7 @@ class CreateUsersCommand extends Command
                 'email' => $usernamePrefix . '@monarc.lu',
                 'password' => $input->getArgument('password'),
                 'creator' => 'admin',
-                'language' => 2,
+                'language' => $usersLang,
                 'role' => [UserRole::USER_FO],
             ]);
 
