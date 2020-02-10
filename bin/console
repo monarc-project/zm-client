@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+define('PROJECT_ROOT', __DIR__ . '/../../../../');
+
+require PROJECT_ROOT . 'vendor/autoload.php';
+
+use Monarc\FrontOffice\Command\CreateUsersCommand;
+use Symfony\Component\Console\Application as ConsoleApp;
+use Zend\Mvc\Application as ZendApp;
+
+$appConfig = require PROJECT_ROOT . 'config/application.config.php';
+$zendApp = ZendApp::init($appConfig);
+
+$consoleApp = new ConsoleApp();
+
+$consoleApp->add($zendApp->getServiceManager()->get(CreateUsersCommand::class));
+
+$consoleApp->run();
