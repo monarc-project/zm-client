@@ -44,7 +44,7 @@ class CreateUsersCommand extends Command
                 'lastname' => 'Last name ' . $userNum,
                 'email' => $usernamePrefix . '@monarc.lu',
                 'password' => self::DEFAULT_PASSWORD,
-                'creator' => User::CREATOR_SYSTEM,
+                'creator' => 'admin',
                 'language' => 2,
                 'role' => [UserRole::USER_FO],
             ]);
