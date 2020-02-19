@@ -521,7 +521,7 @@ class AnrRecordService extends AbstractService
             if ($file !== false && $file['name'] && ($id = $this->importFromArray($file, $anrId)) !== false) {
                 $ids[] = $id;
             } else {
-                $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
+                $errors[] = 'The file "' . $file['name'] . '" can\'t be imported';
             }
         }
         return [$ids, $errors];

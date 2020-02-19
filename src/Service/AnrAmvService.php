@@ -192,7 +192,7 @@ class AnrAmvService extends AmvService
 
             foreach ($amv->measures as $m) {
                 if (false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'), true)) {
-                    $m->$anr->removeAmv($amv);
+                    $m->removeAmv($amv);
                 }
             }
             unset($data['measures']);
