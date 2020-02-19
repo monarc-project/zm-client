@@ -32,11 +32,15 @@ class AnrAmvService extends AmvService
     protected $anrTable;
     protected $userAnrTable;
     protected $assetTable;
+    protected $assetService;
     protected $threatTable;
+    protected $threatService;
+    protected $themeService;
     protected $MonarcObjectTable;
     protected $instanceTable;
     protected $instanceRiskTable;
     protected $vulnerabilityTable;
+    protected $vulnerabilityService;
     protected $measureTable;
     protected $referentialTable;
     protected $amvTable;
