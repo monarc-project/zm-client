@@ -98,7 +98,7 @@ class RecordPersonalData extends AbstractEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="retention_period_description", type="string", length=255, nullable=false)
+     * @ORM\Column(name="retention_period_description", type="text", nullable=true)
      */
     protected $retentionPeriodDescription;
 
