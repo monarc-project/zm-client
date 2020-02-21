@@ -9,9 +9,9 @@ namespace Monarc\FrontOffice\Service\Model\Entity;
 
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Zend\Http\PhpEnvironment\Request;
-use Zend\Router\Http\TreeRouteStack;
-use Zend\Router\RouteMatch;
+use Laminas\Http\PhpEnvironment\Request;
+use Laminas\Router\Http\TreeRouteStack;
+use Laminas\Router\RouteMatch;
 
 /**
  * Class AbstractServiceModelEntity
@@ -27,7 +27,7 @@ abstract class AbstractServiceModelEntity extends \Monarc\Core\Service\Model\Ent
     {
         /** @var Request $request */
         $request = $sm->get('Request');
-        if(!$request instanceof \Zend\Console\Request){
+        if(!$request instanceof \Laminas\Console\Request){
             /** @var TreeRouteStack $router */
             $router = $sm->get('Router');
             /** @var RouteMatch $match */

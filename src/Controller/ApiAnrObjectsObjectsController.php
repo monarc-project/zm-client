@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Service\ObjectObjectService;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api ANR Objects Objects Controller

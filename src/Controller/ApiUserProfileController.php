@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserProfileService;
-use Zend\Mvc\Controller\AbstractRestfulController;
-use Zend\View\Model\JsonModel;
+use Laminas\Mvc\Controller\AbstractRestfulController;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api User Profile Controller

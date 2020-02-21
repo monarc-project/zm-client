@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Service\SoaService;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Anr Soa Controller
