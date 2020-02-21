@@ -9,8 +9,10 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
+use Ramsey\Uuid\Uuid;
 
 /**
  * RecommandationSet
@@ -37,9 +39,9 @@ class RecommandationSet extends AbstractEntity
     protected $uuid;
 
      /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var AnrSuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -76,9 +78,9 @@ class RecommandationSet extends AbstractEntity
     protected $label4;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Recommandation
+     * @var Recommandation[]
      *
-     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Recommandation", mappedBy="recommandationSet", cascade={"persist"}, )
+     * @ORM\OneToMany(targetEntity="Recommandation", mappedBy="recommandationSet", cascade={"persist"}, )
      */
     protected $recommandations;
 
@@ -91,17 +93,17 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @param integer $uuid
-     * @return RecommandationSet
+     * @param string|Uuid $uuid
      */
-    public function setUuid($uuid)
+    public function setUuid($uuid): self
     {
         $this->uuid = $uuid;
+
         return $this;
     }
 
-        /**
-     * @return Anr
+    /**
+     * @return AnrSuperClass
      */
     public function getAnr()
     {
@@ -109,17 +111,17 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @param Anr $anr
-     * @return Scale
+     * @param AnrSuperClass $anr
      */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
     /**
-     * @return Recommandation
+     * @return Recommandation[]
      */
     public function getRecommandations()
     {
@@ -127,12 +129,40 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @param \Monarc\FrontOffice\Model\Entity\Recommandation $recommandations
-     * @return RecommandationSet
+     * @param Recommandation[] $recommandations
      */
     public function setRecommandations($recommandations)
     {
         $this->recommandations = $recommandations;
+
+        return $this;
+    }
+
+    public function setLabel1(string $label1): self
+    {
+        $this->label1 = $label1;
+
+        return $this;
+    }
+
+    public function setLabel2(string $label2): self
+    {
+        $this->label2 = $label2;
+
+        return $this;
+    }
+
+    public function setLabel3(string $label3): self
+    {
+        $this->label3 = $label3;
+
+        return $this;
+    }
+
+    public function setLabel4(string $label4): self
+    {
+        $this->label4 = $label4;
+
         return $this;
     }
 
@@ -145,32 +175,14 @@ class RecommandationSet extends AbstractEntity
             foreach ($texts as $text) {
                 $this->inputFilter->add(array(
                     'name' => $text,
-                    'required' => ((strchr($text, (string)$this->getLanguage())) && (!$partial)) ? true : false,
+                    'required' => strpos($text, (string)$this->getLanguage()) !== false && !$partial,
                     'allow_empty' => false,
                     'filters' => array(),
                     'validators' => array(),
                 ));
             }
-            // $validatorsCode = [];
-            // if (!$partial) {
-            //     $validatorsCode = array(
-            //         array(
-            //             'name' => 'Monarc\Core\Validator\UniqueCode',
-            //             'options' => array(
-            //                 'entity' => $this
-            //             ),
-            //         ),
-            //     );
-            // }
-
-            // $this->inputFilter->add(array(
-            //     'name' => 'uuid',
-            //     'required' => true,
-            //     'allow_empty' => false,
-            //     'filters' => array(),
-            //     // 'validators' => $validatorsCode
-            // ));
         }
+
         return $this->inputFilter;
     }
 }

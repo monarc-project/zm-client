@@ -34,4 +34,13 @@ class RecommandationTable extends AbstractEntityTable
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    public function saveEntity(Recommandation $recommendation, bool $flush = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($recommendation);
+        if ($flush) {
+            $em->flush();
+        }
+    }
 }

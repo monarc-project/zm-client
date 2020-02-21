@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AmvSuperClass;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;

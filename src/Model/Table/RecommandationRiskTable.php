@@ -22,4 +22,13 @@ class RecommandationRiskTable extends AbstractEntityTable
     {
         parent::__construct($dbService, RecommandationRisk::class, $connectedUserService);
     }
+
+    public function saveEntity(RecommandationRisk $recommendationRisk, bool $flush = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($recommendationRisk);
+        if ($flush) {
+            $em->flush();
+        }
+    }
 }

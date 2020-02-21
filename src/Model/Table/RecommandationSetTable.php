@@ -22,4 +22,13 @@ class RecommandationSetTable extends AbstractEntityTable
     {
         parent::__construct($dbService, RecommandationSet::class, $connectedUserService);
     }
+
+    public function saveEntity(RecommandationSet $recommendationSet, bool $flush = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($recommendationSet);
+        if ($flush) {
+            $em->flush();
+        }
+    }
 }
