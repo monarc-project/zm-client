@@ -44,7 +44,7 @@
         "ext-intl": "*",
         "ext-imagick": "*",
         "doctrine/doctrine-orm-module": "^2.1",
-        "monarc/core": "^2.9",
+        "monarc/core": "^2.9.15",
         "monarc/phpword": "^1.0",
         "robmorgan/phinx": "^0.11.1",
         "laminas/laminas-di": "^3.1",
