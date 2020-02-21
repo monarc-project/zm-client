@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\AbstractController;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\FrontOffice\Service\AnrObjectService;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Anr Library Controller

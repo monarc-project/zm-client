@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Anr Record Interntional Transfers Controller

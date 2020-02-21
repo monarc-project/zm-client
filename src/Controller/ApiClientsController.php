@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\FrontOffice\Service\ClientService;
 use Monarc\Core\Controller\AbstractController;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Clients Controller

@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\FrontOffice\Service\AnrService;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Anr Controller

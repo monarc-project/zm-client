@@ -124,7 +124,7 @@ class AnrInstanceService extends InstanceService
      */
     public function importFromArray($data, $anr, $idParent = null, $modeImport = 'merge', $include_eval = false, &$sharedData = [], $isRoot = false)
     {
-        // When importing huge instances trees, Zend can take up a whole lot of memory
+        // When importing big instances trees
         ini_set('max_execution_time', 0);
         ini_set('memory_limit', -1);
         $monarc_version = isset($data['monarc_version'])?$data['monarc_version']:null;

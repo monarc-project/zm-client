@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Validator;
 
-use Zend\Validator\AbstractValidator;
+use Laminas\Validator\AbstractValidator;
 
 /**
  * Class UniqueClientProxyAlias is an implementation of AbstractValidator that ensures the uniqueness or a client

@@ -9,8 +9,8 @@ use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Validator\UniqueClientProxyAlias;
-use Zend\Di\Container\AutowireFactory;
-use Zend\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Laminas\Di\Container\AutowireFactory;
+use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 
 return [
     'router' => [

@@ -8,8 +8,8 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\FrontOffice\Service\UserRoleService;
-use Zend\Mvc\Controller\AbstractRestfulController;
-use Zend\View\Model\JsonModel;
+use Laminas\Mvc\Controller\AbstractRestfulController;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Admin Users Roles Controller

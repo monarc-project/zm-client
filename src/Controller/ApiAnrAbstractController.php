@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Exception\Exception;
 use Ramsey\Uuid\Uuid;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Abstract controller for all ANR-based routes. Allows easy permissions filtering for routes below this one.
