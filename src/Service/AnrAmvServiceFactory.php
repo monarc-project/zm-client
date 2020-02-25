@@ -29,5 +29,9 @@ class AnrAmvServiceFactory extends AbstractServiceFactory
         'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
         'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
         'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
+        'assetService' => 'Monarc\FrontOffice\Service\AnrAssetService',
+        'threatService' => 'Monarc\FrontOffice\Service\AnrThreatService',
+        'themeService' => 'Monarc\FrontOffice\Service\AnrThemeService',
+        'vulnerabilityService' => 'Monarc\FrontOffice\Service\AnrVulnerabilityService',
     ];
 }
