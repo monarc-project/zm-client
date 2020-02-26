@@ -481,10 +481,10 @@ class AnrRecommandationRiskService extends \Monarc\Core\Service\AbstractService
         $uuidReco = [];
         foreach ($recoRisks as $rr) {
             if ($rr->instanceRisk && $rr->instanceRisk->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
-                $uuidReco[$rr->recommandation->uuid] = $rr->recommandation->uuid;
+                $uuidReco[$rr->recommandation->uuid->toString()] = $rr->recommandation->uuid->toString();
             }
             if ($rr->instanceRiskOp && $rr->instanceRiskOp->kindOfMeasure != InstanceRisk::KIND_NOT_TREATED) {
-                $uuidReco[$rr->recommandation->uuid] = $rr->recommandation->uuid;
+                $uuidReco[$rr->recommandation->uuid->toString()] = $rr->recommandation->uuid->toString();
             }
         }
 
