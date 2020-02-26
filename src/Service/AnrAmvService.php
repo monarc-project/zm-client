@@ -29,18 +29,9 @@ use Ramsey\Uuid\Uuid;
  */
 class AnrAmvService extends AmvService
 {
-    protected $anrTable;
     protected $userAnrTable;
-    protected $assetTable;
-    protected $assetService;
-    protected $threatTable;
-    protected $threatService;
-    protected $themeService;
     protected $MonarcObjectTable;
-    protected $instanceTable;
     protected $instanceRiskTable;
-    protected $vulnerabilityTable;
-    protected $vulnerabilityService;
     protected $measureTable;
     protected $referentialTable;
     protected $amvTable;
@@ -221,12 +212,14 @@ class AnrAmvService extends AmvService
         $amv->setLanguage($this->getLanguage());
         $amv->setDbAdapter($this->get('table')->getDb());
 
-        //manage the measures separatly because it's the slave of the relation amv<-->measures
-        foreach ($data['measures'] as $measure) {
-            $measureEntity = $this->get('measureTable')->getEntity($measure);
-            $measureEntity->addAmv($amv);
+        //manage the measures separately because it's the slave of the relation amv<-->measures
+        if (!empty($data['measures'])) {
+            foreach ($data['measures'] as $measure) {
+                $measureEntity = $this->get('measureTable')->getEntity($measure);
+                $measureEntity->addAmv($amv);
+            }
+            unset($data['measures']);
         }
-        unset($data['measures']);
         $amv->exchangeArray($data);
         unset($data['measures']);
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];

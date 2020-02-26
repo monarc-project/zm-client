@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrAmvService;
 
 /**
  * Api ANR Amvs Controller
@@ -135,72 +136,30 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
 
     public function create($data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if(count($data['measures'])>0)
-        $data['measures'] = $this->addAnrId($data['measures']);
-      unset($data ['referential'] );
-      if (array_keys($data) == range(0, count($data) - 1)) {
-        $themeService = $this->getService()->get('themeService');
-        $amvItems = ['asset','threat','vulnerability'];
-        $itemsToCreate = [];
-        for ($i=0; $i < count($amvItems) ; $i++) {
-          $thirdPartyService = $this->getService()->get($amvItems[$i] . 'Service');
-          $itemsToCreate[$amvItems[$i]] = array_values(
-                                            array_filter(
-                                              array_column($data,$amvItems[$i]), function($amvItem){
-                                                if ($amvItem['uuid'] == null)
-                                                  return true;
-                                              }
-                                            )
-                                          );
-          $unique_code = array_unique(array_column($itemsToCreate[$amvItems[$i]], 'code'));
-          $itemsToCreate[$amvItems[$i]] = array_values(
-                                            array_intersect_key($itemsToCreate[$amvItems[$i]],$unique_code)
-                                          );
-          foreach ($itemsToCreate[$amvItems[$i]] as $key => $new_data) {
-            $new_data['anr'] = $anrId;
-            if (isset($new_data['theme']) && !is_numeric($new_data['theme'])) {
-              $label = implode('',array_values($new_data['theme']));
-              $themeFound = $themeService->getList(1,1,null,$label, null);
-              if (empty($themeFound)) {
-                $new_data['theme']['anr'] = $anrId;
-                $new_data['theme'] = $themeService->create($new_data['theme']);
-              }else {
-                $new_data['theme'] = $themeFound[0]['id'];
-              }
-            }
-            $itemsToCreate[$amvItems[$i]][$key]['uuid'] = $thirdPartyService->create($new_data);
-          }
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (!empty($data['measures'])) {
+            $data['measures'] = $this->addAnrId($data['measures']);
+        }
+        unset($data['referential']);
+
+        if (array_keys($data) === range(0, \count($data) - 1)) {
+            /** @var AnrAmvService $anrAmvService */
+            $anrAmvService = $this->getService();
+            $data = $anrAmvService->createAmvsItems($anrId, $data);
         }
 
-        $amvs = array_map(function($amv) use ($itemsToCreate){
-          $uuid_amv = [
-            'asset' => ($amv['asset']['uuid'] == null ?
-                       $itemsToCreate['asset'][array_search($amv['asset']['code'], array_column($itemsToCreate['asset'],'code'))]['uuid'] :
-                       $amv['asset']['uuid']),
-            'threat' => ($amv['threat']['uuid'] == null ?
-                       $itemsToCreate['threat'][array_search($amv['threat']['code'], array_column($itemsToCreate['threat'],'code'))]['uuid'] :
-                       $amv['threat']['uuid']),
-            'vulnerability' => ($amv['vulnerability']['uuid'] == null ?
-                       $itemsToCreate['vulnerability'][array_search($amv['vulnerability']['code'], array_column($itemsToCreate['vulnerability'],'code'))]['uuid'] :
-                       $amv['vulnerability']['uuid']),
-          ];
-          return $uuid_amv;
-
-        },$data);
-        $data = $amvs;
-      }
-      return parent::create($data);
+        return parent::create($data);
     }
 
-    public function update($id,$data)
+    public function update($id, $data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if(count($data['measures'])>0)
-        $data['measures'] = $this->addAnrId($data['measures']);
+        if (count($data['measures']) > 0) {
+            $data['measures'] = $this->addAnrId($data['measures']);
+        }
 
-      unset($data ['referential'] );
-      return parent::update($id, $data);
+        unset($data ['referential']);
+
+        return parent::update($id, $data);
     }
 
     public function patchList($data)

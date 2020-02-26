@@ -8,6 +8,9 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Entity\Amv;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Service;
 
 /**
  * Factory class attached to AnrAmvService
@@ -16,22 +19,22 @@ use Monarc\Core\Service\AbstractServiceFactory;
 class AnrAmvServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Amv',
-        'table' => 'Monarc\FrontOffice\Model\Table\AmvTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'assetTable' => 'Monarc\FrontOffice\Model\Table\AssetTable',
-        'threatTable' => 'Monarc\FrontOffice\Model\Table\ThreatTable',
-        'vulnerabilityTable' => 'Monarc\FrontOffice\Model\Table\VulnerabilityTable',
-        'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
-        'referentialTable' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
-        'amvTable' => 'Monarc\FrontOffice\Model\Table\AmvTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'assetService' => 'Monarc\FrontOffice\Service\AnrAssetService',
-        'threatService' => 'Monarc\FrontOffice\Service\AnrThreatService',
-        'themeService' => 'Monarc\FrontOffice\Service\AnrThemeService',
-        'vulnerabilityService' => 'Monarc\FrontOffice\Service\AnrVulnerabilityService',
+        'entity' => Amv::class,
+        'table' => Table\AmvTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'assetTable' => Table\AssetTable::class,
+        'threatTable' => Table\ThreatTable::class,
+        'vulnerabilityTable' => Table\VulnerabilityTable::class,
+        'measureTable' => Table\MeasureTable::class,
+        'referentialTable' => Table\ReferentialTable::class,
+        'amvTable' => Table\AmvTable::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'instanceRiskTable' => Table\InstanceRiskTable::class,
+        'MonarcObjectTable' => Table\MonarcObjectTable::class,
+        'assetService' => Service\AnrAssetService::class,
+        'threatService' => Service\AnrThreatService::class,
+        'vulnerabilityService' => Service\AnrVulnerabilityService::class,
+        'themeTable' => Table\ThemeTable::class,
     ];
 }
