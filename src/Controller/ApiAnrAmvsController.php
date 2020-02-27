@@ -146,6 +146,10 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
             /** @var AnrAmvService $anrAmvService */
             $anrAmvService = $this->getService();
             $data = $anrAmvService->createAmvsItems($anrId, $data);
+
+            if (empty($data)) {
+                throw new \Monarc\Core\Exception\Exception('No information risks to import', 412);
+            }
         }
 
         return parent::create($data);
