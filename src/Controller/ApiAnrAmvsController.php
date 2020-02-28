@@ -148,7 +148,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
             $data = $anrAmvService->createAmvsItems($anrId, $data);
 
             if (empty($data)) {
-                throw new \Monarc\Core\Exception\Exception('No information risks to import', 412);
+                throw new \Monarc\Core\Exception\Exception('No new information risks to be imported. Already exist in Knowledge Base', 412);
             }
         }
 
