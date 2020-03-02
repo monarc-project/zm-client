@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\AssetSuperClass;
 
 /**
@@ -22,37 +23,20 @@ use Monarc\Core\Model\Entity\AssetSuperClass;
 class Asset extends AssetSuperClass
 {
     /**
-    * @var integer
-    *
-    * @ORM\Column(name="uuid", type="uuid", nullable=false)
-    * @ORM\Id
-    */
-    protected $uuid;
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var integer
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", fetch="EAGER")
+     */
+    protected $uuid;
+
+    /**
+     * @var AnrSuperClass
+     * @ORM\Id
+     * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $anr;
-
-    /**
-     * @return Anr
-     */
-    public function getAnr()
-    {
-        return $this->anr;
-    }
-
-    /**
-     * @param Anr $anr
-     * @return Asset
-     */
-    public function setAnr($anr)
-    {
-        $this->anr = $anr;
-        return $this;
-    }
 }
