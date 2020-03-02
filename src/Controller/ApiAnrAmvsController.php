@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrAmvService;
 
 /**
@@ -34,7 +35,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];
@@ -92,7 +93,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     {
       $anrId = (int)$this->params()->fromRoute('anrid');
       if (empty($anrId)) {
-          throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+          throw new Exception('Anr id missing', 412);
       }
       $id = ['uuid'=>$id, 'anr' => $anrId];
       $entity = $this->getService()->getEntity($id);
@@ -148,7 +149,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
             $data = $anrAmvService->createAmvsItems($anrId, $data);
 
             if (empty($data)) {
-                throw new \Monarc\Core\Exception\Exception('No new information risks to be imported. Already exist in Knowledge Base', 412);
+                throw new Exception('No new information risks to be imported. Already exist in Knowledge Base', 412);
             }
         }
 
