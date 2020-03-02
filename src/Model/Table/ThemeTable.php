@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Model\Table\ThemeTable as CoreThemeTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Theme;
@@ -16,10 +16,15 @@ use Monarc\FrontOffice\Model\Entity\Theme;
  * Class ThemeTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class ThemeTable extends AbstractEntityTable
+class ThemeTable extends CoreThemeTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, Theme::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+    }
+
+    public function getEntityClass(): string
+    {
+        return Theme::class;
     }
 }

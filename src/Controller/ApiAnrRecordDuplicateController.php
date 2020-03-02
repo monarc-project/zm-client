@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Service\AnrRecordService;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Anr Record Duplicate Controller

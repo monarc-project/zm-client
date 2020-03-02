@@ -7,7 +7,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractController;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Doc Models Controller

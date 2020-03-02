@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\FrontOffice\Service\AnrObjectCategoryService;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api ANR Objects Categories Controller

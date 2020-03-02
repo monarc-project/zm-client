@@ -4,18 +4,18 @@ namespace Monarc\FrontOffice;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
-use Zend\Console\Request;
-use Zend\Mvc\ModuleRouteListener;
-use Zend\Mvc\MvcEvent;
-use Zend\Permissions\Rbac\Rbac;
-use Zend\Permissions\Rbac\Role;
-use Zend\View\Model\JsonModel;
+use Laminas\Http\Request;
+use Laminas\Mvc\ModuleRouteListener;
+use Laminas\Mvc\MvcEvent;
+use Laminas\Permissions\Rbac\Rbac;
+use Laminas\Permissions\Rbac\Role;
+use Laminas\View\Model\JsonModel;
 
 class Module
 {
     public function onBootstrap(MvcEvent $e)
     {
-        if (!$e->getRequest() instanceof Request) {
+        if ($e->getRequest() instanceof Request) {
             $eventManager = $e->getApplication()->getEventManager();
             $moduleRouteListener = new ModuleRouteListener();
             $moduleRouteListener->attach($eventManager);
@@ -132,7 +132,7 @@ class Module
      * Check Rbac
      *
      * @param MvcEvent $e
-     * @return \Zend\Stdlib\ResponseInterface
+     * @return \Laminas\Stdlib\ResponseInterface
      */
     public function checkRbac(MvcEvent $e)
     {
@@ -200,7 +200,6 @@ class Module
 
             return $response;
         }
-
     }
 
     private function authorizedPost($route, $method){

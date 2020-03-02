@@ -20,31 +20,4 @@ use Monarc\Core\Model\Entity\ThemeSuperClass;
  */
 class Theme extends ThemeSuperClass
 {
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
-    /**
-     * @return Anr
-     */
-    public function getAnr()
-    {
-        return $this->anr;
-    }
-
-    /**
-     * @param Anr $anr
-     * @return Theme
-     */
-    public function setAnr($anr)
-    {
-        $this->anr = $anr;
-        return $this;
-    }
 }

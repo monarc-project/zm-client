@@ -8,13 +8,13 @@ use Monarc\Core\Validator\LanguageValidator;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\UserTable;
 use Monarc\FrontOffice\Validator\AbstractMonarcInputValidator;
-use Zend\Filter\StringTrim;
-use Zend\InputFilter\ArrayInput;
-use Zend\InputFilter\InputFilter;
-use Zend\Validator\Callback;
-use Zend\Validator\EmailAddress;
-use Zend\Validator\NotEmpty;
-use Zend\Validator\StringLength;
+use Laminas\Filter\StringTrim;
+use Laminas\InputFilter\ArrayInput;
+use Laminas\InputFilter\InputFilter;
+use Laminas\Validator\Callback;
+use Laminas\Validator\EmailAddress;
+use Laminas\Validator\NotEmpty;
+use Laminas\Validator\StringLength;
 
 class CreateUserInputValidator extends AbstractMonarcInputValidator
 {

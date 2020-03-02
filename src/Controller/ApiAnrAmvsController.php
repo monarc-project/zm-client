@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrAmvService;
 
 /**
  * Api ANR Amvs Controller
@@ -33,7 +35,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $filterAnd = ['anr' => $anrId];
@@ -91,7 +93,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
     {
       $anrId = (int)$this->params()->fromRoute('anrid');
       if (empty($anrId)) {
-          throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+          throw new Exception('Anr id missing', 412);
       }
       $id = ['uuid'=>$id, 'anr' => $anrId];
       $entity = $this->getService()->getEntity($id);
@@ -135,32 +137,45 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
 
     public function create($data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if(count($data['measures'])>0)
-        $data['measures'] = $this->addAnrId($data['measures']);
-      unset($data ['referential'] );
-      return parent::create($data);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (!empty($data['measures'])) {
+            $data['measures'] = $this->addAnrId($data['measures']);
+        }
+        unset($data['referential']);
+
+        if (array_keys($data) === range(0, \count($data) - 1)) {
+            /** @var AnrAmvService $anrAmvService */
+            $anrAmvService = $this->getService();
+            $data = $anrAmvService->createAmvsItems($anrId, $data);
+
+            if (empty($data)) {
+                throw new Exception('No new information risks to be imported. Already exist in Knowledge Base', 412);
+            }
+        }
+
+        return parent::create($data);
     }
 
-    public function update($id,$data)
+    public function update($id, $data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if(count($data['measures'])>0)
-        $data['measures'] = $this->addAnrId($data['measures']);
+        if (count($data['measures']) > 0) {
+            $data['measures'] = $this->addAnrId($data['measures']);
+        }
 
-      unset($data ['referential'] );
-      return parent::update($id, $data);
+        unset($data ['referential']);
+
+        return parent::update($id, $data);
     }
 
     public function patchList($data)
     {
-      $service = $this->getService();
-      $data['toReferential'] = $this->addAnrId($data['toReferential']);
-      $service->createLinkedAmvs($data['fromReferential'],$data['toReferential'],$anrId);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $service = $this->getService();
+        $data['toReferential'] = $this->addAnrId($data['toReferential']);
+        $service->createLinkedAmvs($data['fromReferential'], $data['toReferential'], $anrId);
 
-      return new JsonModel([
-          'status' =>  'ok',
-      ]);
-
+        return new JsonModel([
+            'status' => 'ok',
+        ]);
     }
 }

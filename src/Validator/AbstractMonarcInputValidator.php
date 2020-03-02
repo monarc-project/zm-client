@@ -2,7 +2,7 @@
 
 namespace Monarc\FrontOffice\Validator;
 
-use Zend\InputFilter\InputFilter;
+use Laminas\InputFilter\InputFilter;
 
 abstract class AbstractMonarcInputValidator
 {

@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ThreatSuperClass;
 
 /**
@@ -24,30 +25,20 @@ class Threat extends ThreatSuperClass
 {
 
     /**
-    * @var integer
-    *
-    * @ORM\Column(name="uuid", type="uuid", nullable=false)
-    * @ORM\Id
-    */
+     * @var integer
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     * @ORM\Id
+     */
     protected $uuid;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var AnrSuperClass
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", )
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
      */
     protected $anr;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Theme
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Theme", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="theme_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $theme;
 }

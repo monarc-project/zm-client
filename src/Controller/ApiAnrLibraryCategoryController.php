@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractController;
 use Monarc\FrontOffice\Service\AnrObjectCategoryService;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Api Anr Library Category Controller
