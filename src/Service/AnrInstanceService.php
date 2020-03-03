@@ -410,13 +410,13 @@ class AnrInstanceService extends InstanceService
 
         $this->refreshImpactsInherited($instance);
 
-        $uuidRecSet = $this->createSetOfRecommendations($data, $anr, $monarcVersion);
+        $recSetUuid = $this->createSetOfRecommendations($data, $anr, $monarcVersion);
 
         if (!empty($data['risks'])) {
             // load of the existing value
             $this->sharedData['ivuls'] = $vCodes = [];
             $this->sharedData['ithreats'] = $tCodes = [];
-            if (version_compare($monarcVersion, "2.8.2") >= 0) { //TO DO:set the right value with the uuid version
+            if (version_compare($monarcVersion, '2.8.2') >= 0) { //TO DO:set the right value with the uuid version
                 foreach ($data['threats'] as $t) {
                     $tCodes[] = $t['uuid'];
                 }
@@ -682,7 +682,7 @@ class AnrInstanceService extends InstanceService
                                 if (!empty($recs)) {
                                     $reco['uuid'] = (string)$recs[0]->get('uuid');
                                 }
-                                $reco['recommandationSet'] = $uuidRecSet;
+                                $reco['recommandationSet'] = $recSetUuid;
                             }
                             $recSets = $this->get('recommandationSetTable')->getEntityByFields([
                                 'anr' => $anr->getId(),
@@ -1052,7 +1052,7 @@ class AnrInstanceService extends InstanceService
                             if (!empty($recs)) {
                                 $reco['uuid'] = (string)$recs[0]->get('uuid');
                             }
-                            $reco['recommandationSet'] = $uuidRecSet;
+                            $reco['recommandationSet'] = $recSetUuid;
                         }
                         $recSets = $this->get('recommandationSetTable')->getEntityByFields([
                             'anr' => $anr->getId(),
@@ -1858,30 +1858,31 @@ class AnrInstanceService extends InstanceService
 
     private function createSetOfRecommendations(array $data, AnrSuperClass $anr, ?string $monarcVersion): string
     {
-        if (!empty($this->sharedData['recs'])) {
-            return '';
-        }
-
-        $uuidRecSet = '';
+        $recSetUuid = '';
         $recommendationSetTable = $this->get('recommandationSetTable');
         if (!empty($data['recSets'])) {
             /** @var RecommandationSetTable $recommendationSetTable */
-            foreach ($data['recSets'] as $recSetUuid => $recSet_array) {
+            foreach ($data['recSets'] as $recSetUuid => $recommendationSetData) {
+                if (isset($this->sharedData['recSets'][$recSetUuid])) {
+                    continue;
+                }
+
                 // check if the recommendation set is not already present in the analysis
                 $recommendationsSets = $recommendationSetTable
                     ->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $recSetUuid]);
                 if (empty($recommendationsSets)) {
-                    $newRecommandationSet = new RecommandationSet($recSet_array);
-                    $newRecommandationSet->setAnr($anr);
-                    $recommendationSetTable->saveEntity($newRecommandationSet);
-                    $this->sharedData['recSets'][$recSetUuid] = $newRecommandationSet->getUuid();
+                    $newRecommendationSet = new RecommandationSet($recommendationSetData);
+                    $newRecommendationSet->setUuid($recSetUuid);
+                    $newRecommendationSet->setAnr($anr);
+                    $recommendationSetTable->saveEntity($newRecommendationSet);
+                    $this->sharedData['recSets'][$recSetUuid] = $newRecommendationSet;
                 }
             }
         } elseif (version_compare($monarcVersion, '2.8.4') === -1) {
             $recommendationsSets = $recommendationSetTable
                 ->getEntityByFields(['anr' => $anr->getId(), 'label1' => 'Recommandations importées']);
             if (!empty($recommendationsSets)) {
-                $uuidRecSet = (string)$recommendationsSets[0]->uuid;
+                $recSet = (string)$recommendationsSets[0];
             } else {
                 $recommendationSet = (new RecommandationSet())
                     ->setAnr($anr)
@@ -1890,41 +1891,42 @@ class AnrInstanceService extends InstanceService
                     ->setLabel3('Importierte empfehlungen')
                     ->setLabel4('Geïmporteerde aanbevelingen');
                 $recommendationSetTable->saveEntity($recommendationSet);
-                $uuidRecSet = $recommendationSet->getUuid();
+                $recSet = $recommendationSet->getUuid();
             }
+
+            $this->sharedData['recSets'][$recSetUuid] = $recSet;
         }
 
-        // Recommandations unlinked to a recommandation risk
+        // Create recommendations unlinked to a recommendation risk
         if (!empty($data['recs'])) {
             /** @var RecommandationTable $recommendationTable */
             $recommendationTable = $this->get('recommandationTable');
-            foreach ($data['recs'] as $recUuid => $rec_array) {
-                // check if the recommendation is not already present in the analysis
-                $recommandations = $recommendationTable->getEntityByFields([
+            foreach ($data['recs'] as $recUuid => $recommendationData) {
+                if (isset($this->sharedData['recs'][$recUuid])) {
+                    continue;
+                }
+
+                $recommendations = $recommendationTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'uuid' => $recUuid
                 ]);
-                if (empty($recommandations)) {
-                    $recSets = $recommendationSetTable->getEntityByFields([
-                        'anr' => $anr->getId(),
-                        'uuid' => $rec_array['recommandationSet']
-                    ]);
-                    if ($rec_array['duedate']) {
-                        $rec_array['duedate'] = new DateTime($rec_array['duedate']['date']);
+                if (empty($recommendations)) {
+                    if (!empty($recommendationData['duedate']['date'])) {
+                        $recommendationData['duedate'] = new DateTime($recommendationData['duedate']['date']);
                     }
-                    $newRecommandation = new Recommandation($rec_array);
-                    $newRecommandation->setAnr($anr);
-                    if (isset($recSets[0])) {
-                        $newRecommandation->setRecommandationSet($recSets[0]);
-                    }
+                    $newRecommendation = (new Recommandation($recommendationData))
+                        ->setAnr($anr)
+                        ->setRecommandationSet(
+                            $this->sharedData['recSets'][$recommendationData['recommandationSet']] ?? null
+                        );
 
-                    $recommendationTable->saveEntity($newRecommandation);
+                    $recommendationTable->saveEntity($newRecommendation);
 
-                    $this->sharedData['recs'][$recUuid] = $newRecommandation->getUuid();
+                    $this->sharedData['recs'][$recUuid] = $newRecommendation->getUuid();
                 }
             }
         }
 
-        return $uuidRecSet;
+        return $recSetUuid;
     }
 }
