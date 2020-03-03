@@ -42,7 +42,7 @@ class FixRecommendationsPosition extends Command
         foreach ($anrs as $anr) {
             $recommendationsWithEmptyPosition = $this->recommendationTable->findByAnrWithEmptyPosition($anr);
             $updatedCount[$anr->getId()] = 0;
-            if (count($recommendationsWithEmptyPosition) > 0) {
+            if (!empty($recommendationsWithEmptyPosition)) {
                 $maxPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
                 foreach ($recommendationsWithEmptyPosition as $recommendationWithEmptyPosition) {
                     $recommendationWithEmptyPosition->setPosition(++$maxPosition);
@@ -58,5 +58,7 @@ class FixRecommendationsPosition extends Command
         foreach ($updatedCount as $anrId => $count) {
             $output->writeln(['Anr ID: ' . $anrId . ', updated: ' . $count]);
         }
+
+        return 0;
     }
 }

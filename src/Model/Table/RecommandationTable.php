@@ -40,7 +40,7 @@ class RecommandationTable extends AbstractEntityTable
      */
     public function findByAnrWithEmptyPosition(Anr $anr)
     {
-        $this->getRepository()
+        return $this->getRepository()
             ->createQueryBuilder('r')
             ->where('r.anr = :anr')
             ->andWhere('r.position IS NULL')
