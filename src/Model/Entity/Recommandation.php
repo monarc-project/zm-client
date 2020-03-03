@@ -196,6 +196,11 @@ class Recommandation extends AbstractEntity
         return $this;
     }
 
+    public function getPosition(): int
+    {
+        return (int)$this->position;
+    }
+
     public function setPosition(int $position): self
     {
         $this->position = $position;

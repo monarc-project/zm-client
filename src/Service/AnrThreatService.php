@@ -84,6 +84,7 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
                 /** @var InstanceRiskService $instanceRiskService */
                 $instanceRiskService = $this->get('instanceRiskService');
                 $instanceRiskService->updateRisks($instanceRisk->id);
+                $instanceRiskService->updateRecoRisks($instanceRisk);
 
                 $i++;
             }
