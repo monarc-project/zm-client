@@ -196,6 +196,13 @@ class Recommandation extends AbstractEntity
         return $this;
     }
 
+    public function setPosition(int $position): self
+    {
+        $this->position = $position;
+
+        return $this;
+    }
+
     public function getFiltersForService()
     {
         $filterJoin = [
@@ -219,7 +226,6 @@ class Recommandation extends AbstractEntity
 
         return [$filterJoin,$filterLeft,$filtersCol];
     }
-
 
     /**
      * @param bool $partial

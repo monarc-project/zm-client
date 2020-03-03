@@ -34,4 +34,27 @@ class RecommandationTable extends AbstractEntityTable
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * @return Recommandation[]
+     */
+    public function findByAnrWithEmptyPosition(Anr $anr)
+    {
+        $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->andWhere('r.position IS NULL')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($recommendation);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

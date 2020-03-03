@@ -6,6 +6,7 @@ define('PROJECT_ROOT', __DIR__ . '/../../../../');
 require PROJECT_ROOT . 'vendor/autoload.php';
 
 use Monarc\FrontOffice\Command\CreateUsersCommand;
+use Monarc\FrontOffice\Command\FixRecommendationsPosition;
 use Symfony\Component\Console\Application as ConsoleApp;
 use Laminas\Mvc\Application as LaminasApp;
 
@@ -15,5 +16,6 @@ $laminasApp = LaminasApp::init($appConfig);
 $consoleApp = new ConsoleApp();
 
 $consoleApp->add($laminasApp->getServiceManager()->get(CreateUsersCommand::class));
+$consoleApp->add($laminasApp->getServiceManager()->get(FixRecommendationsPosition::class));
 
 $consoleApp->run();
