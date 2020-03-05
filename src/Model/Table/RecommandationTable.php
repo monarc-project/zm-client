@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -24,7 +25,7 @@ class RecommandationTable extends AbstractEntityTable
         parent::__construct($dbService, Recommandation::class, $connectedUserService);
     }
 
-    public function getMaxPositionByAnr(Anr $anr): int
+    public function getMaxPositionByAnr(AnrSuperClass $anr): int
     {
         return (int)$this->getRepository()
             ->createQueryBuilder('r')
@@ -47,6 +48,27 @@ class RecommandationTable extends AbstractEntityTable
             ->setParameter('anr', $anr)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return Recommandation[]
+     */
+    public function findLinkedWithRisksByAnr(
+        AnrSuperClass $anr,
+        array $order = []
+    ) {
+        $queryBuilder = $this->getRepository()
+            ->createQueryBuilder('r')
+            ->innerJoin('r.recommendationRisks', 'rr')
+            ->where('r.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->groupBy('r.uuid');
+
+        foreach ($order as $field => $direction) {
+            $queryBuilder->orderBy('r.' . $field, $direction);
+        }
+
+        return $queryBuilder->getQuery()->getResult();
     }
 
     public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void

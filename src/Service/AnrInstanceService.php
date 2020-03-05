@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\MonarcObject;
 use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 use Monarc\Core\Model\Entity\Scale;
@@ -608,15 +609,17 @@ class AnrInstanceService extends InstanceService
                                     $reco['recommandationSet'] = $uuidRecSet;
                                 }
                                 $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
-                                // La recommandation
+
+                                /** @var RecommandationTable $recommendationTable */
+                                $recommendationTable = $this->get('recommandationTable');
                                 if (isset($sharedData['recos'][$reco['uuid']])) { // Cette recommandation a déjà été gérée dans cet import
-                                    if ($risk['kindOfMeasure'] != \Monarc\Core\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                        $aReco = $this->get('recommandationTable')->getEntity(['anr' => $anr->get('id'), 'uuid' => $reco['uuid']]);
-                                        if ($aReco->get('position') <= 0 || is_null($aReco->get('position'))) {
-                                            $pos = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
+                                    if ($risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                                        $aReco = $recommendationTable->getEntity(['anr' => $anr->get('id'), 'uuid' => $reco['uuid']]);
+                                        if ($aReco->get('position') <= 0) {
+                                            $pos = $recommendationTable->getMaxPositionByAnr($anr) + 1;
                                             $aReco->set('position', $pos);
                                             $aReco->setRecommandationSet($recSets[0]);
-                                            $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
+                                            $reco['uuid'] = $recommendationTable->save($aReco);
                                         }
                                     }
                                 } else {
@@ -625,27 +628,29 @@ class AnrInstanceService extends InstanceService
                                     unset($toExchange['commentAfter']); // data du link
                                     $toExchange['anr'] = $anr->get('id');
 
-                                    // on test l'unicité du code
-                                    $aReco = current($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $reco['code']]));
+                                    $aReco = current($recommendationTable->getEntityByFields(['anr' => $anr->get('id'), 'code' => $reco['code']]));
                                     if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
-                                        $class = $this->get('recommandationTable')->getEntityClass();
+                                        $class = $recommendationTable->getEntityClass();
                                         $aReco = new $class();
-                                        if ($risk['kindOfMeasure'] == \Monarc\Core\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                            $toExchange['position'] = null;
+                                        if ($risk['kindOfMeasure'] == InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                                            $toExchange['position'] = 0;
                                         } else {
-                                            $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
+                                            $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
                                         }
-                                    } elseif (($aReco->get('position') <= 0 || is_null($aReco->get('position'))) && $risk['kindOfMeasure'] != \Monarc\Core\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                        $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
+                                    } elseif ($aReco->get('position') <= 0
+                                        && $risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED
+                                    ) {
+                                        $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
                                     }
                                     $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
                                     $aReco->setLanguage($this->getLanguage());
                                     $aReco->exchangeArray($toExchange, $aReco->get('uuid'));
                                     $aReco->setRecommandationSet($recSets[0]);
                                     $this->setDependencies($aReco, ['anr']);
-                                    if(isset($toExchange['duedate']['date']))
-                                      $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
-                                    $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
+                                    if (isset($toExchange['duedate']['date'])) {
+                                        $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
+                                    }
+                                    $reco['uuid'] = $recommendationTable->save($aReco);
                                     $sharedData['recos'][$reco['uuid']] = $reco['uuid'];
                                 }
 
@@ -983,13 +988,13 @@ class AnrInstanceService extends InstanceService
                             // La recommandation
                             if (isset($sharedData['recos'][$reco['uuid']])) {
                                 // Cette recommandation a déjà été gérée dans cet import
-                                if ($ro['kindOfMeasure'] != \Monarc\Core\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                                if ($ro['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED) {
                                     $aReco = $this->get('recommandationTable')->getEntity(['anr' => $anr->get('id'), 'uuid' => $reco['uuid']]);
-                                    if ($aReco->get('position') <= 0 || is_null($aReco->get('position'))) {
-                                        $pos = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
+                                    if ($aReco->get('position') <= 0) {
+                                        $pos = $recommendationTable->getMaxPositionByAnr($anr) + 1;
                                         $aReco->set('position', $pos);
                                         $aReco->setRecommandationSet($recSets[0]);
-                                        $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
+                                        $reco['uuid'] = $recommendationTable->save($aReco);
                                     }
                                 }
                             } else {
@@ -998,28 +1003,29 @@ class AnrInstanceService extends InstanceService
                                 unset($toExchange['commentAfter']); // data du link
                                 $toExchange['anr'] = $anr->get('id');
 
-                                // on test l'unicité du code
-                                $aReco = current($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $reco['code']]));
-                                if (empty($aReco)) {
-                                    // Code absent, on crée une nouvelle recommandation
-                                    $class = $this->get('recommandationTable')->getEntityClass();
+                                $aReco = current($recommendationTable->getEntityByFields(['anr' => $anr->get('id'), 'code' => $reco['code']]));
+                                if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
+                                    $class = $recommendationTable->getEntityClass();
                                     $aReco = new $class();
-                                    if ($ro['kindOfMeasure'] == \Monarc\Core\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                        $toExchange['position'] = null;
+                                    if ($risk['kindOfMeasure'] == InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                                        $toExchange['position'] = 0;
                                     } else {
-                                        $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
+                                        $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
                                     }
-                                } else if (($aReco->get('position') <= 0 || is_null($aReco->get('position'))) && $ro['kindOfMeasure'] != \Monarc\Core\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                    $toExchange['position'] = count($this->get('recommandationTable')->getEntityByFields(['anr' => $anr->get('id'), 'position' => ['op' => 'IS NOT', 'value' => null]], ['position' => 'ASC'])) + 1;
+                                } elseif ($aReco->get('position') <= 0
+                                    && $risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED
+                                ) {
+                                    $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
                                 }
-                                $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
+                                $aReco->setDbAdapter($recommendationTable->getDb());
                                 $aReco->setLanguage($this->getLanguage());
                                 $aReco->exchangeArray($toExchange, $aReco->get('uuid'));
                                 $this->setDependencies($aReco, ['anr']);
-                                if(isset($toExchange['duedate']['date']))
-                                  $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
+                                if (isset($toExchange['duedate']['date'])) {
+                                    $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
+                                }
                                 $aReco->setRecommandationSet($recSets[0]);
-                                $reco['uuid'] = $this->get('recommandationTable')->save($aReco);
+                                $reco['uuid'] = $recommendationTable->save($aReco);
                                 $sharedData['recos'][$reco['uuid']] = $reco['uuid'];
                             }
 
@@ -1070,7 +1076,7 @@ class AnrInstanceService extends InstanceService
             ]);
             $idReco = [];
             foreach ($recoRisks as $rr) {
-                if ($rr->instanceRisk && $rr->instanceRisk->kindOfMeasure != \Monarc\Core\Model\Entity\InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                if ($rr->instanceRisk && $rr->instanceRisk->kindOfMeasure != InstanceRiskSuperClass::KIND_NOT_TREATED) {
                     $idReco[$rr->recommandation->uuid] = $rr->recommandation->uuid;
                 }
                 if ($rr->instanceRiskOp && $rr->instanceRiskOp->kindOfMeasure != \Monarc\Core\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED) {

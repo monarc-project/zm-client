@@ -68,13 +68,7 @@ class AnrRecommandationService extends AbstractService
         $entity->setLanguage($this->getLanguage());
         $entity->setDbAdapter($recommendationTable->getDb());
 
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        $anr = $anrTable->findById($data['anr']);
-
         $entity->setAnr($data['anr']);
-
-        $data['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
 
         $entity->exchangeArray($data);
 
@@ -107,6 +101,7 @@ class AnrRecommandationService extends AbstractService
      */
     private function updatePosition($id, $data): array
     {
+        // TODO: check the method.
         if (!empty($data['implicitPosition'])) {
             $entity = $this->get('table')->getEntity($id);
             if ($entity->get('position') > 0) {
