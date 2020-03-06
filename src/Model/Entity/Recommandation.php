@@ -151,12 +151,9 @@ class Recommandation extends AbstractEntity
      */
     protected $tokenImport;
 
-    /**
-     * @return int
-     */
-    public function getUuid()
+    public function getUuid(): string
     {
-        return $this->uuid;
+        return (string)$this->uuid;
     }
 
     public function setUuid($id): self

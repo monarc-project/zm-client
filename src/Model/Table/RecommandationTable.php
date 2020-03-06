@@ -7,14 +7,11 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use LogicException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 
 /**
@@ -54,16 +51,11 @@ class RecommandationTable extends AbstractEntityTable
     }
 
     /**
-     * @param AnrSuperClass $anr
-     * @param InstanceRisk|InstanceRiskOp $instanceRisk
-     * @param array $order
-     *
      * @return Recommandation[]
-     *
      */
-    public function findLinkedWithRisksByAnrExcludeInstanceRisk(
+    public function findLinkedWithRisksByAnrExcludeRecommendations(
         AnrSuperClass $anr,
-        $instanceRisk,
+        array $excludeRecommendations,
         array $order = []
     ) {
         $queryBuilder = $this->getRepository()
@@ -71,15 +63,9 @@ class RecommandationTable extends AbstractEntityTable
             ->innerJoin('r.recommendationRisks', 'rr')
             ->where('r.anr = :anr')
             ->setParameter('anr', $anr);
-
-        if ($instanceRisk instanceof InstanceRisk) {
-            $queryBuilder->andWhere('rr.instanceRisk != :instanceRisk');
-        } elseif ($instanceRisk instanceof InstanceRiskOp) {
-            $queryBuilder->andWhere('rr.instanceRiskOp != :instanceRisk');
-        } else {
-            throw new LogicException('Wrong parameter type passed to the method: ' . __CLASS__ . '::' . __METHOD__);
-        }
-        $queryBuilder->setParameter('instanceRisk', $instanceRisk);
+        $queryBuilder
+            ->andWhere($queryBuilder->expr()->notIn('r.uuid', ':recommendations_uuid'))
+            ->setParameter('recommendations_uuid', $excludeRecommendations);
 
         foreach ($order as $field => $direction) {
             $queryBuilder->orderBy('r.' . $field, $direction);
