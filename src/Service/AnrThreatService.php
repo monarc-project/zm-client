@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\InstanceRiskService;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 
 /**
@@ -81,7 +80,7 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
 
                 $instanceRiskTable->save($instanceRisk, ($i == $nbInstancesRisks));
 
-                /** @var InstanceRiskService $instanceRiskService */
+                /** @var AnrInstanceRiskService $instanceRiskService */
                 $instanceRiskService = $this->get('instanceRiskService');
                 $instanceRiskService->updateRisks($instanceRisk->id);
                 $instanceRiskService->updateRecoRisks($instanceRisk);

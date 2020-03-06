@@ -247,14 +247,14 @@ class Recommandation extends AbstractEntity
         return $this->importance;
     }
 
+    public function isImportanceEmpty(): bool
+    {
+        return $this->importance === static::EMPTY_IMPORTANCE;
+    }
+
     public function isPositionEmpty(): bool
     {
         return $this->position === static::EMPTY_POSITION;
-    }
-
-    public function isImportanceEmpty(): bool
-    {
-        return $this->position === static::EMPTY_IMPORTANCE;
     }
 
     public function setEmptyPosition(): self
