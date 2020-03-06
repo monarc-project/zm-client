@@ -7,11 +7,14 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use LogicException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 
 /**
@@ -51,24 +54,41 @@ class RecommandationTable extends AbstractEntityTable
     }
 
     /**
+     * @param AnrSuperClass $anr
+     * @param InstanceRisk|InstanceRiskOp $instanceRisk
+     * @param array $order
+     *
      * @return Recommandation[]
+     *
      */
-    public function findLinkedWithRisksByAnr(
+    public function findLinkedWithRisksByAnrExcludeInstanceRisk(
         AnrSuperClass $anr,
+        $instanceRisk,
         array $order = []
     ) {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('r')
             ->innerJoin('r.recommendationRisks', 'rr')
             ->where('r.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->groupBy('r.uuid');
+            ->setParameter('anr', $anr);
+
+        if ($instanceRisk instanceof InstanceRisk) {
+            $queryBuilder->andWhere('rr.instanceRisk != :instanceRisk');
+        } elseif ($instanceRisk instanceof InstanceRiskOp) {
+            $queryBuilder->andWhere('rr.instanceRiskOp != :instanceRisk');
+        } else {
+            throw new LogicException('Wrong parameter type passed to the method: ' . __CLASS__ . '::' . __METHOD__);
+        }
+        $queryBuilder->setParameter('instanceRisk', $instanceRisk);
 
         foreach ($order as $field => $direction) {
             $queryBuilder->orderBy('r.' . $field, $direction);
         }
 
-        return $queryBuilder->getQuery()->getResult();
+        return $queryBuilder
+            ->groupBy('r.uuid')
+            ->getQuery()
+            ->getResult();
     }
 
     public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void

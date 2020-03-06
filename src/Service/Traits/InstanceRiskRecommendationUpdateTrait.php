@@ -3,8 +3,7 @@
 namespace Monarc\FrontOffice\Service\Traits;
 
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
@@ -14,13 +13,12 @@ trait InstanceRiskRecommendationUpdateTrait
     /**
      * Updates the recommendations' positions related to the risks.
      *
-     * @param InstanceRiskSuperClass|InstanceRiskOpSuperClass $instanceRisk
+     * @param InstanceRisk|InstanceRiskOp $instanceRisk
      */
     public function updateRecoRisks($instanceRisk): void
     {
         $riskRecommendations = [];
         if ($instanceRisk->isTreated()) {
-            /** @var InstanceRiskOp $instanceRisk */
             foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
                 $recommendation = $recommendationRisk->getRecommandation();
                 if ($recommendation->isImportanceEmpty()) {
@@ -33,7 +31,7 @@ trait InstanceRiskRecommendationUpdateTrait
             if (!empty($riskRecommendations)) {
                 krsort($riskRecommendations);
                 $riskRecommendations = array_reduce($riskRecommendations, 'array_merge', []);
-                $this->updateRecommendationsPositions($instanceRisk->getAnr(), $riskRecommendations);
+                $this->updateRecommendationsPositions($instanceRisk, $riskRecommendations);
             }
         } else {
             /** @var InstanceRiskOp $instanceRisk */
@@ -52,16 +50,24 @@ trait InstanceRiskRecommendationUpdateTrait
             if (!empty($riskRecommendations)) {
                 ksort($riskRecommendations);
                 $riskRecommendations = array_reduce($riskRecommendations, 'array_merge', []);
-                $this->resetRecommendationsPositions($instanceRisk->getAnr(), $riskRecommendations);
+                $this->resetRecommendationsPositions($instanceRisk, $riskRecommendations);
             }
         }
     }
 
-    private function updateRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
+    /**
+     * @param InstanceRisk|InstanceRiskOp $instanceRisk
+     * @param array $riskRecommendations
+     */
+    private function updateRecommendationsPositions($instanceRisk, array $riskRecommendations): void
     {
         /** @var RecommandationTable $recommendationTable */
         $recommendationTable = $this->get('recommandationTable');
-        $linkedRecommendations = $recommendationTable->findLinkedWithRisksByAnr($anr, ['position' => 'ASC']);
+        $linkedRecommendations = $recommendationTable->findLinkedWithRisksByAnrExcludeInstanceRisk(
+            $instanceRisk->getAnr(),
+            $instanceRisk,
+            ['position' => 'ASC']
+        );
 
         // Check if order by importance is respected in the linked set.
         $isImportanceOrderRespected = true;
@@ -109,11 +115,19 @@ trait InstanceRiskRecommendationUpdateTrait
         $recommendationTable->getDb()->flush();
     }
 
-    private function resetRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
+    /**
+     * @param InstanceRisk|InstanceRiskOp $instanceRisk
+     * @param array $riskRecommendations
+     */
+    private function resetRecommendationsPositions($instanceRisk, array $riskRecommendations): void
     {
         /** @var RecommandationTable $recommendationTable */
         $recommendationTable = $this->get('recommandationTable');
-        $linkedRecommendations = $recommendationTable->findLinkedWithRisksByAnr($anr, ['position' => 'ASC']);
+        $linkedRecommendations = $recommendationTable->findLinkedWithRisksByAnrExcludeInstanceRisk(
+            $instanceRisk->getAnr(),
+            $instanceRisk,
+            ['position' => 'ASC']
+        );
 
         /** @var Recommandation[] $riskRecommendations */
         foreach ($riskRecommendations as $riskRecommendation) {

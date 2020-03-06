@@ -237,7 +237,7 @@ class Recommandation extends AbstractEntity
 
     public function shiftPositionDown(): self
     {
-        $this->position--;
+        $this->position++;
 
         return $this;
     }
