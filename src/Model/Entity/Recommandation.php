@@ -135,7 +135,7 @@ class Recommandation extends AbstractEntity
      *
      * @ORM\Column(name="counter_treated", type="smallint", options={"unsigned":true, "default":0})
      */
-    protected $counterTreated = '0';
+    protected $counterTreated = 0;
 
     /**
      * @var string
@@ -276,6 +276,36 @@ class Recommandation extends AbstractEntity
         return $this->importance < $importance;
     }
 
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function getDescription(): string
+    {
+        return (string)$this->description;
+    }
+
+    public function getComment(): string
+    {
+        return (string)$this->comment;
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status;
+    }
+
+    public function getResponsable(): string
+    {
+        return (string)$this->responsable;
+    }
+
+    public function getCounterTreated(): int
+    {
+        return $this->counterTreated;
+    }
+
     public function getFiltersForService()
     {
         $filterJoin = [
@@ -296,7 +326,7 @@ class Recommandation extends AbstractEntity
             'r.code',
         ];
 
-        return [$filterJoin,$filterLeft,$filtersCol];
+        return [$filterJoin, $filterLeft, $filtersCol];
     }
 
     /**

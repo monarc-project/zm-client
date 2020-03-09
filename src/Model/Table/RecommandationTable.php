@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -53,19 +54,24 @@ class RecommandationTable extends AbstractEntityTable
     /**
      * @return Recommandation[]
      */
-    public function findLinkedWithRisksByAnrExcludeRecommendations(
+    public function findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
         AnrSuperClass $anr,
-        array $excludeRecommendations,
+        array $excludeRecommendations = [],
         array $order = []
     ) {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('r')
             ->innerJoin('r.recommendationRisks', 'rr')
             ->where('r.anr = :anr')
+            ->andWhere('r.importance > 0')
+            ->andWhere('r.position > 0')
             ->setParameter('anr', $anr);
-        $queryBuilder
-            ->andWhere($queryBuilder->expr()->notIn('r.uuid', ':recommendations_uuid'))
-            ->setParameter('recommendations_uuid', $excludeRecommendations);
+
+        if (!empty($excludeRecommendations)) {
+            $queryBuilder
+                ->andWhere($queryBuilder->expr()->notIn('r.uuid', ':recommendations_uuid'))
+                ->setParameter('recommendations_uuid', $excludeRecommendations);
+        }
 
         foreach ($order as $field => $direction) {
             $queryBuilder->orderBy('r.' . $field, $direction);
@@ -75,6 +81,31 @@ class RecommandationTable extends AbstractEntityTable
             ->groupBy('r.uuid')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): Recommandation
+    {
+        $recommendation = $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->andWhere('r.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->getQuery()
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getSingleResult();
+
+        if ($recommendation === null) {
+            throw new Exception(
+                sprintf('Recommendation with anr ID "%d" and uuid "%s" has not been found.', $anr->getId(), $uuid)
+            );
+        }
+
+        return $recommendation;
     }
 
     public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void

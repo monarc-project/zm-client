@@ -59,11 +59,12 @@ trait InstanceRiskRecommendationUpdateTrait
     {
         /** @var RecommandationTable $recommendationTable */
         $recommendationTable = $this->get('recommandationTable');
-        $linkedRecommendations = $recommendationTable->findLinkedWithRisksByAnrExcludeRecommendations(
-            $anr,
-            array_keys($riskRecommendations),
-            ['position' => 'ASC']
-        );
+        $linkedRecommendations = $recommendationTable
+            ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+                $anr,
+                array_keys($riskRecommendations),
+                ['position' => 'ASC']
+            );
 
         $maxPositionsPerImportance = $this->getMaxPositionsPerImportance($linkedRecommendations);
 
@@ -102,11 +103,12 @@ trait InstanceRiskRecommendationUpdateTrait
     {
         /** @var RecommandationTable $recommendationTable */
         $recommendationTable = $this->get('recommandationTable');
-        $linkedRecommendations = $recommendationTable->findLinkedWithRisksByAnrExcludeRecommendations(
-            $anr,
-            array_keys($riskRecommendations),
-            ['position' => 'ASC']
-        );
+        $linkedRecommendations = $recommendationTable
+            ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+                $anr,
+                array_keys($riskRecommendations),
+                ['position' => 'ASC']
+            );
 
         /** @var Recommandation[] $riskRecommendations */
         foreach ($riskRecommendations as $riskRecommendation) {

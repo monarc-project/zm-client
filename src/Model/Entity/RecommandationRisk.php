@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
@@ -190,7 +191,7 @@ class RecommandationRisk extends AbstractEntity
     }
 
     /**
-     * @return InstanceRisk
+     * @return InstanceRisk|null
      */
     public function getInstanceRisk()
     {
@@ -208,7 +209,7 @@ class RecommandationRisk extends AbstractEntity
     }
 
     /**
-     * @return InstanceRiskOp
+     * @return InstanceRiskOp|null
      */
     public function getInstanceRiskOp()
     {
@@ -244,15 +245,20 @@ class RecommandationRisk extends AbstractEntity
     }
 
     /**
-     * @return Object
+     * @return ObjectSuperClass
      */
     public function getObjectGlobal()
     {
         return $this->objectGlobal;
     }
 
+    public function hasGlobalObjectRelation(): bool
+    {
+        return $this->objectGlobal !== null;
+    }
+
     /**
-     * @param Object $objectGlobal
+     * @param ObjectSuperClass $objectGlobal
      * @return RecommandationRisk
      */
     public function setObjectGlobal($objectGlobal)
