@@ -105,7 +105,7 @@ class AnrRecommandationService extends AbstractService
      */
     private function updatePosition(array $id, array $data): array
     {
-        if (empty($data['implicitPosition'])) {
+        if (!empty($data['implicitPosition'])) {
             /** @var AnrTable $anrTable */
             $anrTable = $this->get('anrTable');
             $anr = $anrTable->findById($id['anr']);
@@ -125,7 +125,9 @@ class AnrRecommandationService extends AbstractService
             switch ($data['implicitPosition']) {
                 case AbstractEntity::IMP_POS_START:
                     foreach ($linkedRecommendations as $linkedRecommendation) {
-                        if ($linkedRecommendation->isPositionHigherThan($recommendation->getPosition())) {
+                        if ($linkedRecommendation->isPositionHigherThan($recommendation->getPosition())
+                            && !$linkedRecommendation->isPositionLowerThan($recommendation->getPosition())
+                        ) {
                             $recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
                         }
                     }
