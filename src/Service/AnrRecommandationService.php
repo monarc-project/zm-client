@@ -169,10 +169,8 @@ class AnrRecommandationService extends AbstractService
                             }
                         }
 
-                        $newPosition = $previousRecommendation->getPosition() + 1;
+                        $newPosition = $previousRecommendation->getPosition();
                     }
-                    break;
-                default:
                     break;
             }
 

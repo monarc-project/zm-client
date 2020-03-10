@@ -273,7 +273,7 @@ class Recommandation extends AbstractEntity
 
     public function isPositionHigherOrEqualThan(int $position): bool
     {
-        return $this->position < $position;
+        return $this->position <= $position;
     }
 
     public function isImportanceLowerThan(int $importance): bool
