@@ -14,6 +14,7 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
+use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 
 /**
  * Class RecommandationTable
@@ -94,7 +95,6 @@ class RecommandationTable extends AbstractEntityTable
             ->andWhere('r.uuid = :uuid')
             ->setParameter('anr', $anr)
             ->setParameter('uuid', $uuid)
-            ->getQuery()
             ->setMaxResults(1)
             ->getQuery()
             ->getSingleResult();
@@ -106,6 +106,27 @@ class RecommandationTable extends AbstractEntityTable
         }
 
         return $recommendation;
+    }
+
+    public function findByAnrCodeAndRecommendationSet(
+        AnrSuperClass $anr,
+        string $code,
+        RecommandationSet $recommendationSet
+    ): ?Recommandation {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->innerJoin('r.recommandationSet', 'rs')
+            ->where('r.anr = :anr')
+            ->andWhere('r.code = :code')
+            ->andWhere('rs.uuid = :recommendation_set_uuid')
+            ->andWhere('rs.anr = :recommendation_set_anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setParameter('recommendation_set_uuid', $recommendationSet->getUuid())
+            ->setParameter('recommendation_set_anr', $anr)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getSingleResult();
     }
 
     public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void

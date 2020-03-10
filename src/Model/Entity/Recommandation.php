@@ -266,14 +266,24 @@ class Recommandation extends AbstractEntity
         return $this->position > $position;
     }
 
-    public function isImportanceHigherThan(int $importance): bool
+    public function isPositionHigherThan(int $position): bool
     {
-        return $this->importance > $importance;
+        return $this->position < $position;
+    }
+
+    public function isPositionHigherOrEqualThan(int $position): bool
+    {
+        return $this->position < $position;
     }
 
     public function isImportanceLowerThan(int $importance): bool
     {
         return $this->importance < $importance;
+    }
+
+    public function isImportanceHigherThan(int $importance): bool
+    {
+        return $this->importance > $importance;
     }
 
     public function getCode(): string

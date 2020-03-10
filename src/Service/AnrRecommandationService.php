@@ -106,93 +106,75 @@ class AnrRecommandationService extends AbstractService
     private function updatePosition(array $id, array $data): array
     {
         if (empty($data['implicitPosition'])) {
+            /** @var AnrTable $anrTable */
+            $anrTable = $this->get('anrTable');
+            $anr = $anrTable->findById($id['anr']);
+
             /** @var RecommandationTable $recommendationTable */
             $recommendationTable = $this->get('table');
-            $recommendation = $recommendationTable->findByAnrAndUuid($id['anr'], $id['uuid']);
+            $recommendation = $recommendationTable->findByAnrAndUuid($anr, $id['uuid']);
+            $newPosition = $recommendation->getPosition();
+
+            $linkedRecommendations = $recommendationTable
+                ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+                    $anr,
+                    [$id['uuid']],
+                    ['position' => 'ASC']
+                );
 
             switch ($data['implicitPosition']) {
                 case AbstractEntity::IMP_POS_START:
-                    // TODO: get all recos and increment positions.
-                    $data['position'] = 1;
-                    $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                        ->select()
-                        ->where('bro.anr = :anr')
-                        ->setParameter(':anr', $recommendation->get('anr'))
-                        ->andWhere('bro.uuid <> :uuid')
-                        ->setParameter(':uuid', (string)$recommendation->get('uuid'))
-                        ->andWhere('bro.position <= :pos')
-                        ->setParameter(':pos', $recommendation->get('position'))
-                        ->andWhere('bro.position IS NOT NULL')
-                        ->getQuery()
-                        ->getResult();
-                    foreach ($bros as $b) {
-                        $b->set('position', $b->get('position') + 1);
-                        $this->get('table')->save($b, false);
+                    foreach ($linkedRecommendations as $linkedRecommendation) {
+                        if ($linkedRecommendation->isPositionHigherThan($recommendation->getPosition())) {
+                            $recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
+                        }
                     }
+
+                    $newPosition = 1;
+
                     break;
                 case AbstractEntity::IMP_POS_END:
-                    // TODO: get max position and set it
-                    $pos = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                        ->select('MAX(bro.position)')
-                        ->where('bro.anr = :anr')
-                        ->setParameter(':anr', $recommendation->get('anr'))
-                        ->andWhere('bro.position IS NOT NULL')
-                        ->getQuery()->getSingleScalarResult();
-                    $data['position'] = $pos;
-                    $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                        ->select()
-                        ->where('bro.anr = :anr')
-                        ->setParameter(':anr', $recommendation->get('anr'))
-                        ->andWhere('bro.uuid <> :uuid')
-                        ->setParameter(':uuid', (string)$recommendation->get('uuid'))
-                        ->andWhere('bro.position >= :pos')
-                        ->setParameter(':pos', $recommendation->get('position'))
-                        ->andWhere('bro.position IS NOT NULL')
-                        ->getQuery()
-                        ->getResult();
-                    foreach ($bros as $b) {
-                        $b->set('position', $b->get('position') - 1);
-                        $this->get('table')->save($b, false);
+                    $maxPosition = 1;
+                    foreach ($linkedRecommendations as $linkedRecommendation) {
+                        if ($linkedRecommendation->isPositionLowerThan($recommendation->getPosition())) {
+                            $maxPosition = $linkedRecommendation->getPosition();
+                            $recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
+                        }
                     }
+
+                    $newPosition = $maxPosition;
+
                     break;
                 case AbstractEntity::IMP_POS_AFTER:
-                    // TODO: get all, set for current $data['previous'] +1, iterate and since the defined $data['previous'] increment
                     if (!empty($data['previous'])) {
-                        $prev = $this->get('table')->getEntity([
-                            'anr' => $recommendation->get('anr')->getId(),
-                            'uuid' => $data['previous']
-                        ]);
-                        if ($prev && $prev->get('position') > 0
-                            && $prev->get('anr')->getId() === $recommendation->get('anr')->getId()
-                        ) {
-                            $data['position'] = $prev->get('position')
-                                + ($recommendation->get('position') > $prev->get('position') ? 1 : 0);
-                            $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                                ->select()
-                                ->where('bro.anr = :anr')
-                                ->setParameter(':anr', $recommendation->get('anr'))
-                                ->andWhere('bro.uuid <> :uuid')
-                                ->setParameter(':uuid', (string)$recommendation->get('uuid'))
-                                ->andWhere('bro.position '
-                                    . ($recommendation->get('position') > $data['position'] ? '>' : '<') . '= :pos1')
-                                ->setParameter(':pos1', $data['position'])
-                                ->andWhere('bro.position '
-                                    . ($recommendation->get('position') > $data['position'] ? '<' : '>') . ' :pos2')
-                                ->setParameter(':pos2', $recommendation->get('position'))
-                                ->andWhere('bro.position IS NOT NULL')
-                                ->getQuery()
-                                ->getResult();
-                            $val = $recommendation->get('position') > $data['position'] ? 1 : -1;
-                            foreach ($bros as $b) {
-                                $b->set('position', $b->get('position') + $val);
-                                $this->get('table')->save($b, false);
+                        $previousRecommendation = $recommendationTable->findByAnrAndUuid($anr, $data['previous']);
+                        $isRecommendationMovedUp = $previousRecommendation->isPositionHigherThan(
+                            $recommendation->getPosition()
+                        );
+                        foreach ($linkedRecommendations as $linkedRecommendation) {
+                            if ($isRecommendationMovedUp
+                                && $linkedRecommendation->isPositionLowerThan($previousRecommendation->getPosition())
+                                && $linkedRecommendation->isPositionHigherThan($recommendation->getPosition())
+                            ) {
+                                $recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
+                            } elseif (!$isRecommendationMovedUp
+                                && $linkedRecommendation->isPositionLowerThan($recommendation->getPosition())
+                                && $linkedRecommendation->isPositionHigherOrEqualThan(
+                                    $previousRecommendation->getPosition()
+                                )
+                            ) {
+                                $recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
                             }
                         }
+
+                        $newPosition = $previousRecommendation->getPosition() + 1;
                     }
                     break;
                 default:
                     break;
             }
+
+            $recommendationTable->saveEntity($recommendation->setPosition($newPosition));
         }
 
         unset($data['implicitPosition'], $data['previous']);

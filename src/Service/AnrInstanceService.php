@@ -628,7 +628,11 @@ class AnrInstanceService extends InstanceService
                                     unset($toExchange['commentAfter']); // data du link
                                     $toExchange['anr'] = $anr->get('id');
 
-                                    $aReco = current($recommendationTable->getEntityByFields(['anr' => $anr->get('id'), 'code' => $reco['code']]));
+                                    $aReco = $recommendationTable->findByAnrCodeAndRecommendationSet(
+                                        $anr,
+                                        $reco['code'],
+                                        $recSets[0]
+                                    );
                                     if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
                                         $class = $recommendationTable->getEntityClass();
                                         $aReco = new $class();
@@ -974,6 +978,8 @@ class AnrInstanceService extends InstanceService
 
                     // Recommandations
                     if ($include_eval && !empty($data['recosop'][$ro['id']]) && !empty($idRiskOp)) {
+                        /** @var RecommandationTable $recommendationTable */
+                        $recommendationTable = $this->get('recommandationTable');
                         foreach ($data['recosop'][$ro['id']] as $reco) {
                             //2.8.3
                             if (version_compare($monarc_version, "2.8.4")==-1){
@@ -1003,7 +1009,11 @@ class AnrInstanceService extends InstanceService
                                 unset($toExchange['commentAfter']); // data du link
                                 $toExchange['anr'] = $anr->get('id');
 
-                                $aReco = current($recommendationTable->getEntityByFields(['anr' => $anr->get('id'), 'code' => $reco['code']]));
+                                $aReco = $recommendationTable->findByAnrCodeAndRecommendationSet(
+                                    $anr,
+                                    $reco['code'],
+                                    $recSets[0]
+                                );
                                 if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
                                     $class = $recommendationTable->getEntityClass();
                                     $aReco = new $class();
@@ -1058,8 +1068,6 @@ class AnrInstanceService extends InstanceService
                 }
             }
 
-
-
             if (!empty($data['children'])) {
               usort($data['children'], function($a,$b){
                 return $a['instance']['position'] <=> $b['instance']['position'];
@@ -1068,35 +1076,6 @@ class AnrInstanceService extends InstanceService
                     $this->importFromArray($child, $anr, $instanceId, $modeImport, $include_eval, $sharedData); // and so on...
                 }
                 $this->updateChildrenImpacts($instanceId);
-            }
-
-            // Duplicate from AnrRecommandationRiskService::initPosition()
-            $recoRisks = $this->get('recommandationRiskTable')->getEntityByFields([
-                'anr' => $anr->id,
-            ]);
-            $idReco = [];
-            foreach ($recoRisks as $rr) {
-                if ($rr->instanceRisk && $rr->instanceRisk->kindOfMeasure != InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                    $idReco[$rr->recommandation->uuid] = $rr->recommandation->uuid;
-                }
-                if ($rr->instanceRiskOp && $rr->instanceRiskOp->kindOfMeasure != \Monarc\Core\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED) {
-                    $idReco[$rr->recommandation->uuid] = $rr->recommandation->uuid;
-                }
-            }
-
-            if (!empty($idReco)) {
-                // Retrieve recommandations
-                /** @var RecommandationTable $recommandationTable */
-                $recommandationTable = $this->get('recommandationTable');
-                $recommandations = $recommandationTable->getEntityByFields(['anr' => $anr->id, 'uuid' => $idReco], ['importance' => 'DESC', 'code' => 'ASC']);
-
-                $i = 1;
-                $nbRecommandations = count($recommandations);
-                foreach ($recommandations as $recommandation) {
-                    $recommandation->position = $i;
-                    $recommandationTable->save($recommandation, ($i == $nbRecommandations));
-                    $i++;
-                }
             }
 
             return $instanceId;
