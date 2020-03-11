@@ -13,6 +13,7 @@ use Monarc\Core\Model\Entity\MonarcObject;
 use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 use Monarc\Core\Model\Entity\Scale;
 use Monarc\Core\Service\InstanceService;
+use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Ramsey\Uuid\Uuid;
@@ -43,6 +44,12 @@ class AnrInstanceService extends InstanceService
     protected $measureMeasureTable;
     protected $soaTable;
     protected $recordService;
+
+    /** @var int */
+    private $currentAnalyseMaxRecommendationPosition;
+
+    /** @var int */
+    private $initialAnalyseMaxRecommendationPosition;
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -89,6 +96,10 @@ class AnrInstanceService extends InstanceService
                     }
                 }
 
+                /** @var RecommandationTable $recommendationTable */
+                $recommendationTable = $this->get('recommandationTable');
+                $this->initialAnalyseMaxRecommendationPosition = $this->currentAnalyseMaxRecommendationPosition
+                    = $recommendationTable->getMaxPositionByAnr($anr);
                 if ($file !== false && ($id = $this->importFromArray($file, $anr, $idParent, $mode, false, $sharedData, true)) !== false) {
                     // Import was successful, store the ID
                     if (is_array($id)) {
@@ -615,9 +626,8 @@ class AnrInstanceService extends InstanceService
                                 if (isset($sharedData['recos'][$reco['uuid']])) { // Cette recommandation a déjà été gérée dans cet import
                                     if ($risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED) {
                                         $aReco = $recommendationTable->getEntity(['anr' => $anr->get('id'), 'uuid' => $reco['uuid']]);
-                                        if ($aReco->get('position') <= 0) {
-                                            $pos = $recommendationTable->getMaxPositionByAnr($anr) + 1;
-                                            $aReco->set('position', $pos);
+                                        if ($aReco->getPosition() <= 0) {
+                                            $aReco->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
                                             $aReco->setRecommandationSet($recSets[0]);
                                             $reco['uuid'] = $recommendationTable->save($aReco);
                                         }
@@ -639,12 +649,12 @@ class AnrInstanceService extends InstanceService
                                         if ($risk['kindOfMeasure'] == InstanceRiskSuperClass::KIND_NOT_TREATED) {
                                             $toExchange['position'] = 0;
                                         } else {
-                                            $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
+                                            $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                                         }
                                     } elseif ($aReco->get('position') <= 0
                                         && $risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED
                                     ) {
-                                        $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
+                                        $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                                     }
                                     $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
                                     $aReco->setLanguage($this->getLanguage());
@@ -997,8 +1007,7 @@ class AnrInstanceService extends InstanceService
                                 if ($ro['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED) {
                                     $aReco = $this->get('recommandationTable')->getEntity(['anr' => $anr->get('id'), 'uuid' => $reco['uuid']]);
                                     if ($aReco->get('position') <= 0) {
-                                        $pos = $recommendationTable->getMaxPositionByAnr($anr) + 1;
-                                        $aReco->set('position', $pos);
+                                        $aReco->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
                                         $aReco->setRecommandationSet($recSets[0]);
                                         $reco['uuid'] = $recommendationTable->save($aReco);
                                     }
@@ -1020,12 +1029,12 @@ class AnrInstanceService extends InstanceService
                                     if ($risk['kindOfMeasure'] == InstanceRiskSuperClass::KIND_NOT_TREATED) {
                                         $toExchange['position'] = 0;
                                     } else {
-                                        $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
+                                        $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                                     }
                                 } elseif ($aReco->get('position') <= 0
                                     && $risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED
                                 ) {
-                                    $toExchange['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
+                                    $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                                 }
                                 $aReco->setDbAdapter($recommendationTable->getDb());
                                 $aReco->setLanguage($this->getLanguage());
@@ -1076,6 +1085,34 @@ class AnrInstanceService extends InstanceService
                     $this->importFromArray($child, $anr, $instanceId, $modeImport, $include_eval, $sharedData); // and so on...
                 }
                 $this->updateChildrenImpacts($instanceId);
+            }
+
+            // Reorder only new linked recommendations.
+            /** @var RecommandationTable $recommendationTable */
+            $recommendationTable = $this->get('recommandationTable');
+            $linkedRecommendations = $recommendationTable
+                ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+                    $anr,
+                    [],
+                    ['position' => 'ASC']
+                );
+            $newRecommendationsToReorder = [];
+            foreach ($linkedRecommendations as $linkedRecommendation) {
+                if ($linkedRecommendation->isPositionLowerThan($this->initialAnalyseMaxRecommendationPosition)) {
+                    $newRecommendationsToReorder[$linkedRecommendation->getImportance()][] = $linkedRecommendation;
+                }
+            }
+            if (!empty($newRecommendationsToReorder)) {
+                krsort($newRecommendationsToReorder);
+                /** @var Recommandation[] $newRecommendationsToReorder */
+                $newRecommendationsToReorder = array_reduce($newRecommendationsToReorder, 'array_merge', []);
+                foreach ($newRecommendationsToReorder as $pos => $newRecommendationToReorder) {
+                    $newRecommendationToReorder->setPosition(
+                        $this->initialAnalyseMaxRecommendationPosition + $pos + 1
+                    );
+                    $recommendationTable->saveEntity($newRecommendationToReorder, false);
+                }
+                $recommendationTable->getDb()->flush();
             }
 
             return $instanceId;
