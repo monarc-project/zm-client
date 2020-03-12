@@ -11,13 +11,14 @@ class FixRecommendationsPosition extends AbstractMigration
             return;
         }
         foreach ($anrs as $anr) {
-            // Add the relation to linked recommendation.
             $stmtMaxPosition = $this->query(
-                'SELECT MAX(`position`) AS max_position from `recommandations` where `anr_id` = ' . $anr['id'] . ' AND `position` IS NOT NULL'
+                'SELECT MAX(r.`position`) AS max_position
+                 FROM `recommandations` r INNER JOIN `recommandations_risks` rr ON r.`uuid` = rr.`recommandation_id` and r.`anr_id` = rr.`anr_id`
+                 WHERE r.`anr_id` = ' . $anr['id'] . ' AND (`position` IS NOT NULL OR `position` = 0)'
             );
             $maxPositionResult = $stmtMaxPosition->fetchAll();
             $maxPosition = 0;
-            if (!empty($maxPositionResult) && !empty($maxPositionResult[0]['max_position'])) {
+            if (isset($maxPositionResult[0]['max_position'])) {
                 $maxPosition = $maxPositionResult[0]['max_position'];
             }
 
@@ -25,9 +26,9 @@ class FixRecommendationsPosition extends AbstractMigration
             $recommendationsToUpdate = $this->query(
                 'SELECT r.`uuid` from `recommandations` r
                 INNER JOIN `recommandations_risks` rr ON r.`uuid` = rr.`recommandation_id` AND r.`anr_id` = rr.`anr_id`
-                WHERE r.`anr_id` = ' . $anr['id'] . ' AND (r.`position` IS NULL OR r.`position` < 1)
+                WHERE r.`anr_id` = ' . $anr['id'] . ' AND (r.`position` IS NULL OR r.`position` = 0)
                 GROUP BY r.`uuid`
-                ORDER BY r.`created_at`'
+                ORDER BY r.`importance`, r.`created_at`'
             );
             $recommendationsToUpdateResult = $recommendationsToUpdate->fetchAll();
             foreach ($recommendationsToUpdateResult as $recommendation) {
@@ -41,7 +42,8 @@ class FixRecommendationsPosition extends AbstractMigration
             $recommendationsToUpdate = $this->query(
                 'SELECT r.`uuid` from `recommandations` r
                 WHERE r.`anr_id` = ' . $anr['id'] . '
-                  AND r.uuid NOT IN (SELECT rr.`recommandation_id` FROM `recommandations_risks` rr WHERE rr.`anr_id` = ' . $anr['id'] . ')'
+                  AND r.`uuid` NOT IN (SELECT rr.`recommandation_id` FROM `recommandations_risks` rr WHERE rr.`anr_id` = ' . $anr['id'] . ')
+                  AND r.`position` > 0'
             );
             $recommendationsToUpdateResult = $recommendationsToUpdate->fetchAll();
             foreach ($recommendationsToUpdateResult as $recommendation) {
