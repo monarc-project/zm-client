@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
@@ -28,6 +29,13 @@ class Recommandation extends AbstractEntity
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
+
+    const EMPTY_POSITION = 0;
+
+    const EMPTY_IMPORTANCE = 0;
+    const LOW_IMPORTANCE = 1;
+    const MEDIUM_IMPORTANCE = 2;
+    const HIGH_IMPORTANCE = 3;
 
     /**
      * @var integer
@@ -60,6 +68,13 @@ class Recommandation extends AbstractEntity
     protected $recommandationSet;
 
     /**
+     * @var ArrayCollection|RecommandationRisk[]
+     *
+     * @ORM\OneToMany(targetEntity="RecommandationRisk", mappedBy="recommandation", cascade={"persist", "remove"})
+     */
+    protected $recommendationRisks;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="code", type="string", length=100, nullable=true)
@@ -76,16 +91,16 @@ class Recommandation extends AbstractEntity
     /**
      * @var int
      *
-     * @ORM\Column(name="importance", type="smallint", options={"unsigned":true, "default":0}, nullable=true)
+     * @ORM\Column(name="importance", type="smallint", options={"unsigned":true, "default":0}, nullable=false)
      */
-    protected $importance = 0;
+    protected $importance = self::EMPTY_IMPORTANCE;
 
     /**
      * @var int
      *
-     * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":1}, nullable=true)
+     * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":0}, nullable=false)
      */
-    protected $position = 1;
+    protected $position = self::EMPTY_POSITION;
 
     /**
      * @var string
@@ -120,7 +135,7 @@ class Recommandation extends AbstractEntity
      *
      * @ORM\Column(name="counter_treated", type="smallint", options={"unsigned":true, "default":0})
      */
-    protected $counterTreated = '0';
+    protected $counterTreated = 0;
 
     /**
      * @var string
@@ -136,12 +151,9 @@ class Recommandation extends AbstractEntity
      */
     protected $tokenImport;
 
-    /**
-     * @return int
-     */
-    public function getUuid()
+    public function getUuid(): string
     {
-        return $this->uuid;
+        return (string)$this->uuid;
     }
 
     public function setUuid($id): self
@@ -196,11 +208,112 @@ class Recommandation extends AbstractEntity
         return $this;
     }
 
+    public function getPosition(): int
+    {
+        return (int)$this->position;
+    }
+
+    public function getRecommendationRisks()
+    {
+        return $this->recommendationRisks;
+    }
+
     public function setPosition(int $position): self
     {
         $this->position = $position;
 
         return $this;
+    }
+
+    public function shiftPositionUp(): self
+    {
+        $this->position--;
+
+        return $this;
+    }
+
+    public function shiftPositionDown(): self
+    {
+        $this->position++;
+
+        return $this;
+    }
+
+    public function getImportance(): int
+    {
+        return $this->importance;
+    }
+
+    public function isImportanceEmpty(): bool
+    {
+        return $this->importance === static::EMPTY_IMPORTANCE;
+    }
+
+    public function isPositionEmpty(): bool
+    {
+        return $this->position === static::EMPTY_POSITION;
+    }
+
+    public function setEmptyPosition(): self
+    {
+        $this->position = static::EMPTY_POSITION;
+
+        return $this;
+    }
+
+    public function isPositionLowerThan(int $position): bool
+    {
+        return $this->position > $position;
+    }
+
+    public function isPositionHigherThan(int $position): bool
+    {
+        return $this->position < $position;
+    }
+
+    public function isPositionHigherOrEqualThan(int $position): bool
+    {
+        return $this->position <= $position;
+    }
+
+    public function isImportanceLowerThan(int $importance): bool
+    {
+        return $this->importance < $importance;
+    }
+
+    public function isImportanceHigherThan(int $importance): bool
+    {
+        return $this->importance > $importance;
+    }
+
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function getDescription(): string
+    {
+        return (string)$this->description;
+    }
+
+    public function getComment(): string
+    {
+        return (string)$this->comment;
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status;
+    }
+
+    public function getResponsable(): string
+    {
+        return (string)$this->responsable;
+    }
+
+    public function getCounterTreated(): int
+    {
+        return $this->counterTreated;
     }
 
     public function getFiltersForService()
@@ -216,7 +329,6 @@ class Recommandation extends AbstractEntity
                 'as' => 'r1',
                 'rel' => 'recommandationSet',
             ],
-
         ];
         $filtersCol = [
             'r.uuid',
@@ -224,7 +336,7 @@ class Recommandation extends AbstractEntity
             'r.code',
         ];
 
-        return [$filterJoin,$filterLeft,$filtersCol];
+        return [$filterJoin, $filterLeft, $filtersCol];
     }
 
     /**
@@ -235,20 +347,6 @@ class Recommandation extends AbstractEntity
     {
         if (!$this->inputFilter) {
             parent::getInputFilter($partial);
-            // $this->inputFilter->add([
-            //     'name' => 'importance',
-            //     'required' => (!$partial) ? true : false,
-            //     'allow_empty' => false,
-            //     'validators' => [
-            //         [
-            //             'name' => 'InArray',
-            //             'options' => [
-            //                 'haystack' => [1, 2, 3],
-            //             ],
-            //             'default' => 0,
-            //         ],
-            //     ],
-            // ]);
 
             $validatorsCode = [];
             if (!$partial) {

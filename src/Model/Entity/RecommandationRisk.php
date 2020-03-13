@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
@@ -34,9 +35,9 @@ class RecommandationRisk extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -44,9 +45,9 @@ class RecommandationRisk extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Recommandation
+     * @var Recommandation
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Recommandation", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Recommandation", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -55,9 +56,9 @@ class RecommandationRisk extends AbstractEntity
     protected $recommandation;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\InstanceRisk
+     * @var InstanceRisk
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\InstanceRisk", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRisk", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_id", referencedColumnName="id", nullable=true)
      * })
@@ -65,9 +66,9 @@ class RecommandationRisk extends AbstractEntity
     protected $instanceRisk;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\InstanceRiskOp
+     * @var InstanceRiskOp
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\InstanceRiskOp", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOp", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", nullable=true)
      * })
@@ -75,9 +76,9 @@ class RecommandationRisk extends AbstractEntity
     protected $instanceRiskOp;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Instance
+     * @var Instance
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
      * })
@@ -85,9 +86,9 @@ class RecommandationRisk extends AbstractEntity
     protected $instance;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\MonarcObject
+     * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\MonarcObject", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_global_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -96,9 +97,9 @@ class RecommandationRisk extends AbstractEntity
     protected $objectGlobal;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Asset
+     * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -107,9 +108,9 @@ class RecommandationRisk extends AbstractEntity
     protected $asset;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Threat
+     * @var Threat
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Threat", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Threat", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -118,9 +119,9 @@ class RecommandationRisk extends AbstractEntity
     protected $threat;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Vulnerability
+     * @var Vulnerability
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Vulnerability", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -145,11 +146,11 @@ class RecommandationRisk extends AbstractEntity
 
     /**
      * @param int $id
-     * @return Asset
      */
-    public function setId($id)
+    public function setId($id): self
     {
         $this->id = $id;
+
         return $this;
     }
 
@@ -163,11 +164,11 @@ class RecommandationRisk extends AbstractEntity
 
     /**
      * @param Anr $anr
-     * @return Scale
      */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
@@ -190,7 +191,7 @@ class RecommandationRisk extends AbstractEntity
     }
 
     /**
-     * @return InstanceRisk
+     * @return InstanceRisk|null
      */
     public function getInstanceRisk()
     {
@@ -208,7 +209,7 @@ class RecommandationRisk extends AbstractEntity
     }
 
     /**
-     * @return InstanceRiskOp
+     * @return InstanceRiskOp|null
      */
     public function getInstanceRiskOp()
     {
@@ -244,15 +245,20 @@ class RecommandationRisk extends AbstractEntity
     }
 
     /**
-     * @return Object
+     * @return ObjectSuperClass
      */
     public function getObjectGlobal()
     {
         return $this->objectGlobal;
     }
 
+    public function hasGlobalObjectRelation(): bool
+    {
+        return $this->objectGlobal !== null;
+    }
+
     /**
-     * @param Object $objectGlobal
+     * @param ObjectSuperClass $objectGlobal
      * @return RecommandationRisk
      */
     public function setObjectGlobal($objectGlobal)

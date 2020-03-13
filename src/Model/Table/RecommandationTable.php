@@ -7,11 +7,14 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
+use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 
 /**
  * Class RecommandationTable
@@ -24,7 +27,7 @@ class RecommandationTable extends AbstractEntityTable
         parent::__construct($dbService, Recommandation::class, $connectedUserService);
     }
 
-    public function getMaxPositionByAnr(Anr $anr): int
+    public function getMaxPositionByAnr(AnrSuperClass $anr): int
     {
         return (int)$this->getRepository()
             ->createQueryBuilder('r')
@@ -47,6 +50,83 @@ class RecommandationTable extends AbstractEntityTable
             ->setParameter('anr', $anr)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return Recommandation[]
+     */
+    public function findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+        AnrSuperClass $anr,
+        array $excludeRecommendations = [],
+        array $order = []
+    ) {
+        $queryBuilder = $this->getRepository()
+            ->createQueryBuilder('r')
+            ->innerJoin('r.recommendationRisks', 'rr')
+            ->where('r.anr = :anr')
+            ->andWhere('r.importance > 0')
+            ->andWhere('r.position > 0')
+            ->setParameter('anr', $anr);
+
+        if (!empty($excludeRecommendations)) {
+            $queryBuilder
+                ->andWhere($queryBuilder->expr()->notIn('r.uuid', ':recommendations_uuid'))
+                ->setParameter('recommendations_uuid', $excludeRecommendations);
+        }
+
+        foreach ($order as $field => $direction) {
+            $queryBuilder->orderBy('r.' . $field, $direction);
+        }
+
+        return $queryBuilder
+            ->groupBy('r.uuid')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): Recommandation
+    {
+        $recommendation = $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->andWhere('r.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getSingleResult();
+
+        if ($recommendation === null) {
+            throw new Exception(
+                sprintf('Recommendation with anr ID "%d" and uuid "%s" has not been found.', $anr->getId(), $uuid)
+            );
+        }
+
+        return $recommendation;
+    }
+
+    public function findByAnrCodeAndRecommendationSet(
+        AnrSuperClass $anr,
+        string $code,
+        RecommandationSet $recommendationSet
+    ): ?Recommandation {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->innerJoin('r.recommandationSet', 'rs')
+            ->where('r.anr = :anr')
+            ->andWhere('r.code = :code')
+            ->andWhere('rs.uuid = :recommendation_set_uuid')
+            ->andWhere('rs.anr = :recommendation_set_anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setParameter('recommendation_set_uuid', $recommendationSet->getUuid())
+            ->setParameter('recommendation_set_anr', $anr)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getSingleResult();
     }
 
     public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void
