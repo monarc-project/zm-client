@@ -2297,7 +2297,7 @@ class DeliverableGenerationService extends AbstractService
                 if ($recommendationRisk->getRecommandation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
                     $cellReco = $table->addCell(Font::centimeterSizeToTwips(5.00), $cell);
-                    $cellRecoRun = $cellReco->addTextRun($alignCenter);
+                    $cellRecoRun = $cellReco->addTextRun($alignLeft);
                     $cellRecoRun->addText($importance . ' ', $styleContentFontRed);
                     $cellRecoRun->addText(
                         _WT($recommendationRisk->getRecommandation()->getCode()),
@@ -2476,7 +2476,7 @@ class DeliverableGenerationService extends AbstractService
                 if ($recommendationRisk->getRecommandation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
                     $cellReco = $table->addCell(Font::centimeterSizeToTwips(5.00), $cell);
-                    $cellRecoRun = $cellReco->addTextRun($alignCenter);
+                    $cellRecoRun = $cellReco->addTextRun($alignLeft);
                     $cellRecoRun->addText($importance . ' ', $styleContentFontRed);
                     $cellRecoRun
                         ->addText(_WT($recommendationRisk->getRecommandation()->getCode()), $styleContentRecoFont);
