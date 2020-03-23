@@ -8,14 +8,14 @@ use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 
-trait InstanceRiskRecommendationUpdateTrait
+trait RecommendationsPositionsUpdateTrait
 {
     /**
-     * Updates the recommendations' positions related to the risks.
+     * Updates the recommendations' positions related to the risk.
      *
      * @param InstanceRisk|InstanceRiskOp $instanceRisk
      */
-    public function updateRecoRisks($instanceRisk): void
+    public function updateInstanceRiskRecommendationsPositions($instanceRisk): void
     {
         $riskRecommendations = [];
         if ($instanceRisk->isTreated()) {
@@ -53,6 +53,34 @@ trait InstanceRiskRecommendationUpdateTrait
                 $this->resetRecommendationsPositions($instanceRisk->getAnr(), $riskRecommendations);
             }
         }
+    }
+
+    protected function resetRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
+    {
+        /** @var RecommandationTable $recommendationTable */
+        $recommendationTable = $this->get('recommandationTable');
+        $linkedRecommendations = $recommendationTable
+            ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+                $anr,
+                array_keys($riskRecommendations),
+                ['position' => 'ASC']
+            );
+
+        /** @var Recommandation[] $riskRecommendations */
+        foreach ($riskRecommendations as $riskRecommendation) {
+            $riskRecommendation->getPosition();
+            foreach ($linkedRecommendations as $linkedRecommendation) {
+                if ($linkedRecommendation->isPositionLowerThan($riskRecommendation->getPosition())) {
+                    $linkedRecommendation->shiftPositionUp();
+                    $recommendationTable->saveEntity($riskRecommendation, false);
+                }
+            }
+
+            $riskRecommendation->setEmptyPosition();
+            $recommendationTable->saveEntity($riskRecommendation, false);
+        }
+
+        $recommendationTable->getDb()->flush();
     }
 
     private function updateRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
@@ -94,34 +122,6 @@ trait InstanceRiskRecommendationUpdateTrait
                 $riskRecommendation->setPosition(++$maxPosition);
                 $recommendationTable->saveEntity($riskRecommendation, false);
             }
-        }
-
-        $recommendationTable->getDb()->flush();
-    }
-
-    private function resetRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
-    {
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
-        $linkedRecommendations = $recommendationTable
-            ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
-                $anr,
-                array_keys($riskRecommendations),
-                ['position' => 'ASC']
-            );
-
-        /** @var Recommandation[] $riskRecommendations */
-        foreach ($riskRecommendations as $riskRecommendation) {
-            $riskRecommendation->getPosition();
-            foreach ($linkedRecommendations as $linkedRecommendation) {
-                if ($linkedRecommendation->isPositionLowerThan($riskRecommendation->getPosition())) {
-                    $linkedRecommendation->shiftPositionUp();
-                    $recommendationTable->saveEntity($riskRecommendation, false);
-                }
-            }
-
-            $riskRecommendation->setEmptyPosition();
-            $recommendationTable->saveEntity($riskRecommendation, false);
         }
 
         $recommendationTable->getDb()->flush();

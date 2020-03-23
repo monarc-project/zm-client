@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use DateTime;
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Service\AbstractService;
@@ -97,28 +98,30 @@ class AnrRecommandationService extends AbstractService
     /**
      * Updates the position of the recommendation, based on the implicitPosition field passed in $data.
      *
-     * @param array $id The recommendation composite ID [anr, uuid]
+     * @param array $recommendationId The recommendation composite ID [anr, uuid]
      * @param array $data The positioning data (implicitPosition field, and previous)
      *
      * @return array
+     *
      * @throws Exception
+     * @throws EntityNotFoundException
      */
-    private function updatePosition(array $id, array $data): array
+    private function updatePosition(array $recommendationId, array $data): array
     {
         if (!empty($data['implicitPosition'])) {
             /** @var AnrTable $anrTable */
             $anrTable = $this->get('anrTable');
-            $anr = $anrTable->findById($id['anr']);
+            $anr = $anrTable->findById($recommendationId['anr']);
 
             /** @var RecommandationTable $recommendationTable */
             $recommendationTable = $this->get('table');
-            $recommendation = $recommendationTable->findByAnrAndUuid($anr, $id['uuid']);
+            $recommendation = $recommendationTable->findByAnrAndUuid($anr, $recommendationId['uuid']);
             $newPosition = $recommendation->getPosition();
 
             $linkedRecommendations = $recommendationTable
                 ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                     $anr,
-                    [$id['uuid']],
+                    [$recommendationId['uuid']],
                     ['position' => 'ASC']
                 );
 
@@ -181,7 +184,6 @@ class AnrRecommandationService extends AbstractService
 
         return $data;
     }
-
 
     /**
      * Computes the due date color for the recommendation. Returns 'no-date' if no due date is set on the

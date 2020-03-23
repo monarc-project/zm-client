@@ -97,10 +97,11 @@ class RecommandationSet extends AbstractEntity
     public function setUuid($uuid)
     {
         $this->uuid = $uuid;
+
         return $this;
     }
 
-        /**
+    /**
      * @return Anr
      */
     public function getAnr()
@@ -110,7 +111,7 @@ class RecommandationSet extends AbstractEntity
 
     /**
      * @param Anr $anr
-     * @return Scale
+     * @return RecommandationSet
      */
     public function setAnr($anr)
     {
@@ -119,7 +120,7 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @return Recommandation
+     * @return Recommandation[]
      */
     public function getRecommandations()
     {
@@ -127,7 +128,7 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @param \Monarc\FrontOffice\Model\Entity\Recommandation $recommandations
+     * @param Recommandation[] $recommandations
      * @return RecommandationSet
      */
     public function setRecommandations($recommandations)

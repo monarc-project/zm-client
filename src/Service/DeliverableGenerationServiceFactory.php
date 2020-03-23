@@ -34,9 +34,6 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'interviewService' => Service\AnrInterviewService::class,
         'threatService' => Service\AnrThreatService::class,
         'instanceService' => Service\AnrInstanceService::class,
-        'recommandationService' => Service\AnrRecommandationService::class,
-        'recommandationRiskService' => Service\AnrRecommandationRiskService::class,
-        'recommandationHistoricService' => Service\AnrRecommandationHistoricService::class,
         'cartoRiskService' => Service\AnrCartoRiskService::class,
         'instanceRiskTable' => Table\InstanceRiskTable::class,
         'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
@@ -46,5 +43,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'riskService' => Service\AnrRiskService::class,
         'recordService' => Service\AnrRecordService::class,
         'translateService' => TranslateService::class,
+        'recommendationRiskTable' => Table\RecommandationRiskTable::class,
+        'recommendationHistoricTable' => Table\RecommendationHistoricTable::class,
     ];
 }

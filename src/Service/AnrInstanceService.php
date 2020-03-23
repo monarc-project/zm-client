@@ -400,7 +400,7 @@ class AnrInstanceService extends InstanceService
                     $recommandationsSets = $this->get('recommandationSetTable')
                                                 ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
                     if(!empty($recommandationsSets)){
-                        $uuidRecSet = $recommandationsSets[0]->uuid->toString();
+                        $uuidRecSet = $recommandationsSets[0]->uuid;
                     }
                     else{
                         $toExchange = [
@@ -615,7 +615,7 @@ class AnrInstanceService extends InstanceService
                                     unset($reco['id']);
                                     $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
                                     if(!empty($recs)){
-                                        $reco['uuid'] = $recs[0]->get('uuid')->toString();
+                                        $reco['uuid'] = $recs[0]->get('uuid');
                                     }
                                     $reco['recommandationSet'] = $uuidRecSet;
                                 }
@@ -762,7 +762,7 @@ class AnrInstanceService extends InstanceService
                                 if (!empty($brotherRecoRisks)) {
                                       foreach ($brotherRecoRisks as $brr) {
                                             $RecoCreated= $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
-                                              'recommandation' => ['anr' => $anr->id, 'uuid' => is_string($brr->recommandation->uuid)?$brr->recommandation->uuid:$brr->recommandation->uuid->toString()],
+                                              'recommandation' => ['anr' => $anr->id, 'uuid' => $brr->recommandation->uuid],
                                               'instance' => $instanceId,
                                               'instanceRisk' => $r->get('id')]);
 
@@ -773,7 +773,7 @@ class AnrInstanceService extends InstanceService
                                                     $rrb->setLanguage($this->getLanguage());
                                                     $toExchange = [
                                                         'anr' => $anr->get('id'),
-                                                        'recommandation' => $brr->recommandation->uuid->toString(),
+                                                        'recommandation' => $brr->recommandation->uuid,
                                                         'instanceRisk' => $r->get('id'),
                                                         'instance' => $instanceId,
                                                         'objectGlobal' => $brr->objectGlobal->uuid->toString(),
@@ -817,7 +817,7 @@ class AnrInstanceService extends InstanceService
                 }
                 foreach ($recoToCreate as $rtc) {
                   $RecoCreated = $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
-                    'recommandation' => ['anr' => $anr->get('id'), 'uuid' => $rtc->recommandation->uuid->toString()],
+                    'recommandation' => ['anr' => $anr->get('id'), 'uuid' => $rtc->recommandation->uuid],
                     'instance' => $instanceId,
                     'asset' => ['anr' => $anr->get('id'), 'uuid' => $rtc->asset->uuid->toString()],
                     'threat' => ['anr' => $anr->get('id'), 'uuid' => $rtc->threat->uuid->toString()],
@@ -830,7 +830,7 @@ class AnrInstanceService extends InstanceService
                           $rrb->setLanguage($this->getLanguage());
                           $toExchange = [
                               'anr' => $anr->get('id'),
-                              'recommandation' => ['anr' => $anr->get('id'), 'uuid' => $rtc->recommandation->uuid->toString()],
+                              'recommandation' => ['anr' => $anr->get('id'), 'uuid' => $rtc->recommandation->uuid],
                               'instanceRisk' => $idRiskSpecific = current($this->get('instanceRiskTable')->getEntityByFields([
                                                       'anr' => $anr->get('id'),
                                                       'instance' => $instanceId,
@@ -904,7 +904,7 @@ class AnrInstanceService extends InstanceService
                     $recommandationsSets = $this->get('recommandationSetTable')
                                                 ->getEntityByFields(['anr' => $anr->id, 'label1' => "Recommandations importées"]);
                     if(!empty($recommandationsSets)){
-                        $uuidRecSet = $recommandationsSets[0]->uuid->toString();
+                        $uuidRecSet = $recommandationsSets[0]->uuid;
                     }
                     else{
                         $toExchange = [
@@ -996,7 +996,7 @@ class AnrInstanceService extends InstanceService
                                 unset($reco['id']);
                                 $recs = $this->get('recommandationTable')->getEntityByFields(['code' => $reco['code'], 'description' => $reco['description']]);
                                 if(!empty($recs)){
-                                    $reco['uuid'] = $recs[0]->get('uuid')->toString();
+                                    $reco['uuid'] = $recs[0]->get('uuid');
                                 }
                                 $reco['recommandationSet'] = $uuidRecSet;
                             }

@@ -244,10 +244,7 @@ class RecommandationRisk extends AbstractEntity
         return $this;
     }
 
-    /**
-     * @return ObjectSuperClass
-     */
-    public function getObjectGlobal()
+    public function getObjectGlobal(): ?ObjectSuperClass
     {
         return $this->objectGlobal;
     }
@@ -257,13 +254,10 @@ class RecommandationRisk extends AbstractEntity
         return $this->objectGlobal !== null;
     }
 
-    /**
-     * @param ObjectSuperClass $objectGlobal
-     * @return RecommandationRisk
-     */
-    public function setObjectGlobal($objectGlobal)
+    public function setObjectGlobal(?ObjectSuperClass $objectGlobal): self
     {
         $this->objectGlobal = $objectGlobal;
+
         return $this;
     }
 

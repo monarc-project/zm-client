@@ -183,7 +183,7 @@ class Recommandation extends AbstractEntity
         return $this->duedate;
     }
 
-    public function setDueDate(DateTime $date): self
+    public function setDueDate(?DateTime $date): self
     {
         $this->duedate = $date;
 
@@ -311,9 +311,42 @@ class Recommandation extends AbstractEntity
         return (string)$this->responsable;
     }
 
+    /**
+     * @param mixed $inputFilter
+     *
+     * @return Recommandation
+     */
+    public function setInputFilter($inputFilter)
+    {
+        $this->inputFilter = $inputFilter;
+
+        return $this;
+    }
+
+    public function setComment(string $comment): Recommandation
+    {
+        $this->comment = $comment;
+
+        return $this;
+    }
+
+    public function setResponsable(string $responsable): Recommandation
+    {
+        $this->responsable = $responsable;
+
+        return $this;
+    }
+
     public function getCounterTreated(): int
     {
         return $this->counterTreated;
+    }
+
+    public function incrementCounterTreated(): self
+    {
+        $this->counterTreated++;
+
+        return $this;
     }
 
     public function getFiltersForService()
