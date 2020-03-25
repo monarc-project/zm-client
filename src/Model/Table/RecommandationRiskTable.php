@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
@@ -15,6 +14,7 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 
 /**
@@ -43,7 +43,7 @@ class RecommandationRiskTable extends AbstractEntityTable
     }
 
     /**
-     * @return RecommandationRisk[]|ArrayCollection
+     * @return RecommandationRisk[]
      */
     public function findByAnr(AnrSuperClass $anr, array $order = [], bool $excludeNotTreated = true)
     {
@@ -55,6 +55,7 @@ class RecommandationRiskTable extends AbstractEntityTable
 
         if ($excludeNotTreated) {
             $queryBuilder
+                ->addSelect('ir, irop')
                 ->leftJoin('rr.instanceRisk', 'ir')
                 ->leftJoin('rr.instanceRiskOp', 'irop')
                 ->andWhere($queryBuilder->expr()->orX(
@@ -67,7 +68,55 @@ class RecommandationRiskTable extends AbstractEntityTable
             $queryBuilder->addOrderBy($field, $ascendancy);
         }
 
-         return $queryBuilder
+        return $queryBuilder
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return RecommandationRisk[]
+     */
+    public function findByAnrAndRecommendation(AnrSuperClass $anr, Recommandation $recommandation)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('rr')
+            ->innerJoin('rr.recommandation', 'r')
+            ->andWhere('rr.anr = :anr')
+            ->andWhere('r.anr = :recommendation_anr')
+            ->andWhere('r.uuid = :recommendation_uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('recommendation_anr', $recommandation->getAnr())
+            ->setParameter('recommendation_uuid', $recommandation->getUuid())
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return RecommandationRisk[]
+     */
+    public function findByAnrAndInstanceRisk(AnrSuperClass $anr, InstanceRisk $instanceRisk)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('rr')
+            ->andWhere('rr.anr = :anr')
+            ->andWhere('rr.instanceRisk = :instance_risk')
+            ->setParameter('anr', $anr)
+            ->setParameter('instance_risk', $instanceRisk)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return RecommandationRisk[]
+     */
+    public function findByAnrAndOperationalInstanceRisk(AnrSuperClass $anr, InstanceRiskOp $instanceRiskOp)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('rr')
+            ->andWhere('rr.anr = :anr')
+            ->andWhere('rr.instanceRiskOp = :instance_risk_op')
+            ->setParameter('anr', $anr)
+            ->setParameter('instance_risk_op', $instanceRiskOp)
             ->getQuery()
             ->getResult();
     }

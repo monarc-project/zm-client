@@ -2,6 +2,7 @@
 
 namespace Monarc\FrontOffice\Service\Traits;
 
+use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
@@ -55,6 +56,13 @@ trait RecommendationsPositionsUpdateTrait
         }
     }
 
+    /**
+     * @param AnrSuperClass $anr
+     * @param array $riskRecommendations List of recommendations to reset the positions (set ot 0),
+     *                                   Keys of the array are UUIDs, values are Recommendation objects.
+     *
+     * @throws OptimisticLockException
+     */
     protected function resetRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
     {
         /** @var RecommandationTable $recommendationTable */
@@ -102,15 +110,15 @@ trait RecommendationsPositionsUpdateTrait
                 $riskRecommendation->setPosition(++$maxPositionsPerImportance[$riskRecommendation->getImportance()]);
                 $recommendationTable->saveEntity($riskRecommendation, false);
 
-                $isPositionIncreased = false;
+                $isMaxPositionIncreasedForImportance = [];
                 foreach ($linkedRecommendations as $linkedRecommendation) {
                     if ($linkedRecommendation->isImportanceLowerThan($riskRecommendation->getImportance())) {
                         $linkedRecommendation->shiftPositionDown();
                         $recommendationTable->saveEntity($linkedRecommendation, false);
 
-                        if (!$isPositionIncreased) {
+                        if (!isset($isMaxPositionIncreasedForImportance[$linkedRecommendation->getImportance()])) {
                             $maxPositionsPerImportance[$linkedRecommendation->getImportance()]++;
-                            $isPositionIncreased = true;
+                            $isMaxPositionIncreasedForImportance[$linkedRecommendation->getImportance()] = true;
                         }
                     }
                 }

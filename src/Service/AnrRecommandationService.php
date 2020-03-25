@@ -156,6 +156,9 @@ class AnrRecommandationService extends AbstractService
                         $isRecommendationMovedUp = $previousRecommendation->isPositionHigherThan(
                             $recommendation->getPosition()
                         );
+                        $newPosition = $isRecommendationMovedUp ? $previousRecommendation->getPosition() + 1
+                            : $previousRecommendation->getPosition();
+
                         foreach ($linkedRecommendations as $linkedRecommendation) {
                             if ($isRecommendationMovedUp
                                 && $linkedRecommendation->isPositionLowerThan($previousRecommendation->getPosition())
@@ -171,8 +174,6 @@ class AnrRecommandationService extends AbstractService
                                 $recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
                             }
                         }
-
-                        $newPosition = $previousRecommendation->getPosition();
                     }
                     break;
             }

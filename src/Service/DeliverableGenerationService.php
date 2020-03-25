@@ -2195,7 +2195,7 @@ class DeliverableGenerationService extends AbstractService
         $recommendationRisks = $this->recommendationRiskTable->findByAnr($anr, ['r.position' => 'ASC']);
 
         //header if array is not empty
-        if (!$recommendationRisks->isEmpty()) {
+        if (!empty($recommendationRisks)) {
             $table->addRow(400, ['tblHeader' => true]);
             $table->addCell(Font::centimeterSizeToTwips(3.50), $cellRowSpan)
                 ->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
@@ -2429,7 +2429,7 @@ class DeliverableGenerationService extends AbstractService
 
         $recommendationRisks = $this->recommendationRiskTable->findByAnr($anr, ['r.position' => 'ASC']);
 
-        if (!$recommendationRisks->isEmpty()) {
+        if (!empty($recommendationRisks)) {
             $table->addRow(400, ['tblHeader' => true]);
             $table->addCell(Font::centimeterSizeToTwips(3.00), $styleHeaderCell)
                 ->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
@@ -2566,7 +2566,7 @@ class DeliverableGenerationService extends AbstractService
         $recommendationRisks = $this->recommendationRiskTable->findByAnr($anr, ['r.position' => 'ASC']);
 
         //header if array is not empty
-        if (!$recommendationRisks->isEmpty()) {
+        if (!empty($recommendationRisks)) {
             $table->addRow(400, ['tblHeader' => true]);
             $table->addCell(Font::centimeterSizeToTwips(10.00), $styleHeaderCell)
                 ->addText($this->anrTranslate('Recommendation'), $styleHeaderFont, $alignCenter);

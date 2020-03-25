@@ -18,7 +18,12 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
      */
     public function delete($id)
     {
-        $this->updateRecommendationsPositions($id);
+        /** @var InstanceRiskOpTable $instanceRiskOpTable */
+        $instanceRiskOpTable = $this->get('table');
+        /** @var InstanceRiskOp $instanceRiskOp */
+        $instanceRiskOp = $instanceRiskOpTable->findById($id);
+
+        $this->updateInstanceRiskRecommendationsPositions($instanceRiskOp);
 
         return parent::delete($id);
     }
@@ -32,7 +37,12 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         // TODO: Pass the object instead of id.
         $result = parent::patch($id, $data);
 
-        $this->updateRecommendationsPositions($id);
+        /** @var InstanceRiskOpTable $instanceRiskOpTable */
+        $instanceRiskOpTable = $this->get('table');
+        /** @var InstanceRiskOp $instanceRiskOp */
+        $instanceRiskOp = $instanceRiskOpTable->findById($id);
+
+        $this->updateInstanceRiskRecommendationsPositions($instanceRiskOp);
 
         return $result;
     }
@@ -46,21 +56,13 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         // TODO: pass the object instead of id.
         $result = parent::update($id, $data);
 
-        $this->updateRecommendationsPositions($id);
-
-        return $result;
-    }
-
-    /**
-     * @throws EntityNotFoundException
-     */
-    private function updateRecommendationsPositions($id): void
-    {
         /** @var InstanceRiskOpTable $instanceRiskOpTable */
         $instanceRiskOpTable = $this->get('table');
         /** @var InstanceRiskOp $instanceRiskOp */
         $instanceRiskOp = $instanceRiskOpTable->findById($id);
 
         $this->updateInstanceRiskRecommendationsPositions($instanceRiskOp);
+
+        return $result;
     }
 }
