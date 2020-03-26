@@ -960,7 +960,6 @@ class AnrInstanceService extends InstanceService
                     $toExchange['instance'] = $instanceId;
                     $toExchange['object'] = $idObject;
                     $tagId = $this->get('objectExportService')->get('table')->getEntity(['anr' => $anr->get('id'),'uuid' =>$idObject])->get('rolfTag');
-                    $rolfRisks = [];
                     if (null !== $tagId) {
                         $rolfRisks = $tagId->risks;
                         $toExchange['rolfRisk'] = $rolfRisks[$k]->id;
@@ -1029,13 +1028,13 @@ class AnrInstanceService extends InstanceService
                                 if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
                                     $class = $recommendationTable->getEntityClass();
                                     $aReco = new $class();
-                                    if ($risk['kindOfMeasure'] == InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                                    if ($ro['kindOfMeasure'] === InstanceRiskSuperClass::KIND_NOT_TREATED) {
                                         $toExchange['position'] = 0;
                                     } else {
                                         $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                                     }
                                 } elseif ($aReco->get('position') <= 0
-                                    && $risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED
+                                    && $ro['kindOfMeasure'] !== InstanceRiskSuperClass::KIND_NOT_TREATED
                                 ) {
                                     $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                                 }
