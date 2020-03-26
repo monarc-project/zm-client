@@ -320,7 +320,7 @@ class AnrRecommandationRiskService extends AbstractService
                     $methodName = 'getName' . $anr->getLanguage();
                     $path = $recommendationRisk->getInstance()->$methodName();
 
-                    $globalObjectUuid = (string)$recommendationRisk->getObjectGlobal()->getUuid();
+                    $globalObjectUuid = (string)$recommendationRisk->getGlobalObject()->getUuid();
                     $assetUuid = (string)$recommendationRisk->getAsset()->getUuid();
                     $threatUuid = (string)$recommendationRisk->getThreat()->getUuid();
                     $vulnerabilityUuid = (string)$recommendationRisk->getVulnerability()->getUuid();
@@ -428,7 +428,7 @@ class AnrRecommandationRiskService extends AbstractService
 
         $entity->setInstance($risk->getInstance());
         if ($risk->getInstance()->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL) {
-            $entity->setObjectGlobal($risk->getInstance()->getObject());
+            $entity->setGlobalObject($risk->getInstance()->getObject());
         }
 
         return $table->save($entity);
@@ -619,8 +619,8 @@ class AnrRecommandationRiskService extends AbstractService
                     $brothersInstances = $instanceTable->getEntityByFields([
                         'anr' => $recommendationRisk->get('anr')->get('id'),
                         'object' => [
-                            'anr' => $recommendationRisk->get('anr')->get('id'),
-                            'uuid' => $recommendationRisk->get('objectGlobal')->get('uuid')->toString()
+                            'anr' => $recommendationRisk->getAnr()->getId(),
+                            'uuid' => (string)$recommendationRisk->getGlobalObject()->getUuid()
                         ],
                     ]);
                     foreach ($brothersInstances as $brotherInstance) {

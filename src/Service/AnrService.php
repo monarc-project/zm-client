@@ -1279,10 +1279,10 @@ class AnrService extends AbstractService
                     $newRecommendationRisk->setInstance(
                         $instancesNewIds[$newRecommendationRisk->get('instance')->get('id')]
                     );
-                    if ($newRecommendationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommendationRisk->get('objectGlobal')->getUuid()->toString()])) {
-                        $newRecommendationRisk->set('objectGlobal', $objectsNewIds[$newRecommendationRisk->get('objectGlobal')->getUuid()->toString()]);
+                    if ($newRecommendationRisk->getGlobalObject() && isset($objectsNewIds[(string)$newRecommendationRisk->getGlobalObject()->getUuid()])) {
+                        $newRecommendationRisk->setGlobalObject($objectsNewIds[(string)$newRecommendationRisk->getGlobalObject()->getUuid()]);
                     } else {
-                        $newRecommendationRisk->set('objectGlobal', null);
+                        $newRecommendationRisk->setGlobalObject(null);
                     }
                     if ($newRecommendationRisk->get('asset')) {
                         $newRecommendationRisk->set('asset', $assetsNewIds[$newRecommendationRisk->get('asset')->getUuid()->toString()]);
@@ -1293,6 +1293,7 @@ class AnrService extends AbstractService
                     if ($newRecommendationRisk->get('vulnerability')) {
                         $newRecommendationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommendationRisk->get('vulnerability')->getUuid()->toString()]);
                     }
+                    // TODO: check why do we need the following manipulation and remove the double save call.
                     $newRecommendationRisk->setAnr(null);
                     $this->get('recommandationRiskCliTable')->save($newRecommendationRisk);
                     $newRecommendationRisk->setAnr($newAnr);

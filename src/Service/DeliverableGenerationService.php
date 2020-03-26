@@ -2237,7 +2237,7 @@ class DeliverableGenerationService extends AbstractService
                 $key = $recommendationRisk->getRecommandation()->getUuid()
                     . ' - ' . $recommendationRisk->getThreat()->getUuid()
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
-                    . ' - ' . $recommendationRisk->getObjectGlobal()->getUuid();
+                    . ' - ' . $recommendationRisk->getGlobalObject()->getUuid();
                 if (\array_key_exists($key, $global)) {
                     if (\array_key_exists($key, $toUnset)
                         && $recommendationRisk->getInstanceRisk()->getCacheMaxRisk() > $toUnset[$key]
@@ -2316,7 +2316,7 @@ class DeliverableGenerationService extends AbstractService
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
                     . ' - ' . (
                         $recommendationRisk->hasGlobalObjectRelation()
-                            ? (string)$recommendationRisk->getObjectGlobal()->getUuid()
+                            ? (string)$recommendationRisk->getGlobalObject()->getUuid()
                             : ''
                     );
                 if (isset($toUnset[$key])) {

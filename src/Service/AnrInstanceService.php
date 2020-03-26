@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\MonarcObject;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 use Monarc\Core\Model\Entity\Scale;
 use Monarc\Core\Service\InstanceService;
@@ -203,7 +204,7 @@ class AnrInstanceService extends InstanceService
             $toExchange['asset'] = null;
             $obj = $this->get('objectExportService')->get('table')->getEntity(['anr' => $anr, 'uuid' => $idObject]);
             if ($obj) {
-                $toExchange['asset'] = is_string($obj->get('asset')->get('uuid'))?$obj->get('asset')->get('uuid'):$obj->get('asset')->get('uuid')->toString();
+                $toExchange['asset'] = (string)$obj->get('asset')->get('uuid');
                 if ($modeImport == 'duplicate') {
                     for ($i = 1; $i <= 4; $i++) {
                         $toExchange['name' . $i] = $obj->get('name' . $i);
@@ -678,20 +679,22 @@ class AnrInstanceService extends InstanceService
                                     'recommandation' => $reco['uuid'],
                                     'instanceRisk' => $idRisk,
                                     'instance' => $instanceId,
-                                    'objectGlobal' => (($obj && $obj->get('scope') == \Monarc\Core\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL) ? is_string($obj->get('uuid'))?$obj->get('uuid'):$obj->get('uuid')->toString() : null),
-                                    'asset' => is_string($r->get('asset')->get('uuid'))?$r->get('asset')->get('uuid'):$r->get('asset')->get('uuid')->toString(),
-                                    'threat' => is_string($r->get('threat')->get('uuid'))?$r->get('threat')->get('uuid'):$r->get('threat')->get('uuid')->toString(),
-                                    'vulnerability' => is_string($r->get('vulnerability')->get('uuid'))?$r->get('vulnerability')->get('uuid'):$r->get('vulnerability')->get('uuid')->toString(),
+                                    'globalObject' => $obj && $obj->get('scope') === ObjectSuperClass::SCOPE_GLOBAL
+                                        ? (string)$obj->get('uuid')
+                                        : null,
+                                    'asset' => (string)$r->get('asset')->get('uuid'),
+                                    'threat' => (string)$r->get('threat')->get('uuid'),
+                                    'vulnerability' => (string)$r->get('vulnerability')->get('uuid'),
                                     'commentAfter' => $reco['commentAfter'],
                                     'op' => 0,
                                     'risk' => $idRisk,
                                 ];
                                 $rr->exchangeArray($toExchange);
-                                $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                                $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'globalObject', 'asset', 'threat', 'vulnerability']);
                                 $this->get('recommandationRiskTable')->save($rr);
 
                                 // Reply recommandation to brothers
-                                if (!empty($toExchange['objectGlobal']) && $modeImport == 'merge') {
+                                if (!empty($toExchange['globalObject']) && $modeImport == 'merge') {
                                       $instances = $this->get('table')->getEntityByFields([ // Get the brothers
                                           'anr' => $anr->get('id'),
                                           'asset' => ['anr' => $anr->get('id'), 'uuid' => is_string($obj->get('asset')->get('uuid'))?$obj->get('asset')->get('uuid'):$obj->get('asset')->get('uuid')->toString()],
@@ -726,7 +729,7 @@ class AnrInstanceService extends InstanceService
                                                               $toExchange['instanceRisk'] = $brother->id;
                                                               $toExchange['instance'] = $i->get('id');
                                                               $rr->exchangeArray($toExchange);
-                                                              $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                                                              $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'globalObject', 'asset', 'threat', 'vulnerability']);
                                                               $this->get('recommandationRiskTable')->save($rr,false);
                                                         }
                                                   }
@@ -757,7 +760,7 @@ class AnrInstanceService extends InstanceService
                                     'anr' => $anr->get('id'),
                                     'instanceRisk' => $irb->id,
                                     'instance' => ['op' => '!=', 'value' => $instanceId],
-                                    'objectGlobal' => ['anr' => $anr->get('id'), 'uuid' => is_string($obj->get('uuid'))?$obj->get('uuid'):$obj->get('uuid')->toString()]]);
+                                    'globalObject' => ['anr' => $anr->get('id'), 'uuid' => is_string($obj->get('uuid'))?$obj->get('uuid'):$obj->get('uuid')->toString()]]);
 
                                 if (!empty($brotherRecoRisks)) {
                                       foreach ($brotherRecoRisks as $brr) {
@@ -776,16 +779,16 @@ class AnrInstanceService extends InstanceService
                                                         'recommandation' => $brr->recommandation->uuid,
                                                         'instanceRisk' => $r->get('id'),
                                                         'instance' => $instanceId,
-                                                        'objectGlobal' => $brr->objectGlobal->uuid->toString(),
-                                                        'asset' => $brr->asset->uuid->toString(),
-                                                        'threat' => $brr->threat->uuid->toString(),
-                                                        'vulnerability' => $brr->vulnerability->uuid->toString(),
+                                                        'globalObject' => (string)$brr->globalObject->uuid,
+                                                        'asset' => (string)$brr->asset->uuid,
+                                                        'threat' => (string)$brr->threat->uuid,
+                                                        'vulnerability' => (string)$brr->vulnerability->uuid,
                                                         'commentAfter' => $brr->commentAfter,
                                                         'op' => 0,
                                                         'risk' => $r->get('id'),
                                                     ];
                                                     $rrb->exchangeArray($toExchange);
-                                                    $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                                                    $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'globalObject', 'asset', 'threat', 'vulnerability']);
                                                     $this->get('recommandationRiskTable')->save($rrb,false);
 
                                             }
@@ -839,7 +842,7 @@ class AnrInstanceService extends InstanceService
                                                       'threat' => ['anr' => $anr->get('id'), 'uuid' => $rtc->threat->uuid->toString()],
                                                       'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $rtc->vulnerability->uuid->toString()]])),
                               'instance' => $instanceId,
-                              'objectGlobal' => ['anr' => $anr->get('id'), 'uuid' => $rtc->objectGlobal->uuid->toString()],
+                              'globalObject' => ['anr' => $anr->get('id'), 'uuid' => $rtc->globalObject->uuid->toString()],
                               'asset' =>['anr' => $anr->get('id'), 'uuid' =>  $rtc->asset->uuid->toString()],
                               'threat' => ['anr' => $anr->get('id'), 'uuid' => $rtc->threat->uuid->toString()],
                               'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $rtc->vulnerability->uuid->toString()],
@@ -848,7 +851,7 @@ class AnrInstanceService extends InstanceService
                               'risk' => $idRiskSpecific,
                           ];
                           $rrb->exchangeArray($toExchange);
-                          $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                          $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'globalObject', 'asset', 'threat', 'vulnerability']);
                           $this->get('recommandationRiskTable')->save($rrb,false);
                   }
                 }
@@ -1058,7 +1061,7 @@ class AnrInstanceService extends InstanceService
                                 'recommandation' => $reco['uuid'],
                                 'instanceRiskOp' => $idRiskOp,
                                 'instance' => $instanceId,
-                                'objectGlobal' => (($obj && $obj->get('scope') == \Monarc\Core\Model\Entity\ObjectSuperClass::SCOPE_GLOBAL) ? is_string($obj->get('uuid'))?$obj->get('uuid'):$obj->get('uuid')->toString() : null),
+                                'globalObject' => $obj && $obj->get('scope') === ObjectSuperClass::SCOPE_GLOBAL ? (string)$obj->get('uuid') : null,
                                 'asset' => null,
                                 'threat' => null,
                                 'vulnerability' => null,
@@ -1067,7 +1070,7 @@ class AnrInstanceService extends InstanceService
                                 'risk' => $idRiskOp,
                             ];
                             $rr->exchangeArray($toExchange);
-                            $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRiskOp', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                            $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRiskOp', 'instance', 'globalObject', 'asset', 'threat', 'vulnerability']);
                             $rr->setAnr(null);
                             $this->get('recommandationRiskTable')->save($rr);
                             $rr->setAnr($anr);

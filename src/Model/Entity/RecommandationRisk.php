@@ -94,7 +94,7 @@ class RecommandationRisk extends AbstractEntity
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
-    protected $objectGlobal;
+    protected $globalObject;
 
     /**
      * @var Asset
@@ -244,19 +244,19 @@ class RecommandationRisk extends AbstractEntity
         return $this;
     }
 
-    public function getObjectGlobal(): ?ObjectSuperClass
+    public function getGlobalObject(): ?ObjectSuperClass
     {
-        return $this->objectGlobal;
+        return $this->globalObject;
     }
 
     public function hasGlobalObjectRelation(): bool
     {
-        return $this->objectGlobal !== null;
+        return $this->globalObject !== null;
     }
 
-    public function setObjectGlobal(?ObjectSuperClass $objectGlobal): self
+    public function setGlobalObject(?ObjectSuperClass $globalObject): self
     {
-        $this->objectGlobal = $objectGlobal;
+        $this->globalObject = $globalObject;
 
         return $this;
     }
