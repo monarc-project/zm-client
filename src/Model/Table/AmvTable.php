@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Exception\Exception;
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AmvSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
@@ -29,6 +29,9 @@ class AmvTable extends AbstractEntityTable
         parent::__construct($dbService, Amv::class, $connectedUserService);
     }
 
+    /**
+     * @throws EntityNotFoundException
+     */
     public function findByUuidAndAnrId(string $uuid, int $anrId)
     {
         $amv = $this->getRepository()
@@ -40,10 +43,12 @@ class AmvTable extends AbstractEntityTable
             ->setParameter('uuid', $uuid)
             ->setParameter('anrId', $anrId)
             ->getQuery()
-            ->getSingleResult();
+            ->getOneOrNullResult();
 
         if ($amv === null) {
-            throw new Exception(sprintf('Amv with uuid "%s" and Anr id "%d" is not found', $uuid, $anrId), 412);
+            throw new EntityNotFoundException(
+                sprintf('Amv with uuid "%s" and Anr id "%d" is not found', $uuid, $anrId)
+            );
         }
 
         return $amv;

@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Exception\Exception;
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -85,7 +85,7 @@ class RecommandationTable extends AbstractEntityTable
     }
 
     /**
-     * @throws Exception
+     * @throws EntityNotFoundException
      */
     public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): Recommandation
     {
@@ -97,10 +97,10 @@ class RecommandationTable extends AbstractEntityTable
             ->setParameter('uuid', $uuid)
             ->setMaxResults(1)
             ->getQuery()
-            ->getSingleResult();
+            ->getOneOrNullResult();
 
         if ($recommendation === null) {
-            throw new Exception(
+            throw new EntityNotFoundException(
                 sprintf('Recommendation with anr ID "%d" and uuid "%s" has not been found.', $anr->getId(), $uuid)
             );
         }
@@ -126,7 +126,7 @@ class RecommandationTable extends AbstractEntityTable
             ->setParameter('recommendation_set_anr', $anr)
             ->setMaxResults(1)
             ->getQuery()
-            ->getSingleResult();
+            ->getOneOrNullResult();
     }
 
     public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void
