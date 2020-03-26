@@ -35,7 +35,6 @@ trait RecommendationsPositionsUpdateTrait
                 $this->updateRecommendationsPositions($instanceRisk->getAnr(), $riskRecommendations);
             }
         } else {
-            /** @var InstanceRiskOp $instanceRisk */
             foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
                 $recommendation = $recommendationRisk->getRecommandation();
                 if ($recommendation->isPositionEmpty()

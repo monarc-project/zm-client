@@ -1246,7 +1246,7 @@ class AnrInstanceService extends InstanceService
                                 $originQuestionChoices = [];
                                 $response = $data['method']['questions'][$pos]['response'] ?? '';
                                 if (trim($response, '[]')) {
-                                    $originQuestionChoices = explode(',', trim($response), '[]');
+                                    $originQuestionChoices = explode(',', trim($response, '[]'));
                                 }
                                 $questionChoicesIds = [];
                                 foreach ($originQuestionChoices as $originQuestionChoice) {
