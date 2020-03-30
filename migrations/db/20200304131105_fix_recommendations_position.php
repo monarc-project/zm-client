@@ -56,7 +56,8 @@ class FixRecommendationsPosition extends AbstractMigration
 
         $this->execute(
             'ALTER TABLE `recommandations` CHANGE `position` `position` INT(11) DEFAULT 0 NOT NULL,
-                CHANGE `importance` `importance` TINYINT(4) DEFAULT 0 NOT NULL;
+                CHANGE `importance` `importance` TINYINT(4) DEFAULT 0 NOT NULL,
+                ADD INDEX `recommendation_anr_position` (`anr_id`, `position`);
             '
         );
     }

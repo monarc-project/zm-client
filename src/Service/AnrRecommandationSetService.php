@@ -7,7 +7,13 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
+use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 /**
  * AnrRecommandationSet Service
@@ -17,10 +23,18 @@ use Monarc\Core\Service\AbstractService;
  */
 class AnrRecommandationSetService extends AbstractService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     protected $dependencies = ['anr'];
     protected $filterColumns = ['uuid', 'label1', 'label2', 'label3', 'label4'];
     protected $userAnrTable;
     protected $selfCoreService;
+
+    /** @var AnrTable */
+    protected $anrTable;
+
+    /** @var RecommandationTable */
+    protected $recommandationTable;
 
     /**
      * @inheritdoc
@@ -37,6 +51,37 @@ class AnrRecommandationSetService extends AbstractService
         );
 
         return $data;
-        //return array_slice($data, ($page - 1) * $limit, $limit, false);
+    }
+
+    /**
+     * @param array $id
+     *
+     * @return bool
+     *
+     * @throws EntityNotFoundException
+     * @throws OptimisticLockException
+     */
+    public function delete($id)
+    {
+        /** @var RecommandationSetTable $recommendationSetTable */
+        $recommendationSetTable = $this->get('table');
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anr = $anrTable->findById($id['anr']);
+        $recommendationSet = $recommendationSetTable->findByAnrAndUuid($anr, $id['uuid']);
+
+        $recommendationsToResetPositions = [];
+        foreach ($recommendationSet->getRecommandations() as $recommendation) {
+            if (!$recommendation->isPositionEmpty()) {
+                $recommendationsToResetPositions[$recommendation->getUuid()] = $recommendation;
+            }
+        }
+        if (!empty($recommendationsToResetPositions)) {
+            $this->resetRecommendationsPositions($anr, $recommendationsToResetPositions);
+        }
+
+        $recommendationSetTable->deleteEntity($recommendationSet);
+
+        return true;
     }
 }

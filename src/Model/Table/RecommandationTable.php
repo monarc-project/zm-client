@@ -8,12 +8,14 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\Query\Expr;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
+use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 
 /**
@@ -75,7 +77,7 @@ class RecommandationTable extends AbstractEntityTable
         }
 
         foreach ($order as $field => $direction) {
-            $queryBuilder->orderBy('r.' . $field, $direction);
+            $queryBuilder->orderBy($field, $direction);
         }
 
         return $queryBuilder
@@ -129,11 +131,47 @@ class RecommandationTable extends AbstractEntityTable
             ->getOneOrNullResult();
     }
 
+    /**
+     * Returns list of recommendations which are unlinked with risks and position is not 0.
+     *
+     * @return Recommandation[]
+     */
+    public function findUnlinkedWithNotEmptyPositionByAnr(AnrSuperClass $anr)
+    {
+        $queryBuilderLinked = $this->getRepository()
+            ->createQueryBuilder('rec')
+            ->select('rec.uuid')
+            ->innerJoin('rec.recommendationRisks', 'rec_risk')
+            ->where('rec.anr = :anr')
+            ->andWhere('rec_risk.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->groupBy('rec.uuid');
+
+        $queryBuilderUnlinked = $this->getRepository()->createQueryBuilder('r');
+
+        return $queryBuilderUnlinked
+            ->where('r.anr = :anr')
+            ->andWhere('r.position > 0')
+            ->andWhere($queryBuilderUnlinked->expr()->notIn('r.uuid', $queryBuilderLinked->getDQL()))
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void
     {
         $em = $this->getDb()->getEntityManager();
         $em->persist($recommendation);
         if ($flushAll) {
+            $em->flush();
+        }
+    }
+
+    public function deleteEntity(Recommandation $recommendation, bool $flush = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->remove($recommendation);
+        if ($flush) {
             $em->flush();
         }
     }

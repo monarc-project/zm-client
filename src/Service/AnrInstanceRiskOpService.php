@@ -3,6 +3,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\InstanceRiskOpService;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
@@ -14,18 +16,26 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
     use RecommendationsPositionsUpdateTrait;
 
     /**
+     * @param int $id
+     *
+     * @return bool
+     *
      * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function delete($id)
     {
-        /** @var InstanceRiskOpTable $instanceRiskOpTable */
-        $instanceRiskOpTable = $this->get('table');
-        /** @var InstanceRiskOp $instanceRiskOp */
-        $instanceRiskOp = $instanceRiskOpTable->findById($id);
+        /** @var InstanceRiskOpTable $operationalRiskTable */
+        $operationalRiskTable = $this->get('table');
+        /** @var InstanceRiskOp $operationalRisk */
+        $operationalRisk = $operationalRiskTable->findById($id);
 
-        $this->updateInstanceRiskRecommendationsPositions($instanceRiskOp);
+        $operationalRiskTable->deleteEntity($operationalRisk);
 
-        return parent::delete($id);
+        $this->processRemovedInstanceRiskRecommendationsPositions($operationalRisk);
+
+        return true;
     }
 
     /**

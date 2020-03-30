@@ -18,9 +18,14 @@ trait RecommendationsPositionsUpdateTrait
      */
     public function updateInstanceRiskRecommendationsPositions($instanceRisk): void
     {
+        $recommendationRisks = $instanceRisk->getRecommendationRisks();
+        if ($recommendationRisks === null) {
+            return;
+        }
+
         $riskRecommendations = [];
         if ($instanceRisk->isTreated()) {
-            foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
+            foreach ($recommendationRisks as $recommendationRisk) {
                 $recommendation = $recommendationRisk->getRecommandation();
                 if ($recommendation->isImportanceEmpty() || !$recommendation->isPositionEmpty()) {
                     continue;
@@ -35,7 +40,7 @@ trait RecommendationsPositionsUpdateTrait
                 $this->updateRecommendationsPositions($instanceRisk->getAnr(), $riskRecommendations);
             }
         } else {
-            foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
+            foreach ($recommendationRisks as $recommendationRisk) {
                 $recommendation = $recommendationRisk->getRecommandation();
                 if ($recommendation->isPositionEmpty()
                     || $recommendation->isImportanceEmpty()
@@ -56,6 +61,32 @@ trait RecommendationsPositionsUpdateTrait
     }
 
     /**
+     * Resets positions of the recommendations related to the informational/operational risk if not linked anymore.
+     *
+     * @param InstanceRisk|InstanceRiskOp $instanceRisk
+     *
+     * @throws OptimisticLockException
+     */
+    protected function processRemovedInstanceRiskRecommendationsPositions($instanceRisk): void
+    {
+        if ($instanceRisk->isTreated()
+            && $instanceRisk->getRecommendationRisks() !== null
+            && !$instanceRisk->getRecommendationRisks()->isEmpty()
+        ) {
+            $recommendationsToResetPositions = [];
+            foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
+                $linkedRecommendation = $recommendationRisk->getRecommandation();
+                if (!$linkedRecommendation->hasLinkedRecommendationRisks()) {
+                    $recommendationsToResetPositions[$linkedRecommendation->getUuid()] = $linkedRecommendation;
+                }
+            }
+            if (!empty($recommendationsToResetPositions)) {
+                $this->resetRecommendationsPositions($instanceRisk->getAnr(), $recommendationsToResetPositions);
+            }
+        }
+    }
+
+    /**
      * @param AnrSuperClass $anr
      * @param array $riskRecommendations List of recommendations to reset the positions (set ot 0),
      *                                   Keys of the array are UUIDs, values are Recommendation objects.
@@ -70,19 +101,22 @@ trait RecommendationsPositionsUpdateTrait
             ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                 $anr,
                 array_keys($riskRecommendations),
-                ['position' => 'ASC']
+                ['r.position' => 'ASC']
             );
 
+        $positionShiftAdjustment = 0;
         /** @var Recommandation[] $riskRecommendations */
         foreach ($riskRecommendations as $riskRecommendation) {
-            $riskRecommendation->getPosition();
             foreach ($linkedRecommendations as $linkedRecommendation) {
-                if ($linkedRecommendation->isPositionLowerThan($riskRecommendation->getPosition())) {
+                if ($linkedRecommendation->isPositionLowerThan(
+                    $riskRecommendation->getPosition() + $positionShiftAdjustment
+                )) {
                     $linkedRecommendation->shiftPositionUp();
                     $recommendationTable->saveEntity($riskRecommendation, false);
                 }
             }
 
+            $positionShiftAdjustment--;
             $riskRecommendation->setEmptyPosition();
             $recommendationTable->saveEntity($riskRecommendation, false);
         }
@@ -98,7 +132,7 @@ trait RecommendationsPositionsUpdateTrait
             ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                 $anr,
                 array_keys($riskRecommendations),
-                ['position' => 'ASC']
+                ['r.position' => 'ASC']
             );
 
         $maxPositionsPerImportance = $this->getMaxPositionsPerImportance($linkedRecommendations);
@@ -109,19 +143,17 @@ trait RecommendationsPositionsUpdateTrait
                 $riskRecommendation->setPosition(++$maxPositionsPerImportance[$riskRecommendation->getImportance()]);
                 $recommendationTable->saveEntity($riskRecommendation, false);
 
-                $isMaxPositionIncreasedForImportance = [];
                 foreach ($linkedRecommendations as $linkedRecommendation) {
                     if ($linkedRecommendation->isImportanceLowerThan($riskRecommendation->getImportance())) {
                         $linkedRecommendation->shiftPositionDown();
                         $recommendationTable->saveEntity($linkedRecommendation, false);
-
-                        if (!isset($isMaxPositionIncreasedForImportance[$linkedRecommendation->getImportance()])) {
-                            $maxPositionsPerImportance[$linkedRecommendation->getImportance()]++;
-                            $isMaxPositionIncreasedForImportance[$linkedRecommendation->getImportance()] = true;
-                        }
                     }
                 }
-                $maxPositionsPerImportance = $this->getReviewedPositions($maxPositionsPerImportance);
+
+                $maxPositionsPerImportance = $this->increaseMaxPositionsForLowerImportance(
+                    $maxPositionsPerImportance,
+                    $riskRecommendation->getImportance()
+                );
             }
         } else {
             $maxPosition = max($maxPositionsPerImportance);
@@ -163,6 +195,17 @@ trait RecommendationsPositionsUpdateTrait
                 && $maxPositionsPerImportance[$importance + 1] > $maxPosition
             ) {
                 $maxPositionsPerImportance[$importance] = $maxPositionsPerImportance[$importance + 1];
+            }
+        }
+
+        return $maxPositionsPerImportance;
+    }
+
+    private function increaseMaxPositionsForLowerImportance(array $maxPositionsPerImportance, int $importance): array
+    {
+        foreach ($maxPositionsPerImportance as $currentImportance => $maxPosition) {
+            if ($currentImportance < $importance) {
+                $maxPositionsPerImportance[$currentImportance]++;
             }
         }
 

@@ -3,6 +3,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Service\InstanceRiskService;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
@@ -30,10 +32,13 @@ class AnrInstanceRiskService extends InstanceRiskService
     }
 
     /**
-     * @param $id
+     * @param int $id
      *
      * @return bool
+     *
      * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function delete($id)
     {
@@ -42,9 +47,11 @@ class AnrInstanceRiskService extends InstanceRiskService
         /** @var InstanceRisk $instanceRisk */
         $instanceRisk = $instanceRiskTable->findById($id);
 
-        $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
+        $instanceRiskTable->deleteEntity($instanceRisk);
 
-        return parent::delete($id);
+        $this->processRemovedInstanceRiskRecommendationsPositions($instanceRisk);
+
+        return true;
     }
 
     /**

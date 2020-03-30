@@ -76,24 +76,6 @@ class RecommandationRiskTable extends AbstractEntityTable
     /**
      * @return RecommandationRisk[]
      */
-    public function findByAnrAndRecommendation(AnrSuperClass $anr, Recommandation $recommandation)
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('rr')
-            ->innerJoin('rr.recommandation', 'r')
-            ->andWhere('rr.anr = :anr')
-            ->andWhere('r.anr = :recommendation_anr')
-            ->andWhere('r.uuid = :recommendation_uuid')
-            ->setParameter('anr', $anr)
-            ->setParameter('recommendation_anr', $recommandation->getAnr())
-            ->setParameter('recommendation_uuid', $recommandation->getUuid())
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return RecommandationRisk[]
-     */
     public function findByAnrAndInstanceRisk(AnrSuperClass $anr, InstanceRisk $instanceRisk)
     {
         return $this->getRepository()

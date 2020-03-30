@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -21,5 +23,18 @@ class UserAnrTable extends AbstractEntityTable
     public function __construct(DbCli $dbCli, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbCli, UserAnr::class, $connectedUserService);
+    }
+
+    public function findByAnrAndUser(AnrSuperClass $anr, UserSuperClass $user): ?UserAnr
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ua')
+            ->where('ua.anr = :anr')
+            ->andWhere('ua.user = :user')
+            ->setParameter('anr', $anr)
+            ->setParameter('user', $user)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

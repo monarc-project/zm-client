@@ -9,12 +9,14 @@ namespace Monarc\FrontOffice\Service;
 
 use DateTime;
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Throwable;
 
 /**
@@ -23,10 +25,15 @@ use Throwable;
  */
 class AnrRecommandationService extends AbstractService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     protected $filterColumns = ['code', 'description'];
     protected $dependencies = ['anr', 'recommandationSet'];
     protected $anrTable;
     protected $userAnrTable;
+
+    /** @var RecommandationTable */
+    protected $recommandationTable;
 
     /**
      * @inheritdoc
@@ -96,6 +103,33 @@ class AnrRecommandationService extends AbstractService
     }
 
     /**
+     * @param array $id
+     *
+     * @return bool
+     *
+     * @throws EntityNotFoundException
+     * @throws OptimisticLockException
+     */
+    public function delete($id)
+    {
+        /** @var RecommandationTable $recommendationTable */
+        $recommendationTable = $this->get('table');
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anr = $anrTable->findById($id['anr']);
+        $recommendation = $recommendationTable->findByAnrAndUuid($anr, $id['uuid']);
+
+        if (!$recommendation->isPositionEmpty()) {
+            $this->set('recommandationTable', $recommendationTable);
+            $this->resetRecommendationsPositions($anr, [$recommendation->getUuid() => $recommendation]);
+        }
+
+        $recommendationTable->deleteEntity($recommendation);
+
+        return true;
+    }
+
+    /**
      * Updates the position of the recommendation, based on the implicitPosition field passed in $data.
      *
      * @param array $recommendationId The recommendation composite ID [anr, uuid]
@@ -122,7 +156,7 @@ class AnrRecommandationService extends AbstractService
                 ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                     $anr,
                     [$recommendationId['uuid']],
-                    ['position' => 'ASC']
+                    ['r.position' => 'ASC']
                 );
 
             switch ($data['implicitPosition']) {

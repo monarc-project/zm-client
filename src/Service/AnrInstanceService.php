@@ -15,8 +15,10 @@ use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 use Monarc\Core\Model\Entity\Scale;
 use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
+use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Ramsey\Uuid\Uuid;
 use DateTime;
 
@@ -27,6 +29,8 @@ use DateTime;
  */
 class AnrInstanceService extends InstanceService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     /** @var UserAnrTable */
     protected $userAnrTable;
     protected $questionTable;
@@ -51,6 +55,27 @@ class AnrInstanceService extends InstanceService
 
     /** @var int */
     private $initialAnalyseMaxRecommendationPosition;
+
+    public function delete($id)
+    {
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('table');
+        $anr = $instanceTable->findById($id)->getAnr();
+
+        parent::delete($id);
+
+        // Reset related recommendations positions to 0.
+        /** @var RecommandationTable $recommendationTable */
+        $recommendationTable = $this->get('recommandationTable');
+        $unlinkedRecommendations = $recommendationTable->findUnlinkedWithNotEmptyPositionByAnr($anr);
+        $recommendationsToResetPositions = [];
+        foreach ($unlinkedRecommendations as $unlinkedRecommendation) {
+            $recommendationsToResetPositions[$unlinkedRecommendation->getUuid()] = $unlinkedRecommendation;
+        }
+        if (!empty($recommendationsToResetPositions)) {
+            $this->resetRecommendationsPositions($anr, $recommendationsToResetPositions);
+        }
+    }
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -1096,7 +1121,7 @@ class AnrInstanceService extends InstanceService
                 ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                     $anr,
                     [],
-                    ['position' => 'ASC']
+                    ['r.position' => 'ASC']
                 );
             $newRecommendationsToReorder = [];
             foreach ($linkedRecommendations as $linkedRecommendation) {

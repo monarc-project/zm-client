@@ -128,6 +128,7 @@ class AnrRecommandationRiskService extends AbstractService
     /**
      * @throws EntityNotFoundException
      * @throws Exception
+     * @throws OptimisticLockException
      */
     public function delete($id)
     {
@@ -144,9 +145,18 @@ class AnrRecommandationRiskService extends AbstractService
             if ($instanceRisk->getInstance()->getObject()->getScope() === MonarcObject::SCOPE_GLOBAL) {
                 if ($instanceRisk->getAmv() === null && $instanceRisk->isSpecific()) {//case specific amv_id = null
                     $brothers = $instanceRiskTable->getEntityByFields([
-                        'asset' => ['anr' => $instanceRisk->anr->id, 'uuid' => $instanceRisk->asset->uuid->toString()],
-                        'threat' => ['anr' => $instanceRisk->anr->id, 'uuid' => $instanceRisk->threat->uuid->toString()],
-                        'vulnerability' => ['anr' => $instanceRisk->anr->id, 'uuid' => $instanceRisk->vulnerability->uuid->toString()],
+                        'asset' => [
+                            'anr' => $instanceRisk->getAnr()->getId(),
+                            'uuid' => (string)$instanceRisk->getAsset()->getUuid(),
+                        ],
+                        'threat' => [
+                            'anr' => $instanceRisk->getAnr()->getId(),
+                            'uuid' => (string)$instanceRisk->getThreat()->getUuid(),
+                        ],
+                        'vulnerability' => [
+                            'anr' => $instanceRisk->getAnr()->getId(),
+                            'uuid' => $instanceRisk->getVulnerability()->getUuid(),
+                        ],
                     ]);
                 } else {
                     $brothers = $instanceRiskTable->findByAmv($instanceRisk->getAmv());
@@ -158,11 +168,7 @@ class AnrRecommandationRiskService extends AbstractService
                     }
                 }
 
-                $recommendationRisksRelatedToRecommendation = $recommendationRiskTable->findByAnrAndRecommendation(
-                    $recommendationRisk->getAnr(),
-                    $recommendation
-                );
-                foreach ($recommendationRisksRelatedToRecommendation as $recommendationRiskRelatedToReco) {
+                foreach ($recommendation->getRecommendationRisks() as $recommendationRiskRelatedToReco) {
                     if ($recommendationRiskRelatedToReco->getInstanceRisk()
                         && \in_array($recommendationRiskRelatedToReco->getInstanceRisk()->getId(), $brothersIds, true)
                     ) {
@@ -189,11 +195,7 @@ class AnrRecommandationRiskService extends AbstractService
                     }
                 }
 
-                $recommendationRisksRelatedToRecommendation = $recommendationRiskTable->findByAnrAndRecommendation(
-                    $recommendationRisk->getAnr(),
-                    $recommendation
-                );
-                foreach ($recommendationRisksRelatedToRecommendation as $recommendationRiskRelatedToReco) {
+                foreach ($recommendation->getRecommendationRisks() as $recommendationRiskRelatedToReco) {
                     if ($recommendationRiskRelatedToReco->getInstanceRiskOp()
                         && \in_array($recommendationRiskRelatedToReco->getInstanceRiskOp()->getId(), $brothersIds, true)
                     ) {
@@ -206,7 +208,7 @@ class AnrRecommandationRiskService extends AbstractService
         }
 
         // Reset the recommendation's position if it's not linked to risks anymore.
-        if (empty($recommendationRiskTable->findByAnrAndRecommendation($recommendation->getAnr(), $recommendation))) {
+        if (empty($recommendation->getRecommendationRisks())) {
             $this->resetRecommendationsPositions(
                 $recommendation->getAnr(),
                 [$recommendation->getUuid() => $recommendation]
@@ -293,7 +295,7 @@ class AnrRecommandationRiskService extends AbstractService
                 ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                     $anr,
                     [],
-                    ['position' => 'ASC']
+                    ['r.position' => 'ASC']
                 );
         }
 
@@ -816,14 +818,14 @@ class AnrRecommandationRiskService extends AbstractService
         }
     }
 
+    /**
+     * @throws OptimisticLockException
+     */
     private function updateRecommendationData(Recommandation $recommendation): void
     {
         $recommendation->incrementCounterTreated();
 
-        /** @var RecommandationRiskTable $recommendationRiskTable */
-        $recommendationRiskTable = $this->get('table');
-
-        if (empty($recommendationRiskTable->findByAnrAndRecommendation($recommendation->getAnr(), $recommendation))) {
+        if (empty($recommendation->getRecommendationRisks())) {
             $recommendation->setDueDate(null);
             $recommendation->setResponsable('');
             $recommendation->setComment('');
@@ -836,6 +838,6 @@ class AnrRecommandationRiskService extends AbstractService
 
         /** @var RecommandationTable $recommendationTable */
         $recommendationTable = $this->get('recommandationTable');
-        $recommendationTable->save($recommendation);
+        $recommendationTable->saveEntity($recommendation);
     }
 }

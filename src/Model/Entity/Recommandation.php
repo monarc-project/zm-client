@@ -20,7 +20,8 @@ use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
  * @ORM\Table(name="recommandations", indexes={
  *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
  *      @ORM\Index(name="anr_id_2", columns={"anr_id"}),
- *      @ORM\Index(name="recommandation_set_uuid", columns={"recommandation_set_uuid", "code", "anr_id"})
+ *      @ORM\Index(name="recommandation_set_uuid", columns={"recommandation_set_uuid", "code", "anr_id"}),
+ *      @ORM\Index(name="recommendation_anr_position", columns={"anr_id", "position"})
  * })
  * @ORM\Entity
  * @ORM\HasLifecycleCallbacks()
@@ -216,6 +217,11 @@ class Recommandation extends AbstractEntity
     public function getRecommendationRisks()
     {
         return $this->recommendationRisks;
+    }
+
+    public function hasLinkedRecommendationRisks(): bool
+    {
+        return $this->recommendationRisks !== null && !$this->recommendationRisks->isEmpty();
     }
 
     public function setPosition(int $position): self
