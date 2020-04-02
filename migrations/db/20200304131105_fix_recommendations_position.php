@@ -37,7 +37,7 @@ class FixRecommendationsPosition extends AbstractMigration
                 WHERE r.`anr_id` = ' . $anr['id'] . '
                   AND r.`importance` > 0
                 GROUP BY r.`uuid`
-                ORDER BY r.`importance`, r.`code`'
+                ORDER BY r.`position`, r.`code`'
             );
             $position = 1;
             foreach ($recommendationsToUpdate->fetchAll() as $itemNum => $recommendation) {
