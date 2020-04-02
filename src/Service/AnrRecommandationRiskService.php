@@ -208,7 +208,7 @@ class AnrRecommandationRiskService extends AbstractService
         }
 
         // Reset the recommendation's position if it's not linked to risks anymore.
-        if (empty($recommendation->getRecommendationRisks())) {
+        if (!$recommendation->hasLinkedRecommendationRisks()) {
             $this->resetRecommendationsPositions(
                 $recommendation->getAnr(),
                 [$recommendation->getUuid() => $recommendation]
@@ -825,7 +825,7 @@ class AnrRecommandationRiskService extends AbstractService
     {
         $recommendation->incrementCounterTreated();
 
-        if (empty($recommendation->getRecommendationRisks())) {
+        if (!$recommendation->hasLinkedRecommendationRisks()) {
             $recommendation->setDueDate(null);
             $recommendation->setResponsable('');
             $recommendation->setComment('');
