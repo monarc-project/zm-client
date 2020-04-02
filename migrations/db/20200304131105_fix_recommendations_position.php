@@ -11,46 +11,42 @@ class FixRecommendationsPosition extends AbstractMigration
             return;
         }
         foreach ($anrs as $anr) {
-            $stmtMaxPosition = $this->query(
-                'SELECT MAX(r.`position`) AS max_position
-                 FROM `recommandations` r INNER JOIN `recommandations_risks` rr ON r.`uuid` = rr.`recommandation_id` and r.`anr_id` = rr.`anr_id`
-                 WHERE r.`anr_id` = ' . $anr['id'] . ' AND (`position` IS NOT NULL OR `position` = 0)'
-            );
-            $maxPositionResult = $stmtMaxPosition->fetchAll();
-            $maxPosition = 0;
-            if (isset($maxPositionResult[0]['max_position'])) {
-                $maxPosition = $maxPositionResult[0]['max_position'];
-            }
-
-            // Update positions of linked recommendations which have 0 or nullable positions' values.
-            $recommendationsToUpdate = $this->query(
-                'SELECT r.`uuid` from `recommandations` r
-                INNER JOIN `recommandations_risks` rr ON r.`uuid` = rr.`recommandation_id` AND r.`anr_id` = rr.`anr_id`
-                WHERE r.`anr_id` = ' . $anr['id'] . ' AND (r.`position` IS NULL OR r.`position` = 0)
-                GROUP BY r.`uuid`
-                ORDER BY r.`importance`, r.`created_at`'
-            );
-            $recommendationsToUpdateResult = $recommendationsToUpdate->fetchAll();
-            foreach ($recommendationsToUpdateResult as $recommendation) {
-                $this->execute(
-                    'UPDATE `recommandations` SET `position` = ' . ++$maxPosition .
-                    ' WHERE `uuid` = "' . $recommendation['uuid'] . '" AND `anr_id` = ' . $anr['id']
-                );
-            }
-
-            // Set position to 0 for all not linked recommendations.
+            // 1. position to 0 for all not linked recommendations, or where importance is 0.
             $recommendationsToUpdate = $this->query(
                 'SELECT r.`uuid` from `recommandations` r
                 WHERE r.`anr_id` = ' . $anr['id'] . '
-                  AND r.`uuid` NOT IN (SELECT rr.`recommandation_id` FROM `recommandations_risks` rr WHERE rr.`anr_id` = ' . $anr['id'] . ')
-                  AND r.`position` > 0'
+                  AND (
+                    r.`uuid` NOT IN (
+                        SELECT rr.`recommandation_id` FROM `recommandations_risks` rr WHERE rr.`anr_id` = ' . $anr['id'] . '
+                    )
+                    OR r.`importance` = 0
+                  )
+                  AND r.`position` > 0 OR r.`position` IS NULL'
             );
-            $recommendationsToUpdateResult = $recommendationsToUpdate->fetchAll();
-            foreach ($recommendationsToUpdateResult as $recommendation) {
+            foreach ($recommendationsToUpdate->fetchAll() as $recommendation) {
                 $this->execute(
                     'UPDATE `recommandations` SET `position` = 0
-                    WHERE `uuid` = "' . $recommendation['uuid'] .  '" AND `anr_id` = ' . $anr['id']
+                    WHERE `anr_id` = ' . $anr['id'] . ' AND `uuid` = "' . $recommendation['uuid'] .  '"'
                 );
+            }
+
+            // Update positions of linked recommendations to be sure they are ordered well.
+            $recommendationsToUpdate = $this->query(
+                'SELECT r.`uuid` FROM `recommandations` r
+                INNER JOIN `recommandations_risks` rr ON r.`uuid` = rr.`recommandation_id` AND r.`anr_id` = rr.`anr_id`
+                WHERE r.`anr_id` = ' . $anr['id'] . '
+                  AND r.`importance` > 0
+                GROUP BY r.`uuid`
+                ORDER BY r.`importance`, r.`code`'
+            );
+            $position = 1;
+            foreach ($recommendationsToUpdate->fetchAll() as $itemNum => $recommendation) {
+                if ($position !== $itemNum) {
+                    $this->execute(
+                        'UPDATE `recommandations` SET `position` = ' . $position++ .
+                        ' WHERE `uuid` = "' . $recommendation['uuid'] . '" AND `anr_id` = ' . $anr['id']
+                    );
+                }
             }
         }
 
