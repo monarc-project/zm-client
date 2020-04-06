@@ -255,16 +255,14 @@ class AnrRecommandationService extends AbstractService
 
     private function prepareUpdateData($id, $data): array
     {
-        if (!isset($data['duedate'])) {
-            $data['duedate'] = null;
-        }
-
-        if ($data['duedate'] !== null) {
+        if (!empty($data['duedate'])) {
             try {
                 $data['duedate'] = new DateTime($data['duedate']);
             } catch (Throwable $e) {
                 throw new Exception('Invalid date format', 412);
             }
+        } else {
+            $data['duedate'] = null;
         }
 
         if (empty($data['recommandationSet'])) {
