@@ -1427,7 +1427,7 @@ class AnrInstanceService extends InstanceService
           // import the SOAs
           if (isset($data['soas'])) {
             $measuresStoredId = $this->get('measureTable')->fetchAllFiltered(['uuid'],1,0,null,null,['anr'=>$anr->get('id')],null,null);
-            $measuresStoredId  = array_map(function($elt){return is_string($elt['uuid'])?$elt['uuid']:$elt['uuid']->toString();},$measuresStoredId);
+              $measuresStoredId = array_map(function ($elt) {return (string)$elt['uuid'];}, $measuresStoredId);
               foreach ($data['soas'] as $soa) {
                   // check if the corresponding measure has been created during
                   // this import

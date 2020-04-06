@@ -1491,7 +1491,7 @@ class AnrService extends AbstractService
                     if (empty($entity->get('label' . $lang))) {
                         $success[$lang] = false;
                     } else {
-                        ${$value}[$entity->getUuid()->toString()] = $entity->getUuid()->toString();
+                        ${$value}[(string)$entity->getUuid()] = (string)$entity->getUuid();
                     }
                 }
             }
