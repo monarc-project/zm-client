@@ -35,6 +35,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
         'instanceConsequenceTable' => Table\InstanceConsequenceTable::class,
         'instanceRiskTable' => Table\InstanceRiskTable::class,
+        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
         'instanceConsequenceEntity' => InstanceConsequence::class,
         'recommandationRiskTable' => Table\RecommandationRiskTable::class,
         'recommandationTable' => Table\RecommandationTable::class,
