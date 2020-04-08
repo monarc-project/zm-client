@@ -2,105 +2,77 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Doctrine\DBAL\Connection;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
+use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\InstanceRiskOpService;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 class AnrInstanceRiskOpService extends InstanceRiskOpService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     /**
-     * Updates recommendation operational risks positions.
+     * @param int $id
+     *
+     * @return bool
+     *
+     * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
-    public function updateRecoRisksOp(InstanceRiskOpSuperClass $instanceRiskOp): void
+    public function delete($id)
     {
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
-        /** @var Connection $instanceRiskOpTableConnection */
-        $instanceRiskOpTableConnection = $this->get('table')->getDb()->getEntityManager()->getConnection();
+        /** @var InstanceRiskOpTable $operationalRiskTable */
+        $operationalRiskTable = $this->get('table');
+        /** @var InstanceRiskOp $operationalRisk */
+        $operationalRisk = $operationalRiskTable->findById($id);
 
-        switch ($instanceRiskOp->get('kindOfMeasure')) {
-            case InstanceRiskOpSuperClass::KIND_REDUCTION:
-            case InstanceRiskOpSuperClass::KIND_REFUS:
-            case InstanceRiskOpSuperClass::KIND_ACCEPTATION:
-            case InstanceRiskOpSuperClass::KIND_PARTAGE:
-                $sql = 'SELECT recommandation_id
-                        FROM recommandations_risks
-                        WHERE instance_risk_op_id = :id
-                        GROUP BY recommandation_id';
-                $res = $instanceRiskOpTableConnection->fetchAll($sql, [':id' => $instanceRiskOp->get('id')]);
-                $ids = [];
-                foreach ($res as $r) {
-                    $ids[$r['recommandation_id']] = $r['recommandation_id'];
-                }
-                $recos = $recommendationTable->getEntityByFields(
-                    ['anr' => $instanceRiskOp->get('anr')->get('id')],
-                    ['position' => 'ASC', 'importance' => 'DESC', 'code' => 'ASC']
-                );
-                $i = 0;
-                $hasSave = false;
-                foreach ($recos as $r) {
-                    if ((int)$r->get('position') <= 0 && isset($ids[$r->get('uuid')])) {
-                        $i++;
-                        $r->set('position', $i);
-                        $recommendationTable->save($r, false);
-                        $hasSave = true;
-                    } elseif ($i > 0 && $r->get('position') > 0) {
-                        $r->set('position', $r->get('position') + $i);
-                        $recommendationTable->save($r, false);
-                        $hasSave = true;
-                    }
-                }
-                if ($hasSave && !empty($r)) {
-                    $recommendationTable->save($r);
-                }
-                break;
+        $operationalRiskTable->deleteEntity($operationalRisk);
 
-            case InstanceRiskOpSuperClass::KIND_NOT_TREATED:
-            default:
-                $sql = 'SELECT rr.recommandation_id
-                        FROM recommandations_risks rr
-                        LEFT JOIN instances_risks ir
-                        ON ir.id = rr.instance_risk_id
-                        LEFT JOIN instances_risks_op iro
-                        ON iro.id = rr.instance_risk_op_id
-                        AND rr.instance_risk_op_id != :id
-                        WHERE ((ir.kind_of_measure IS NOT NULL AND ir.kind_of_measure < ' . InstanceRiskSuperClass::KIND_NOT_TREATED . ')
-                            OR (iro.kind_of_measure IS NOT NULL AND iro.kind_of_measure < ' . InstanceRiskOpSuperClass::KIND_NOT_TREATED . '))
-                        AND (rr.instance_risk_op_id IS NOT NULL OR rr.instance_risk_id IS NOT NULL)
-                        AND rr.anr_id = :anr
-                        GROUP BY rr.recommandation_id';
-                $res = $instanceRiskOpTableConnection->fetchAll($sql, [
-                    ':anr' => $instanceRiskOp->get('anr')->get('id'),
-                    ':id' => $instanceRiskOp->get('id')
-                ]);
-                $ids = [];
-                foreach ($res as $r) {
-                    $ids[$r['recommandation_id']] = $r['recommandation_id'];
-                }
-                $recos = $recommendationTable->getEntityByFields([
-                    'anr' => $instanceRiskOp->get('anr')->get('id'),
-                    'position' => ['op' => 'IS NOT', 'value' => null]
-                ], ['position' => 'ASC']);
-                $i = 0;
-                $hasSave = false;
-                foreach ($recos as $r) {
-                    if ($r->get('position') > 0 && !isset($ids[$r->get('uuid')])) {
-                        $i++;
-                        $r->set('position', null);
-                        $recommendationTable->save($r, false);
-                        $hasSave = true;
-                    } elseif ($i > 0 && $r->get('position') > 0) {
-                        $r->set('position', $r->get('position') - $i);
-                        $recommendationTable->save($r, false);
-                        $hasSave = true;
-                    }
-                }
-                if ($hasSave && !empty($r)) {
-                    $recommendationTable->save($r);
-                }
-                break;
-        }
+        $this->processRemovedInstanceRiskRecommendationsPositions($operationalRisk);
+
+        return true;
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     * @throws Exception
+     */
+    public function patch($id, $data)
+    {
+        // TODO: Pass the object instead of id.
+        $result = parent::patch($id, $data);
+
+        /** @var InstanceRiskOpTable $instanceRiskOpTable */
+        $instanceRiskOpTable = $this->get('table');
+        /** @var InstanceRiskOp $instanceRiskOp */
+        $instanceRiskOp = $instanceRiskOpTable->findById($id);
+
+        $this->updateInstanceRiskRecommendationsPositions($instanceRiskOp);
+
+        return $result;
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     * @throws Exception
+     */
+    public function update($id, $data)
+    {
+        // TODO: pass the object instead of id.
+        $result = parent::update($id, $data);
+
+        /** @var InstanceRiskOpTable $instanceRiskOpTable */
+        $instanceRiskOpTable = $this->get('table');
+        /** @var InstanceRiskOp $instanceRiskOp */
+        $instanceRiskOp = $instanceRiskOpTable->findById($id);
+
+        $this->updateInstanceRiskRecommendationsPositions($instanceRiskOp);
+
+        return $result;
     }
 }

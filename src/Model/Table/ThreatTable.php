@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Exception\Exception;
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ThreatSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
@@ -41,10 +41,9 @@ class ThreatTable extends AbstractEntityTable
     }
 
     /**
-     * @throws Exception
-     * @return ThreatSuperClass
+     * @throws EntityNotFoundException
      */
-    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid)
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): ThreatSuperClass
     {
         $threat = $this->getRepository()
             ->createQueryBuilder('t')
@@ -54,10 +53,10 @@ class ThreatTable extends AbstractEntityTable
             ->setParameter(':uuid', $uuid)
             ->setMaxResults(1)
             ->getQuery()
-            ->getSingleResult();
+            ->getOneOrNullResult();
 
         if ($threat === null) {
-            throw new Exception(
+            throw new EntityNotFoundException(
                 sprintf('Threat with anr ID "%d" and uuid "%s" has not been found.', $anr->getId(), $uuid)
             );
         }

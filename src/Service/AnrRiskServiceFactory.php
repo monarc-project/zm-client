@@ -7,21 +7,27 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\TranslateService;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
+
 /**
  * Factory class attached to AnrRiskService
  * @package Monarc\FrontOffice\Service
  */
-class AnrRiskServiceFactory extends \Monarc\Core\Service\AbstractServiceFactory
+class AnrRiskServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\InstanceRisk',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'vulnerabilityTable' => 'Monarc\FrontOffice\Model\Table\VulnerabilityTable',
-        'threatTable' => 'Monarc\FrontOffice\Model\Table\ThreatTable',
-        'translateService' => 'Monarc\Core\Service\TranslateService'
+        'table' => Table\InstanceRiskTable::class,
+        'entity' => InstanceRisk::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'instanceRiskTable' => Table\InstanceRiskTable::class,
+        'vulnerabilityTable' => Table\VulnerabilityTable::class,
+        'threatTable' => Table\ThreatTable::class,
+        'recommandationTable' => Table\RecommandationTable::class,
+        'translateService' => TranslateService::class,
     ];
 }

@@ -8,11 +8,11 @@
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\MonarcObject;
@@ -22,21 +22,27 @@ use Monarc\Core\Model\Entity\QuestionSuperClass;
 use Monarc\Core\Model\Entity\Scale;
 use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
 use Monarc\FrontOffice\Model\Entity\Question;
 use Monarc\FrontOffice\Model\Entity\QuestionChoice;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
+use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
+use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Ramsey\Uuid\Uuid;
 use DateTime;
 
@@ -47,6 +53,8 @@ use DateTime;
  */
 class AnrInstanceService extends InstanceService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     /** @var UserAnrTable */
     protected $userAnrTable;
     protected $questionTable;
@@ -71,6 +79,33 @@ class AnrInstanceService extends InstanceService
 
     /** @var array */
     private $sharedData = [];
+
+    /** @var int */
+    private $currentAnalyseMaxRecommendationPosition;
+
+    /** @var int */
+    private $initialAnalyseMaxRecommendationPosition;
+
+    public function delete($id)
+    {
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('table');
+        $anr = $instanceTable->findById($id)->getAnr();
+
+        parent::delete($id);
+
+        // Reset related recommendations positions to 0.
+        /** @var RecommandationTable $recommendationTable */
+        $recommendationTable = $this->get('recommandationTable');
+        $unlinkedRecommendations = $recommendationTable->findUnlinkedWithNotEmptyPositionByAnr($anr);
+        $recommendationsToResetPositions = [];
+        foreach ($unlinkedRecommendations as $unlinkedRecommendation) {
+            $recommendationsToResetPositions[$unlinkedRecommendation->getUuid()] = $unlinkedRecommendation;
+        }
+        if (!empty($recommendationsToResetPositions)) {
+            $this->resetRecommendationsPositions($anr, $recommendationsToResetPositions);
+        }
+    }
 
     /**
      * Imports a previously exported instance from an uploaded file into the current ANR. It may be imported using two
@@ -128,6 +163,10 @@ class AnrInstanceService extends InstanceService
                     }
                 }
 
+                /** @var RecommandationTable $recommendationTable */
+                $recommendationTable = $this->get('recommandationTable');
+                $this->initialAnalyseMaxRecommendationPosition = $recommendationTable->getMaxPositionByAnr($anr);
+                $this->currentAnalyseMaxRecommendationPosition = $this->initialAnalyseMaxRecommendationPosition;
                 if ($file !== false
                     && ($id = $this->importFromArray($file, $anr, $parentInstance, $mode)) !== false) {
                     // Import was successful, store the ID
@@ -242,25 +281,25 @@ class AnrInstanceService extends InstanceService
             return false;
         }
 
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('table');
+
         $instance = new Instance();
-        $instance->setDbAdapter($this->get('table')->getDb());
+        // TODO: use setters.
+        $instance->setDbAdapter($instanceTable->getDb());
         $instance->setLanguage($this->getLanguage());
         $toExchange = $data['instance'];
         unset($toExchange['id']);
         unset($toExchange['position']);
-        $toExchange['anr'] = $anr->get('id');
-        $toExchange['object'] = $idObject;
         $toExchange['asset'] = null;
-        $obj = $this->get('objectExportService')->get('table')->getEntity(['anr' => $anr, 'uuid' => $idObject]);
-        if ($obj) {
-            $toExchange['asset'] = (string)$obj->get('asset')->get('uuid');
-            if ($modeImport == 'duplicate') {
-                for ($i = 1; $i <= 4; $i++) {
-                    $toExchange['name' . $i] = $obj->get('name' . $i);
-                }
+        /** @var MonarcObjectTable $monarcObjectTable */
+        $monarcObjectTable = $this->get('objectTable');
+        $monarcObject = $monarcObjectTable->findByAnrAndUuid($anr, $idObject);
+        if ($modeImport === 'duplicate') {
+            for ($i = 1; $i <= 4; $i++) {
+                $toExchange['name' . $i] = $monarcObject->get('name' . $i);
             }
         }
-        $toExchange['parent'] = $parent !== null ? $parent->getId() : null;
         $toExchange['implicitPosition'] = AbstractEntity::IMP_POS_END;
         if ($isRoot) {
             // On force en level "ROOT" lorsque c'est le 1er niveau de l'import. Pour les autres, on laisse les
@@ -269,13 +308,15 @@ class AnrInstanceService extends InstanceService
         }
 
         $instance->exchangeArray($toExchange);
-        $this->setDependencies($instance, ['anr', 'object', 'asset', 'parent']);
 
-        /** @var InstanceTable $instanceTable */
-        $instanceTable = $this->get('table');
+        $instance->setAnr($anr)
+            ->setObject($monarcObject)
+            ->setAsset($monarcObject->getAsset())
+            ->setParent($parent);
+
         $instanceTable->saveEntity($instance);
 
-        $instanceRiskService->createInstanceRisks($instance, $anr, $obj);
+        $instanceRiskService->createInstanceRisks($instance, $anr, $monarcObject);
 
         $labelKey = 'label' . $this->getLanguage();
 
@@ -364,7 +405,7 @@ class AnrInstanceService extends InstanceService
         } else {
             // on génère celles par défaut
 
-            $this->createInstanceConsequences($instance->getId(), $anr->get('id'), $obj);
+            $this->createInstanceConsequences($instance->getId(), $anr->get('id'), $monarcObject);
         }
 
         // Update impacts from brothers for global assets
@@ -410,7 +451,7 @@ class AnrInstanceService extends InstanceService
 
         $this->refreshImpactsInherited($instance);
 
-        $recSetUuid = $this->createSetOfRecommendations($data, $anr, $monarcVersion);
+        $this->createSetOfRecommendations($data, $anr, $monarcVersion);
 
         if (!empty($data['risks'])) {
             // load of the existing value
@@ -460,9 +501,13 @@ class AnrInstanceService extends InstanceService
                 }
             }
 
+            /** @var InstanceRiskTable $instanceRiskTable */
+            $instanceRiskTable = $this->get('instanceRiskTable');
+
             foreach ($data['risks'] as $risk) {
                 //uuid id now the pivot instead of code
                 if ($risk['specific']) {
+                    // TODO: remove the support of the old version because it's a mess.
                     // on doit le créer localement mais pour ça il nous faut les pivots sur les menaces et vulnérabilités
                     // on checke si on a déjà les menaces et les vulnérabilités liées, si c'est pas le cas, faut les créer
                     if ((!in_array($risk['threat'], $this->sharedData['ithreats'])
@@ -475,7 +520,7 @@ class AnrInstanceService extends InstanceService
                         $toExchange = $data['threats'][$risk['threat']];
                         unset($toExchange['id']);
                         $toExchange['anr'] = $anr->get('id');
-                        $class = $instanceRiskService->get('threatTable')->getEntityClass();
+                        $class = $this->get('threatTable')->getEntityClass();
                         $threat = new $class();
                         $threat->setDbAdapter($instanceConsequenceTable->getDb());
                         $threat->setLanguage($this->getLanguage());
@@ -486,7 +531,6 @@ class AnrInstanceService extends InstanceService
                             $this->sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $tuuid;
                         }
                     }
-
 
                     if ((!in_array($risk['vulnerability'], $this->sharedData['ivuls'])
                             && version_compare($monarcVersion, '2.8.2') >= 0
@@ -509,53 +553,50 @@ class AnrInstanceService extends InstanceService
                         }
                     }
 
-                    if (isset($obj)) {
-                        $instanceBrothers = $this->get('table')->getEntityByFields([ // Get the Instance of brothers
-                            'id' => ['op' => '!=', 'value' => $instance->getId()],
+                    $instanceBrothers = $this->get('table')->getEntityByFields([ // Get the Instance of brothers
+                        'id' => ['op' => '!=', 'value' => $instance->getId()],
+                        'anr' => $anr->get('id'),
+                        'asset' => [
                             'anr' => $anr->get('id'),
-                            'asset' => [
-                                'anr' => $anr->get('id'),
-                                'uuid' => (string)$instance->get('asset')->get('uuid')
-                            ],
-                            'object' => [
-                                'anr' => $anr->get('id'),
-                                'uuid' => (string)$obj->get('uuid')
-                            ]
-                        ]);
+                            'uuid' => (string)$instance->get('asset')->get('uuid')
+                        ],
+                        'object' => [
+                            'anr' => $anr->get('id'),
+                            'uuid' => (string)$monarcObject->getUuid()
+                        ]
+                    ]);
 
-                        // Creation of specific risks to brothers
-                        foreach ($instanceBrothers as $ib) {
-                            $toExchange = $risk;
-                            unset($toExchange['id']);
-                            $toExchange['anr'] = $anr->get('id');
-                            $toExchange['instance'] = $ib->get('id');
-                            $toExchange['asset'] = (string)$obj->get('asset')->get('uuid');
-                            $toExchange['amv'] = null;
-                            $toExchange['threat'] = Uuid::isValid($risk['threat'])
-                                ? $risk['threat']
-                                : $this->sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
-                            $toExchange['vulnerability'] = Uuid::isValid($risk['vulnerability'])
-                                ? $risk['vulnerability']
-                                : $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
-                            $class = $instanceRiskService->get('table')->getEntityClass();
-                            $rToBrother = new $class();
-                            $rToBrother->setDbAdapter($instanceRiskService->get('table')->getDb());
-                            $rToBrother->setLanguage($this->getLanguage());
-                            $rToBrother->exchangeArray($toExchange);
-                            $this->setDependencies(
-                                $rToBrother,
-                                ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']
-                            );
-                            $idRiskSpecific = $instanceRiskService->get('table')->save($rToBrother, false);
-                            $rToBrother->set('id', $idRiskSpecific);
-                        }
+                    // Creation of specific risks to brothers
+                    foreach ($instanceBrothers as $ib) {
+                        $toExchange = $risk;
+                        unset($toExchange['id']);
+                        $toExchange['anr'] = $anr->get('id');
+                        $toExchange['instance'] = $ib->get('id');
+                        $toExchange['asset'] = (string)$monarcObject->getAsset()->getUuid();
+                        $toExchange['amv'] = null;
+                        $toExchange['threat'] = Uuid::isValid($risk['threat'])
+                            ? $risk['threat']
+                            : $this->sharedData['ithreats'][$data['threats'][$risk['threat']]['code']];
+                        $toExchange['vulnerability'] = Uuid::isValid($risk['vulnerability'])
+                            ? $risk['vulnerability']
+                            : $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
+                        $rToBrother = new InstanceRisk();
+                        $rToBrother->setDbAdapter($instanceRiskTable->getDb());
+                        $rToBrother->setLanguage($this->getLanguage());
+                        $rToBrother->exchangeArray($toExchange);
+                        $this->setDependencies(
+                            $rToBrother,
+                            ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']
+                        );
+                        $idRiskSpecific = $instanceRiskTable->save($rToBrother, false);
+                        $rToBrother->set('id', $idRiskSpecific);
                     }
 
                     $toExchange = $risk;
                     unset($toExchange['id']);
                     $toExchange['anr'] = $anr->get('id');
                     $toExchange['instance'] = $instance->getId();
-                    $toExchange['asset'] = $obj ? (string)$obj->get('asset')->get('uuid') : null;
+                    $toExchange['asset'] = (string)$monarcObject->getAsset()->getUuid();
                     $toExchange['amv'] = null;
                     $toExchange['threat'] = Uuid::isValid($risk['threat'])
                         ? $risk['threat']
@@ -563,14 +604,13 @@ class AnrInstanceService extends InstanceService
                     $toExchange['vulnerability'] = Uuid::isValid($risk['vulnerability'])
                         ? $risk['vulnerability']
                         : $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
-                    $class = $instanceRiskService->get('table')->getEntityClass();
-                    $r = new $class();
-                    $r->setDbAdapter($instanceRiskService->get('table')->getDb());
-                    $r->setLanguage($this->getLanguage());
-                    $r->exchangeArray($toExchange);
-                    $this->setDependencies($r, ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']);
-                    $idRisk = $instanceRiskService->get('table')->save($r, false);
-                    $r->set('id', $idRisk);
+                    $instanceRisk = new InstanceRisk();
+                    $instanceRisk->setDbAdapter($instanceRiskTable->getDb());
+                    $instanceRisk->setLanguage($this->getLanguage());
+                    $instanceRisk->exchangeArray($toExchange);
+                    $this->setDependencies($instanceRisk, ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']);
+                    $idRisk = $instanceRiskTable->save($instanceRisk, false);
+                    $instanceRisk->set('id', $idRisk);
                 }
 
                 $tuuid = Uuid::isValid($risk['threat'])
@@ -580,56 +620,54 @@ class AnrInstanceService extends InstanceService
                     ? $risk['vulnerability']
                     : $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
 
-                $r = current($instanceRiskService->get('table')->getEntityByFields([
+                /** @var InstanceRisk $instanceRisk */
+                $instanceRisk = current($instanceRiskService->get('table')->getEntityByFields([
                     'anr' => $anr->get('id'),
                     'instance' => $instance->getId(),
-                    'asset' => $obj ? [
-                        'anr' => $anr->get('id'),
-                        'uuid' => (string)$obj->get('asset')->get('uuid')
+                    'asset' => $monarcObject ? [
+                        'anr' => $anr->getId(),
+                        'uuid' => (string)$monarcObject->getAsset()->getUuid()
                     ] : null,
                     'threat' => ['anr' => $anr->get('id'), 'uuid' => $tuuid],
                     'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $vuuid]
                 ]));
-                if ($r === false) {
-                    $r = null;
-                }
 
-                if (!empty($r) && $includeEval) {
-                    $r->set('threatRate', $this->approximate(
+                if ($instanceRisk !== null && $includeEval) {
+                    $instanceRisk->set('threatRate', $this->approximate(
                         $risk['threatRate'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_THREAT]['min'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_THREAT]['max'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_THREAT]['min'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_THREAT]['max']
                     ));
-                    $r->set('vulnerabilityRate', $this->approximate(
+                    $instanceRisk->set('vulnerabilityRate', $this->approximate(
                         $risk['vulnerabilityRate'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['min'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['max'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['min'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['max']
                     ));
-                    $r->set('mh', $risk['mh']);
-                    $r->set('kindOfMeasure', $risk['kindOfMeasure']);
-                    $r->set('comment', $risk['comment']);
-                    $r->set('commentAfter', $risk['commentAfter']);
+                    $instanceRisk->set('mh', $risk['mh']);
+                    $instanceRisk->set('kindOfMeasure', $risk['kindOfMeasure']);
+                    $instanceRisk->set('comment', $risk['comment']);
+                    $instanceRisk->set('commentAfter', $risk['commentAfter']);
 
                     // La valeur -1 pour le reduction_amount n'a pas de sens, c'est 0 le minimum. Le -1 fausse
                     // les calculs.
                     // Cas particulier, faudrait pas mettre n'importe quoi dans cette colonne si on part d'une scale
                     // 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
-                    $r->set(
+                    $instanceRisk->set(
                         'reductionAmount',
                         $risk['reductionAmount'] != -1
-                            ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $r->get('vulnerabilityRate'), 0)
+                            ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $instanceRisk->get('vulnerabilityRate'), 0)
                             : 0
                     );
-                    $idRisk = $instanceRiskService->get('table')->save($r, false);
+                    $idRisk = $instanceRiskService->get('table')->save($instanceRisk, false);
 
                     // Merge all fields for global assets
 
                     if ($instance->get('object')->get('scope') === MonarcObject::SCOPE_GLOBAL
-                        && $r->get('specific') === 0
+                        && $instanceRisk->get('specific') === 0
                         && $modeImport === 'merge'
                     ) {
                         $objectIdsBrothers = $this->get('table')->getEntityByFields([ // Get object Ids of brother
@@ -646,7 +684,7 @@ class AnrInstanceService extends InstanceService
                             'instance' => ['op' => 'IN', 'value' => $objectIdsBrothers],
                             'amv' => [
                                 'anr' => $anr->get('id'),
-                                'uuid' => (string)$r->get('amv')->get('uuid')
+                                'uuid' => (string)$instanceRisk->get('amv')->get('uuid')
                             ]
                         ]));
 
@@ -657,252 +695,217 @@ class AnrInstanceService extends InstanceService
                             $dataUpdate['vulnerabilityRate'] = $instanceRiskBrothers->vulnerabilityRate; // Merge vulnerability rate
                             $dataUpdate['kindOfMeasure'] = $instanceRiskBrothers->kindOfMeasure; // Merge kind Of Measure
                             $dataUpdate['reductionAmount'] = $instanceRiskBrothers->reductionAmount; // Merge reduction amount
-                            if (strcmp($instanceRiskBrothers->comment, $r->get('comment')) !== 0// Check if comment is different
-                                && strpos($instanceRiskBrothers->comment, $r->get('comment')) == false
+                            if (strcmp($instanceRiskBrothers->comment, $instanceRisk->get('comment')) !== 0// Check if comment is different
+                                && strpos($instanceRiskBrothers->comment, $instanceRisk->get('comment')) == false
                             ) { // Check if comment is not exist yet
-                                $dataUpdate['comment'] = $instanceRiskBrothers->comment . "\n\n" . $r->get('comment'); // Merge comments
+                                $dataUpdate['comment'] = $instanceRiskBrothers->comment . "\n\n" . $instanceRisk->get('comment'); // Merge comments
                             } else {
                                 $dataUpdate['comment'] = $instanceRiskBrothers->comment;
                             }
 
-                            $instanceRiskService->update($r->get('id'), $dataUpdate); // Finally update the risks
+                            $instanceRiskService->update($instanceRisk->get('id'), $dataUpdate); // Finally update the risks
                         }
                     }
 
                     // Recommandations
                     if (!empty($data['recos'][$risk['id']])) {
+                        /** @var RecommandationTable $recommendationTable */
+                        $recommendationTable = $this->get('recommandationTable');
+
                         foreach ($data['recos'][$risk['id']] as $reco) {
-                            //2.8.3
-                            if (version_compare($monarcVersion, "2.8.4") == -1) {
-                                unset($reco['id']);
-                                $recs = $this->get('recommandationTable')->getEntityByFields([
-                                    'code' => $reco['code'],
-                                    'description' => $reco['description']
-                                ]);
-                                if (!empty($recs)) {
-                                    $reco['uuid'] = (string)$recs[0]->get('uuid');
-                                }
-                                $reco['recommandationSet'] = $recSetUuid;
-                            }
-                            $recSets = $this->get('recommandationSetTable')->getEntityByFields([
-                                'anr' => $anr->getId(),
-                                'uuid' => $reco['recommandationSet']
-                            ]);
-                            // La recommandation
-                            if (isset($this->sharedData['recos'][$reco['uuid']])) { // Cette recommandation a déjà été gérée dans cet import
-                                if ($risk['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                    $aReco = $this->get('recommandationTable')->getEntity([
-                                        'anr' => $anr->get('id'),
-                                        'uuid' => $reco['uuid']
-                                    ]);
-                                    if ($aReco->get('position') <= 0 || is_null($aReco->get('position'))) {
-                                        $pos = \count($this->get('recommandationTable')->getEntityByFields(
-                                                [
-                                                    'anr' => $anr->getId(),
-                                                    'position' => ['op' => 'IS NOT', 'value' => null]
-                                                ],
-                                                ['position' => 'ASC']
-                                            )) + 1;
-                                        $aReco->set('position', $pos);
-                                        $aReco->setRecommandationSet($recSets[0]);
-                                        $reco['uuid'] = $this->get('recommandationTable')->save($aReco, false);
-                                    }
+                            if (isset($this->sharedData['recs'][$reco['uuid']])) {
+                                /** @var Recommandation $recommendation */
+                                $recommendation = $this->sharedData['recs'][$reco['uuid']];
+                                if ($risk['kindOfMeasure'] !== InstanceRiskSuperClass::KIND_NOT_TREATED
+                                    && $recommendation->isPositionEmpty()
+                                ) {
+                                    $recommendation->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
+                                    $recommendationTable->saveEntity($recommendation, false);
                                 }
                             } else {
-                                // sinon, on teste sa présence
-                                $toExchange = $reco;
-                                unset($toExchange['commentAfter']); // data du link
-                                $toExchange['anr'] = $anr->get('id');
+                                if (isset($this->sharedData['recSets'][$reco['recommandationSet']])) {
+                                    $recommendationSet = $this->sharedData['recSets'][$reco['recommandationSet']];
+                                } else {
+                                    /** @var RecommandationSetTable $recommendationSetTable */
+                                    $recommendationSetTable = $this->get('recommandationSetTable');
+                                    $recommendationSet = $recommendationSetTable
+                                        ->findByAnrAndUuid($anr, $reco['recommandationSet']);
 
-                                // on test l'unicité du code
-                                $aReco = current($this->get('recommandationTable')->getEntityByFields([
-                                    'anr' => $anr->get('id'),
-                                    'code' => $reco['code']
-                                ]));
-                                if (empty($aReco)) { // Code absent, on crée une nouvelle recommandation
-                                    $class = $this->get('recommandationTable')->getEntityClass();
-                                    $aReco = new $class();
-                                    if ($risk['kindOfMeasure'] == InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                        $toExchange['position'] = null;
-                                    } else {
-                                        $toExchange['position'] = \count($this->get('recommandationTable')->getEntityByFields(
-                                                [
-                                                    'anr' => $anr->get('id'),
-                                                    'position' => ['op' => 'IS NOT', 'value' => null]
-                                                ],
-                                                ['position' => 'ASC']
-                                            )) + 1;
-                                    }
-                                } elseif (($aReco->get('position') <= 0 || $aReco->get('position') === null)
-                                    && $risk['kindOfMeasure'] !== InstanceRiskSuperClass::KIND_NOT_TREATED
+                                    $this->sharedData['recSets'][$recommendationSet->getUuid()] = $recommendationSet;
+                                }
+
+                                $recommendation = $recommendationTable
+                                    ->findByAnrCodeAndRecommendationSet($anr, $reco['code'], $recommendationSet);
+                                if ($recommendation === null) {
+                                    $recommendation = (new Recommandation())
+                                        ->setUuid($reco['uuid']);
+                                }
+
+                                $recommendation->setAnr($anr)
+                                    ->setRecommandationSet($recommendationSet)
+                                    ->setComment($reco['comment'])
+                                    ->setResponsable($reco['responsable'])
+                                    ->setStatus($reco['status'])
+                                    ->setImportance($reco['importance'])
+                                    ->setCode($reco['code'])
+                                    ->setDescription($reco['description'])
+                                    ->setCounterTreated($reco['counterTreated']);
+
+                                if ($risk['kindOfMeasure'] !== InstanceRiskSuperClass::KIND_NOT_TREATED
+                                    && $recommendation->isPositionEmpty()
                                 ) {
-                                    $toExchange['position'] = \count($this->get('recommandationTable')->getEntityByFields(
-                                            [
-                                                'anr' => $anr->get('id'),
-                                                'position' => ['op' => 'IS NOT', 'value' => null]
-                                            ],
-                                            ['position' => 'ASC']
-                                        )) + 1;
+                                    $recommendation->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
                                 }
-                                $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
-                                $aReco->setLanguage($this->getLanguage());
-                                $aReco->exchangeArray($toExchange, $aReco->get('uuid'));
-                                $aReco->setRecommandationSet($recSets[0]);
-                                $this->setDependencies($aReco, ['anr']);
-                                if (isset($toExchange['duedate']['date'])) {
-                                    $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
+
+                                if (!empty($reco['duedate']['date'])) {
+                                    $recommendation->setDueDate(new DateTime($reco['duedate']['date']));
                                 }
-                                $reco['uuid'] = $this->get('recommandationTable')->save($aReco, false);
-                                $this->sharedData['recos'][$reco['uuid']] = $reco['uuid'];
+
+                                $recommendationTable->saveEntity($recommendation, false);
+
+                                $this->sharedData['recs'][$recommendation->getUuid()] = $recommendation;
                             }
 
-                            // Le lien recommandation <-> risk
-                            $class = $this->get('recommandationRiskTable')->getEntityClass();
-                            $rr = new $class();
-                            $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
-                            $rr->setLanguage($this->getLanguage());
-                            $toExchange = [
-                                'anr' => $anr->get('id'),
-                                'recommandation' => $reco['uuid'],
-                                'instanceRisk' => $idRisk,
-                                'instance' => $instance->getId(),
-                                'objectGlobal' => $obj && $obj->get('scope') === ObjectSuperClass::SCOPE_GLOBAL
-                                    ? (string)$obj->get('uuid')
-                                    : null,
-                                'asset' => (string)$r->get('asset')->get('uuid'),
-                                'threat' => (string)$r->get('threat')->get('uuid'),
-                                'vulnerability' => (string)$r->get('vulnerability')->get('uuid'),
-                                'commentAfter' => $reco['commentAfter'],
-                                'op' => 0,
-                                'risk' => $idRisk,
-                            ];
-                            $rr->exchangeArray($toExchange);
-                            $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                            $this->get('recommandationRiskTable')->save($rr, false);
+                            /** @var RecommandationRiskTable $recommendationRiskTable */
+                            $recommendationRiskTable = $this->get('recommandationRiskTable');
+                            $recommendationRisk = (new RecommandationRisk())
+                                ->setAnr($anr)
+                                ->setInstance($instance)
+                                ->setInstanceRisk($instanceRisk)
+                                ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
+                                ->setAsset($instanceRisk->getAsset())
+                                ->setThreat($instanceRisk->getThreat())
+                                ->setVulnerability($instanceRisk->getVulnerability())
+                                ->setCommentAfter((string)$reco['commentAfter'])
+                                ->setRecommandation($recommendation);
 
-                            // Reply recommandation to brothers
-                            if (!empty($toExchange['objectGlobal']) && $modeImport == 'merge') {
-                                $instances = $this->get('table')->getEntityByFields([ // Get the brothers
+                            $recommendationRiskTable->saveEntity($recommendationRisk, false);
+
+                            // Replicate recommendation to brothers.
+                            if ($recommendationRisk->hasGlobalObjectRelation() && $modeImport === 'merge') {
+                                /** @var Instance[] $brotherInstances */
+                                $brotherInstances = $this->get('table')->getEntityByFields([ // Get the brothers
                                     'anr' => $anr->get('id'),
                                     'asset' => [
                                         'anr' => $anr->get('id'),
-                                        'uuid' => (string)$obj->get('asset')->get('uuid')
+                                        'uuid' => (string)$monarcObject->get('asset')->get('uuid')
                                     ],
-                                    'object' => ['anr' => $anr->get('id'), 'uuid' => (string)$obj->get('uuid')]
+                                    'object' => ['anr' => $anr->get('id'), 'uuid' => (string)$monarcObject->get('uuid')]
                                 ]);
 
-                                if (!empty($instances)) {
-                                    foreach ($instances as $i) {
-                                        if ($r->get('specific') == 0) {
-                                            $brothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get the risks of brothers
-                                                'anr' => $anr->get('id'),
-                                                'instance' => $i->get('id'),
-                                                'amv' => [
-                                                    'anr' => $anr->get('id'),
-                                                    'uuid' => (string)$r->get('amv')->get('uuid')
-                                                ]
-                                            ]);
-                                        } else {
-                                            $brothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get the risks of brothers
-                                                'anr' => $anr->get('id'),
-                                                'specific' => 1,
-                                                'instance' => $i->get('id'),
+                                if (!empty($brotherInstances)) {
+                                    foreach ($brotherInstances as $brotherInstance) {
+                                        // Get the risks of brothers
+                                        /** @var InstanceRisk[] $brothers */
+                                        if ($instanceRisk->isSpecific()) {
+                                            $brothers = $recommendationRiskTable->getEntityByFields([
+                                                'anr' => $anr->getId(),
+                                                'specific' => InstanceRisk::TYPE_SPECIFIC,
+                                                'instance' => $brotherInstance->getId(),
                                                 'threat' => [
-                                                    'anr' => $anr->get('id'),
-                                                    'uuid' => (string)$r->get('threat')->get('uuid')
+                                                    'anr' => $anr->getId(),
+                                                    'uuid' => (string)$instanceRisk->getThreat()->getUuid()
                                                 ],
                                                 'vulnerability' => [
                                                     'anr' => $anr->get('id'),
-                                                    'uuid' => (string)$r->get('vulnerability')->get('uuid')
+                                                    'uuid' => (string)$instanceRisk->get('vulnerability')->get('uuid')
+                                                ]
+                                            ]);
+                                        } else {
+                                            $brothers = $recommendationRiskTable->getEntityByFields([
+                                                'anr' => $anr->getId(),
+                                                'instance' => $brotherInstance->getId(),
+                                                'amv' => [
+                                                    'anr' => $anr->getId(),
+                                                    'uuid' => (string)$instanceRisk->getAmv()->getUuid()
                                                 ]
                                             ]);
                                         }
 
                                         foreach ($brothers as $brother) {
-                                            $RecoCreated = $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
-                                                'recommandation' => ['anr' => $anr->get('id'), 'uuid' => $reco['uuid']],
-                                                'instance' => $i->get('id'),
-                                                'instanceRisk' => $brother->id]);
+                                            $recommendationRiskBrother = $recommendationRiskTable
+                                                ->findByInstanceRiskAndRecommendation($brother, $recommendation);
+                                            if ($recommendationRiskBrother === null) {
+                                                $recommendationRiskBrother = (new RecommandationRisk())
+                                                    ->setAnr($anr)
+                                                    ->setInstance($brotherInstance)
+                                                    ->setInstanceRisk($brother)
+                                                    ->setGlobalObject(
+                                                        $monarcObject->isScopeGlobal() ? $monarcObject : null
+                                                    )
+                                                    ->setAsset($instanceRisk->getAsset())
+                                                    ->setThreat($instanceRisk->getThreat())
+                                                    ->setVulnerability($instanceRisk->getVulnerability())
+                                                    ->setCommentAfter((string)$reco['commentAfter'])
+                                                    ->setRecommandation($recommendation);
 
-                                            if (empty($RecoCreated)) { // Creation link
-                                                $rr = new $class();
-                                                $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
-                                                $rr->setLanguage($this->getLanguage());
-                                                $toExchange['instanceRisk'] = $brother->id;
-                                                $toExchange['instance'] = $i->get('id');
-                                                $rr->exchangeArray($toExchange);
-                                                $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                                                $this->get('recommandationRiskTable')->save($rr, false);
+                                                $recommendationRiskTable->saveEntity($recommendationRiskBrother, false);
                                             }
                                         }
                                     }
+                                    $recommendationRiskTable->getDb()->flush();
                                 }
-
                             }
                         }
-                        $this->get('table')->getDb()->flush();
+                        $recommendationTable->getDb()->flush();
                     }
                 }
 
-                // Check recommendations from brothers
-                $instanceBrother = current($this->get('table')->getEntityByFields([ // Get instances of brothers (only one)
+                // Check recommendations from a brother
+                /** @var Instance $instanceBrother */
+                $instanceBrother = current($this->get('table')->getEntityByFields([
                     'id' => ['op' => '!=', 'value' => $instance->getId()],
                     'anr' => $anr->get('id'),
-                    'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$obj->get('asset')->get('uuid')],
-                    'object' => ['anr' => $anr->get('id'), 'uuid' => (string)$obj->get('uuid')]
+                    'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$monarcObject->get('asset')->get('uuid')],
+                    'object' => ['anr' => $anr->get('id'), 'uuid' => (string)$monarcObject->get('uuid')]
                 ]));
 
-                if (!empty($instanceBrother) && !empty($r) && $r->get('specific') == 0) {
-                    $instanceRiskBrothers = $this->get('instanceRiskTable')->getEntityByFields([ // Get instance risk of brother
-                        'anr' => $anr->get('id'),
-                        'instance' => $instanceBrother->get('id'),
-                        'amv' => ['anr' => $anr->get('id'), 'uuid' => (string)$r->get('amv')->get('uuid')]
-                    ]);
+                if ($instanceBrother !== null && $instanceRisk !== null && !$instanceRisk->isSpecific()) {
+                    /** @var InstanceRiskTable $instanceRiskTable */
+                    $instanceRiskTable = $this->get('instanceRiskTable');
+                    $instanceRiskBrothers = $instanceRiskTable->findByInstanceAndAmv(
+                        $instanceBrother,
+                        $instanceRisk->getAmv()
+                    );
 
-                    foreach ($instanceRiskBrothers as $irb) {
-                        $brotherRecoRisks = $this->get('recommandationRiskTable')->getEntityByFields([ // Get recommendation of brother
-                            'anr' => $anr->get('id'),
-                            'instanceRisk' => $irb->id,
+                    /** @var RecommandationRiskTable $recommendationRiskTable */
+                    $recommendationRiskTable = $this->get('recommandationRiskTable');
+                    foreach ($instanceRiskBrothers as $instanceRiskBrother) {
+                        /** @var RecommandationRisk[] $brotherRecoRisks */
+                        $brotherRecoRisks = $recommendationRiskTable->getEntityByFields([ // Get recommendation of brother
+                            'anr' => $anr->getId(),
+                            'instanceRisk' => $instanceRiskBrother->getId(),
                             'instance' => ['op' => '!=', 'value' => $instance->getId()],
-                            'objectGlobal' => ['anr' => $anr->get('id'), 'uuid' => (string)$obj->get('uuid')]
+                            'globalObject' => [
+                                'anr' => $anr->getId(),
+                                'uuid' => (string)$monarcObject->getUuid(),
+                            ]
                         ]);
 
                         if (!empty($brotherRecoRisks)) {
-                            foreach ($brotherRecoRisks as $brr) {
-                                $RecoCreated = $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
-                                    'recommandation' => [
-                                        'anr' => $anr->getId(),
-                                        'uuid' => (string)$brr->recommandation->uuid
-                                    ],
-                                    'instance' => $instance->getId(),
-                                    'instanceRisk' => $r->get('id')]);
+                            foreach ($brotherRecoRisks as $brotherRecoRisk) {
+                                $recommendationRisk = $recommendationRiskTable->findByInstanceRiskAndRecommendation(
+                                    $instanceRisk,
+                                    $brotherRecoRisk->getRecommandation()
+                                );
 
-                                if (empty($RecoCreated)) {// Creation of link reco -> risk
-                                    $class = $this->get('recommandationRiskTable')->getEntityClass();
-                                    $rrb = new $class();
-                                    $rrb->setDbAdapter($this->get('recommandationRiskTable')->getDb());
-                                    $rrb->setLanguage($this->getLanguage());
-                                    $toExchange = [
-                                        'anr' => $anr->get('id'),
-                                        'recommandation' => (string)$brr->recommandation->uuid,
-                                        'instanceRisk' => $r->get('id'),
-                                        'instance' => $instance->getId(),
-                                        'objectGlobal' => (string)$brr->objectGlobal->uuid,
-                                        'asset' => (string)$brr->asset->uuid,
-                                        'threat' => (string)$brr->threat->uuid,
-                                        'vulnerability' => (string)$brr->vulnerability->uuid,
-                                        'commentAfter' => $brr->commentAfter,
-                                        'op' => 0,
-                                        'risk' => $r->get('id'),
-                                    ];
-                                    $rrb->exchangeArray($toExchange);
-                                    $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                                    $this->get('recommandationRiskTable')->save($rrb, false);
+                                if ($recommendationRisk === null) {
+                                    $recommendationRisk = (new RecommandationRisk())
+                                        ->setAnr($anr)
+                                        ->setInstance($instance)
+                                        ->setInstanceRisk($brotherRecoRisk->getInstanceRisk())
+                                        ->setGlobalObject($brotherRecoRisk->getGlobalObject())
+                                        ->setAsset($brotherRecoRisk->getAsset())
+                                        ->setThreat($brotherRecoRisk->getThreat())
+                                        ->setVulnerability($brotherRecoRisk->getVulnerability())
+                                        ->setCommentAfter($brotherRecoRisk->getCommentAfter())
+                                        ->setRecommandation($brotherRecoRisk->getRecommandation());
 
+                                    $recommendationRiskTable->saveEntity($recommendationRisk, false);
                                 }
                             }
-                            // TODO: adjust the code and remove the flush call.
-                            $this->get('recommandationRiskTable')->getDb()->flush();
+
+                            $recommendationRiskTable->getDb()->flush();
                         }
                     }
                 }
@@ -926,8 +929,10 @@ class AnrInstanceService extends InstanceService
                     }
                 }
             }
+            /** @var RecommandationRiskTable $recommendationRiskTable */
+            $recommendationRiskTable = $this->get('recommandationRiskTable');
             foreach ($recoToCreate as $rtc) {
-                $RecoCreated = $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
+                $RecoCreated = $recommendationRiskTable->getEntityByFields([ // Check if reco-risk link exist
                     'recommandation' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->recommandation->uuid],
                     'instance' => $instance->getId(),
                     'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->asset->uuid],
@@ -935,35 +940,35 @@ class AnrInstanceService extends InstanceService
                     'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->vulnerability->uuid]]);
 
                 if (empty($RecoCreated)) {// Creation of link reco -> risk
-                    $class = $this->get('recommandationRiskTable')->getEntityClass();
-                    $rrb = new $class();
-                    $rrb->setDbAdapter($this->get('recommandationRiskTable')->getDb());
+                    $rrb = new RecommandationRisk();
+                    // TODO: use setters.
+                    $rrb->setDbAdapter($recommendationRiskTable->getDb());
                     $rrb->setLanguage($this->getLanguage());
                     $toExchange = [
                         'anr' => $anr->get('id'),
-                        'recommandation' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->recommandation->uuid],
+                        'recommandation' => ['anr' => $anr->get('id'), 'uuid' => $rtc->recommandation->uuid],
                         'instanceRisk' => $idRiskSpecific = current($this->get('instanceRiskTable')->getEntityByFields([
                             'anr' => $anr->get('id'),
                             'instance' => $instance->getId(),
                             'specific' => 1,
-                            'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->asset->uuid],
-                            'threat' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->threat->uuid],
-                            'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->vulnerability->uuid]])),
+                            'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->getAsset()->getUuid()],
+                            'threat' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->getThreat()->getUuid()],
+                            'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->getVulnerability()->getUuid()]])),
                         'instance' => $instance->getId(),
-                        'objectGlobal' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->objectGlobal->uuid],
-                        'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->asset->uuid],
-                        'threat' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->threat->uuid],
-                        'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->vulnerability->uuid],
+                        'globalObject' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->getGlobalObject()->getUuid()],
+                        'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->getAsset()->getUuid()],
+                        'threat' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->getThreat()->getUuid()],
+                        'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->getVulnerability()->getUuid()],
                         'commentAfter' => $rtc->commentAfter,
                         'op' => 0,
                         'risk' => $idRiskSpecific,
                     ];
                     $rrb->exchangeArray($toExchange);
-                    $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
-                    $this->get('recommandationRiskTable')->save($rrb, false);
+                    $this->setDependencies($rrb, ['anr', 'recommandation', 'instanceRisk', 'instance', 'globalObject', 'asset', 'threat', 'vulnerability']);
+                    $recommendationRiskTable->saveEntity($rrb, false);
                 }
             }
-            $this->get('recommandationRiskTable')->getDb()->flush();
+            $recommendationRiskTable->getDb()->flush();
 
             // on met finalement à jour les risques en cascade
             $this->updateRisks($instance);
@@ -999,16 +1004,16 @@ class AnrInstanceService extends InstanceService
             foreach ($data['risksop'] as $ro) {
                 // faut penser à actualiser l'anr_id, l'instance_id, l'object_id. Le risk_id quant à lui n'est pas repris dans l'export, on s'en moque donc
                 $class = $this->get('instanceRiskOpService')->get('table')->getEntityClass();
-                $r = new $class();
+                // TODO: use entity class directly and setters.
+                $instanceRisk = new $class();
                 $ro['rolfRisk'] = null;
-
                 $toExchange = $ro;
                 unset($toExchange['id']);
-                $toExchange['anr'] = $anr->get('id');
+                $toExchange['anr'] = $anr->getId();
                 $toExchange['instance'] = $instance->getId();
                 $toExchange['object'] = $idObject;
                 $tagId = $this->get('objectExportService')->get('table')->getEntity([
-                    'anr' => $anr->get('id'),
+                    'anr' => $anr->getId(),
                     'uuid' => $idObject
                 ])->get('rolfTag');
                 if (null !== $tagId) {
@@ -1033,117 +1038,94 @@ class AnrInstanceService extends InstanceService
                         }
                     }
                 }
-                $r->setDbAdapter($this->get('instanceRiskOpService')->get('table')->getDb());
-                $r->setLanguage($this->getLanguage());
-                $r->exchangeArray($toExchange);
-                $this->setDependencies($r, ['anr', 'instance', 'object', 'rolfRisk']);
-                $idRiskOp = $this->get('instanceRiskOpService')->get('table')->save($r, false);
+                $instanceRisk->setDbAdapter($this->get('instanceRiskOpService')->get('table')->getDb());
+                $instanceRisk->setLanguage($this->getLanguage());
+                $instanceRisk->exchangeArray($toExchange);
+                $this->setDependencies($instanceRisk, ['anr', 'instance', 'object', 'rolfRisk']);
+                $idRiskOp = $this->get('instanceRiskOpService')->get('table')->save($instanceRisk, false);
 
                 // Recommandations
+                $recommendationRiskTable = $this->get('recommandationRiskTable');
                 if ($includeEval && !empty($data['recosop'][$ro['id']]) && !empty($idRiskOp)) {
+                    /** @var RecommandationTable $recommendationTable */
+                    $recommendationTable = $this->get('recommandationTable');
                     foreach ($data['recosop'][$ro['id']] as $reco) {
                         //2.8.3
                         if (version_compare($monarcVersion, "2.8.4") == -1) {
                             unset($reco['id']);
-                            $recs = $this->get('recommandationTable')->getEntityByFields([
+                            $recs = $recommendationTable->getEntityByFields([
                                 'code' => $reco['code'],
                                 'description' => $reco['description']
                             ]);
                             if (!empty($recs)) {
-                                $reco['uuid'] = (string)$recs[0]->get('uuid');
+                                $reco['uuid'] = $recs[0]->get('uuid');
                             }
-                            $reco['recommandationSet'] = $recSetUuid;
+                            $reco['recommandationSet'] = current($this->sharedData['recSets']);
                         }
-                        $recSets = $this->get('recommandationSetTable')->getEntityByFields([
+                        // TODO: use the table find method.
+                        $recommendationSetTable = $this->get('recommandationSetTable');
+                        $recSets = $recommendationSetTable->getEntityByFields([
                             'anr' => $anr->getId(),
                             'uuid' => $reco['recommandationSet']
                         ]);
                         // La recommandation
-                        if (isset($this->sharedData['recos'][$reco['uuid']])) {
+                        if (isset($this->sharedData['recs'][$reco['uuid']])) {
                             // Cette recommandation a déjà été gérée dans cet import
                             if ($ro['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                $aReco = $this->get('recommandationTable')->getEntity([
-                                    'anr' => $anr->get('id'),
-                                    'uuid' => $reco['uuid']
-                                ]);
-                                if ($aReco->get('position') <= 0 || is_null($aReco->get('position'))) {
-                                    $pos = \count($this->get('recommandationTable')->getEntityByFields(
-                                            [
-                                                'anr' => $anr->getId(),
-                                                'position' => ['op' => 'IS NOT', 'value' => null]
-                                            ],
-                                            ['position' => 'ASC']
-                                        )) + 1;
-                                    $aReco->set('position', $pos);
-                                    $aReco->setRecommandationSet($recSets[0]);
-                                    $reco['uuid'] = $this->get('recommandationTable')->save($aReco, false);
+                                if ($recommendation->isPositionEmpty()) {
+                                    $recommendation->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
+                                    $recommendation->setRecommandationSet($recSets[0]);
+                                    // Check if we call saveEntity with second argument = false.
+                                    $reco['uuid'] = $recommendationTable->saveEntity($recommendation, false);
                                 }
                             }
                         } else {
                             // sinon, on teste sa présence
                             $toExchange = $reco;
                             unset($toExchange['commentAfter']); // data du link
-                            $toExchange['anr'] = $anr->get('id');
+                            $toExchange['anr'] = $anr->getId();
 
-                            // on test l'unicité du code
-                            $aReco = current($this->get('recommandationTable')->getEntityByFields([
-                                'anr' => $anr->get('id'),
-                                'code' => $reco['code']
-                            ]));
-                            if (empty($aReco)) {
-                                // Code absent, on crée une nouvelle recommandation
-                                $class = $this->get('recommandationTable')->getEntityClass();
-                                $aReco = new $class();
-                                if ($ro['kindOfMeasure'] == InstanceRiskSuperClass::KIND_NOT_TREATED) {
-                                    $toExchange['position'] = null;
+                            $recommendation = $recommendationTable->findByAnrCodeAndRecommendationSet(
+                                $anr,
+                                $reco['code'],
+                                $recSets[0]
+                            );
+                            if ($recommendation === null) {
+                                // extract the other part to a separate method and use it here as well
+                                $recommendation = new Recommandation();
+                                if ($ro['kindOfMeasure'] === InstanceRiskSuperClass::KIND_NOT_TREATED) {
+                                    $toExchange['position'] = 0;
                                 } else {
-                                    $toExchange['position'] = \count($this->get('recommandationTable')->getEntityByFields(
-                                            [
-                                                'anr' => $anr->get('id'),
-                                                'position' => ['op' => 'IS NOT', 'value' => null]
-                                            ],
-                                            ['position' => 'ASC']
-                                        )) + 1;
+                                    $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                                 }
-                            } else {
-                                if (($aReco->get('position') <= 0
-                                        || is_null($aReco->get('position'))
-                                    )
-                                    && $ro['kindOfMeasure'] != InstanceRiskSuperClass::KIND_NOT_TREATED
-                                ) {
-                                    $toExchange['position'] = \count($this->get('recommandationTable')->getEntityByFields(
-                                            [
-                                                'anr' => $anr->get('id'),
-                                                'position' => ['op' => 'IS NOT', 'value' => null]
-                                            ],
-                                            ['position' => 'ASC']
-                                        )) + 1;
-                                }
+                            } elseif ($recommendation->get('position') <= 0
+                                && $ro['kindOfMeasure'] !== InstanceRiskSuperClass::KIND_NOT_TREATED
+                            ) {
+                                $toExchange['position'] = ++$this->currentAnalyseMaxRecommendationPosition;
                             }
-                            $aReco->setDbAdapter($this->get('recommandationTable')->getDb());
-                            $aReco->setLanguage($this->getLanguage());
-                            $aReco->exchangeArray($toExchange, $aReco->get('uuid'));
-                            $this->setDependencies($aReco, ['anr']);
+
+                            $recommendation->setDbAdapter($recommendationTable->getDb());
+                            $recommendation->setLanguage($this->getLanguage());
+                            $recommendation->exchangeArray($toExchange, $recommendation->get('uuid'));
+                            $this->setDependencies($recommendation, ['anr']);
                             if (isset($toExchange['duedate']['date'])) {
-                                $aReco->setDueDate(new DateTime($toExchange['duedate']['date']));
+                                $recommendation->setDueDate(new DateTime($toExchange['duedate']['date']));
                             }
-                            $aReco->setRecommandationSet($recSets[0]);
-                            $reco['uuid'] = $this->get('recommandationTable')->save($aReco, false);
-                            $this->sharedData['recos'][$reco['uuid']] = $reco['uuid'];
+                            $recommendation->setRecommandationSet($recSets[0]);
+                            $reco['uuid'] = $recommendationTable->save($recommendation);
+                            $sharedData['recos'][$reco['uuid']] = $reco['uuid'];
                         }
 
-                        // Le lien recommandation <-> risk
-                        $class = $this->get('recommandationRiskTable')->getEntityClass();
-                        $rr = new $class();
-                        $rr->setDbAdapter($this->get('recommandationRiskTable')->getDb());
+                        $rr = new RecommandationRisk();
+                        // TODO: use setters.
+                        $rr->setDbAdapter($recommendationRiskTable->getDb());
                         $rr->setLanguage($this->getLanguage());
                         $toExchange = [
-                            'anr' => $anr->get('id'),
                             'recommandation' => $reco['uuid'],
                             'instanceRiskOp' => $idRiskOp,
                             'instance' => $instance->getId(),
-                            'objectGlobal' => $obj && $obj->get('scope') === ObjectSuperClass::SCOPE_GLOBAL
-                                ? (string)$obj->get('uuid')
+                            'globalObject' => $monarcObject && $monarcObject->get('scope') === ObjectSuperClass::SCOPE_GLOBAL
+                                ? (string)$monarcObject->get('uuid')
                                 : null,
                             'asset' => null,
                             'threat' => null,
@@ -1153,16 +1135,15 @@ class AnrInstanceService extends InstanceService
                             'risk' => $idRiskOp,
                         ];
                         $rr->exchangeArray($toExchange);
-                        $this->setDependencies($rr, ['anr', 'recommandation', 'instanceRiskOp', 'instance', 'objectGlobal', 'asset', 'threat', 'vulnerability']);
+                        $this->setDependencies($rr, ['recommandation', 'instanceRiskOp', 'instance', 'globalObject', 'asset', 'threat', 'vulnerability']);
                         $rr->setAnr($anr);
-                        $this->get('recommandationRiskTable')->save($rr, false);
+                        $recommendationRiskTable->saveEntity($rr, false);
                     }
                 }
 
-                $this->get('recommandationRiskTable')->getDb()->flush();
+                $recommendationRiskTable->getDb()->flush();
             }
         }
-
 
         if (!empty($data['children'])) {
             usort($data['children'], function ($a, $b) {
@@ -1172,47 +1153,6 @@ class AnrInstanceService extends InstanceService
                 $this->importInstanceFromArray($child, $anr, $instance, $modeImport);
             }
             $this->updateChildrenImpacts($instance->getId());
-        }
-
-        // Duplicate from AnrRecommandationRiskService::initPosition()
-        $recoRisks = $this->get('recommandationRiskTable')->getEntityByFields([
-            'anr' => $anr->getId(),
-        ]);
-        $idReco = [];
-        foreach ($recoRisks as $rr) {
-            if ($rr->instanceRisk
-                && $rr->instanceRisk->kindOfMeasure !== InstanceRiskSuperClass::KIND_NOT_TREATED
-            ) {
-                $idReco[$rr->recommandation->uuid] = $rr->recommandation->uuid;
-            }
-            if ($rr->instanceRiskOp
-                && $rr->instanceRiskOp->kindOfMeasure !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
-            ) {
-                $idReco[$rr->recommandation->uuid] = $rr->recommandation->uuid;
-            }
-        }
-
-        if (!empty($idReco)) {
-            // Retrieve recommandations
-            /** @var RecommandationTable $recommandationTable */
-            $recommandationTable = $this->get('recommandationTable');
-            $recommandations = $recommandationTable->getEntityByFields(
-                [
-                    'anr' => $anr->getId(),
-                    'uuid' => $idReco
-                ],
-                [
-                    'importance' => 'DESC',
-                    'code' => 'ASC'
-                ]
-            );
-
-            $i = 1;
-            foreach ($recommandations as $recommandation) {
-                $recommandation->position = $i;
-                $recommandationTable->save($recommandation, false);
-                $i++;
-            }
         }
 
         $instanceTable->getDb()->flush();
@@ -1536,36 +1476,34 @@ class AnrInstanceService extends InstanceService
                     $newSoa->setAnr($anr);
                     $newSoa->setMeasure($measuresNewIds[$soa['measure_id']]);
                     $this->get('soaTable')->save($newSoa, false);
-                } else {
-                    if (in_array($soa['measure_id'], $measuresStoredId)) { //measure exist so soa exist (normally)
-                        $soaExistant = $this->get('soaTable')->getEntityByFields([
-                            'measure' => [
-                                'anr' => $anr->getId(),
-                                'uuid' => $soa['measure_id']
-                            ]
-                        ]);
-                        if (empty($soaExistant)) {
-                            $newSoa = new Soa($soa);
-                            $newSoa->setAnr($anr);
-                            $newSoa->setMeasure($this->get('measureTable')->getEntity([
-                                'anr' => $anr->getId(),
-                                'uuid' => $soa['measure_id']
-                            ]));
-                            $this->get('soaTable')->save($newSoa, false);
-                        } else {
-                            $soaExistant = $soaExistant[0];
-                            $soaExistant->remarks = $soa['remarks'];
-                            $soaExistant->evidences = $soa['evidences'];
-                            $soaExistant->actions = $soa['actions'];
-                            $soaExistant->compliance = $soa['compliance'];
-                            $soaExistant->EX = $soa['EX'];
-                            $soaExistant->LR = $soa['LR'];
-                            $soaExistant->CO = $soa['CO'];
-                            $soaExistant->BR = $soa['BR'];
-                            $soaExistant->BP = $soa['BP'];
-                            $soaExistant->RRA = $soa['RRA'];
-                            $this->get('soaTable')->save($soaExistant, false);
-                        }
+                } elseif (in_array($soa['measure_id'], $measuresStoredId)) { //measure exist so soa exist (normally)
+                    $soaExistant = $this->get('soaTable')->getEntityByFields([
+                        'measure' => [
+                            'anr' => $anr->getId(),
+                            'uuid' => $soa['measure_id']
+                        ]
+                    ]);
+                    if (empty($soaExistant)) {
+                        $newSoa = new Soa($soa);
+                        $newSoa->setAnr($anr);
+                        $newSoa->setMeasure($this->get('measureTable')->getEntity([
+                            'anr' => $anr->getId(),
+                            'uuid' => $soa['measure_id']
+                        ]));
+                        $this->get('soaTable')->save($newSoa, false);
+                    } else {
+                        $soaExistant = $soaExistant[0];
+                        $soaExistant->remarks = $soa['remarks'];
+                        $soaExistant->evidences = $soa['evidences'];
+                        $soaExistant->actions = $soa['actions'];
+                        $soaExistant->compliance = $soa['compliance'];
+                        $soaExistant->EX = $soa['EX'];
+                        $soaExistant->LR = $soa['LR'];
+                        $soaExistant->CO = $soa['CO'];
+                        $soaExistant->BR = $soa['BR'];
+                        $soaExistant->BP = $soa['BP'];
+                        $soaExistant->RRA = $soa['RRA'];
+                        $this->get('soaTable')->save($soaExistant, false);
                     }
                 }
             }
@@ -1856,33 +1794,38 @@ class AnrInstanceService extends InstanceService
         return $this->monarcVersion;
     }
 
-    private function createSetOfRecommendations(array $data, AnrSuperClass $anr, ?string $monarcVersion): string
+    private function createSetOfRecommendations(array $data, AnrSuperClass $anr, ?string $monarcVersion): void
     {
-        $recSetUuid = '';
+        /** @var RecommandationSetTable $recommendationSetTable */
         $recommendationSetTable = $this->get('recommandationSetTable');
         if (!empty($data['recSets'])) {
             /** @var RecommandationSetTable $recommendationSetTable */
             foreach ($data['recSets'] as $recSetUuid => $recommendationSetData) {
-                if (isset($this->sharedData['recSets'][$recSetUuid])) {
-                    continue;
-                }
+                if (!isset($this->sharedData['recSets'][$recSetUuid])) {
+                    try {
+                        $recommendationsSet = $recommendationSetTable->findByAnrAndUuid($anr, $recSetUuid);
+                    } catch (EntityNotFoundException $e) {
+                        $recommendationsSet = (new RecommandationSet())
+                            ->setUuid($recSetUuid)
+                            ->setAnr($anr)
+                            ->setLabel1($recommendationSetData['label1'])
+                            ->setLabel2($recommendationSetData['label2'])
+                            ->setLabel3($recommendationSetData['label3'])
+                            ->setLabel4($recommendationSetData['label4']);
 
-                // check if the recommendation set is not already present in the analysis
-                $recommendationsSets = $recommendationSetTable
-                    ->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $recSetUuid]);
-                if (empty($recommendationsSets)) {
-                    $newRecommendationSet = new RecommandationSet($recommendationSetData);
-                    $newRecommendationSet->setUuid($recSetUuid);
-                    $newRecommendationSet->setAnr($anr);
-                    $recommendationSetTable->saveEntity($newRecommendationSet);
-                    $this->sharedData['recSets'][$recSetUuid] = $newRecommendationSet;
+                        $recommendationSetTable->saveEntity($recommendationsSet);
+                    }
+
+                    $this->sharedData['recSets'][$recSetUuid] = $recommendationsSet;
                 }
             }
         } elseif (version_compare($monarcVersion, '2.8.4') === -1) {
-            $recommendationsSets = $recommendationSetTable
-                ->getEntityByFields(['anr' => $anr->getId(), 'label1' => 'Recommandations importées']);
+            $recommendationsSets = $recommendationSetTable->getEntityByFields([
+                'anr' => $anr->getId(),
+                'label1' => 'Recommandations importées'
+            ]);
             if (!empty($recommendationsSets)) {
-                $recSet = (string)$recommendationsSets[0];
+                $recommendationSet = current($recommendationsSets);
             } else {
                 $recommendationSet = (new RecommandationSet())
                     ->setAnr($anr)
@@ -1890,43 +1833,47 @@ class AnrInstanceService extends InstanceService
                     ->setLabel2('Imported recommendations')
                     ->setLabel3('Importierte empfehlungen')
                     ->setLabel4('Geïmporteerde aanbevelingen');
+
                 $recommendationSetTable->saveEntity($recommendationSet);
-                $recSet = $recommendationSet->getUuid();
             }
 
-            $this->sharedData['recSets'][$recSetUuid] = $recSet;
+            $this->sharedData['recSets'][$recommendationSet->getUuid()] = $recommendationSet;
         }
 
-        // Create recommendations unlinked to a recommendation risk
+        // Create recommendations not linked with recommendation risks.
         if (!empty($data['recs'])) {
             /** @var RecommandationTable $recommendationTable */
             $recommendationTable = $this->get('recommandationTable');
             foreach ($data['recs'] as $recUuid => $recommendationData) {
-                if (isset($this->sharedData['recs'][$recUuid])) {
-                    continue;
-                }
+                if (!isset($this->sharedData['recs'][$recUuid])) {
+                    try {
+                        $recommendation = $recommendationTable->findByAnrAndUuid($anr, $recUuid);
+                    } catch (EntityNotFoundException $e) {
+                        $recommendation = (new Recommandation())
+                            ->setUuid($recommendationData['uuid'])
+                            ->setAnr($anr)
+                            ->setRecommandationSet(
+                                $this->sharedData['recSets'][$recommendationData['recommandationSet']]
+                            )
+                            ->setComment($recommendationData['comment'])
+                            ->setResponsable($recommendationData['responsable'])
+                            ->setStatus($recommendationData['status'])
+                            ->setImportance($recommendationData['importance'])
+                            ->setCode($recommendationData['code'])
+                            ->setDescription($recommendationData['description'])
+                            ->setCounterTreated($recommendationData['counterTreated']);
 
-                $recommendations = $recommendationTable->getEntityByFields([
-                    'anr' => $anr->getId(),
-                    'uuid' => $recUuid
-                ]);
-                if (empty($recommendations)) {
-                    if (!empty($recommendationData['duedate']['date'])) {
-                        $recommendationData['duedate'] = new DateTime($recommendationData['duedate']['date']);
+                        if (!empty($recommendationData['duedate']['date'])) {
+                            $recommendation->setDueDate(new DateTime($recommendationData['duedate']['date']));
+                        }
+
+                        $recommendationTable->saveEntity($recommendation, false);
                     }
-                    $newRecommendation = (new Recommandation($recommendationData))
-                        ->setAnr($anr)
-                        ->setRecommandationSet(
-                            $this->sharedData['recSets'][$recommendationData['recommandationSet']] ?? null
-                        );
 
-                    $recommendationTable->saveEntity($newRecommendation);
-
-                    $this->sharedData['recs'][$recUuid] = $newRecommendation->getUuid();
+                    $this->sharedData['recs'][$recUuid] = $recommendation;
                 }
             }
+            $recommendationTable->getDb()->flush();
         }
-
-        return $recSetUuid;
     }
 }

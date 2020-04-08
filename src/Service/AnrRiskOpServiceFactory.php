@@ -7,22 +7,29 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Service;
+use Monarc\Core\Service\TranslateService;
+
 /**
  * Factory class attached to AnrRiskOpService
  * @package Monarc\FrontOffice\Service
  */
-class AnrRiskOpServiceFactory extends \Monarc\Core\Service\AbstractServiceFactory
+class AnrRiskOpServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\InstanceRiskOp',
-        'instanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpService',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'rolfRiskTable' => 'Monarc\FrontOffice\Model\Table\RolfRiskTable',
-        'rolfRiskService' => 'Monarc\FrontOffice\Service\AnrRolfRiskService',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'translateService' => 'Monarc\Core\Service\TranslateService'
+        'table' =>  Table\InstanceRiskOpTable::class,
+        'entity' => InstanceRiskOp::class,
+        'instanceRiskOpService' => Service\AnrInstanceRiskOpService::class,
+        'rolfRiskService' => Service\AnrRolfRiskService::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'rolfRiskTable' => Table\RolfRiskTable::class,
+        'monarcObjectTable' => Table\MonarcObjectTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' =>  Table\UserAnrTable::class,
+        'recommandationTable' => Table\RecommandationTable::class,
+        'translateService' => TranslateService::class
     ];
 }

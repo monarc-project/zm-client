@@ -8,12 +8,15 @@
 namespace Monarc\FrontOffice\Service;
 
 use DateTime;
+use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Throwable;
 
 /**
@@ -22,10 +25,15 @@ use Throwable;
  */
 class AnrRecommandationService extends AbstractService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     protected $filterColumns = ['code', 'description'];
     protected $dependencies = ['anr', 'recommandationSet'];
     protected $anrTable;
     protected $userAnrTable;
+
+    /** @var RecommandationTable */
+    protected $recommandationTable;
 
     /**
      * @inheritdoc
@@ -68,13 +76,7 @@ class AnrRecommandationService extends AbstractService
         $entity->setLanguage($this->getLanguage());
         $entity->setDbAdapter($recommendationTable->getDb());
 
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        $anr = $anrTable->findById($data['anr']);
-
         $entity->setAnr($data['anr']);
-
-        $data['position'] = $recommendationTable->getMaxPositionByAnr($anr) + 1;
 
         $entity->exchangeArray($data);
 
@@ -101,102 +103,122 @@ class AnrRecommandationService extends AbstractService
     }
 
     /**
-     * Updates the position of the recommendation, based on the implicitPosition field passed in $data.
-     * @param int $id The recommendation composite ID [anr, uuid]
-     * @param array $data The positionning data (implicitPosition field, and previous)
+     * @param array $id
+     *
+     * @return bool
+     *
+     * @throws EntityNotFoundException
+     * @throws OptimisticLockException
      */
-    private function updatePosition($id, $data): array
+    public function delete($id)
+    {
+        /** @var RecommandationTable $recommendationTable */
+        $recommendationTable = $this->get('table');
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anr = $anrTable->findById($id['anr']);
+        $recommendation = $recommendationTable->findByAnrAndUuid($anr, $id['uuid']);
+
+        if (!$recommendation->isPositionEmpty()) {
+            $this->set('recommandationTable', $recommendationTable);
+            $this->resetRecommendationsPositions($anr, [$recommendation->getUuid() => $recommendation]);
+        }
+
+        $recommendationTable->deleteEntity($recommendation);
+
+        return true;
+    }
+
+    /**
+     * Updates the position of the recommendation, based on the implicitPosition field passed in $data.
+     *
+     * @param array $recommendationId The recommendation composite ID [anr, uuid]
+     * @param array $data The positioning data (implicitPosition field, and previous)
+     *
+     * @return array
+     *
+     * @throws Exception
+     * @throws EntityNotFoundException
+     */
+    private function updatePosition(array $recommendationId, array $data): array
     {
         if (!empty($data['implicitPosition'])) {
-            $entity = $this->get('table')->getEntity($id);
-            if ($entity->get('position') > 0) {
-                switch ($data['implicitPosition']) {
-                    case AbstractEntity::IMP_POS_START:
-                        $data['position'] = 1;
-                        $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                            ->select()
-                            ->where('bro.anr = :anr')
-                            ->setParameter(':anr', $entity->get('anr'))
-                            ->andWhere('bro.uuid <> :uuid')
-                            ->setParameter(':uuid', (string)$entity->get('uuid'))
-                            ->andWhere('bro.position <= :pos')
-                            ->setParameter(':pos', $entity->get('position'))
-                            ->andWhere('bro.position IS NOT NULL')
-                            ->getQuery()
-                            ->getResult();
-                        foreach ($bros as $b) {
-                            $b->set('position', $b->get('position') + 1);
-                            $this->get('table')->save($b, false);
+            /** @var AnrTable $anrTable */
+            $anrTable = $this->get('anrTable');
+            $anr = $anrTable->findById($recommendationId['anr']);
+
+            /** @var RecommandationTable $recommendationTable */
+            $recommendationTable = $this->get('table');
+            $recommendation = $recommendationTable->findByAnrAndUuid($anr, $recommendationId['uuid']);
+            $newPosition = $recommendation->getPosition();
+
+            $linkedRecommendations = $recommendationTable
+                ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+                    $anr,
+                    [$recommendationId['uuid']],
+                    ['r.position' => 'ASC']
+                );
+
+            switch ($data['implicitPosition']) {
+                case AbstractEntity::IMP_POS_START:
+                    foreach ($linkedRecommendations as $linkedRecommendation) {
+                        if ($linkedRecommendation->isPositionHigherThan($recommendation->getPosition())
+                            && !$linkedRecommendation->isPositionLowerThan($recommendation->getPosition())
+                        ) {
+                            $recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
                         }
-                        break;
-                    case AbstractEntity::IMP_POS_END:
-                        $pos = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                            ->select('MAX(bro.position)')
-                            ->where('bro.anr = :anr')
-                            ->setParameter(':anr', $entity->get('anr'))
-                            ->andWhere('bro.position IS NOT NULL')
-                            ->getQuery()->getSingleScalarResult();
-                        $data['position'] = $pos;
-                        $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                            ->select()
-                            ->where('bro.anr = :anr')
-                            ->setParameter(':anr', $entity->get('anr'))
-                            ->andWhere('bro.uuid <> :uuid')
-                            ->setParameter(':uuid', (string)$entity->get('uuid'))
-                            ->andWhere('bro.position >= :pos')
-                            ->setParameter(':pos', $entity->get('position'))
-                            ->andWhere('bro.position IS NOT NULL')
-                            ->getQuery()
-                            ->getResult();
-                        foreach ($bros as $b) {
-                            $b->set('position', $b->get('position') - 1);
-                            $this->get('table')->save($b, false);
+                    }
+
+                    $newPosition = 1;
+
+                    break;
+                case AbstractEntity::IMP_POS_END:
+                    $maxPosition = 1;
+                    foreach ($linkedRecommendations as $linkedRecommendation) {
+                        if ($linkedRecommendation->isPositionLowerThan($recommendation->getPosition())) {
+                            $maxPosition = $linkedRecommendation->getPosition();
+                            $recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
                         }
-                        break;
-                    case AbstractEntity::IMP_POS_AFTER:
-                        if (!empty($data['previous'])) {
-                            $prev = $this->get('table')->getEntity([
-                                'anr' => $entity->get('anr')->getId(),
-                                'uuid' => $data['previous']
-                            ]);
-                            if ($prev && $prev->get('position') > 0
-                                && $prev->get('anr')->getId() === $entity->get('anr')->getId()
+                    }
+
+                    $newPosition = $maxPosition;
+
+                    break;
+                case AbstractEntity::IMP_POS_AFTER:
+                    if (!empty($data['previous'])) {
+                        $previousRecommendation = $recommendationTable->findByAnrAndUuid($anr, $data['previous']);
+                        $isRecommendationMovedUp = $previousRecommendation->isPositionHigherThan(
+                            $recommendation->getPosition()
+                        );
+                        $newPosition = $isRecommendationMovedUp ? $previousRecommendation->getPosition() + 1
+                            : $previousRecommendation->getPosition();
+
+                        foreach ($linkedRecommendations as $linkedRecommendation) {
+                            if ($isRecommendationMovedUp
+                                && $linkedRecommendation->isPositionLowerThan($previousRecommendation->getPosition())
+                                && $linkedRecommendation->isPositionHigherThan($recommendation->getPosition())
                             ) {
-                                $data['position'] = $prev->get('position')
-                                    + ($entity->get('position') > $prev->get('position') ? 1 : 0);
-                                $bros = $this->get('table')->getRepository()->createQueryBuilder('bro')
-                                    ->select()
-                                    ->where('bro.anr = :anr')
-                                    ->setParameter(':anr', $entity->get('anr'))
-                                    ->andWhere('bro.uuid <> :uuid')
-                                    ->setParameter(':uuid', (string)$entity->get('uuid'))
-                                    ->andWhere('bro.position '
-                                        . ($entity->get('position') > $data['position'] ? '>' : '<') . '= :pos1')
-                                    ->setParameter(':pos1', $data['position'])
-                                    ->andWhere('bro.position '
-                                        . ($entity->get('position') > $data['position'] ? '<' : '>') . ' :pos2')
-                                    ->setParameter(':pos2', $entity->get('position'))
-                                    ->andWhere('bro.position IS NOT NULL')
-                                    ->getQuery()
-                                    ->getResult();
-                                $val = $entity->get('position') > $data['position'] ? 1 : -1;
-                                foreach ($bros as $b) {
-                                    $b->set('position', $b->get('position') + $val);
-                                    $this->get('table')->save($b, false);
-                                }
+                                $recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
+                            } elseif (!$isRecommendationMovedUp
+                                && $linkedRecommendation->isPositionLowerThan($recommendation->getPosition())
+                                && $linkedRecommendation->isPositionHigherOrEqualThan(
+                                    $previousRecommendation->getPosition()
+                                )
+                            ) {
+                                $recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
                             }
                         }
-                        break;
-                    default:
-                        break;
-                }
+                    }
+                    break;
             }
+
+            $recommendationTable->saveEntity($recommendation->setPosition($newPosition));
         }
+
         unset($data['implicitPosition'], $data['previous']);
 
         return $data;
     }
-
 
     /**
      * Computes the due date color for the recommendation. Returns 'no-date' if no due date is set on the
@@ -233,16 +255,14 @@ class AnrRecommandationService extends AbstractService
 
     private function prepareUpdateData($id, $data): array
     {
-        if (!isset($data['duedate'])) {
-            $data['duedate'] = null;
-        }
-
-        if ($data['duedate'] !== null) {
+        if (!empty($data['duedate'])) {
             try {
                 $data['duedate'] = new DateTime($data['duedate']);
             } catch (Throwable $e) {
                 throw new Exception('Invalid date format', 412);
             }
+        } else {
+            $data['duedate'] = null;
         }
 
         if (empty($data['recommandationSet'])) {

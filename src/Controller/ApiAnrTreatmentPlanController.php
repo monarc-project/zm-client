@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrRecommandationRiskService;
 use Laminas\View\Model\JsonModel;
 
@@ -18,8 +19,6 @@ use Laminas\View\Model\JsonModel;
  */
 class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
 {
-    protected $name = 'recommandations-risks';
-
     /**
      * @inheritdoc
      */
@@ -27,20 +26,15 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         /** @var AnrRecommandationRiskService $service */
         $service = $this->getService();
         $entities = $service->getTreatmentPlan($anrId);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
 
         return new JsonModel([
-            $this->name => $entities
+            'recommandations-risks' => $entities
         ]);
     }
 
@@ -51,25 +45,17 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         /** @var AnrRecommandationRiskService $service */
         $service = $this->getService();
         $entities = $service->getTreatmentPlan($anrId, $id);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
+        if (empty($entities)) {
+            throw new Exception('Entity does not exist', 412);
         }
 
-        if (count($entities)) {
-            return new JsonModel($entities[0]);
-        } else {
-            throw new \Monarc\Core\Exception\Exception('ENtity not exist', 412);
-        }
-
-
+        return new JsonModel($entities[0]);
     }
 
     /**
@@ -79,12 +65,12 @@ class ApiAnrTreatmentPlanController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         /** @var AnrRecommandationRiskService $service */
         $service = $this->getService();
-        $service->initPosition($anrId);
+        $service->resetRecommendationsPositionsToDefault($anrId);
 
         return new JsonModel(['status' => 'ok']);
     }

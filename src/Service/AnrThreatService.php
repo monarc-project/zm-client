@@ -7,14 +7,14 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\InstanceRiskService;
+use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 
 /**
  * This class is the service that handles threats within an ANR.
  * @package Monarc\FrontOffice\Service
  */
-class AnrThreatService extends \Monarc\Core\Service\AbstractService
+class AnrThreatService extends AbstractService
 {
     protected $dependencies = ['anr', 'theme'];
     protected $anrTable;
@@ -49,6 +49,7 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
     /**
      * Updates the qualifications for the specified threat whenever they are created or updated. This noticeably
      * handles qualification values inheritance.
+     *
      * @param int $id The threat ID
      * @param array $data The qualification data
      */
@@ -69,10 +70,9 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
             $instanceRiskTable = $this->get('instanceRiskTable');
             $instancesRisks = $instanceRiskTable->getEntityByFields($filter);
 
-            /** @var InstanceRiskService $instanceRiskService */
+            /** @var AnrInstanceRiskService $instanceRiskService */
             $instanceRiskService = $this->get('instanceRiskService');
 
-            $nbInstancesRisks = \count($instancesRisks);
             foreach ($instancesRisks as $i => $instanceRisk) {
                 $instanceRisk->threatRate = $data['qualification'];
 
@@ -81,11 +81,13 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
                     $instanceRisk->mh = 1;
                 }
 
-                $instanceRiskTable->saveEntity($instanceRisk, ($i + 1) === $nbInstancesRisks);
+                $instanceRiskTable->saveEntity($instanceRisk, false);
 
                 $instanceRiskService->updateRisks($instanceRisk);
-                $instanceRiskService->updateRecoRisks($instanceRisk);
+                $instanceRiskService->updateInstanceRiskRecommendationsPositions($instanceRisk);
             }
+
+            $instanceRiskTable->getDb()->flush();
         }
     }
 }

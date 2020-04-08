@@ -7,35 +7,16 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\FrontOffice\Service\AbstractService;
-use Monarc\FrontOffice\Model\Table\RecommandationHistoricTable;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
-
-
+use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
 
 /**
- * This class is the service that handles the recommendation events history. This is a simple CRUD service.
- * @package Monarc\FrontOffice\Service
+ * TODO: This service is not really needed. Can be used the table class directly in the controller and AnrService.
  */
-class AnrRecommandationHistoricService extends \Monarc\Core\Service\AbstractService
+class AnrRecommandationHistoricService extends AbstractService
 {
     protected $dependencies = ['anr'];
     protected $userAnrTable;
     protected $recommandationHistoricTable;
     protected $recommandationHistoricEntity;
-
-    /**
-     * Get Delivery Recommandations Risks
-     *
-     * @param $anrId
-     * @return array|bool
-     */
-
-    public function getDeliveryRecommandationsHistory($anrId) {
-        /** @var RecommandationHistoricTable $table */
-        $table = $this->get('table');
-        $recoRecords = $table->getEntityByFields(['anr' => $anrId], ['id' => 'ASC']);
-
-        return $recoRecords;
-    }
 }

@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 use Ramsey\Uuid\Uuid;
@@ -33,13 +32,13 @@ class RecommandationSet extends AbstractEntity
      *
      * @var integer
      *
-     * @ORM\Column(name="uuid", type="uuid", unique=true)
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
      * @ORM\Id
      */
     protected $uuid;
 
      /**
-     * @var AnrSuperClass
+     * @var Anr
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
@@ -80,7 +79,7 @@ class RecommandationSet extends AbstractEntity
     /**
      * @var Recommandation[]
      *
-     * @ORM\OneToMany(targetEntity="Recommandation", mappedBy="recommandationSet", cascade={"persist"}, )
+     * @ORM\OneToMany(targetEntity="Recommandation", mappedBy="recommandationSet", cascade={"persist"})
      */
     protected $recommandations;
 
@@ -89,7 +88,7 @@ class RecommandationSet extends AbstractEntity
      */
     public function getUuid()
     {
-        return $this->uuid;
+        return (string)$this->uuid;
     }
 
     /**
@@ -103,7 +102,7 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @return AnrSuperClass
+     * @return Anr
      */
     public function getAnr()
     {
@@ -111,7 +110,7 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @param AnrSuperClass $anr
+     * @param Anr $anr
      */
     public function setAnr($anr): self
     {
@@ -131,7 +130,7 @@ class RecommandationSet extends AbstractEntity
     /**
      * @param Recommandation[] $recommandations
      */
-    public function setRecommandations($recommandations)
+    public function setRecommandations($recommandations): self
     {
         $this->recommandations = $recommandations;
 

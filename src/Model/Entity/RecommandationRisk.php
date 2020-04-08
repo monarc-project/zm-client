@@ -9,16 +9,8 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\AssetSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\InstanceSuperClass;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
-use Monarc\Core\Model\Entity\ThreatSuperClass;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
-use Monarc\Core\Model\Entity\VulnerabilitySuperClass;
 
 /**
  * Recommandation Risk
@@ -42,7 +34,7 @@ class RecommandationRisk extends AbstractEntity
     protected $id;
 
     /**
-     * @var AnrSuperClass
+     * @var Anr
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -63,7 +55,7 @@ class RecommandationRisk extends AbstractEntity
     protected $recommandation;
 
     /**
-     * @var InstanceRiskSuperClass
+     * @var InstanceRisk
      *
      * @ORM\ManyToOne(targetEntity="InstanceRisk", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -73,7 +65,7 @@ class RecommandationRisk extends AbstractEntity
     protected $instanceRisk;
 
     /**
-     * @var InstanceRiskOpSuperClass
+     * @var InstanceRiskOp
      *
      * @ORM\ManyToOne(targetEntity="InstanceRiskOp", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -83,7 +75,7 @@ class RecommandationRisk extends AbstractEntity
     protected $instanceRiskOp;
 
     /**
-     * @var InstanceSuperClass
+     * @var Instance
      *
      * @ORM\ManyToOne(targetEntity="Instance", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -93,7 +85,7 @@ class RecommandationRisk extends AbstractEntity
     protected $instance;
 
     /**
-     * @var ObjectSuperClass
+     * @var MonarcObject
      *
      * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -101,10 +93,10 @@ class RecommandationRisk extends AbstractEntity
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
-    protected $objectGlobal;
+    protected $globalObject;
 
     /**
-     * @var AssetSuperClass
+     * @var Asset
      *
      * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -115,7 +107,7 @@ class RecommandationRisk extends AbstractEntity
     protected $asset;
 
     /**
-     * @var ThreatSuperClass
+     * @var Threat
      *
      * @ORM\ManyToOne(targetEntity="Threat", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -126,7 +118,7 @@ class RecommandationRisk extends AbstractEntity
     protected $threat;
 
     /**
-     * @var VulnerabilitySuperClass
+     * @var Vulnerability
      *
      * @ORM\ManyToOne(targetEntity="Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -154,173 +146,134 @@ class RecommandationRisk extends AbstractEntity
     /**
      * @param int $id
      */
-    public function setId($id)
+    public function setId($id): self
     {
         $this->id = $id;
 
         return $this;
     }
 
-    /**
-     * @return AnrSuperClass
-     */
-    public function getAnr()
+    public function getAnr(): ?Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param AnrSuperClass $anr
-     */
-    public function setAnr($anr): self
+    public function setAnr(?Anr $anr): self
     {
         $this->anr = $anr;
 
         return $this;
     }
 
-    /**
-     * @return Recommandation
-     */
-    public function getRecommandation()
+    public function getRecommandation(): ?Recommandation
     {
         return $this->recommandation;
     }
 
-    /**
-     * @param Recommandation $recommandation
-     */
-    public function setRecommandation($recommandation): self
+    public function setRecommandation(?Recommandation $recommandation): self
     {
         $this->recommandation = $recommandation;
 
         return $this;
     }
 
-    /**
-     * @return InstanceRiskSuperClass
-     */
-    public function getInstanceRisk()
+    public function getInstanceRisk(): ?InstanceRisk
     {
         return $this->instanceRisk;
     }
 
-    /**
-     * @param InstanceRiskSuperClass $instanceRisk
-     */
-    public function setInstanceRisk($instanceRisk): self
+    public function setInstanceRisk(?InstanceRisk $instanceRisk): self
     {
         $this->instanceRisk = $instanceRisk;
 
         return $this;
     }
 
-    /**
-     * @return InstanceRiskOpSuperClass
-     */
-    public function getInstanceRiskOp()
+    public function getInstanceRiskOp(): ?InstanceRiskOp
     {
         return $this->instanceRiskOp;
     }
 
-    /**
-     * @param InstanceRiskOpSuperClass $instanceRiskOp
-     */
-    public function setInstanceRiskOp($instanceRiskOp)
+    public function setInstanceRiskOp(?InstanceRiskOp $instanceRiskOp)
     {
         $this->instanceRiskOp = $instanceRiskOp;
 
         return $this;
     }
 
-    /**
-     * @return InstanceSuperClass
-     */
-    public function getInstance()
+    public function getInstance(): ?Instance
     {
         return $this->instance;
     }
 
-    /**
-     * @param InstanceRiskSuperClass $instance
-     */
-    public function setInstance($instance): self
+    public function setInstance(?Instance $instance): self
     {
         $this->instance = $instance;
 
         return $this;
     }
 
-    /**
-     * @return ObjectSuperClass
-     */
-    public function getObjectGlobal()
+    public function hasGlobalObjectRelation(): bool
     {
-        return $this->objectGlobal;
+        return $this->globalObject !== null;
     }
 
-    /**
-     * @param ObjectSuperClass $objectGlobal
-     *
-     * @return RecommandationRisk
-     */
-    public function setObjectGlobal($objectGlobal)
+    public function getGlobalObject(): ?MonarcObject
     {
-        $this->objectGlobal = $objectGlobal;
+        return $this->globalObject;
+    }
+
+    public function setGlobalObject(?MonarcObject $globalObject): self
+    {
+        $this->globalObject = $globalObject;
 
         return $this;
     }
 
-    /**
-     * @return AssetSuperClass
-     */
-    public function getAsset()
+    public function getAsset(): ?Asset
     {
         return $this->asset;
     }
 
-    /**
-     * @param Asset $asset
-     */
-    public function setAsset($asset): self
+    public function setAsset(?Asset $asset): self
     {
         $this->asset = $asset;
 
         return $this;
     }
 
-    /**
-     * @return ThreatSuperClass
-     */
-    public function getThreat(): self
+    public function getThreat(): ?Threat
     {
         return $this->threat;
     }
 
-    /**
-     * @param ThreatSuperClass $threat
-     */
-    public function setThreat($threat): self
+    public function setThreat(?Threat $threat): self
     {
         $this->threat = $threat;
 
         return $this;
     }
 
-    /**
-     * @return VulnerabilitySuperClass
-     */
-    public function getVulnerability()
+    public function getVulnerability(): ?Vulnerability
     {
         return $this->vulnerability;
     }
 
-    /**
-     * @param VulnerabilitySuperClass $vulnerability
-     */
-    public function setVulnerability($vulnerability): self
+    public function setVulnerability(?Vulnerability $vulnerability): self
     {
         $this->vulnerability = $vulnerability;
+
+        return $this;
+    }
+
+    public function getCommentAfter(): string
+    {
+        return (string)$this->commentAfter;
+    }
+
+    public function setCommentAfter(string $commentAfter): self
+    {
+        $this->commentAfter = $commentAfter;
 
         return $this;
     }

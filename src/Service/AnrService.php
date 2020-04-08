@@ -1223,67 +1223,81 @@ class AnrService extends AbstractService
                     $internationalTransferNewIds[$it->id] = $newInternationalTransfer;
                 }
 
+                $recommendationsNewIds = [];
                 // duplicate recommandations sets and recommandations
-                $recommandationsNewIds = [];
-                $recommandationsSets = $this->get('recommandationSetCliTable')->getEntityByFields(['anr' => $anr->id]);
-                foreach ($recommandationsSets as $recommandationSet) {
-                    $recommandations = $recommandationSet->getRecommandations();
-                    $recommandationSet->setRecommandations(null);
-                    $newRecommandationSet = new RecommandationSet($recommandationSet);
-                    $newRecommandationSet->setAnr($newAnr);
+                /** @var RecommandationSet[] $recommendationsSets */
+                $recommendationsSets = $this->get('recommandationSetCliTable')->getEntityByFields(['anr' => $anr->id]);
+                foreach ($recommendationsSets as $recommendationSet) {
+                    $recommendationSetRecommendations = [];
 
-                    foreach ($recommandations as $recommandation) {
+                    $recommendations = $recommendationSet->getRecommandations();
+                    $recommendationSet->setRecommandations(null);
+                    $newRecommendationSet = new RecommandationSet($recommendationSet);
+                    $newRecommendationSet->setAnr($newAnr);
+
+                    foreach ($recommendations as $recommandation) {
                         $newRecommandation = new Recommandation($recommandation);
                         $newRecommandation->setAnr($newAnr);
-                        $newRecommandation->setRecommandationSet($newRecommandationSet);
-                        $this->get('recommandationCliTable')->save($newRecommandation,false);
-                        $recommandationsNewIds[$recommandation->uuid->toString()] = $newRecommandation;
+                        $newRecommandation->setRecommandationSet($newRecommendationSet);
+                        $this->get('recommandationCliTable')->save($newRecommandation, false);
+                        $recommendationSetRecommendations[] = $newRecommandation;
+                        $recommendationsNewIds[$recommandation->getUuid()] = $newRecommandation;
                     }
-                    $newRecommandationSet->setRecommandations($recommandationsNewIds);
-                    $this->get('recommandationSetCliTable')->save($newRecommandationSet, false);
+
+                    $newRecommendationSet->setRecommandations($recommendationSetRecommendations);
+                    $this->get('recommandationSetCliTable')->save($newRecommendationSet, false);
                 }
 
-                //duplicate recommandations historics
+                // duplicate recommendations historics
                 $recommandationsHistorics = $this->get('recommandationHistoricCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($recommandationsHistorics as $recommandationHistoric) {
                     $newRecommandationHistoric = new RecommandationHistoric($recommandationHistoric);
                     $newRecommandationHistoric->set('id', null);
                     $newRecommandationHistoric->setAnr($newAnr);
-                    $this->get('recommandationHistoricCliTable')->save($newRecommandationHistoric,false);
+                    $this->get('recommandationHistoricCliTable')->save($newRecommandationHistoric, false);
                 }
 
                 //duplicate recommandations risks
                 $recommandationsRisks = $this->get('recommandationRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($recommandationsRisks as $recommandationRisk) {
-                    $newRecommandationRisk = new RecommandationRisk($recommandationRisk);
-                    $newRecommandationRisk->set('id', null);
-                    $newRecommandationRisk->setAnr($newAnr);
-                    $newRecommandationRisk->set('recommandation', $recommandationsNewIds[$newRecommandationRisk->get('recommandation')->getUuid()->toString()]);
-                    if ($newRecommandationRisk->get('instanceRisk')) {
-                        $newRecommandationRisk->set('instanceRisk', $instancesRisksNewIds[$newRecommandationRisk->get('instanceRisk')->get('id')]);
+                    $newRecommendationRisk = new RecommandationRisk($recommandationRisk);
+                    $newRecommendationRisk->setId(null);
+                    $newRecommendationRisk->setAnr($newAnr);
+                    $newRecommendationRisk->setRecommandation(
+                        $recommendationsNewIds[$newRecommendationRisk->getRecommandation()->getUuid()]
+                    );
+                    if ($newRecommendationRisk->getInstanceRisk()) {
+                        $newRecommendationRisk->setInstanceRisk(
+                            $instancesRisksNewIds[$newRecommendationRisk->getInstanceRisk()->getId()]
+                        );
                     }
-                    if ($newRecommandationRisk->get('instanceRiskOp')) {
-                        $newRecommandationRisk->set('instanceRiskOp', $instancesRisksOpNewIds[$newRecommandationRisk->get('instanceRiskOp')->get('id')]);
+                    if ($newRecommendationRisk->getInstanceRiskOp()) {
+                        $newRecommendationRisk->setInstanceRiskOp(
+                            $instancesRisksOpNewIds[$newRecommendationRisk->getInstanceRiskOp()->getId()]
+                        );
                     }
-                    $newRecommandationRisk->set('instance', $instancesNewIds[$newRecommandationRisk->get('instance')->get('id')]);
-                    if ($newRecommandationRisk->get('objectGlobal') && isset($objectsNewIds[$newRecommandationRisk->get('objectGlobal')->getUuid()->toString()])) {
-                        $newRecommandationRisk->set('objectGlobal', $objectsNewIds[$newRecommandationRisk->get('objectGlobal')->getUuid()->toString()]);
+                    $newRecommendationRisk->setInstance(
+                        $instancesNewIds[$newRecommendationRisk->get('instance')->get('id')]
+                    );
+                    if ($newRecommendationRisk->getGlobalObject() && isset($objectsNewIds[(string)$newRecommendationRisk->getGlobalObject()->getUuid()])) {
+                        $newRecommendationRisk->setGlobalObject($objectsNewIds[(string)$newRecommendationRisk->getGlobalObject()->getUuid()]);
                     } else {
-                        $newRecommandationRisk->set('objectGlobal', null);
+                        $newRecommendationRisk->setGlobalObject(null);
                     }
-                    if ($newRecommandationRisk->get('asset')) {
-                        $newRecommandationRisk->set('asset', $assetsNewIds[$newRecommandationRisk->get('asset')->getUuid()->toString()]);
+                    if ($newRecommendationRisk->get('asset')) {
+                        $newRecommendationRisk->set('asset', $assetsNewIds[$newRecommendationRisk->get('asset')->getUuid()->toString()]);
                     }
-                    if ($newRecommandationRisk->get('threat')) {
-                        $newRecommandationRisk->set('threat', $threatsNewIds[$newRecommandationRisk->get('threat')->getUuid()->toString()]);
+                    if ($newRecommendationRisk->get('threat')) {
+                        $newRecommendationRisk->set('threat', $threatsNewIds[$newRecommendationRisk->get('threat')->getUuid()->toString()]);
                     }
-                    if ($newRecommandationRisk->get('vulnerability')) {
-                        $newRecommandationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommandationRisk->get('vulnerability')->getUuid()->toString()]);
+                    if ($newRecommendationRisk->get('vulnerability')) {
+                        $newRecommendationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommendationRisk->get('vulnerability')->getUuid()->toString()]);
                     }
-                    $newRecommandationRisk->setAnr(null);
-                    $this->get('recommandationRiskCliTable')->save($newRecommandationRisk);
-                    $newRecommandationRisk->setAnr($newAnr);
-                    $this->get('recommandationRiskCliTable')->save($newRecommandationRisk, false);
+                    // TODO: check why do we need the following manipulation and remove the double save call.
+                    $newRecommendationRisk->setAnr(null);
+                    $this->get('recommandationRiskCliTable')->save($newRecommendationRisk);
+                    $newRecommendationRisk->setAnr($newAnr);
+                    $this->get('recommandationRiskCliTable')->save($newRecommendationRisk, false);
                 }
             }
 
@@ -1477,7 +1491,7 @@ class AnrService extends AbstractService
                     if (empty($entity->get('label' . $lang))) {
                         $success[$lang] = false;
                     } else {
-                        ${$value}[$entity->getUuid()->toString()] = $entity->getUuid()->toString();
+                        ${$value}[(string)$entity->getUuid()] = (string)$entity->getUuid();
                     }
                 }
             }

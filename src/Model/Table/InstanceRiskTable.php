@@ -89,7 +89,6 @@ class InstanceRiskTable extends CoreInstanceRiskTable
 
 
     /**
-     * @throws Exception
      * @return InstanceRisk[]
      */
     public function findByAmv(AmvSuperClass $amv)
@@ -99,6 +98,24 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->innerJoin('ir.amv', 'amv')
             ->where('amv.uuid = :amv_uuid')
             ->andWhere('amv.anr = :amv_anr')
+            ->setParameter('amv_uuid', $amv->getUuid())
+            ->setParameter('amv_anr', $amv->getAnr())
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceRisk[]
+     */
+    public function findByInstanceAndAmv(InstanceSuperClass $instance, AmvSuperClass $amv)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->innerJoin('ir.amv', 'amv')
+            ->where('ir.instance = :instance')
+            ->andWhere('amv.uuid = :amv_uuid')
+            ->andWhere('amv.anr = :amv_anr')
+            ->setParameter('instance', $instance)
             ->setParameter('amv_uuid', $amv->getUuid())
             ->setParameter('amv_anr', $amv->getAnr())
             ->getQuery()

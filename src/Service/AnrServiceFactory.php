@@ -62,7 +62,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'objectCategoryCliTable' => 'Monarc\FrontOffice\Model\Table\ObjectCategoryTable',
         'objectObjectCliTable' => 'Monarc\FrontOffice\Model\Table\ObjectObjectTable',
         'recommandationCliTable' => 'Monarc\FrontOffice\Model\Table\RecommandationTable',
-        'recommandationHistoricCliTable' => 'Monarc\FrontOffice\Model\Table\RecommandationHistoricTable',
+        'recommandationHistoricCliTable' => 'Monarc\FrontOffice\Model\Table\RecommendationHistoricTable',
         'recommandationRiskCliTable' => 'Monarc\FrontOffice\Model\Table\RecommandationRiskTable',
         'recommandationSetCliTable' => 'Monarc\FrontOffice\Model\Table\RecommandationSetTable',
         'rolfRiskCliTable' => 'Monarc\FrontOffice\Model\Table\RolfRiskTable',

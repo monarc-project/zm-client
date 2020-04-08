@@ -7,13 +7,17 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
-use Monarc\Core\Service\AbstractService;
-use Monarc\Core\Model\Entity\User;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 /**
  * This class is the service that handles risks within an ANR.
@@ -21,6 +25,8 @@ use Monarc\Core\Model\Entity\User;
  */
 class AnrRiskService extends AbstractService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     protected $filterColumns = [];
     protected $dependencies = ['anr', 'vulnerability', 'threat', 'instance', 'asset'];
     protected $anrTable;
@@ -30,6 +36,9 @@ class AnrRiskService extends AbstractService
     protected $threatTable;
     protected $vulnerabilityTable;
     protected $translateService;
+
+    /** @var RecommandationTable */
+    protected $recommandationTable;
 
     /**
      * Computes and returns the list of risks for either the entire ANR, or a specific instance if an ID is set.
@@ -86,7 +95,7 @@ class AnrRiskService extends AbstractService
             'i.id' => $data['instance']
         ]);
         if (!empty($entity)) {
-            throw new \Monarc\Core\Exception\Exception("This risk already exists in this instance", 412);
+            throw new Exception("This risk already exists in this instance", 412);
         }
 
         $class = $this->get('entity');
@@ -135,60 +144,88 @@ class AnrRiskService extends AbstractService
     }
 
     /**
+     * TODO: check if we use the method or the InstanceRiskService::deleteInstanceRisks is only used.
+     */
+    public function deleteInstanceRisks($instanceId, $anrId)
+    {
+        $risks = $this->getInstanceRisks($instanceId, $anrId);
+        $table = $this->get('table');
+        $i = 1;
+        $nb = count($risks);
+        foreach ($risks as $r) {
+            $table->delete($r->id, ($i == $nb));
+            $i++;
+        }
+    }
+
+    /**
      * @inheritdoc
      */
     public function deleteFromAnr($id, $anrId = null)
     {
-        $entity = $this->get('table')->getEntity($id);
+        /** @var InstanceRiskTable $instanceRiskTable */
+        $instanceRiskTable = $this->get('table');
+        /** @var InstanceRisk $instanceRisk */
+        $instanceRisk = $instanceRiskTable->findById($id);
 
-        if (!$entity->specific) {
-            throw new \Monarc\Core\Exception\Exception('You can not delete a not specific risk', 412);
+        if (!$instanceRisk->isSpecific()) {
+            throw new Exception('You can not delete a not specific risk', 412);
         }
 
-        if ($entity->anr->id != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr id error', 412);
+        if ($instanceRisk->getAnr()->getId() !== $anrId) {
+            throw new Exception('Anr id error', 412);
         }
-
-        /** @var User $connectedUser */
-        $connectedUser = $this->get('table')->getConnectedUser();
 
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $this->get('userAnrTable');
-        $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser->getId(), 'anr' => $anrId]);
-        $rwd = 0;
-        foreach ($rights as $right) {
-            if ($right->rwd == 1) {
-                $rwd = 1;
-            }
-        }
-
-        if (!$rwd) {
-            throw new \Monarc\Core\Exception\Exception('You are not authorized to do this action', 412);
+        $userAnr = $userAnrTable->findByAnrAndUser($instanceRisk->getAnr(), $instanceRiskTable->getConnectedUser());
+        if ($userAnr === null || $userAnr->getRwd() === 0) {
+            throw new Exception('You are not authorized to do this action', 412);
         }
 
         // If the object is global, delete all risks link to brothers instances
-        if ($entity->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
+        if ($instanceRisk->getInstance()->getObject()->isScopeGlobal()) {
             // Retrieve brothers
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');
-            $brothers = $instanceTable->getEntityByFields(['object' => ['anr' => $entity->anr->id, 'uuid' => $entity->instance->object->uuid->toString()], 'anr' => $entity->anr->id]);
+            /** @var Instance[] $brothers */
+            $brothers = $instanceTable->getEntityByFields([
+                'anr' => $instanceRisk->getAnr()->getId(),
+                'object' => [
+                    'anr' => $instanceRisk->getAnr()->getId(),
+                    'uuid' => (string)$instanceRisk->getInstance()->getObject()->getUuid(),
+                ],
+            ]);
 
             // Retrieve instances with same risk
-            $instancesRisks = $this->get('table')->getEntityByFields([
-                'asset' => ['uuid' => $entity->asset->uuid->toString(), 'anr' => $entity->anr->id],
-                'threat' => ['uuid'=> $entity->threat->uuid->toString(), 'anr' => $entity->anr->id],
-                'vulnerability' => ['uuid'=> $entity->vulnerability->uuid->toString(), 'anr' => $entity->anr->id],
+            $instancesRisks = $instanceRiskTable->getEntityByFields([
+                'asset' => [
+                    'uuid' => (string)$instanceRisk->getAsset()->getUuid(),
+                    'anr' => $instanceRisk->getAnr()->getId(),
+                ],
+                'threat' => [
+                    'uuid' => (string)$instanceRisk->getThreat()->getUuid(),
+                    'anr' => $instanceRisk->getAnr()->getId(),
+                ],
+                'vulnerability' => [
+                    'uuid' => (string)$instanceRisk->getVulnerability()->getUuid(),
+                    'anr' => $instanceRisk->getAnr()->getId(),
+                ],
             ]);
 
             foreach ($instancesRisks as $instanceRisk) {
                 foreach ($brothers as $brother) {
-                    if ($brother->id == $instanceRisk->instance->id && $instanceRisk->id != $id) {
-                        $this->get('table')->delete($instanceRisk->id);
+                    if ($brother->getId() === $instanceRisk->getInstance()->getId() && $instanceRisk->getId() !== $id) {
+                        $instanceRiskTable->deleteEntity($instanceRisk, false);
                     }
                 }
             }
         }
 
-        return $this->get('table')->delete($id);
+        $instanceRiskTable->deleteEntity($instanceRisk);
+
+        $this->processRemovedInstanceRiskRecommendationsPositions($instanceRisk);
+
+        return true;
     }
 }

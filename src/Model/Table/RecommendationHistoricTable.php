@@ -7,19 +7,29 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\RecommandationHistoric;
 
-/**
- * Class RecommandationHistoricTable
- * @package Monarc\FrontOffice\Model\Table
- */
-class RecommandationHistoricTable extends AbstractEntityTable
+class RecommendationHistoricTable extends AbstractEntityTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, RecommandationHistoric::class, $connectedUserService);
+    }
+
+    /**
+     * @return RecommandationHistoric[]
+     */
+    public function findByAnr(AnrSuperClass $anr)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('rh')
+            ->where('rh.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 }

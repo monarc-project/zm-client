@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\MonarcObjectTable as CoreMonarcObjectTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
@@ -26,5 +28,24 @@ class MonarcObjectTable extends CoreMonarcObjectTable
     public function getEntityClass(): string
     {
         return MonarcObject::class;
+    }
+
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): MonarcObject
+    {
+        $monarcObject = $this->getRepository()
+            ->createQueryBuilder('mo')
+            ->where('mo.anr = :anr')
+            ->andWhere('mo.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($monarcObject === null) {
+            throw EntityNotFoundException::fromClassNameAndIdentifier(\get_class($this), [$anr->getId(), $uuid]);
+        }
+
+        return $monarcObject;
     }
 }

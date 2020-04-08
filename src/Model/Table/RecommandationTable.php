@@ -7,11 +7,14 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
+use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 
 /**
  * Class RecommandationTable
@@ -24,7 +27,7 @@ class RecommandationTable extends AbstractEntityTable
         parent::__construct($dbService, Recommandation::class, $connectedUserService);
     }
 
-    public function getMaxPositionByAnr(Anr $anr): int
+    public function getMaxPositionByAnr(AnrSuperClass $anr): int
     {
         return (int)$this->getRepository()
             ->createQueryBuilder('r')
@@ -35,10 +38,137 @@ class RecommandationTable extends AbstractEntityTable
             ->getSingleScalarResult();
     }
 
-    public function saveEntity(Recommandation $recommendation, bool $flush = true): void
+    /**
+     * @return Recommandation[]
+     */
+    public function findByAnrWithEmptyPosition(Anr $anr)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->andWhere('r.position IS NULL')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Recommandation[]
+     */
+    public function findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
+        AnrSuperClass $anr,
+        array $excludeRecommendations = [],
+        array $order = []
+    ) {
+        $queryBuilder = $this->getRepository()
+            ->createQueryBuilder('r')
+            ->innerJoin('r.recommendationRisks', 'rr')
+            ->where('r.anr = :anr')
+            ->andWhere('r.importance > 0')
+            ->andWhere('r.position > 0')
+            ->setParameter('anr', $anr);
+
+        if (!empty($excludeRecommendations)) {
+            $queryBuilder
+                ->andWhere($queryBuilder->expr()->notIn('r.uuid', ':recommendations_uuid'))
+                ->setParameter('recommendations_uuid', $excludeRecommendations);
+        }
+
+        foreach ($order as $field => $direction) {
+            $queryBuilder->orderBy($field, $direction);
+        }
+
+        return $queryBuilder
+            ->groupBy('r.uuid')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     */
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): Recommandation
+    {
+        $recommendation = $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->andWhere('r.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($recommendation === null) {
+            throw new EntityNotFoundException(
+                sprintf('Recommendation with anr ID "%d" and uuid "%s" has not been found.', $anr->getId(), $uuid)
+            );
+        }
+
+        return $recommendation;
+    }
+
+    public function findByAnrCodeAndRecommendationSet(
+        AnrSuperClass $anr,
+        string $code,
+        RecommandationSet $recommendationSet
+    ): ?Recommandation {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->innerJoin('r.recommandationSet', 'rs')
+            ->where('r.anr = :anr')
+            ->andWhere('r.code = :code')
+            ->andWhere('rs.uuid = :recommendation_set_uuid')
+            ->andWhere('rs.anr = :recommendation_set_anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setParameter('recommendation_set_uuid', $recommendationSet->getUuid())
+            ->setParameter('recommendation_set_anr', $anr)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Returns list of recommendations which are unlinked with risks and position is not 0.
+     *
+     * @return Recommandation[]
+     */
+    public function findUnlinkedWithNotEmptyPositionByAnr(AnrSuperClass $anr)
+    {
+        $queryBuilderLinked = $this->getRepository()
+            ->createQueryBuilder('rec')
+            ->select('rec.uuid')
+            ->innerJoin('rec.recommendationRisks', 'rec_risk')
+            ->where('rec.anr = :anr')
+            ->andWhere('rec_risk.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->groupBy('rec.uuid');
+
+        $queryBuilderUnlinked = $this->getRepository()->createQueryBuilder('r');
+
+        return $queryBuilderUnlinked
+            ->where('r.anr = :anr')
+            ->andWhere('r.position > 0')
+            ->andWhere($queryBuilderUnlinked->expr()->notIn('r.uuid', $queryBuilderLinked->getDQL()))
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(Recommandation $recommendation, bool $flushAll = true): void
     {
         $em = $this->getDb()->getEntityManager();
         $em->persist($recommendation);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
+
+    public function deleteEntity(Recommandation $recommendation, bool $flush = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->remove($recommendation);
         if ($flush) {
             $em->flush();
         }
