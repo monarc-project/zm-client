@@ -68,11 +68,11 @@ class ApiAdminUsersController extends AbstractRestfulController
                 'Data validation errors: [ ' . json_encode($this->createUserInputValidator->getErrorMessages()),
                 400
             );
-                // TODO: make it on the application level to throw a particular exception interface and process in Module.
-    //            return new JsonModel([
-    //                'httpStatus' => 400,
-    //                'errors' => $this->createUserInputValidator->getErrorMessages(),
-    //            ]);
+            /* TODO: make it on the application level to throw a particular exception interface and process in Module.
+            return new JsonModel([
+                'httpStatus' => 400,
+                'errors' => $this->createUserInputValidator->getErrorMessages(),
+            ]);*/
         }
 
         $this->userService->create($this->createUserInputValidator->getValidData());

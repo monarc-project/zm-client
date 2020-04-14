@@ -61,7 +61,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Monarc\\FrontOffice\\": "/src"
+            "Monarc\\FrontOffice\\": "src/"
         }
     },
     "minimum-stability": "dev",
