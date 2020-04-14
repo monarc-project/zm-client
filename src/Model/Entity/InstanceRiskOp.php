@@ -9,7 +9,11 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
+use Monarc\Core\Model\Entity\InstanceSuperClass;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Model\Entity\RolfRiskSuperClass;
 
 /**
  * Instance Risk Op
@@ -26,9 +30,9 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
 {
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var AnrSuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -36,9 +40,9 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Instance
+     * @var InstanceSuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Instance", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
      * })
@@ -46,9 +50,9 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     protected $instance;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\MonarcObject
+     * @var ObjectSuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\MonarcObject", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -57,9 +61,9 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     protected $object;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\RolfRisk
+     * @var RolfRiskSuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RolfRisk", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="RolfRisk", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id", nullable=true)
      * })
@@ -72,4 +76,12 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
      * @ORM\OneToMany(targetEntity="RecommandationRisk", mappedBy="instanceRiskOp", cascade={"persist", "remove"})
      */
     protected $recommendationRisks;
+
+    /**
+     * @return ArrayCollection|RecommandationRisk[]
+     */
+    public function getRecommendationRisks()
+    {
+        return $this->recommendationRisks;
+    }
 }

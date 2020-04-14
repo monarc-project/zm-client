@@ -7,27 +7,36 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
+use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 /**
  * This class is the service that handles operational risks within an ANR.
  * @package Monarc\FrontOffice\Service
  */
-class AnrRiskOpService extends \Monarc\Core\Service\AbstractService
+class AnrRiskOpService extends AbstractService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     protected $filterColumns = [];
     protected $dependencies = ['anr', 'scale'];
     protected $instanceRiskOpService;
     protected $instanceTable;
     protected $rolfRiskTable;
     protected $rolfRiskService;
-    protected $MonarcObjectTable;
+    protected $monarcObjectTable;
     protected $anrTable;
     protected $userAnrTable;
     protected $translateService;
+
+    /** @var RecommandationTable */
+    protected $recommandationTable;
 
     /**
      * Helper method to find the specified string in the provided fields within the provided object. The search is
@@ -210,7 +219,7 @@ class AnrRiskOpService extends \Monarc\Core\Service\AbstractService
      * be entirely new, or duplicated for another existing operational risk.
      * @param array $data The operational risk details fields
      * @return object The resulting created risk object (entity)
-     * @throws \Monarc\Core\Exception\Exception If the risk already exists on the instance
+     * @throws Exception If the risk already exists on the instance
      */
     public function createSpecificRiskOp($data)
     {
@@ -218,7 +227,7 @@ class AnrRiskOpService extends \Monarc\Core\Service\AbstractService
 
         $instance = $this->instanceTable->getEntity($data['instance']);
         $data['instance'] = $instance;
-        $data['object'] = $this->MonarcObjectTable->getEntity(['anr' => $data['anr'], 'uuid' => $instance->object->uuid->toString()]);
+        $data['object'] = $this->monarcObjectTable->getEntity(['anr' => $data['anr'], 'uuid' => $instance->object->uuid->toString()]);
 
         if ($data['source'] == 2) {
             // Create a new risk
@@ -242,7 +251,7 @@ class AnrRiskOpService extends \Monarc\Core\Service\AbstractService
             /** @var InstanceRiskOpTable $table */
             $table = $this->get('table');
             if ($table->getEntityByFields(['anr' => $data['anr'], 'instance' => $data['instance']->id, 'rolfRisk' => $data['risk']])) {
-                throw new \Monarc\Core\Exception\Exception("This risk already exists in this instance", 412);
+                throw new Exception("This risk already exists in this instance", 412);
             }
 
         }
@@ -265,18 +274,22 @@ class AnrRiskOpService extends \Monarc\Core\Service\AbstractService
         return $this->create($data, true);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function deleteFromAnr($id, $anrId = null)
     {
-        $entity = $this->get('table')->getEntity($id);
+        /** @var InstanceRiskOpTable $operationalRiskTable */
+        $operationalRiskTable = $this->get('table');
+        /** @var InstanceRiskOp $operationalRisk */
+        $operationalRisk = $operationalRiskTable->findById($id);
 
-        if (!$entity->specific) {
-            throw new \Monarc\Core\Exception\Exception('You can not delete a not specific risk', 412);
+        if (!$operationalRisk->isSpecific()) {
+            throw new Exception('You can not delete a not specific risk', 412);
         }
 
-        return parent::deleteFromAnr($id, $anrId);
+        $result = parent::deleteFromAnr($id, $anrId);
+
+        $this->processRemovedInstanceRiskRecommendationsPositions($operationalRisk);
+
+        return $result;
     }
 
     /**

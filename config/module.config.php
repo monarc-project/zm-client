@@ -1046,7 +1046,7 @@ return [
             Table\RecordTable::class => AutowireFactory::class,
             Table\ReferentialTable::class => AutowireFactory::class,
             Table\RecommandationTable::class => AutowireFactory::class,
-            Table\RecommandationHistoricTable::class => AutowireFactory::class,
+            Table\RecommendationHistoricTable::class => AutowireFactory::class,
             Table\RecommandationRiskTable::class => AutowireFactory::class,
             Table\RecommandationSetTable::class => AutowireFactory::class,
             Table\ScaleTable::class => AutowireFactory::class,

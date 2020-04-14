@@ -86,4 +86,12 @@ class InstanceRisk extends InstanceRiskSuperClass
      * @ORM\OneToMany(targetEntity="RecommandationRisk", mappedBy="instanceRisk", cascade={"persist", "remove"})
      */
     protected $recommendationRisks;
+
+    /**
+     * @return ArrayCollection|RecommandationRisk[]
+     */
+    public function getRecommendationRisks()
+    {
+        return $this->recommendationRisks;
+    }
 }

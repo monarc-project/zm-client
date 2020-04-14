@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\DeliveriesModelsService;
@@ -15,15 +16,20 @@ use Monarc\Core\Service\QuestionService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\ClientTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
+use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
+use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
 use PhpOffice\Common\Font;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\Writer\Word2007;
+use PhpOffice\PhpWord\Writer\Word2007\Part\Document;
 
 /**
  * This class is the service that handles the generation of the deliverable Word documents throughout the steps of the
@@ -59,12 +65,6 @@ class DeliverableGenerationService extends AbstractService
     protected $threatService;
     /** @var AnrInstanceService */
     protected $instanceService;
-    /** @var AnrRecommandationService */
-    protected $recommandationService;
-    /** @var AnrRecommandationRiskService */
-    protected $recommandationRiskService;
-    /** @var AnrRecommandationHistoricService */
-    protected $recommandationHistoricService;
     /** @var AnrCartoRiskService */
     protected $cartoRiskService;
     /** @var InstanceRiskTable */
@@ -84,7 +84,13 @@ class DeliverableGenerationService extends AbstractService
     /** @var TranslateService */
     protected $translateService;
 
-    protected $currentLangAnrIndex;
+    /** @var RecommandationRiskTable */
+    protected $recommendationRiskTable;
+
+    /** @var RecommendationHistoricTable */
+    protected $recommendationHistoricTable;
+
+    protected $currentLangAnrIndex = 1;
 
     /**
      * Language field setter
@@ -1652,7 +1658,7 @@ class DeliverableGenerationService extends AbstractService
         });
         foreach ($tree as $branch) {
             unset($branch['position']);
-            $flat_array = $this->single_level_array($branch);
+            $flat_array = $this->singleLevelArray($branch);
             $lst = array_merge($lst, $flat_array);
         }
 
@@ -2149,26 +2155,10 @@ class DeliverableGenerationService extends AbstractService
     /**
      * Generates the Risks Plan data
      *
-     * @param Anr $anr The ANR object
-     * @param bool $full Whether or not the full plan is requested or just an extract
-     *
      * @return mixed|string The WordXml data generated
      */
-    protected function generateRisksPlan($anr)
+    protected function generateRisksPlan(AnrSuperClass $anr)
     {
-        /** @var AnrRecommandationRiskService $recommandationService */
-        $recommandationRiskService = $this->recommandationRiskService;
-        $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->getId());
-        $instanceTable = $this->get('instanceService')->get('table');
-
-        //oder by recommandation position asc and importance desc
-        $recosRisks = [];
-        foreach ($recosRisksNotOrdered as $key => $recoRisk) {
-            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-' . (string)$recoRisk->recommandation->uuid . '-' . $key;
-            $recosRisks[$newKey] = $recoRisk;
-        }
-        ksort($recosRisks, SORT_NUMERIC);
-
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
@@ -2176,31 +2166,51 @@ class DeliverableGenerationService extends AbstractService
         $styleContentRecoFont = ['bold' => true, 'size' => 12];
         $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
         $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-        $alignRight = ['Alignment' => 'right', 'spaceAfter' => '0'];
         $styleContentFontRed = ['bold' => true, 'color' => 'FF0000', 'size' => 12];
         $styleContentFont = ['bold' => false, 'size' => 10];
         $styleContentFontBold = ['bold' => true, 'size' => 10];
         $cell = ['gridSpan' => 9, 'bgcolor' => 'DBE5F1', 'valign' => 'center'];
-        $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
+        $cellRowSpan = [
+            'vMerge' => 'restart',
+            'valign' => 'center',
+            'bgcolor' => 'DFDFDF',
+            'align' => 'center',
+            'Alignment' => 'center'
+        ];
         $cellRowContinue = ['vMerge' => 'continue', 'valign' => 'center', 'bgcolor' => 'DFDFDF'];
-        $cellColSpan = ['gridSpan' => 3, 'bgcolor' => 'DFDFDF', 'size' => 10, 'valign' => 'center', 'align' => 'center', 'Alignment' => 'center'];
-
+        $cellColSpan = [
+            'gridSpan' => 3,
+            'bgcolor' => 'DFDFDF',
+            'size' => 10,
+            'valign' => 'center',
+            'align' => 'center',
+            'Alignment' => 'center'
+        ];
 
         //create section
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
+        $recommendationRisks = $this->recommendationRiskTable->findByAnr($anr, ['r.position' => 'ASC']);
+
         //header if array is not empty
-        if (count($recosRisks)) {
+        if (!empty($recommendationRisks)) {
             $table->addRow(400, ['tblHeader' => true]);
-            $table->addCell(Font::centimeterSizeToTwips(3.50), $cellRowSpan)->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(6.00), $cellRowSpan)->addText($this->anrTranslate('Threat'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(6.00), $cellRowSpan)->addText($this->anrTranslate('Vulnerability'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(6.00), $cellRowSpan)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(2.10), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(2.10), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(3.50), $cellRowSpan)
+                ->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(6.00), $cellRowSpan)
+                ->addText($this->anrTranslate('Threat'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(6.00), $cellRowSpan)
+                ->addText($this->anrTranslate('Vulnerability'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(6.00), $cellRowSpan)
+                ->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(2.10), $cellColSpan)
+                ->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(2.10), $cellRowSpan)
+                ->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(2.10), $cellRowSpan)
+                ->addText($this->anrTranslate('Residual risk'), $styleHeaderFont, $alignCenter);
 
             $table->addRow();
             $table->addCell(Font::centimeterSizeToTwips(3.00), $cellRowContinue);
@@ -2222,134 +2232,169 @@ class DeliverableGenerationService extends AbstractService
         //unset
         $global = [];
         $toUnset = [];
-        foreach ($recosRisks as $recoRisk) {
-            if ($recoRisk->instance->object->scope == MonarcObject::SCOPE_GLOBAL) {
-                $key = (string)$recoRisk->recommandation->uuid . ' - ' . (string)$recoRisk->threat->uuid . ' - '
-                    . (string)$recoRisk->vulnerability->uuid . ' - ' . (string)$recoRisk->objectGlobal->uuid;
-                if (array_key_exists($key, $global)) {
-                    if (array_key_exists($key, $toUnset) && ($recoRisk->instanceRisk->cacheMaxRisk > $toUnset[$key])) {
-                        $toUnset[$key] = $recoRisk->instanceRisk->cacheMaxRisk;
+        foreach ($recommendationRisks as $recommendationRisk) {
+            if ($recommendationRisk->getInstance()->getObject()->getScope() === MonarcObject::SCOPE_GLOBAL) {
+                $key = $recommendationRisk->getRecommandation()->getUuid()
+                    . ' - ' . $recommendationRisk->getThreat()->getUuid()
+                    . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
+                    . ' - ' . $recommendationRisk->getGlobalObject()->getUuid();
+                if (\array_key_exists($key, $global)) {
+                    if (\array_key_exists($key, $toUnset)
+                        && $recommendationRisk->getInstanceRisk()->getCacheMaxRisk() > $toUnset[$key]
+                    ) {
+                        $toUnset[$key] = $recommendationRisk->getInstanceRisk()->getCacheMaxRisk();
                     } else {
-                        $toUnset[$key] = max($recoRisk->instanceRisk->cacheMaxRisk, $global[$key]);
+                        $toUnset[$key] = max($recommendationRisk->getInstanceRisk()->getCacheMaxRisk(), $global[$key]);
                     }
                 }
-                $global[$key] = $recoRisk->instanceRisk->cacheMaxRisk;
+                $global[$key] = $recommendationRisk->getInstanceRisk()->getCacheMaxRisk();
             }
         }
 
         $alreadySet = [];
-        foreach ($recosRisks as $recoRisk) {
-            if ($recoRisk->instanceRisk) {
+        foreach ($recommendationRisks as $recommendationRisk) {
+            if ($recommendationRisk->getInstanceRisk()) {
                 foreach ($impacts as $impact) {
                     $risk = 'risk' . ucfirst($impact);
                     if ($impact == 'd') {
                         $impact = 'a'; // Changed to get threat->a value;
                     }
                     $bgcolor = 'FFBC1C';
-                    if (($recoRisk->instanceRisk->$risk == -1) || (!$recoRisk->threat->$impact)) {
+                    if ($recommendationRisk->getInstanceRisk()->$risk == -1
+                        || !$recommendationRisk->getThreat()->$impact) {
                         $bgcolor = 'E7E6E6';
-                        $recoRisk->instanceRisk->$risk = null;
+                        $recommendationRisk->getInstanceRisk()->$risk = null;
                     } else {
-                        if ($recoRisk->instanceRisk->$risk <= $anr->seuil1) {
+                        if ($recommendationRisk->getInstanceRisk()->$risk <= $anr->seuil1) {
                             $bgcolor = 'D6F107';
-                        } else {
-                            if ($recoRisk->instanceRisk->$risk > $anr->seuil2) {
-                                $bgcolor = 'FD661F';
-                            }
+                        } elseif ($recommendationRisk->getInstanceRisk()->$risk > $anr->seuil2) {
+                            $bgcolor = 'FD661F';
                         }
                     }
-                    ${'styleContentCell' . ucfirst($impact)} = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
-
+                    ${'styleContentCell' . ucfirst($impact)} = [
+                        'valign' => 'center',
+                        'bgcolor' => $bgcolor,
+                        'size' => 10
+                    ];
 
                     $bgcolor = 'FFBC1C';
-                    if ($recoRisk->instanceRisk->cacheTargetedRisk == -1) {
+                    if ($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk() == -1) {
                         $bgcolor = 'E7E6E6';
                     } else {
-                        if ($recoRisk->instanceRisk->cacheTargetedRisk <= $anr->seuil1) {
+                        if ($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk() <= $anr->seuil1) {
                             $bgcolor = 'D6F107';
-                        } else {
-                            if ($recoRisk->instanceRisk->cacheTargetedRisk > $anr->seuil2) {
-                                $bgcolor = 'FD661F';
-                            }
+                        } elseif ($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk() > $anr->seuil2) {
+                            $bgcolor = 'FD661F';
                         }
                     }
                     $styleContentCellTargetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
                 }
                 $importance = '';
-                for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
+                for ($i = 0; $i <= ($recommendationRisk->getRecommandation()->getImportance() - 1); $i++) {
                     $importance .= '●';
                 }
 
-                if ((string)$recoRisk->recommandation->uuid != $previousRecoId) {
-
+                if ($recommendationRisk->getRecommandation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
                     $cellReco = $table->addCell(Font::centimeterSizeToTwips(5.00), $cell);
                     $cellRecoRun = $cellReco->addTextRun($alignLeft);
                     $cellRecoRun->addText($importance . ' ', $styleContentFontRed);
-                    $cellRecoRun->addText(_WT($recoRisk->recommandation->code), $styleContentRecoFont);
-                    $cellRecoRun->addText(' - ' . _WT($recoRisk->recommandation->description), $styleContentRecoFont);
+                    $cellRecoRun->addText(
+                        _WT($recommendationRisk->getRecommandation()->getCode()),
+                        $styleContentRecoFont
+                    );
+                    $cellRecoRun->addText(
+                        ' - ' . _WT($recommendationRisk->getRecommandation()->getDescription()),
+                        $styleContentRecoFont
+                    );
                 }
 
                 $continue = true;
 
-                $key = (string)$recoRisk->recommandation->uuid . ' - ' . (string)$recoRisk->threat->uuid . ' - '
-                    . (string)$recoRisk->vulnerability->uuid . ' - '
-                    . (!empty($recoRisk->objectGlobal) ? (string)$recoRisk->objectGlobal->uuid : null);
+                $key = $recommendationRisk->getRecommandation()->getUuid()
+                    . ' - ' . $recommendationRisk->getThreat()->getUuid()
+                    . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
+                    . ' - ' . (
+                        $recommendationRisk->hasGlobalObjectRelation()
+                            ? (string)$recommendationRisk->getGlobalObject()->getUuid()
+                            : ''
+                    );
                 if (isset($toUnset[$key])) {
-                    if (($recoRisk->instanceRisk->cacheMaxRisk < $toUnset[$key]) || (isset($alreadySet[$key]))) {
+                    if ($recommendationRisk->getInstanceRisk()->getCacheMaxRisk() < $toUnset[$key]
+                        || isset($alreadySet[$key])
+                    ) {
                         $continue = false;
                     } else {
                         $alreadySet[$key] = true;
                     }
                 }
 
-                $KindOfTreatment = $recoRisk->instanceRisk->kindOfMeasure;
-
-                if (empty($recoRisk->objectGlobal->uuid)) {
-                    $path = null;
-                    $asc = $instanceTable->getAscendance($recoRisk->instance);
-                    foreach ($asc as $a) {
-                        $path .= $a['name' . $this->currentLangAnrIndex];
-                        if (end($asc) !== $a) {
-                            $path .= ' > ';
-                        }
-                    }
-                } else {
-                    $path = $recoRisk->instance->{'name' . $anr->getLanguage()} . ' (' . $this->anrTranslate('Global') . ')';
-                }
-
-                switch ($KindOfTreatment) {
-
-                    case 1:
-                        $Treatment = "Reduction";
-                        break;
-                    case 2;
-                        $Treatment = "Denied";
-                        break;
-                    case 3:
-                        $Treatment = "Accepted";
-                        break;
-                    case 4:
-                        $Treatment = "Shared";
-                        break;
-                    default:
-                        $Treatment = "Not treated";
-                }
-
                 if ($continue) {
+                    $path = $this->getObjectInstancePath($recommendationRisk);
+
                     $table->addRow(400);
-                    $table->addCell(Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($path), $styleContentFont, $alignLeft);
-                    $table->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->threat->{'label' . $anr->getLanguage()}), $styleContentFont, $alignLeft);
-                    $table->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->vulnerability->{'label' . $anr->getLanguage()}), $styleContentFont, $alignLeft);
-                    $table->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRisk->comment), $styleContentFont, $alignLeft);
-                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellC)->addText($recoRisk->instanceRisk->riskC, $styleContentFontBold, $alignCenter);
-                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellI)->addText($recoRisk->instanceRisk->riskI, $styleContentFontBold, $alignCenter);
-                    $table->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellA)->addText($recoRisk->instanceRisk->riskD, $styleContentFontBold, $alignCenter);
-                    $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCell)->addText($this->anrTranslate($Treatment), $styleContentFont, $alignLeft);
-                    $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRisk->cacheTargetedRisk, $styleHeaderFont, $alignCenter);
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(3.00), $styleContentCell)
+                        ->addText(_WT($path), $styleContentFont, $alignLeft);
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)
+                        ->addText(
+                            _WT($recommendationRisk->getThreat()->{'label' . $anr->getLanguage()}),
+                            $styleContentFont,
+                            $alignLeft
+                        );
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)
+                        ->addText(
+                            _WT($recommendationRisk->getVulnerability()->{'label' . $anr->getLanguage()}),
+                            $styleContentFont,
+                            $alignLeft
+                        );
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)
+                        ->addText(
+                            _WT($recommendationRisk->getInstanceRisk()->getComment()),
+                            $styleContentFont,
+                            $alignLeft
+                        );
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellC)
+                        ->addText(
+                            $recommendationRisk->getInstanceRisk()->getRiskConfidentiality(),
+                            $styleContentFontBold,
+                            $alignCenter
+                        );
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellI)
+                        ->addText(
+                            $recommendationRisk->getInstanceRisk()->getRiskIntegrity(),
+                            $styleContentFontBold,
+                            $alignCenter
+                        );
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(0.70), $styleContentCellA)
+                        ->addText(
+                            $recommendationRisk->getInstanceRisk()->getRiskAvailability(),
+                            $styleContentFontBold,
+                            $alignCenter
+                        );
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCell)
+                        ->addText(
+                            $this->anrTranslate($recommendationRisk->getInstanceRisk()->getTreatmentName()),
+                            $styleContentFont,
+                            $alignLeft
+                        );
+                    $table
+                        ->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)
+                        ->addText(
+                            $recommendationRisk->getInstanceRisk()->getCacheTargetedRisk(),
+                            $styleHeaderFont,
+                            $alignCenter
+                        );
                 }
             }
-            $previousRecoId = (string)$recoRisk->recommandation->uuid;
+            $previousRecoId = $recommendationRisk->getRecommandation()->getUuid();
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
@@ -2359,26 +2404,11 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Operational Risks Plan data
      *
      * @param Anr $anr The ANR object
-     * @param bool $full Whether or not the full plan is requested or just an extract
      *
      * @return mixed|string The WordXml data generated
      */
     protected function generateOperationalRisksPlan($anr)
     {
-        /** @var AnrRecommandationRiskService $recommandationService */
-        $recommandationRiskService = $this->recommandationRiskService;
-        $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->getId());
-        $instanceTable = $this->get('instanceService')->get('table');
-
-        //oder by recommandation position asc and importance desc
-        $recosRisks = [];
-        foreach ($recosRisksNotOrdered as $key => $recoRisk) {
-            $newKey = $recoRisk->recommandation->position . '-' . -$recoRisk->recommandation->importance . '-'
-                . (string)$recoRisk->recommandation->uuid . '-' . $key;
-            $recosRisks[$newKey] = $recoRisk;
-        }
-        ksort($recosRisks, SORT_NUMERIC);
-
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
@@ -2397,112 +2427,111 @@ class DeliverableGenerationService extends AbstractService
         $section = $tableWord->addSection();
         $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
-        if (!empty($recosRisks)) {
+        $recommendationRisks = $this->recommendationRiskTable->findByAnr($anr, ['r.position' => 'ASC']);
+
+        if (!empty($recommendationRisks)) {
             $table->addRow(400, ['tblHeader' => true]);
-            $table->addCell(Font::centimeterSizeToTwips(3.00), $styleHeaderCell)->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(12.20), $styleHeaderCell)->addText($this->anrTranslate('Risk description'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(6.00), $styleHeaderCell)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(2.10), $styleHeaderCell)->addText($this->anrTranslate('Residual risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(3.00), $styleHeaderCell)
+                ->addText($this->anrTranslate('Asset'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(12.20), $styleHeaderCell)
+                ->addText($this->anrTranslate('Risk description'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(6.00), $styleHeaderCell)
+                ->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(2.10), $styleHeaderCell)
+                ->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(2.10), $styleHeaderCell)
+                ->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(2.10), $styleHeaderCell)
+                ->addText($this->anrTranslate('Residual risk'), $styleHeaderFont, $alignCenter);
         }
 
         $previousRecoId = null;
-
-        //$alreadySet = [];
-        foreach ($recosRisks as $recoRisk) {
-            if ($recoRisk->instanceRiskOp) {
+        foreach ($recommendationRisks as $recommendationRisk) {
+            if ($recommendationRisk->getInstanceRiskOp()) {
                 $bgcolor = 'FFBC1C';
-                if ($recoRisk->instanceRiskOp->cacheNetRisk == -1) {
+                if ($recommendationRisk->getInstanceRiskOp()->getCacheNetRisk() === -1) {
                     $bgcolor = 'E7E6E6';
-                } else {
-                    if ($recoRisk->instanceRiskOp->cacheNetRisk <= $anr->seuilRolf1) {
-                        $bgcolor = 'D6F107';
-                    } else {
-                        if ($recoRisk->instanceRiskOp->cacheNetRisk > $anr->seuilRolf2) {
-                            $bgcolor = 'FD661F';
-                        }
-                    }
+                } elseif ($recommendationRisk->getInstanceRiskOp()->getCacheNetRisk() <= $anr->getSeuilRolf1()) {
+                    $bgcolor = 'D6F107';
+                } elseif ($recommendationRisk->getInstanceRiskOp()->getCacheNetRisk() > $anr->getSeuilRolf2()) {
+                    $bgcolor = 'FD661F';
                 }
                 $styleContentCellNetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
 
-
                 $bgcolor = 'FFBC1C';
-                if ($recoRisk->instanceRiskOp->cacheTargetedRisk == -1) {
+                if ($recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk() === -1) {
                     $bgcolor = 'E7E6E6';
-                } else {
-                    if ($recoRisk->instanceRiskOp->cacheTargetedRisk <= $anr->seuilRolf1) {
-                        $bgcolor = 'D6F107';
-                    } else {
-                        if ($recoRisk->instanceRiskOp->cacheTargetedRisk > $anr->seuilRolf2) {
-                            $bgcolor = 'FD661F';
-                        }
-                    }
+                } elseif ($recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk() <= $anr->getSeuilRolf1()) {
+                    $bgcolor = 'D6F107';
+                } elseif ($recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk() > $anr->getSeuilRolf2()) {
+                    $bgcolor = 'FD661F';
                 }
                 $styleContentCellTargetRisk = ['valign' => 'center', 'bgcolor' => $bgcolor, 'size' => 10];
 
-
                 $importance = '';
-                for ($i = 0; $i <= ($recoRisk->recommandation->importance - 1); $i++) {
+                for ($i = 0; $i <= ($recommendationRisk->getRecommandation()->getImportance() - 1); $i++) {
                     $importance .= '●';
                 }
 
-                if ((string)$recoRisk->recommandation->uuid != $previousRecoId) {
-
+                if ($recommendationRisk->getRecommandation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
                     $cellReco = $table->addCell(Font::centimeterSizeToTwips(5.00), $cell);
                     $cellRecoRun = $cellReco->addTextRun($alignLeft);
                     $cellRecoRun->addText($importance . ' ', $styleContentFontRed);
-                    $cellRecoRun->addText(_WT($recoRisk->recommandation->code), $styleContentRecoFont);
-                    $cellRecoRun->addText(' - ' . _WT($recoRisk->recommandation->description), $styleContentRecoFont);
+                    $cellRecoRun
+                        ->addText(_WT($recommendationRisk->getRecommandation()->getCode()), $styleContentRecoFont);
+                    $cellRecoRun->addText(
+                        ' - ' . _WT($recommendationRisk->getRecommandation()->getDescription()),
+                        $styleContentRecoFont
+                    );
                 }
 
-                $KindOfTreatment = $recoRisk->instanceRiskOp->kindOfMeasure;
-
-                if (empty($recoRisk->objectGlobal->uuid)) {
-                    $path = null;
-                    $asc = $instanceTable->getAscendance($recoRisk->instance);
-                    foreach ($asc as $a) {
-                        $path .= $a['name' . $this->currentLangAnrIndex];
-                        if (end($asc) !== $a) {
-                            $path .= ' > ';
-                        }
-                    }
-                } else {
-                    $path = $recoRisk->instance->{'name' . $anr->getLanguage()} . ' (' . $this->anrTranslate('Global') . ')';
-                }
-
-                switch ($KindOfTreatment) {
-
-                    case 1:
-                        $Treatment = "Reduction";
-                        break;
-                    case 2;
-                        $Treatment = "Denied";
-                        break;
-                    case 3:
-                        $Treatment = "Accepted";
-                        break;
-                    case 4:
-                        $Treatment = "Shared";
-                        break;
-                    default:
-                        $Treatment = "Not treated";
-                }
+                $path = $this->getObjectInstancePath($recommendationRisk);
 
                 $table->addRow(400);
-                $table->addCell(Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText(_WT($path), $styleContentFont, $alignLeft);
-                $table->addCell(Font::centimeterSizeToTwips(12.20), $styleContentCell)->addText(_WT($recoRisk->instanceRiskOp->{'riskCacheLabel' . $anr->getLanguage()}), $styleContentFont, $alignLeft);
-                $table->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)->addText(_WT($recoRisk->instanceRiskOp->comment), $styleContentFont, $alignLeft);
-                $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellNetRisk)->addText($recoRisk->instanceRiskOp->cacheNetRisk, $styleContentFontBold, $alignCenter);
-                $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCell)->addText($this->anrTranslate($Treatment), $styleContentFont, $alignLeft);
-                if ($recoRisk->instanceRiskOp->cacheTargetedRisk == '-') {
-                    $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRiskOp->cacheNetRisk, $styleHeaderFont, $alignCenter);
+                $table->addCell(Font::centimeterSizeToTwips(3.00), $styleContentCell)
+                    ->addText(_WT($path), $styleContentFont, $alignLeft);
+                $table->addCell(Font::centimeterSizeToTwips(12.20), $styleContentCell)
+                    ->addText(
+                        _WT($recommendationRisk->getInstanceRiskOp()->{'riskCacheLabel' . $anr->getLanguage()}),
+                        $styleContentFont,
+                        $alignLeft
+                    );
+                $table->addCell(Font::centimeterSizeToTwips(6.00), $styleContentCell)
+                    ->addText(
+                        _WT($recommendationRisk->getInstanceRiskOp()->getComment()),
+                        $styleContentFont,
+                        $alignLeft
+                    );
+                $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellNetRisk)
+                    ->addText(
+                        $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk(),
+                        $styleContentFontBold,
+                        $alignCenter
+                    );
+                $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCell)
+                    ->addText(
+                        $this->anrTranslate($recommendationRisk->getInstanceRiskOp()->getTreatmentName()),
+                        $styleContentFont,
+                        $alignLeft
+                    );
+                if ($recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk() === '-') {
+                    $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)
+                        ->addText(
+                            $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk(),
+                            $styleHeaderFont,
+                            $alignCenter
+                        );
                 } else {
-                    $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)->addText($recoRisk->instanceRiskOp->cacheTargetedRisk, $styleHeaderFont, $alignCenter);
+                    $table->addCell(Font::centimeterSizeToTwips(2.10), $styleContentCellTargetRisk)
+                        ->addText(
+                            $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk(),
+                            $styleHeaderFont,
+                            $alignCenter
+                        );
                 }
 
-                $previousRecoId = $recoRisk->recommandation->uuid->toString();
+                $previousRecoId = $recommendationRisk->getRecommandation()->getUuid();
             }
 
         }
@@ -2514,25 +2543,11 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Implamentation Recommendations Plan data
      *
      * @param Anr $anr The ANR object
-     * @param bool $full Whether or not the full plan is requested or just an extract
      *
      * @return mixed|string The WordXml data generated
      */
     protected function generateTableImplementationPlan($anr)
     {
-        /** @var AnrRecommandationRiskService $recommandationService */
-        $recommandationRiskService = $this->recommandationRiskService;
-        $recosRisksNotOrdered = $recommandationRiskService->getDeliveryRecommandationsRisks($anr->getId());
-
-        //keep the recommandation's order from the application
-        $recoLists = [];
-        foreach ($recosRisksNotOrdered as $key => $recoRisk) {
-            if (!in_array($recoRisk->recommandation, $recoLists)) {
-                $recoLists[$recoRisk->recommandation->position] = $recoRisk->recommandation;
-            }
-        }
-        ksort($recoLists, SORT_NUMERIC);
-
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
         $styleHeaderFont = ['bold' => true, 'size' => 10];
@@ -2548,42 +2563,48 @@ class DeliverableGenerationService extends AbstractService
         $section = $tableWord->addSection();
         $table = $section->addTable(['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0']);
 
+        $recommendationRisks = $this->recommendationRiskTable->findByAnr($anr, ['r.position' => 'ASC']);
+
         //header if array is not empty
-        if (count($recoLists)) {
+        if (!empty($recommendationRisks)) {
             $table->addRow(400, ['tblHeader' => true]);
-            $table->addCell(Font::centimeterSizeToTwips(10.00), $styleHeaderCell)->addText($this->anrTranslate('Recommendation'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(2.00), $styleHeaderCell)->addText($this->anrTranslate('Imp.'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)->addText($this->anrTranslate('Comment'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(4.00), $styleHeaderCell)->addText($this->anrTranslate('Manager'), $styleHeaderFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(3.00), $styleHeaderCell)->addText($this->anrTranslate('Deadline'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(10.00), $styleHeaderCell)
+                ->addText($this->anrTranslate('Recommendation'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(2.00), $styleHeaderCell)
+                ->addText($this->anrTranslate('Imp.'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(5.00), $styleHeaderCell)
+                ->addText($this->anrTranslate('Comment'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(4.00), $styleHeaderCell)
+                ->addText($this->anrTranslate('Manager'), $styleHeaderFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(3.00), $styleHeaderCell)
+                ->addText($this->anrTranslate('Deadline'), $styleHeaderFont, $alignCenter);
         }
 
-        $previousRecoId = null;
-
-        //$alreadySet = [];
-        foreach ($recoLists as $recoRisk) {
+        foreach ($recommendationRisks as $recommendationRisk) {
+            $recommendation = $recommendationRisk->getRecommandation();
             $importance = '';
-            for ($i = 0; $i <= ($recoRisk->importance - 1); $i++) {
+            for ($i = 0; $i <= ($recommendation->getImportance() - 1); $i++) {
                 $importance .= '●';
             }
 
-            if ($recoRisk->duedate == null) {
-                $recoDeadline = '';
-            } else {
-                $recoDeadline = $recoRisk->duedate->format('d-m-Y');
+            $recoDeadline = '';
+            if ($recommendation->getDueDate()) {
+                $recoDeadline = $recommendation->getDueDate()->format('d-m-Y');
             }
 
             $table->addRow(400);
             $cellRecoName = $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell);
             $cellRecoNameRun = $cellRecoName->addTextRun($styleContentCell);
-            $cellRecoNameRun->addText(_WT($recoRisk->code) . '<w:br/>', $styleContentFontBold);
-            $cellRecoNameRun->addText(_WT($recoRisk->description), $styleContentFont);
-            $table->addCell(Font::centimeterSizeToTwips(2.00), $styleContentCell)->addText($importance, $styleContentFontRed, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)->addText(_WT($recoRisk->comment), $styleContentFont, $alignLeft);
-            $table->addCell(Font::centimeterSizeToTwips(4.00), $styleContentCell)->addText(_WT($recoRisk->responsable), $styleContentFont, $alignCenter);
-            $table->addCell(Font::centimeterSizeToTwips(3.00), $styleContentCell)->addText($recoDeadline, $styleContentFont, $alignCenter);
-
-            $previousRecoId = $recoRisk->uuid->toString();
+            $cellRecoNameRun->addText(_WT($recommendation->getCode()) . '<w:br/>', $styleContentFontBold);
+            $cellRecoNameRun->addText(_WT($recommendation->getDescription()), $styleContentFont);
+            $table->addCell(Font::centimeterSizeToTwips(2.00), $styleContentCell)
+                ->addText($importance, $styleContentFontRed, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(5.00), $styleContentCell)
+                ->addText(_WT($recommendation->getComment()), $styleContentFont, $alignLeft);
+            $table->addCell(Font::centimeterSizeToTwips(4.00), $styleContentCell)
+                ->addText(_WT($recommendation->getResponsable()), $styleContentFont, $alignCenter);
+            $table->addCell(Font::centimeterSizeToTwips(3.00), $styleContentCell)
+                ->addText($recoDeadline, $styleContentFont, $alignCenter);
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
@@ -2592,16 +2613,11 @@ class DeliverableGenerationService extends AbstractService
     /**
      * Generates the Implamentation Recommendations Plan data
      *
-     * @param Anr $anr The ANR object
-     * @param bool $full Whether or not the full plan is requested or just an extract
-     *
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableImplementationHistory($anr)
+    protected function generateTableImplementationHistory(AnrSuperClass $anr)
     {
-        /** @var AnrRecommandationHistoricService $recommandationHistoricService */
-        $recommandationHistoricService = $this->recommandationHistoricService;
-        $recoRecords = $recommandationHistoricService->getDeliveryRecommandationsHistory($anr->getId());
+        $recoRecords = $this->recommendationHistoricTable->findByAnr($anr);
 
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
@@ -3893,25 +3909,26 @@ class DeliverableGenerationService extends AbstractService
     /**
      * Generates a single-level array from multilevel array
      *
-     * @param multi_level_array $multi_level_array
+     * @param multi_level_array $multiLevelArray
      *
      * @return array
      */
-    protected function single_level_array($multi_level_array)
+    protected function singleLevelArray($multiLevelArray)
     {
-        foreach ($multi_level_array as $a) {
+        $singleLevelArray = [];
+        foreach ($multiLevelArray as $a) {
             if (isset($a['children'])) {
-                $single_level_array[] = $a;
-                $children_array = $this->single_level_array($a['children']);
+                $singleLevelArray[] = $a;
+                $children_array = $this->singleLevelArray($a['children']);
                 foreach ($children_array as $children) {
-                    $single_level_array[] = $children;
+                    $singleLevelArray[] = $children;
                 }
             } else {
-                $single_level_array[] = $a;
+                $singleLevelArray[] = $a;
             }
         }
 
-        return $single_level_array;
+        return $singleLevelArray;
     }
 
     /**
@@ -3924,7 +3941,7 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function getWordXmlFromWordObject($phpWord, $useBody = true)
     {
-        $part = new \PhpOffice\PhpWord\Writer\Word2007\Part\Document();
+        $part = new Document();
         $part->setParentWriter(new Word2007($phpWord));
         $docXml = $part->write();
         $matches = [];
@@ -3934,19 +3951,34 @@ class DeliverableGenerationService extends AbstractService
         } else {
             if ($useBody === 'graph') {
                 return $docXml;
-            } else {
-                $regex = '/<w:r>(.*)<\/w:r>/is';
             }
+
+            $regex = '/<w:r>(.*)<\/w:r>/is';
         }
 
         if (preg_match($regex, $docXml, $matches) === 1) {
             return $matches[1];
-        } else {
-            return "";
         }
+
+        return '';
+    }
+
+    private function getObjectInstancePath(RecommandationRisk $recommendationRisk): string
+    {
+        if ($recommendationRisk->hasGlobalObjectRelation()) {
+            return $recommendationRisk->getInstance()->{'name' . $recommendationRisk->getAnr()->getLanguage()}
+                . ' (' . $this->anrTranslate('Global') . ')';
+        }
+
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('instanceService')->get('table');
+
+        return implode(' > ', array_column(
+            $instanceTable->getAscendance($recommendationRisk->getInstance()),
+            'name' . $this->currentLangAnrIndex
+        ));
     }
 }
-
 
 function _WT($input)
 {

@@ -31,15 +31,15 @@ class RecommandationSet extends AbstractEntity
      *
      * @var integer
      *
-     * @ORM\Column(name="uuid", type="uuid", unique=true)
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
      * @ORM\Id
      */
     protected $uuid;
 
      /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -76,9 +76,9 @@ class RecommandationSet extends AbstractEntity
     protected $label4;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Recommandation
+     * @var Recommandation
      *
-     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Recommandation", mappedBy="recommandationSet", cascade={"persist"}, )
+     * @ORM\OneToMany(targetEntity="Recommandation", mappedBy="recommandationSet", cascade={"persist"})
      */
     protected $recommandations;
 
@@ -87,7 +87,7 @@ class RecommandationSet extends AbstractEntity
      */
     public function getUuid()
     {
-        return $this->uuid;
+        return (string)$this->uuid;
     }
 
     /**
@@ -97,10 +97,11 @@ class RecommandationSet extends AbstractEntity
     public function setUuid($uuid)
     {
         $this->uuid = $uuid;
+
         return $this;
     }
 
-        /**
+    /**
      * @return Anr
      */
     public function getAnr()
@@ -110,7 +111,7 @@ class RecommandationSet extends AbstractEntity
 
     /**
      * @param Anr $anr
-     * @return Scale
+     * @return RecommandationSet
      */
     public function setAnr($anr)
     {
@@ -119,7 +120,7 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @return Recommandation
+     * @return Recommandation[]
      */
     public function getRecommandations()
     {
@@ -127,7 +128,7 @@ class RecommandationSet extends AbstractEntity
     }
 
     /**
-     * @param \Monarc\FrontOffice\Model\Entity\Recommandation $recommandations
+     * @param Recommandation[] $recommandations
      * @return RecommandationSet
      */
     public function setRecommandations($recommandations)

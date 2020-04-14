@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Entity\RecommandationHistoric;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Factory class attached to AnrRecommandationHistoricService
@@ -16,8 +18,8 @@ use Monarc\Core\Service\AbstractServiceFactory;
 class AnrRecommandationHistoricServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Model\Entity\RecommandationHistoric',
-        'table' => 'Monarc\FrontOffice\Model\Table\RecommandationHistoricTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'entity' => RecommandationHistoric::class,
+        'table' => Table\RecommendationHistoricTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
     ];
 }
