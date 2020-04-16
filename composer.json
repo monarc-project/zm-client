@@ -43,6 +43,7 @@
         "php": "^7.1",
         "ext-intl": "*",
         "ext-imagick": "*",
+        "ext-json": "*",
         "doctrine/doctrine-orm-module": "^2.1",
         "monarc/core": "^2.9.15",
         "monarc/phpword": "^1.0",
