@@ -3,7 +3,6 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
-use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
  * @ORM\Table(name="stats_anrs")
@@ -12,7 +11,11 @@ use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 class StatsAnr
 {
     use CreateEntityTrait;
-    use UpdateEntityTrait;
+
+    public const TYPE_RISK = 'risk';
+    public const TYPE_THREAT = 'threat';
+    public const TYPE_VULNERABILITY = 'vulnerability';
+    public const TYPE_MAPPING = 'mapping';
 
     /**
      * @var int
@@ -64,7 +67,7 @@ class StatsAnr
     /**
      * @var string
      *
-     * @ORM\Column(name="type", type="string", length=50, nullable=false)
+     * @ORM\Column(name="type", type="string", length=20, nullable=false)
      */
     protected $type;
 
@@ -77,13 +80,13 @@ class StatsAnr
 
     public function __construct(array $data)
     {
-        $this->anr = $data['anr'];
-        $this->type = $data['type'];
-        $this->statsData = $data['statsData'];
-        $this->day = $data['day'] ?? date('z') + 1;
-        $this->week = $data['week'] ?? (int)date('W');
-        $this->month = $data['month'] ?? (int)date('m');
-        $this->year = $data['year'] ?? (int)date('Y');
+        $this->setAnr($data['anr'])
+            ->setType($data['type'])
+            ->setStatsData($data['statsData'])
+            ->setDay($data['day'] ?? date('z') + 1)
+            ->setWeek($data['week'] ?? (int)date('W'))
+            ->setMonth($data['month'] ?? (int)date('m'))
+            ->setYear($data['year'] ?? (int)date('Y'));
     }
 
     public function getAnr(): Anr
@@ -153,9 +156,23 @@ class StatsAnr
 
     public function setType(string $type): StatsAnr
     {
+        if (!\in_array($type, static::getAvailableTypes(), true)) {
+            throw new \UnexpectedValueException(sprintf('Stats type %s is not supported!', $type));
+        }
+
         $this->type = $type;
 
         return $this;
+    }
+
+    public static function getAvailableTypes(): array
+    {
+        return [
+            static::TYPE_RISK,
+            static::TYPE_THREAT,
+            static::TYPE_VULNERABILITY,
+            static::TYPE_MAPPING,
+        ];
     }
 
     public function getStatsData(): array

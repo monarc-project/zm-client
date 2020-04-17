@@ -7,14 +7,16 @@ use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
- * @ORM\Table(name="stats_settings")
+ * @ORM\Table(name="settings")
  * @ORM\Entity
  */
-class StatsSetting
+class Setting
 {
     use CreateEntityTrait;
-
     use UpdateEntityTrait;
+
+    public const SETTING_IS_STATS_ENABLED = 'is_stats_enabled';
+    public const SETTING_IS_STATS_SHARING_ENABLED = 'is_stats_sharing_enabled';
 
     /**
      * @var int
@@ -49,19 +51,12 @@ class StatsSetting
         return $this->name;
     }
 
-    public function setName(string $name): StatsSetting
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
     public function getValue(): string
     {
         return $this->value;
     }
 
-    public function setValue(string $value): StatsSetting
+    public function setValue(string $value): Setting
     {
         $this->value = $value;
 
