@@ -1055,6 +1055,7 @@ return [
             Table\SnapshotTable::class => AutowireFactory::class,
             Table\SoaTable::class => AutowireFactory::class,
             Table\SoaCategoryTable::class => AutowireFactory::class,
+            Table\StatsAnrTable::class => AutowireFactory::class,
             Table\ThemeTable::class => AutowireFactory::class,
             Table\ThreatTable::class => AutowireFactory::class,
             Table\UserTable::class => AutowireFactory::class,
@@ -1165,6 +1166,7 @@ return [
             'Monarc\FrontOffice\Service\ObjectExportService' => 'Monarc\FrontOffice\Service\ObjectExportServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
+            Service\StatsAnrService::class => ReflectionBasedAbstractFactory::class,
 
             CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
         ],
