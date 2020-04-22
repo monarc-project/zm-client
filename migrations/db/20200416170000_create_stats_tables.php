@@ -14,7 +14,7 @@ class CreateStatsTables extends AbstractMigration
                 `creator` varchar(255) DEFAULT NULL,
                 `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
                 `updater` varchar(255) DEFAULT NULL,
-                `updated_at` datetime DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
+                `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`)
             );'
         );
