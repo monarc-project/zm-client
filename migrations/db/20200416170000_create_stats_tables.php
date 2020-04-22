@@ -12,9 +12,9 @@ class CreateStatsTables extends AbstractMigration
                 `name` varchar(255) NOT NULL,
                 `value` text,
                 `creator` varchar(255) DEFAULT NULL,
-                `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
                 `updater` varchar(255) DEFAULT NULL,
-                `updated_at` timestamp DEFAULT 0,
+                `updated_at` datetime DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`)
             );'
         );
@@ -33,7 +33,7 @@ class CreateStatsTables extends AbstractMigration
                 `year` tinyint(4) unsigned NOT NULL,
                 `type` varchar(20) NOT NULL,
                 `stats_data` text,
-                `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
                 `creator` varchar(255) DEFAULT NULL,
                 PRIMARY KEY (`id`),
                 KEY `stats_anrs_anr_id_type` (`anr_id`, `type`),
