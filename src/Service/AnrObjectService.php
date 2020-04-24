@@ -7,8 +7,6 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-
 /**
  * This class is the service that handles objects in use within an ANR. Inherits its behavior from its Monarc\Core
  * parent class ObjectService

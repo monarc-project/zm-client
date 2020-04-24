@@ -2,32 +2,35 @@
 
 namespace Monarc\FrontOffice\Command;
 
+use Monarc\FrontOffice\Service\StatsAnrService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Monarc\FrontOffice\Model\Entity\StatsAnr;
-// use Monarc\FrontOffice\Model\Table\StatsAnrTable;
-// use Monarc\FrontOffice\Model\Entity\Anr;
 
 class CollectStatsCommand extends Command
 {
     protected static $defaultName = 'monarc:collect-stats';
 
-    /** @var StatsAnrTable */
-    // private $statsAnrTable;
+    /** @var StatsAnrService */
+    private $statsAnrService;
 
-    public function __construct()
+    public function __construct(StatsAnrService $statsAnrService)
     {
+        $this->statsAnrService = $statsAnrService;
+
         parent::__construct();
     }
 
     protected function configure()
     {
+        $this->addArgument('anrIds', InputArgument::OPTIONAL, 'Anr IDs list, comma separated');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->statsAnrService->collectStats($input->getArguments());
+
         return 0;
     }
 }
