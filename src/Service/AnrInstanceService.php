@@ -646,6 +646,11 @@ class AnrInstanceService extends InstanceService
                                     $reco['recommandationSet'] = $uuidRecSet;
                                 }
                                 $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
+                                if (empty($recSets)) {
+                                    # sets should be created/imported previously
+                                    # this case should never occur, except if the exported analysis had controls without categories
+                                    continue;
+                                }
 
                                 /** @var RecommandationTable $recommendationTable */
                                 $recommendationTable = $this->get('recommandationTable');
@@ -1028,6 +1033,12 @@ class AnrInstanceService extends InstanceService
                                 $reco['recommandationSet'] = $uuidRecSet;
                             }
                             $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
+                            if (empty($recSets)) {
+                                # sets should be created/imported previously
+                                # this case should never occur, except if the exported analysis had controls without categories
+                                continue;
+                            }
+
                             // La recommandation
                             if (isset($sharedData['recos'][$reco['uuid']])) {
                                 // Cette recommandation a déjà été gérée dans cet import
