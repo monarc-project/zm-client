@@ -10,15 +10,23 @@ namespace Monarc\FrontOffice\Model\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Anr
  *
- * @ORM\Table(name="anrs")
+ * @ORM\Table(name="anrs", uniqueConstraints={@ORM\UniqueConstraint(name="uuid", columns={"uuid"})})
  * @ORM\Entity
  */
 class Anr extends AnrSuperClass
 {
+    /**
+     * @var Uuid
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     */
+    protected $uuid;
+
     /**
      * @var int
      *
@@ -80,5 +88,18 @@ class Anr extends AnrSuperClass
     public function getLanguage(): int
     {
         return $this->language;
+    }
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function generateAndSetUuid(): void
+    {
+        $this->uuid = Uuid::uuid4();
+    }
+
+    public function getUuid(): string
+    {
+        return (string)$this->uuid;
     }
 }

@@ -1195,10 +1195,9 @@ class DeliverableGenerationService extends AbstractService
             unset($canvas);
 
             return $return;
-        } else {
-            return "";
         }
 
+        return '';
     }
 
     /**

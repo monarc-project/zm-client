@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 
 /**
@@ -55,6 +56,35 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
                 $qb->expr()->neq('t.targetedL', -1),
                 $qb->expr()->neq('t.targetedF', -1)
             ))->getQuery()->getSingleScalarResult();
+
         return $res > 0;
+    }
+
+
+    public function findRisksDataForStatsByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('oprisk')
+            ->select('
+                oprisk.netProb as netProb,
+                oprisk.netR as netR,
+                oprisk.netO as netO,
+                oprisk.netL as netL,
+                oprisk.netF as netF,
+                oprisk.netP as netP,
+                oprisk.targetedProb as targetedProb,
+                oprisk.targetedR as targetedR,
+                oprisk.targetedO as targetedO,
+                oprisk.targetedL as targetedL,
+                oprisk.targetedF as targetedF,
+                oprisk.targetedP as targetedP,
+                oprisk.cacheNetRisk as cacheNetRisk,
+                oprisk.cacheTargetedRisk as cacheTargetedRisk
+            ')
+            ->where('oprisk.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->andWhere('oprisk.cacheNetRisk <> -1 OR cacheTargetedRisk <> -1')
+            ->getQuery()
+            ->getResult();
     }
 }

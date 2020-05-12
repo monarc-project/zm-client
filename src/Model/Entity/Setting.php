@@ -7,16 +7,18 @@ use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
- * @ORM\Table(name="settings")
+ * @ORM\Table(name="settings", uniqueConstraints={@ORM\UniqueConstraint(name="name", columns={"name"})})
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Setting
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    public const SETTING_IS_STATS_ENABLED = 'is_stats_enabled';
-    public const SETTING_IS_STATS_SHARING_ENABLED = 'is_stats_sharing_enabled';
+    public const SETTINGS_STATS = 'stats';
+    public const SETTING_STATS_IS_SHARING_ENABLED = 'is_sharing_enabled';
+    public const SETTING_STATS_API_KEY = 'api_key';
 
     /**
      * @var int
@@ -37,7 +39,7 @@ class Setting
     /**
      * @var string
      *
-     * @ORM\Column(name="value", type="text", nullable=false)
+     * @ORM\Column(name="value", type="json", nullable=false)
      */
     protected $value;
 
@@ -51,14 +53,14 @@ class Setting
         return $this->name;
     }
 
-    public function getValue(): string
+    public function getValue(): array
     {
-        return $this->value;
+        return json_decode($this->value, true);
     }
 
-    public function setValue(string $value): Setting
+    public function setValue(array $value): Setting
     {
-        $this->value = $value;
+        $this->value = json_encode($value);
 
         return $this;
     }

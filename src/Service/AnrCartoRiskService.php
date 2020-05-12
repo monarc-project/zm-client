@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use \Monarc\Core\Model\Entity\Scale;
 use \Monarc\Core\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Table\ScaleTable;
 
 /**
  * This class is the service that handles the ANR Cartography of real & targeted risks (as shown on the dashboard)
@@ -67,6 +68,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
         list($counters, $distrib) = $this->getCountersRisks('target');
         list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('target');
+
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
@@ -80,7 +82,6 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
               'distrib' => $distribRiskOp,
             ],
         ];
-
       }
 
     /**
@@ -96,42 +97,37 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
         // Only compute the listScales and headers fields if we didn't already
         // TODO: If we reuse the service to build the carto for 2 different ANRs in the same run, this will cause issues!
-        if (is_null($this->listScales)) {
-            $scales = $this->get('table')->getEntityByFields(['anr' => $this->anr->get('id')]);
+        if ($this->listScales === null) {
+            /** @var ScaleTable $scaleTable */
+            $scaleTable = $this->get('table');
+            $scales = $scaleTable->findByAnr($this->anr);
+
             $this->listScales = [
                 Scale::TYPE_IMPACT => [],
                 Scale::TYPE_THREAT => [],
                 Scale::TYPE_VULNERABILITY => [],
             ];
             foreach ($scales as $scale) {
-                if (isset($this->listScales[$scale->get('type')])) {
-                    for ($i = $scale->get('min'); $i <= $scale->get('max'); $i++) {
-                        array_push($this->listScales[$scale->get('type')],$i);
-                    }
-                }
+                $this->listScales[$scale->getType()] = range($scale->getMin(), $scale->getMax());
             }
         }
 
-        if (is_null($this->headers)) {
+        if ($this->headers === null) {
             $this->headers = [];
-            $tempHeaders = [];
             foreach ($this->listScales[Scale::TYPE_IMPACT] as $i) {
                 foreach ($this->listScales[Scale::TYPE_THREAT] as $m) {
                     foreach ($this->listScales[Scale::TYPE_VULNERABILITY] as $v) {
                         $val = -1;
-                        if ($i != -1 && $m != -1 && $v != -1) {
+                        if ($i !== -1 && $m !== -1 && $v !== -1) {
                             $val = $m * $v;
                         }
-                        if(!in_array($val, $tempHeaders, true)){
-                            array_push($tempHeaders,$val);
+                        if (!\in_array($val, $this->headers, true)) {
+                            $this->headers[] = $val;
                         }
                     }
                 }
             }
-            asort($tempHeaders);
-            foreach ($tempHeaders as $value) {
-              array_push($this->headers,$value);
-            }
+            sort($this->headers);
         }
     }
 

@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AmvSuperClass;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
@@ -88,7 +87,6 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $queryBuilder->getQuery()->getResult();
     }
 
-
     /**
      * @throws Exception
      * @return InstanceRisk[]
@@ -102,6 +100,36 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->andWhere('amv.anr = :amv_anr')
             ->setParameter('amv_uuid', $amv->getUuid())
             ->setParameter('amv_anr', $amv->getAnr())
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findRisksDataForStatsByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->select('
+                ir.id,
+                IDENTITY(ir.asset) as assetId,
+                IDENTITY(ir.threat) as threatId,
+                IDENTITY(ir.vulnerability) as vulnerabilityId,
+                IDENTITY(i.object) as objectId,
+                ir.cacheMaxRisk,
+                ir.cacheTargetedRisk,
+                i.c as instanceConfidentiality,
+                i.i as instanceIntegrity,
+                i.d as instanceAvailability,
+                t.c as threatConfidentiality,
+                t.i as threatIntegrity,
+                t.a as threatAvailability,
+                o.scope
+            ')
+            ->where('ir.anr = :anr')
+            ->setParameter(':anr', $anr)
+            ->andWhere('cacheMaxRisk <> -1 OR ir.cacheTargetedRisk <> -1')
+            ->innerJoin('ir.instance', 'i')
+            ->innerJoin('ir.threat', 't')
+            ->innerJoin('i.object', 'o')
             ->getQuery()
             ->getResult();
     }

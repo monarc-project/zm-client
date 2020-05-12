@@ -2,6 +2,7 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Monarc\FrontOffice\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
@@ -1166,8 +1167,12 @@ return [
             'Monarc\FrontOffice\Service\ObjectExportService' => 'Monarc\FrontOffice\Service\ObjectExportServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
-            Service\StatsAnrService::class => ReflectionBasedAbstractFactory::class,
+            Service\StatsAnrService::class => AutowireFactory::class,
 
+            // Providers
+            StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
+
+            // Validators
             CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
         ],
     ],

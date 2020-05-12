@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\Query\Expr;
 use Monarc\Core\Model\Entity\AnrSuperClass;
@@ -40,6 +41,21 @@ class AnrTable extends AbstractEntityTable
         }
 
         return $anr;
+    }
+
+    /**
+     * @param int[] $anrIds
+     *
+     * @return ArrayCollection|Anr[]
+     */
+    public function findByIds(array $anrIds): ArrayCollection
+    {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('a');
+
+        return $queryBuilder
+            ->where($queryBuilder->expr()->in('a.id', $anrIds))
+            ->getQuery()
+            ->getResult();
     }
 
     public function fetchAnrsExcludeSnapshotsWithUserRights(int $userId): array
