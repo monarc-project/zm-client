@@ -66,6 +66,7 @@
             "Monarc\\FrontOffice\\": "/src"
         }
     },
+    "bin": ["bin/console"],
     "minimum-stability": "dev",
     "prefer-stable": true
 }
