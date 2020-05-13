@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Monarc\FrontOffice\Model\Table;
 
@@ -24,7 +24,7 @@ abstract class AbstractTable
 
     public function getRepository(): EntityRepository
     {
-        $this->entityManager->getRepository($this->entityName);
+        return $this->entityManager->getRepository($this->entityName);
     }
 
     /**

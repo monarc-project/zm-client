@@ -3,8 +3,7 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
-use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
+use Monarc\Core\Model\Entity\Traits;
 
 /**
  * @ORM\Table(name="settings", uniqueConstraints={@ORM\UniqueConstraint(name="name", columns={"name"})})
@@ -13,8 +12,8 @@ use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
  */
 class Setting
 {
-    use CreateEntityTrait;
-    use UpdateEntityTrait;
+    use Traits\CreateEntityTrait;
+    use Traits\UpdateEntityTrait;
 
     public const SETTINGS_STATS = 'stats';
     public const SETTING_STATS_IS_SHARING_ENABLED = 'is_sharing_enabled';
