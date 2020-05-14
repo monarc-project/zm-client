@@ -36,7 +36,7 @@ class Setting
     protected $name;
 
     /**
-     * @var string
+     * @var array
      *
      * @ORM\Column(name="value", type="json", nullable=false)
      */
@@ -54,12 +54,12 @@ class Setting
 
     public function getValue(): array
     {
-        return json_decode($this->value, true);
+        return $this->value;
     }
 
     public function setValue(array $value): Setting
     {
-        $this->value = json_encode($value);
+        $this->value = $value;
 
         return $this;
     }

@@ -10,6 +10,8 @@ use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
+use Monarc\FrontOffice\Provider\Exception\StatsFetchingException;
+use Monarc\FrontOffice\Provider\Exception\StatsSendingException;
 use Monarc\FrontOffice\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Service\Exception\StatsAlreadyCollectedException;
 
@@ -55,12 +57,14 @@ class StatsAnrService
      * @param bool $forceUpdate Whether or not overwrite the data if already presented for today.
      *
      * @throws StatsAlreadyCollectedException
+     * @throws StatsFetchingException
+     * @throws StatsSendingException
      */
     public function collectStats(array $anrIds = [], bool $forceUpdate = false): void
     {
         $currentDate = new DateTime();
         $statsOfToday = $this->statsApiProvider->getStatsData(['fromDate' => $currentDate, 'toDate' => $currentDate]);
-        if (!empty($statsOfToday) && !$forceUpdate) {
+        if (!$forceUpdate && $statsOfToday['metadata']['resultset']['count'] !== 0) {
             throw new StatsAlreadyCollectedException();
         }
 
@@ -73,7 +77,9 @@ class StatsAnrService
             $statsData[$anr->getUuid()] = $this->collectAnrStats($anr);
         }
 
-        $this->statsApiProvider->sendStatsData($statsData);
+        if (!empty($statsData)) {
+            $this->statsApiProvider->sendStatsData($statsData);
+        }
     }
 
     /**

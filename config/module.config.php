@@ -2,7 +2,7 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Monarc\Frontoffice\Model\Factory\ClientEntityManagerInvocableFactory;
+use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
 use Monarc\FrontOffice\Controller;
@@ -1051,7 +1051,7 @@ return [
             Table\RecommendationHistoricTable::class => AutowireFactory::class,
             Table\RecommandationRiskTable::class => AutowireFactory::class,
             Table\RecommandationSetTable::class => AutowireFactory::class,
-            Table\SettingTable::class => ClientEntityManagerInvocableFactory::class,
+            Table\SettingTable::class => ClientEntityManagerFactory::class,
             Table\ScaleTable::class => AutowireFactory::class,
             Table\ScaleCommentTable::class => AutowireFactory::class,
             Table\ScaleImpactTypeTable::class => AutowireFactory::class,
