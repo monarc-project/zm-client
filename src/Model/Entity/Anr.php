@@ -17,6 +17,7 @@ use Ramsey\Uuid\Uuid;
  *
  * @ORM\Table(name="anrs", uniqueConstraints={@ORM\UniqueConstraint(name="uuid", columns={"uuid"})})
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Anr extends AnrSuperClass
 {
