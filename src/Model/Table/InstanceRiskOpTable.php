@@ -83,7 +83,7 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             ')
             ->where('oprisk.anr = :anr')
             ->setParameter('anr', $anr)
-            ->andWhere('oprisk.cacheNetRisk <> -1 OR cacheTargetedRisk <> -1')
+            ->andWhere('oprisk.cacheNetRisk <> -1 OR oprisk.cacheTargetedRisk <> -1')
             ->getQuery()
             ->getResult();
     }

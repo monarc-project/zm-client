@@ -10,7 +10,6 @@ namespace Monarc\FrontOffice\Model\Table;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\Query\Expr;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -79,7 +78,7 @@ class AnrTable extends AbstractEntityTable
     }
 
     /**
-     * @return AnrSuperClass[]
+     * @return Anr[]
      */
     public function findAll(): array
     {

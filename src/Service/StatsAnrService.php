@@ -74,7 +74,10 @@ class StatsAnrService
 
         $statsData = [];
         foreach ($anrLists as $anr) {
-            $statsData[$anr->getUuid()] = $this->collectAnrStats($anr);
+            $statsData[] = [
+                'anr_uuid' => $anr->getUuid(),
+                'stats_data' => $this->collectAnrStats($anr),
+            ];
         }
 
         if (!empty($statsData)) {
