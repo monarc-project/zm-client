@@ -11,6 +11,7 @@ use Monarc\FrontOffice\Model\Table\SettingTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
 use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
+use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
 
 class StatsApiProvider
 {
@@ -63,7 +64,7 @@ class StatsApiProvider
             throw new StatsFetchingException($response->getBody()->getContents(), $response->getStatusCode());
         }
 
-        return $this->buildResponse($response->getBody()->getContents());
+        return $this->buildFormattedResponse($response->getBody()->getContents());
     }
 
     /**
@@ -101,13 +102,29 @@ class StatsApiProvider
         }
     }
 
-    private function buildResponse(string $responseContents): array
+    /**
+     * @throws WrongResponseFormatException
+     */
+    private function buildFormattedResponse(string $responseContents): array
     {
-        $response = [];
-        foreach (json_decode($responseContents, true) as $data) {
-            $response[] = new StatsDataObject($data);
+        $formattedResponse = [];
+        $response = json_decode($responseContents, true);
+        if (!isset($response['metadata']['resultset']['count'])) {
+            throw new WrongResponseFormatException(['"metadata.resultset.count"']);
         }
 
-        return $response;
+        if ($response['metadata']['resultset']['count'] > 0) {
+            foreach ($response as $itemNum => $responseData) {
+                if (!isset($responseData['type'], $responseData['data'])) {
+                    throw new WrongResponseFormatException(
+                        ['"data.' . $itemNum . '.type"', '"data.' . $itemNum . '.data"']
+                    );
+                }
+
+                $formattedResponse[] = new StatsDataObject($responseData);
+            }
+        }
+
+        return $formattedResponse;
     }
 }

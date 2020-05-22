@@ -41,7 +41,7 @@ class StatsDataObject implements JsonSerializable
     {
         $currentDateParams = $this->getCurrentDateParams();
 
-        $this->setAnr($data['anr'])
+        $this->setAnr($data['anr'] ?? '')
             ->setType($data['type'])
             ->setData($data['data'])
             ->setDay($data['day'] ?? $currentDateParams['day'])
@@ -126,13 +126,13 @@ class StatsDataObject implements JsonSerializable
         return $this;
     }
 
-    public static function getAvailableTypes(): array
+    private static function getAvailableTypes(): array
     {
         return [
-            static::TYPE_RISK,
-            static::TYPE_THREAT,
-            static::TYPE_VULNERABILITY,
-            static::TYPE_CARTOGRAPHY,
+            self::TYPE_RISK,
+            self::TYPE_THREAT,
+            self::TYPE_VULNERABILITY,
+            self::TYPE_CARTOGRAPHY,
         ];
     }
 
