@@ -65,7 +65,7 @@ class StatsAnrService
     {
         $currentDate = new DateTime();
         $statsOfToday = $this->statsApiProvider->getStatsData(['fromDate' => $currentDate, 'toDate' => $currentDate]);
-        if (!$forceUpdate && $statsOfToday['metadata']['resultset']['count'] !== 0) {
+        if (!$forceUpdate && !empty($statsOfToday)) {
             throw new StatsAlreadyCollectedException();
         }
 
