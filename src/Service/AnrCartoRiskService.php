@@ -272,8 +272,6 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             }
             $countersRiskOP[$imax][$prob]++;
             $distribRiskOp[$color]++;
-
-
         }
 
         return [$countersRiskOP, $distribRiskOp];

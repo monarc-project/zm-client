@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Monarc\FrontOffice\Service\Exception;
+namespace Monarc\FrontOffice\Stats\Exception;
 
 use Monarc\Core\Exception\Exception;
 use Throwable;

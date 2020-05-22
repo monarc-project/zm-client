@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Monarc\FrontOffice\Provider;
+namespace Monarc\FrontOffice\Stats\Provider;
 
 use Doctrine\ORM\EntityNotFoundException;
 use GuzzleHttp\Client;
@@ -8,8 +8,9 @@ use GuzzleHttp\HandlerStack;
 use Monarc\FrontOffice\Exception\InvalidConfigurationException;
 use Monarc\FrontOffice\Model\Entity\Setting;
 use Monarc\FrontOffice\Model\Table\SettingTable;
-use Monarc\FrontOffice\Provider\Exception\StatsFetchingException;
-use Monarc\FrontOffice\Provider\Exception\StatsSendingException;
+use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
+use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
+use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
 
 class StatsApiProvider
 {
@@ -44,32 +45,37 @@ class StatsApiProvider
         $this->apiKey = $settingTable->findByName(Setting::SETTINGS_STATS)->getValue()[Setting::SETTING_STATS_API_KEY];
     }
 
+    /**
+     * @param array $params
+     *
+     * @return StatsDataObject[]
+     *
+     * @throws StatsFetchingException
+     */
     public function getStatsData(array $params): array
     {
         $response = $this->guzzleClient->get(self::BASE_URI . '/stats', [
-            [
-                'headers' => $this->getAuthHeaders(),
-                'query' => $params,
-            ]
+            'headers' => $this->getAuthHeaders(),
+            'query' => $params,
         ]);
 
         if ($response->getStatusCode() !== 200) {
             throw new StatsFetchingException($response->getBody()->getContents(), $response->getStatusCode());
         }
 
-        return json_decode($response->getBody()->getContents(), true);
+        return $this->buildResponse($response->getBody()->getContents());
     }
 
     /**
+     * @param StatsDataObject[] $data
+     *
      * @throws StatsSendingException
      */
-    public function sendStatsData(array $data): void
+    public function sendStatsDataInBatch(array $data): void
     {
         $response = $this->guzzleClient->post(self::BASE_URI . '/stats', [
-            [
-                'headers' => $this->getAuthHeaders(),
-                'body' => $data,
-            ]
+            'headers' => $this->getAuthHeaders(),
+            'json' => $data,
         ]);
 
         if ($response->getStatusCode() !== 200) {
@@ -93,5 +99,15 @@ class StatsApiProvider
         if (empty($config['statsApi']['baseUrl'])) {
             throw new InvalidConfigurationException(['statsApi.baseUrl']);
         }
+    }
+
+    private function buildResponse(string $responseContents): array
+    {
+        $response = [];
+        foreach (json_decode($responseContents, true) as $data) {
+            $response[] = new StatsDataObject($data);
+        }
+
+        return $response;
     }
 }

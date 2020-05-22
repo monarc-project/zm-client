@@ -126,7 +126,7 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ')
             ->where('ir.anr = :anr')
             ->setParameter(':anr', $anr)
-            ->andWhere('ir.cacheMaxRisk <> -1 OR ir.cacheTargetedRisk <> -1')
+            ->andWhere('ir.cacheMaxRisk > -1 OR ir.cacheTargetedRisk > -1')
             ->innerJoin('ir.instance', 'i')
             ->innerJoin('ir.threat', 't')
             ->innerJoin('i.object', 'o')

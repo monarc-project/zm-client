@@ -5,7 +5,7 @@ define('PROJECT_ROOT', __DIR__ . '/../../../../');
 
 require PROJECT_ROOT . 'vendor/autoload.php';
 
-use Monarc\FrontOffice\Command\CollectStatsCommand;
+use Monarc\FrontOffice\Stats\Command\CollectStatsCommand;
 use Monarc\FrontOffice\Command\CreateUsersCommand;
 use Monarc\FrontOffice\Command\FixRecommendationsPosition;
 use Symfony\Component\Console\Application as ConsoleApp;

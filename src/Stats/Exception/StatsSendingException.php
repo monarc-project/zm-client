@@ -1,6 +1,6 @@
 <?php
 
-namespace Monarc\FrontOffice\Provider\Exception;
+namespace Monarc\FrontOffice\Stats\Exception;
 
 use Monarc\Core\Exception\Exception;
 

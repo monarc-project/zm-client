@@ -1,8 +1,8 @@
 <?php
 
-namespace Monarc\FrontOffice\Command;
+namespace Monarc\FrontOffice\Stats\Command;
 
-use Monarc\FrontOffice\Service\StatsAnrService;
+use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;

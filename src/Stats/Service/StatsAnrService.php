@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Monarc\FrontOffice\Service;
+namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
 use Monarc\FrontOffice\Model\Entity\Anr;
@@ -10,10 +10,11 @@ use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
-use Monarc\FrontOffice\Provider\Exception\StatsFetchingException;
-use Monarc\FrontOffice\Provider\Exception\StatsSendingException;
-use Monarc\FrontOffice\Provider\StatsApiProvider;
-use Monarc\FrontOffice\Service\Exception\StatsAlreadyCollectedException;
+use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
+use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
+use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
+use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
+use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 
 class StatsAnrService
 {
@@ -74,14 +75,15 @@ class StatsAnrService
 
         $statsData = [];
         foreach ($anrLists as $anr) {
-            $statsData[] = [
-                'anr_uuid' => $anr->getUuid(),
-                'stats_data' => $this->collectAnrStats($anr),
-            ];
+            $statsData[] = new StatsDataObject([
+                'anr' => $anr->getUuid(),
+                'data' => $this->collectAnrStats($anr),
+                'type' => StatsDataObject::TYPE_CARTOGRAPHY,
+            ]);
         }
 
         if (!empty($statsData)) {
-            $this->statsApiProvider->sendStatsData($statsData);
+            $this->statsApiProvider->sendStatsDataInBatch($statsData);
         }
     }
 
@@ -261,25 +263,23 @@ class StatsAnrService
         $targetRisksDistributed = [];
         $risksData = $this->operationalRiskTable->findRisksDataForStatsByAnr($anr);
         foreach ($risksData as $riskData) {
-            if ($riskData['cacheNetRisk'] > -1) {
-                $maxImpact = max(
-                    $riskData['netR'],
-                    $riskData['netO'],
-                    $riskData['netL'],
-                    $riskData['netF'],
-                    $riskData['netP']
-                );
-                $riskValue = $riskData['cacheNetRisk'];
-                $prob = $riskData['netProb'];
-                [$currentRisksCounters, $currentRisksDistributed] = $this->countOperationalRisks(
-                    $anr,
-                    $riskValue,
-                    $currentRisksCounters,
-                    $maxImpact,
-                    $prob,
-                    $currentRisksDistributed
-                );
-            }
+            $maxImpact = max(
+                $riskData['netR'],
+                $riskData['netO'],
+                $riskData['netL'],
+                $riskData['netF'],
+                $riskData['netP']
+            );
+            $riskValue = $riskData['cacheNetRisk'];
+            $prob = $riskData['netProb'];
+            [$currentRisksCounters, $currentRisksDistributed] = $this->countOperationalRisks(
+                $anr,
+                $riskValue,
+                $currentRisksCounters,
+                $maxImpact,
+                $prob,
+                $currentRisksDistributed
+            );
             if ($riskData['cacheTargetedRisk'] > -1) {
                 $maxImpact = max(
                     $riskData['targetedR'],
@@ -290,15 +290,15 @@ class StatsAnrService
                 );
                 $riskValue = $riskData['cacheTargetedRisk'];
                 $prob = $riskData['targetedProb'];
-                [$targetRisksCounters, $targetRisksDistributed] = $this->countOperationalRisks(
-                    $anr,
-                    $riskValue,
-                    $targetRisksCounters,
-                    $maxImpact,
-                    $prob,
-                    $targetRisksDistributed
-                );
             }
+            [$targetRisksCounters, $targetRisksDistributed] = $this->countOperationalRisks(
+                $anr,
+                $riskValue,
+                $targetRisksCounters,
+                $maxImpact,
+                $prob,
+                $targetRisksDistributed
+            );
         }
 
         return [

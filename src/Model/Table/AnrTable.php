@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\Query\Expr;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -45,9 +46,9 @@ class AnrTable extends AbstractEntityTable
     /**
      * @param int[] $anrIds
      *
-     * @return ArrayCollection|Anr[]
+     * @return Anr[]
      */
-    public function findByIds(array $anrIds): ArrayCollection
+    public function findByIds(array $anrIds): array
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('a');
 
