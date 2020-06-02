@@ -1380,11 +1380,20 @@ class AnrInstanceService extends InstanceService
                   if (empty($measures)) {
                       // load the referential linked to the measure
                       $referentials = $this->get('referentialTable')
-                                            ->getEntityByFields(['anr' => $anr->id,
-                                            'uuid' => $measure_array['referential']]);
-                      $soaCategories = $this->get('soaCategoryTable')
-                                            ->getEntityByFields(['anr' => $anr->id,
-                                                'label' . $this->getLanguage() => $measure_array['category']]);
+                          ->getEntityByFields([
+                              'anr' => $anr->getId(),
+                              'uuid' => $measure_array['referential']
+                          ]);
+                      $soaCategories = $this
+                          ->get('soaCategoryTable')
+                          ->getEntityByFields([
+                              'anr' => $anr->getId(),
+                              'label' . $this->getLanguage() => $measure_array['category'],
+                              'referential' => [
+                                  'anr' => $anr->getId(),
+                                  'uuid' => $referentials[0]->getUuid()
+                              ]
+                          ]);
                       if (!empty($referentials) && !empty($soaCategories)) {
                           // a measure must be linked to a referential and a category
                           $newMeasure = new \Monarc\FrontOffice\Model\Entity\Measure($measure_array);
