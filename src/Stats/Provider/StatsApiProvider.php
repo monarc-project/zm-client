@@ -79,7 +79,7 @@ class StatsApiProvider
             'json' => $data,
         ]);
 
-        if ($response->getStatusCode() !== 200) {
+        if ($response->getStatusCode() !== 201) {
             // TODO: send a notification or email.
             throw new StatsSendingException($response->getBody()->getContents(), $response->getStatusCode());
         }

@@ -15,6 +15,7 @@ class StatsDataObject implements JsonSerializable
     public const TYPE_THREAT = 'threat';
     public const TYPE_VULNERABILITY = 'vulnerability';
     public const TYPE_CARTOGRAPHY = 'cartography';
+    public const TYPE_COMPLIANCE = 'compliance';
 
     /** @var string */
     private $anr;
@@ -32,6 +33,9 @@ class StatsDataObject implements JsonSerializable
     private $month;
 
     /** @var int */
+    private $quarter;
+
+    /** @var int */
     private $year;
 
     /** @var array */
@@ -47,6 +51,7 @@ class StatsDataObject implements JsonSerializable
             ->setDay($data['day'] ?? $currentDateParams['day'])
             ->setWeek($data['week'] ?? $currentDateParams['week'])
             ->setMonth($data['month'] ?? $currentDateParams['month'])
+            ->setQuarter($data['quarter'] ?? $currentDateParams['quarter'])
             ->setYear($data['year'] ?? $currentDateParams['year']);
     }
 
@@ -103,6 +108,18 @@ class StatsDataObject implements JsonSerializable
         return $this->year;
     }
 
+    public function getQuarter(): int
+    {
+        return $this->quarter;
+    }
+
+    public function setQuarter(int $quarter): self
+    {
+        $this->quarter = $quarter;
+
+        return $this;
+    }
+
     public function setYear(int $year): self
     {
         $this->year = $year;
@@ -133,6 +150,7 @@ class StatsDataObject implements JsonSerializable
             self::TYPE_THREAT,
             self::TYPE_VULNERABILITY,
             self::TYPE_CARTOGRAPHY,
+            self::TYPE_COMPLIANCE,
         ];
     }
 
@@ -156,6 +174,7 @@ class StatsDataObject implements JsonSerializable
             'day' => $this->day,
             'week' => $this->week,
             'month' => $this->month,
+            'quarter' => $this->quarter,
             'year' => $this->year,
             'data' => $this->data,
         ];
@@ -169,6 +188,7 @@ class StatsDataObject implements JsonSerializable
             'day' => (int)$dateTime->format('z') + 1,
             'week' => (int)$dateTime->format('W'),
             'month' => (int)$dateTime->format('m'),
+            'quarter' => (int)ceil($dateTime->format('m') / 3),
             'year' => (int)$dateTime->format('Y'),
         ];
     }
