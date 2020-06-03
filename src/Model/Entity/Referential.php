@@ -32,61 +32,11 @@ class Referential extends ReferentialSuperClass
     protected $anr;
 
     /**
-     * @var Measure[]
-     *
-     * @ORM\OneToMany(targetEntity="Measure", mappedBy="referential", cascade={"persist"})
-     */
-    protected $measures;
-
-    /**
-     * @var SoaCategory[]
-     *
-     * @ORM\OneToMany(targetEntity="SoaCategory", mappedBy="referential", cascade={"persist"})
-     */
-    protected $categories;
-
-    /**
     * @param Anr $anr
     */
     public function setAnr($anr): self
     {
         $this->anr = $anr;
-
-        return $this;
-    }
-
-    /**
-     * @return Measure[]
-     */
-    public function getMeasures()
-    {
-        return $this->measures;
-    }
-
-    /**
-     * @param Measure[] $measures
-     */
-    public function setMeasures($measures): self
-    {
-        $this->measures = $measures;
-
-        return $this;
-    }
-
-    /**
-     * @return SoaCategory[]
-     */
-    public function getCategories()
-    {
-        return $this->categories;
-    }
-
-    /**
-     * @param SoaCategory $categories
-     */
-    public function setCategories($categories): self
-    {
-        $this->categories = $categories;
 
         return $this;
     }
