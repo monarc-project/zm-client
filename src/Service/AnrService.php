@@ -1306,7 +1306,7 @@ class AnrService extends AbstractService
             $this->setUserCurrentAnr($newAnr->get('id'));
 
         } catch (\Exception $e) {
-            if (is_int($id)) {
+            if (isset($id) && is_int($id)) {
                 $anrCliTable->delete($id);
             }
             throw new  Exception('Error during analysis creation', 412);
