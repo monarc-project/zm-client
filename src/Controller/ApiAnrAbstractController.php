@@ -65,7 +65,7 @@ abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\Abstract
         $class = $this->getService()->get('entity');
         $entity = new $class();
         $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
-        if (\count($ids) === 2 && empty(array_diff(['uuid', 'anr'], $ids)) && Uuid::isValid($id)) {
+        if (\count($ids) === 2 && empty(array_diff(['uuid', 'anr'], $ids)) && !is_array($id) && Uuid::isValid($id)) {
             $identifier['uuid'] = $id;
             $identifier['anr'] = $anrId;
         } else {

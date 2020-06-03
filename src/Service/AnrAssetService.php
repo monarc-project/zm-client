@@ -238,11 +238,13 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                     $newAmvs[] = $keyAmv;
                     $currentAmvs[] = $keyAmv;
                     // link the measures we only link the measures if they are in the DB (potential copyright issue)
-                    foreach ($valueAmv['measures'] as $m) {
-                      try{
-                        $measure = $this->get('measureTable')->getEntity(['anr'=>$anr->id , 'uuid' =>$m]);
-                        $measure->addAmv($newAmv);
-                      }catch (Exception $e) {}
+                    if (isset($valueAmv['measures']) && is_array($valueAmv['measures'])) {
+                        foreach ($valueAmv['measures'] as $m) {
+                            try {
+                                $measure = $this->get('measureTable')->getEntity(['anr' => $anr->getId(), 'uuid' => $m]);
+                                $measure->addAmv($newAmv);
+                            } catch (Exception $e) {}
+                        }
                     }
 
                     //update instances

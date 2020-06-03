@@ -21,10 +21,10 @@ use Monarc\Core\Model\Entity\ReferentialSuperClass;
 class Referential extends ReferentialSuperClass
 {
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", )
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -32,62 +32,12 @@ class Referential extends ReferentialSuperClass
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Measure
-     *
-     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Measure", mappedBy="referential", cascade={"persist"})
-     */
-    protected $measures;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\SoaCategory
-     *
-     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\SoaCategory", mappedBy="referential", cascade={"persist"})
-     */
-    protected $categories;
-
-    /**
-    * @param int $anr
-    * @return Referential
+    * @param Anr $anr
     */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
-        return $this;
-    }
 
-    /**
-     * @return Measure
-     */
-    public function getMeasures()
-    {
-        return $this->measures;
-    }
-
-    /**
-     * @param \Monarc\FrontOffice\Model\Entity\Measure $measures
-     * @return Referential
-     */
-    public function setMeasures($measures)
-    {
-        $this->measures = $measures;
-        return $this;
-    }
-
-    /**
-     * @return Category
-     */
-    public function getCategories()
-    {
-        return $this->categories;
-    }
-
-    /**
-     * @param \Monarc\FrontOffice\Model\Entity\Category $categories
-     * @return Referential
-     */
-    public function setCategories($categories)
-    {
-        $this->categories = $categories;
         return $this;
     }
 }

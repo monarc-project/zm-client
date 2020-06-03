@@ -646,6 +646,11 @@ class AnrInstanceService extends InstanceService
                                     $reco['recommandationSet'] = $uuidRecSet;
                                 }
                                 $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
+                                if (empty($recSets)) {
+                                    # sets should be created/imported previously
+                                    # this case should never occur, except if the exported analysis had controls without categories
+                                    continue;
+                                }
 
                                 /** @var RecommandationTable $recommendationTable */
                                 $recommendationTable = $this->get('recommandationTable');
@@ -1028,6 +1033,12 @@ class AnrInstanceService extends InstanceService
                                 $reco['recommandationSet'] = $uuidRecSet;
                             }
                             $recSets = $this->get('recommandationSetTable')->getEntityByFields(['anr' => $anr->id, 'uuid' => $reco['recommandationSet']]);
+                            if (empty($recSets)) {
+                                # sets should be created/imported previously
+                                # this case should never occur, except if the exported analysis had controls without categories
+                                continue;
+                            }
+
                             // La recommandation
                             if (isset($sharedData['recos'][$reco['uuid']])) {
                                 // Cette recommandation a déjà été gérée dans cet import
@@ -1380,11 +1391,20 @@ class AnrInstanceService extends InstanceService
                   if (empty($measures)) {
                       // load the referential linked to the measure
                       $referentials = $this->get('referentialTable')
-                                            ->getEntityByFields(['anr' => $anr->id,
-                                            'uuid' => $measure_array['referential']]);
-                      $soaCategories = $this->get('soaCategoryTable')
-                                            ->getEntityByFields(['anr' => $anr->id,
-                                                'label' . $this->getLanguage() => $measure_array['category']]);
+                          ->getEntityByFields([
+                              'anr' => $anr->getId(),
+                              'uuid' => $measure_array['referential']
+                          ]);
+                      $soaCategories = $this
+                          ->get('soaCategoryTable')
+                          ->getEntityByFields([
+                              'anr' => $anr->getId(),
+                              'label' . $this->getLanguage() => $measure_array['category'],
+                              'referential' => [
+                                  'anr' => $anr->getId(),
+                                  'uuid' => $referentials[0]->getUuid()
+                              ]
+                          ]);
                       if (!empty($referentials) && !empty($soaCategories)) {
                           // a measure must be linked to a referential and a category
                           $newMeasure = new \Monarc\FrontOffice\Model\Entity\Measure($measure_array);
