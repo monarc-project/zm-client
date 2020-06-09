@@ -37,12 +37,6 @@ class StatsAnrService
     /** @var StatsApiProvider */
     private $statsApiProvider;
 
-    /** @var array */
-    private $informationalRisksData;
-
-    /** @var array */
-    private $operationalRisksData;
-
     public function __construct(
         AnrTable $anrTable,
         ScaleTable $scaleTable,
@@ -96,27 +90,27 @@ class StatsAnrService
 
         $statsData = [];
         foreach ($anrLists as $anr) {
-            $anrStats = $this->collectAnrStats($anr);
+            $anrStatsPerLevel = $this->collectAnrStatsPerLevel($anr);
 
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_RISK,
-                'data' => $this->transformStatsDataToRisksTypeFormat($anrStats),
-            ]);
-            $statsData[] = new StatsDataObject([
-                'anr' => $anr->getUuid(),
-                'type' => StatsDataObject::TYPE_THREAT,
-                'data' => $this->collectAnrThreatStats($anr),
-            ]);
-            $statsData[] = new StatsDataObject([
-                'anr' => $anr->getUuid(),
-                'type' => StatsDataObject::TYPE_VULNERABILITY,
-                'data' => $this->collectAnrVulnerabilityStats($anr),
+                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_RISK],
             ]);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_CARTOGRAPHY,
-                'data' => $anrStats,
+                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_CARTOGRAPHY],
+            ]);
+            $statsData[] = new StatsDataObject([
+                'anr' => $anr->getUuid(),
+                'type' => StatsDataObject::TYPE_THREAT,
+                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_THREAT],
+            ]);
+            $statsData[] = new StatsDataObject([
+                'anr' => $anr->getUuid(),
+                'type' => StatsDataObject::TYPE_VULNERABILITY,
+                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_VULNERABILITY],
             ]);
         }
 
@@ -125,7 +119,7 @@ class StatsAnrService
         }
     }
 
-    private function collectAnrStats(Anr $anr): array
+    private function collectAnrStatsPerLevel(Anr $anr): array
     {
         $scalesRanges = $this->prepareScalesRanges($anr);
         $likelihoodScales = $this->calculateScalesColumnValues($scalesRanges);
@@ -134,20 +128,54 @@ class StatsAnrService
         $operationalRisksValues = $this->calculateOperationalRisks($anr);
 
         return [
-            'scales' => [
-                'impact' => $scalesRanges[Scale::TYPE_IMPACT],
-                'probability' => $scalesRanges[Scale::TYPE_THREAT],
-                'likelihood' => $likelihoodScales,
-            ],
-            'risks' => [
-                'current' => [
-                    'informational' => $informationalRisksValues['current'],
-                    'operational' => $operationalRisksValues['current'],
+            StatsDataObject::TYPE_RISK => [
+                'total' => [
+                    'current' => [
+                        'informational' => $this->getTotalValue(
+                            $informationalRisksValues[StatsDataObject::TYPE_RISK]['current']
+                        ),
+                        'operational' => $this->getTotalValue(
+                            $operationalRisksValues[StatsDataObject::TYPE_RISK]['current']
+                        ),
+                    ],
+                    'residual' => [
+                        'informational' => $this->getTotalValue(
+                            $informationalRisksValues[StatsDataObject::TYPE_RISK]['residual']
+                        ),
+                        'operational' => $this->getTotalValue(
+                            $operationalRisksValues[StatsDataObject::TYPE_RISK]['residual']
+                        ),
+                    ],
                 ],
-                'residual' => [
-                    'informational' => $informationalRisksValues['residual'],
-                    'operational' => $operationalRisksValues['residual'],
-                ]
+                'risks' => [
+                    'current' => [
+                        'informational' => $informationalRisksValues[StatsDataObject::TYPE_RISK]['current'],
+                        'operational' => $operationalRisksValues[StatsDataObject::TYPE_RISK]['current'],
+                    ],
+                    'residual' => [
+                        'informational' => $informationalRisksValues[StatsDataObject::TYPE_RISK]['residual'],
+                        'operational' => $operationalRisksValues[StatsDataObject::TYPE_RISK]['residual'],
+                    ],
+                ],
+            ],
+            StatsDataObject::TYPE_THREAT => $informationalRisksValues[StatsDataObject::TYPE_THREAT],
+            StatsDataObject::TYPE_VULNERABILITY => $informationalRisksValues[StatsDataObject::TYPE_VULNERABILITY],
+            StatsDataObject::TYPE_CARTOGRAPHY => [
+                'scales' => [
+                    'impact' => $scalesRanges[Scale::TYPE_IMPACT],
+                    'probability' => $scalesRanges[Scale::TYPE_THREAT],
+                    'likelihood' => $likelihoodScales,
+                ],
+                'risks' => [
+                    'current' => [
+                        'informational' => $informationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['current'],
+                        'operational' => $operationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['current'],
+                    ],
+                    'residual' => [
+                        'informational' =>  $informationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['residual'],
+                        'operational' => $operationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['residual'],
+                    ]
+                ],
             ],
         ];
     }
@@ -190,12 +218,14 @@ class StatsAnrService
     }
 
     /**
-     * Calculates the number of risks for each impact/MxV combo.
+     * Calculates the number of risks per each level, its distribution, threats and vulnerabilities rates per uuid key.
      */
-    public function calculateInformationalRisks(Anr $anr): array
+    private function calculateInformationalRisks(Anr $anr): array
     {
         $currentRisksValues = [];
-        $targetRisksValues = [];
+        $residualRisksValues = [];
+        $threatsValues = [];
+        $vulnerabilitiesValues = [];
         $risksData = $this->informationalRiskTable->findRisksDataForStatsByAnr($anr);
         foreach ($risksData as $riskData) {
             $confidentiality = $riskData['threatConfidentiality'] ? $riskData['instanceConfidentiality'] : 0;
@@ -208,18 +238,32 @@ class StatsAnrService
             }
             $amvKey = $riskData['assetId'] . '_' . $riskData['threatId'] . '_' . $riskData['vulnerabilityId'];
             if ($riskData['cacheMaxRisk'] > -1) {
-                $context = $this->getRiskContext($anr, $amvKey, $maxImpact, $riskData['cacheMaxRisk']);
-                $this->setRiskValues($currentRisksValues, $context, $amvKey, $riskData);
+                $riskContext = $this->getRiskContext($anr, $amvKey, $maxImpact, $riskData['cacheMaxRisk']);
+                $this->setRiskValues($currentRisksValues, $riskContext, $amvKey, $riskData);
+
+                $this->setThreatsValues($threatsValues, $amvKey, $riskData);
+                $this->setVulnerabilitiesValues($vulnerabilitiesValues, $amvKey, $riskData);
             }
             if ($riskData['cacheTargetedRisk'] > -1) {
-                $context = $this->getRiskContext($anr, $amvKey, $maxImpact, $riskData['cacheTargetedRisk']);
-                $this->setRiskValues($targetRisksValues, $context, $amvKey, $riskData);
+                $riskContext = $this->getRiskContext($anr, $amvKey, $maxImpact, $riskData['cacheTargetedRisk']);
+                $this->setRiskValues($residualRisksValues, $riskContext, $amvKey, $riskData);
             }
         }
 
+        $currentInformationalRisks = $this->countInformationalRisksValues($currentRisksValues);
+        $residualInformationalRisks = $this->countInformationalRisksValues($residualRisksValues);
+
         return [
-            'current' => $this->countInformationalRisksValues($currentRisksValues),
-            'residual' => $this->countInformationalRisksValues($targetRisksValues),
+            StatsDataObject::TYPE_RISK => [
+                'current' => $currentInformationalRisks['distributed'],
+                'residual' => $residualInformationalRisks['distributed'],
+            ],
+            StatsDataObject::TYPE_THREAT => $this->calculateAverageRatesAndCountPerKey($threatsValues),
+            StatsDataObject::TYPE_VULNERABILITY => $this->calculateAverageRatesAndCountPerKey($vulnerabilitiesValues),
+            StatsDataObject::TYPE_CARTOGRAPHY => [
+                'current' => $currentInformationalRisks['counters'],
+                'residual' => $residualInformationalRisks['counters'],
+            ],
         ];
     }
 
@@ -234,18 +278,61 @@ class StatsAnrService
         ];
     }
 
-    private function setRiskValues(&$risksValues, $riskContext, $amvKey, $riskData): void
+    private function setRiskValues(array &$risksValues, array $riskContext, string $amvKey, array $riskData): void
     {
-        $objectId = $riskData['objectId'];
-        if ($riskData['scope'] === MonarcObject::SCOPE_GLOBAL) {
-            if (empty($risksValues[$objectId][$amvKey])
-                || $riskContext['max'] > $risksValues[$objectId][$amvKey][0]
-            ) {
-                $risksValues[$objectId][$amvKey][0] = $riskContext;
-            }
-        } else {
-            $risksValues[$objectId][$amvKey][$riskData['id']] = $riskContext;
+        $objectId = (string)$riskData['objectId'];
+        if ($riskData['scope'] === MonarcObject::SCOPE_GLOBAL
+            && !empty($risksValues[$objectId][$amvKey])
+            && $riskContext['max'] <= current($risksValues[$objectId][$amvKey])['max']
+        ) {
+            return;
         }
+
+        $risksValues[$objectId][$amvKey][$riskData['id']] = $riskContext;
+    }
+
+    private function setThreatsValues(array &$threatsValues, string $amvKey, array $riskData): void
+    {
+        $objectId = (string)$riskData['objectId'];
+        if ($riskData['scope'] === MonarcObject::SCOPE_GLOBAL
+            && !empty($threatsValues[$objectId][$amvKey])
+            && $riskData['cacheMaxRisk'] <= current($threatsValues[$objectId][$amvKey])['maxRisk']
+        ) {
+            return;
+        }
+
+        $threatsValues[$objectId][$amvKey][$riskData['id']] = [
+            'key' => (string)$riskData['threatId'],
+            'label1' => $riskData['threatLabel1'],
+            'label2' => $riskData['threatLabel2'],
+            'label3' => $riskData['threatLabel3'],
+            'label4' => $riskData['threatLabel4'],
+            'maxRisk' => $riskData['cacheMaxRisk'],
+            'count' => 1,
+            'averageRate' => $riskData['threatRate'],
+        ];
+    }
+
+    private function setVulnerabilitiesValues(array &$vulnerabilitiesValues, string $amvKey, array $riskData): void
+    {
+        $objectId = (string)$riskData['objectId'];
+        if ($riskData['scope'] === MonarcObject::SCOPE_GLOBAL
+            && !empty($vulnerabilitiesValues[$objectId][$amvKey])
+            && $riskData['cacheMaxRisk'] <= current($vulnerabilitiesValues[$objectId][$amvKey])['maxRisk']
+        ) {
+            return;
+        }
+
+        $vulnerabilitiesValues[$objectId][$amvKey][$riskData['id']] = [
+            'key' => (string)$riskData['vulnerabilityId'],
+            'label1' => $riskData['vulnerabilityLabel1'],
+            'label2' => $riskData['vulnerabilityLabel2'],
+            'label3' => $riskData['vulnerabilityLabel3'],
+            'label4' => $riskData['vulnerabilityLabel4'],
+            'count' => 1,
+            'maxRisk' => $riskData['cacheMaxRisk'],
+            'averageRate' => $riskData['vulnerabilityRate'],
+        ];
     }
 
     private function countInformationalRisksValues(array $risksValues): array
@@ -265,23 +352,46 @@ class StatsAnrService
                 'value' => 0,
             ],
         ];
-        foreach ($risksValues as $risksValue) {
-            foreach ($risksValue as $contexts) {
-                foreach ($contexts as $context) {
-                    if (!isset($counters[$context['impact']][$context['likelihood']])) {
-                        $counters[$context['impact']][$context['likelihood']] = 0;
-                    }
-                    $counters[$context['impact']][$context['likelihood']]++;
+        foreach (array_reduce(array_reduce($risksValues, 'array_merge', []), 'array_merge', []) as $context) {
+            if (!isset($counters[$context['impact']][$context['likelihood']])) {
+                $counters[$context['impact']][$context['likelihood']] = 0;
+            }
+            $counters[$context['impact']][$context['likelihood']]++;
 
-                    $levelElementIndex = array_search($context['level'], array_column($distributed, 'level'), true);
-                    if ($levelElementIndex !== false) {
-                        $distributed[(int)$levelElementIndex]['value']++;
-                    }
-                }
+            $levelElementIndex = array_search($context['level'], array_column($distributed, 'level'), true);
+            if ($levelElementIndex !== false) {
+                $distributed[(int)$levelElementIndex]['value']++;
             }
         }
 
         return compact('counters', 'distributed');
+    }
+
+    private function calculateAverageRatesAndCountPerKey(array $values): array
+    {
+        $averageRatesPerKey = [];
+        foreach (array_reduce(array_reduce($values, 'array_merge', []), 'array_merge', []) as $value) {
+            if (isset($averageRatesPerKey[$value['key']])) {
+                $averageRatesPerKey[$value['key']]['averageRate'] =
+                    bcdiv(
+                        bcadd(
+                            bcmul(
+                                $averageRatesPerKey[$value['key']]['averageRate'],
+                                $averageRatesPerKey[$value['key']]['count'],
+                                2
+                            ),
+                            $value['averageRate'],
+                            2
+                        ),
+                        ++$averageRatesPerKey[$value['key']]['count'],
+                        2
+                    );
+            } else {
+                $averageRatesPerKey[$value['key']] = $value;
+            }
+        }
+
+        return $averageRatesPerKey;
     }
 
     /**
@@ -304,8 +414,8 @@ class StatsAnrService
                 'value' => 0,
             ],
         ];
-        $targetRisksCounters = [];
-        $targetRisksDistributed = [
+        $residualRisksCounters = [];
+        $residualRisksDistributed = [
             [
                 'level' => self::LOW_RISKS,
                 'value' => 0,
@@ -349,24 +459,24 @@ class StatsAnrService
                 $riskValue = $riskData['cacheTargetedRisk'];
                 $prob = $riskData['targetedProb'];
             }
-            [$targetRisksCounters, $targetRisksDistributed] = $this->countOperationalRisks(
+            [$residualRisksCounters, $residualRisksDistributed] = $this->countOperationalRisks(
                 $anr,
                 $riskValue,
-                $targetRisksCounters,
+                $residualRisksCounters,
                 $maxImpact,
                 $prob,
-                $targetRisksDistributed
+                $residualRisksDistributed
             );
         }
 
         return [
-            'current' => [
-                'counters' => $currentRisksCounters,
-                'distributed' => $currentRisksDistributed,
+            StatsDataObject::TYPE_RISK => [
+                'current' => $currentRisksDistributed,
+                'residual' => $residualRisksDistributed,
             ],
-            'residual' => [
-                'counters' => $targetRisksCounters,
-                'distributed' => $targetRisksDistributed,
+            StatsDataObject::TYPE_CARTOGRAPHY => [
+                'current' => $currentRisksCounters,
+                'residual' => $residualRisksCounters,
             ],
         ];
     }
@@ -408,40 +518,6 @@ class StatsAnrService
         }
 
         return self::HIGH_RISKS;
-    }
-
-    private function transformStatsDataToRisksTypeFormat(array $statsData): array
-    {
-        return [
-            'total' => [
-                'currentRisks' => [
-                    'informational' => $this->getTotalValue(
-                        $statsData['risks']['current']['informational']['distributed']
-                    ),
-                    'operational' => $this->getTotalValue(
-                        $statsData['risks']['current']['operational']['distributed']
-                    ),
-                ],
-                'residualRisks' => [
-                    'informational' => $this->getTotalValue(
-                        $statsData['risks']['residual']['informational']['distributed']
-                    ),
-                    'operational' => $this->getTotalValue(
-                        $statsData['risks']['residual']['operational']['distributed']
-                    ),
-                ],
-            ],
-            'risks' => [
-                'current' => [
-                    'informational' => $statsData['risks']['current']['informational']['distributed'],
-                    'operational' => $statsData['risks']['current']['operational']['distributed'],
-                ],
-                'residual' => [
-                    'informational' => $statsData['risks']['residual']['informational']['distributed'],
-                    'operational' => $statsData['risks']['residual']['operational']['distributed'],
-                ],
-            ],
-        ];
     }
 
     private function getTotalValue(array $values): int
