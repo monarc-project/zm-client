@@ -309,7 +309,7 @@ class StatsAnrService
             'label4' => $riskData['threatLabel4'],
             'maxRisk' => $riskData['cacheMaxRisk'],
             'count' => 1,
-            'averageRate' => $riskData['threatRate'],
+            'averageRate' => (string)$riskData['threatRate'],
         ];
     }
 
@@ -331,7 +331,7 @@ class StatsAnrService
             'label4' => $riskData['vulnerabilityLabel4'],
             'count' => 1,
             'maxRisk' => $riskData['cacheMaxRisk'],
-            'averageRate' => $riskData['vulnerabilityRate'],
+            'averageRate' => (string)$riskData['vulnerabilityRate'],
         ];
     }
 
@@ -377,13 +377,13 @@ class StatsAnrService
                         bcadd(
                             bcmul(
                                 $averageRatesPerKey[$value['key']]['averageRate'],
-                                $averageRatesPerKey[$value['key']]['count'],
+                                (string)$averageRatesPerKey[$value['key']]['count'],
                                 2
                             ),
                             $value['averageRate'],
                             2
                         ),
-                        ++$averageRatesPerKey[$value['key']]['count'],
+                        (string)++$averageRatesPerKey[$value['key']]['count'],
                         2
                     );
             } else {
