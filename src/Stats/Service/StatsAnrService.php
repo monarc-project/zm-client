@@ -236,17 +236,24 @@ class StatsAnrService
             if ($maxImpact < 0) {
                 continue;
             }
-            $amvKey = $riskData['assetId'] . '_' . $riskData['threatId'] . '_' . $riskData['vulnerabilityId'];
+            $amvKey = md5($riskData['assetId'] . $riskData['threatId'] . $riskData['vulnerabilityId']);
             if ($riskData['cacheMaxRisk'] > -1) {
-                $riskContext = $this->getRiskContext($anr, $amvKey, $maxImpact, $riskData['cacheMaxRisk']);
-                $this->setRiskValues($currentRisksValues, $riskContext, $amvKey, $riskData);
+                $riskContext = $this->getRiskContext($anr, $maxImpact, $riskData['cacheMaxRisk']);
+                $currentRisksValues = $this->getRiskValues($currentRisksValues, $riskContext, $amvKey, $riskData);
 
-                $this->setThreatsValues($threatsValues, $amvKey, $riskData);
-                $this->setVulnerabilitiesValues($vulnerabilitiesValues, $amvKey, $riskData);
+                if ($riskData['cacheMaxRisk'] > 0) {
+                    $otvKey = md5($riskData['objectId'] . $riskData['threatId'] . $riskData['vulnerabilityId']);
+                    $threatsValues = $this->getThreatsValues($threatsValues, $otvKey, $riskData);
+                    $vulnerabilitiesValues = $this->getVulnerabilitiesValues(
+                        $vulnerabilitiesValues,
+                        $otvKey,
+                        $riskData
+                    );
+                }
             }
             if ($riskData['cacheTargetedRisk'] > -1) {
-                $riskContext = $this->getRiskContext($anr, $amvKey, $maxImpact, $riskData['cacheTargetedRisk']);
-                $this->setRiskValues($residualRisksValues, $riskContext, $amvKey, $riskData);
+                $riskContext = $this->getRiskContext($anr, $maxImpact, $riskData['cacheTargetedRisk']);
+                $residualRisksValues = $this->getRiskValues($residualRisksValues, $riskContext, $amvKey, $riskData);
             }
         }
 
@@ -267,72 +274,69 @@ class StatsAnrService
         ];
     }
 
-    private function getRiskContext(Anr $anr, string $amvKey, int $maxImpact, int $maxRiskValue): array
+    private function getRiskContext(Anr $anr, int $maxImpact, int $maxRiskValue): array
     {
         return [
             'impact' => $maxImpact,
             'likelihood' => $maxImpact > 0 ? round($maxRiskValue / $maxImpact) : 0,
-            'amv' => $amvKey,
             'max' => $maxRiskValue,
             'level' => $this->getRiskLevel($anr, $maxRiskValue),
         ];
     }
 
-    private function setRiskValues(array &$risksValues, array $riskContext, string $amvKey, array $riskData): void
+    private function getRiskValues(array $risksValues, array $riskContext, string $amvKey, array $riskData): array
     {
         $objectId = (string)$riskData['objectId'];
-        if ($riskData['scope'] === MonarcObject::SCOPE_GLOBAL
-            && !empty($risksValues[$objectId][$amvKey])
-            && $riskContext['max'] <= current($risksValues[$objectId][$amvKey])['max']
+        if ($riskData['scope'] !== MonarcObject::SCOPE_GLOBAL
+            || empty($risksValues[$objectId][$amvKey])
+            || $riskContext['max'] > current($risksValues[$objectId][$amvKey])['max']
         ) {
-            return;
+            $risksValues[$objectId][$amvKey][$riskData['id']] = $riskContext;
         }
 
-        $risksValues[$objectId][$amvKey][$riskData['id']] = $riskContext;
+        return $risksValues;
     }
 
-    private function setThreatsValues(array &$threatsValues, string $amvKey, array $riskData): void
+    private function getThreatsValues(array $threatsValues, string $key, array $riskData): array
     {
-        $objectId = (string)$riskData['objectId'];
-        if ($riskData['scope'] === MonarcObject::SCOPE_GLOBAL
-            && !empty($threatsValues[$objectId][$amvKey])
-            && $riskData['cacheMaxRisk'] <= current($threatsValues[$objectId][$amvKey])['maxRisk']
+        if ($riskData['scope'] !== MonarcObject::SCOPE_GLOBAL
+            || empty($threatsValues[$key])
+            || $riskData['cacheMaxRisk'] > current($threatsValues[$key])['maxRisk']
         ) {
-            return;
+            $threatsValues[$key][(string)$riskData['threatId']] = [
+                'uuid' => (string)$riskData['threatId'],
+                'label1' => $riskData['threatLabel1'],
+                'label2' => $riskData['threatLabel2'],
+                'label3' => $riskData['threatLabel3'],
+                'label4' => $riskData['threatLabel4'],
+                'maxRisk' => $riskData['cacheMaxRisk'],
+                'count' => 1,
+                'averageRate' => (string)$riskData['threatRate'],
+            ];
         }
 
-        $threatsValues[$objectId][$amvKey][$riskData['id']] = [
-            'key' => (string)$riskData['threatId'],
-            'label1' => $riskData['threatLabel1'],
-            'label2' => $riskData['threatLabel2'],
-            'label3' => $riskData['threatLabel3'],
-            'label4' => $riskData['threatLabel4'],
-            'maxRisk' => $riskData['cacheMaxRisk'],
-            'count' => 1,
-            'averageRate' => (string)$riskData['threatRate'],
-        ];
+        return $threatsValues;
     }
 
-    private function setVulnerabilitiesValues(array &$vulnerabilitiesValues, string $amvKey, array $riskData): void
+    private function getVulnerabilitiesValues(array $vulnerabilitiesValues, string $key, array $riskData): array
     {
-        $objectId = (string)$riskData['objectId'];
-        if ($riskData['scope'] === MonarcObject::SCOPE_GLOBAL
-            && !empty($vulnerabilitiesValues[$objectId][$amvKey])
-            && $riskData['cacheMaxRisk'] <= current($vulnerabilitiesValues[$objectId][$amvKey])['maxRisk']
+        if ($riskData['scope'] !== MonarcObject::SCOPE_GLOBAL
+            || empty($vulnerabilitiesValues[$key])
+            || $riskData['cacheMaxRisk'] > current($vulnerabilitiesValues[$key])['maxRisk']
         ) {
-            return;
+            $vulnerabilitiesValues[$key][(string)$riskData['vulnerabilityId']] = [
+                'uuid' => (string)$riskData['vulnerabilityId'],
+                'label1' => $riskData['vulnerabilityLabel1'],
+                'label2' => $riskData['vulnerabilityLabel2'],
+                'label3' => $riskData['vulnerabilityLabel3'],
+                'label4' => $riskData['vulnerabilityLabel4'],
+                'count' => 1,
+                'maxRisk' => $riskData['cacheMaxRisk'],
+                'averageRate' => (string)$riskData['vulnerabilityRate'],
+            ];
         }
 
-        $vulnerabilitiesValues[$objectId][$amvKey][$riskData['id']] = [
-            'key' => (string)$riskData['vulnerabilityId'],
-            'label1' => $riskData['vulnerabilityLabel1'],
-            'label2' => $riskData['vulnerabilityLabel2'],
-            'label3' => $riskData['vulnerabilityLabel3'],
-            'label4' => $riskData['vulnerabilityLabel4'],
-            'count' => 1,
-            'maxRisk' => $riskData['cacheMaxRisk'],
-            'averageRate' => (string)$riskData['vulnerabilityRate'],
-        ];
+        return $vulnerabilitiesValues;
     }
 
     private function countInformationalRisksValues(array $risksValues): array
@@ -352,16 +356,26 @@ class StatsAnrService
                 'value' => 0,
             ],
         ];
-        foreach (array_reduce(array_reduce($risksValues, 'array_merge', []), 'array_merge', []) as $context) {
-            if (!isset($counters[$context['impact']][$context['likelihood']])) {
-                $counters[$context['impact']][$context['likelihood']] = 0;
-            }
-            $counters[$context['impact']][$context['likelihood']]++;
 
-            $levelElementIndex = array_search($context['level'], array_column($distributed, 'level'), true);
-            if ($levelElementIndex !== false) {
-                $distributed[(int)$levelElementIndex]['value']++;
+        foreach ($risksValues as $risksValue) {
+            foreach ($risksValue as $values) {
+                foreach ($values as $context) {
+                    if (!isset($counters[$context['impact']][$context['likelihood']])) {
+                        $counters[$context['impact']][$context['likelihood']] = 0;
+                    }
+                    $counters[$context['impact']][$context['likelihood']]++;
+
+                    $levelElementIndex = array_search($context['level'], array_column($distributed, 'level'), true);
+                    if ($levelElementIndex !== false) {
+                        $distributed[(int)$levelElementIndex]['value']++;
+                    }
+                }
             }
+        }
+
+        ksort($counters);
+        foreach ($counters as &$counter) {
+            ksort($counter);
         }
 
         return compact('counters', 'distributed');
@@ -370,28 +384,34 @@ class StatsAnrService
     private function calculateAverageRatesAndCountPerKey(array $values): array
     {
         $averageRatesPerKey = [];
-        foreach (array_reduce(array_reduce($values, 'array_merge', []), 'array_merge', []) as $value) {
-            if (isset($averageRatesPerKey[$value['key']])) {
-                $averageRatesPerKey[$value['key']]['averageRate'] =
-                    bcdiv(
-                        bcadd(
-                            bcmul(
-                                $averageRatesPerKey[$value['key']]['averageRate'],
-                                (string)$averageRatesPerKey[$value['key']]['count'],
+        foreach ($values as $value) {
+            foreach ($value as $context) {
+                $key = $context['uuid'];
+                if (isset($averageRatesPerKey[$key])) {
+                    $averageRatesPerKey[$key]['averageRate'] =
+                        bcdiv(
+                            bcadd(
+                                bcmul(
+                                    $averageRatesPerKey[$key]['averageRate'],
+                                    (string)$averageRatesPerKey[$key]['count'],
+                                    2
+                                ),
+                                $context['averageRate'],
                                 2
                             ),
-                            $value['averageRate'],
+                            (string)++$averageRatesPerKey[$key]['count'],
                             2
-                        ),
-                        (string)++$averageRatesPerKey[$value['key']]['count'],
-                        2
-                    );
-            } else {
-                $averageRatesPerKey[$value['key']] = $value;
+                        );
+                    if ($context['maxRisk'] > $averageRatesPerKey[$key]['maxRisk']) {
+                        $averageRatesPerKey[$key]['maxRisk'] = $context['maxRisk'];
+                    }
+                } else {
+                    $averageRatesPerKey[$key] = $context;
+                }
             }
         }
 
-        return $averageRatesPerKey;
+        return array_values($averageRatesPerKey);
     }
 
     /**
