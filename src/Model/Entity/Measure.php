@@ -99,6 +99,12 @@ class Measure extends MeasureSuperClass
     protected $measuresLinked;
 
     /**
+     * @var Soa|null
+     * @ORM\OneToOne(targetEntity="Soa", mappedBy="measure", cascade={"persist"})
+     */
+    protected $soa;
+
+    /**
      * @return Anr
      */
     public function getAnr()
@@ -114,5 +120,13 @@ class Measure extends MeasureSuperClass
     {
         $this->anr = $anr;
         return $this;
+    }
+
+    /**
+     * @return Soa|null
+     */
+    public function getSoa(): ?Soa
+    {
+        return $this->soa;
     }
 }

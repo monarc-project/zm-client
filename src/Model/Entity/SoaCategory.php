@@ -22,18 +22,18 @@ use Monarc\Core\Model\Entity\SoaCategorySuperClass;
 class SoaCategory extends SoaCategorySuperClass
 {
     /**
-    * @var \Monarc\FrontOffice\Model\Entity\Anr
+    * @var Anr
     *
-    * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+    * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
     * @ORM\JoinColumns({
     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
     * })
     */
     protected $anr;
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Referential
+     * @var Referential
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Referential", inversedBy="categories", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Referential", inversedBy="categories", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -55,6 +55,7 @@ class SoaCategory extends SoaCategorySuperClass
     public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 }

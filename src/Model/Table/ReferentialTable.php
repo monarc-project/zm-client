@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Referential;
 
 /**
@@ -21,5 +22,18 @@ class ReferentialTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Referential::class, $connectedUserService);
+    }
+
+    /**
+     * @return Referential[]
+     */
+    public function findByAnr(Anr $anr)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 }

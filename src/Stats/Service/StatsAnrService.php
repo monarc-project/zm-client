@@ -4,11 +4,13 @@ namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
+use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
@@ -37,17 +39,22 @@ class StatsAnrService
     /** @var StatsApiProvider */
     private $statsApiProvider;
 
+    /** @var ReferentialTable */
+    private $referentialTable;
+
     public function __construct(
         AnrTable $anrTable,
         ScaleTable $scaleTable,
         InstanceRiskTable $informationalRiskTable,
         InstanceRiskOpTable $operationalRiskTable,
+        ReferentialTable $referentialTable,
         StatsApiProvider $statsApiProvider
     ) {
         $this->anrTable = $anrTable;
         $this->scaleTable = $scaleTable;
         $this->informationalRiskTable = $informationalRiskTable;
         $this->operationalRiskTable = $operationalRiskTable;
+        $this->referentialTable = $referentialTable;
         $this->statsApiProvider = $statsApiProvider;
     }
 
@@ -90,27 +97,33 @@ class StatsAnrService
 
         $statsData = [];
         foreach ($anrLists as $anr) {
-            $anrStatsPerLevel = $this->collectAnrStatsPerLevel($anr);
-
+            $anrStatsForRtvc = $this->collectAnrStatsForRiskThreatVulnerabilityAndCartography($anr);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_RISK,
-                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_RISK],
-            ]);
-            $statsData[] = new StatsDataObject([
-                'anr' => $anr->getUuid(),
-                'type' => StatsDataObject::TYPE_CARTOGRAPHY,
-                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_CARTOGRAPHY],
+                'data' => $anrStatsForRtvc[StatsDataObject::TYPE_RISK],
             ]);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_THREAT,
-                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_THREAT],
+                'data' => $anrStatsForRtvc[StatsDataObject::TYPE_THREAT],
             ]);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_VULNERABILITY,
-                'data' => $anrStatsPerLevel[StatsDataObject::TYPE_VULNERABILITY],
+                'data' => $anrStatsForRtvc[StatsDataObject::TYPE_VULNERABILITY],
+            ]);
+            $statsData[] = new StatsDataObject([
+                'anr' => $anr->getUuid(),
+                'type' => StatsDataObject::TYPE_CARTOGRAPHY,
+                'data' => $anrStatsForRtvc[StatsDataObject::TYPE_CARTOGRAPHY],
+            ]);
+
+            $anrStatsForCompliance = $this->collectAnrStatsForCompliance($anr);
+            $statsData[] = new StatsDataObject([
+                'anr' => $anr->getUuid(),
+                'type' => StatsDataObject::TYPE_COMPLIANCE,
+                'data' => $anrStatsForCompliance,
             ]);
         }
 
@@ -119,7 +132,7 @@ class StatsAnrService
         }
     }
 
-    private function collectAnrStatsPerLevel(Anr $anr): array
+    private function collectAnrStatsForRiskThreatVulnerabilityAndCartography(Anr $anr): array
     {
         $scalesRanges = $this->prepareScalesRanges($anr);
         $likelihoodScales = $this->calculateScalesColumnValues($scalesRanges);
@@ -178,6 +191,85 @@ class StatsAnrService
                 ],
             ],
         ];
+    }
+
+    private function collectAnrStatsForCompliance(Anr $anr): array
+    {
+        $complianceStatsValues = [];
+        $references = $this->referentialTable->findByAnr($anr);
+        foreach ($references as $reference) {
+            if (!$reference->hasMeasures()) {
+                continue;
+            }
+
+            $currentCategoriesValues = [];
+            $targetCategoriesValues = [];
+            foreach ($reference->getCategories() as $soaCategory) {
+                $soaCategoryId = $soaCategory->getId();
+                $soaCategoryData = [
+                    'label1' => $soaCategory->getlabel1(),
+                    'label2' => $soaCategory->getlabel2(),
+                    'label3' => $soaCategory->getlabel3(),
+                    'label4' => $soaCategory->getlabel4(),
+                ];
+                /** @var Measure[] $measures */
+                $measures = $soaCategory->getMeasures();
+                $targetSoaCount = 0;
+                $currentSoaTotalCompliance = '0';
+                foreach ($measures as $measure) {
+                    $soa = $measure->getSoa();
+                    if (!$soa) {
+                        continue;
+                    }
+
+                    $currentControlData = [
+                        'code' => $measure->getCode(),
+                        'measure' => $measure->getUuid(),
+                        'value' => $soa->getEx() === 1 ? '0.00' : bcmul((string)$soa->getCompliance(), '0.2', 2),
+                    ];
+                    $targetControlData = [
+                        'code' => $measure->getCode(),
+                        'measure' => $measure->getUuid(),
+                        'value' => $soa->getEx() === 1 ? '0' : '1',
+                    ];
+                    $currentCategoriesValues[$soaCategoryId] = $soaCategoryData;
+                    $currentCategoriesValues[$soaCategoryId]['current'][] = $currentControlData;
+                    $currentCategoriesValues[$soaCategoryId]['target'][] = $targetControlData;
+
+                    $targetCategoriesValues[$soaCategoryId] = $soaCategoryData;
+                    $targetCategoriesValues[$soaCategoryId]['current'][] = $currentControlData;
+                    $targetCategoriesValues[$soaCategoryId]['target'][] = $targetControlData;
+
+                    $currentSoaTotalCompliance = bcadd(
+                        $currentSoaTotalCompliance,
+                        $soa->getEx() === 1 ? '0' : (string)$soa->getCompliance(),
+                        2
+                    );
+                    if ($soa->getEx() !== 1) {
+                        $targetSoaCount++;
+                    }
+                }
+
+                $currentCategoriesValues[$soaCategoryId]['value'] = bcmul(
+                    bcdiv($currentSoaTotalCompliance, \count($currentCategoriesValues[$soaCategoryId]), 2),
+                    '0.2',
+                    2
+                );
+                $targetCategoriesValues[$soaCategoryId] = bcdiv(
+                    (string)$targetSoaCount,
+                    $targetSoaCount,
+                    2
+                );
+            }
+
+            $complianceStatsValues[] = [
+                'referential' => $reference->getUuid(),
+                'current' => $currentCategoriesValues,
+                'target' => $targetCategoriesValues,
+            ];
+        }
+
+        return $complianceStatsValues;
     }
 
     private function prepareScalesRanges(Anr $anr): array
