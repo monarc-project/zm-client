@@ -30,6 +30,7 @@ class SoaCategory extends SoaCategorySuperClass
     * })
     */
     protected $anr;
+
     /**
      * @var Referential
      *

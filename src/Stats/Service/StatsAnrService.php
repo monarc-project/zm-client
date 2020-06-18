@@ -7,11 +7,13 @@ use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Scale;
+use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
+use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
@@ -36,11 +38,14 @@ class StatsAnrService
     /** @var InstanceRiskOpTable */
     private $operationalRiskTable;
 
-    /** @var StatsApiProvider */
-    private $statsApiProvider;
-
     /** @var ReferentialTable */
     private $referentialTable;
+
+    /** @var SoaTable */
+    private $soaTable;
+
+    /** @var StatsApiProvider */
+    private $statsApiProvider;
 
     public function __construct(
         AnrTable $anrTable,
@@ -48,6 +53,7 @@ class StatsAnrService
         InstanceRiskTable $informationalRiskTable,
         InstanceRiskOpTable $operationalRiskTable,
         ReferentialTable $referentialTable,
+        SoaTable $soaTable,
         StatsApiProvider $statsApiProvider
     ) {
         $this->anrTable = $anrTable;
@@ -55,6 +61,7 @@ class StatsAnrService
         $this->informationalRiskTable = $informationalRiskTable;
         $this->operationalRiskTable = $operationalRiskTable;
         $this->referentialTable = $referentialTable;
+        $this->soaTable = $soaTable;
         $this->statsApiProvider = $statsApiProvider;
     }
 
@@ -198,47 +205,45 @@ class StatsAnrService
         $complianceStatsValues = [];
         $references = $this->referentialTable->findByAnr($anr);
         foreach ($references as $reference) {
-            if (!$reference->hasMeasures()) {
-                continue;
-            }
-
-            $currentCategoriesValues = [];
-            $targetCategoriesValues = [];
+            /** @var SoaCategory $soaCategory */
             foreach ($reference->getCategories() as $soaCategory) {
-                $soaCategoryId = $soaCategory->getId();
-                $soaCategoryData = [
+                $statementOfApplicabilityList = $this->soaTable->findByAnrAndSoaCategory(
+                    $anr,
+                    $soaCategory,
+                    ['m.code' => 'ASC']
+                );
+                if (empty($statementOfApplicabilityList)) {
+                    continue;
+                }
+
+                $currentCategoryValues = [
                     'label1' => $soaCategory->getlabel1(),
                     'label2' => $soaCategory->getlabel2(),
                     'label3' => $soaCategory->getlabel3(),
                     'label4' => $soaCategory->getlabel4(),
+                    'controls' => [],
                 ];
-                /** @var Measure[] $measures */
-                $measures = $soaCategory->getMeasures();
+                $targetCategoryValues = [
+                    'label1' => $soaCategory->getlabel1(),
+                    'label2' => $soaCategory->getlabel2(),
+                    'label3' => $soaCategory->getlabel3(),
+                    'label4' => $soaCategory->getlabel4(),
+                    'controls' => [],
+                ];
                 $targetSoaCount = 0;
                 $currentSoaTotalCompliance = '0';
-                foreach ($measures as $measure) {
-                    $soa = $measure->getSoa();
-                    if (!$soa) {
-                        continue;
-                    }
-
-                    $currentControlData = [
+                foreach ($statementOfApplicabilityList as $soa) {
+                    $measure = $soa->getMeasure();
+                    $currentCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
-                        'measure' => $measure->getUuid(),
+                        'measure' => (string)$measure->getUuid(),
                         'value' => $soa->getEx() === 1 ? '0.00' : bcmul((string)$soa->getCompliance(), '0.2', 2),
                     ];
-                    $targetControlData = [
+                    $targetCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
-                        'measure' => $measure->getUuid(),
+                        'measure' => (string)$measure->getUuid(),
                         'value' => $soa->getEx() === 1 ? '0' : '1',
                     ];
-                    $currentCategoriesValues[$soaCategoryId] = $soaCategoryData;
-                    $currentCategoriesValues[$soaCategoryId]['current'][] = $currentControlData;
-                    $currentCategoriesValues[$soaCategoryId]['target'][] = $targetControlData;
-
-                    $targetCategoriesValues[$soaCategoryId] = $soaCategoryData;
-                    $targetCategoriesValues[$soaCategoryId]['current'][] = $currentControlData;
-                    $targetCategoriesValues[$soaCategoryId]['target'][] = $targetControlData;
 
                     $currentSoaTotalCompliance = bcadd(
                         $currentSoaTotalCompliance,
@@ -250,26 +255,33 @@ class StatsAnrService
                     }
                 }
 
-                $currentCategoriesValues[$soaCategoryId]['value'] = bcmul(
-                    bcdiv($currentSoaTotalCompliance, \count($currentCategoriesValues[$soaCategoryId]), 2),
-                    '0.2',
-                    2
-                );
-                $targetCategoriesValues[$soaCategoryId] = bcdiv(
-                    (string)$targetSoaCount,
-                    $targetSoaCount,
-                    2
-                );
-            }
+                $currentControlsNumber = \count($currentCategoryValues['controls']);
+                if ($currentControlsNumber > 0) {
+                    $currentCategoryValues['value'] = bcmul(bcdiv(
+                        $currentSoaTotalCompliance,
+                        (string)$currentControlsNumber,
+                        2
+                    ), '0.2', 2);
+                    $targetCategoryValues['value'] = bcdiv((string)$targetSoaCount, (string)$currentControlsNumber, 2);
 
-            $complianceStatsValues[] = [
-                'referential' => $reference->getUuid(),
-                'current' => $currentCategoriesValues,
-                'target' => $targetCategoriesValues,
-            ];
+                    if (!isset($complianceStatsValues[(string)$reference->getUuid()])) {
+                        $complianceStatsValues[(string)$reference->getUuid()] = [
+                            'referential' => (string)$reference->getUuid(),
+                            'label1' => $reference->getLabel1(),
+                            'label2' => $reference->getLabel2(),
+                            'label3' => $reference->getLabel3(),
+                            'label4' => $reference->getLabel4(),
+                            'current' => [],
+                            'target' => [],
+                        ];
+                    }
+                    $complianceStatsValues[(string)$reference->getUuid()]['current'][] = $currentCategoryValues;
+                    $complianceStatsValues[(string)$reference->getUuid()]['target'][] = $targetCategoryValues;
+                }
+            }
         }
 
-        return $complianceStatsValues;
+        return array_values($complianceStatsValues);
     }
 
     private function prepareScalesRanges(Anr $anr): array
