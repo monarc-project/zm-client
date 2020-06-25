@@ -4,7 +4,6 @@ namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
@@ -340,6 +339,7 @@ class StatsAnrService
             if ($maxImpact < 0) {
                 continue;
             }
+
             $amvKey = md5($riskData['assetId'] . $riskData['threatId'] . $riskData['vulnerabilityId']);
             if ($riskData['cacheMaxRisk'] > -1) {
                 $riskContext = $this->getRiskContext($anr, $maxImpact, $riskData['cacheMaxRisk']);
@@ -383,7 +383,7 @@ class StatsAnrService
         return [
             'impact' => $maxImpact,
             'likelihood' => $maxImpact > 0 ? round($maxRiskValue / $maxImpact) : 0,
-            'max' => $maxRiskValue,
+            'maxRisk' => $maxRiskValue,
             'level' => $this->getRiskLevel($anr, $maxRiskValue),
         ];
     }
@@ -391,11 +391,13 @@ class StatsAnrService
     private function getRiskValues(array $risksValues, array $riskContext, string $amvKey, array $riskData): array
     {
         $objectId = (string)$riskData['objectId'];
-        if ($riskData['scope'] !== MonarcObject::SCOPE_GLOBAL
-            || empty($risksValues[$objectId][$amvKey])
-            || $riskContext['max'] > current($risksValues[$objectId][$amvKey])['max']
+        $isScopeGlobal = $riskData['scope'] === MonarcObject::SCOPE_GLOBAL;
+        $riskKey = $isScopeGlobal ? 0 : $riskData['id'];
+        if (!$isScopeGlobal
+            || empty($risksValues[$objectId][$amvKey][$riskKey])
+            || $riskContext['maxRisk'] > $risksValues[$objectId][$amvKey][$riskKey]['maxRisk']
         ) {
-            $risksValues[$objectId][$amvKey][$riskData['id']] = $riskContext;
+            $risksValues[$objectId][$amvKey][$riskKey] = $riskContext;
         }
 
         return $risksValues;
@@ -403,11 +405,13 @@ class StatsAnrService
 
     private function getThreatsValues(array $threatsValues, string $key, array $riskData): array
     {
-        if ($riskData['scope'] !== MonarcObject::SCOPE_GLOBAL
-            || empty($threatsValues[$key])
-            || $riskData['cacheMaxRisk'] > current($threatsValues[$key])['maxRisk']
+        $isScopeGlobal = $riskData['scope'] === MonarcObject::SCOPE_GLOBAL;
+        $threatKey = $isScopeGlobal ? 0 : (string)$riskData['threatId'];
+        if (!$isScopeGlobal
+            || empty($threatsValues[$key][$threatKey])
+            || $riskData['cacheMaxRisk'] > $threatsValues[$key][$threatKey]['maxRisk']
         ) {
-            $threatsValues[$key][(string)$riskData['threatId']] = [
+            $threatsValues[$key][$threatKey] = [
                 'uuid' => (string)$riskData['threatId'],
                 'label1' => $riskData['threatLabel1'],
                 'label2' => $riskData['threatLabel2'],
@@ -424,11 +428,13 @@ class StatsAnrService
 
     private function getVulnerabilitiesValues(array $vulnerabilitiesValues, string $key, array $riskData): array
     {
-        if ($riskData['scope'] !== MonarcObject::SCOPE_GLOBAL
-            || empty($vulnerabilitiesValues[$key])
-            || $riskData['cacheMaxRisk'] > current($vulnerabilitiesValues[$key])['maxRisk']
+        $isScopeGlobal = $riskData['scope'] === MonarcObject::SCOPE_GLOBAL;
+        $vulnerabilityKey = $isScopeGlobal ? 0 : (string)$riskData['vulnerabilityId'];
+        if (!$isScopeGlobal
+            || empty($vulnerabilitiesValues[$key][$vulnerabilityKey])
+            || $riskData['cacheMaxRisk'] > $vulnerabilitiesValues[$key][$vulnerabilityKey]['maxRisk']
         ) {
-            $vulnerabilitiesValues[$key][(string)$riskData['vulnerabilityId']] = [
+            $vulnerabilitiesValues[$key][$vulnerabilityKey] = [
                 'uuid' => (string)$riskData['vulnerabilityId'],
                 'label1' => $riskData['vulnerabilityLabel1'],
                 'label2' => $riskData['vulnerabilityLabel2'],
