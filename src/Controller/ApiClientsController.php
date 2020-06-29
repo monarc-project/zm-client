@@ -7,9 +7,9 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\FrontOffice\Service\ClientService;
-use Monarc\Core\Controller\AbstractController;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\ClientService;
 
 /**
  * Api Clients Controller
@@ -17,46 +17,25 @@ use Laminas\View\Model\JsonModel;
  * Class ApiClientsController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiClientsController extends AbstractController
+class ApiClientsController extends AbstractRestfulController
 {
-    protected $name = 'clients';
+    /** @var ClientService */
+    private $clientService;
 
-    /**
-     * @inheritdoc
-     */
-    public function create($data)
+    public function __construct(ClientService $clientService)
     {
-        /** @var ClientService $service */
-        $service = $this->getService();
-
-        // Security: Don't allow changing role, password, status and history fields. To clean later.
-        if (isset($data['id'])) unset($data['id']);
-        if (isset($data['updatedAt'])) unset($data['updatedAt']);
-        if (isset($data['updater'])) unset($data['updater']);
-        if (isset($data['createdAt'])) unset($data['createdAt']);
-        if (isset($data['creator'])) unset($data['creator']);
-
-        $service->create($data);
-
-        return new JsonModel(['status' => 'ok']);
+        $this->clientService = $clientService;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
+    public function getList()
     {
-        /** @var ClientService $service */
-        $service = $this->getService();
+        return new JsonModel($this->clientService->getAll());
+    }
 
-        // Security: Don't allow changing role, password, status and history fields. To clean later.
-        if (isset($data['updatedAt'])) unset($data['updatedAt']);
-        if (isset($data['updater'])) unset($data['updater']);
-        if (isset($data['createdAt'])) unset($data['createdAt']);
-        if (isset($data['creator'])) unset($data['creator']);
+    public function patch($id, $data)
+    {
+        $this->clientService->patch((int)$id, $data);
 
-        $service->update($id, $data);
-
-        return new JsonModel(['status' => 'ok']);
+        return new JsonModel(array('status' => 'ok'));
     }
 }
