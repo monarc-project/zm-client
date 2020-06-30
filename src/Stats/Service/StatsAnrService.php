@@ -3,10 +3,15 @@
 namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Exception\AccessForbiddenException;
+use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Model\Entity\User;
+use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
@@ -46,6 +51,9 @@ class StatsAnrService
     /** @var StatsApiProvider */
     private $statsApiProvider;
 
+    /** @var ConnectedUserService */
+    private $connectedUserService;
+
     public function __construct(
         AnrTable $anrTable,
         ScaleTable $scaleTable,
@@ -53,7 +61,8 @@ class StatsAnrService
         InstanceRiskOpTable $operationalRiskTable,
         ReferentialTable $referentialTable,
         SoaTable $soaTable,
-        StatsApiProvider $statsApiProvider
+        StatsApiProvider $statsApiProvider,
+        ConnectedUserService $connectedUserService
     ) {
         $this->anrTable = $anrTable;
         $this->scaleTable = $scaleTable;
@@ -62,6 +71,7 @@ class StatsAnrService
         $this->referentialTable = $referentialTable;
         $this->soaTable = $soaTable;
         $this->statsApiProvider = $statsApiProvider;
+        $this->connectedUserService = $connectedUserService;
     }
 
     /**
@@ -75,8 +85,22 @@ class StatsAnrService
     {
         // TODO: Inject the Authenticated user (get connected user) and validate:
         //  - if the role is SEO we return allow all the analyses to the result, if not filtered by specific ones
-        //  - if user role if userfo then we allow to use only accessible for him anrs
+        //  - if user role if userfo then we allow to use only accessible for his anrs
         // TODO: call stats-api to get the data.
+        /** @var User $loggedInUser */
+        $loggedInUser = $this->connectedUserService->getConnectedUser();
+        if ($loggedInUser === null) {
+            throw new UserNotAuthorizedException();
+        }
+        $hasFullAccess = $loggedInUser->hasRole(UserRole::USER_ROLE_CEO);
+
+        $filterParams['anrs'] = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
+
+        $statsData = $this->statsApiProvider->getStatsData($filterParams);
+
+        // TODO: prepare format the result
+
+        return $statsData;
     }
 
     /**
@@ -654,4 +678,29 @@ class StatsAnrService
     {
         return array_sum(array_column($values, 'value'));
     }
+
+    /**
+     * @return array
+     * @throws AccessForbiddenException
+     */
+    private function getFilteredAnrUuids(array $filterParams, bool $hasFullAccess, User $loggedInUser): array
+    {
+        $anrUuids = [];
+        if (!$hasFullAccess) {
+            foreach ($loggedInUser->getUserAnrs() as $userAnr) {
+                /** @var Anr $anr */
+                $anr = $userAnr->getAnr();
+                $anrUuids[] = $anr->getUuid();
+            }
+            if (empty($anrUuids)) {
+                throw new AccessForbiddenException();
+            }
+        } elseif (!empty($filterParams['anrs'])) {
+            foreach ($this->anrTable->findByIds($filterParams['anrs']) as $anr) {
+                $anrUuids[] = $anr->getUuid();
+            }
+        }
+
+        return $anrUuids;
+}
 }

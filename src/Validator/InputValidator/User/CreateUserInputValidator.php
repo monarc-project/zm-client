@@ -1,13 +1,7 @@
 <?php declare(strict_types=1);
 
-namespace Monarc\FrontOffice\Validator\User;
+namespace Monarc\FrontOffice\Validator\InputValidator\User;
 
-use Monarc\Core\Service\ConnectedUserService;
-use Monarc\Core\Validator\UniqueEmail;
-use Monarc\Core\Validator\LanguageValidator;
-use Monarc\FrontOffice\Model\Entity\UserRole;
-use Monarc\FrontOffice\Model\Table\UserTable;
-use Monarc\FrontOffice\Validator\AbstractMonarcInputValidator;
 use Laminas\Filter\StringTrim;
 use Laminas\InputFilter\ArrayInput;
 use Laminas\InputFilter\InputFilter;
@@ -15,6 +9,14 @@ use Laminas\Validator\Callback;
 use Laminas\Validator\EmailAddress;
 use Laminas\Validator\NotEmpty;
 use Laminas\Validator\StringLength;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Validator\LanguageValidator;
+use Monarc\Core\Validator\UniqueEmail;
+use Monarc\FrontOffice\Model\Entity\UserRole;
+use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\UserTable;
+use Monarc\FrontOffice\Validator\FieldValidator\AnrExistenceValidator;
+use Monarc\FrontOffice\Validator\InputValidator\AbstractMonarcInputValidator;
 
 class CreateUserInputValidator extends AbstractMonarcInputValidator
 {
@@ -27,15 +29,20 @@ class CreateUserInputValidator extends AbstractMonarcInputValidator
     /** @var ConnectedUserService */
     private $connectedUserService;
 
+    /** @var AnrTable */
+    private $anrTable;
+
     public function __construct(
         InputFilter $inputFilter,
         UserTable $userTable,
         ConnectedUserService $connectedUserService,
+        AnrTable $anrTable,
         array $config
     ) {
         $this->availableLanguages = $config['languages'];
         $this->userTable = $userTable;
         $this->connectedUserService = $connectedUserService;
+        $this->anrTable = $anrTable;
 
         parent::__construct($inputFilter);
     }
@@ -148,7 +155,12 @@ class CreateUserInputValidator extends AbstractMonarcInputValidator
                 'required' => false,
                 'type' => ArrayInput::class,
                 'validators' => [
-                    // TODO: create AnrValidator.
+                    [
+                        'name' => AnrExistenceValidator::class,
+                        'options' => [
+                            'anrTable' => $this->anrTable,
+                        ],
+                    ]
                 ],
             ],
             [
@@ -173,6 +185,6 @@ class CreateUserInputValidator extends AbstractMonarcInputValidator
 
     public function validateRoles($value): bool
     {
-        return in_array($value, [UserRole::SUPER_ADMIN_FO, UserRole::USER_FO]);
+        return in_array($value, UserRole::getAvailableRoles());
     }
 }

@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace Monarc\FrontOffice\Validator;
+namespace Monarc\FrontOffice\Validator\InputValidator;
 
 use Laminas\InputFilter\InputFilter;
 
 abstract class AbstractMonarcInputValidator
 {
     /** @var InputFilter */
-    private $inputFilter;
+    protected $inputFilter;
 
     public function __construct(InputFilter $inputFilter)
     {

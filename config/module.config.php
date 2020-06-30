@@ -1,22 +1,21 @@
 <?php
 
-use Monarc\FrontOffice\Service\ClientService;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Monarc\Core\Validator\FieldValidator\UserAnrsValidator;
+use Laminas\Di\Container\AutowireFactory;
+use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Service;
+use Monarc\FrontOffice\Service\ClientService;
 use Monarc\FrontOffice\Stats\Controller\StatsApiController;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
 use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
-use Monarc\FrontOffice\Controller;
-use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Table;
-use Monarc\FrontOffice\Model\Entity;
-use Monarc\FrontOffice\Service;
-use Laminas\Di\Container\AutowireFactory;
-use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 
 return [
     'router' => [
@@ -1004,7 +1003,7 @@ return [
             Controller\ApiAnrInstancesConsequencesController::class => Controller\ApiAnrInstancesConsequencesControllerFactory::class,
             Controller\ApiModelVerifyLanguageController::class => Controller\ApiModelVerifyLanguageControllerFactory::class,
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
-            StatsController::class => AutowireFactory::class,
+            StatsApiController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1029,9 +1028,6 @@ return [
     'service_manager' => [
         'invokables' => [
             Entity\UserAnr::class => Entity\UserAnr::class,
-
-            //validators
-            UserAnrsValidator::class => UserAnrsValidator::class,
         ],
         'factories' => [
             DbCli::class => Service\Model\DbCliFactory::class,
@@ -1340,6 +1336,7 @@ return [
         ],
         Entity\UserRole::USER_ROLE_CEO => [
             'monarc_api_admin_users_roles',
+            'monarc_api_admin_user_reset_password',
             'monarc_api_user_password',
             'monarc_api_user_profile',
             'monarc_api_stats',
