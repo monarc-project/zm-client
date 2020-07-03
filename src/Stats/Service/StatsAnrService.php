@@ -3,6 +3,7 @@
 namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
+use Exception;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Exception\AccessForbiddenException;
 use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
@@ -29,6 +30,16 @@ class StatsAnrService
     public const LOW_RISKS = 'Low risks';
     public const MEDIUM_RISKS = 'Medium risks';
     public const HIGH_RISKS = 'High risks';
+
+    public const DEFAULT_STATS_DATES_RANGE = '3 months';
+
+    public const AVAILABLE_AGGREGATION_FIELDS = [
+        'day',
+        'week',
+        'month',
+        'quarter',
+        'year',
+    ];
 
     /** @var AnrTable */
     private $anrTable;
@@ -76,17 +87,18 @@ class StatsAnrService
 
     /**
      * @param array $filterParams Accepts the following params keys:
-     *              - dateStart Stats period start date;
-     *              - endDate Stats period end date;
-     *              - anrIds List of Anr IDs to use for the result;
-     *              - aggregationPeriod One of the available options [per day, per week, per month]
+     *              - dateFrom Stats period start date (optional);
+     *              - dateTo Stats period end date (optional);
+     *              - anrs List of Anr IDs to use for the result (optional);
+     *              - type Stats type (required);
+     *              - aggregationPeriod One of the available options [day, week, month, quarter, year] (optional).
+     *
+     * @throws AccessForbiddenException
+     * @throws Exception
+     * @throws StatsFetchingException
      */
     public function getStats(array $filterParams): array
     {
-        // TODO: Inject the Authenticated user (get connected user) and validate:
-        //  - if the role is SEO we return allow all the analyses to the result, if not filtered by specific ones
-        //  - if user role if userfo then we allow to use only accessible for his anrs
-        // TODO: call stats-api to get the data.
         /** @var User $loggedInUser */
         $loggedInUser = $this->connectedUserService->getConnectedUser();
         if ($loggedInUser === null) {
@@ -95,10 +107,10 @@ class StatsAnrService
         $hasFullAccess = $loggedInUser->hasRole(UserRole::USER_ROLE_CEO);
 
         $filterParams['anrs'] = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
+        $filterParams['dateFrom'] = $this->getPreparedDateFrom($filterParams);
+        $filterParams['dateTo'] = $this->getPreparedDateTo($filterParams);
 
         $statsData = $this->statsApiProvider->getStatsData($filterParams);
-
-        // TODO: prepare format the result
 
         return $statsData;
     }
@@ -260,7 +272,7 @@ class StatsAnrService
                     $currentCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
                         'measure' => (string)$measure->getUuid(),
-                        'value' => $soa->getEx() === 1 ? '0.00' : bcmul((string)$soa->getCompliance(), '0.2', 2),
+                        'value' => $soa->getEx() === 1 ? '0.00' : bcmul((string)$soa->getCompliance(), '0.20', 2),
                     ];
                     $targetCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
@@ -680,7 +692,6 @@ class StatsAnrService
     }
 
     /**
-     * @return array
      * @throws AccessForbiddenException
      */
     private function getFilteredAnrUuids(array $filterParams, bool $hasFullAccess, User $loggedInUser): array
@@ -690,6 +701,10 @@ class StatsAnrService
             foreach ($loggedInUser->getUserAnrs() as $userAnr) {
                 /** @var Anr $anr */
                 $anr = $userAnr->getAnr();
+                if (!empty($filterParams['anrs']) && !in_array($anr->getId(), $filterParams['anrs'], true)) {
+                    continue;
+                }
+
                 $anrUuids[] = $anr->getUuid();
             }
             if (empty($anrUuids)) {
@@ -702,5 +717,34 @@ class StatsAnrService
         }
 
         return $anrUuids;
-}
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function getPreparedDateFrom(array $filterParams): string
+    {
+        if (!empty($filterParams['dateFrom'])) {
+            return $filterParams['dateFrom'];
+        }
+
+        $dateTo = new DateTime();
+        if (!empty($filterParams['dateTo'])) {
+            $dateTo = new DateTime($filterParams['dateTo']);
+        }
+
+        return $dateTo->modify('- ' . self::DEFAULT_STATS_DATES_RANGE)->format('Y-m-d');
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function getPreparedDateTo(array $filterParams): string
+    {
+        if (!empty($filterParams['dateTo'])) {
+            return $filterParams['dateTo'];
+        }
+
+        return (new DateTime())->format('Y-m-d');
+    }
 }

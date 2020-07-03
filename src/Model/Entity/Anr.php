@@ -64,16 +64,16 @@ class Anr extends AnrSuperClass
     protected $referentials;
 
     /**
-    * @param Referential[]|ArrayCollection $referentials
-    */
+     * @param Referential[]|ArrayCollection $referentials
+     */
     public function setReferentials($referentials)
     {
         $this->referentials = $referentials;
     }
 
     /**
-    * @return Referential[]
-    */
+     * @return Referential[]
+     */
     public function getReferentials()
     {
         return $this->referentials;
@@ -94,9 +94,11 @@ class Anr extends AnrSuperClass
     /**
      * @ORM\PrePersist
      */
-    public function generateAndSetUuid(): void
+    public function generateAndSetUuid(): self
     {
         $this->uuid = Uuid::uuid4();
+
+        return $this;
     }
 
     public function getUuid(): string

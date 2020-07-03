@@ -103,11 +103,6 @@ class StatsDataObject implements JsonSerializable
         return $this;
     }
 
-    public function getYear(): int
-    {
-        return $this->year;
-    }
-
     public function getQuarter(): int
     {
         return $this->quarter;
@@ -118,6 +113,11 @@ class StatsDataObject implements JsonSerializable
         $this->quarter = $quarter;
 
         return $this;
+    }
+
+    public function getYear(): int
+    {
+        return $this->year;
     }
 
     public function setYear(int $year): self
@@ -143,7 +143,7 @@ class StatsDataObject implements JsonSerializable
         return $this;
     }
 
-    private static function getAvailableTypes(): array
+    public static function getAvailableTypes(): array
     {
         return [
             self::TYPE_RISK,
