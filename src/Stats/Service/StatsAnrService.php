@@ -107,8 +107,8 @@ class StatsAnrService
         $hasFullAccess = $loggedInUser->hasRole(UserRole::USER_ROLE_CEO);
 
         $filterParams['anrs'] = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
-        $filterParams['dateFrom'] = $this->getPreparedDateFrom($filterParams);
-        $filterParams['dateTo'] = $this->getPreparedDateTo($filterParams);
+        $filterParams['date_from'] = $this->getPreparedDateFrom($filterParams);
+        $filterParams['date_to'] = $this->getPreparedDateTo($filterParams);
 
         $statsData = $this->statsApiProvider->getStatsData($filterParams);
 
@@ -127,8 +127,12 @@ class StatsAnrService
      */
     public function collectStats(array $anrIds = [], bool $forceUpdate = false): void
     {
-        $currentDate = new DateTime();
-        $statsOfToday = $this->statsApiProvider->getStatsData(['fromDate' => $currentDate, 'toDate' => $currentDate]);
+        $currentDate = (new DateTime())->format('Y-d-d');
+        $statsOfToday = $this->statsApiProvider->getStatsData([
+            'type' => StatsDataObject::TYPE_RISK,
+            'date_from' => $currentDate,
+            'date_to' => $currentDate,
+        ]);
         if (!$forceUpdate && !empty($statsOfToday)) {
             throw new StatsAlreadyCollectedException();
         }

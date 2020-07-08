@@ -79,7 +79,7 @@ class StatsApiProvider
             'json' => $data,
         ]);
 
-        if ($response->getStatusCode() !== 201) {
+        if (!in_array($response->getStatusCode(), [200, 201, 204], true)) {
             // TODO: send a notification or email.
             throw new StatsSendingException($response->getBody()->getContents(), $response->getStatusCode());
         }
@@ -109,11 +109,11 @@ class StatsApiProvider
     {
         $formattedResponse = [];
         $response = json_decode($responseContents, true);
-        if (!isset($response['metadata']['resultset']['count'], $response['data'])) {
-            throw new WrongResponseFormatException(['"metadata.resultset.count"', '"data"']);
+        if (!isset($response['metadata']['count'], $response['data'])) {
+            throw new WrongResponseFormatException(['"metadata.count"', '"data"']);
         }
 
-        if ($response['metadata']['resultset']['count'] > 0) {
+        if ($response['metadata']['count'] > 0) {
             foreach ($response['data'] as $itemNum => $responseData) {
                 if (!isset($responseData['type'], $responseData['data'])) {
                     throw new WrongResponseFormatException(

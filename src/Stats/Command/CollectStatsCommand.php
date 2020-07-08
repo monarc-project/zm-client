@@ -24,12 +24,12 @@ class CollectStatsCommand extends Command
 
     protected function configure()
     {
-        $this->addArgument('anrIds', InputArgument::OPTIONAL, 'Anr IDs list, comma separated');
+        $this->addArgument('anrIds', InputArgument::OPTIONAL, 'Anr IDs list, comma separated', []);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->statsAnrService->collectStats($input->getArguments());
+        $this->statsAnrService->collectStats($input->getArguments()['anrIds']);
 
         return 0;
     }
