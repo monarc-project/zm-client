@@ -23,36 +23,21 @@ class StatsDataObject implements JsonSerializable
     /** @var string */
     private $type;
 
-    /** @var int */
-    private $day;
-
-    /** @var int */
-    private $week;
-
-    /** @var int */
-    private $month;
-
-    /** @var int */
-    private $quarter;
-
-    /** @var int */
-    private $year;
+    /** @var string */
+    private $date = '';
 
     /** @var array */
     private $data;
 
     public function __construct(array $data)
     {
-        $currentDateParams = $this->getCurrentDateParams();
-
-        $this->setAnr($data['anr'] ?? '')
+        $this->setAnr($data['anr'])
             ->setType($data['type'])
-            ->setData($data['data'])
-            ->setDay($data['day'] ?? $currentDateParams['day'])
-            ->setWeek($data['week'] ?? $currentDateParams['week'])
-            ->setMonth($data['month'] ?? $currentDateParams['month'])
-            ->setQuarter($data['quarter'] ?? $currentDateParams['quarter'])
-            ->setYear($data['year'] ?? $currentDateParams['year']);
+            ->setData($data['data']);
+
+        if (!empty($data['date'])) {
+            $this->setDate($data['date']);
+        }
     }
 
     public function getAnr(): string
@@ -67,62 +52,14 @@ class StatsDataObject implements JsonSerializable
         return $this;
     }
 
-    public function getDay(): int
+    public function getDate(): string
     {
-        return $this->day;
+        return $this->date;
     }
 
-    public function setDay(int $day): self
+    public function setDate(string $date): self
     {
-        $this->day = $day;
-
-        return $this;
-    }
-
-    public function getWeek(): int
-    {
-        return $this->week;
-    }
-
-    public function setWeek(int $week): self
-    {
-        $this->week = $week;
-
-        return $this;
-    }
-
-    public function getMonth(): int
-    {
-        return $this->month;
-    }
-
-    public function setMonth(int $month): self
-    {
-        $this->month = $month;
-
-        return $this;
-    }
-
-    public function getQuarter(): int
-    {
-        return $this->quarter;
-    }
-
-    public function setQuarter(int $quarter): self
-    {
-        $this->quarter = $quarter;
-
-        return $this;
-    }
-
-    public function getYear(): int
-    {
-        return $this->year;
-    }
-
-    public function setYear(int $year): self
-    {
-        $this->year = $year;
+        $this->date = $date;
 
         return $this;
     }
@@ -171,25 +108,8 @@ class StatsDataObject implements JsonSerializable
         return [
             'anr' => $this->anr,
             'type' => $this->type,
-            'day' => $this->day,
-            'week' => $this->week,
-            'month' => $this->month,
-            'quarter' => $this->quarter,
-            'year' => $this->year,
+            'date' => $this->date,
             'data' => $this->data,
-        ];
-    }
-
-    private function getCurrentDateParams(): array
-    {
-        $dateTime = new DateTime();
-
-        return [
-            'day' => (int)$dateTime->format('z') + 1,
-            'week' => (int)$dateTime->format('W'),
-            'month' => (int)$dateTime->format('m'),
-            'quarter' => (int)ceil($dateTime->format('m') / 3),
-            'year' => (int)$dateTime->format('Y'),
         ];
     }
 }

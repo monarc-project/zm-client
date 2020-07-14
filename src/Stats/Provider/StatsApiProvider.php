@@ -52,6 +52,7 @@ class StatsApiProvider
      * @return StatsDataObject[]
      *
      * @throws StatsFetchingException
+     * @throws WrongResponseFormatException
      */
     public function getStatsData(array $params): array
     {
@@ -79,7 +80,7 @@ class StatsApiProvider
             'json' => $data,
         ]);
 
-        if (!in_array($response->getStatusCode(), [200, 201, 204], true)) {
+        if (!\in_array($response->getStatusCode(), [200, 201, 204], true)) {
             // TODO: send a notification or email.
             throw new StatsSendingException($response->getBody()->getContents(), $response->getStatusCode());
         }

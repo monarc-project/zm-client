@@ -23,6 +23,7 @@ use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
 use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
+use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 
 class StatsAnrService
@@ -87,12 +88,15 @@ class StatsAnrService
 
     /**
      * @param array $filterParams Accepts the following params keys:
+     *              - type Stats type (required);
      *              - dateFrom Stats period start date (optional);
      *              - dateTo Stats period end date (optional);
      *              - anrs List of Anr IDs to use for the result (optional);
-     *              - type Stats type (required);
      *              - aggregationPeriod One of the available options [day, week, month, quarter, year] (optional).
      *
+     * @return array
+     *
+     * @throws UserNotAuthorizedException
      * @throws AccessForbiddenException
      * @throws Exception
      * @throws StatsFetchingException
@@ -104,15 +108,27 @@ class StatsAnrService
         if ($loggedInUser === null) {
             throw new UserNotAuthorizedException();
         }
+
+        if (empty($filterParams['type'])) {
+            throw new \LogicException("Filter parameter 'type' is mandatory to get the stats.");
+        }
+
         $hasFullAccess = $loggedInUser->hasRole(UserRole::USER_ROLE_CEO);
 
-        $filterParams['anrs'] = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
-        $filterParams['date_from'] = $this->getPreparedDateFrom($filterParams);
-        $filterParams['date_to'] = $this->getPreparedDateTo($filterParams);
+        $requestParams = [
+            'type' => $filterParams['type'],
+            'date_from' => $this->getPreparedDateFrom($filterParams),
+            'date_to' => $this->getPreparedDateTo($filterParams),
+        ];
+        $anrUuids = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
+        if (!empty($anrUuids)) {
+            $requestParams['anrs'] = $anrUuids;
+        }
+        if (!empty($filterParams['aggregationPeriod'])) {
+            $requestParams['aggregation_period'] = $filterParams['aggregationPeriod'];
+        }
 
-        $statsData = $this->statsApiProvider->getStatsData($filterParams);
-
-        return $statsData;
+        return $this->statsApiProvider->getStatsData($requestParams);
     }
 
     /**
@@ -124,10 +140,11 @@ class StatsAnrService
      * @throws StatsAlreadyCollectedException
      * @throws StatsFetchingException
      * @throws StatsSendingException
+     * @throws WrongResponseFormatException
      */
     public function collectStats(array $anrIds = [], bool $forceUpdate = false): void
     {
-        $currentDate = (new DateTime())->format('Y-d-d');
+        $currentDate = (new DateTime())->format('Y-m-d');
         $statsOfToday = $this->statsApiProvider->getStatsData([
             'type' => StatsDataObject::TYPE_RISK,
             'date_from' => $currentDate,
@@ -148,21 +165,25 @@ class StatsAnrService
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_RISK,
                 'data' => $anrStatsForRtvc[StatsDataObject::TYPE_RISK],
+                'date' => $currentDate,
             ]);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_THREAT,
                 'data' => $anrStatsForRtvc[StatsDataObject::TYPE_THREAT],
+                'date' => $currentDate,
             ]);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_VULNERABILITY,
                 'data' => $anrStatsForRtvc[StatsDataObject::TYPE_VULNERABILITY],
+                'date' => $currentDate,
             ]);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_CARTOGRAPHY,
                 'data' => $anrStatsForRtvc[StatsDataObject::TYPE_CARTOGRAPHY],
+                'date' => $currentDate,
             ]);
 
             $anrStatsForCompliance = $this->collectAnrStatsForCompliance($anr);
@@ -170,6 +191,7 @@ class StatsAnrService
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_COMPLIANCE,
                 'data' => $anrStatsForCompliance,
+                'date' => $currentDate,
             ]);
         }
 
