@@ -38,18 +38,20 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     {
         $this->buildListScalesAndHeaders($anrId);
 
-        list($counters, $distrib) = $this->getCountersRisks('raw');
-        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('raw');
+        list($counters, $distrib, $amvs) = $this->getCountersRisks('raw');
+        list($countersRiskOP, $distribRiskOp,$rolfRisks) = $this->getCountersOpRisks('raw');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
             'MxV' => $this->headers,
             'riskInfo' => [
+              'amvs' => $amvs,
               'counters' => $counters,
               'distrib' => $distrib,
             ],
             'riskOp' => [
+              'rolfRisks' => $rolfRisks,
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
             ],
@@ -65,17 +67,19 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     {
         $this->buildListScalesAndHeaders($anrId);
 
-        list($counters, $distrib) = $this->getCountersRisks('target');
-        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('target');
+        list($counters, $distrib, $amvs) = $this->getCountersRisks('target');
+        list($countersRiskOP, $distribRiskOp, $rolfRisks) = $this->getCountersOpRisks('target');
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
             'MxV' => $this->headers,
             'riskInfo' => [
+              'amvs' => $amvs,
               'counters' => $counters,
               'distrib' => $distrib,
             ],
             'riskOp' => [
+              'rolfRisks' => $rolfRisks,
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
             ],
@@ -146,7 +150,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $changeField = $mode == 'raw' ? 'ir.cacheMaxRisk' : 'ir.cacheTargetedRisk';
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-            'ir.id as myid', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
+            'ir.id as myid', 'IDENTITY(ir.amv) as amv', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
             'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
             'm.c as mc', 'm.i as mi', 'm.a as ma',
             'o.scope',
@@ -157,7 +161,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->innerJoin('ir.threat', 'm')
             ->innerJoin('i.object', 'o')->getQuery()->getResult();
 
-        $counters = $distrib = $temp = [];
+        $amvs = $counters = $distrib = $temp = [];
         foreach ($result as $r) {
             if (!isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
@@ -186,6 +190,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 'amv' => $r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability'],
                 'max' => $max,
                 'color' => $this->getColor($max,'riskInfo'),
+                'uuid' => $r['amv']
             ];
 
             // on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
@@ -220,18 +225,20 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
                     if (!isset($counters[$context['impact']][$context['right']])) {
                         $counters[$context['impact']][$context['right']] = 0;
+                        $amvs[$context['impact']][$context['right']] = [];
                     }
 
                     if (!isset($distrib[$context['color']])) {
                         $distrib[$context['color']] = 0;
                     }
+                    array_push($amvs[$context['impact']][$context['right']],$context['uuid']);
                     $counters[$context['impact']][$context['right']]++;
                     $distrib[$context['color']]++;
                 }
             }
         }
 
-        return [$counters, $distrib];
+        return [$counters, $distrib, $amvs];
     }
 
     /**
@@ -241,7 +248,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
      */
     public function getCountersOpRisks($mode = 'raw')
     {
-        $valuesField = ['iro.netProb as netProb', 'iro.netR as netR', 'iro.netO as netO','iro.netL as netL','iro.netF as netF','iro.netP as netP',
+        $valuesField = ['IDENTITY(iro.rolfRisk) as id', 'iro.netProb as netProb', 'iro.netR as netR', 'iro.netO as netO','iro.netL as netL','iro.netF as netF','iro.netP as netP',
                         'iro.targetedProb as targetedProb', 'iro.targetedR as targetedR', 'iro.targetedO as targetedO','iro.targetedL as targetedL','iro.targetedF as targetedF','iro.targetedP as targetedP'];
         $query = $this->get('instanceRiskOpTable')->getRepository()->createQueryBuilder('iro');
         $result = $query->select([
@@ -253,34 +260,36 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->getQuery()->getResult();
 
 
-        $countersRiskOP = $distribRiskOp = $temp = [];
+        $rolfRisks = $countersRiskOP = $distribRiskOp = $temp = [];
         foreach ($result as $r) {
             if ($mode == 'raw' || $r['targetedRisk'] == -1) {
               $imax = max($r['netR'], $r['netO'],$r['netL'], $r['netF'], $r['netP']);
               $max = $r['netRisk'];
               $prob = $r['netProb'];
-              $color = $this->getColor($max,'riskOp');
             }else {
               $imax =  max($r['targetedR'], $r['targetedO'],$r['targetedL'], $r['targetedF'], $r['targetedP']);
               $max = $r['targetedRisk'];
               $prob = $r['targetedProb'];
-              $color = $this->getColor($max,'riskOp');
             }
+            $id = $r['id'];
+            $color = $this->getColor($max,'riskOp');
 
             if (!isset($countersRiskOP[$imax][$prob])) {
                 $countersRiskOP[$imax][$prob] = 0;
+                $rolfRisks[$imax][$prob] = [];
             }
 
             if (!isset($distribRiskOp[$color])) {
                 $distribRiskOp[$color] = 0;
             }
+            array_push($rolfRisks[$imax][$prob],$r['id']);
             $countersRiskOP[$imax][$prob]++;
             $distribRiskOp[$color]++;
 
 
         }
 
-        return [$countersRiskOP, $distribRiskOp];
+        return [$countersRiskOP, $distribRiskOp,$rolfRisks];
 
     }
 
