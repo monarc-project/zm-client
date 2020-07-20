@@ -38,20 +38,18 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     {
         $this->buildListScalesAndHeaders($anrId);
 
-        list($counters, $distrib, $amvs) = $this->getCountersRisks('raw');
-        list($countersRiskOP, $distribRiskOp,$rolfRisks) = $this->getCountersOpRisks('raw');
+        list($counters, $distrib) = $this->getCountersRisks('raw');
+        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('raw');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
             'MxV' => $this->headers,
             'riskInfo' => [
-              'amvs' => $amvs,
               'counters' => $counters,
               'distrib' => $distrib,
             ],
             'riskOp' => [
-              'rolfRisks' => $rolfRisks,
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
             ],
@@ -67,19 +65,17 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     {
         $this->buildListScalesAndHeaders($anrId);
 
-        list($counters, $distrib, $amvs) = $this->getCountersRisks('target');
-        list($countersRiskOP, $distribRiskOp, $rolfRisks) = $this->getCountersOpRisks('target');
+        list($counters, $distrib) = $this->getCountersRisks('target');
+        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('target');
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
             'MxV' => $this->headers,
             'riskInfo' => [
-              'amvs' => $amvs,
               'counters' => $counters,
               'distrib' => $distrib,
             ],
             'riskOp' => [
-              'rolfRisks' => $rolfRisks,
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
             ],
@@ -161,7 +157,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->innerJoin('ir.threat', 'm')
             ->innerJoin('i.object', 'o')->getQuery()->getResult();
 
-        $amvs = $counters = $distrib = $temp = [];
+        $counters = $distrib = $temp = [];
         foreach ($result as $r) {
             if (!isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
@@ -224,21 +220,19 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                     }
 
                     if (!isset($counters[$context['impact']][$context['right']])) {
-                        $counters[$context['impact']][$context['right']] = 0;
-                        $amvs[$context['impact']][$context['right']] = [];
+                        $counters[$context['impact']][$context['right']] = [];
                     }
 
                     if (!isset($distrib[$context['color']])) {
-                        $distrib[$context['color']] = 0;
+                        $distrib[$context['color']] = [];
                     }
-                    array_push($amvs[$context['impact']][$context['right']],$context['uuid']);
-                    $counters[$context['impact']][$context['right']]++;
-                    $distrib[$context['color']]++;
+                    array_push($counters[$context['impact']][$context['right']],$context['uuid']);
+                    array_push($distrib[$context['color']],$context['uuid']);
                 }
             }
         }
 
-        return [$counters, $distrib, $amvs];
+        return [$counters, $distrib];
     }
 
     /**
@@ -260,7 +254,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->getQuery()->getResult();
 
 
-        $rolfRisks = $countersRiskOP = $distribRiskOp = $temp = [];
+        $countersRiskOP = $distribRiskOp = $temp = [];
         foreach ($result as $r) {
             if ($mode == 'raw' || $r['targetedRisk'] == -1) {
               $imax = max($r['netR'], $r['netO'],$r['netL'], $r['netF'], $r['netP']);
@@ -275,21 +269,17 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             $color = $this->getColor($max,'riskOp');
 
             if (!isset($countersRiskOP[$imax][$prob])) {
-                $countersRiskOP[$imax][$prob] = 0;
-                $rolfRisks[$imax][$prob] = [];
+                $countersRiskOP[$imax][$prob] = [];
             }
 
             if (!isset($distribRiskOp[$color])) {
-                $distribRiskOp[$color] = 0;
+                $distribRiskOp[$color] = [];
             }
-            array_push($rolfRisks[$imax][$prob],$r['id']);
-            $countersRiskOP[$imax][$prob]++;
-            $distribRiskOp[$color]++;
-
-
+            array_push($countersRiskOP[$imax][$prob],$r['id']);
+            array_push($distribRiskOp[$color],$r['id']);
         }
 
-        return [$countersRiskOP, $distribRiskOp,$rolfRisks];
+        return [$countersRiskOP, $distribRiskOp];
 
     }
 
