@@ -314,10 +314,6 @@ class AnrRecommandationRiskService extends AbstractService
                     $type = 'risksop';
                 }
 
-                if (!$instanceRisk->isTreated()) {
-                    continue;
-                }
-
                 if ($type === 'risks' && $recommendationRisk->hasGlobalObjectRelation()) {
                     $methodName = 'getName' . $anr->getLanguage();
                     $path = $recommendationRisk->getInstance()->$methodName();
