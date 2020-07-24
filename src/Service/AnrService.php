@@ -750,7 +750,7 @@ class AnrService extends AbstractService
                     }
                 }
                 $this->get('amvCliTable')->save($newAmv, false);
-                $amvsNewIds[$amv->id] = $newAmv;
+                $amvsNewIds[$amv->getUuid()->toString()] = $newAmv;
             }
 
             // duplicate rolf tags
@@ -992,7 +992,7 @@ class AnrService extends AbstractService
                 $newInstanceRisk->set('id', null);
                 $newInstanceRisk->setAnr($newAnr);
                 if ($instanceRisk->amv) {
-                    $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
+                    $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->getUuid()->toString()]);
                 }
                 if ($instanceRisk->asset) {
                     $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->getUuid()->toString()]);
