@@ -3,6 +3,7 @@
 namespace Monarc\FrontOffice\Stats\Validator;
 
 use DateTime;
+use Laminas\Filter\Boolean;
 use Laminas\Filter\StringTrim;
 use Laminas\InputFilter\ArrayInput;
 use Laminas\InputFilter\InputFilter;
@@ -114,7 +115,16 @@ class GetStatsQueryParamsValidator extends AbstractMonarcInputValidator
                         ],
                     ]
                 ],
-            ]
+            ],
+            [
+                'name' => 'getLast',
+                'required' => false,
+                'filters' => [
+                    [
+                        'name' => Boolean::class,
+                    ],
+                ],
+            ],
         ];
     }
 

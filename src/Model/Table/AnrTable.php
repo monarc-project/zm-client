@@ -32,12 +32,12 @@ class AnrTable extends AbstractEntityTable
     /**
      * @throws EntityNotFoundException
      */
-    public function findById(int $anrId): Anr
+    public function findById(int $id): Anr
     {
         /** @var Anr|null $anr */
-        $anr = $this->getRepository()->find($anrId);
+        $anr = $this->getRepository()->find($id);
         if ($anr === null) {
-            throw new EntityNotFoundException(sprintf('Anr with id "%d" was not found', $anrId));
+            throw new EntityNotFoundException(sprintf('Anr with id "%d" was not found', $id));
         }
 
         return $anr;
@@ -48,12 +48,27 @@ class AnrTable extends AbstractEntityTable
      *
      * @return Anr[]
      */
-    public function findByIds(array $anrIds): array
+    public function findByIds(array $ids): array
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('a');
 
         return $queryBuilder
-            ->where($queryBuilder->expr()->in('a.id', $anrIds))
+            ->where($queryBuilder->expr()->in('a.id', $ids))
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @param string[] $uuids
+     *
+     * @return Anr[]
+     */
+    public function findByUuids(array $uuids): array
+    {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('a');
+
+        return $queryBuilder
+            ->where($queryBuilder->expr()->in('a.uuid', $uuids))
             ->getQuery()
             ->getResult();
     }

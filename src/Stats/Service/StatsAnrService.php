@@ -4,6 +4,7 @@ namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
 use Exception;
+use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Exception\AccessForbiddenException;
 use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
@@ -115,11 +116,15 @@ class StatsAnrService
 
         $hasFullAccess = $loggedInUser->hasRole(UserRole::USER_ROLE_CEO);
 
-        $requestParams = [
-            'type' => $filterParams['type'],
-            'date_from' => $this->getPreparedDateFrom($filterParams),
-            'date_to' => $this->getPreparedDateTo($filterParams),
-        ];
+        $requestParams['type'] = $filterParams['type'];
+        if (empty($filterParams['getLast'])) {
+            $requestParams['date_from'] = $this->getPreparedDateFrom($filterParams);
+            $requestParams['date_to'] = $this->getPreparedDateTo($filterParams);
+            $requestParams['get_last'] = false;
+        } else {
+            $requestParams['get_last'] = true;
+        }
+
         $anrUuids = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
         if (!empty($anrUuids)) {
             $requestParams['anrs'] = $anrUuids;
@@ -128,7 +133,22 @@ class StatsAnrService
             $requestParams['aggregation_period'] = $filterParams['aggregationPeriod'];
         }
 
-        return $this->statsApiProvider->getStatsData($requestParams);
+        $statsData = $this->statsApiProvider->getStatsData($requestParams);
+
+        // TODO: make a response data formatter.
+        if ($requestParams['type'] === StatsDataObject::TYPE_RISK) {
+            $statsData = $this->formatRisksStatsData($statsData);
+        } elseif (
+        \in_array($requestParams['type'], [StatsDataObject::TYPE_THREAT, StatsDataObject::TYPE_VULNERABILITY], true)
+        ) {
+            $statsData = $this->formatThreatsOrVulnerabilitiesStatsData($statsData);
+        } elseif ($requestParams['type'] === StatsDataObject::TYPE_CARTOGRAPHY) {
+            $statsData = $this->formatCartographyStatsData($statsData);
+        } elseif ($requestParams['type'] === StatsDataObject::TYPE_COMPLIANCE) {
+            $statsData = $this->formatComplianceStatsData($statsData);
+        }
+
+        return $statsData;
     }
 
     /**
@@ -720,14 +740,14 @@ class StatsAnrService
     /**
      * @throws AccessForbiddenException
      */
-    private function getFilteredAnrUuids(array $filterParams, bool $hasFullAccess, User $loggedInUser): array
+    private function getFilteredAnrUuids(array $filterParams, bool $hasFullAccess, UserSuperClass $loggedInUser): array
     {
         $anrUuids = [];
         if (!$hasFullAccess) {
             foreach ($loggedInUser->getUserAnrs() as $userAnr) {
                 /** @var Anr $anr */
                 $anr = $userAnr->getAnr();
-                if (!empty($filterParams['anrs']) && !in_array($anr->getId(), $filterParams['anrs'], true)) {
+                if (!empty($filterParams['anrs']) && !\in_array($anr->getId(), $filterParams['anrs'], true)) {
                     continue;
                 }
 
@@ -772,5 +792,182 @@ class StatsAnrService
         }
 
         return (new DateTime())->format('Y-m-d');
+    }
+
+    /**
+     * @param StatsDataObject[] $statsData
+     *
+     * @return array
+     */
+    private function formatRisksStatsData(array $statsData): array
+    {
+        if (empty($statsData)) {
+            return [];
+        }
+
+        $formattedResult = [];
+        $anrUuids = [];
+        foreach ($statsData as $data) {
+            $anrUuids[] = $data->getAnr();
+            $formattedResult[$data->getAnr()] = [
+                'current' => [
+                    'category' => '',
+                    'series' => $this->getSeriesForType('current', $data->getData()),
+                ],
+                'residual' => [
+                    'category' => '',
+                    'series' => $this->getSeriesForType('residual', $data->getData()),
+                ],
+            ];
+        }
+
+        $anrs = $this->anrTable->findByUuids($anrUuids);
+        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
+        foreach ($anrs as $anr) {
+            $formattedResult[$anr->getUuid()]['current']['category'] = $anr->getLabel($userLanguageNumber);
+            $formattedResult[$anr->getUuid()]['residual']['category'] = $anr->getLabel($userLanguageNumber);
+        }
+
+        if (!empty($formattedResult)) {
+            $formattedResult = [
+                'current' => array_column($formattedResult, 'current'),
+                'residual' => array_column($formattedResult, 'residual'),
+            ];
+        }
+
+        return $formattedResult;
+    }
+
+    private function getSeriesForType(string $riskType, array $data): array
+    {
+        $series = [];
+        foreach ($data['risks'][$riskType]['informational'] as $currentInformational) {
+            $series[] = [
+                'label' => $currentInformational['level'],
+                'value' => $currentInformational['value'],
+            ];
+        }
+
+        return $series;
+    }
+
+    /**
+     * @param StatsDataObject[] $statsData
+     *
+     * @return array
+     */
+    private function formatThreatsOrVulnerabilitiesStatsData(array $statsData): array
+    {
+        if (empty($statsData)) {
+            return [];
+        }
+
+        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
+        $formattedResult = [];
+        $anrUuids = [];
+        foreach ($statsData as $data) {
+            $anrUuid = $data->getAnr();
+            $dataSets = $data->getData();
+            if (!\in_array($anrUuid, $anrUuids, true)) {
+                $anrUuids[] = $anrUuid;
+                $formattedResult[$anrUuid] = [
+                    'category' => '',
+                    'series' => [],
+                ];
+            }
+
+            foreach ($dataSets as $dataSet) {
+                $dataSetUuid = $dataSet['uuid'];
+                if (!isset($formattedResult[$anrUuid]['series'][$dataSetUuid])) {
+                    $formattedResult[$anrUuid]['series'][$dataSetUuid] = [
+                        'category' => $dataSet['label' . $userLanguageNumber],
+                        'series' => [
+                            [
+                                'label' => $data->getDate(),
+                                'value' => '',
+                                'count' => $dataSet['count'],
+                                'maxRisk' => $dataSet['maxRisk'],
+                                'averageRate' => $dataSet['averageRate'],
+                            ]
+                        ],
+                    ];
+
+                    continue;
+                }
+
+                $lastSerie = end($formattedResult[$anrUuid]['series'][$dataSetUuid]['series']);
+                if ($lastSerie['count'] !== $dataSet['count']
+                    || $lastSerie['maxRisk'] !== $dataSet['maxRisk']
+                    || $lastSerie['averageRate'] !== $dataSet['averageRate']
+                ) {
+                    $formattedResult[$anrUuid]['series'][$dataSetUuid]['series'][] = [
+                        'label' => $data->getDate(),
+                        'value' => '',
+                        'count' => $dataSet['count'],
+                        'maxRisk' => $dataSet['maxRisk'],
+                        'averageRate' => $dataSet['averageRate'],
+                    ];
+                }
+            }
+        }
+
+        $anrs = $this->anrTable->findByUuids($anrUuids);
+        foreach ($anrs as $anr) {
+            $formattedResult[$anr->getUuid()]['category'] = $anr->getLabel($userLanguageNumber);
+        }
+
+        $formattedResult = array_values($formattedResult);
+        foreach ($formattedResult as &$resultByAnr) {
+            $resultByAnr['series'] = array_values($resultByAnr['series']);
+        }
+
+        return $formattedResult;
+    }
+
+    /**
+     * @param StatsDataObject[] $statsData
+     *
+     * @return array
+     */
+    private function formatCartographyStatsData(array $statsData): array
+    {
+        if (empty($statsData)) {
+            return [];
+        }
+
+        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
+        $formattedResult = [];
+        $anrUuids = [];
+        foreach ($statsData as $data) {
+            $anrUuids[] = $data->getAnr();
+            $data = $data->getData();
+            // TODO: build a matrix with values.
+            //       iterate for ($i = 0 till max scale x and y)
+            $data['risks']['current']['informational'];
+            $data['risks']['current']['operational'];
+            $formattedResult[$data->getAnr()] = [
+                'saceles' => $data['scales'],
+                'series' => [],
+            ];
+        }
+    }
+
+    /**
+     * @param StatsDataObject[] $statsData
+     *
+     * @return array
+     */
+    private function formatComplianceStatsData(array $statsData): array
+    {
+        if (empty($statsData)) {
+            return [];
+        }
+
+        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
+        $formattedResult = [];
+        $anrUuids = [];
+        foreach ($statsData as $data) {
+
+        }
     }
 }
