@@ -822,10 +822,9 @@ class StatsAnrService
         }
 
         $anrs = $this->anrTable->findByUuids($anrUuids);
-        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
         foreach ($anrs as $anr) {
-            $formattedResult[$anr->getUuid()]['current']['category'] = $anr->getLabel($userLanguageNumber);
-            $formattedResult[$anr->getUuid()]['residual']['category'] = $anr->getLabel($userLanguageNumber);
+            $formattedResult[$anr->getUuid()]['current']['category'] = $anr->getLabel($anr->getLanguage());
+            $formattedResult[$anr->getUuid()]['residual']['category'] = $anr->getLabel($anr->getLanguage());
         }
 
         if (!empty($formattedResult)) {
@@ -833,6 +832,11 @@ class StatsAnrService
                 'current' => array_column($formattedResult, 'current'),
                 'residual' => array_column($formattedResult, 'residual'),
             ];
+            foreach ($formattedResult as $key => &$value) {
+              usort($value, function ($a,$b){
+                return $a['category'] <=> $b['category'];
+              });
+            }
         }
 
         return $formattedResult;
