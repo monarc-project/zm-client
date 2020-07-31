@@ -871,11 +871,14 @@ class StatsAnrService
         $anrUuids = [];
         foreach ($statsData as $data) {
             $anrUuid = $data->getAnr();
+            $anr = current($this->anrTable->findByUuids([$anrUuid]));
+            $anrLanguage = $anr->getLanguage();
+
             $dataSets = $data->getData();
             if (!\in_array($anrUuid, $anrUuids, true)) {
                 $anrUuids[] = $anrUuid;
                 $formattedResult[$anrUuid] = [
-                    'category' => '',
+                    'category' => $anr->getLabel($anr->getLanguage()),
                     'series' => [],
                 ];
             }
@@ -884,46 +887,40 @@ class StatsAnrService
                 $dataSetUuid = $dataSet['uuid'];
                 if (!isset($formattedResult[$anrUuid]['series'][$dataSetUuid])) {
                     $formattedResult[$anrUuid]['series'][$dataSetUuid] = [
-                        'category' => $dataSet['label' . $userLanguageNumber],
+                        'category' => (!empty($dataSet['label' . $userLanguageNumber]) ?
+                                        $dataSet['label' . $userLanguageNumber] :
+                                        $dataSet['label' . $anrLanguage]),
+                        'uuid' => $dataSetUuid,
                         'series' => [
                             [
                                 'label' => $data->getDate(),
-                                'value' => '',
                                 'count' => $dataSet['count'],
                                 'maxRisk' => $dataSet['maxRisk'],
                                 'averageRate' => $dataSet['averageRate'],
                             ]
                         ],
                     ];
+                }else {
+                  $addSerie = [
+                      'label' => $data->getDate(),
+                      'count' => $dataSet['count'],
+                      'maxRisk' => $dataSet['maxRisk'],
+                      'averageRate' => $dataSet['averageRate']
+                  ];
 
-                    continue;
-                }
-
-                $lastSerie = end($formattedResult[$anrUuid]['series'][$dataSetUuid]['series']);
-                if ($lastSerie['count'] !== $dataSet['count']
-                    || $lastSerie['maxRisk'] !== $dataSet['maxRisk']
-                    || $lastSerie['averageRate'] !== $dataSet['averageRate']
-                ) {
-                    $formattedResult[$anrUuid]['series'][$dataSetUuid]['series'][] = [
-                        'label' => $data->getDate(),
-                        'value' => '',
-                        'count' => $dataSet['count'],
-                        'maxRisk' => $dataSet['maxRisk'],
-                        'averageRate' => $dataSet['averageRate'],
-                    ];
+                  array_push($formattedResult[$anrUuid]['series'][$dataSetUuid]['series'],$addSerie);
                 }
             }
-        }
-
-        $anrs = $this->anrTable->findByUuids($anrUuids);
-        foreach ($anrs as $anr) {
-            $formattedResult[$anr->getUuid()]['category'] = $anr->getLabel($userLanguageNumber);
         }
 
         $formattedResult = array_values($formattedResult);
         foreach ($formattedResult as &$resultByAnr) {
             $resultByAnr['series'] = array_values($resultByAnr['series']);
         }
+
+          usort($formattedResult, function ($a,$b){
+            return $a['category'] <=> $b['category'];
+          });
 
         return $formattedResult;
     }
