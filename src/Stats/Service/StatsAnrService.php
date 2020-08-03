@@ -925,6 +925,9 @@ class StatsAnrService
     }
 
     /**
+     * The formatted result is currently performed only for a single day (assumed that anr is unique per set of data).
+     * The result contains only informational risks matrix with data.
+     *
      * @param StatsDataObject[] $statsData
      *
      * @return array
@@ -935,21 +938,59 @@ class StatsAnrService
             return [];
         }
 
-        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
         $formattedResult = [];
-        $anrUuids = [];
         foreach ($statsData as $data) {
-            $anrUuids[] = $data->getAnr();
+            $anrUuid = $data->getAnr();
+            $anr = $this->anrTable->findByUuid($anrUuid);
+            if ($anr === null) {
+                continue;
+            }
+            $anrLanguage = $anr->getLanguage();
+            $dataSets = $data->getData();
+            if (!isset($formattedResult[$anrUuid])) {
+                $formattedResult[$anrUuid] = [
+                    'current' => [
+                        'category' => $anr->getLabel($anr->getLanguage()),
+                        'series' => [],
+                    ],
+                    'residual' => [
+                        'category' => $anr->getLabel($anr->getLanguage()),
+                        'series' => [],
+                    ],
+                ];
+            }
+
             $data = $data->getData();
-            // TODO: build a matrix with values.
-            //       iterate for ($i = 0 till max scale x and y)
-            $data['risks']['current']['informational'];
-            $data['risks']['current']['operational'];
-            $formattedResult[$data->getAnr()] = [
-                'saceles' => $data['scales'],
-                'series' => [],
-            ];
+            foreach ($data['scales']['impact'] as $impactValue) {
+                foreach ($data['scales']['likelihood'] as $likelihoodValue) {
+                    $formattedResult[$anrUuid]['current']['series'][] = [
+                        'y' => $impactValue,
+                        'x' => $likelihoodValue,
+                        'value' => $data['risks']['current']['informational'][$likelihoodValue][$impactValue] ?? null,
+                    ];
+                    $formattedResult[$anrUuid]['residual']['series'][] = [
+                        'y' => $impactValue,
+                        'x' => $likelihoodValue,
+                        'value' => $data['risks']['residual']['informational'][$likelihoodValue][$impactValue] ?? null,
+                    ];
+                }
+            }
         }
+
+        if (!empty($formattedResult)) {
+            $formattedResult = [
+                'current' => array_column($formattedResult, 'current'),
+                'residual' => array_column($formattedResult, 'residual'),
+            ];
+
+            foreach ($formattedResult as $key => &$value) {
+                usort($value, function ($a, $b) {
+                    return $a['category'] <=> $b['category'];
+                });
+            }
+        }
+
+        return $formattedResult;
     }
 
     /**

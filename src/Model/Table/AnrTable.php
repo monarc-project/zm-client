@@ -66,7 +66,8 @@ class AnrTable extends AbstractEntityTable
     public function findByUuid(string $uuid): ?Anr
     {
         return $this->getRepository()->createQueryBuilder('a')
-            ->where('a.uuid', $uuid)
+            ->where('a.uuid = :uuid')
+            ->setParameter('uuid', $uuid)
             ->getQuery()
             ->getOneOrNullResult();
     }
