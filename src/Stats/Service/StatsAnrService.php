@@ -273,7 +273,7 @@ class StatsAnrService
                         'operational' => $operationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['current'],
                     ],
                     'residual' => [
-                        'informational' =>  $informationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['residual'],
+                        'informational' => $informationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['residual'],
                         'operational' => $operationalRisksValues[StatsDataObject::TYPE_CARTOGRAPHY]['residual'],
                     ]
                 ],
@@ -833,9 +833,9 @@ class StatsAnrService
                 'residual' => array_column($formattedResult, 'residual'),
             ];
             foreach ($formattedResult as $key => &$value) {
-              usort($value, function ($a,$b){
-                return $a['category'] <=> $b['category'];
-              });
+                usort($value, function ($a, $b) {
+                    return $a['category'] <=> $b['category'];
+                });
             }
         }
 
@@ -868,15 +868,16 @@ class StatsAnrService
 
         $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
         $formattedResult = [];
-        $anrUuids = [];
         foreach ($statsData as $data) {
             $anrUuid = $data->getAnr();
-            $anr = current($this->anrTable->findByUuids([$anrUuid]));
+            $anr = $this->anrTable->findByUuid($anrUuid);
+            if ($anr === null) {
+                continue;
+            }
             $anrLanguage = $anr->getLanguage();
 
             $dataSets = $data->getData();
-            if (!\in_array($anrUuid, $anrUuids, true)) {
-                $anrUuids[] = $anrUuid;
+            if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
                     'category' => $anr->getLabel($anr->getLanguage()),
                     'series' => [],
@@ -885,11 +886,18 @@ class StatsAnrService
 
             foreach ($dataSets as $dataSet) {
                 $dataSetUuid = $dataSet['uuid'];
-                if (!isset($formattedResult[$anrUuid]['series'][$dataSetUuid])) {
+                if (isset($formattedResult[$anrUuid]['series'][$dataSetUuid])) {
+                    $formattedResult[$anrUuid]['series'][$dataSetUuid]['series'][] = [
+                        'label' => $data->getDate(),
+                        'count' => $dataSet['count'],
+                        'maxRisk' => $dataSet['maxRisk'],
+                        'averageRate' => $dataSet['averageRate']
+                    ];
+                } else {
                     $formattedResult[$anrUuid]['series'][$dataSetUuid] = [
-                        'category' => (!empty($dataSet['label' . $userLanguageNumber]) ?
-                                        $dataSet['label' . $userLanguageNumber] :
-                                        $dataSet['label' . $anrLanguage]),
+                        'category' => !empty($dataSet['label' . $userLanguageNumber]) ?
+                            $dataSet['label' . $userLanguageNumber] :
+                            $dataSet['label' . $anrLanguage],
                         'uuid' => $dataSetUuid,
                         'series' => [
                             [
@@ -900,15 +908,6 @@ class StatsAnrService
                             ]
                         ],
                     ];
-                }else {
-                  $addSerie = [
-                      'label' => $data->getDate(),
-                      'count' => $dataSet['count'],
-                      'maxRisk' => $dataSet['maxRisk'],
-                      'averageRate' => $dataSet['averageRate']
-                  ];
-
-                  array_push($formattedResult[$anrUuid]['series'][$dataSetUuid]['series'],$addSerie);
                 }
             }
         }
@@ -918,9 +917,9 @@ class StatsAnrService
             $resultByAnr['series'] = array_values($resultByAnr['series']);
         }
 
-          usort($formattedResult, function ($a,$b){
+        usort($formattedResult, static function ($a, $b) {
             return $a['category'] <=> $b['category'];
-          });
+        });
 
         return $formattedResult;
     }
