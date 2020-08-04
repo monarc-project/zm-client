@@ -1004,11 +1004,65 @@ class StatsAnrService
             return [];
         }
 
-        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
         $formattedResult = [];
-        $anrUuids = [];
         foreach ($statsData as $data) {
+            $anrUuid = $data->getAnr();
+            $anr = $this->anrTable->findByUuid($anrUuid);
+            if ($anr === null) {
+                continue;
+            }
+            $anrLanguage = $anr->getLanguage();
+            $dataSets = $data->getData();
+            if (!isset($formattedResult[$anrUuid])) {
+                $formattedResult[$anrUuid] = [
+                    'category' => $anr->getLabel($anr->getLanguage()),
+                    'series' => [],
+                ];
+            }
 
+            foreach ($dataSets as $dataSet) {
+                $formattedResult[$anrUuid]['series'][] = [
+                    'category' => $dataSet['label' . $anrLanguage],
+                    'series' => [
+                        'current' => [],
+                        'target' => [],
+                    ]
+                ];
+
+                foreach ($dataSet['target'] as $targetData) {
+                    $formattedResult[$anrUuid]['series']['target'][] = $this->getMeasuresData(
+                        $targetData,
+                        $anrLanguage
+                    );
+                }
+                foreach ($dataSet['current'] as $currentData) {
+                    $formattedResult[$anrUuid]['series']['current'][] = $this->getMeasuresData(
+                        $currentData,
+                        $anrLanguage
+                    );
+                }
+            }
         }
+
+        return array_values($formattedResult);
+    }
+
+    private function getMeasuresData(array $data, int $anrLanguage): array
+    {
+        $measuresData = [
+            'label' => $data['label' . $anrLanguage],
+            'value' => $data['value'],
+            'data' => [],
+        ];
+        if (!empty($data['controls'])) {
+            foreach ($data['controls'] as $control) {
+                $measuresData['data'][] = [
+                    'label' => $control['code'],
+                    'value' => $control['value'],
+                ];
+            }
+        }
+
+        return $measuresData;
     }
 }
