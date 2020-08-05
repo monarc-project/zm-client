@@ -808,34 +808,40 @@ class StatsAnrService
         $formattedResult = [];
         $anrUuids = [];
         foreach ($statsData as $data) {
+            $risksData = $data->getData();
+            if (empty($risksData['current']) || empty($risksData['residual'])) {
+                continue;
+            }
             $anrUuids[] = $data->getAnr();
             $formattedResult[$data->getAnr()] = [
                 'current' => [
                     'category' => '',
-                    'series' => $this->getSeriesForType('current', $data->getData()),
+                    'series' => $this->getSeriesForType('current', $risksData),
                 ],
                 'residual' => [
                     'category' => '',
-                    'series' => $this->getSeriesForType('residual', $data->getData()),
+                    'series' => $this->getSeriesForType('residual', $risksData),
                 ],
             ];
         }
 
-        $anrs = $this->anrTable->findByUuids($anrUuids);
-        foreach ($anrs as $anr) {
-            $formattedResult[$anr->getUuid()]['current']['category'] = $anr->getLabel($anr->getLanguage());
-            $formattedResult[$anr->getUuid()]['residual']['category'] = $anr->getLabel($anr->getLanguage());
-        }
+        if (!empty($anrUuids)) {
+            $anrs = $this->anrTable->findByUuids($anrUuids);
+            foreach ($anrs as $anr) {
+                $formattedResult[$anr->getUuid()]['current']['category'] = $anr->getLabel($anr->getLanguage());
+                $formattedResult[$anr->getUuid()]['residual']['category'] = $anr->getLabel($anr->getLanguage());
+            }
 
-        if (!empty($formattedResult)) {
-            $formattedResult = [
-                'current' => array_column($formattedResult, 'current'),
-                'residual' => array_column($formattedResult, 'residual'),
-            ];
-            foreach ($formattedResult as $key => &$value) {
-                usort($value, function ($a, $b) {
-                    return $a['category'] <=> $b['category'];
-                });
+            if (!empty($formattedResult)) {
+                $formattedResult = [
+                    'current' => array_column($formattedResult, 'current'),
+                    'residual' => array_column($formattedResult, 'residual'),
+                ];
+                foreach ($formattedResult as $key => &$value) {
+                    usort($value, function ($a, $b) {
+                        return $a['category'] <=> $b['category'];
+                    });
+                }
             }
         }
 
@@ -945,8 +951,6 @@ class StatsAnrService
             if ($anr === null) {
                 continue;
             }
-            $anrLanguage = $anr->getLanguage();
-            $dataSets = $data->getData();
             if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
                     'current' => [
@@ -966,12 +970,12 @@ class StatsAnrService
                     $formattedResult[$anrUuid]['current']['series'][] = [
                         'y' => $impactValue,
                         'x' => $likelihoodValue,
-                        'value' => $data['risks']['current']['informational'][$likelihoodValue][$impactValue] ?? null,
+                        'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue] ?? null,
                     ];
                     $formattedResult[$anrUuid]['residual']['series'][] = [
                         'y' => $impactValue,
                         'x' => $likelihoodValue,
-                        'value' => $data['risks']['residual']['informational'][$likelihoodValue][$impactValue] ?? null,
+                        'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue] ?? null,
                     ];
                 }
             }
@@ -984,7 +988,7 @@ class StatsAnrService
             ];
 
             foreach ($formattedResult as $key => &$value) {
-                usort($value, function ($a, $b) {
+                usort($value, static function ($a, $b) {
                     return $a['category'] <=> $b['category'];
                 });
             }
@@ -1038,9 +1042,15 @@ class StatsAnrService
             }
         }
 
-        $formattedResult = array_values($formattedResult);
-        foreach ($formattedResult as &$resultByAnr) {
-            $resultByAnr['series'] = array_values($resultByAnr['series']);
+        if (!empty($formattedResult)) {
+            $formattedResult = array_values($formattedResult);
+            foreach ($formattedResult as &$resultByAnr) {
+                $resultByAnr['series'] = array_values($resultByAnr['series']);
+            }
+
+            usort($formattedResult, static function ($a, $b) {
+                return $a['category'] <=> $b['category'];
+            });
         }
 
         return $formattedResult;
