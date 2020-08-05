@@ -1021,30 +1021,29 @@ class StatsAnrService
             }
 
             foreach ($dataSets as $dataSet) {
-                $formattedResult[$anrUuid]['series'][] = [
-                    'category' => $dataSet['label' . $anrLanguage],
-                    'series' => [
-                        'current' => [],
-                        'target' => [],
-                    ]
+                $referentialLabel = $dataSet['label' . $anrLanguage];
+                $formattedResult[$anrUuid]['series'][$referentialLabel] = [
+                    'category' => $referentialLabel,
+                    'series' => [],
                 ];
 
                 foreach ($dataSet['target'] as $targetData) {
-                    $formattedResult[$anrUuid]['series']['target'][] = $this->getMeasuresData(
-                        $targetData,
-                        $anrLanguage
-                    );
+                    $formattedResult[$anrUuid]['series'][$referentialLabel]['series']['target'][] =
+                        $this->getMeasuresData($targetData, $anrLanguage);
                 }
                 foreach ($dataSet['current'] as $currentData) {
-                    $formattedResult[$anrUuid]['series']['current'][] = $this->getMeasuresData(
-                        $currentData,
-                        $anrLanguage
-                    );
+                    $formattedResult[$anrUuid]['series'][$referentialLabel]['series']['current'][] =
+                        $this->getMeasuresData($currentData, $anrLanguage);
                 }
             }
         }
 
-        return array_values($formattedResult);
+        $formattedResult = array_values($formattedResult);
+        foreach ($formattedResult as &$resultByAnr) {
+            $resultByAnr['series'] = array_values($resultByAnr['series']);
+        }
+
+        return $formattedResult;
     }
 
     private function getMeasuresData(array $data, int $anrLanguage): array
