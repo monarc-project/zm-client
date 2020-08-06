@@ -719,7 +719,7 @@ class StatsAnrService
     private function getRiskLevel(Anr $anr, int $riskValue, string $riskType = 'informational'): string
     {
         $firstRiskLevel = $riskType === 'informational' ? $anr->getSeuil1() : $anr->getSeuilRolf1();
-        $secondRiskLevel = $riskType === 'informational' ? $anr->getSeuil2() : $anr->getSeuilRolf1();
+        $secondRiskLevel = $riskType === 'informational' ? $anr->getSeuil2() : $anr->getSeuilRolf2();
 
         if ($riskValue <= $firstRiskLevel) {
             return self::LOW_RISKS;
