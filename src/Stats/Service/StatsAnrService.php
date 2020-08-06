@@ -915,6 +915,10 @@ class StatsAnrService
                         ],
                     ];
                 }
+
+                usort($formattedResult[$anrUuid]['series'][$dataSetUuid]['series'], function ($a,$b){
+                  return $a['label'] <=> $b['label'];
+                });
             }
         }
 
