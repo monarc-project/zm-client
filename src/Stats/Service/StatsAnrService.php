@@ -910,6 +910,10 @@ class StatsAnrService
 
                   array_push($formattedResult[$anrUuid]['series'][$dataSetUuid]['series'],$addSerie);
                 }
+
+                usort($formattedResult[$anrUuid]['series'][$dataSetUuid]['series'], function ($a,$b){
+                  return $a['label'] <=> $b['label'];
+                });
             }
         }
 
