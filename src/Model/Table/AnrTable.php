@@ -7,10 +7,9 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\Query\Expr;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -56,6 +55,21 @@ class AnrTable extends AbstractEntityTable
             ->where($queryBuilder->expr()->in('a.id', $ids))
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @param string $uuid
+     *
+     * @return Anr|null
+     * @throws NonUniqueResultException
+     */
+    public function findByUuid(string $uuid): ?Anr
+    {
+        return $this->getRepository()->createQueryBuilder('a')
+            ->where('a.uuid = :uuid')
+            ->setParameter('uuid', $uuid)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
