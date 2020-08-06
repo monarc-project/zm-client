@@ -809,7 +809,7 @@ class StatsAnrService
         $anrUuids = [];
         foreach ($statsData as $data) {
             $risksData = $data->getData();
-            if (empty($risksData['current']) || empty($risksData['residual'])) {
+            if (empty($risksData['risks']['current']) || empty($risksData['risks']['residual'])) {
                 continue;
             }
             $anrUuids[] = $data->getAnr();
