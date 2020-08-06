@@ -851,10 +851,13 @@ class StatsAnrService
     private function getSeriesForType(string $riskType, array $data): array
     {
         $series = [];
-        foreach ($data['risks'][$riskType]['informational'] as $currentInformational) {
+        $risks = $data['risks'][$riskType]['informational'];
+
+        foreach ($risks as $index => $risk) {
             $series[] = [
-                'label' => $currentInformational['level'],
-                'value' => $currentInformational['value'],
+                'label' => $risk['level'],
+                'riskInfo' => $risk['value'],
+                'riskOp' => $data['risks'][$riskType]['operational'][$index]['value']
             ];
         }
 
