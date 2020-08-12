@@ -360,11 +360,11 @@ class AnrService extends AbstractService
                     $data = [];
                     if (!count($this->get('measureMeasureCliTable')->getEntityByFields([
                         'anr' => $anr->id,
-                        'father' => $measure->getUuid()->toString(),
-                        'child' => $measureLinked->getUuid()->toString()
+                        'father' => $measure->getUuid(),
+                        'child' => $measureLinked->getUuid()
                     ]))) {
-                        $data['father'] = $newMeasure->getUuid()->toString();
-                        $data['child'] = $measureLinked->getUuid()->toString();
+                        $data['father'] = $newMeasure->getUuid();
+                        $data['child'] = $measureLinked->getUuid();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
@@ -372,11 +372,11 @@ class AnrService extends AbstractService
 
                     if (!count($this->get('measureMeasureCliTable')->getEntityByFields([
                         'anr' => $anr->id,
-                        'father' => $measureLinked->getUuid()->toString(),
-                        'child' => $newMeasure->getUuid()->toString()
+                        'father' => $measureLinked->getUuid(),
+                        'child' => $newMeasure->getUuid()
                     ]))) {
-                        $data['father'] = $measureLinked->getUuid()->toString();
-                        $data['child'] = $newMeasure->getUuid()->toString();
+                        $data['father'] = $measureLinked->getUuid();
+                        $data['child'] = $newMeasure->getUuid();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
@@ -641,12 +641,12 @@ class AnrService extends AbstractService
                             ->setCategory($categoryNewIds[$measure->category->id]);
                         foreach ($measure->getMeasuresLinked() as $measureLinked) {
                             $newMeasureMeasure = (new MeasureMeasure([
-                                'father' => $measure->getUuid()->toString(),
-                                'child' => $measureLinked->getUuid()->toString(),
+                                'father' => $measure->getUuid(),
+                                'child' => $measureLinked->getUuid(),
                             ]))->setAnr($newAnr);
                             $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                         }
-                        $measuresNewIds[$measure->getUuid()->toString()] = $newMeasure;
+                        $measuresNewIds[$measure->getUuid()] = $newMeasure;
                     }
                     //$newReferential->setMeasures(null);
                     $this->get('referentialCliTable')->save($newReferential, false);
@@ -685,7 +685,7 @@ class AnrService extends AbstractService
                             ->setMeasuresLinked(new ArrayCollection())
                             ->setAmvs(new ArrayCollection())
                             ->setRolfRisks(new ArrayCollection());
-                        $measuresNewIds[$measure->getUuid()->toString()] = $newMeasure;
+                        $measuresNewIds[$measure->getUuid()] = $newMeasure;
                         $newMeasures[] = $newMeasure;
                     }
                     $newReferential->setMeasures($newMeasures);
@@ -718,7 +718,7 @@ class AnrService extends AbstractService
                     $newSoa = new Soa($soa);
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
-                    $newSoa->setMeasure($measuresNewIds[$soa->measure->getUuid()->toString()]);
+                    $newSoa->setMeasure($measuresNewIds[$soa->measure->getUuid()]);
                     $this->get('soaTable')->save($newSoa, false);
                 }
             }
@@ -745,8 +745,8 @@ class AnrService extends AbstractService
                 $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->getUuid()->toString()]);
                 $newAmv->setMeasures(null);
                 foreach ($amv->getMeasures() as $measure) {
-                    if (isset($measuresNewIds[$measure->getUuid()->toString()])) {
-                        $measuresNewIds[$measure->getUuid()->toString()]->addAmv($newAmv);
+                    if (isset($measuresNewIds[$measure->getUuid()])) {
+                        $measuresNewIds[$measure->getUuid()]->addAmv($newAmv);
                     }
                 }
                 $this->get('amvCliTable')->save($newAmv, false);
