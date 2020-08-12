@@ -17,6 +17,7 @@ use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Model\Table\ThreatTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Ramsey\Uuid\Uuid;
@@ -467,28 +468,39 @@ class AnrInstanceService extends InstanceService
                     }
                 }
 
+                $createdThreatsUuids = [];
                 foreach ($data['risks'] as $risk) {
                   //uuid id now the pivot instead of code
                     if ($risk['specific']) {
                         // on doit le créer localement mais pour ça il nous faut les pivots sur les menaces et vulnérabilités
                         // on checke si on a déjà les menaces et les vulnérabilités liées, si c'est pas le cas, faut les créer
-                        if (( !in_array($risk['threat'],$sharedData['ithreats']) && version_compare ($monarc_version, "2.8.2")>=0) ||
-                              (version_compare ($monarc_version, "2.8.2")==-1 && !isset($sharedData['ithreats'][$data['threats'][$risk['threat']]['code']]))
-                            ) {
+                        if (!\in_array($risk['threat'], $createdThreatsUuids, true)
+                            && (
+                                (!in_array($risk['threat'], $sharedData['ithreats'])
+                                    && version_compare($monarc_version, "2.8.2") >= 0
+                                )
+                                || (version_compare($monarc_version, "2.8.2") == -1
+                                    && !isset($sharedData['ithreats'][$data['threats'][$risk['threat']]['code']])
+                                )
+                            )
+                        ) {
+                            /** @var ThreatTable $threatTable */
+                            $threatTable = $this->get('threatTable');
                             $toExchange = $data['threats'][$risk['threat']];
                             unset($toExchange['id']);
                             $toExchange['anr'] = $anr->get('id');
-                            $class = $this->get('instanceRiskService')->get('threatTable')->getEntityClass();
+                            $class = $threatTable->getEntityClass();
                             $threat = new $class();
-                            $threat->setDbAdapter($this->get('instanceConsequenceTable')->getDb());
+                            $threat->setDbAdapter($threatTable->getDb());
                             $threat->setLanguage($this->getLanguage());
                             $threat->exchangeArray($toExchange);
                             $this->setDependencies($threat, ['anr']);
-                            $tuuid = $this->get('instanceConsequenceTable')->save($threat,false);
-                            if(!version_compare ($monarc_version, "2.8.2")==-1 )
-                              $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $tuuid;
+                            $tuuid = $threatTable->save($threat, false);
+                            $createdThreatsUuids[] = $tuuid;
+                            if (!version_compare($monarc_version, "2.8.2") == -1) {
+                                $sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $tuuid;
+                            }
                         }
-
 
                         if (( !in_array($risk['vulnerability'],$sharedData['ivuls']) && version_compare ($monarc_version, "2.8.2")>=0) ||
                               (version_compare ($monarc_version, "2.8.2")==-1&& !isset($sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']]))
@@ -852,9 +864,9 @@ class AnrInstanceService extends InstanceService
                   $RecoCreated = $this->get('recommandationRiskTable')->getEntityByFields([ // Check if reco-risk link exist
                     'recommandation' => ['anr' => $anr->get('id'), 'uuid' => $rtc->recommandation->uuid],
                     'instance' => $instanceId,
-                    'asset' => ['anr' => $anr->get('id'), 'uuid' => $rtc->asset->uuid->toString()],
-                    'threat' => ['anr' => $anr->get('id'), 'uuid' => $rtc->threat->uuid->toString()],
-                    'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => $rtc->vulnerability->uuid->toString()]]);
+                    'asset' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->asset->getUuid()],
+                    'threat' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->threat->getUuid()],
+                    'vulnerability' => ['anr' => $anr->get('id'), 'uuid' => (string)$rtc->vulnerability->getUuid()]]);
 
                   if (empty($RecoCreated)) {// Creation of link reco -> risk
                           $class = $this->get('recommandationRiskTable')->getEntityClass();
