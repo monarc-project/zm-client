@@ -308,10 +308,10 @@ class AnrService extends AbstractService
 
         // search for referentials to unlink from the anr
         foreach ($anr->getReferentials() as $referential) {
-            if (!in_array($referential->getUuid()->toString(), $uuidArray, true)) {
+            if (!in_array((string)$referential->getUuid(), $uuidArray, true)) {
                 $this->get('referentialCliTable')->delete([
                     'anr' => $anr->id,
-                    'uuid' => $referential->getUuid()->toString()
+                    'uuid' => (string)$referential->getUuid()
                 ]);
             }
         }
@@ -337,7 +337,7 @@ class AnrService extends AbstractService
 
             // duplicate categories
             $categoryNewIds = [];
-            $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
+            $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => (string)$referential->getUuid()]);
             foreach ($category as $cat) {
                 $newCategory = new SoaCategory($cat);
                 $newCategory->set('id', null);
@@ -388,15 +388,19 @@ class AnrService extends AbstractService
                 $newMeasure->amvs = new ArrayCollection;
                 $newMeasure->rolfRisks = new ArrayCollection;
                 // update the amv with the new measures from the current referential
-                foreach ($amvs as $amv_common) {
+                foreach ($amvs as $amvCommon) {
                     // match the AMVs from common with AMVS from cli
-                    $amv_cli = $this->get('amvCliTable')
+                    $amvCli = $this->get('amvCliTable')
                         ->getEntityByFields([
-                            'asset' => ['uuid' => $amv_common->asset->getUuid()->toString(), 'anr' => $anr->id ],
-                            'threat' => ['uuid' => $amv_common->threat->getUuid()->toString(), 'anr' => $anr->id ],
-                            'vulnerability' => ['uuid' => $amv_common->vulnerability->getUuid()->toString(), 'anr' => $anr->id ]]);
-                    if (count($amv_cli)) {
-                        $newMeasure->addAmv($amv_cli[0]);
+                            'asset' => ['uuid' => (string)$amvCommon->getAsset()->getUuid(), 'anr' => $anr->id],
+                            'threat' => ['uuid' => (string)$amvCommon->getThreat()->getUuid(), 'anr' => $anr->id],
+                            'vulnerability' => [
+                                'uuid' => (string)$amvCommon->getVulnerability()->getUuid(),
+                                'anr' => $anr->id
+                            ]
+                        ]);
+                    if (count($amvCli)) {
+                        $newMeasure->addAmv($amvCli[0]);
                     }
                 }
                 foreach ($rolfRisks as $rolfRisk_common) {
@@ -552,7 +556,7 @@ class AnrService extends AbstractService
                 $newAsset = new Asset($asset);
                 $newAsset->setAnr($newAnr);
                 $this->get('assetCliTable')->save($newAsset, false);
-                $assetsNewIds[$asset->getUuid()->toString()] = $newAsset;
+                $assetsNewIds[(string)$asset->getUuid()] = $newAsset;
             }
 
             // duplicate threats
@@ -580,7 +584,7 @@ class AnrService extends AbstractService
                     $newThreat->setTheme($themesNewIds[$threat->theme->id]);
                 }
                 $this->get('threatCliTable')->save($newThreat, false);
-                $threatsNewIds[$threat->getUuid()->toString()] = $newThreat;
+                $threatsNewIds[(string)$threat->getUuid()] = $newThreat;
             }
 
             // duplicate vulnerabilities
@@ -602,7 +606,7 @@ class AnrService extends AbstractService
                 $newVulnerability = new Vulnerability($vulnerability);
                 $newVulnerability->setAnr($newAnr);
                 $this->get('vulnerabilityCliTable')->save($newVulnerability, false);
-                $vulnerabilitiesNewIds[$vulnerability->getUuid()->toString()] = $newVulnerability;
+                $vulnerabilitiesNewIds[(string)$vulnerability->getUuid()] = $newVulnerability;
             }
 
             // duplicate categories, referentials and measures
@@ -619,7 +623,7 @@ class AnrService extends AbstractService
 
                     // duplicate categories
                     $categoryNewIds = [];
-                    $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()->toString()]);
+                    $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => (string)$referential->getUuid()]);
                     foreach ($category as $cat) {
                         $newCategory = new SoaCategory($cat);
                         $newCategory->set('id', null);
@@ -729,20 +733,20 @@ class AnrService extends AbstractService
                 ? $this->get('amvTable')->fetchAllObject()
                 : $this->get('amvCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($amvs as $key => $amv) {
-                if (
-                    (!isset($assetsNewIds[$amv->asset->getUuid()->toString()])) ||
-                    (!isset($threatsNewIds[$amv->threat->getUuid()->toString()])) ||
-                    (!isset($vulnerabilitiesNewIds[$amv->vulnerability->getUuid()->toString()]))
-                ) {
+                if (!isset(
+                    $assetsNewIds[(string)$amv->asset->getUuid()],
+                    $threatsNewIds[(string)$amv->threat->getUuid()],
+                    $vulnerabilitiesNewIds[(string)$amv->vulnerability->getUuid()]
+                )) {
                     unset($amvs[$key]);
                 }
             }
             foreach ($amvs as $amv) {
                 $newAmv = new Amv($amv);
                 $newAmv->setAnr($newAnr);
-                $newAmv->setAsset($assetsNewIds[$amv->asset->getUuid()->toString()]);
-                $newAmv->setThreat($threatsNewIds[$amv->threat->getUuid()->toString()]);
-                $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->getUuid()->toString()]);
+                $newAmv->setAsset($assetsNewIds[(string)$amv->asset->getUuid()]);
+                $newAmv->setThreat($threatsNewIds[(string)$amv->threat->getUuid()]);
+                $newAmv->setVulnerability($vulnerabilitiesNewIds[(string)$amv->vulnerability->getUuid()]);
                 $newAmv->setMeasures(null);
                 foreach ($amv->getMeasures() as $measure) {
                     if (isset($measuresNewIds[$measure->getUuid()])) {
@@ -750,7 +754,7 @@ class AnrService extends AbstractService
                     }
                 }
                 $this->get('amvCliTable')->save($newAmv, false);
-                $amvsNewIds[$amv->id] = $newAmv;
+                $amvsNewIds[(string)$amv->getUuid()] = $newAmv;
             }
 
             // duplicate rolf tags
@@ -849,12 +853,12 @@ class AnrService extends AbstractService
                 if (!is_null($object->category)) {
                     $newObject->setCategory($objectsCategoriesNewIds[$object->category->id]);
                 }
-                $newObject->setAsset($assetsNewIds[$object->asset->getUuid()->toString()]);
+                $newObject->setAsset($assetsNewIds[(string)$object->asset->getUuid()]);
                 if ($object->rolfTag) {
                     $newObject->setRolfTag($rolfTagsNewIds[$object->rolfTag->id]);
                 }
                 $this->get('objectCliTable')->save($newObject, false);
-                $objectsNewIds[$object->getUuid()->toString()] = $newObject;
+                $objectsNewIds[(string)$object->getUuid()] = $newObject;
 
                 //root category
                 if (!is_null($object->category)) {
@@ -889,15 +893,17 @@ class AnrService extends AbstractService
                 ? $this->get('objectObjectTable')->fetchAllObject()
                 : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objectsObjects as $key => $objectObject) {
-                if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->getUuid()->toString()]) && $objectObject->child && isset($objectsNewIds[$objectObject->child->getUuid()->toString()]))) {
+                if (!($objectObject->father && isset($objectsNewIds[(string)$objectObject->father->getUuid()])
+                    && $objectObject->child && isset($objectsNewIds[(string)$objectObject->child->getUuid()]))
+                ) {
                     unset($objectsObjects[$key]);
                 }
             }
             foreach ($objectsObjects as $objectObject) {
                 $newObjectObject = new ObjectObject($objectObject);
                 $newObjectObject->setAnr($newAnr);
-                $newObjectObject->setFather($objectsNewIds[$objectObject->father->getUuid()->toString()]);
-                $newObjectObject->setChild($objectsNewIds[$objectObject->child->getUuid()->toString()]);
+                $newObjectObject->setFather($objectsNewIds[(string)$objectObject->father->getUuid()]);
+                $newObjectObject->setChild($objectsNewIds[(string)$objectObject->child->getUuid()]);
                 $this->get('objectObjectCliTable')->save($newObjectObject, false);
             }
 
@@ -913,8 +919,8 @@ class AnrService extends AbstractService
                 $newInstance = new Instance($instance);
                 $newInstance->set('id', null);
                 $newInstance->setAnr($newAnr);
-                $newInstance->setAsset($assetsNewIds[$instance->asset->getUuid()->toString()]);
-                $newInstance->setObject($objectsNewIds[$instance->object->getUuid()->toString()]);
+                $newInstance->setAsset($assetsNewIds[(string)$instance->asset->getUuid()]);
+                $newInstance->setObject($objectsNewIds[(string)$instance->object->getUuid()]);
                 if ($instance->root || $instance->parent) {
                     $nbInstanceWithParent++;
                 }
@@ -992,16 +998,16 @@ class AnrService extends AbstractService
                 $newInstanceRisk->set('id', null);
                 $newInstanceRisk->setAnr($newAnr);
                 if ($instanceRisk->amv) {
-                    $newInstanceRisk->setAmv($amvsNewIds[$instanceRisk->amv->id]);
+                    $newInstanceRisk->setAmv($amvsNewIds[(string)$instanceRisk->amv->getUuid()]);
                 }
                 if ($instanceRisk->asset) {
-                    $newInstanceRisk->setAsset($assetsNewIds[$instanceRisk->asset->getUuid()->toString()]);
+                    $newInstanceRisk->setAsset($assetsNewIds[(string)$instanceRisk->asset->getUuid()]);
                 }
                 if ($instanceRisk->threat) {
-                    $newInstanceRisk->setThreat($threatsNewIds[$instanceRisk->threat->getUuid()->toString()]);
+                    $newInstanceRisk->setThreat($threatsNewIds[(string)$instanceRisk->threat->getUuid()]);
                 }
                 if ($instanceRisk->vulnerability) {
-                    $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->vulnerability->getUuid()->toString()]);
+                    $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[(string)$instanceRisk->vulnerability->getUuid()]);
                 }
                 if ($instanceRisk->instance) {
                     $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->instance->id]);
@@ -1021,7 +1027,7 @@ class AnrService extends AbstractService
                 $newInstanceRiskOp->set('id', null);
                 $newInstanceRiskOp->setAnr($newAnr);
                 $newInstanceRiskOp->setInstance($instancesNewIds[$instanceRiskOp->instance->id]);
-                $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->object->getUuid()->toString()]);
+                $newInstanceRiskOp->setObject($objectsNewIds[(string)$instanceRiskOp->object->getUuid()]);
                 if ($instanceRiskOp->rolfRisk) {
                     $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
                 }
@@ -1039,7 +1045,7 @@ class AnrService extends AbstractService
                 $newInstanceConsequence->set('id', null);
                 $newInstanceConsequence->setAnr($newAnr);
                 $newInstanceConsequence->setInstance($instancesNewIds[$instanceConsequence->instance->id]);
-                $newInstanceConsequence->setObject($objectsNewIds[$instanceConsequence->object->getUuid()->toString()]);
+                $newInstanceConsequence->setObject($objectsNewIds[(string)$instanceConsequence->object->getUuid()]);
                 $newInstanceConsequence->setScaleImpactType($scalesImpactTypesNewIds[$instanceConsequence->scaleImpactType->id]);
                 $this->get('instanceConsequenceCliTable')->save($newInstanceConsequence, false);
             }
@@ -1285,13 +1291,13 @@ class AnrService extends AbstractService
                         $newRecommendationRisk->setGlobalObject(null);
                     }
                     if ($newRecommendationRisk->get('asset')) {
-                        $newRecommendationRisk->set('asset', $assetsNewIds[$newRecommendationRisk->get('asset')->getUuid()->toString()]);
+                        $newRecommendationRisk->set('asset', $assetsNewIds[(string)$newRecommendationRisk->get('asset')->getUuid()]);
                     }
                     if ($newRecommendationRisk->get('threat')) {
-                        $newRecommendationRisk->set('threat', $threatsNewIds[$newRecommendationRisk->get('threat')->getUuid()->toString()]);
+                        $newRecommendationRisk->set('threat', $threatsNewIds[(string)$newRecommendationRisk->get('threat')->getUuid()]);
                     }
                     if ($newRecommendationRisk->get('vulnerability')) {
-                        $newRecommendationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommendationRisk->get('vulnerability')->getUuid()->toString()]);
+                        $newRecommendationRisk->set('vulnerability', $vulnerabilitiesNewIds[(string)$newRecommendationRisk->get('vulnerability')->getUuid()]);
                     }
                     // TODO: check why do we need the following manipulation and remove the double save call.
                     $newRecommendationRisk->setAnr(null);
