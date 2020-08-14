@@ -261,6 +261,8 @@ class AnrRecommandationService extends AbstractService
             } catch (Throwable $e) {
                 throw new Exception('Invalid date format', 412);
             }
+        } elseif (isset($data['duedate']) && $data['duedate'] === '') {
+            $data['duedate'] = null;
         }
 
         if (empty($data['recommandationSet'])) {
