@@ -92,7 +92,7 @@ class AnrAmvService extends AmvService
 
         $linkedMeasuresUuids = array_column($data['measures'], 'uuid');
         foreach ($amv->getMeasures() as $measure) {
-            $linkedMeasuresUuidKey = array_search((string)$measure->getUuid(), $linkedMeasuresUuids, true);
+            $linkedMeasuresUuidKey = array_search($measure->getUuid(), $linkedMeasuresUuids, true);
             if ($linkedMeasuresUuidKey === false) {
                 $amv->removeMeasure($measure);
                 continue;
@@ -182,7 +182,7 @@ class AnrAmvService extends AmvService
             }
 
             foreach ($amv->measures as $m) {
-                if (false === array_search($m->uuid->toString(), array_column($data['measures'], 'uuid'), true)) {
+                if (false === array_search($m->getUuid(), array_column($data['measures'], 'uuid'), true)) {
                     $m->removeAmv($amv);
                 }
             }
