@@ -904,6 +904,9 @@ class AnrInstanceService extends InstanceService
             }
 
             if (!empty($data['risksop'])) {
+                usort($data['risksop'], function($a, $b) {
+                    return $a['rolfRisk'] <=> $b['rolfRisk'];
+                });
                 $toApproximate = [
                     Scale::TYPE_THREAT => [
                         'netProb',
