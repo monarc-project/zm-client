@@ -1244,9 +1244,9 @@ class DeliverableGenerationService extends AbstractService
         $maxLevelDeep = 1;
 
         foreach ($result as $r) {
-          $objectUuidString = $r['oid'];
-          $threatUuidString = $r['mid'];
-          $vulnerabilityUuidString = $r['vid'];
+          $objectUuidString = (string)$r['oid'];
+          $threatUuidString = (string)$r['mid'];
+          $vulnerabilityUuidString = (string)$r['vid'];
           if (!isset($globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString])) {
             $key = null;
             if ($r['scope'] == ObjectSuperClass::SCOPE_GLOBAL) {

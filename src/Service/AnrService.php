@@ -744,9 +744,9 @@ class AnrService extends AbstractService
             foreach ($amvs as $amv) {
                 $newAmv = new Amv($amv);
                 $newAmv->setAnr($newAnr);
-                $newAmv->setAsset($assetsNewIds[$amv->asset->getUuid()]);
-                $newAmv->setThreat($threatsNewIds[$amv->threat->getUuid()]);
-                $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->vulnerability->getUuid()]);
+                $newAmv->setAsset($assetsNewIds[$amv->getAsset()->getUuid()]);
+                $newAmv->setThreat($threatsNewIds[$amv->getThreat()->getUuid()]);
+                $newAmv->setVulnerability($vulnerabilitiesNewIds[$amv->getVulnerability()->getUuid()]);
                 $newAmv->setMeasures(null);
                 foreach ($amv->getMeasures() as $measure) {
                     if (isset($measuresNewIds[$measure->getUuid()])) {
@@ -896,8 +896,8 @@ class AnrService extends AbstractService
                 ? $this->get('objectObjectTable')->fetchAllObject()
                 : $this->get('objectObjectCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($objectsObjects as $key => $objectObject) {
-                if (!($objectObject->father && isset($objectsNewIds[$objectObject->father->getUuid()])
-                    && $objectObject->child && isset($objectsNewIds[$objectObject->child->getUuid()]))
+                if (!($objectObject->getFather() && isset($objectsNewIds[$objectObject->getFather()->getUuid()])
+                    && $objectObject->getChild() && isset($objectsNewIds[$objectObject->getChild()->getUuid()]))
                 ) {
                     unset($objectsObjects[$key]);
                 }
@@ -905,8 +905,8 @@ class AnrService extends AbstractService
             foreach ($objectsObjects as $objectObject) {
                 $newObjectObject = new ObjectObject($objectObject);
                 $newObjectObject->setAnr($newAnr);
-                $newObjectObject->setFather($objectsNewIds[$objectObject->father->getUuid()]);
-                $newObjectObject->setChild($objectsNewIds[$objectObject->child->getUuid()]);
+                $newObjectObject->setFather($objectsNewIds[$objectObject->getFather()->getUuid()]);
+                $newObjectObject->setChild($objectsNewIds[$objectObject->getChild()->getUuid()]);
                 $this->get('objectObjectCliTable')->save($newObjectObject, false);
             }
 
@@ -921,8 +921,8 @@ class AnrService extends AbstractService
                 $newInstance = new Instance($instance);
                 $newInstance->set('id', null);
                 $newInstance->setAnr($newAnr);
-                $newInstance->setAsset($assetsNewIds[$instance->asset->getUuid()]);
-                $newInstance->setObject($objectsNewIds[$instance->object->getUuid()]);
+                $newInstance->setAsset($assetsNewIds[$instance->getAsset()->getUuid()]);
+                $newInstance->setObject($objectsNewIds[$instance->getObject()->getUuid()]);
                 $newInstance->setRoot(null);
                 $newInstance->setParent(null);
                 $this->get('instanceCliTable')->save($newInstance, false);
