@@ -1244,9 +1244,9 @@ class DeliverableGenerationService extends AbstractService
         $maxLevelDeep = 1;
 
         foreach ($result as $r) {
-          $objectUuidString = (string)$r['oid'];
-          $threatUuidString = (string)$r['mid'];
-          $vulnerabilityUuidString = (string)$r['vid'];
+          $objectUuidString = $r['oid'];
+          $threatUuidString = $r['mid'];
+          $vulnerabilityUuidString = $r['vid'];
           if (!isset($globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString])) {
             $key = null;
             if ($r['scope'] == ObjectSuperClass::SCOPE_GLOBAL) {
@@ -2316,7 +2316,7 @@ class DeliverableGenerationService extends AbstractService
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
                     . ' - ' . (
                         $recommendationRisk->hasGlobalObjectRelation()
-                            ? (string)$recommendationRisk->getGlobalObject()->getUuid()
+                            ? $recommendationRisk->getGlobalObject()->getUuid()
                             : ''
                     );
                 if (isset($toUnset[$key])) {
@@ -2949,17 +2949,17 @@ class DeliverableGenerationService extends AbstractService
             $amvs = [];
             $rolfRisks = [];
             foreach ($controlSoa['measure']->amvs as $amv) {
-                array_push($amvs, $amv->uuid->tostring());
+                $amvs[] = $amv->getUuid();
             }
             foreach ($controlSoa['measure']->rolfRisks as $rolfRisk) {
-                array_push($rolfRisks, $rolfRisk->id);
+                $rolfRisksp[] = $rolfRisk->getId();
             }
 
             $controlSoa['measure']->rolfRisks = $riskOpService->getRisksOp($anr->getId(), null, ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']);
             $controlSoa['measure']->amvs = $riskService->getRisks($anr->getId(), null, ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']);
 
             if (!empty($controlSoa['measure']->amvs) || !empty($controlSoa['measure']->rolfRisks)) {
-                if ($controlSoa['measure']->uuid != $previousControlId) {
+                if ($controlSoa['measure']->getUuid() != $previousControlId) {
                     $section->addText(_WT($controlSoa['measure']->code) . ' - ' . _WT($controlSoa['measure']->get('label' . $anr->getLanguage())), $styleContentFontBoldCat);
 
                     if (!empty($controlSoa['measure']->amvs)) {
@@ -3043,7 +3043,7 @@ class DeliverableGenerationService extends AbstractService
                         $tableRiskOp->addCell(Font::centimeterSizeToTwips(2.00), $cellRowContinue);
                     }
                 }
-                $previousControlId = $controlSoa['measure']->uuid;
+                $previousControlId = $controlSoa['measure']->getUuid();
                 if (!empty($controlSoa['measure']->amvs)) {
                     $impacts = ['c', 'i', 'd'];
 

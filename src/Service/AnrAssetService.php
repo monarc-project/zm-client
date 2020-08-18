@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AssetSuperClass;
+use Monarc\FrontOffice\Model\Table\InstanceTable;
 
 /**
  * This class is the service that handles assets in use within an ANR.
@@ -109,7 +110,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
             /** @var AssetSuperClass $asset */
             $asset = current($this->get('table')->getEntityByFields(['anr' => $anr->get('id'), 'uuid' => $data['asset']['uuid']]));
             if (!empty($asset)) {
-                $idAsset = (string)$asset->getUuid();
+                $idAsset = $asset->getUuid();
             } else {
                 $c = $this->get('table')->getEntityClass();
                 $asset = new $c();
@@ -188,7 +189,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                       $newThreat->set('theme', $newTheme);
                       $this->setDependencies($newThreat, ['anr', 'theme']);
                       $idThreat = $this->get('threatTable')->save($newThreat,false);
-                      $objectsCache['threats'][$newThreat->uuid] =  $newThreat->uuid;
+                      $objectsCache['threats'][$newThreat->getUuid()] =  $newThreat->getUuid();
                     }
                   }
 
@@ -197,7 +198,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
               ******/
               $vulnerabilities = $this->get('vulnerabilityTable')->fetchAllFiltered(['uuid'],1,0,null,null,['anr'=>$anr->get('id')],null,null);
                 $vulnerabilities = array_map(function ($elt) {
-                    return (string)$elt['uuid'];
+                    return $elt['uuid'];
                 }, $vulnerabilities);
                 foreach ($data['vuls'] as $keyVul => $valueVul) {
                   if(!in_array($valueVul['uuid'],$vulnerabilities)){
@@ -209,8 +210,8 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                       $newVul->set('anr', $anr->get('id'));
                       $this->setDependencies($newVul, ['anr']);
                       $idVul = $this->get('vulnerabilityTable')->save($newVul,false);
-                      $vulnerabilities[] = $newVul->uuid;
-                      $objectsCache['vuls'][$newVul->uuid] =  $newVul->uuid;
+                      $vulnerabilities[] = $newVul->getUuid();
+                      $objectsCache['vuls'][$newVul->getUuid()] = $newVul->getUuid();
                   }
                 }
                 $this->get('vulnerabilityTable')->getDb()->flush();
@@ -220,7 +221,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
               ******/
               $currentAmvs = $this->get('amvTable')->fetchAllFiltered(['uuid'],1,0,null,null,['anr'=>$anr->get('id')],null,null);
                 $currentAmvs = array_map(function ($elt) {
-                    return (string)$elt['uuid'];
+                    return $elt['uuid'];
                 }, $currentAmvs);
                 foreach ($data['amvs'] as $keyAmv => $valueAmv) {
                   if (!in_array($valueAmv['uuid'],$currentAmvs)) {//the $amv doesn't exist
@@ -249,11 +250,23 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
 
                     //update instances
                     $MonarcObjectTable = $this->get('MonarcObjectTable');
-                    $objects = $MonarcObjectTable->getEntityByFields(['anr' => $anr->get('id'), 'asset' => ['anr' => $anr->get('id'), 'uuid' =>$idAsset]]);
+                      $objects = $MonarcObjectTable->getEntityByFields([
+                          'anr' => $anr->get('id'),
+                          'asset' => [
+                              'anr' => $anr->get('id'),
+                              'uuid' => $idAsset
+                          ]
+                      ]);
                     foreach ($objects as $object) {
                         /** @var InstanceTable $instanceTable */
                         $instanceTable = $this->get('instanceTable');
-                        $instances = $instanceTable->getEntityByFields(['anr' => $anr->get('id'), 'object' => ['anr' => $anr->get('id'), 'uuid' => $object->get('uuid')->toString()]]);
+                        $instances = $instanceTable->getEntityByFields([
+                            'anr' => $anr->get('id'),
+                            'object' => [
+                                'anr' => $anr->get('id'),
+                                'uuid' => $object->getUuid()
+                            ]
+                        ]);
                         $i = 1;
                         $nbInstances = count($instances);
                         foreach ($instances as $instance) {
@@ -286,7 +299,13 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                   if(!in_array($oldAmv->getUuid(), $newAmvs)){ //it's an old amv
 
                       //we fetch the instances risks wich contains the amv to set the risk to specific
-                      $oldIRs = $this->get('instanceRiskTable')->getEntityByFields(['anr' => $anr->get('id'), 'amv' => ['anr' => $anr->get('id'), 'uuid' => (string)$oldAmv->getUuid()]]);
+                      $oldIRs = $this->get('instanceRiskTable')->getEntityByFields([
+                          'anr' => $anr->get('id'),
+                          'amv' => [
+                              'anr' => $anr->get('id'),
+                              'uuid' => $oldAmv->getUuid()
+                          ]
+                      ]);
                       foreach ($oldIRs as $oldIR) {
                         $oldIR->set('amv',null);
                         $oldIR->set('anr',null);
@@ -299,7 +318,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                         $this->get('instanceRiskTable')->save($oldIR, false);
                       }
                       $this->get('instanceRiskTable')->getDb()->flush();
-                      $amvsToDelete[] = ['uuid' => (string)$oldAmv->getUuid(), 'anr' => $anr->get('id')];
+                      $amvsToDelete[] = ['uuid' => $oldAmv->getUuid(), 'anr' => $anr->get('id')];
                   }
                 }
 
@@ -316,7 +335,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
               // we'll create a new one.
               $asset = current($this->get('table')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['asset']['code']]));
               if (!empty($asset)) {
-                  $idAsset = $asset->get('uuid')->ToString();
+                  $idAsset = $asset->getUuid();
               } else {
                   $c = $this->get('table')->getEntityClass();
                   $asset = new $c();
@@ -371,7 +390,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                               $threat = $this->get('threatTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['threats'][$amvArray['threat']]['code']]);
                               if ($threat) {
                                   $threat = current($threat);
-                                  $data['threats'][$amvArray['threat']] = (string)$threat->get('uuid');
+                                  $data['threats'][$amvArray['threat']] = $threat->getUuid();
 
                                   // Update du theme
                                   $theme = $threat->get('theme');
@@ -404,7 +423,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                               $vul = $this->get('vulnerabilityTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['vuls'][$amvArray['vulnerability']]['code']]);
                               if ($vul) {
                                   $vul = current($vul);
-                                  $data['vuls'][$amvArray['vulnerability']] = (string)$vul->get('uuid');
+                                  $data['vuls'][$amvArray['vulnerability']] = $vul->getUuid();
                               } else {
                                   $c = $this->get('vulnerabilityTable')->getEntityClass();
                                   $vul = new $c();
@@ -474,7 +493,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                     $measure = $this->get('measureTable')->getEntityByFields(['anr' => $anr->get('id'), 'code' => $data['measures'][$amvArray['measure' . $i]]['code']]);
                                     if ($measure) {
                                         $measure = current($measure);
-                                        $data['measures'][$amvArray['measure' . $i]] = (string)$measure->get('uuid');
+                                        $data['measures'][$amvArray['measure' . $i]] = $measure->getUuid();
                                      }
                                 }
                                 $amvData['measures'][] = $data['measures'][$amvArray['measure' . $i]];
@@ -521,7 +540,13 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                           foreach ($objects as $object) {
                               /** @var InstanceTable $instanceTable */
                               $instanceTable = $this->get('instanceTable');
-                              $instances = $instanceTable->getEntityByFields(['anr' => $anr->get('id'), 'object' => ['anr' => $anr->get('id'), 'uuid' => (string)$object->get('uuid')]]);
+                              $instances = $instanceTable->getEntityByFields([
+                                  'anr' => $anr->get('id'),
+                                  'object' => [
+                                      'anr' => $anr->get('id'),
+                                      'uuid' => $object->getUuid()
+                                  ]
+                              ]);
                               $i = 1;
                               $nbInstances = count($instances);
                               foreach ($instances as $instance) {
@@ -542,7 +567,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                               }
                           }
                       } else {
-                          $localAmv[] = (string)$amvTest->get('uuid');
+                          $localAmv[] = $amvTest->getUuid();
                           if(isset($amvArray['measures'])){ //version with uuid
                             foreach ($amvArray['measures'] as $m) {
                               try{
@@ -578,7 +603,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                   foreach ($risks as $a) {
                       $amv = $a->get('amv');
                       if (!empty($amv)) {
-                          $amvs[] = ['anr'=>$anr->get('id'), 'uuid' => (string)$amv->getUuid()];
+                          $amvs[] = ['anr'=>$anr->get('id'), 'uuid' => $amv->getUuid()];
                           $a->set('amv', null);
                           $a->set('anr', null);
                           $this->get('instanceRiskTable')->save($a);
@@ -598,7 +623,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                   ]);
                   $idsAmv = [];
                   foreach($amvs as $amv){
-                      $idsAmv[] = ['anr'=>$anr->get('id'), 'uuid' => (string)$amv->getUuid()];
+                      $idsAmv[] = ['anr'=>$anr->get('id'), 'uuid' => $amv->getUuid()];
                   }
                   if (!empty($idsAmv)) {
                       $this->get('amvTable')->deleteList($idsAmv);

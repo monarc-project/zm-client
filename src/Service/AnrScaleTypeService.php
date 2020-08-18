@@ -112,7 +112,7 @@ class AnrScaleTypeService extends \Monarc\Core\Service\AbstractService
             $dataConsequences = [
                 'anr' => $anrId,
                 'instance' => $instance->id,
-                'object' => $instance->object->uuid->toString(),
+                'object' => $instance->getObject()->getUuid(),
                 'scaleImpactType' => $id,
             ];
             /** @var InstanceConsequenceService $instanceConsequenceService */
