@@ -56,9 +56,21 @@ class StatsApiProvider
      */
     public function getStatsData(array $params): array
     {
+        $query = '';
+        foreach ($params as $name => $value) {
+            if (\is_array($value)) {
+                foreach ($value as $v) {
+                    $query .= $name . '=' . $v . '&';
+                }
+            } else {
+                $query .= $name . '=' . $value . '&';
+            }
+        }
+        $query = substr($query, 0, -1);
+
         $response = $this->guzzleClient->get(self::BASE_URI . '/stats', [
             'headers' => $this->getAuthHeaders(),
-            'query' => $params,
+            'query' => $query,
         ]);
 
         if ($response->getStatusCode() !== 200) {
