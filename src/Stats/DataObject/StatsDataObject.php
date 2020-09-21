@@ -28,12 +28,16 @@ class StatsDataObject implements JsonSerializable
 
     /** @var array */
     private $data;
+    
+    /** @var array */
+    private $processedData;
 
     public function __construct(array $data)
     {
         $this->setAnr($data['anr'])
             ->setType($data['type'])
-            ->setData($data['data']);
+            ->setData($data['data'])
+            ->setProcessedData(array_key_exists('processed_data', $data) ? $data['processed_data'] : []);
 
         if (!empty($data['date'])) {
             $this->setDate($data['date']);
@@ -102,6 +106,18 @@ class StatsDataObject implements JsonSerializable
 
         return $this;
     }
+    
+    public function getProcessedData(): array
+    {
+        return $this->processedData;
+    }
+
+    public function setProcessedData(array $processedData): self
+    {
+        $this->processedData = $processedData;
+
+        return $this;
+    }
 
     public function jsonSerialize(): array
     {
@@ -110,6 +126,7 @@ class StatsDataObject implements JsonSerializable
             'type' => $this->type,
             'date' => $this->date,
             'data' => $this->data,
+            'processed_data' => $this->processedData,
         ];
     }
 }

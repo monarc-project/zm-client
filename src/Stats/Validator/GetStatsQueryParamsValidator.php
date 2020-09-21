@@ -66,6 +66,15 @@ class GetStatsQueryParamsValidator extends AbstractMonarcInputValidator
                 ],
             ],
             [
+                'name' => 'postprocessor',
+                'required' => false,
+                'filters' => [
+                    [
+                        'name' => StringTrim::class,
+                    ],
+                ],
+            ],
+            [
                 'name' => 'dateFrom',
                 'required' => false,
                 'validators' => [
