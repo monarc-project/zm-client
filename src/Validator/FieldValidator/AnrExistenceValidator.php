@@ -23,7 +23,7 @@ class AnrExistenceValidator extends AbstractValidator
         /** @var AnrTable $anrTable */
         $anrTable = $this->getOptions()['anrTable'];
         try {
-            $anrTable->findById($value);
+            $anrTable->findById((int)$value);
         } catch (EntityNotFoundException $e) {
             $this->error(self::ANR_DOES_NOT_EXIST, $value);
 
