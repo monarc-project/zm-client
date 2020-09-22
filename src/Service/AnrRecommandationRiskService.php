@@ -107,12 +107,12 @@ class AnrRecommandationRiskService extends AbstractService
                 }
 
                 $instance = $this->instanceTable->getEntity($recoRisk['instance']);
-                $objId = $instance->object->uuid->toString();
+                $objId = $instance->getObject()->getUuid();
 
-                if (!isset($knownGlobObjId[$objId][$threat->uuid->toString()][$vulnerability->uuid->toString()])) {
+                if (!isset($knownGlobObjId[$objId][$threat->getUuid()][$vulnerability->getUuid()])) {
                     $objectCache[$objId] = $instance->object;
                     if ($instance->object->scope == 2) { // SCOPE_GLOBAL
-                        $knownGlobObjId[$objId][$threat->uuid->toString()][$vulnerability->uuid->toString()] = $objId;
+                        $knownGlobObjId[$objId][$threat->getUuid()][$vulnerability->getUuid()] = $objId;
                     }
 
                     return true;
@@ -147,11 +147,11 @@ class AnrRecommandationRiskService extends AbstractService
                     $brothers = $instanceRiskTable->getEntityByFields([
                         'asset' => [
                             'anr' => $instanceRisk->getAnr()->getId(),
-                            'uuid' => (string)$instanceRisk->getAsset()->getUuid(),
+                            'uuid' => $instanceRisk->getAsset()->getUuid(),
                         ],
                         'threat' => [
                             'anr' => $instanceRisk->getAnr()->getId(),
-                            'uuid' => (string)$instanceRisk->getThreat()->getUuid(),
+                            'uuid' => $instanceRisk->getThreat()->getUuid(),
                         ],
                         'vulnerability' => [
                             'anr' => $instanceRisk->getAnr()->getId(),
@@ -252,7 +252,7 @@ class AnrRecommandationRiskService extends AbstractService
             $instances = $this->get('instanceTable')->getEntityByFields([
                 'object' => [
                     'anr' => $gRisk->anr->id,
-                    'uuid' => $gRisk->getInstance()->getObject()->get('uuid')->toString()
+                    'uuid' => $gRisk->getInstance()->getObject()->getUuid()
                 ],
                 'anr' => $gRisk->anr->id,
                 'id' => ['op' => '!=', 'value' => $gRisk->getInstance()->get('id')],
@@ -264,11 +264,11 @@ class AnrRecommandationRiskService extends AbstractService
 
             if (!empty($instanceIds)) {
                 $brothers = $tableUsed->getEntityByFields([
-                    'asset' => ['anr' => $gRisk->anr->id, 'uuid' => $gRisk->asset->uuid->toString()],
-                    'threat' => ['anr' => $gRisk->anr->id, 'uuid' => $gRisk->threat->uuid->toString()],
-                    'vulnerability' => ['anr' => $gRisk->anr->id, 'uuid' => $gRisk->vulnerability->uuid->toString()],
+                    'asset' => ['anr' => $gRisk->getAnr()->getId(), 'uuid' => $gRisk->getAsset()->getUuid()],
+                    'threat' => ['anr' => $gRisk->getAnr()->getId(), 'uuid' => $gRisk->getThreat()->getUuid()],
+                    'vulnerability' => ['anr' => $gRisk->getAnr()->getId(), 'uuid' => $gRisk->getVulnerability()->getUuid()],
                     'instance' => ['op' => 'IN', 'value' => $instanceIds],
-                    'anr' => $gRisk->anr->id
+                    'anr' => $gRisk->getAnr()->getId()
                 ]);
 
                 foreach ($brothers as $brother) {
@@ -322,10 +322,10 @@ class AnrRecommandationRiskService extends AbstractService
                     $methodName = 'getName' . $anr->getLanguage();
                     $path = $recommendationRisk->getInstance()->$methodName();
 
-                    $globalObjectUuid = (string)$recommendationRisk->getGlobalObject()->getUuid();
-                    $assetUuid = (string)$recommendationRisk->getAsset()->getUuid();
-                    $threatUuid = (string)$recommendationRisk->getThreat()->getUuid();
-                    $vulnerabilityUuid = (string)$recommendationRisk->getVulnerability()->getUuid();
+                    $globalObjectUuid = $recommendationRisk->getGlobalObject()->getUuid();
+                    $assetUuid = $recommendationRisk->getAsset()->getUuid();
+                    $threatUuid = $recommendationRisk->getThreat()->getUuid();
+                    $vulnerabilityUuid = $recommendationRisk->getVulnerability()->getUuid();
                     if (!empty($globalObjects[$globalObjectUuid][$assetUuid][$threatUuid][$vulnerabilityUuid])) {
                         if ($globalObjects[$globalObjectUuid][$assetUuid][$threatUuid][$vulnerabilityUuid]['maxRisk']
                             < $instanceRisk->getCacheMaxRisk()
@@ -622,7 +622,7 @@ class AnrRecommandationRiskService extends AbstractService
                         'anr' => $recommendationRisk->get('anr')->get('id'),
                         'object' => [
                             'anr' => $recommendationRisk->getAnr()->getId(),
-                            'uuid' => (string)$recommendationRisk->getGlobalObject()->getUuid()
+                            'uuid' => $recommendationRisk->getGlobalObject()->getUuid()
                         ],
                     ]);
                     foreach ($brothersInstances as $brotherInstance) {
@@ -630,15 +630,15 @@ class AnrRecommandationRiskService extends AbstractService
                             'anr' => $recommendationRisk->getAnr()->getId(),
                             'asset' => [
                                 'anr' => $recommendationRisk->getAnr()->getId(),
-                                'uuid' => (string)$instanceRisk->getAsset()->getUuid(),
+                                'uuid' => $instanceRisk->getAsset()->getUuid(),
                             ],
                             'threat' => [
                                 'anr' => $recommendationRisk->getAnr()->getId(),
-                                'uuid' => (string)$instanceRisk->getThreat()->getUuid(),
+                                'uuid' => $instanceRisk->getThreat()->getUuid(),
                             ],
                             'vulnerability' => [
                                 'anr' => $recommendationRisk->getAnr()->getId(),
-                                'uuid' => (string)$instanceRisk->getVulnerability()->getUuid()
+                                'uuid' => $instanceRisk->getVulnerability()->getUuid()
                             ],
                             'instance' => $brotherInstance->getId(),
                         ]);

@@ -227,7 +227,7 @@ class AnrRiskOpService extends AbstractService
 
         $instance = $this->instanceTable->getEntity($data['instance']);
         $data['instance'] = $instance;
-        $data['object'] = $this->monarcObjectTable->getEntity(['anr' => $data['anr'], 'uuid' => $instance->object->uuid->toString()]);
+        $data['object'] = $this->monarcObjectTable->getEntity(['anr' => $data['anr'], 'uuid' => $instance->getObject()->getUuid()]);
 
         if ($data['source'] == 2) {
             // Create a new risk

@@ -124,7 +124,7 @@ class StatsAnrService
         } else {
             $requestParams['get_last'] = true;
         }
-        
+
         $requestParams['postprocessor'] = $filterParams['postprocessor'];
 
         $anrUuids = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
@@ -892,7 +892,7 @@ class StatsAnrService
                 $formattedResult[$anrUuid] = [
                     'category' => $anr->getLabel($anr->getLanguage()),
                     'series' => [],
-                    'processed_data' => $data->getProcessedData(),
+                    'processedData' => $data->getProcessedData(),
                 ];
             }
 
