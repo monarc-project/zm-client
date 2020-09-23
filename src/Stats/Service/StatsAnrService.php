@@ -1072,6 +1072,7 @@ class StatsAnrService
             'label' => $data['label' . $anrLanguage],
             'value' => $data['value'],
             'data' => [],
+            'processedData' => $data->setProcessedData(),
         ];
         if (!empty($data['controls'])) {
             foreach ($data['controls'] as $control) {
