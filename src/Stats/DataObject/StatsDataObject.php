@@ -28,9 +28,9 @@ class StatsDataObject implements JsonSerializable
 
     /** @var array */
     private $data;
-    
+
     /** @var array */
-    private $processedData;
+    private $processedData = [];
 
     public function __construct(array $data)
     {
@@ -40,6 +40,9 @@ class StatsDataObject implements JsonSerializable
 
         if (!empty($data['date'])) {
             $this->setDate($data['date']);
+        }
+        if (!empty($data['processed_data'])) {
+            $this->setProcessedData($data['processed_data']);
         }
     }
 
@@ -105,7 +108,7 @@ class StatsDataObject implements JsonSerializable
 
         return $this;
     }
-    
+
     public function getProcessedData(): array
     {
         return $this->processedData;

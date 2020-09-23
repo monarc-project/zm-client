@@ -11,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
+use Ramsey\Uuid\Lazy\LazyUuidFromString;
 
 /**
  * RecommandationSet
@@ -29,7 +30,7 @@ class RecommandationSet extends AbstractEntity
 
     /**
      *
-     * @var integer
+     * @var LazyUuidFromString|string
      *
      * @ORM\Column(name="uuid", type="uuid", nullable=false)
      * @ORM\Id
@@ -82,19 +83,16 @@ class RecommandationSet extends AbstractEntity
      */
     protected $recommandations;
 
-    /**
-     * @return integer
-     */
-    public function getUuid()
+    public function getUuid(): ?string
     {
-        return (string)$this->uuid;
+        return $this->uuid;
     }
 
     /**
-     * @param integer $uuid
-     * @return RecommandationSet
+     * @param string $uuid
+     * @return self
      */
-    public function setUuid($uuid)
+    public function setUuid($uuid): self
     {
         $this->uuid = $uuid;
 

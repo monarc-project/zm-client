@@ -165,7 +165,7 @@ class AnrAmvService extends AmvService
         }
 
         // on ne permet pas de modifier l'asset
-        $data['asset'] = ['anr' => $amv->get('asset')->get('anr')->get('id'), 'uuid' => $amv->get('asset')->get('uuid')->toString()]; // asset can not be changed
+        $data['asset'] = ['anr' => $amv->get('asset')->get('anr')->get('id'), 'uuid' => $amv->getAsset()->getUuid()]; // asset can not be changed
 
         $amv->setLanguage($this->getLanguage());
 
@@ -236,11 +236,17 @@ class AnrAmvService extends AmvService
         // Create instances risks
         /** @var MonarcObjectTable $MonarcObjectTable */
         $MonarcObjectTable = $this->get('MonarcObjectTable');
-        $objects = $MonarcObjectTable->getEntityByFields(['anr' => $data['anr'], 'asset' => ['uuid' => $amv->get('asset')->get('uuid')->toString(), 'anr' => $data['anr']]]);
+        $objects = $MonarcObjectTable->getEntityByFields([
+            'anr' => $data['anr'],
+            'asset' => [
+                'uuid' => $amv->getAsset()->getUuid(),
+                'anr' => $data['anr']
+            ]
+        ]);
         foreach ($objects as $object) {
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');
-            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => ['anr' => $data['anr'], 'uuid' => $object->get('uuid')->toString()]]);
+            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => ['anr' => $data['anr'], 'uuid' => $object->getUuid()]]);
             $i = 1;
             $nbInstances = count($instances);
             foreach ($instances as $instance) {
@@ -265,11 +271,11 @@ class AnrAmvService extends AmvService
 
     protected function isThreatChanged(array $data, AmvSuperClass $amv): bool
     {
-        return (string)$amv->getThreat()->getUuid() !== $data['threat'];
+        return $amv->getThreat()->getUuid() !== $data['threat'];
     }
 
     protected function isVulnerabilityChanged(array $data, AmvSuperClass $amv): bool
     {
-        return (string)$amv->getVulnerability()->getUuid() !== $data['vulnerability'];
+        return $amv->getVulnerability()->getUuid() !== $data['vulnerability'];
     }
 }

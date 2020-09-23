@@ -26,6 +26,30 @@ class SoaTable extends AbstractEntityTable
     }
 
     /**
+     * @param Anr $anr
+     *
+     * @return Soa[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('s')
+            ->where('s.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(Soa $soa, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($soa);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
+
+    /**
      * @return Soa[]
      */
     public function findByAnrAndSoaCategory(Anr $anr, SoaCategory $soaCategory, array $order = [])

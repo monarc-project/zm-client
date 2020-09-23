@@ -108,7 +108,7 @@ class AnrRiskService extends AbstractService
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
         $instance = $instanceTable->getEntity($data['instance']);
-        $data['asset'] = ['uuid' => $instance->asset->uuid->toString(), 'anr' => $data['anr']];
+        $data['asset'] = ['uuid' => $instance->getAsset()->getUuid(), 'anr' => $data['anr']];
         $entity->exchangeArray($data);
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
@@ -123,7 +123,7 @@ class AnrRiskService extends AbstractService
                 'anr' => $entity->getAnr()->getId(),
                 'object' => [
                     'anr' => $entity->getAnr()->getId(),
-                    'uuid' => (string)$entity->getInstance()->getObject()->getUuid()
+                    'uuid' => $entity->getInstance()->getObject()->getUuid()
                 ],
                 'id' => [
                     'op' => '!=',
@@ -193,22 +193,22 @@ class AnrRiskService extends AbstractService
                 'anr' => $instanceRisk->getAnr()->getId(),
                 'object' => [
                     'anr' => $instanceRisk->getAnr()->getId(),
-                    'uuid' => (string)$instanceRisk->getInstance()->getObject()->getUuid(),
+                    'uuid' => $instanceRisk->getInstance()->getObject()->getUuid(),
                 ],
             ]);
 
             // Retrieve instances with same risk
             $instancesRisks = $instanceRiskTable->getEntityByFields([
                 'asset' => [
-                    'uuid' => (string)$instanceRisk->getAsset()->getUuid(),
+                    'uuid' => $instanceRisk->getAsset()->getUuid(),
                     'anr' => $instanceRisk->getAnr()->getId(),
                 ],
                 'threat' => [
-                    'uuid' => (string)$instanceRisk->getThreat()->getUuid(),
+                    'uuid' => $instanceRisk->getThreat()->getUuid(),
                     'anr' => $instanceRisk->getAnr()->getId(),
                 ],
                 'vulnerability' => [
-                    'uuid' => (string)$instanceRisk->getVulnerability()->getUuid(),
+                    'uuid' => $instanceRisk->getVulnerability()->getUuid(),
                     'anr' => $instanceRisk->getAnr()->getId(),
                 ],
             ]);
