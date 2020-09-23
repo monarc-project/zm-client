@@ -125,7 +125,9 @@ class StatsAnrService
             $requestParams['get_last'] = true;
         }
 
-        $requestParams['postprocessor'] = $filterParams['postprocessor'];
+        if (!empty($filterParams['postprocessor'])) {
+            $requestParams['postprocessor'] = $filterParams['postprocessor'];
+        }
 
         $anrUuids = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
         if (!empty($anrUuids)) {
