@@ -36,8 +36,7 @@ class StatsDataObject implements JsonSerializable
     {
         $this->setAnr($data['anr'])
             ->setType($data['type'])
-            ->setData($data['data'])
-            ->setProcessedData(array_key_exists('processed_data', $data) ? $data['processed_data'] : []);
+            ->setData($data['data']);
 
         if (!empty($data['date'])) {
             $this->setDate($data['date']);
@@ -126,7 +125,6 @@ class StatsDataObject implements JsonSerializable
             'type' => $this->type,
             'date' => $this->date,
             'data' => $this->data,
-            'processed_data' => $this->processedData,
         ];
     }
 }
