@@ -9,7 +9,10 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Query\Expr;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -113,5 +116,18 @@ class AnrTable extends AbstractEntityTable
     public function findAll(): array
     {
         return $this->getRepository()->findAll();
+    }
+
+    /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function saveEntity(AnrSuperClass $anr, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($anr);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

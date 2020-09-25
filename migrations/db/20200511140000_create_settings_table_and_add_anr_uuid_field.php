@@ -39,7 +39,8 @@ class CreateSettingsTableAndAddAnrUuidField extends AbstractMigration
         $this->execute(
             'ALTER TABLE `anrs`
                 MODIFY COLUMN `uuid` char(36) NOT NULL,
-                ADD UNIQUE INDEX `anrs_uuid_unq` (`uuid`);'
+                ADD UNIQUE INDEX `anrs_uuid_unq` (`uuid`),
+                ADD COLUMN `is_visible_on_dashboard` TINYINT(1) default 1;'
         );
     }
 }

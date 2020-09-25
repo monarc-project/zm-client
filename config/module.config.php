@@ -11,9 +11,11 @@ use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Service\ClientService;
-use Monarc\FrontOffice\Stats\Controller\StatsApiController;
+use Monarc\FrontOffice\Stats\Controller\StatsController;
+use Monarc\FrontOffice\Stats\Controller\StatsSettingsController;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
+use Monarc\FrontOffice\Stats\Service\StatsSettingsService;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
 use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
 
@@ -921,7 +923,17 @@ return [
                     'route' => '/api/stats[/]',
                     'verb' => 'get',
                     'defaults' => [
-                        'controller' => StatsApiController::class,
+                        'controller' => StatsController::class,
+                    ],
+                ],
+            ],
+            'monarc_api_stats_settings' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/stats/settings[/]',
+                    'verb' => 'get,patch',
+                    'defaults' => [
+                        'controller' => StatsSettingsController::class,
                     ],
                 ],
             ],
@@ -1003,7 +1015,8 @@ return [
             Controller\ApiAnrInstancesConsequencesController::class => Controller\ApiAnrInstancesConsequencesControllerFactory::class,
             Controller\ApiModelVerifyLanguageController::class => Controller\ApiModelVerifyLanguageControllerFactory::class,
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
-            StatsApiController::class => AutowireFactory::class,
+            StatsController::class => AutowireFactory::class,
+            StatsSettingsController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1180,6 +1193,7 @@ return [
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
             StatsAnrService::class => AutowireFactory::class,
+            StatsSettingsService::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
@@ -1340,6 +1354,7 @@ return [
             'monarc_api_user_password',
             'monarc_api_user_profile',
             'monarc_api_stats',
+            'monarc_api_stats_settings',
         ],
     ],
     'activeLanguages' => ['fr'],

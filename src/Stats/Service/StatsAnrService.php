@@ -125,14 +125,16 @@ class StatsAnrService
             $requestParams['get_last'] = true;
         }
 
-        $requestParams['postprocessor'] = $filterParams['postprocessor'];
-
         $anrUuids = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
         if (!empty($anrUuids)) {
             $requestParams['anrs'] = $anrUuids;
         }
         if (!empty($filterParams['aggregationPeriod'])) {
             $requestParams['aggregation_period'] = $filterParams['aggregationPeriod'];
+        }
+
+        if (!empty($filterParams['postprocessor'])) {
+            $requestParams['postprocessor'] = $filterParams['postprocessor'];
         }
 
         $statsData = $this->statsApiProvider->getStatsData($requestParams);
@@ -830,8 +832,8 @@ class StatsAnrService
         if (!empty($anrUuids)) {
             $anrs = $this->anrTable->findByUuids($anrUuids);
             foreach ($anrs as $anr) {
-                $formattedResult[$anr->getUuid()]['current']['category'] = $anr->getLabel($anr->getLanguage());
-                $formattedResult[$anr->getUuid()]['residual']['category'] = $anr->getLabel($anr->getLanguage());
+                $formattedResult[$anr->getUuid()]['current']['category'] = $anr->getLabel();
+                $formattedResult[$anr->getUuid()]['residual']['category'] = $anr->getLabel();
             }
 
             if (!empty($formattedResult)) {
@@ -890,7 +892,7 @@ class StatsAnrService
             $dataSets = $data->getData();
             if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
-                    'category' => $anr->getLabel($anr->getLanguage()),
+                    'category' => $anr->getLabel(),
                     'series' => [],
                     'processedData' => $data->getProcessedData(),
                 ];
@@ -964,11 +966,11 @@ class StatsAnrService
             if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
                     'current' => [
-                        'category' => $anr->getLabel($anr->getLanguage()),
+                        'category' => $anr->getLabel(),
                         'series' => [],
                     ],
                     'residual' => [
-                        'category' => $anr->getLabel($anr->getLanguage()),
+                        'category' => $anr->getLabel(),
                         'series' => [],
                     ],
                 ];
@@ -1029,7 +1031,7 @@ class StatsAnrService
             $dataSets = $data->getData();
             if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
-                    'category' => $anr->getLabel($anr->getLanguage()),
+                    'category' => $anr->getLabel(),
                     'series' => [],
                 ];
             }

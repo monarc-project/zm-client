@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Monarc\FrontOffice\Stats\Controller;
 
@@ -9,7 +9,7 @@ use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
 
-class StatsApiController extends AbstractRestfulController
+class StatsController extends AbstractRestfulController
 {
     /** @var GetStatsQueryParamsValidator */
     private $getStatsQueryParamsValidator;
@@ -25,7 +25,7 @@ class StatsApiController extends AbstractRestfulController
         $this->statsAnrService = $statsAnrService;
     }
 
-    public function getList()
+    public function getList(): JsonModel
     {
         if (!$this->getStatsQueryParamsValidator->isValid($this->params()->fromQuery())) {
             throw new Exception(

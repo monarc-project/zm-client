@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -22,7 +23,7 @@ use Ramsey\Uuid\Uuid;
 class Anr extends AnrSuperClass
 {
     /**
-     * @var Uuid
+     * @var LazyUuidFromString|string
      *
      * @ORM\Column(name="uuid", type="uuid", nullable=false)
      */
@@ -55,6 +56,13 @@ class Anr extends AnrSuperClass
      * @ORM\Column(name="cache_model_is_scales_updatable", type="smallint", options={"unsigned":true, "default":0})
      */
     protected $cacheModelIsScalesUpdatable = '0';
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="is_visible_on_dashboard", type="smallint", options={"default":1})
+     */
+    protected $isVisibleOnDashboard = 1;
 
     /**
      * @var Referential[]|ArrayCollection
@@ -103,6 +111,18 @@ class Anr extends AnrSuperClass
 
     public function getUuid(): string
     {
-        return (string)$this->uuid;
+        return $this->uuid;
+    }
+
+    public function isVisibleOnDashboard(): bool
+    {
+        return (bool)$this->isVisibleOnDashboard;
+    }
+
+    public function setIsVisibleOnDashboard(int $isVisibleOnDashboard): self
+    {
+        $this->isVisibleOnDashboard = $isVisibleOnDashboard;
+
+        return $this;
     }
 }
