@@ -128,7 +128,6 @@ class StatsDataObject implements JsonSerializable
             'type' => $this->type,
             'date' => $this->date,
             'data' => $this->data,
-            'processedData' => $this->processedData,
         ];
     }
 }

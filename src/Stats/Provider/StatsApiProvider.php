@@ -87,7 +87,7 @@ class StatsApiProvider
      */
     public function sendStatsDataInBatch(array $data): void
     {
-        $response = $this->guzzleClient->post(self::BASE_URI . '/stats', [
+        $response = $this->guzzleClient->post(self::BASE_URI . '/stats/', [
             'headers' => $this->getAuthHeaders(),
             'json' => $data,
         ]);
