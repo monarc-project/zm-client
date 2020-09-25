@@ -143,7 +143,7 @@ class StatsAnrService
         if ($requestParams['type'] === StatsDataObject::TYPE_RISK) {
             $statsData = $this->formatRisksStatsData($statsData);
         } elseif (
-        \in_array($requestParams['type'], [StatsDataObject::TYPE_THREAT, StatsDataObject::TYPE_VULNERABILITY], true)
+            \in_array($requestParams['type'], [StatsDataObject::TYPE_THREAT, StatsDataObject::TYPE_VULNERABILITY], true)
         ) {
             $statsData = $this->formatThreatsOrVulnerabilitiesStatsData($statsData);
         } elseif ($requestParams['type'] === StatsDataObject::TYPE_CARTOGRAPHY) {

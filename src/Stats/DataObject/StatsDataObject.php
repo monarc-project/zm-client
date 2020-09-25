@@ -41,8 +41,8 @@ class StatsDataObject implements JsonSerializable
         if (!empty($data['date'])) {
             $this->setDate($data['date']);
         }
-        if (!empty($data['processed_data'])) {
-            $this->setProcessedData($data['processed_data']);
+        if (!empty($data['processedData'])) {
+            $this->setProcessedData($data['processedData']);
         }
     }
 
