@@ -826,6 +826,7 @@ class StatsAnrService
                     'category' => '',
                     'series' => $this->getSeriesForType('residual', $risksData),
                 ],
+                'processedData' => $data->getProcessedData(),
             ];
         }
 
@@ -973,6 +974,7 @@ class StatsAnrService
                         'category' => $anr->getLabel(),
                         'series' => [],
                     ],
+                    'processedData' => $data->getProcessedData(),
                 ];
             }
 
@@ -1033,6 +1035,7 @@ class StatsAnrService
                 $formattedResult[$anrUuid] = [
                     'category' => $anr->getLabel(),
                     'series' => [],
+                    'processedData' => $data->getProcessedData(),
                 ];
             }
 
