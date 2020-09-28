@@ -134,6 +134,12 @@ class StatsApiProvider
                     );
                 }
 
+                if (!empty($response['processedData'])) {
+                  $responseData['processedData'] = $response['processedData'];
+                } else {
+                  $responseData['processedData'] = [];
+                }
+
                 $formattedResponse[] = new StatsDataObject($responseData);
             }
         }
