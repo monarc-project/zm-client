@@ -933,12 +933,14 @@ class StatsAnrService
         foreach ($formattedResult as &$resultByAnr) {
             $resultByAnr['series'] = array_values($resultByAnr['series']);
         }
-
+        
         usort($formattedResult, static function ($a, $b) {
             return $a['category'] <=> $b['category'];
         });
-
-        $formattedResult['processedData'] = $data->getProcessedData();
+        
+        $formattedResult[] = [
+          'processedData' => $data->getProcessedData()
+        ];
 
         return $formattedResult;
     }
