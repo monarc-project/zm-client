@@ -826,7 +826,6 @@ class StatsAnrService
                     'category' => '',
                     'series' => $this->getSeriesForType('residual', $risksData),
                 ],
-                'processedData' => $data->getProcessedData(),
             ];
         }
 
@@ -894,8 +893,7 @@ class StatsAnrService
             if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
                     'category' => $anr->getLabel(),
-                    'series' => [],
-                    'processedData' => $data->getProcessedData(),
+                    'series' => []
                 ];
             }
 
@@ -940,6 +938,8 @@ class StatsAnrService
             return $a['category'] <=> $b['category'];
         });
 
+        $formattedResult['processedData'] = $data->getProcessedData();
+
         return $formattedResult;
     }
 
@@ -974,7 +974,6 @@ class StatsAnrService
                         'category' => $anr->getLabel(),
                         'series' => [],
                     ],
-                    'processedData' => $data->getProcessedData(),
                 ];
             }
 
@@ -1035,7 +1034,6 @@ class StatsAnrService
                 $formattedResult[$anrUuid] = [
                     'category' => $anr->getLabel(),
                     'series' => [],
-                    'processedData' => $data->getProcessedData(),
                 ];
             }
 

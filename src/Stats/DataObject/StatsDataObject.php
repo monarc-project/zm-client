@@ -42,7 +42,9 @@ class StatsDataObject implements JsonSerializable
             $this->setDate($data['date']);
         }
 
-        $this->setProcessedData($data['processedData']);
+        if (!empty($data['processedData'])) {
+            $this->setProcessedData($data['processedData']);
+        }
     }
 
     public function getAnr(): string
