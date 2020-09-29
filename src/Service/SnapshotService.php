@@ -75,6 +75,10 @@ class SnapshotService extends AbstractService
 
         $snapshotTable->saveEntity($snapshot);
 
+        // Snapshots should not be visible on global dashboard.
+        $newAnr->setIsVisibleOnDashboard(0);
+        $anrTable->saveEntity($newAnr);
+
         return $snapshot->getId();
     }
 
@@ -179,8 +183,10 @@ class SnapshotService extends AbstractService
         }
 
         // resume access
+        /** @var AnrTable $userAnrCliTable */
         $userAnrCliTable = $anrService->get('userAnrCliTable');
-        $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anrId]);
+        $userAnr = $userAnrCliTable->findById($anrId);
+
         $i = 1;
         foreach ($userAnr as $u) {
             $u->set('anr', $newAnr->getId());
@@ -188,6 +194,10 @@ class SnapshotService extends AbstractService
             $userAnrCliTable->save($u, count($userAnr) >= $i);
             $i++;
         }
+
+        // We restore visibility on global dashboard and swap the uuid of the old anr, that we are going to drop.
+        $newAnr->setIsVisibleOnDashboard((int)$userAnr->isVisibleOnDashboard());
+        $newAnr->setUuid($userAnr->getUuid());
 
         // delete old anr
         $anrTable->delete($anrId);

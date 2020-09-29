@@ -114,6 +114,13 @@ class Anr extends AnrSuperClass
         return $this->uuid;
     }
 
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
+
+        return $this;
+    }
+
     public function isVisibleOnDashboard(): bool
     {
         return (bool)$this->isVisibleOnDashboard;

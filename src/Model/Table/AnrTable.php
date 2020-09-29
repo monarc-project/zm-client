@@ -12,6 +12,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Query\Expr;
+use Doctrine\ORM\QueryBuilder;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
@@ -92,12 +93,7 @@ class AnrTable extends AbstractEntityTable
 
     public function fetchAnrsExcludeSnapshotsWithUserRights(int $userId): array
     {
-        $excludedSnapshots = $this->getDb()
-            ->getEntityManager()
-            ->createQueryBuilder()
-            ->select('anr.id')
-            ->from(Snapshot::class, 's')
-            ->join(Anr::class, 'anr', Expr\Join::WITH, 's.anr = anr');
+        $excludedSnapshots = $this->getSnapshotsIdsQueryBuilder();
 
         $queryBuilder = $this->getRepository()->createQueryBuilder('a');
 
@@ -119,6 +115,34 @@ class AnrTable extends AbstractEntityTable
     }
 
     /**
+     * @return Anr[]
+     */
+    public function findAllExcludeSnapshots(): array
+    {
+        $excludedSnapshots = $this->getSnapshotsIdsQueryBuilder();
+
+        $queryBuilder = $this->getRepository()->createQueryBuilder('a');
+
+        return $queryBuilder
+            ->where($queryBuilder->expr()->notIn('a.id', $excludedSnapshots->getDQL()))
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    /**
+     * @return Anr[]
+     */
+    public function findVisibleOnDashboard(): array
+    {
+        return $this
+            ->getRepository()
+            ->createQueryBuilder('a')
+            ->where('a.isVisibleOnDashboard = 1')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @throws ORMException
      * @throws OptimisticLockException
      */
@@ -129,5 +153,15 @@ class AnrTable extends AbstractEntityTable
         if ($flushAll) {
             $em->flush();
         }
+    }
+
+    private function getSnapshotsIdsQueryBuilder(): QueryBuilder
+    {
+        return $this->getDb()
+            ->getEntityManager()
+            ->createQueryBuilder()
+            ->select('anr.id')
+            ->from(Snapshot::class, 's')
+            ->join(Anr::class, 'anr', Expr\Join::WITH, 's.anr = anr');
     }
 }

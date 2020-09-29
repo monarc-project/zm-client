@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\FrontOffice\Model\Table\SoaTable;
+use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 
 /**
  * Factory class attached to AnrService
@@ -96,5 +97,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'recordService' => 'Monarc\FrontOffice\Service\AnrRecordService',
         'recordProcessorService' => 'Monarc\FrontOffice\Service\AnrRecordProcessorService',
 
+        // Stats Service
+        'statsAnrService' => StatsAnrService::class,
     ];
 }

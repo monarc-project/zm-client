@@ -19,7 +19,7 @@ class StatsSettingsService
     public function getAnrsSettings(): array
     {
         $anrsSettings = [];
-        foreach ($this->anrTable->findAll() as $anr) {
+        foreach ($this->anrTable->findAllExcludeSnapshots() as $anr) {
             $anrsSettings[] = [
                 'anrId' => $anr->getId(),
                 'anrName' => $anr->getLabel(),

@@ -9,6 +9,7 @@ use Monarc\FrontOffice\Exception\InvalidConfigurationException;
 use Monarc\FrontOffice\Model\Entity\Setting;
 use Monarc\FrontOffice\Model\Table\SettingTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
+use Monarc\FrontOffice\Stats\Exception\StatsDeletionException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
 use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
 use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
@@ -98,6 +99,23 @@ class StatsApiProvider
         }
     }
 
+    /**
+     * @param string $anrUuid
+     *
+     * @throws StatsDeletionException
+     */
+    public function deleteStatsForAnr(string $anrUuid): void
+    {
+        $response = $this->guzzleClient->delete(self::BASE_URI . '/stats/' . $anrUuid, [
+            'headers' => $this->getAuthHeaders(),
+        ]);
+
+        if ($response->getStatusCode() !== 204) {
+            // TODO: send a notification or email.
+            throw new StatsDeletionException($response->getBody()->getContents(), $response->getStatusCode());
+        }
+    }
+
     private function getAuthHeaders(): array
     {
         return [
@@ -132,12 +150,6 @@ class StatsApiProvider
                     throw new WrongResponseFormatException(
                         ['"data.' . $itemNum . '.type"', '"data.' . $itemNum . '.data"']
                     );
-                }
-
-                if (!empty($response['processedData'])) {
-                  $responseData['processedData'] = $response['processedData'];
-                } else {
-                  $responseData['processedData'] = [];
                 }
 
                 $formattedResponse[] = new StatsDataObject($responseData);

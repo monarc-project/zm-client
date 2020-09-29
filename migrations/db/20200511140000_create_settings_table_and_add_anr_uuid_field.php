@@ -26,12 +26,21 @@ class CreateSettingsTableAndAddAnrUuidField extends AbstractMigration
             'INSERT INTO `settings` (`name`, `value`, `creator`)
              VALUES ("stats", "{\"is_sharing_enabled\": true, \"api_key\": \"%s\"}", "system");', $apiKey));
 
-        $this->execute('ALTER TABLE `anrs` ADD `uuid` char(36) NULL AFTER `id`;');
+        $this->execute(
+            'ALTER TABLE `anrs` ADD `uuid` char(36) NULL AFTER `id`,
+             ADD `is_visible_on_dashboard` TINYINT(1) default 1;'
+        );
 
+        $snapshotsAnrsIds = $this->query('SELECT DISTINCT `anr_id` from `snapshots`')->fetchAll();
+        $snapshotsAnrsIds = !empty($snapshotsAnrsIds) ? array_column($snapshotsAnrsIds, 'anr_id') : [];
         $anrs = $this->query('SELECT `id` from `anrs`')->fetchAll();
         foreach ($anrs as $anr) {
+            $visibilityOnDashboardSql = '';
+            if (in_array($anr['id'], $snapshotsAnrsIds)) {
+                $visibilityOnDashboardSql = ', `is_visible_on_dashboard` = 0';
+            }
             $this->execute(
-                'UPDATE `anrs` SET `uuid` = "' . Uuid::uuid4() . '"' .
+                'UPDATE `anrs` SET `uuid` = "' . Uuid::uuid4() . '"' . $visibilityOnDashboardSql .
                 ' WHERE `id` = ' . $anr['id']
             );
         }
@@ -39,8 +48,7 @@ class CreateSettingsTableAndAddAnrUuidField extends AbstractMigration
         $this->execute(
             'ALTER TABLE `anrs`
                 MODIFY COLUMN `uuid` char(36) NOT NULL,
-                ADD UNIQUE INDEX `anrs_uuid_unq` (`uuid`),
-                ADD COLUMN `is_visible_on_dashboard` TINYINT(1) default 1;'
+                ADD UNIQUE INDEX `anrs_uuid_unq` (`uuid`);'
         );
     }
 }

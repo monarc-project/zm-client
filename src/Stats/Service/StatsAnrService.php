@@ -180,7 +180,7 @@ class StatsAnrService
 
         $anrLists = !empty($anrIds)
             ? $this->anrTable->findByIds($anrIds)
-            : $this->anrTable->findAll();
+            : $this->anrTable->findAllExcludeSnapshots();
 
         $statsData = [];
         foreach ($anrLists as $anr) {
@@ -222,6 +222,11 @@ class StatsAnrService
         if (!empty($statsData)) {
             $this->statsApiProvider->sendStatsDataInBatch($statsData);
         }
+    }
+
+    public function deleteStatsForAnr(string $anrUuid): void
+    {
+        $this->statsApiProvider->deleteStatsForAnr($anrUuid);
     }
 
     private function collectAnrStatsForRiskThreatVulnerabilityAndCartography(Anr $anr): array
@@ -744,7 +749,7 @@ class StatsAnrService
     /**
      * @throws AccessForbiddenException
      */
-    private function getFilteredAnrUuids(array $filterParams, bool $hasFullAccess, UserSuperClass $loggedInUser): array
+    private function getFilteredAnrUuids(array $filterParams, bool $hasFullAccess, User $loggedInUser): array
     {
         $anrUuids = [];
         if (!$hasFullAccess) {
@@ -762,6 +767,10 @@ class StatsAnrService
             }
         } elseif (!empty($filterParams['anrs'])) {
             foreach ($this->anrTable->findByIds($filterParams['anrs']) as $anr) {
+                $anrUuids[] = $anr->getUuid();
+            }
+        } else {
+            foreach ($this->anrTable->findVisibleOnDashboard() as $anr) {
                 $anrUuids[] = $anr->getUuid();
             }
         }
@@ -933,14 +942,12 @@ class StatsAnrService
         foreach ($formattedResult as &$resultByAnr) {
             $resultByAnr['series'] = array_values($resultByAnr['series']);
         }
-        
+
         usort($formattedResult, static function ($a, $b) {
             return $a['category'] <=> $b['category'];
         });
-        
-        $formattedResult[] = [
-          'processedData' => $data->getProcessedData()
-        ];
+
+        $formattedResult['processedData'] = $data->getProcessedData();
 
         return $formattedResult;
     }
