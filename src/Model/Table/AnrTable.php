@@ -126,7 +126,7 @@ class AnrTable extends AbstractEntityTable
         return $queryBuilder
             ->where($queryBuilder->expr()->notIn('a.id', $excludedSnapshots->getDQL()))
             ->getQuery()
-            ->getArrayResult();
+            ->getResult();
     }
 
     /**
