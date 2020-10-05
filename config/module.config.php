@@ -2,7 +2,9 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
+use Laminas\InputFilter\Factory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
@@ -16,6 +18,7 @@ use Monarc\FrontOffice\Stats\Controller\StatsSettingsController;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Stats\Service\StatsSettingsService;
+use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidator;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
 use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
 
@@ -927,14 +930,34 @@ return [
                     ],
                 ],
             ],
-            'monarc_api_stats_settings' => [
+            'monarc_api_stats_global' => [
                 'type' => 'segment',
                 'options' => [
-                    'route' => '/api/stats/settings[/]',
-                    'verb' => 'get,patch',
-                    'defaults' => [
-                        'controller' => StatsSettingsController::class,
+                    'route' => '/api/stats/',
+                ],
+                'may_terminate' => false,
+                'child_routes' => [
+                    'processed' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'processed[/]',
+                            'verb' => 'get',
+                            'defaults' => [
+                                'controller' => StatsController::class,
+                                'action' => 'getProcessedList'
+                            ],
+                        ],
                     ],
+                    'settings' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'settings[/]',
+                            'verb' => 'get,patch',
+                            'defaults' => [
+                                'controller' => StatsSettingsController::class,
+                            ],
+                        ],
+                    ]
                 ],
             ],
         ],
@@ -1200,7 +1223,16 @@ return [
 
             // Validators
             CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
-            GetStatsQueryParamsValidator::class => AutowireFactory::class,
+            GetStatsQueryParamsValidator::class => function(ContainerInterface $container, $requestedName) {
+                $inputFilterFactory = $container->get(Factory::class);
+
+                return new $requestedName($inputFilterFactory->createInputFilter([]), $container->get(Table\AnrTable::class));
+            },
+            GetProcessedStatsQueryParamsValidator::class => function(ContainerInterface $container, $requestedName) {
+                $inputFilterFactory = $container->get(Factory::class);
+
+                return new $requestedName($inputFilterFactory->createInputFilter([]));
+            },
         ],
     ],
 
@@ -1347,6 +1379,7 @@ return [
             'monarc_api_global_client_anr/record_import',
             'monarc_api_global_client_anr/record_duplicate',
             'monarc_api_stats',
+            'monarc_api_stats_global/processed'
         ],
         Entity\UserRole::USER_ROLE_CEO => [
             'monarc_api_admin_users_roles',
@@ -1354,7 +1387,8 @@ return [
             'monarc_api_user_password',
             'monarc_api_user_profile',
             'monarc_api_stats',
-            'monarc_api_stats_settings',
+            'monarc_api_stats_global/processed',
+            'monarc_api_stats_global/settings',
         ],
     ],
     'activeLanguages' => ['fr'],

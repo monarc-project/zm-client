@@ -20,6 +20,7 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SoaTable;
+use Monarc\FrontOffice\Model\Table\UserTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
@@ -41,6 +42,13 @@ class StatsAnrService
         'month',
         'quarter',
         'year',
+    ];
+
+    public const AVAILABLE_PROCESSORS = [
+        'risk_process',
+        'threat_process',
+        'threat_average_on_date',
+        'vulnerability_average_on_date',
     ];
 
     /** @var AnrTable */
@@ -67,6 +75,9 @@ class StatsAnrService
     /** @var ConnectedUserService */
     private $connectedUserService;
 
+    /** @var UserTable */
+    private $userTable;
+
     public function __construct(
         AnrTable $anrTable,
         ScaleTable $scaleTable,
@@ -75,7 +86,8 @@ class StatsAnrService
         ReferentialTable $referentialTable,
         SoaTable $soaTable,
         StatsApiProvider $statsApiProvider,
-        ConnectedUserService $connectedUserService
+        ConnectedUserService $connectedUserService,
+        UserTable $userTable
     ) {
         $this->anrTable = $anrTable;
         $this->scaleTable = $scaleTable;
@@ -85,15 +97,17 @@ class StatsAnrService
         $this->soaTable = $soaTable;
         $this->statsApiProvider = $statsApiProvider;
         $this->connectedUserService = $connectedUserService;
+        $this->userTable = $userTable;
     }
 
     /**
-     * @param array $filterParams Accepts the following params keys:
+     * @param array $validatedParams Accepts the following params keys:
      *              - type Stats type (required);
      *              - dateFrom Stats period start date (optional);
      *              - dateTo Stats period end date (optional);
      *              - anrs List of Anr IDs to use for the result (optional);
      *              - aggregationPeriod One of the available options [day, week, month, quarter, year] (optional).
+     *                                  Not used on StatsApi, will might be used to aggregate the received data here.
      *
      * @return array
      *
@@ -102,44 +116,37 @@ class StatsAnrService
      * @throws Exception
      * @throws StatsFetchingException
      */
-    public function getStats(array $filterParams): array
+    public function getStats(array $validatedParams): array
     {
-        /** @var User $loggedInUser */
-        $loggedInUser = $this->connectedUserService->getConnectedUser();
-        if ($loggedInUser === null) {
-            throw new UserNotAuthorizedException();
-        }
+        $loggedInUser = $this->getValidatedLoggedInUser();
 
-        if (empty($filterParams['type'])) {
+        if (empty($validatedParams['type'])) {
             throw new \LogicException("Filter parameter 'type' is mandatory to get the stats.");
         }
+        $requestParams['type'] = $validatedParams['type'];
 
-        $hasFullAccess = $loggedInUser->hasRole(UserRole::USER_ROLE_CEO);
-
-        $requestParams['type'] = $filterParams['type'];
-        if (empty($filterParams['getLast'])) {
-            $requestParams['date_from'] = $this->getPreparedDateFrom($filterParams);
-            $requestParams['date_to'] = $this->getPreparedDateTo($filterParams);
+        if (empty($validatedParams['getLast'])) {
+            $requestParams['date_from'] = $this->getPreparedDateFrom($validatedParams);
+            $requestParams['date_to'] = $this->getPreparedDateTo($validatedParams);
             $requestParams['get_last'] = false;
         } else {
             $requestParams['get_last'] = true;
         }
 
-        $anrUuids = $this->getFilteredAnrUuids($filterParams, $hasFullAccess, $loggedInUser);
+        $anrUuids = $this->getFilteredAnrUuids($validatedParams, $loggedInUser);
         if (!empty($anrUuids)) {
             $requestParams['anrs'] = $anrUuids;
         }
-        if (!empty($filterParams['aggregationPeriod'])) {
-            $requestParams['aggregation_period'] = $filterParams['aggregationPeriod'];
+        if (isset($validatedParams['offset'])) {
+            $requestParams['offset'] = $validatedParams['offset'];
         }
-
-        if (!empty($filterParams['postprocessor'])) {
-            $requestParams['postprocessor'] = $filterParams['postprocessor'];
+        if (isset($validatedParams['limit'])) {
+            $requestParams['limit'] = $validatedParams['limit'];
         }
 
         $statsData = $this->statsApiProvider->getStatsData($requestParams);
 
-        // TODO: make a response data formatter.
+        // TODO: make a response data formatter with passing the aggregation period param.
         if ($requestParams['type'] === StatsDataObject::TYPE_RISK) {
             $statsData = $this->formatRisksStatsData($statsData);
         } elseif (
@@ -153,6 +160,31 @@ class StatsAnrService
         }
 
         return $statsData;
+    }
+
+    /**
+     * @throws AccessForbiddenException
+     * @throws UserNotAuthorizedException
+     */
+    public function getProcessedStats(array $validatedParams): array
+    {
+        $loggedInUser = $this->getValidatedLoggedInUser();
+
+        if (empty($validatedParams['processor'])) {
+            throw new \LogicException("Filter parameter 'processor' is mandatory to get the stats.");
+        }
+        $requestParams['processor'] = $validatedParams['processor'];
+
+        $anrUuids = $this->getFilteredAnrUuids(['anrs' => []], $loggedInUser);
+        if (!empty($anrUuids)) {
+            $requestParams['anrs'] = $anrUuids;
+        }
+
+        if (!empty($validatedParams['nbdays'])) {
+            $validatedParams['nbdays'];
+        }
+
+        return $this->statsApiProvider->getProcessedStatsData($requestParams);
     }
 
     /**
@@ -749,14 +781,17 @@ class StatsAnrService
     /**
      * @throws AccessForbiddenException
      */
-    private function getFilteredAnrUuids(array $filterParams, bool $hasFullAccess, User $loggedInUser): array
+    private function getFilteredAnrUuids(array $validatedParams, UserSuperClass $loggedInUser): array
     {
         $anrUuids = [];
-        if (!$hasFullAccess) {
-            foreach ($loggedInUser->getUserAnrs() as $userAnr) {
+        if (!$loggedInUser->hasRole(UserRole::USER_ROLE_CEO)) {
+            /** @var User $user */
+            // We do this trick to get the User object from FO side instead of Core.
+            $user = $this->userTable->findById($loggedInUser->getId());
+            foreach ($user->getUserAnrs() as $userAnr) {
                 /** @var Anr $anr */
                 $anr = $userAnr->getAnr();
-                if (!empty($filterParams['anrs']) && !\in_array($anr->getId(), $filterParams['anrs'], true)) {
+                if (!empty($validatedParams['anrs']) && !\in_array($anr->getId(), $validatedParams['anrs'], true)) {
                     continue;
                 }
 
@@ -765,8 +800,8 @@ class StatsAnrService
             if (empty($anrUuids)) {
                 throw new AccessForbiddenException();
             }
-        } elseif (!empty($filterParams['anrs'])) {
-            foreach ($this->anrTable->findByIds($filterParams['anrs']) as $anr) {
+        } elseif (!empty($validatedParams['anrs'])) {
+            foreach ($this->anrTable->findByIds($validatedParams['anrs']) as $anr) {
                 $anrUuids[] = $anr->getUuid();
             }
         } else {
@@ -947,8 +982,6 @@ class StatsAnrService
             return $a['category'] <=> $b['category'];
         });
 
-        $formattedResult['processedData'] = $data->getProcessedData();
-
         return $formattedResult;
     }
 
@@ -1095,5 +1128,18 @@ class StatsAnrService
         }
 
         return $measuresData;
+    }
+
+    /**
+     * @throws UserNotAuthorizedException
+     */
+    private function getValidatedLoggedInUser(): UserSuperClass
+    {
+        $loggedInUser = $this->connectedUserService->getConnectedUser();
+        if ($loggedInUser === null) {
+            throw new UserNotAuthorizedException();
+        }
+
+        return $loggedInUser;
     }
 }

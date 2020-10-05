@@ -2,7 +2,6 @@
 
 namespace Monarc\FrontOffice\Stats\DataObject;
 
-use DateTime;
 use JsonSerializable;
 use LogicException;
 
@@ -29,9 +28,6 @@ class StatsDataObject implements JsonSerializable
     /** @var array */
     private $data;
 
-    /** @var array */
-    private $processedData = [];
-
     public function __construct(array $data)
     {
         $this->setAnr($data['anr'])
@@ -40,10 +36,6 @@ class StatsDataObject implements JsonSerializable
 
         if (!empty($data['date'])) {
             $this->setDate($data['date']);
-        }
-
-        if (!empty($data['processedData'])) {
-            $this->setProcessedData($data['processedData']);
         }
     }
 
@@ -106,18 +98,6 @@ class StatsDataObject implements JsonSerializable
     public function setData(array $data): self
     {
         $this->data = $data;
-
-        return $this;
-    }
-
-    public function getProcessedData(): array
-    {
-        return $this->processedData;
-    }
-
-    public function setProcessedData(array $processedData): self
-    {
-        $this->processedData = $processedData;
 
         return $this;
     }

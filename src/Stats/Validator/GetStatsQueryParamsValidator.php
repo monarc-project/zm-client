@@ -9,6 +9,7 @@ use Laminas\InputFilter\ArrayInput;
 use Laminas\InputFilter\InputFilter;
 use Laminas\Validator\Callback;
 use Laminas\Validator\Date;
+use Laminas\Validator\Digits;
 use Laminas\Validator\InArray;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
@@ -63,15 +64,6 @@ class GetStatsQueryParamsValidator extends AbstractMonarcInputValidator
                             'anrTable' => $this->anrTable,
                         ],
                     ]
-                ],
-            ],
-            [
-                'name' => 'postprocessor',
-                'required' => false,
-                'filters' => [
-                    [
-                        'name' => StringTrim::class,
-                    ],
                 ],
             ],
             [
@@ -132,6 +124,24 @@ class GetStatsQueryParamsValidator extends AbstractMonarcInputValidator
                     [
                         'name' => Boolean::class,
                     ],
+                ],
+            ],
+            [
+                'name' => 'offset',
+                'required' => false,
+                'validators' => [
+                    [
+                        'name' => Digits::class
+                    ]
+                ],
+            ],
+            [
+                'name' => 'limit',
+                'required' => false,
+                'validators' => [
+                    [
+                        'name' => Digits::class
+                    ]
                 ],
             ],
         ];

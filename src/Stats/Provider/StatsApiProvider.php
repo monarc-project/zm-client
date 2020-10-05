@@ -57,21 +57,31 @@ class StatsApiProvider
      */
     public function getStatsData(array $params): array
     {
-        $query = '';
-        foreach ($params as $name => $value) {
-            if (\is_array($value)) {
-                foreach ($value as $v) {
-                    $query .= $name . '=' . $v . '&';
-                }
-            } else {
-                $query .= $name . '=' . $value . '&';
-            }
-        }
-        $query = substr($query, 0, -1);
-
-        $response = $this->guzzleClient->get(self::BASE_URI . '/stats', [
+        $response = $this->guzzleClient->post(self::BASE_URI . '/stats', [
             'headers' => $this->getAuthHeaders(),
-            'query' => $query,
+            'json' => $params,
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new StatsFetchingException($response->getBody()->getContents(), $response->getStatusCode());
+        }
+
+        return $this->buildFormattedResponse($response->getBody()->getContents());
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return StatsDataObject[]
+     *
+     * @throws StatsFetchingException
+     * @throws WrongResponseFormatException
+     */
+    public function getProcessedStatsData(array $params): array
+    {
+        $response = $this->guzzleClient->post(self::BASE_URI . '/stats/processed', [
+            'headers' => $this->getAuthHeaders(),
+            'json' => $params,
         ]);
 
         if ($response->getStatusCode() !== 200) {

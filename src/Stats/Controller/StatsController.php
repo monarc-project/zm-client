@@ -5,23 +5,30 @@ namespace Monarc\FrontOffice\Stats\Controller;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Exception\AccessForbiddenException;
 use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
+use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidator;
 
 class StatsController extends AbstractRestfulController
 {
     /** @var GetStatsQueryParamsValidator */
     private $getStatsQueryParamsValidator;
 
+    /** @var GetProcessedStatsQueryParamsValidator */
+    private $getProcessedStatsQueryParamsValidator;
+
     /** @var StatsAnrService */
     private $statsAnrService;
 
     public function __construct(
         GetStatsQueryParamsValidator $getStatsQueryParamsValidator,
+        GetProcessedStatsQueryParamsValidator $getProcessedStatsQueryParamsValidator,
         StatsAnrService $statsAnrService
     ) {
         $this->getStatsQueryParamsValidator = $getStatsQueryParamsValidator;
+        $this->getProcessedStatsQueryParamsValidator = $getProcessedStatsQueryParamsValidator;
         $this->statsAnrService = $statsAnrService;
     }
 
@@ -37,7 +44,27 @@ class StatsController extends AbstractRestfulController
 
         try {
             $stats = $this->statsAnrService->getStats($this->getStatsQueryParamsValidator->getValidData());
-        } catch (UserNotAuthorizedException $e) {
+        } catch (UserNotAuthorizedException | AccessForbiddenException $e) {
+            $stats = [];
+            $this->getResponse()->setStatusCode(401);
+        }
+
+        return new JsonModel($stats);
+    }
+
+    public function getProcessedList(): JsonModel
+    {
+        if (!$this->getProcessedStatsQueryParamsValidator->isValid($this->params()->fromQuery())) {
+            throw new Exception(
+                'Query params validation errors: [ '
+                . json_encode($this->getProcessedStatsQueryParamsValidator->getErrorMessages()),
+                400
+            );
+        }
+
+        try {
+            $stats = $this->statsAnrService->getProcessedStats($this->getProcessedStatsQueryParamsValidator->getValidData());
+        } catch (UserNotAuthorizedException | AccessForbiddenException $e) {
             $stats = [];
             $this->getResponse()->setStatusCode(401);
         }
