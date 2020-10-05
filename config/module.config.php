@@ -2,9 +2,7 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
-use Laminas\InputFilter\Factory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
@@ -19,7 +17,9 @@ use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Stats\Service\StatsSettingsService;
 use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidator;
+use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidatorFactory;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
+use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidatorFactory;
 use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
 
 return [
@@ -1223,16 +1223,8 @@ return [
 
             // Validators
             CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
-            GetStatsQueryParamsValidator::class => function(ContainerInterface $container, $requestedName) {
-                $inputFilterFactory = $container->get(Factory::class);
-
-                return new $requestedName($inputFilterFactory->createInputFilter([]), $container->get(Table\AnrTable::class));
-            },
-            GetProcessedStatsQueryParamsValidator::class => function(ContainerInterface $container, $requestedName) {
-                $inputFilterFactory = $container->get(Factory::class);
-
-                return new $requestedName($inputFilterFactory->createInputFilter([]));
-            },
+            GetStatsQueryParamsValidator::class => GetStatsQueryParamsValidatorFactory::class,
+            GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
         ],
     ],
 
