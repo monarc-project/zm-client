@@ -52,7 +52,7 @@ class StatsController extends AbstractRestfulController
         return new JsonModel($stats);
     }
 
-    public function getProcessedList(): JsonModel
+    public function getProcessedListAction(): JsonModel
     {
         if (!$this->getProcessedStatsQueryParamsValidator->isValid($this->params()->fromQuery())) {
             throw new Exception(
