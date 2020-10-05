@@ -16,11 +16,21 @@ class StatsDataObject implements JsonSerializable
     public const TYPE_CARTOGRAPHY = 'cartography';
     public const TYPE_COMPLIANCE = 'compliance';
 
+    public const AVAILABLE_PROCESSORS = [
+        'risk_process',
+        'threat_process',
+        'threat_average_on_date',
+        'vulnerability_average_on_date',
+    ];
+
     /** @var string */
     private $anr;
 
     /** @var string */
     private $type;
+
+    /** @var string|null */
+    private $processor;
 
     /** @var string */
     private $date = '';
@@ -36,6 +46,10 @@ class StatsDataObject implements JsonSerializable
 
         if (!empty($data['date'])) {
             $this->setDate($data['date']);
+        }
+
+        if (!empty($data['processor'])) {
+            $this->setProcessor($data['processor']);
         }
     }
 
@@ -102,11 +116,17 @@ class StatsDataObject implements JsonSerializable
         return $this;
     }
 
+    public function setProcessor(string $processor): void
+    {
+        $this->processor = $processor;
+    }
+
     public function jsonSerialize(): array
     {
         return [
             'anr' => $this->anr,
             'type' => $this->type,
+            'processor' => (string)$this->processor,
             'date' => $this->date,
             'data' => $this->data,
         ];

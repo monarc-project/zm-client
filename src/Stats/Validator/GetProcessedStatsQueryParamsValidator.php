@@ -6,6 +6,7 @@ use Laminas\Filter\StringTrim;
 use Laminas\InputFilter\InputFilter;
 use Laminas\Validator\Digits;
 use Laminas\Validator\InArray;
+use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Validator\InputValidator\AbstractMonarcInputValidator;
 
@@ -20,6 +21,27 @@ class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
     {
         return [
             [
+                'name' => 'type',
+                'required' => true,
+                'filters' => [
+                    [
+                        'name' => StringTrim::class,
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => InArray::class,
+                        'options' => [
+                            'haystack' => StatsDataObject::getAvailableTypes(),
+                            'messageTemplates' => [
+                                InArray::NOT_IN_ARRAY => 'Should be one of the values: '
+                                    . implode(', ', StatsDataObject::getAvailableTypes()),
+                            ],
+                        ],
+                    ]
+                ],
+            ],
+            [
                 'name' => 'processor',
                 'required' => true,
                 'filters' => [
@@ -31,10 +53,10 @@ class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
                     [
                         'name' => InArray::class,
                         'options' => [
-                            'haystack' => StatsAnrService::AVAILABLE_PROCESSORS,
+                            'haystack' => StatsDataObject::AVAILABLE_PROCESSORS,
                             'messageTemplates' => [
                                 InArray::NOT_IN_ARRAY => 'Should be one of the values: '
-                                    . implode(', ', StatsAnrService::AVAILABLE_PROCESSORS),
+                                    . implode(', ', StatsDataObject::AVAILABLE_PROCESSORS),
                             ],
                         ],
                     ]

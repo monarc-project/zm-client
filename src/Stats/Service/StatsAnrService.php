@@ -44,13 +44,6 @@ class StatsAnrService
         'year',
     ];
 
-    public const AVAILABLE_PROCESSORS = [
-        'risk_process',
-        'threat_process',
-        'threat_average_on_date',
-        'vulnerability_average_on_date',
-    ];
-
     /** @var AnrTable */
     private $anrTable;
 
@@ -170,10 +163,11 @@ class StatsAnrService
     {
         $loggedInUser = $this->getValidatedLoggedInUser();
 
-        if (empty($validatedParams['processor'])) {
-            throw new \LogicException("Filter parameter 'processor' is mandatory to get the stats.");
+        if (empty($validatedParams['processor']) || empty($validatedParams['type'])) {
+            throw new \LogicException("Filter parameters 'processor' and 'type' are mandatory to get the stats.");
         }
         $requestParams['processor'] = $validatedParams['processor'];
+        $requestParams['type'] = $validatedParams['type'];
 
         $anrUuids = $this->getFilteredAnrUuids(['anrs' => []], $loggedInUser);
         if (!empty($anrUuids)) {

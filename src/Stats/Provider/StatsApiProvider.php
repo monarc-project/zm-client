@@ -57,7 +57,7 @@ class StatsApiProvider
      */
     public function getStatsData(array $params): array
     {
-        $response = $this->guzzleClient->post(self::BASE_URI . '/stats', [
+        $response = $this->guzzleClient->get(self::BASE_URI . '/stats/', [
             'headers' => $this->getAuthHeaders(),
             'json' => $params,
         ]);
@@ -79,7 +79,7 @@ class StatsApiProvider
      */
     public function getProcessedStatsData(array $params): array
     {
-        $response = $this->guzzleClient->post(self::BASE_URI . '/stats/processed', [
+        $response = $this->guzzleClient->get(self::BASE_URI . '/stats/processed/', [
             'headers' => $this->getAuthHeaders(),
             'json' => $params,
         ]);
