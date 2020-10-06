@@ -150,11 +150,11 @@ class StatsApiProvider
     {
         $formattedResponse = [];
         $response = json_decode($responseContents, true);
-        if (!isset($response['metadata']['count'], $response['data'])) {
-            throw new WrongResponseFormatException(['"metadata.count"', '"data"']);
+        if (!isset($response['data'])) {
+            throw new WrongResponseFormatException(['"data"']);
         }
 
-        if ($response['metadata']['count'] > 0) {
+        if (!empty($response['data'])) {
             foreach ($response['data'] as $itemNum => $responseData) {
                 if (!isset($responseData['type'], $responseData['data'])) {
                     throw new WrongResponseFormatException(
