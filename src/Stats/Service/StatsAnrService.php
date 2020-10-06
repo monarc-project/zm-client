@@ -157,7 +157,9 @@ class StatsAnrService
 
     /**
      * @throws AccessForbiddenException
+     * @throws StatsFetchingException
      * @throws UserNotAuthorizedException
+     * @throws WrongResponseFormatException
      */
     public function getProcessedStats(array $validatedParams): array
     {

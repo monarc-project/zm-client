@@ -33,16 +33,21 @@ class CreateSettingsTableAndAddAnrUuidField extends AbstractMigration
 
         $snapshotsAnrsIds = $this->query('SELECT DISTINCT `anr_id` from `snapshots`')->fetchAll();
         $snapshotsAnrsIds = !empty($snapshotsAnrsIds) ? array_column($snapshotsAnrsIds, 'anr_id') : [];
-        $anrs = $this->query('SELECT `id` from `anrs`')->fetchAll();
+        $anrs = $this->query('SELECT `id`, `uuid` from `anrs`')->fetchAll();
         foreach ($anrs as $anr) {
-            $visibilityOnDashboardSql = '';
-            if (in_array($anr['id'], $snapshotsAnrsIds)) {
-                $visibilityOnDashboardSql = ', `is_visible_on_dashboard` = 0';
+            $updateFieldsSql = '';
+            if (!$anr['uuid']) {
+                $updateFieldsSql = '`uuid` = "' . Uuid::uuid4();
             }
-            $this->execute(
-                'UPDATE `anrs` SET `uuid` = "' . Uuid::uuid4() . '"' . $visibilityOnDashboardSql .
-                ' WHERE `id` = ' . $anr['id']
-            );
+            if (in_array($anr['id'], $snapshotsAnrsIds)) {
+                $updateFieldsSql .= ($updateFieldsSql ? ', ' : '') . '`is_visible_on_dashboard` = 0';
+            }
+            if ($updateFieldsSql) {
+                $this->execute(
+                    'UPDATE `anrs` SET ' . $updateFieldsSql .
+                    ' WHERE `id` = ' . $anr['id']
+                );
+            }
         }
 
         $this->execute(

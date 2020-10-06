@@ -123,12 +123,16 @@ class StatsDataObject implements JsonSerializable
 
     public function jsonSerialize(): array
     {
-        return [
+        $data = [
             'anr' => $this->anr,
             'type' => $this->type,
-            'processor' => (string)$this->processor,
             'date' => $this->date,
             'data' => $this->data,
         ];
+        if ($this->processor) {
+            $data['processor'] = $this->processor;
+        }
+
+        return $data;
     }
 }
