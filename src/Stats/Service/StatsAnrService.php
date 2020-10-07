@@ -46,6 +46,7 @@ class StatsAnrService
 
     public const AVAILABLE_STATS_PROCESSORS = [
         'risk_process',
+        'risk_averages',
         'threat_process',
         'threat_average_on_date',
         'vulnerability_average_on_date',
