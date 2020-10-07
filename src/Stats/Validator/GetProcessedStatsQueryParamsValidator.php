@@ -53,10 +53,10 @@ class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
                     [
                         'name' => InArray::class,
                         'options' => [
-                            'haystack' => StatsDataObject::AVAILABLE_PROCESSORS,
+                            'haystack' => StatsAnrService::AVAILABLE_STATS_PROCESSORS,
                             'messageTemplates' => [
                                 InArray::NOT_IN_ARRAY => 'Should be one of the values: '
-                                    . implode(', ', StatsDataObject::AVAILABLE_PROCESSORS),
+                                    . implode(', ', StatsAnrService::AVAILABLE_STATS_PROCESSORS),
                             ],
                         ],
                     ]

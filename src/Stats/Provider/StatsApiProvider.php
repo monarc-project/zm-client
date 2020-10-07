@@ -155,6 +155,11 @@ class StatsApiProvider
         }
 
         if (!empty($response['data'])) {
+            // Return the processed data response as received.
+            if (isset($response['processor'])) {
+                return $response['data'];
+            }
+
             foreach ($response['data'] as $itemNum => $responseData) {
                 if (!isset($responseData['type'], $responseData['data'])) {
                     throw new WrongResponseFormatException(

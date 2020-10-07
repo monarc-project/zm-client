@@ -44,6 +44,13 @@ class StatsAnrService
         'year',
     ];
 
+    public const AVAILABLE_STATS_PROCESSORS = [
+        'risk_process',
+        'threat_process',
+        'threat_average_on_date',
+        'vulnerability_average_on_date',
+    ];
+
     /** @var AnrTable */
     private $anrTable;
 
@@ -180,7 +187,7 @@ class StatsAnrService
             $validatedParams['nbdays'];
         }
 
-        return $this->statsApiProvider->getProcessedStatsData($requestParams);
+        return $this->formatProcessedStatsData($this->statsApiProvider->getProcessedStatsData($requestParams));
     }
 
     /**
@@ -1124,6 +1131,31 @@ class StatsAnrService
         }
 
         return $measuresData;
+    }
+
+    private function formatProcessedStatsData(array $data): array
+    {
+        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
+        $formattedResponse = [];
+        foreach ($data as $processedStats) {
+            $dataRow = $processedStats;
+            if (!empty($dataRow['labels'])) {
+                if (!empty($dataRow['labels']['label' . $userLanguageNumber])) {
+                    $dataRow['label'] = $dataRow['labels']['label' . $userLanguageNumber];
+                } else {
+                    foreach ($dataRow['labels'] as $label) {
+                        if (!empty($label)) {
+                            $dataRow['label'] = $label;
+                        }
+                    }
+                }
+                unset($dataRow['labels']);
+            }
+
+            $formattedResponse[] = $dataRow;
+        }
+
+        return $formattedResponse;
     }
 
     /**
