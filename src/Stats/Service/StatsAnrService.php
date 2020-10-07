@@ -1152,6 +1152,10 @@ class StatsAnrService
                 unset($dataRow['labels']);
             }
 
+            usort($dataRow['values'], static function ($a, $b) {
+                return $a['date'] <=> $b['date'];
+            });
+
             $formattedResponse[] = $dataRow;
         }
 
