@@ -46,6 +46,8 @@ class StatsAnrService
 
     public const AVAILABLE_STATS_PROCESSORS = [
         'risk_process',
+        'risk_averages',
+        'risk_averages_on_date',
         'threat_process',
         'threat_average_on_date',
         'vulnerability_average_on_date',
@@ -948,7 +950,7 @@ class StatsAnrService
                 $dataSetUuid = $dataSet['uuid'];
                 if (isset($formattedResult[$anrUuid]['series'][$dataSetUuid])) {
                     $formattedResult[$anrUuid]['series'][$dataSetUuid]['series'][] = [
-                        'label' => $data->getDate(),
+                        'date' => $data->getDate(),
                         'count' => $dataSet['count'],
                         'maxRisk' => $dataSet['maxRisk'],
                         'averageRate' => $dataSet['averageRate']
@@ -961,7 +963,7 @@ class StatsAnrService
                         'uuid' => $dataSetUuid,
                         'series' => [
                             [
-                                'label' => $data->getDate(),
+                                'date' => $data->getDate(),
                                 'count' => $dataSet['count'],
                                 'maxRisk' => $dataSet['maxRisk'],
                                 'averageRate' => $dataSet['averageRate'],
@@ -971,7 +973,7 @@ class StatsAnrService
                 }
 
                 usort($formattedResult[$anrUuid]['series'][$dataSetUuid]['series'], function ($a,$b){
-                  return $a['label'] <=> $b['label'];
+                  return $a['date'] <=> $b['date'];
                 });
             }
         }
@@ -1150,6 +1152,12 @@ class StatsAnrService
                     }
                 }
                 unset($dataRow['labels']);
+            }
+
+            if (!empty($dataRow['values'])) {
+              usort($dataRow['values'], static function ($a, $b) {
+                  return $a['date'] <=> $b['date'];
+              });
             }
 
             $formattedResponse[] = $dataRow;
