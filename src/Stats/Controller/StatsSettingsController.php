@@ -16,7 +16,18 @@ class StatsSettingsController extends AbstractRestfulController
         $this->statsSettingsService = $statsSettingsService;
     }
 
-    public function patchList($data)
+    public function validateStatsAvailabilityAction(): JsonModel
+    {
+        if ($this->statsSettingsService->isStatsAvailable()) {
+            $this->getResponse()->setStatusCode(204);
+        } else {
+            $this->getResponse()->setStatusCode(404);
+        }
+
+        return new JsonModel([]);
+    }
+
+    public function patchList($data): JsonModel
     {
         $updatedList = $this->statsSettingsService->updateAnrsSettings($data);
 

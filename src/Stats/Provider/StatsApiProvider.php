@@ -11,6 +11,7 @@ use Monarc\FrontOffice\Model\Table\SettingTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsDeletionException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
+use Monarc\FrontOffice\Stats\Exception\StatsGetClientException;
 use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
 use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
 
@@ -124,6 +125,19 @@ class StatsApiProvider
             // TODO: send a notification or email.
             throw new StatsDeletionException($response->getBody()->getContents(), $response->getStatusCode());
         }
+    }
+
+    public function getClient(): array
+    {
+        $response = $this->guzzleClient->get(self::BASE_URI . '/client/me', [
+            'headers' => $this->getAuthHeaders(),
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new StatsGetClientException($response->getBody()->getContents(), $response->getStatusCode());
+        }
+
+        return json_decode($response->getBody()->getContents(), true);
     }
 
     private function getAuthHeaders(): array

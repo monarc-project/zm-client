@@ -957,6 +957,17 @@ return [
                                 'controller' => StatsSettingsController::class,
                             ],
                         ],
+                    ],
+                    'is_stats_available' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'settings/validate-stats-availability',
+                            'verb' => 'get',
+                            'defaults' => [
+                                'controller' => StatsSettingsController::class,
+                                'action' => 'validateStatsAvailability'
+                            ],
+                        ],
                     ]
                 ],
             ],
@@ -1371,7 +1382,8 @@ return [
             'monarc_api_global_client_anr/record_import',
             'monarc_api_global_client_anr/record_duplicate',
             'monarc_api_stats',
-            'monarc_api_stats_global/processed'
+            'monarc_api_stats_global/processed',
+            'monarc_api_stats_global/validate-stats-availability',
         ],
         Entity\UserRole::USER_ROLE_CEO => [
             'monarc_api_admin_users_roles',
@@ -1381,6 +1393,7 @@ return [
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
             'monarc_api_stats_global/settings',
+            'monarc_api_stats_global/validate-stats-availability',
         ],
     ],
     'activeLanguages' => ['fr'],
