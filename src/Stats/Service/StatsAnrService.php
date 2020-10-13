@@ -950,7 +950,7 @@ class StatsAnrService
                 $dataSetUuid = $dataSet['uuid'];
                 if (isset($formattedResult[$anrUuid]['series'][$dataSetUuid])) {
                     $formattedResult[$anrUuid]['series'][$dataSetUuid]['series'][] = [
-                        'label' => $data->getDate(),
+                        'date' => $data->getDate(),
                         'count' => $dataSet['count'],
                         'maxRisk' => $dataSet['maxRisk'],
                         'averageRate' => $dataSet['averageRate']
@@ -963,7 +963,7 @@ class StatsAnrService
                         'uuid' => $dataSetUuid,
                         'series' => [
                             [
-                                'label' => $data->getDate(),
+                                'date' => $data->getDate(),
                                 'count' => $dataSet['count'],
                                 'maxRisk' => $dataSet['maxRisk'],
                                 'averageRate' => $dataSet['averageRate'],
@@ -973,7 +973,7 @@ class StatsAnrService
                 }
 
                 usort($formattedResult[$anrUuid]['series'][$dataSetUuid]['series'], function ($a,$b){
-                  return $a['label'] <=> $b['label'];
+                  return $a['date'] <=> $b['date'];
                 });
             }
         }
