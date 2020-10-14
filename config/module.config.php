@@ -958,17 +958,17 @@ return [
                             ],
                         ],
                     ],
-                    'is_stats_available' => [
+                    'validate-stats-availability' => [
                         'type' => 'segment',
                         'options' => [
-                            'route' => 'settings/validate-stats-availability',
+                            'route' => 'validate-stats-availability[/]',
                             'verb' => 'get',
                             'defaults' => [
-                                'controller' => StatsSettingsController::class,
+                                'controller' => StatsController::class,
                                 'action' => 'validateStatsAvailability'
                             ],
                         ],
-                    ]
+                    ],
                 ],
             ],
         ],
@@ -1390,6 +1390,7 @@ return [
             'monarc_api_admin_user_reset_password',
             'monarc_api_user_password',
             'monarc_api_user_profile',
+            'monarc_api_client_anr',
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
             'monarc_api_stats_global/settings',

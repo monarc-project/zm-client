@@ -3,6 +3,7 @@
 namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
+use Doctrine\ORM\EntityNotFoundException;
 use Exception;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
@@ -11,6 +12,7 @@ use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Scale;
+use Monarc\FrontOffice\Model\Entity\Setting;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserRole;
@@ -19,6 +21,8 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
+use Monarc\FrontOffice\Model\Table\SettingTable;
+use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Model\Table\UserTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
@@ -27,6 +31,8 @@ use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
 use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
 use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
+use Throwable;
+use function in_array;
 
 class StatsAnrService
 {
@@ -80,6 +86,12 @@ class StatsAnrService
     /** @var UserTable */
     private $userTable;
 
+    /** @var SnapshotTable */
+    private $snapshotTable;
+
+    /** @var SettingTable */
+    private $settingTable;
+
     public function __construct(
         AnrTable $anrTable,
         ScaleTable $scaleTable,
@@ -89,7 +101,9 @@ class StatsAnrService
         SoaTable $soaTable,
         StatsApiProvider $statsApiProvider,
         ConnectedUserService $connectedUserService,
-        UserTable $userTable
+        UserTable $userTable,
+        SnapshotTable $snapshotTable,
+        SettingTable $settingTable
     ) {
         $this->anrTable = $anrTable;
         $this->scaleTable = $scaleTable;
@@ -100,6 +114,43 @@ class StatsAnrService
         $this->statsApiProvider = $statsApiProvider;
         $this->connectedUserService = $connectedUserService;
         $this->userTable = $userTable;
+        $this->snapshotTable = $snapshotTable;
+        $this->settingTable = $settingTable;
+    }
+
+    /**
+     * @throws UserNotAuthorizedException
+     * @throws EntityNotFoundException
+     */
+    public function isStatsAvailable(): bool
+    {
+        $loggedInUser = $this->getValidatedLoggedInUser();
+        if (!$loggedInUser->hasRole(UserRole::USER_ROLE_CEO)) {
+            $anrUuids = $this->getAvailableUserAnrsUuids($loggedInUser);
+            if (empty($anrUuids)) {
+                return false;
+            }
+        }
+
+        $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
+        if (
+            !isset(
+                $setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED],
+                $setting->getValue()[Setting::SETTING_STATS_API_KEY]
+            )
+            || empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED])
+            || empty($setting->getValue()[Setting::SETTING_STATS_API_KEY])
+        ) {
+            return false;
+        }
+
+        try {
+            $client = $this->statsApiProvider->getClient();
+        } catch (Throwable $e) {
+            return false;
+        }
+
+        return $client['token'] === $setting->getValue()[Setting::SETTING_STATS_API_KEY];
     }
 
     /**
@@ -152,7 +203,7 @@ class StatsAnrService
         if ($requestParams['type'] === StatsDataObject::TYPE_RISK) {
             $statsData = $this->formatRisksStatsData($statsData);
         } elseif (
-            \in_array($requestParams['type'], [StatsDataObject::TYPE_THREAT, StatsDataObject::TYPE_VULNERABILITY], true)
+            in_array($requestParams['type'], [StatsDataObject::TYPE_THREAT, StatsDataObject::TYPE_VULNERABILITY], true)
         ) {
             $statsData = $this->formatThreatsOrVulnerabilitiesStatsData($statsData);
         } elseif ($requestParams['type'] === StatsDataObject::TYPE_CARTOGRAPHY) {
@@ -436,7 +487,7 @@ class StatsAnrService
                     if ($i !== -1 && $t !== -1 && $v !== -1) {
                         $value = $t * $v;
                     }
-                    if (!\in_array($value, $headersResult, true)) {
+                    if (!in_array($value, $headersResult, true)) {
                         $headersResult[] = $value;
                     }
                 }
@@ -785,23 +836,13 @@ class StatsAnrService
 
     /**
      * @throws AccessForbiddenException
+     * @throws EntityNotFoundException
      */
     private function getFilteredAnrUuids(array $validatedParams, UserSuperClass $loggedInUser): array
     {
         $anrUuids = [];
         if (!$loggedInUser->hasRole(UserRole::USER_ROLE_CEO)) {
-            /** @var User $user */
-            // We do this trick to get the User object from FO side instead of Core.
-            $user = $this->userTable->findById($loggedInUser->getId());
-            foreach ($user->getUserAnrs() as $userAnr) {
-                /** @var Anr $anr */
-                $anr = $userAnr->getAnr();
-                if (!empty($validatedParams['anrs']) && !\in_array($anr->getId(), $validatedParams['anrs'], true)) {
-                    continue;
-                }
-
-                $anrUuids[] = $anr->getUuid();
-            }
+            $anrUuids = $this->getAvailableUserAnrsUuids($loggedInUser, $validatedParams['anrs']);
             if (empty($anrUuids)) {
                 throw new AccessForbiddenException();
             }
@@ -1177,5 +1218,37 @@ class StatsAnrService
         }
 
         return $loggedInUser;
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     */
+    private function getAvailableUserAnrsUuids(UserSuperClass $loggedInUser, array $anrIds = []): array
+    {
+        $anrUuids = [];
+        /** @var User $user */
+        // We do this trick to get the User object from FO side instead of Core.
+        $user = $this->userTable->findById($loggedInUser->getId());
+        $userAnrs = $user->getUserAnrs();
+        $snapshotAnrsIds = [];
+        if (!$userAnrs->isEmpty()) {
+            $snapshots = $this->snapshotTable->findAll();
+            foreach ($snapshots as $snapshot) {
+                $snapshotAnrsIds[] = $snapshot->getAnr()->getId();
+            }
+        }
+        foreach ($userAnrs as $userAnr) {
+            /** @var Anr $anr */
+            $anr = $userAnr->getAnr();
+            if ((!empty($anrIds) && !in_array($anr->getId(), $anrIds, true))
+                || in_array($anr->getId(), $snapshotAnrsIds, true)
+            ) {
+                continue;
+            }
+
+            $anrUuids[] = $anr->getUuid();
+        }
+
+        return $anrUuids;
     }
 }

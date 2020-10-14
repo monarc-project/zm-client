@@ -71,4 +71,9 @@ class StatsController extends AbstractRestfulController
 
         return new JsonModel($stats);
     }
+
+    public function validateStatsAvailabilityAction(): JsonModel
+    {
+        return new JsonModel(['isStatsAvailable' => $this->statsAnrService->isStatsAvailable()]);
+    }
 }

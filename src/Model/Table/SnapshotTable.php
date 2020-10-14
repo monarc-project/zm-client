@@ -34,4 +34,12 @@ class SnapshotTable extends AbstractEntityTable
         $this->db->getEntityManager()->persist($snapshot);
         $this->db->getEntityManager()->flush();
     }
+
+    /**
+     * @return Snapshot[]|array
+     */
+    public function findAll(): array
+    {
+        return $this->getRepository()->findAll();
+    }
 }
