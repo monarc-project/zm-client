@@ -42,7 +42,7 @@ class Soa extends AbstractEntity
 
     /**
      * @var Measure
-     * @ORM\OneToOne(targetEntity="Measure", inversedBy="soa", cascade={"persist"})
+     * @ORM\OneToOne(targetEntity="Measure", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true),
