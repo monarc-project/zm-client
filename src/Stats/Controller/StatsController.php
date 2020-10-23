@@ -49,7 +49,9 @@ class StatsController extends AbstractRestfulController
             $this->getResponse()->setStatusCode(401);
         }
 
-        return new JsonModel($stats);
+        return new JsonModel([
+          'data' => $stats,
+          ]);
     }
 
     public function getProcessedListAction(): JsonModel
@@ -69,7 +71,9 @@ class StatsController extends AbstractRestfulController
             $this->getResponse()->setStatusCode(401);
         }
 
-        return new JsonModel($stats);
+        return new JsonModel([
+          'data' => $stats,
+          ]);
     }
 
     public function validateStatsAvailabilityAction(): JsonModel
