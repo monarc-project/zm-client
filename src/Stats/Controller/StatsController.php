@@ -50,8 +50,8 @@ class StatsController extends AbstractRestfulController
         }
 
         return new JsonModel([
-          'data' => $stats,
-          ]);
+            'data' => $stats,
+        ]);
     }
 
     public function getProcessedListAction(): JsonModel
@@ -72,8 +72,8 @@ class StatsController extends AbstractRestfulController
         }
 
         return new JsonModel([
-          'data' => $stats,
-          ]);
+            'data' => $stats,
+        ]);
     }
 
     public function validateStatsAvailabilityAction(): JsonModel

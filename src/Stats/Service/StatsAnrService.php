@@ -524,15 +524,13 @@ class StatsAnrService
                 $riskContext = $this->getRiskContext($anr, $maxImpact, $riskData['cacheMaxRisk']);
                 $currentRisksValues = $this->getRiskValues($currentRisksValues, $riskContext, $amvKey, $riskData);
 
-                if ($riskData['cacheMaxRisk'] > 0) {
-                    $otvKey = md5($riskData['objectId'] . $riskData['threatId'] . $riskData['vulnerabilityId']);
-                    $threatsValues = $this->getThreatsValues($threatsValues, $otvKey, $riskData);
-                    $vulnerabilitiesValues = $this->getVulnerabilitiesValues(
-                        $vulnerabilitiesValues,
-                        $otvKey,
-                        $riskData
-                    );
-                }
+                $otvKey = md5($riskData['objectId'] . $riskData['threatId'] . $riskData['vulnerabilityId']);
+                $threatsValues = $this->getThreatsValues($threatsValues, $otvKey, $riskData);
+                $vulnerabilitiesValues = $this->getVulnerabilitiesValues(
+                    $vulnerabilitiesValues,
+                    $otvKey,
+                    $riskData
+                );
             }
             if ($riskData['cacheTargetedRisk'] > -1) {
                 $riskContext = $this->getRiskContext($anr, $maxImpact, $riskData['cacheTargetedRisk']);

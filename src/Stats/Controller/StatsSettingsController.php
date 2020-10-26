@@ -21,14 +21,14 @@ class StatsSettingsController extends AbstractRestfulController
         $this->statsSettingsService->updateAnrsSettings($data);
 
         return new JsonModel([
-          'status' => 'ok'
+            'status' => 'ok'
         ]);
     }
 
     public function getList(): JsonModel
     {
         return new JsonModel([
-          'data' => $this->statsSettingsService->getAnrsSettings()
+            'data' => $this->statsSettingsService->getAnrsSettings()
         ]);
     }
 }
