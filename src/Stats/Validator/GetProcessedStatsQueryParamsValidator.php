@@ -63,6 +63,26 @@ class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
                 ],
             ],
             [
+                'name' => 'processor_params',
+                'required' => false,
+                // 'filters' => [
+                //     [
+                //         'name' => StringTrim::class,
+                //     ],
+                // ],
+                // 'validators' => [
+                //     [
+                //         'name' => InArray::class,
+                //         // 'options' => [
+                //         //     'haystack' => [
+                //         //         'firstDimension' => ['processor_params'],
+                //         //         'secondDimension' => ['risks_type', 'risks_state'],
+                //         //     ],
+                //         // ],
+                //     ]
+                // ],
+            ],
+            [
                 'name' => 'nbdays',
                 'required' => false,
                 'validators' => [

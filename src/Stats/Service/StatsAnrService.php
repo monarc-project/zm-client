@@ -229,6 +229,7 @@ class StatsAnrService
             throw new \LogicException("Filter parameters 'processor' and 'type' are mandatory to get the stats.");
         }
         $requestParams['processor'] = $validatedParams['processor'];
+        $requestParams['processor_params'] = $validatedParams['processor_params'];
         $requestParams['type'] = $validatedParams['type'];
 
         $anrUuids = $this->getFilteredAnrUuids(['anrs' => []], $loggedInUser);
