@@ -213,7 +213,7 @@ class AnrRecordService extends AbstractService
         $entity = $this->get('table')->getEntity($recordId);
         $newRecord = new Record($entity);
         $newRecord->setId(null);
-        $newRecord->setUpdatedAt(null);
+        $newRecord->resetUpdatedAtValue();
         $newRecord->setLabel($newLabel);
         $id = $this->get('table')->save($newRecord);
         if($entity->getProcessors()) {

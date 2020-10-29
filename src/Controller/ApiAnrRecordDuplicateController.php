@@ -32,7 +32,7 @@ class ApiAnrRecordDuplicateController extends \Monarc\Core\Controller\AbstractCo
             throw new \Monarc\Core\Exception\Exception('Record missing', 412);
         }
 
-        $id = $service->duplicateRecord(intval($data['record']), $data['label']);
+        $id = $service->duplicateRecord((int)$data['record'], $data['label']);
 
         return new JsonModel([
             'status' => 'ok',
