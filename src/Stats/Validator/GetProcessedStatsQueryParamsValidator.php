@@ -3,6 +3,7 @@
 namespace Monarc\FrontOffice\Stats\Validator;
 
 use Laminas\Filter\StringTrim;
+use Laminas\InputFilter\ArrayInput;
 use Laminas\InputFilter\InputFilter;
 use Laminas\Validator\Digits;
 use Laminas\Validator\InArray;
@@ -61,6 +62,11 @@ class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
                         ],
                     ]
                 ],
+            ],
+            [
+                'name' => 'processor_params',
+                'required' => false,
+                'type' => ArrayInput::class,
             ],
             [
                 'name' => 'nbdays',
