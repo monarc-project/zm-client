@@ -1055,12 +1055,22 @@ class StatsAnrService
             }
             if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
-                    'current' => [
+                    'currentInfo' => [
                         'category' => $anr->getLabel(),
                         'uuid' => $anrUuid,
                         'series' => [],
                     ],
-                    'residual' => [
+                    'residualInfo' => [
+                        'category' => $anr->getLabel(),
+                        'uuid' => $anrUuid,
+                        'series' => [],
+                    ],
+                    'currentOp' => [
+                        'category' => $anr->getLabel(),
+                        'uuid' => $anrUuid,
+                        'series' => [],
+                    ],
+                    'residualOp' => [
                         'category' => $anr->getLabel(),
                         'uuid' => $anrUuid,
                         'series' => [],
@@ -1073,45 +1083,86 @@ class StatsAnrService
             $minImpact = min($data['scales']['impact']);
             $maxLikehood = max($data['scales']['likelihood']);
             $minLikehood = min($data['scales']['likelihood']);
+            $maxProbability = max($data['scales']['probability']);
+            $minProbability = min($data['scales']['probability']);
+
 
             foreach ($data['scales']['impact'] as $impactValue) {
+              $y = $this->approximate($impactValue,$minImpact,$maxImpact,0,4);
                 foreach ($data['scales']['likelihood'] as $likelihoodValue) {
-                    $y = $this->approximate($impactValue,$minImpact,$maxImpact,0,4);
                     $x = $this->approximate($likelihoodValue,$minLikehood,$maxLikehood,0,20);
 
-                    if (!isset($formattedResult[$anrUuid]['current']['series'][$y . $x])) {
-                      $formattedResult[$anrUuid]['current']['series'][$y . $x] = [
+                    if (!isset($formattedResult[$anrUuid]['informational']['currentInfo']['series'][$y . $x])) {
+                      $formattedResult[$anrUuid]['informational']['currentInfo']['series'][$y . $x] = [
                           'y' => $y,
                           'x' => $x,
                           'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue] ?? null,
                       ];
                     }elseif (isset($data['risks']['current']['informational'][$impactValue][$likelihoodValue])) {
-                      $formattedResult[$anrUuid]['current']['series'][$y . $x]['value'] += $data['risks']['current']['informational'][$impactValue][$likelihoodValue];
+                      $formattedResult[$anrUuid]['informational']['currentInfo']['series'][$y . $x]['value'] += $data['risks']['current']['informational'][$impactValue][$likelihoodValue];
                     }
 
-                    if (!isset($formattedResult[$anrUuid]['residual']['series'][$y . $x])) {
-                      $formattedResult[$anrUuid]['residual']['series'][$y . $x] = [
+                    if (!isset($formattedResult[$anrUuid]['informational']['residualInfo']['series'][$y . $x])) {
+                      $formattedResult[$anrUuid]['informational']['residualInfo']['series'][$y . $x] = [
                           'y' => $y,
                           'x' => $x,
                           'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue] ?? null,
                       ];
                     }elseif (isset($data['risks']['residual']['informational'][$impactValue][$likelihoodValue])) {
-                      $formattedResult[$anrUuid]['residual']['series'][$y . $x]['value'] += $data['risks']['residual']['informational'][$impactValue][$likelihoodValue];
+                      $formattedResult[$anrUuid]['informational']['residualInfo']['series'][$y . $x]['value'] += $data['risks']['residual']['informational'][$impactValue][$likelihoodValue];
+                    }
+                }
+
+                foreach ($data['scales']['probability'] as $probabilityValue) {
+                    $x = $this->approximate($probabilityValue,$minProbability,$maxProbability,0,4);
+
+                    if (!isset($formattedResult[$anrUuid]['operational']['currentOp']['series'][$y . $x])) {
+                      $formattedResult[$anrUuid]['operational']['currentOp']['series'][$y . $x] = [
+                          'y' => $y,
+                          'x' => $x,
+                          'value' => $data['risks']['current']['operational'][$impactValue][$probabilityValue] ?? null,
+                      ];
+                    }elseif (isset($data['risks']['current']['operational'][$impactValue][$probabilityValue])) {
+                      $formattedResult[$anrUuid]['operational']['currentOp']['series'][$y . $x]['value'] += $data['risks']['current']['operational'][$impactValue][$probabilityValue];
+                    }
+
+                    if (!isset($formattedResult[$anrUuid]['operational']['residualOp']['series'][$y . $x])) {
+                      $formattedResult[$anrUuid]['operational']['residualOp']['series'][$y . $x] = [
+                          'y' => $y,
+                          'x' => $x,
+                          'value' => $data['risks']['residual']['operational'][$impactValue][$probabilityValue] ?? null,
+                      ];
+                    }elseif (isset($data['risks']['residual']['operational'][$impactValue][$probabilityValue])) {
+                      $formattedResult[$anrUuid]['operational']['residualOp']['series'][$y . $x]['value'] += $data['risks']['residual']['operational'][$impactValue][$probabilityValue];
                     }
                 }
             }
 
-            $formattedResult[$anrUuid]['current']['series'] = array_values($formattedResult[$anrUuid]['current']['series']);
-            $formattedResult[$anrUuid]['residual']['series'] = array_values($formattedResult[$anrUuid]['residual']['series']);
+            $formattedResult[$anrUuid]['currentInfo']['series'] = array_values($formattedResult[$anrUuid]['informational']['currentInfo']['series']);
+            $formattedResult[$anrUuid]['residualInfo']['series'] = array_values($formattedResult[$anrUuid]['informational']['residualInfo']['series']);
+            $formattedResult[$anrUuid]['currentOp']['series'] = array_values($formattedResult[$anrUuid]['operational']['currentOp']['series']);
+            $formattedResult[$anrUuid]['residualOp']['series'] = array_values($formattedResult[$anrUuid]['operational']['residualOp']['series']);
+
         }
 
         if (!empty($formattedResult)) {
             $formattedResult = [
-                'current' => array_column($formattedResult, 'current'),
-                'residual' => array_column($formattedResult, 'residual'),
+              'informational' => [
+                'current' => array_column($formattedResult, 'currentInfo'),
+                'residual' => array_column($formattedResult, 'residualInfo'),
+              ],
+              'operational' => [
+                'current' => array_column($formattedResult, 'currentOp'),
+                'residual' => array_column($formattedResult, 'residualOp'),
+              ]
             ];
 
-            foreach ($formattedResult as $key => &$value) {
+            foreach ($formattedResult['informational'] as $key => &$value) {
+                usort($value, static function ($a, $b) {
+                    return $a['category'] <=> $b['category'];
+                });
+            }
+            foreach ($formattedResult['operational'] as $key => &$value) {
                 usort($value, static function ($a, $b) {
                     return $a['category'] <=> $b['category'];
                 });
