@@ -1057,30 +1057,52 @@ class StatsAnrService
                 $formattedResult[$anrUuid] = [
                     'current' => [
                         'category' => $anr->getLabel(),
+                        'uuid' => $anrUuid,
                         'series' => [],
                     ],
                     'residual' => [
                         'category' => $anr->getLabel(),
+                        'uuid' => $anrUuid,
                         'series' => [],
                     ],
                 ];
             }
 
             $data = $data->getData();
+            $maxImpact = max($data['scales']['impact']);
+            $minImpact = min($data['scales']['impact']);
+            $maxLikehood = max($data['scales']['likelihood']);
+            $minLikehood = min($data['scales']['likelihood']);
+
             foreach ($data['scales']['impact'] as $impactValue) {
                 foreach ($data['scales']['likelihood'] as $likelihoodValue) {
-                    $formattedResult[$anrUuid]['current']['series'][] = [
-                        'y' => $impactValue,
-                        'x' => $likelihoodValue,
-                        'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue] ?? null,
-                    ];
-                    $formattedResult[$anrUuid]['residual']['series'][] = [
-                        'y' => $impactValue,
-                        'x' => $likelihoodValue,
-                        'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue] ?? null,
-                    ];
+                    $y = $this->approximate($impactValue,$minImpact,$maxImpact,0,4);
+                    $x = $this->approximate($likelihoodValue,$minLikehood,$maxLikehood,0,20);
+
+                    if (!isset($formattedResult[$anrUuid]['current']['series'][$y . $x])) {
+                      $formattedResult[$anrUuid]['current']['series'][$y . $x] = [
+                          'y' => $y,
+                          'x' => $x,
+                          'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue] ?? null,
+                      ];
+                    }elseif (isset($data['risks']['current']['informational'][$impactValue][$likelihoodValue])) {
+                      $formattedResult[$anrUuid]['current']['series'][$y . $x]['value'] += $data['risks']['current']['informational'][$impactValue][$likelihoodValue];
+                    }
+
+                    if (!isset($formattedResult[$anrUuid]['residual']['series'][$y . $x])) {
+                      $formattedResult[$anrUuid]['residual']['series'][$y . $x] = [
+                          'y' => $y,
+                          'x' => $x,
+                          'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue] ?? null,
+                      ];
+                    }elseif (isset($data['risks']['residual']['informational'][$impactValue][$likelihoodValue])) {
+                      $formattedResult[$anrUuid]['residual']['series'][$y . $x]['value'] += $data['risks']['residual']['informational'][$impactValue][$likelihoodValue];
+                    }
                 }
             }
+
+            $formattedResult[$anrUuid]['current']['series'] = array_values($formattedResult[$anrUuid]['current']['series']);
+            $formattedResult[$anrUuid]['residual']['series'] = array_values($formattedResult[$anrUuid]['residual']['series']);
         }
 
         if (!empty($formattedResult)) {
@@ -1097,6 +1119,17 @@ class StatsAnrService
         }
 
         return $formattedResult;
+    }
+
+    private function approximate($x, $minorig, $maxorig, $mindest, $maxdest, $defaultvalue = -1)
+    {
+        if ($x == $maxorig){
+            return $maxdest;
+        } elseif ($x != -1 && ($maxorig - $minorig) != -1) {
+            return min(max(round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)), $mindest), $maxdest);
+        } else {
+            return $defaultvalue;
+        }
     }
 
     /**
