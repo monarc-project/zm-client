@@ -84,6 +84,8 @@ class StatsApiProvider
             'headers' => $this->getAuthHeaders(),
             'json' => $params,
         ]);
+        
+        file_put_contents('php://stderr', print_r($params, TRUE).PHP_EOL);
 
         if ($response->getStatusCode() !== 200) {
             throw new StatsFetchingException($response->getBody()->getContents(), $response->getStatusCode());

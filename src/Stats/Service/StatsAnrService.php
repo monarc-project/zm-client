@@ -230,6 +230,8 @@ class StatsAnrService
         }
         $requestParams['processor'] = $validatedParams['processor'];
         $requestParams['processor_params'] = $validatedParams['processor_params'];
+        $requestParams['date_from'] = $validatedParams['dateFrom'];
+        $requestParams['date_to'] = $validatedParams['dateTo'];
         $requestParams['type'] = $validatedParams['type'];
 
         $anrUuids = $this->getFilteredAnrUuids(['anrs' => []], $loggedInUser);

@@ -2,9 +2,12 @@
 
 namespace Monarc\FrontOffice\Stats\Validator;
 
+use DateTime;
 use Laminas\Filter\StringTrim;
 use Laminas\InputFilter\ArrayInput;
 use Laminas\InputFilter\InputFilter;
+use Laminas\Validator\Callback;
+use Laminas\Validator\Date;
 use Laminas\Validator\Digits;
 use Laminas\Validator\InArray;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
@@ -77,6 +80,43 @@ class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
                     ]
                 ],
             ],
+            [
+                'name' => 'dateFrom',
+                'required' => false,
+                'validators' => [
+                    [
+                        'name' => Date::class,
+                    ],
+                ],
+            ],
         ];
+    }
+    
+    public function validateDateFrom($value, array $context = []): bool
+    {
+        // if (empty($value)) {
+        //     return true;
+        // }
+        
+        file_put_contents('php://stderr', print_r($value , TRUE).PHP_EOL);
+
+        $currentDate = new DateTime();
+        if ($value > $currentDate->format('Y-m-d')) {
+            $this->inputFilter->getInputs()['dateFrom']->setErrorMessage(
+                '"dateFrom" should be lower or equal to current date.'
+            );
+
+            return false;
+        }
+
+        if (!empty($context['dateTo']) && $value > $context['dateTo']) {
+            $this->inputFilter->getInputs()['dateFrom']->setErrorMessage(
+                '"dateFrom" should be lower or equal to "dateTo".'
+            );
+
+            return false;
+        }
+
+        return true;
     }
 }
