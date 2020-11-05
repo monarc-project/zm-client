@@ -56,8 +56,6 @@ class StatsController extends AbstractRestfulController
 
     public function getProcessedListAction(): JsonModel
     {
-      file_put_contents('php://stderr', print_r($this->params()->fromQuery() , TRUE).PHP_EOL);
-      
         if (!$this->getProcessedStatsQueryParamsValidator->isValid($this->params()->fromQuery())) {
             throw new Exception(
                 'Query params validation errors: [ '
