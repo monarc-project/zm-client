@@ -69,7 +69,6 @@ class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
             [
                 'name' => 'processor_params',
                 'required' => false,
-                'type' => ArrayInput::class,
             ],
             [
                 'name' => 'nbdays',
