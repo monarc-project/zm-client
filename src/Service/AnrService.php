@@ -487,7 +487,7 @@ class AnrService extends AbstractService
             }
         }
 
-        try {
+//        try {
             // duplicate anr
             $newAnr = new Anr($anr);
             $newAnr->setId(null);
@@ -1311,12 +1311,12 @@ class AnrService extends AbstractService
 
             $this->setUserCurrentAnr($newAnr->get('id'));
 
-        } catch (\Exception $e) {
-            if (isset($id) && is_int($id)) {
-                $anrCliTable->delete($id);
-            }
-            throw new  Exception('Error during analysis creation', 412);
-        }
+//        } catch (\Exception $e) {
+//            if (isset($id) && is_int($id)) {
+//                $anrCliTable->delete($id);
+//            }
+//            throw new  Exception('Error during analysis creation', 412);
+//        }
 
         return $newAnr;
     }
