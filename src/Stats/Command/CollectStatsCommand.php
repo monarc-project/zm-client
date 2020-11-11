@@ -29,7 +29,11 @@ class CollectStatsCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->statsAnrService->collectStats($input->getArguments()['anrIds']);
+        $output->writeln('Start datetime: ' . date('Y-m-d_H:i:s'));
+
+        $collectedAnrUuids = $this->statsAnrService->collectStats($input->getArguments()['anrIds']);
+
+        $output->writeln('[' . date('Y-m-d_H:i:s') . '] Collected anr UUIDs: ' . implode(', ', $collectedAnrUuids));
 
         return 0;
     }

@@ -252,12 +252,14 @@ class StatsAnrService
      * @param int[] $anrIds List of Anr IDs to use for the stats collection.
      * @param bool $forceUpdate Whether or not overwrite the data if already presented for today.
      *
+     * @return array
+     *
      * @throws StatsAlreadyCollectedException
      * @throws StatsFetchingException
      * @throws StatsSendingException
      * @throws WrongResponseFormatException
      */
-    public function collectStats(array $anrIds = [], bool $forceUpdate = false): void
+    public function collectStats(array $anrIds = [], bool $forceUpdate = false): array
     {
         $currentDate = (new DateTime())->format('Y-m-d');
         $statsOfToday = $this->statsApiProvider->getStatsData([
@@ -274,6 +276,7 @@ class StatsAnrService
             : $this->anrTable->findAllExcludeSnapshots();
 
         $statsData = [];
+        $anrUuids = [];
         foreach ($anrLists as $anr) {
             $anrStatsForRtvc = $this->collectAnrStatsForRiskThreatVulnerabilityAndCartography($anr);
             $statsData[] = new StatsDataObject([
@@ -308,11 +311,15 @@ class StatsAnrService
                 'data' => $anrStatsForCompliance,
                 'date' => $currentDate,
             ]);
+
+            $anrUuids[] = $anr->getUuid();
         }
 
         if (!empty($statsData)) {
             $this->statsApiProvider->sendStatsDataInBatch($statsData);
         }
+
+        return $anrUuids;
     }
 
     public function deleteStatsForAnr(string $anrUuid): void
