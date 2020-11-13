@@ -1226,7 +1226,7 @@ return [
             'Monarc\FrontOffice\Service\ObjectExportService' => 'Monarc\FrontOffice\Service\ObjectExportServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
-            StatsAnrService::class => AutowireFactory::class,
+            StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
 
             // Providers

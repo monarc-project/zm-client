@@ -2,12 +2,9 @@
 
 namespace Monarc\FrontOffice\Stats\Provider;
 
-use Doctrine\ORM\EntityNotFoundException;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use Monarc\FrontOffice\Exception\InvalidConfigurationException;
-use Monarc\FrontOffice\Model\Entity\Setting;
-use Monarc\FrontOffice\Model\Table\SettingTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsDeletionException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
@@ -28,10 +25,9 @@ class StatsApiProvider
     private $apiKey;
 
     /**
-     * @throws EntityNotFoundException
      * @throws InvalidConfigurationException
      */
-    public function __construct(SettingTable $settingTable, array $config, callable $handler = null)
+    public function __construct(array $config, callable $handler = null)
     {
         if ($handler === null) {
             $this->validateConfig($config);
@@ -45,7 +41,7 @@ class StatsApiProvider
             $this->guzzleClient = new Client(['handler' => $handlerStack]);
         }
 
-        $this->apiKey = $settingTable->findByName(Setting::SETTINGS_STATS)->getValue()[Setting::SETTING_STATS_API_KEY];
+        $this->apiKey = $config['statsApi']['apiKey'];
     }
 
     /**

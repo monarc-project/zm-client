@@ -92,6 +92,9 @@ class StatsAnrService
     /** @var SettingTable */
     private $settingTable;
 
+    /** @var string */
+    private $apiKey;
+
     public function __construct(
         AnrTable $anrTable,
         ScaleTable $scaleTable,
@@ -103,7 +106,8 @@ class StatsAnrService
         ConnectedUserService $connectedUserService,
         UserTable $userTable,
         SnapshotTable $snapshotTable,
-        SettingTable $settingTable
+        SettingTable $settingTable,
+        array $config
     ) {
         $this->anrTable = $anrTable;
         $this->scaleTable = $scaleTable;
@@ -116,6 +120,7 @@ class StatsAnrService
         $this->userTable = $userTable;
         $this->snapshotTable = $snapshotTable;
         $this->settingTable = $settingTable;
+        $this->apiKey = $config['statsApi']['apiKey'];
     }
 
     /**
@@ -133,14 +138,7 @@ class StatsAnrService
         }
 
         $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
-        if (
-            !isset(
-                $setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED],
-                $setting->getValue()[Setting::SETTING_STATS_API_KEY]
-            )
-            || empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED])
-            || empty($setting->getValue()[Setting::SETTING_STATS_API_KEY])
-        ) {
+        if (empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED])) {
             return false;
         }
 
@@ -150,7 +148,7 @@ class StatsAnrService
             return false;
         }
 
-        return $client['token'] === $setting->getValue()[Setting::SETTING_STATS_API_KEY];
+        return $client['token'] === $this->apiKey;
     }
 
     /**

@@ -17,7 +17,6 @@ class Setting
 
     public const SETTINGS_STATS = 'stats';
     public const SETTING_STATS_IS_SHARING_ENABLED = 'is_sharing_enabled';
-    public const SETTING_STATS_API_KEY = 'api_key';
 
     /**
      * @var int

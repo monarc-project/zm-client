@@ -21,10 +21,7 @@ class CreateSettingsTableAndAddAnrUuidField extends AbstractMigration
             );'
         );
 
-        $apiKey = Uuid::uuid4();
-        $this->execute(sprintf(
-            'INSERT INTO `settings` (`name`, `value`, `creator`)
-             VALUES ("stats", "{\"is_sharing_enabled\": true, \"api_key\": \"%s\"}", "system");', $apiKey));
+        $this->execute('INSERT INTO `settings` (`name`, `value`, `creator`) VALUES ("stats", "{\"is_sharing_enabled\": true}", "system");');
 
         $this->execute(
             'ALTER TABLE `anrs` ADD `uuid` char(36) NULL AFTER `id`,
