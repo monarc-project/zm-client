@@ -10,15 +10,25 @@ namespace Monarc\FrontOffice\Model\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Ramsey\Uuid\Lazy\LazyUuidFromString;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Anr
  *
- * @ORM\Table(name="anrs")
+ * @ORM\Table(name="anrs", uniqueConstraints={@ORM\UniqueConstraint(name="uuid", columns={"uuid"})})
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class Anr extends AnrSuperClass
 {
+    /**
+     * @var LazyUuidFromString|string
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     */
+    protected $uuid;
+
     /**
      * @var int
      *
@@ -48,6 +58,13 @@ class Anr extends AnrSuperClass
     protected $cacheModelIsScalesUpdatable = '0';
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="is_visible_on_dashboard", type="smallint", options={"default":1})
+     */
+    protected $isVisibleOnDashboard = 1;
+
+    /**
      * @var Referential[]|ArrayCollection
      *
      * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Referential", mappedBy="anr", cascade={"persist"})
@@ -55,16 +72,16 @@ class Anr extends AnrSuperClass
     protected $referentials;
 
     /**
-    * @param Referential[]|ArrayCollection $referentials
-    */
+     * @param Referential[]|ArrayCollection $referentials
+     */
     public function setReferentials($referentials)
     {
         $this->referentials = $referentials;
     }
 
     /**
-    * @return Referential[]
-    */
+     * @return Referential[]
+     */
     public function getReferentials()
     {
         return $this->referentials;
@@ -80,5 +97,39 @@ class Anr extends AnrSuperClass
     public function getLanguage(): int
     {
         return $this->language;
+    }
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function generateAndSetUuid(): self
+    {
+        $this->uuid = Uuid::uuid4();
+
+        return $this;
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function isVisibleOnDashboard(): bool
+    {
+        return (bool)$this->isVisibleOnDashboard;
+    }
+
+    public function setIsVisibleOnDashboard(int $isVisibleOnDashboard): self
+    {
+        $this->isVisibleOnDashboard = $isVisibleOnDashboard;
+
+        return $this;
     }
 }

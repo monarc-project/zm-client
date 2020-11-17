@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrRolfRiskService;
 
 /**
  * Api ANR Rolf Risks Controller
@@ -43,7 +44,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         $tag = $this->params()->fromQuery('tag');
         $anr = $this->params()->fromRoute("anrid");
 
-        /** @var RolfRiskService $service */
+        /** @var AnrRolfRiskService $service */
         $service = $this->getService();
 
         $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $tag, $anr);

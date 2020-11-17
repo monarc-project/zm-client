@@ -47,7 +47,6 @@ class Soa extends AbstractEntity
      *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true),
      * })
-     *
      */
     protected $measure;
 

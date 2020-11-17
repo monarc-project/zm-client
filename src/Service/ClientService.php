@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
  * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
@@ -7,144 +7,42 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\FrontOffice\Model\Entity\Client;
 use Monarc\FrontOffice\Model\Table\ClientTable;
-use Monarc\Core\Service\AbstractService;
 
-/**
- * This class is the service that handles clients. This is a simple CRUD service.
- * @package Monarc\FrontOffice\Service
- */
-class ClientService extends AbstractService
+class ClientService
 {
-    protected $forbiddenFields = ['model_id'];
+    /** @var ClientTable */
+    private $clientTable;
 
-    /**
-     * Get Filtered Count
-     *
-     * @param null $filter
-     * @param null $filterAnd
-     * @return mixed
-     */
-    public function getFilteredCount($filter = null, $filterAnd = null)
+    public function __construct(ClientTable $clientTable)
     {
-        return $this->table->countFiltered(
-            $this->parseFrontendFilter(
-                $filter,
-                ['name', 'address', 'postalcode', 'email', 'contact_fullname', 'contact_email']
-            )
-        );
+        $this->clientTable = $clientTable;
     }
 
-    /**
-     * Get List
-     *
-     * @param int $page
-     * @param int $limit
-     * @param null $order
-     * @param null $filter
-     * @param null $filterAnd
-     * @return mixed
-     */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
+    public function getAll(): array
     {
-        return $this->table->fetchAllFiltered(
-            ['id', 'name', 'proxy_alias', 'address', 'postalcode', 'fax', 'email', 'contactFullname',
-                'employees_number', 'contact_email', 'model_id'],
-            $page,
-            $limit,
-            $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter(
-                $filter,
-                ['name', 'address', 'postalcode', 'email', 'contactFullname', 'contact_email']
-            )
-        );
-    }
-
-    /**
-     * Get Entity
-     *
-     * @param $id
-     * @return mixed
-     */
-    public function getEntity($id)
-    {
-        $client = $this->table->get($id);
-        return $client;
-    }
-
-    /**
-     * Create
-     *
-     * @param $data
-     * @param bool $last
-     */
-    public function create($data, $last = true)
-    {
-        $entity = $this->get('clientEntity');
-        $entity->exchangeArray($data);
-
-        $this->table->save($entity, $last);
-    }
-
-    /**
-     * Update
-     *
-     * @param $id
-     * @param $data
-     * @return bool
-     */
-    public function update($id, $data)
-    {
-        //security
-        $this->filterPatchFields($data);
-
-        /** @var ClientTable $clientTable */
-        $clientTable = $this->table;
-
-        /** @var Client $entity */
-        $entity = $clientTable->getEntity($id);
-
-        if (isset($data['proxy_alias'])) {
-            // Don't allow changing the proxy_alias once set
-            unset($data['proxy_alias']);
+        $clients = [];
+        foreach ($this->clientTable->findAll() as $client) {
+            $clients[] = [
+                'id' => $client->getId(),
+                'name' => $client->getName(),
+                'contact_email' => $client->getContactEmail(),
+            ];
         }
 
-        if ($entity != null) {
-            $entity->exchangeArray($data, true);
-            $clientTable->save($entity);
-            return true;
-        } else {
-            return false;
-        }
+        return [
+            'count' => \count($clients),
+            'clients' => $clients,
+        ];
     }
 
-    /**
-     * Delete
-     *
-     * @param $id
-     */
-    public function delete($id)
+    public function patch(int $id, array $data): void
     {
-        /** @var ClientTable $clientTable */
-        $clientTable = $this->table;
+        $client = $this->clientTable->findById($id);
 
-        $clientTable->delete($id);
-    }
+        $client->setName($data['name']);
+        $client->setContactEmail($data['contact_email']);
 
-    /**
-     * Get Json Data
-     *
-     * @return array
-     */
-    public function getJsonData()
-    {
-        $var = get_object_vars($this);
-        foreach ($var as &$value) {
-            if (is_object($value) && method_exists($value, 'getJsonData')) {
-                $value = $value->getJsonData();
-            }
-        }
-        return $var;
+        $this->clientTable->saveEntity($client);
     }
 }

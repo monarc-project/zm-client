@@ -61,6 +61,8 @@ use Monarc\FrontOffice\Model\Entity\Vulnerability;
 use Monarc\FrontOffice\Model\Table\UserTable;
 use Monarc\FrontOffice\Model\Entity\Record;
 use Monarc\FrontOffice\Model\Entity\RecordRecipient;
+use Monarc\FrontOffice\Stats\Service\StatsAnrService;
+use Throwable;
 
 /**
  * This class is the service that handles ANR CRUD operations, and various actions on them.
@@ -141,6 +143,8 @@ class AnrService extends AbstractService
     protected $instanceService;
     protected $recordService;
     protected $recordProcessorService;
+
+    protected $statsAnrService;
 
     /**
      * @inheritdoc
@@ -1397,15 +1401,25 @@ class AnrService extends AbstractService
      */
     public function delete($id)
     {
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('table');
         //retrieve and delete snapshots associated to anr
         $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
         foreach ($snapshots as $s) {
             if (!empty($s)) {
-                $this->get('table')->delete($s->get('anr')->get('id'), false);
+                $anrTable->delete($s->get('anr')->get('id'), false);
             }
         }
 
-        return $this->get('table')->delete($id);
+        // Try to drop the stats.
+        try {
+            $anr = $anrTable->findById($id);
+            /** @var StatsAnrService $statsAnrService */
+            $statsAnrService = $this->get('statsAnrService');
+            $statsAnrService->deleteStatsForAnr($anr->getUuid());
+        } catch (Throwable $e) {}
+
+        return $anrTable->delete($id);
     }
 
     /**

@@ -63,6 +63,7 @@ class ApiAnrRecommandationsRisksController extends ApiAnrAbstractController
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Recommandation', ['recommandationSet']);
+                $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Instance', ['object']);
             }
         }
 

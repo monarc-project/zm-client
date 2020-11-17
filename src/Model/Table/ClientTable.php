@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -21,5 +22,36 @@ class ClientTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Client::class, $connectedUserService);
+    }
+
+    /**
+     * @return Client[]
+     */
+    public function findAll(): array
+    {
+        return $this->getRepository()->findAll();
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     */
+    public function findById(int $id): Client
+    {
+        /** @var Client|null $client */
+        $client = $this->getRepository()->find($id);
+        if ($client === null) {
+            throw EntityNotFoundException::fromClassNameAndIdentifier(\get_class($this), [$id]);
+        }
+
+        return $client;
+    }
+
+    public function saveEntity(Client $client, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($client);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

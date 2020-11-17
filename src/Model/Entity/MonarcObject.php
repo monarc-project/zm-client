@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Ramsey\Uuid\Uuid;
 
 /**
  * MonarcObject
@@ -25,7 +26,7 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
 class MonarcObject extends ObjectSuperClass
 {
     /**
-    * @var integer
+    * @var Uuid|string
     *
     * @ORM\Column(name="uuid", type="uuid", nullable=false)
     * @ORM\Id

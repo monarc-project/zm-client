@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use \Monarc\Core\Model\Entity\Scale;
 use \Monarc\Core\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Table\ScaleTable;
 
 /**
  * This class is the service that handles the ANR Cartography of real & targeted risks (as shown on the dashboard)
@@ -67,6 +68,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
         list($counters, $distrib) = $this->getCountersRisks('target');
         list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('target');
+
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
@@ -80,7 +82,6 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
               'distrib' => $distribRiskOp,
             ],
         ];
-
       }
 
     /**
@@ -96,42 +97,37 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
         // Only compute the listScales and headers fields if we didn't already
         // TODO: If we reuse the service to build the carto for 2 different ANRs in the same run, this will cause issues!
-        if (is_null($this->listScales)) {
-            $scales = $this->get('table')->getEntityByFields(['anr' => $this->anr->get('id')]);
+        if ($this->listScales === null) {
+            /** @var ScaleTable $scaleTable */
+            $scaleTable = $this->get('table');
+            $scales = $scaleTable->findByAnr($this->anr);
+
             $this->listScales = [
                 Scale::TYPE_IMPACT => [],
                 Scale::TYPE_THREAT => [],
                 Scale::TYPE_VULNERABILITY => [],
             ];
             foreach ($scales as $scale) {
-                if (isset($this->listScales[$scale->get('type')])) {
-                    for ($i = $scale->get('min'); $i <= $scale->get('max'); $i++) {
-                        array_push($this->listScales[$scale->get('type')],$i);
-                    }
-                }
+                $this->listScales[$scale->getType()] = range($scale->getMin(), $scale->getMax());
             }
         }
 
-        if (is_null($this->headers)) {
+        if ($this->headers === null) {
             $this->headers = [];
-            $tempHeaders = [];
             foreach ($this->listScales[Scale::TYPE_IMPACT] as $i) {
                 foreach ($this->listScales[Scale::TYPE_THREAT] as $m) {
                     foreach ($this->listScales[Scale::TYPE_VULNERABILITY] as $v) {
                         $val = -1;
-                        if ($i != -1 && $m != -1 && $v != -1) {
+                        if ($i !== -1 && $m !== -1 && $v !== -1) {
                             $val = $m * $v;
                         }
-                        if(!in_array($val, $tempHeaders, true)){
-                            array_push($tempHeaders,$val);
+                        if (!\in_array($val, $this->headers, true)) {
+                            $this->headers[] = $val;
                         }
                     }
                 }
             }
-            asort($tempHeaders);
-            foreach ($tempHeaders as $value) {
-              array_push($this->headers,$value);
-            }
+            sort($this->headers);
         }
     }
 
@@ -146,7 +142,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $changeField = $mode == 'raw' ? 'ir.cacheMaxRisk' : 'ir.cacheTargetedRisk';
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-            'ir.id as myid', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
+            'ir.id as myid', 'IDENTITY(ir.amv) as amv', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
             'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
             'm.c as mc', 'm.i as mi', 'm.a as ma',
             'o.scope',
@@ -186,6 +182,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 'amv' => $r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability'],
                 'max' => $max,
                 'color' => $this->getColor($max,'riskInfo'),
+                'uuid' => $r['amv']
             ];
 
             // on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
@@ -219,14 +216,14 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                     }
 
                     if (!isset($counters[$context['impact']][$context['right']])) {
-                        $counters[$context['impact']][$context['right']] = 0;
+                        $counters[$context['impact']][$context['right']] = [];
                     }
 
                     if (!isset($distrib[$context['color']])) {
-                        $distrib[$context['color']] = 0;
+                        $distrib[$context['color']] = [];
                     }
-                    $counters[$context['impact']][$context['right']]++;
-                    $distrib[$context['color']]++;
+                    array_push($counters[$context['impact']][$context['right']],$context['uuid']);
+                    array_push($distrib[$context['color']],$context['uuid']);
                 }
             }
         }
@@ -241,7 +238,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
      */
     public function getCountersOpRisks($mode = 'raw')
     {
-        $valuesField = ['iro.netProb as netProb', 'iro.netR as netR', 'iro.netO as netO','iro.netL as netL','iro.netF as netF','iro.netP as netP',
+        $valuesField = ['IDENTITY(iro.rolfRisk) as id', 'iro.netProb as netProb', 'iro.netR as netR', 'iro.netO as netO','iro.netL as netL','iro.netF as netF','iro.netP as netP',
                         'iro.targetedProb as targetedProb', 'iro.targetedR as targetedR', 'iro.targetedO as targetedO','iro.targetedL as targetedL','iro.targetedF as targetedF','iro.targetedP as targetedP'];
         $query = $this->get('instanceRiskOpTable')->getRepository()->createQueryBuilder('iro');
         $result = $query->select([
@@ -259,25 +256,23 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
               $imax = max($r['netR'], $r['netO'],$r['netL'], $r['netF'], $r['netP']);
               $max = $r['netRisk'];
               $prob = $r['netProb'];
-              $color = $this->getColor($max,'riskOp');
             }else {
               $imax =  max($r['targetedR'], $r['targetedO'],$r['targetedL'], $r['targetedF'], $r['targetedP']);
               $max = $r['targetedRisk'];
               $prob = $r['targetedProb'];
-              $color = $this->getColor($max,'riskOp');
             }
+            $id = $r['id'];
+            $color = $this->getColor($max,'riskOp');
 
             if (!isset($countersRiskOP[$imax][$prob])) {
-                $countersRiskOP[$imax][$prob] = 0;
+                $countersRiskOP[$imax][$prob] = [];
             }
 
             if (!isset($distribRiskOp[$color])) {
-                $distribRiskOp[$color] = 0;
+                $distribRiskOp[$color] = [];
             }
-            $countersRiskOP[$imax][$prob]++;
-            $distribRiskOp[$color]++;
-
-
+            array_push($countersRiskOP[$imax][$prob],$r['id']);
+            array_push($distribRiskOp[$color],$r['id']);
         }
 
         return [$countersRiskOP, $distribRiskOp];
