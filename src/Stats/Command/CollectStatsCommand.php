@@ -7,6 +7,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 class CollectStatsCommand extends Command
 {
@@ -29,9 +30,15 @@ class CollectStatsCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln('Start datetime: ' . date('Y-m-d H:i:s'));
+        $output->writeln('[' . date('Y-m-d H:i:s') . '] Start process.');
 
-        $collectedAnrUuids = $this->statsAnrService->collectStats($input->getArguments()['anrIds']);
+        try {
+            $collectedAnrUuids = $this->statsAnrService->collectStats($input->getArguments()['anrIds']);
+        } catch (Throwable $e) {
+            $output->writeln('[' . date('Y-m-d H:i:s') . '] An error occurred: ' . $e->getMessage());
+
+            return 1;
+        }
 
         $output->writeln('[' . date('Y-m-d H:i:s') . '] Collected anr UUIDs: ' . implode(', ', $collectedAnrUuids));
 
