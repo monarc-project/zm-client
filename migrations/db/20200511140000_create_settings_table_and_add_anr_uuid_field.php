@@ -34,7 +34,7 @@ class CreateSettingsTableAndAddAnrUuidField extends AbstractMigration
         foreach ($anrs as $anr) {
             $updateFieldsSql = '';
             if (!$anr['uuid']) {
-                $updateFieldsSql = '`uuid` = "' . Uuid::uuid4();
+                $updateFieldsSql = '`uuid` = "' . Uuid::uuid4() . '"';
             }
             if (in_array($anr['id'], $snapshotsAnrsIds)) {
                 $updateFieldsSql .= ($updateFieldsSql ? ', ' : '') . '`is_visible_on_dashboard` = 0';
