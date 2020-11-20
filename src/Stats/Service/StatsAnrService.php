@@ -916,10 +916,12 @@ class StatsAnrService
             $formattedResult[$data->getAnr()] = [
                 'current' => [
                     'category' => '',
+                    'uuid' => $data->getAnr(),
                     'series' => $this->getSeriesForType('current', $risksData),
                 ],
                 'residual' => [
                     'category' => '',
+                    'uuid' => $data->getAnr(),
                     'series' => $this->getSeriesForType('residual', $risksData),
                 ],
             ];
