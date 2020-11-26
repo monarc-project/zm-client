@@ -12,7 +12,8 @@ use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Service\ClientService;
 use Monarc\FrontOffice\Stats\Controller\StatsController;
-use Monarc\FrontOffice\Stats\Controller\StatsSettingsController;
+use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
+use Monarc\FrontOffice\Stats\Controller\StatsGeneralSettingsController;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Stats\Service\StatsSettingsService;
@@ -948,13 +949,23 @@ return [
                             ],
                         ],
                     ],
-                    'settings' => [
+                    'anrs_settings' => [
                         'type' => 'segment',
                         'options' => [
-                            'route' => 'settings[/]',
+                            'route' => 'anrs-settings[/]',
                             'verb' => 'get,patch',
                             'defaults' => [
-                                'controller' => StatsSettingsController::class,
+                                'controller' => StatsAnrsSettingsController::class,
+                            ],
+                        ],
+                    ],
+                    'global_settings' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'general-settings[/]',
+                            'verb' => 'get,patch',
+                            'defaults' => [
+                                'controller' => StatsGeneralSettingsController::class,
                             ],
                         ],
                     ],
@@ -1050,7 +1061,7 @@ return [
             Controller\ApiModelVerifyLanguageController::class => Controller\ApiModelVerifyLanguageControllerFactory::class,
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
             StatsController::class => AutowireFactory::class,
-            StatsSettingsController::class => AutowireFactory::class,
+            StatsAnrsSettingsController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1383,6 +1394,7 @@ return [
             'monarc_api_global_client_anr/record_duplicate',
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
+            'monarc_api_stats_global/global_settings',
             'monarc_api_stats_global/validate-stats-availability',
         ],
         Entity\UserRole::USER_ROLE_CEO => [
@@ -1393,7 +1405,8 @@ return [
             'monarc_api_client_anr',
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
-            'monarc_api_stats_global/settings',
+            'monarc_api_stats_global/anrs_settings',
+            'monarc_api_stats_global/global_settings',
             'monarc_api_stats_global/validate-stats-availability',
         ],
     ],

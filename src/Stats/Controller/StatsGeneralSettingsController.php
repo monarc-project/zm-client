@@ -6,7 +6,7 @@ use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 use Monarc\FrontOffice\Stats\Service\StatsSettingsService;
 
-class StatsSettingsController extends AbstractRestfulController
+class StatsGeneralSettingsController extends AbstractRestfulController
 {
     /** @var StatsSettingsService */
     private $statsSettingsService;
@@ -18,7 +18,7 @@ class StatsSettingsController extends AbstractRestfulController
 
     public function patchList($data): JsonModel
     {
-        $this->statsSettingsService->updateAnrsSettings($data);
+        $this->statsSettingsService->updateGeneralSettings($data);
 
         return new JsonModel([
             'status' => 'ok'
@@ -28,7 +28,7 @@ class StatsSettingsController extends AbstractRestfulController
     public function getList(): JsonModel
     {
         return new JsonModel([
-            'data' => $this->statsSettingsService->getAnrsSettings()
+            'data' => $this->statsSettingsService->getGeneralSettings()
         ]);
     }
 }
