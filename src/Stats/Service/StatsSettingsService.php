@@ -29,6 +29,7 @@ class StatsSettingsService
         foreach ($this->anrTable->findAllExcludeSnapshots() as $anr) {
             $anrsSettings[] = [
                 'anrId' => $anr->getId(),
+                'uuid' => $anr->getUuid(),
                 'anrName' => $anr->getLabel(),
                 'isVisible' => $anr->isVisibleOnDashboard(),
             ];

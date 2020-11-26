@@ -922,10 +922,12 @@ class StatsAnrService
             $formattedResult[$data->getAnr()] = [
                 'current' => [
                     'category' => '',
+                    'uuid' => $data->getAnr(),
                     'series' => $this->getSeriesForType('current', $risksData),
                 ],
                 'residual' => [
                     'category' => '',
+                    'uuid' => $data->getAnr(),
                     'series' => $this->getSeriesForType('residual', $risksData),
                 ],
             ];
@@ -1153,10 +1155,15 @@ class StatsAnrService
                 }
             }
 
-            $formattedResult[$anrUuid]['currentInfo']['series'] = array_values($formattedResult[$anrUuid]['informational']['currentInfo']['series']);
-            $formattedResult[$anrUuid]['residualInfo']['series'] = array_values($formattedResult[$anrUuid]['informational']['residualInfo']['series']);
-            $formattedResult[$anrUuid]['currentOp']['series'] = array_values($formattedResult[$anrUuid]['operational']['currentOp']['series']);
-            $formattedResult[$anrUuid]['residualOp']['series'] = array_values($formattedResult[$anrUuid]['operational']['residualOp']['series']);
+            $currentInfoSeries = $formattedResult[$anrUuid]['informational']['currentInfo']['series'];
+            $residualInfoSeries = $formattedResult[$anrUuid]['informational']['residualInfo']['series'];
+            $currentOpSeries = $formattedResult[$anrUuid]['operational']['currentOp']['series'];
+            $residualOpSeries = $formattedResult[$anrUuid]['operational']['residualOp']['series'];
+
+            $formattedResult[$anrUuid]['currentInfo']['series'] = is_array($currentInfoSeries) ? array_values($currentInfoSeries): [];
+            $formattedResult[$anrUuid]['residualInfo']['series'] = is_array($residualInfoSeries) ? array_values($residualInfoSeries): [];
+            $formattedResult[$anrUuid]['currentOp']['series'] = is_array($currentOpSeries) ? array_values($currentOpSeries): [];
+            $formattedResult[$anrUuid]['residualOp']['series'] = is_array($residualOpSeries) ? array_values($residualOpSeries): [];
 
         }
 
@@ -1363,6 +1370,6 @@ class StatsAnrService
     {
         $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
 
-        return empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED]);
+        return !empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED]);
     }
 }
