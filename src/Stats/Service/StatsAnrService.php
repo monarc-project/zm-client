@@ -1370,6 +1370,6 @@ class StatsAnrService
     {
         $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
 
-        return empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED]);
+        return !empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED]);
     }
 }
