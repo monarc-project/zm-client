@@ -137,8 +137,7 @@ class StatsAnrService
             }
         }
 
-        $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
-        if (empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED])) {
+        if (!$this->isStatsSharingEnabled()) {
             return false;
         }
 
@@ -256,9 +255,16 @@ class StatsAnrService
      * @throws StatsFetchingException
      * @throws StatsSendingException
      * @throws WrongResponseFormatException
+     * @throws EntityNotFoundException
      */
     public function collectStats(array $anrIds = [], bool $forceUpdate = false): array
     {
+        if (!$this->isStatsSharingEnabled()) {
+            throw new StatsSendingException(
+                'Stats can\'t be sent for the client because the sharing option is disabled.'
+            );
+        }
+
         $currentDate = (new DateTime())->format('Y-m-d');
         $statsOfToday = $this->statsApiProvider->getStatsData([
             'type' => StatsDataObject::TYPE_RISK,
@@ -1346,5 +1352,17 @@ class StatsAnrService
         }
 
         return $anrUuids;
+    }
+
+    /**
+     * @return bool
+     *
+     * @throws EntityNotFoundException
+     */
+    private function isStatsSharingEnabled(): bool
+    {
+        $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
+
+        return empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED]);
     }
 }
