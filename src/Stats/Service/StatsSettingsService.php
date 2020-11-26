@@ -78,17 +78,22 @@ class StatsSettingsService
 
     /**
      * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function updateGeneralSettings(array $data)
     {
         $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
+
         $settingValues = $setting->getValue();
-        foreach (array_keys($setting->getValue()) as $name) {
-            if (isset($data[$name])) {
+        foreach ($data as $name => $value) {
+            if (isset($settingValues[$name])) {
                 $settingValues[$name] = $data[$name];
             }
         }
 
         $setting->setValue($settingValues);
+
+        $this->settingTable->save($setting);
     }
 }
