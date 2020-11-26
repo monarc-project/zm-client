@@ -959,7 +959,7 @@ return [
                             ],
                         ],
                     ],
-                    'global_settings' => [
+                    'general_settings' => [
                         'type' => 'segment',
                         'options' => [
                             'route' => 'general-settings[/]',
@@ -1062,6 +1062,7 @@ return [
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
             StatsController::class => AutowireFactory::class,
             StatsAnrsSettingsController::class => AutowireFactory::class,
+            StatsGeneralSettingsController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1394,7 +1395,7 @@ return [
             'monarc_api_global_client_anr/record_duplicate',
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
-            'monarc_api_stats_global/global_settings',
+            'monarc_api_stats_global/general_settings',
             'monarc_api_stats_global/validate-stats-availability',
         ],
         Entity\UserRole::USER_ROLE_CEO => [
@@ -1406,7 +1407,7 @@ return [
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
             'monarc_api_stats_global/anrs_settings',
-            'monarc_api_stats_global/global_settings',
+            'monarc_api_stats_global/general_settings',
             'monarc_api_stats_global/validate-stats-availability',
         ],
     ],
