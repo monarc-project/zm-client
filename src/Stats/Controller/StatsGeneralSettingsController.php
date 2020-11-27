@@ -28,7 +28,7 @@ class StatsGeneralSettingsController extends AbstractRestfulController
     public function getList(): JsonModel
     {
         return new JsonModel([
-            'settings' => $this->statsSettingsService->getGeneralSettings()
+            'data' => $this->statsSettingsService->getGeneralSettings()
         ]);
     }
 }
