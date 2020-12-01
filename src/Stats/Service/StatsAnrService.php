@@ -137,10 +137,6 @@ class StatsAnrService
             }
         }
 
-        if (!$this->isStatsSharingEnabled()) {
-            return false;
-        }
-
         try {
             $client = $this->statsApiProvider->getClient();
         } catch (Throwable $e) {
