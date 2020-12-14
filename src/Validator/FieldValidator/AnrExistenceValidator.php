@@ -16,14 +16,14 @@ class AnrExistenceValidator extends AbstractValidator
 
     public function isValid($value)
     {
-        if (empty($value)) {
+        if (!isset($value['id'])) {
             return true;
         }
 
         /** @var AnrTable $anrTable */
         $anrTable = $this->getOptions()['anrTable'];
         try {
-            $anrTable->findById((int)$value);
+            $anrTable->findById((int)$value['id']);
         } catch (EntityNotFoundException $e) {
             $this->error(self::ANR_DOES_NOT_EXIST, $value);
 
