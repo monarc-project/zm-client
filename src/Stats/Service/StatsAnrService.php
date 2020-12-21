@@ -993,6 +993,7 @@ class StatsAnrService
             if (!isset($formattedResult[$anrUuid])) {
                 $formattedResult[$anrUuid] = [
                     'category' => $anr->getLabel(),
+                    'uuid' => $anrUuid,
                     'series' => []
                 ];
             }
