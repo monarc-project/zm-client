@@ -422,6 +422,9 @@ class StatsAnrService
                 $currentSoaTotalCompliance = '0';
                 foreach ($statementOfApplicabilityList as $soa) {
                     $measure = $soa->getMeasure();
+                    if ($measure === null) {
+                        continue;
+                    }
                     $currentCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
                         'measure' => (string)$measure->getUuid(),
