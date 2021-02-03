@@ -32,6 +32,7 @@ class StatsSettingsService
                 'uuid' => $anr->getUuid(),
                 'anrName' => $anr->getLabel(),
                 'isVisible' => $anr->isVisibleOnDashboard(),
+                'isStatsCollected' => $anr->isStatsCollected(),
             ];
         }
 
@@ -49,14 +50,16 @@ class StatsSettingsService
         }
 
         $updatedAnrsSettings = [];
-        $anrSettings = array_column($anrSettings, 'isVisible', 'anrId');
+        $anrSettings = array_column($anrSettings, null, 'anrId');
 
-        foreach ($this->anrTable->findByIds(array_keys($anrSettings)) as $anr) {
-            $anr->setIsVisibleOnDashboard((int)$anrSettings[$anr->getId()]);
+        foreach ($this->anrTable->findByIds($anrSettings) as $anr) {
+            $anr->setIsVisibleOnDashboard((int)$anrSettings[$anr->getId()]['isVisible'])
+                ->setIsStatsCollected((int)$anrSettings[$anr->getId()]['isStatsCollected']);
             $updatedAnrsSettings[] = [
                 'anrId' => $anr->getId(),
                 'anrName' => $anr->getLabel(),
                 'isVisible' => $anr->isVisibleOnDashboard(),
+                'isStatsCollected' => $anr->isStatsCollected(),
             ];
 
             $this->anrTable->saveEntity($anr, false);
