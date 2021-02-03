@@ -154,7 +154,8 @@ class SnapshotService extends AbstractService
     }
 
     /**
-     * Restores a snapshot into a separate regular ANR
+     * Restores a snapshot into a separate regular Anr.
+     *
      * @param int $anrId Reference ANR ID
      * @param int $id Snapshot ID to restore
      * @return int Newly created ANR ID
@@ -170,18 +171,18 @@ class SnapshotService extends AbstractService
         $anrTable = $this->get('anrTable');
 
         $snapshot = $snapshotTable->findById($id);
+        /** @var Anr $anrReference */
+        $anrReference = $snapshot->getAnrReference();
 
         // duplicate the anr linked to this snapshot
         $newAnr = $anrService->duplicateAnr($snapshot->getAnr(), MonarcObject::SOURCE_CLIENT, null, [], false, true);
 
-        $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
-        $i = 1;
-        foreach ($anrSnapshots as $s) {
-            //define new reference for all snapshots
-            $s->set('anrReference', $newAnr->getId());
-            $this->setDependencies($s, $this->dependencies);
-            $snapshotTable->save($s, count($anrSnapshots) >= $i);
-            $i++;
+        /** @var Snapshot[] $snapshots */
+        $snapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
+        //define new reference for all snapshots
+        foreach ($snapshots as $snap) {
+            $snap->setAnrReference($newAnr);
+            $snapshotTable->saveEntity($snap);
         }
 
         /**
@@ -190,8 +191,6 @@ class SnapshotService extends AbstractService
         /** @var UserAnrTable $userAnrTable */
         $userAnrTable = $anrService->get('userAnrCliTable');
         $usersAnrs = $userAnrTable->findByAnrId($anrId);
-        /** @var Anr $replacedAnr */
-        $replacedAnr = $snapshot->getAnrReference();
 
         foreach ($usersAnrs as $userAnr) {
             $userAnr->setAnr($newAnr);
@@ -202,14 +201,14 @@ class SnapshotService extends AbstractService
          * We need to set visibility on global dashboard, set stats sending option,
          * swap the uuid of the old anr, that we are going to drop and restore labels.
          */
-        $newAnr->setIsVisibleOnDashboard((int)$replacedAnr->isVisibleOnDashboard())
-            ->setUuid($replacedAnr->getUuid())
-            ->setLabel1($replacedAnr->getLabel1())
-            ->setLabel2($replacedAnr->getLabel2())
-            ->setLabel3($replacedAnr->getLabel3())
-            ->setLabel4($replacedAnr->getLabel4());
+        $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
+            ->setUuid($anrReference->getUuid())
+            ->setLabel1($anrReference->getLabel1())
+            ->setLabel2($anrReference->getLabel2())
+            ->setLabel3($anrReference->getLabel3())
+            ->setLabel4($anrReference->getLabel4());
 
-        $anrTable->deleteEntity($replacedAnr);
+        $anrTable->deleteEntity($anrReference);
 
         $anrTable->saveEntity($newAnr);
 
