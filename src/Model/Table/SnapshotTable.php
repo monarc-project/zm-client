@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\ORMException;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -25,14 +26,29 @@ class SnapshotTable extends AbstractEntityTable
     }
 
     /**
-     * TODO: move it to an abstract table class (also rename the method to save) when we remove AbstractEntityTable.
      * @throws ORMException
      */
-    public function saveEntity(Snapshot $snapshot): void
+    public function saveEntity(Snapshot $snapshot, bool $flushAll = true): void
     {
-        // TODO: EntityManager has to be injected instead of the db class, db class will be removed at all.
-        $this->db->getEntityManager()->persist($snapshot);
-        $this->db->getEntityManager()->flush();
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($snapshot);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     */
+    public function findById(int $id): Snapshot
+    {
+        /** @var Snapshot|null $snapshot */
+        $snapshot = $this->getRepository()->find($id);
+        if ($snapshot === null) {
+            throw new EntityNotFoundException(sprintf('Snapshot with id "%d" was not found', $id));
+        }
+
+        return $snapshot;
     }
 
     /**
