@@ -52,7 +52,7 @@ class StatsSettingsService
         $updatedAnrsSettings = [];
         $anrSettings = array_column($anrSettings, null, 'anrId');
 
-        foreach ($this->anrTable->findByIds($anrSettings) as $anr) {
+        foreach ($this->anrTable->findByIds(array_keys($anrSettings)) as $anr) {
             $anr->setIsVisibleOnDashboard((int)$anrSettings[$anr->getId()]['isVisible'])
                 ->setIsStatsCollected((int)$anrSettings[$anr->getId()]['isStatsCollected']);
             $updatedAnrsSettings[] = [
