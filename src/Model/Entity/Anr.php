@@ -132,4 +132,52 @@ class Anr extends AnrSuperClass
 
         return $this;
     }
+
+    public function getLabel1(): string
+    {
+        return $this->label1;
+    }
+
+    public function setLabel1(string $label): Anr
+    {
+        $this->label1 = $label;
+
+        return $this;
+    }
+
+    public function getLabel2(): string
+    {
+        return $this->label2;
+    }
+
+    public function setLabel2(string $label): Anr
+    {
+        $this->label2 = $label;
+
+        return $this;
+    }
+
+    public function setLabel3(string $label): Anr
+    {
+        $this->label3 = $label;
+
+        return $this;
+    }
+
+    public function getLabel4(): string
+    {
+        return $this->label4;
+    }
+
+    public function getLabel3(): string
+    {
+        return $this->label3;
+    }
+
+    public function setLabel4(string $label): Anr
+    {
+        $this->label4 = $label;
+
+        return $this;
+    }
 }
