@@ -78,7 +78,9 @@ class SnapshotService extends AbstractService
 
         // Snapshots should not be visible on global dashboard
         // and stats not send to the StatsService (but snapshots are ignored anyway).
-        $newAnr->setIsVisibleOnDashboard(0);
+        $newAnr->setIsVisibleOnDashboard(0)
+            ->setIsStatsCollected(0);
+
         $anrTable->saveEntity($newAnr);
 
         return $snapshot->getId();
@@ -202,6 +204,7 @@ class SnapshotService extends AbstractService
          * swap the uuid of the old anr, that we are going to drop and restore labels.
          */
         $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
+            ->setIsStatsCollected((int)$anrReference->isStatsCollected())
             ->setUuid($anrReference->getUuid())
             ->setLabel1($anrReference->getLabel1())
             ->setLabel2($anrReference->getLabel2())

@@ -7,20 +7,22 @@ use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Monarc\FrontOffice\Model\Entity\Setting;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\SettingTable;
+use Monarc\FrontOffice\Stats\Exception\StatsGetClientException;
+use Monarc\FrontOffice\Stats\Exception\StatsUpdateClientException;
+use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 
 class StatsSettingsService
 {
     /** @var AnrTable */
     private $anrTable;
 
-    /** @var SettingTable */
-    private $settingTable;
+    /** @var StatsApiProvider */
+    private $statsApiProvider;
 
-    public function __construct(AnrTable $anrTable, SettingTable $settingTable)
+    public function __construct(AnrTable $anrTable, StatsApiProvider $statsApiProvider)
     {
         $this->anrTable = $anrTable;
-        $this->settingTable = $settingTable;
+        $this->statsApiProvider = $statsApiProvider;
     }
 
     public function getAnrsSettings(): array
@@ -32,6 +34,7 @@ class StatsSettingsService
                 'uuid' => $anr->getUuid(),
                 'anrName' => $anr->getLabel(),
                 'isVisible' => $anr->isVisibleOnDashboard(),
+                'isStatsCollected' => $anr->isStatsCollected(),
             ];
         }
 
@@ -49,14 +52,16 @@ class StatsSettingsService
         }
 
         $updatedAnrsSettings = [];
-        $anrSettings = array_column($anrSettings, 'isVisible', 'anrId');
+        $anrSettings = array_column($anrSettings, null, 'anrId');
 
         foreach ($this->anrTable->findByIds(array_keys($anrSettings)) as $anr) {
-            $anr->setIsVisibleOnDashboard((int)$anrSettings[$anr->getId()]);
+            $anr->setIsVisibleOnDashboard((int)$anrSettings[$anr->getId()]['isVisible'])
+                ->setIsStatsCollected((int)$anrSettings[$anr->getId()]['isStatsCollected']);
             $updatedAnrsSettings[] = [
                 'anrId' => $anr->getId(),
                 'anrName' => $anr->getLabel(),
                 'isVisible' => $anr->isVisibleOnDashboard(),
+                'isStatsCollected' => $anr->isStatsCollected(),
             ];
 
             $this->anrTable->saveEntity($anr, false);
@@ -67,33 +72,28 @@ class StatsSettingsService
     }
 
     /**
-     * @throws EntityNotFoundException
+     * @throws StatsGetClientException
      */
     public function getGeneralSettings(): array
     {
-        $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
+        $client = $this->statsApiProvider->getClient();
 
-        return $setting->getValue();
+        return [
+            'is_sharing_enabled' => $client['is_sharing_enabled']
+        ];
     }
 
     /**
-     * @throws EntityNotFoundException
-     * @throws ORMException
-     * @throws OptimisticLockException
+     * @throws StatsUpdateClientException
      */
-    public function updateGeneralSettings(array $data)
+    public function updateGeneralSettings(array $data): void
     {
-        $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
-
-        $settingValues = $setting->getValue();
-        foreach ($data as $name => $value) {
-            if (isset($settingValues[$name])) {
-                $settingValues[$name] = $data[$name];
-            }
+        if (!isset($data['is_sharing_enabled'])) {
+            throw new StatsUpdateClientException('The option `is_sharing_enabled` is mandatory.');
         }
 
-        $setting->setValue($settingValues);
-
-        $this->settingTable->save($setting);
+        $this->statsApiProvider->updateClient([
+            'is_sharing_enabled' => (bool)$data['is_sharing_enabled'],
+        ]);
     }
 }

@@ -10,6 +10,7 @@ use Monarc\FrontOffice\Stats\Exception\StatsDeletionException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
 use Monarc\FrontOffice\Stats\Exception\StatsGetClientException;
 use Monarc\FrontOffice\Stats\Exception\StatsSendingException;
+use Monarc\FrontOffice\Stats\Exception\StatsUpdateClientException;
 use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
 
 class StatsApiProvider
@@ -131,6 +132,20 @@ class StatsApiProvider
 
         if ($response->getStatusCode() !== 200) {
             throw new StatsGetClientException($response->getBody()->getContents(), $response->getStatusCode());
+        }
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    public function updateClient(array $data): array
+    {
+        $response = $this->guzzleClient->patch(self::BASE_URI . '/client/me', [
+            'headers' => $this->getAuthHeaders(),
+            'json' => $data,
+        ]);
+
+        if (!\in_array($response->getStatusCode(), [200, 201, 204], true)) {
+            throw new StatsUpdateClientException($response->getBody()->getContents(), $response->getStatusCode());
         }
 
         return json_decode($response->getBody()->getContents(), true);

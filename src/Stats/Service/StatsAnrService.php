@@ -278,6 +278,10 @@ class StatsAnrService
         $statsData = [];
         $anrUuids = [];
         foreach ($anrLists as $anr) {
+            if (!$anr->isStatsCollected()) {
+                continue;
+            }
+
             $anrStatsForRtvc = $this->collectAnrStatsForRiskThreatVulnerabilityAndCartography($anr);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
