@@ -155,6 +155,15 @@ class AnrTable extends AbstractEntityTable
         }
     }
 
+    public function deleteEntity(AnrSuperClass $anr, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->remove($anr);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
+
     private function getSnapshotsIdsQueryBuilder(): QueryBuilder
     {
         return $this->getDb()

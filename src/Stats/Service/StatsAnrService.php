@@ -137,10 +137,6 @@ class StatsAnrService
             }
         }
 
-        if (!$this->isStatsSharingEnabled()) {
-            return false;
-        }
-
         try {
             $client = $this->statsApiProvider->getClient();
         } catch (Throwable $e) {
@@ -282,6 +278,10 @@ class StatsAnrService
         $statsData = [];
         $anrUuids = [];
         foreach ($anrLists as $anr) {
+            if (!$anr->isStatsCollected()) {
+                continue;
+            }
+
             $anrStatsForRtvc = $this->collectAnrStatsForRiskThreatVulnerabilityAndCartography($anr);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
@@ -426,6 +426,9 @@ class StatsAnrService
                 $currentSoaTotalCompliance = '0';
                 foreach ($statementOfApplicabilityList as $soa) {
                     $measure = $soa->getMeasure();
+                    if ($measure === null) {
+                        continue;
+                    }
                     $currentCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
                         'measure' => (string)$measure->getUuid(),

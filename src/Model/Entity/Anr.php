@@ -65,6 +65,13 @@ class Anr extends AnrSuperClass
     protected $isVisibleOnDashboard = 1;
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="is_stats_collected", type="smallint", options={"default":1})
+     */
+    protected $isStatsCollected = 1;
+
+    /**
      * @var Referential[]|ArrayCollection
      *
      * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\Referential", mappedBy="anr", cascade={"persist"})
@@ -129,6 +136,66 @@ class Anr extends AnrSuperClass
     public function setIsVisibleOnDashboard(int $isVisibleOnDashboard): self
     {
         $this->isVisibleOnDashboard = $isVisibleOnDashboard;
+
+        return $this;
+    }
+
+    public function isStatsCollected(): bool
+    {
+        return (bool)$this->isStatsCollected;
+    }
+
+    public function setIsStatsCollected(int $isStatsCollected): self
+    {
+        $this->isStatsCollected = $isStatsCollected;
+
+        return $this;
+    }
+
+    public function getLabel1(): string
+    {
+        return $this->label1;
+    }
+
+    public function setLabel1(string $label): Anr
+    {
+        $this->label1 = $label;
+
+        return $this;
+    }
+
+    public function getLabel2(): string
+    {
+        return $this->label2;
+    }
+
+    public function setLabel2(string $label): Anr
+    {
+        $this->label2 = $label;
+
+        return $this;
+    }
+
+    public function setLabel3(string $label): Anr
+    {
+        $this->label3 = $label;
+
+        return $this;
+    }
+
+    public function getLabel4(): string
+    {
+        return $this->label4;
+    }
+
+    public function getLabel3(): string
+    {
+        return $this->label3;
+    }
+
+    public function setLabel4(string $label): Anr
+    {
+        $this->label4 = $label;
 
         return $this;
     }
