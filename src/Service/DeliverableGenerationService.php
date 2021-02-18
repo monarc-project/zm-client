@@ -1859,9 +1859,9 @@ class DeliverableGenerationService extends AbstractService
         $intro = sprintf($this->anrTranslate("The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"), $sum);
 
         return $intro .
-            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d critical risk(s) to be treated as priority'), count($distrib[2])) .
-            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d medium risk(s) to be partially treated'), count($distrib[1])) .
-            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d low risk(s) negligible'), count($distrib[0]));
+            "<br/>&nbsp;&nbsp;- " . count($distrib[2]) . ' ' . $this->anrTranslate('critical risk(s) to be treated as priority') .
+            "<br/>&nbsp;&nbsp;- " . count($distrib[1]) . ' ' . $this->anrTranslate('medium risk(s) to be partially treated') .
+            "<br/>&nbsp;&nbsp;- " . count($distrib[0]) . ' ' . $this->anrTranslate('low risk(s) negligible');
     }
 
     /**
