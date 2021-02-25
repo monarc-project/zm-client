@@ -495,6 +495,7 @@ class AnrService extends AbstractService
             // duplicate anr
             $newAnr = new Anr($anr);
             $newAnr->setId(null);
+            $newAnr->generateAndSetUuid();
             $newAnr->setObjects(null);
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);

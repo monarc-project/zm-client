@@ -205,15 +205,15 @@ class SnapshotService extends AbstractService
          */
         $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
             ->setIsStatsCollected((int)$anrReference->isStatsCollected())
-            ->setUuid($anrReference->getUuid())
             ->setLabel1($anrReference->getLabel1())
             ->setLabel2($anrReference->getLabel2())
             ->setLabel3($anrReference->getLabel3())
             ->setLabel4($anrReference->getLabel4());
+        $referenceAnrUuid = $anrReference->getUuid();
 
         $anrTable->deleteEntity($anrReference);
 
-        $anrTable->saveEntity($newAnr);
+        $anrTable->saveEntity($newAnr->setUuid($referenceAnrUuid));
 
         return $newAnr->getId();
     }
