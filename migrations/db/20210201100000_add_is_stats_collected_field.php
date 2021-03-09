@@ -7,7 +7,7 @@ class AddIsStatsCollectedField extends AbstractMigration
     public function change()
     {
         $this->execute(
-            'ALTER TABLE `anrs` ADD `is_stats_collected` TINYINT(1) default 1;'
+            'ALTER TABLE `anrs` ADD `is_stats_collected` TINYINT(1) NOT NULL default 1;'
         );
     }
 }
