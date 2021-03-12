@@ -266,8 +266,6 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                     $referentialTable->saveEntity($referential);
                                 }
 
-                                $data['measures'][$keyMeasure]['referential'] = $data['measures'][$keyMeasure]['referential']['uuid'];
-
                                 $category = $this->get('soaCategoryTable')->getEntityByFields([
                                     'anr' => $anr->getId(),
                                     'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
