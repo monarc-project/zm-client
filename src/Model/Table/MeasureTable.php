@@ -7,10 +7,12 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Model\Entity\MeasureSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Measure;
 
 /**
@@ -22,6 +24,22 @@ class MeasureTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Measure::class, $connectedUserService);
+    }
+
+    /**
+     * @return Measure|null
+     * @throws NonUniqueResultException
+     */
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Measure
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('m')
+            ->where('m.anr = :anr')
+            ->andWhere('m.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     public function saveEntity(MeasureSuperClass $measure, bool $flushAll = true): void

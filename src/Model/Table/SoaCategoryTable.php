@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\SoaCategorySuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -21,5 +22,14 @@ class SoaCategoryTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, SoaCategory::class, $connectedUserService);
+    }
+
+    public function saveEntity(SoaCategorySuperClass $soaCategory, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($soaCategory);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

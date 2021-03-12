@@ -242,27 +242,28 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                     $newAmv->set('measures', null);
                     $this->setDependencies($newAmv, ['anr','asset','threat','vulnerability','measures']);
 
-                    $idAmv = $this->get('amvTable')->save($newAmv,false);
+                    $this->get('amvTable')->save($newAmv,false);
                     $newAmvs[] = $keyAmv;
                     $currentAmvs[] = $keyAmv;
                     // link the measures we only link the measures if they are in the DB (potential copyright issue)
                     if (isset($valueAmv['measures']) && is_array($valueAmv['measures'])) {
+                        /** @var MeasureTable $measureTable */
+                        $measureTable = $this->get('measureTable');
+                        /** @var ReferentialTable $referentialTable */
+                        $referentialTable = $this->get('referentialTable');
                         foreach ($valueAmv['measures'] as $keyMeasure) {
-                            $measure = $this->get('measureTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $keyMeasure]);
-                            if (empty($measure)) {
-                                /** @var ReferentialTable $referentialTable */
-                                $referentialTable = $this->get('referentialTable');
+                            $measure = $measureTable->findByAnrAndUuid($anr, $keyMeasure);
+                            if ($measure === null) {
                                 $referential = $referentialTable->findByAnrAndUuid(
                                     $anr,
                                     $data['measures'][$keyMeasure]['referential']['uuid']
                                 );
                                 if ($referential === null) {
-                                    $newReferential = (new Referential())
+                                    $referential = (new Referential())
                                         ->setAnr($anr)
                                         ->setUuid($data['measures'][$keyMeasure]['referential']['uuid'])
                                         ->{'setLabel' . $this->getLanguage()}($data['measures'][$keyMeasure]['referential']['label' . $this->getLanguage()]);
-                                    $referentialTable->save($newReferential);
-                                    $referential = $newReferential;
+                                    $referentialTable->saveEntity($referential);
                                 }
 
                                 $data['measures'][$keyMeasure]['referential'] = $data['measures'][$keyMeasure]['referential']['uuid'];
@@ -282,7 +283,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                         ->{'setLabel' . $this->getLanguage()}($data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()]);
                                     /** @var SoaCategoryTable $soaCategoryTable */
                                     $soaCategoryTable = $this->get('soaCategoryTable');
-                                    $soaCategoryTable->save($category);
+                                    $soaCategoryTable->saveEntity($category);
                                 } else {
                                     $category = current($category);
                                 }
@@ -294,8 +295,6 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                     ->setReferential($referential)
                                     ->setCode($data['measures'][$keyMeasure]['code'])
                                     ->setLabels($data['measures'][$keyMeasure]);
-                                /** @var MeasureTable $measureTable */
-                                $measureTable = $this->get('measureTable');
                                 $measureTable->saveEntity($measure, false);
                             }
 

@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\NonUniqueResultException;
+use Monarc\Core\Model\Entity\ReferentialSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -52,5 +53,14 @@ class ReferentialTable extends AbstractEntityTable
             ->setParameter('uuid', $uuid)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    public function saveEntity(ReferentialSuperClass $referential, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($referential);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }
