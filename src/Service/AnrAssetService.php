@@ -10,7 +10,13 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AssetSuperClass;
+use Monarc\FrontOffice\Model\Entity\Measure;
+use Monarc\FrontOffice\Model\Entity\Referential;
+use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\MeasureTable;
+use Monarc\FrontOffice\Model\Table\ReferentialTable;
+use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
 
 /**
  * This class is the service that handles assets in use within an ANR.
@@ -242,72 +248,58 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                     // link the measures we only link the measures if they are in the DB (potential copyright issue)
                     if (isset($valueAmv['measures']) && is_array($valueAmv['measures'])) {
                         foreach ($valueAmv['measures'] as $keyMeasure) {
-                            $measure = current($this->get('measureTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $keyMeasure]));
+                            $measure = $this->get('measureTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $keyMeasure]);
                             if (empty($measure)) {
-                                $referential = current($this->get('referentialTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $data['measures'][$keyMeasure]['referential']['uuid']]));
-                                if (empty($referential)) {
-                                    $toExchange = [
-                                      'anr' => $anr,
-                                      'uuid' => $data['measures'][$keyMeasure]['referential']['uuid'],
-                                      'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['referential']['label' . $this->getLanguage()]
-                                    ];
-
-                                    $c = $this->get('referentialTable')->getEntityClass();
-                                    $newReferential = new $c();
-                                    $newReferential->setDbAdapter($this->get('referentialTable')->getDb());
-                                    $newReferential->setLanguage($this->getLanguage());
-                                    $newReferential->exchangeArray($toExchange);
-                                    $this->get('referentialTable')->save($newReferential);
+                                /** @var ReferentialTable $referentialTable */
+                                $referentialTable = $this->get('referentialTable');
+                                $referential = $referentialTable->findByAnrAndUuid(
+                                    $anr,
+                                    $data['measures'][$keyMeasure]['referential']['uuid']
+                                );
+                                if ($referential === null) {
+                                    $newReferential = (new Referential())
+                                        ->setAnr($anr)
+                                        ->setUuid($data['measures'][$keyMeasure]['referential']['uuid'])
+                                        ->{'setLabel' . $this->getLanguage()}($data['measures'][$keyMeasure]['referential']['label' . $this->getLanguage()]);
+                                    $referentialTable->save($newReferential);
                                     $referential = $newReferential;
                                 }
 
                                 $data['measures'][$keyMeasure]['referential'] = $data['measures'][$keyMeasure]['referential']['uuid'];
 
-                                $category =  current($this->get('soaCategoryTable')->getEntityByFields([
-                                  'anr' => $anr->getId(),
-                                  'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
-                                  'referential' => [
+                                $category = $this->get('soaCategoryTable')->getEntityByFields([
                                     'anr' => $anr->getId(),
-                                    'uuid' => $referential->getUuid()
+                                    'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
+                                    'referential' => [
+                                        'anr' => $anr->getId(),
+                                        'uuid' => $referential->getUuid()
                                     ]
-                                  ]));
+                                ]);
                                 if (empty($category)) {
-                                    $toExchange = [
-                                      'anr' => $anr,
-                                      'referential' => $referential,
-                                      'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()]
-                                    ];
-
-                                    $c = $this->get('soaCategoryTable')->getEntityClass();
-                                    $newSoaCategory = new $c();
-                                    $newSoaCategory->setDbAdapter($this->get('soaCategoryTable')->getDb());
-                                    $newSoaCategory->setLanguage($this->getLanguage());
-                                    $newSoaCategory->exchangeArray($toExchange);
-                                    $newSoaCategory->setReferential($referential);
-                                    $this->get('soaCategoryTable')->save($newSoaCategory);
-                                    $category = $newSoaCategory;
+                                    $category = (new SoaCategory())
+                                        ->setAnr($anr)
+                                        ->setReferential($referential)
+                                        ->{'setLabel' . $this->getLanguage()}($data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()]);
+                                    /** @var SoaCategoryTable $soaCategoryTable */
+                                    $soaCategoryTable = $this->get('soaCategoryTable');
+                                    $soaCategoryTable->save($category);
+                                } else {
+                                    $category = current($category);
                                 }
 
-                                $data['measures'][$keyMeasure]['category'] = $category->getId();
-                                $data['measures'][$keyMeasure]['anr'] = $anr->getId();
-
-                                $c = $this->get('measureTable')->getEntityClass();
-                                $newMeasure = new $c();
-                                $newMeasure->setDbAdapter($this->get('measureTable')->getDb());
-                                $newMeasure->setLanguage($this->getLanguage());
-                                $newMeasure->exchangeArray($data['measures'][$keyMeasure]);
-                                $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection;
-                                $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
-                                $this->get('measureTable')->save($newMeasure);
-                                $measure = $newMeasure;
-                          }
+                                $measure = (new Measure())
+                                    ->setAnr($anr)
+                                    ->setUuid($keyMeasure)
+                                    ->setCategory($category)
+                                    ->setReferential($referential)
+                                    ->setCode($data['measures'][$keyMeasure]['code'])
+                                    ->setLabels($data['measures'][$keyMeasure]);
+                                /** @var MeasureTable $measureTable */
+                                $measureTable = $this->get('measureTable');
+                                $measureTable->saveEntity($measure, false);
+                            }
 
                           $measure->addAmv($newAmv);
-
-                            // try {
-                            //     $measure = $this->get('measureTable')->getEntity(['anr' => $anr->getId(), 'uuid' => $m]);
-                            //     $measure->addAmv($newAmv);
-                            // } catch (Exception $e) {}
                         }
                     }
 

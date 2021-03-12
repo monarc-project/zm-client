@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -35,5 +36,21 @@ class ReferentialTable extends AbstractEntityTable
             ->setParameter('anr', $anr)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return Referential|null
+     * @throws NonUniqueResultException
+     */
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Referential
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->andWhere('r.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }
