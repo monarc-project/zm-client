@@ -257,22 +257,24 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                 $newReferential->setDbAdapter($this->get('referentialTable')->getDb());
                                 $newReferential->setLanguage($this->getLanguage());
                                 $newReferential->exchangeArray($toExchange);
-                                $data['measures'][$keyMeasure]['referential'] = $this->get('referentialTable')->save($newReferential);
-                            } else{
-                                $data['measures'][$keyMeasure]['referential'] = $referential;
+                                $this->get('referentialTable')->save($newReferential);
+                                $referential = $newReferential;
                             }
+
+                            $data['measures'][$keyMeasure]['referential'] = $data['measures'][$keyMeasure]['referential']['uuid'];
 
                             $category =  $this->get('soaCategoryTable')->getEntityByFields([
                               'anr' => $anr->getId(),
+                              'label' . $this->getLanguage() => $$data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
                               'referential' => [
                                 'anr' => $anr->getId(),
-                                'uuid' => $data['measures'][$keyMeasure]['referential']->getUuid()
-                                ],
-                              'label' . $this->getLanguage() => $$data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()]]);
+                                'uuid' => $referential->getUuid()
+                                ]
+                              ]);
                             if (empty($category)) {
                                 $toExchange = [
-                                  'anr' => $anr->getId(),
-                                  'referential' => $keyMeasure['referential'],
+                                  'anr' => $anr,
+                                  'referential' => $referential,
                                   'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()]
                                 ];
 
@@ -281,18 +283,21 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                 $newSoaCategory->setDbAdapter($this->get('soaCategoryTable')->getDb());
                                 $newSoaCategory->setLanguage($this->getLanguage());
                                 $newSoaCategory->exchangeArray($toExchange);
-                                $newSoaCategory->setReferential($data['measures'][$keyMeasure]['referential']);
-                                $data['measures'][$keyMeasure]['category'] = $this->get('soaCategoryTable')->save($newSoaCategory);
-                            } else {
-                                $data['measures'][$keyMeasure]['category'] = $category;
+                                $newSoaCategory->setReferential($referential);
+                                $this->get('soaCategoryTable')->save($newSoaCategory);
+                                $category = $newSoaCategory;
                             }
 
+                            $data['measures'][$keyMeasure]['category'] = $category->getId();
+                            $data['measures'][$keyMeasure]['anr'] = $anr->getId();
+
                             $c = $this->get('measureTable')->getEntityClass();
-                            $newMeasure = new $c();
+                            $newMeasure = new \Monarc\FrontOffice\Model\Entity\Measure();
                             $newMeasure->setDbAdapter($this->get('measureTable')->getDb());
                             $newMeasure->setLanguage($this->getLanguage());
                             $newMeasure->exchangeArray($data['measures'][$keyMeasure]);
-                            $measure = $this->get('measureMeasureTable')->save($newMeasure);
+                            $this->get('measureTable')->save($newMeasure,false);
+                            $measure = $newMeasure;
                           }
 
                           $measure->addAmv($newAmv);
