@@ -242,62 +242,64 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                     // link the measures we only link the measures if they are in the DB (potential copyright issue)
                     if (isset($valueAmv['measures']) && is_array($valueAmv['measures'])) {
                         foreach ($valueAmv['measures'] as $keyMeasure) {
-                            $measure = $this->get('measureTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $keyMeasure]);
+                            $measure = current($this->get('measureTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $keyMeasure]));
                             if (empty($measure)) {
                                 $referential = $this->get('referentialTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $data['measures'][$keyMeasure]['referential']['uuid']]);
-                            if (empty($referential)) {
-                                $toExchange = [
-                                  'anr' => $anr,
-                                  'uuid' => $data['measures'][$keyMeasure]['referential']['uuid'],
-                                  'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['referential']['label' . $this->getLanguage()]
-                                ];
+                                if (empty($referential)) {
+                                    $toExchange = [
+                                      'anr' => $anr,
+                                      'uuid' => $data['measures'][$keyMeasure]['referential']['uuid'],
+                                      'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['referential']['label' . $this->getLanguage()]
+                                    ];
 
-                                $c = $this->get('referentialTable')->getEntityClass();
-                                $newReferential = new $c();
-                                $newReferential->setDbAdapter($this->get('referentialTable')->getDb());
-                                $newReferential->setLanguage($this->getLanguage());
-                                $newReferential->exchangeArray($toExchange);
-                                $this->get('referentialTable')->save($newReferential);
-                                $referential = $newReferential;
-                            }
+                                    $c = $this->get('referentialTable')->getEntityClass();
+                                    $newReferential = new $c();
+                                    $newReferential->setDbAdapter($this->get('referentialTable')->getDb());
+                                    $newReferential->setLanguage($this->getLanguage());
+                                    $newReferential->exchangeArray($toExchange);
+                                    $this->get('referentialTable')->save($newReferential);
+                                    $referential = $newReferential;
+                                }
 
-                            $data['measures'][$keyMeasure]['referential'] = $data['measures'][$keyMeasure]['referential']['uuid'];
+                                $data['measures'][$keyMeasure]['referential'] = $data['measures'][$keyMeasure]['referential']['uuid'];
 
-                            $category =  $this->get('soaCategoryTable')->getEntityByFields([
-                              'anr' => $anr->getId(),
-                              'label' . $this->getLanguage() => $$data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
-                              'referential' => [
-                                'anr' => $anr->getId(),
-                                'uuid' => $referential->getUuid()
-                                ]
-                              ]);
-                            if (empty($category)) {
-                                $toExchange = [
-                                  'anr' => $anr,
-                                  'referential' => $referential,
-                                  'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()]
-                                ];
+                                $category =  $this->get('soaCategoryTable')->getEntityByFields([
+                                  'anr' => $anr->getId(),
+                                  'label' . $this->getLanguage() => $$data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
+                                  'referential' => [
+                                    'anr' => $anr->getId(),
+                                    'uuid' => $referential->getUuid()
+                                    ]
+                                  ]);
+                                if (empty($category)) {
+                                    $toExchange = [
+                                      'anr' => $anr,
+                                      'referential' => $referential,
+                                      'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()]
+                                    ];
 
-                                $c = $this->get('soaCategoryTable')->getEntityClass();
-                                $newSoaCategory = new $c();
-                                $newSoaCategory->setDbAdapter($this->get('soaCategoryTable')->getDb());
-                                $newSoaCategory->setLanguage($this->getLanguage());
-                                $newSoaCategory->exchangeArray($toExchange);
-                                $newSoaCategory->setReferential($referential);
-                                $this->get('soaCategoryTable')->save($newSoaCategory);
-                                $category = $newSoaCategory;
-                            }
+                                    $c = $this->get('soaCategoryTable')->getEntityClass();
+                                    $newSoaCategory = new $c();
+                                    $newSoaCategory->setDbAdapter($this->get('soaCategoryTable')->getDb());
+                                    $newSoaCategory->setLanguage($this->getLanguage());
+                                    $newSoaCategory->exchangeArray($toExchange);
+                                    $newSoaCategory->setReferential($referential);
+                                    $this->get('soaCategoryTable')->save($newSoaCategory);
+                                    $category = $newSoaCategory;
+                                }
 
-                            $data['measures'][$keyMeasure]['category'] = $category->getId();
-                            $data['measures'][$keyMeasure]['anr'] = $anr->getId();
+                                $data['measures'][$keyMeasure]['category'] = $category->getId();
+                                $data['measures'][$keyMeasure]['anr'] = $anr->getId();
 
-                            $c = $this->get('measureTable')->getEntityClass();
-                            $newMeasure = new $c();
-                            $newMeasure->setDbAdapter($this->get('measureTable')->getDb());
-                            $newMeasure->setLanguage($this->getLanguage());
-                            $newMeasure->exchangeArray($data['measures'][$keyMeasure]);
-                            $this->get('measureTable')->save($newMeasure,false);
-                            $measure = $newMeasure;
+                                $c = $this->get('measureTable')->getEntityClass();
+                                $newMeasure = new $c();
+                                $newMeasure->setDbAdapter($this->get('measureTable')->getDb());
+                                $newMeasure->setLanguage($this->getLanguage());
+                                $newMeasure->exchangeArray($data['measures'][$keyMeasure]);
+                                $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection;
+                                $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
+                                $this->get('measureTable')->save($newMeasure,false);
+                                $measure = $newMeasure;
                           }
 
                           $measure->addAmv($newAmv);
