@@ -244,7 +244,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                         foreach ($valueAmv['measures'] as $keyMeasure) {
                             $measure = current($this->get('measureTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $keyMeasure]));
                             if (empty($measure)) {
-                                $referential = $this->get('referentialTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $data['measures'][$keyMeasure]['referential']['uuid']]);
+                                $referential = current($this->get('referentialTable')->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $data['measures'][$keyMeasure]['referential']['uuid']]));
                                 if (empty($referential)) {
                                     $toExchange = [
                                       'anr' => $anr,
@@ -263,14 +263,14 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
 
                                 $data['measures'][$keyMeasure]['referential'] = $data['measures'][$keyMeasure]['referential']['uuid'];
 
-                                $category =  $this->get('soaCategoryTable')->getEntityByFields([
+                                $category =  current($this->get('soaCategoryTable')->getEntityByFields([
                                   'anr' => $anr->getId(),
-                                  'label' . $this->getLanguage() => $$data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
+                                  'label' . $this->getLanguage() => $data['measures'][$keyMeasure]['category']['label' . $this->getLanguage()],
                                   'referential' => [
                                     'anr' => $anr->getId(),
                                     'uuid' => $referential->getUuid()
                                     ]
-                                  ]);
+                                  ]));
                                 if (empty($category)) {
                                     $toExchange = [
                                       'anr' => $anr,
@@ -298,7 +298,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                                 $newMeasure->exchangeArray($data['measures'][$keyMeasure]);
                                 $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection;
                                 $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
-                                $this->get('measureTable')->save($newMeasure,false);
+                                $this->get('measureTable')->save($newMeasure);
                                 $measure = $newMeasure;
                           }
 
