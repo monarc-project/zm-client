@@ -292,7 +292,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                             $data['measures'][$keyMeasure]['anr'] = $anr->getId();
 
                             $c = $this->get('measureTable')->getEntityClass();
-                            $newMeasure = new \Monarc\FrontOffice\Model\Entity\Measure();
+                            $newMeasure = new $c();
                             $newMeasure->setDbAdapter($this->get('measureTable')->getDb());
                             $newMeasure->setLanguage($this->getLanguage());
                             $newMeasure->exchangeArray($data['measures'][$keyMeasure]);
