@@ -245,7 +245,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                     $this->get('amvTable')->save($newAmv,false);
                     $newAmvs[] = $keyAmv;
                     $currentAmvs[] = $keyAmv;
-                    // link the measures we only link the measures if they are in the DB (potential copyright issue)
+
                     if (isset($valueAmv['measures']) && is_array($valueAmv['measures'])) {
                         /** @var MeasureTable $measureTable */
                         $measureTable = $this->get('measureTable');
