@@ -28,6 +28,8 @@ class ObjectExportServiceFactory extends AbstractServiceFactory
         'rolfTagTable' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
         'rolfRiskTable' => 'Monarc\FrontOffice\Model\Table\RolfRiskTable',
         'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
+        'referentialTable'  => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
+        'soaCategoryTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
         'configService' => 'Monarc\Core\Service\ConfigService',
     ];
 }
