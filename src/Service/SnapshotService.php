@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Snapshot;
 use Monarc\FrontOffice\Model\Table\AnrTable;
@@ -74,6 +75,13 @@ class SnapshotService extends AbstractService
             ->setComment($data['comment']);
 
         $snapshotTable->saveEntity($snapshot);
+
+        // Snapshots should not be visible on global dashboard
+        // and stats not send to the StatsService (but snapshots are ignored anyway).
+        $newAnr->setIsVisibleOnDashboard(0)
+            ->setIsStatsCollected(0);
+
+        $anrTable->saveEntity($newAnr);
 
         return $snapshot->getId();
     }
@@ -148,7 +156,8 @@ class SnapshotService extends AbstractService
     }
 
     /**
-     * Restores a snapshot into a separate regular ANR
+     * Restores a snapshot into a separate regular Anr.
+     *
      * @param int $anrId Reference ANR ID
      * @param int $id Snapshot ID to restore
      * @return int Newly created ANR ID
@@ -163,40 +172,48 @@ class SnapshotService extends AbstractService
         /** @var AnrTable $anrTable */
         $anrTable = $this->get('anrTable');
 
-        $anrSnapshot = current($snapshotTable->getEntityByFields(['anrReference' => $anrId, 'id' => $id]));
+        $snapshot = $snapshotTable->findById($id);
+        /** @var Anr $anrReference */
+        $anrReference = $snapshot->getAnrReference();
 
         // duplicate the anr linked to this snapshot
-        $newAnr = $anrService->duplicateAnr($anrSnapshot->get('anr')->get('id'), MonarcObject::SOURCE_CLIENT, null, [], false, true);
+        $newAnr = $anrService->duplicateAnr($snapshot->getAnr(), MonarcObject::SOURCE_CLIENT, null, [], false, true);
 
-        $anrSnapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
-        $i = 1;
-        foreach ($anrSnapshots as $s) {
-            //define new reference for all snapshots
-            $s->set('anrReference', $newAnr->getId());
-            $this->setDependencies($s, $this->dependencies);
-            $snapshotTable->save($s, count($anrSnapshots) >= $i);
-            $i++;
+        /** @var Snapshot[] $snapshots */
+        $snapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
+        //define new reference for all snapshots
+        foreach ($snapshots as $snap) {
+            $snap->setAnrReference($newAnr);
+            $snapshotTable->saveEntity($snap);
         }
 
-        // resume access
-        $userAnrCliTable = $anrService->get('userAnrCliTable');
-        $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anrId]);
-        $i = 1;
-        foreach ($userAnr as $u) {
-            $u->set('anr', $newAnr->getId());
-            $this->setDependencies($u, ['anr', 'user']);
-            $userAnrCliTable->save($u, count($userAnr) >= $i);
-            $i++;
+        /**
+         * Transmit the to the new anr (restored from snapshot) access and settings from the replaced (old) anr.
+         */
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $anrService->get('userAnrCliTable');
+        $usersAnrs = $userAnrTable->findByAnrId($anrId);
+
+        foreach ($usersAnrs as $userAnr) {
+            $userAnr->setAnr($newAnr);
+            $userAnrTable->saveEntity($userAnr);
         }
 
-        // delete old anr
-        $anrTable->delete($anrId);
+        /*
+         * We need to set visibility on global dashboard, set stats sending option,
+         * swap the uuid of the old anr, that we are going to drop and restore labels.
+         */
+        $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
+            ->setIsStatsCollected((int)$anrReference->isStatsCollected())
+            ->setLabel1($anrReference->getLabel1())
+            ->setLabel2($anrReference->getLabel2())
+            ->setLabel3($anrReference->getLabel3())
+            ->setLabel4($anrReference->getLabel4());
+        $referenceAnrUuid = $anrReference->getUuid();
 
-        //remove the snap suffix
-        for ($i = 1; $i <= 4; ++$i) {
-            $newAnr->set('label' . $i, substr($newAnr->get('label' . $i), 7));
-        }
-        $anrTable->save($newAnr);
+        $anrTable->deleteEntity($anrReference);
+
+        $anrTable->saveEntity($newAnr->setUuid($referenceAnrUuid));
 
         return $newAnr->getId();
     }

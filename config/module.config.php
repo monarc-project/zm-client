@@ -2,15 +2,26 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
-use Monarc\FrontOffice\Controller;
-use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Table;
-use Monarc\FrontOffice\Model\Entity;
-use Monarc\FrontOffice\Service;
-use Monarc\FrontOffice\Validator\UniqueClientProxyAlias;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Service;
+use Monarc\FrontOffice\Service\ClientService;
+use Monarc\FrontOffice\Stats\Controller\StatsController;
+use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
+use Monarc\FrontOffice\Stats\Controller\StatsGeneralSettingsController;
+use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
+use Monarc\FrontOffice\Stats\Service\StatsAnrService;
+use Monarc\FrontOffice\Stats\Service\StatsSettingsService;
+use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidator;
+use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidatorFactory;
+use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
+use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidatorFactory;
+use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
 
 return [
     'router' => [
@@ -909,6 +920,68 @@ return [
                     ],
                 ],
             ],
+
+            'monarc_api_stats' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/stats[/]',
+                    'verb' => 'get',
+                    'defaults' => [
+                        'controller' => StatsController::class,
+                    ],
+                ],
+            ],
+            'monarc_api_stats_global' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/stats/',
+                ],
+                'may_terminate' => false,
+                'child_routes' => [
+                    'processed' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'processed[/]',
+                            'verb' => 'get',
+                            'defaults' => [
+                                'controller' => StatsController::class,
+                                'action' => 'getProcessedList'
+                            ],
+                        ],
+                    ],
+                    'anrs_settings' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'anrs-settings[/]',
+                            'verb' => 'get,patch',
+                            'defaults' => [
+                                'controller' => StatsAnrsSettingsController::class,
+                            ],
+                        ],
+                    ],
+                    'general_settings' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'general-settings[/]',
+                            'verb' => 'get,patch',
+                            'defaults' => [
+                                'controller' => StatsGeneralSettingsController::class,
+                            ],
+                        ],
+                    ],
+                    'validate-stats-availability' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'validate-stats-availability[/]',
+                            'verb' => 'get',
+                            'defaults' => [
+                                'controller' => StatsController::class,
+                                'action' => 'validateStatsAvailability'
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ],
     ],
 
@@ -924,7 +997,7 @@ return [
             Controller\ApiSnapshotController::class => Controller\ApiSnapshotControllerFactory::class,
             Controller\ApiSnapshotRestoreController::class => Controller\ApiSnapshotRestoreControllerFactory::class,
             Controller\ApiConfigController::class => AutowireFactory::class,
-            Controller\ApiClientsController::class => Controller\ApiClientsControllerFactory::class,
+            Controller\ApiClientsController::class => AutowireFactory::class,
             Controller\ApiModelsController::class => Controller\ApiModelsControllerFactory::class,
             Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
             Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
@@ -987,6 +1060,9 @@ return [
             Controller\ApiAnrInstancesConsequencesController::class => Controller\ApiAnrInstancesConsequencesControllerFactory::class,
             Controller\ApiModelVerifyLanguageController::class => Controller\ApiModelVerifyLanguageControllerFactory::class,
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
+            StatsController::class => AutowireFactory::class,
+            StatsAnrsSettingsController::class => AutowireFactory::class,
+            StatsGeneralSettingsController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1011,9 +1087,6 @@ return [
     'service_manager' => [
         'invokables' => [
             Entity\UserAnr::class => Entity\UserAnr::class,
-
-            //validators
-            UniqueClientProxyAlias::class => UniqueClientProxyAlias::class,
         ],
         'factories' => [
             DbCli::class => Service\Model\DbCliFactory::class,
@@ -1049,6 +1122,7 @@ return [
             Table\RecommendationHistoricTable::class => AutowireFactory::class,
             Table\RecommandationRiskTable::class => AutowireFactory::class,
             Table\RecommandationSetTable::class => AutowireFactory::class,
+            Table\SettingTable::class => ClientEntityManagerFactory::class,
             Table\ScaleTable::class => AutowireFactory::class,
             Table\ScaleCommentTable::class => AutowireFactory::class,
             Table\ScaleImpactTypeTable::class => AutowireFactory::class,
@@ -1069,7 +1143,6 @@ return [
             'Monarc\FrontOffice\Model\Entity\Anr' => 'Monarc\FrontOffice\Service\Model\Entity\AnrServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\AnrObjectCategory' => 'Monarc\FrontOffice\Service\Model\Entity\AnrObjectCategoryServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Asset' => 'Monarc\FrontOffice\Service\Model\Entity\AssetServiceModelEntity',
-            'Monarc\FrontOffice\Model\Entity\Client' => 'Monarc\FrontOffice\Service\Model\Entity\ClientServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Delivery' => 'Monarc\FrontOffice\Service\Model\Entity\DeliveryServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\Instance' => 'Monarc\FrontOffice\Service\Model\Entity\InstanceServiceModelEntity',
             'Monarc\FrontOffice\Model\Entity\InstanceConsequence' => 'Monarc\FrontOffice\Service\Model\Entity\InstanceConsequenceServiceModelEntity',
@@ -1140,7 +1213,7 @@ return [
             'Monarc\FrontOffice\Service\AnrRolfRiskService' => 'Monarc\FrontOffice\Service\AnrRolfRiskServiceFactory',
             'Monarc\FrontOffice\Service\AmvService' => 'Monarc\FrontOffice\Service\AmvServiceFactory',
             'Monarc\FrontOffice\Service\AssetService' => 'Monarc\FrontOffice\Service\AssetServiceFactory',
-            'Monarc\FrontOffice\Service\ClientService' => 'Monarc\FrontOffice\Service\ClientServiceFactory',
+            ClientService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
             'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
             'Monarc\FrontOffice\Service\ModelService' => 'Monarc\FrontOffice\Service\ModelServiceFactory',
@@ -1165,8 +1238,16 @@ return [
             'Monarc\FrontOffice\Service\ObjectExportService' => 'Monarc\FrontOffice\Service\ObjectExportServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
+            StatsAnrService::class => ReflectionBasedAbstractFactory::class,
+            StatsSettingsService::class => AutowireFactory::class,
 
+            // Providers
+            StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
+
+            // Validators
             CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
+            GetStatsQueryParamsValidator::class => GetStatsQueryParamsValidatorFactory::class,
+            GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
         ],
     ],
 
@@ -1212,9 +1293,9 @@ return [
             'monarc_api_models',
             'monarc_api_referentials',
             'monarc_api_client',
-            'monarc_api_user_profile',
             'monarc_api_anr_carto_risks',
             'monarc_api_global_client_anr/carto_risks',
+            'monarc_api_stats',
         ],
         // Utilisateur : Accès RWD par analyse
         Entity\UserRole::USER_FO => [
@@ -1312,6 +1393,22 @@ return [
             'monarc_api_global_client_anr/records_export',
             'monarc_api_global_client_anr/record_import',
             'monarc_api_global_client_anr/record_duplicate',
+            'monarc_api_stats',
+            'monarc_api_stats_global/processed',
+            'monarc_api_stats_global/general_settings',
+            'monarc_api_stats_global/validate-stats-availability',
+        ],
+        Entity\UserRole::USER_ROLE_CEO => [
+            'monarc_api_admin_users_roles',
+            'monarc_api_admin_user_reset_password',
+            'monarc_api_user_password',
+            'monarc_api_user_profile',
+            'monarc_api_client_anr',
+            'monarc_api_stats',
+            'monarc_api_stats_global/processed',
+            'monarc_api_stats_global/anrs_settings',
+            'monarc_api_stats_global/general_settings',
+            'monarc_api_stats_global/validate-stats-availability',
         ],
     ],
     'activeLanguages' => ['fr'],

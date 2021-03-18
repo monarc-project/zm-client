@@ -8,11 +8,11 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityNotFoundException;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ThreatSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Threat;
 
 /**
@@ -40,10 +40,24 @@ class ThreatTable extends AbstractEntityTable
         return $res > 0;
     }
 
+
+    /**
+     * @return Threat[]
+     */
+    public function findByAnr(Anr $anr)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('t')
+            ->where('t.anr = :anr')
+            ->setParameter(':anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
     /**
      * @throws EntityNotFoundException
      */
-    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): ThreatSuperClass
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ThreatSuperClass
     {
         $threat = $this->getRepository()
             ->createQueryBuilder('t')
@@ -62,5 +76,14 @@ class ThreatTable extends AbstractEntityTable
         }
 
         return $threat;
+    }
+
+    public function saveEntity(Threat $threat, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($threat);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

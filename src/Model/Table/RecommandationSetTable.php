@@ -8,10 +8,14 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 
 /**
@@ -27,8 +31,9 @@ class RecommandationSetTable extends AbstractEntityTable
 
     /**
      * @throws EntityNotFoundException
+     * @throws NonUniqueResultException
      */
-    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): RecommandationSet
+    public function findByAnrAndUuid(Anr $anr, string $uuid): RecommandationSet
     {
         $recommendationSet = $this->getRepository()
             ->createQueryBuilder('rs')
@@ -49,6 +54,10 @@ class RecommandationSetTable extends AbstractEntityTable
         return $recommendationSet;
     }
 
+    /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
     public function deleteEntity(RecommandationSet $recommendationSet, bool $flush = true): void
     {
         $em = $this->getDb()->getEntityManager();
@@ -58,6 +67,10 @@ class RecommandationSetTable extends AbstractEntityTable
         }
     }
 
+    /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
     public function saveEntity(RecommandationSet $recommendationSet, bool $flush = true): void
     {
         $em = $this->getDb()->getEntityManager();

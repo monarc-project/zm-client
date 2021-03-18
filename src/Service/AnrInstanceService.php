@@ -12,7 +12,6 @@ use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
@@ -21,9 +20,14 @@ use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 use Monarc\Core\Model\Entity\QuestionSuperClass;
 use Monarc\Core\Model\Entity\Scale;
 use Monarc\Core\Service\InstanceService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Entity\Interview;
+use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
 use Monarc\FrontOffice\Model\Entity\Question;
 use Monarc\FrontOffice\Model\Entity\QuestionChoice;
@@ -33,17 +37,32 @@ use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Model\Entity\Theme;
+use Monarc\FrontOffice\Model\Entity\Threat;
+use Monarc\FrontOffice\Model\Entity\Vulnerability;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\MeasureMeasureTable;
+use Monarc\FrontOffice\Model\Table\MeasureTable;
 use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
+use Monarc\FrontOffice\Model\Table\QuestionChoiceTable;
+use Monarc\FrontOffice\Model\Table\QuestionTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Model\Table\ReferentialTable;
+use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
+use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
+use Monarc\FrontOffice\Model\Table\SoaTable;
+use Monarc\FrontOffice\Model\Table\ThemeTable;
+use Monarc\FrontOffice\Model\Table\ThreatTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Ramsey\Uuid\Uuid;
 use DateTime;
@@ -192,20 +211,26 @@ class AnrInstanceService extends InstanceService
 
     /**
      * Imports an instance from an exported data (json) array.
-     * @see #importFromFile
      *
      * @param array $data The instance data
-     * @param AnrSuperClass $anr The target ANR
-     * @param null|InstanceSuperClass $parent The parent under which the instance should be imported, or null if at the
-     *     root
+     * @param Anr $anr The target ANR
+     * @param null|Instance $parent The parent under which the instance should be imported or null if it is root.
      * @param string $modeImport Import mode, either 'merge' or 'duplicate'
      * @param bool $isRoot If the imported instance should be treated as a root instance
      *
      * @return array|bool An array of created instances IDs, or false in case of error
+     * @throws Exception
      */
-    public function importFromArray(array $data, AnrSuperClass $anr, ?Instance $parent = null, $modeImport = 'merge', $isRoot = false)
-    {
-        $this->monarcVersion = $data['monarc_version'] ?? null;
+    public function importFromArray(
+        array $data,
+        Anr $anr,
+        ?Instance $parent = null,
+        string $modeImport = 'merge',
+        bool $isRoot = false
+    ) {
+        if (isset($data['monarc_version'])) {
+            $this->monarcVersion = strpos($data['monarc_version'], 'master') === false ? $data['monarc_version'] : '99';
+        }
 
         // Ensure we're importing an instance, from the same version (this is NOT a backup feature!)
         if (isset($data['type']) && $data['type'] === 'instance') {
@@ -225,7 +250,7 @@ class AnrInstanceService extends InstanceService
      */
     private function importInstanceFromArray(
         array $data,
-        AnrSuperClass $anr,
+        Anr $anr,
         ?Instance $parent,
         string $modeImport,
         bool $isRoot = false
@@ -289,7 +314,9 @@ class AnrInstanceService extends InstanceService
         $instanceTable = $this->get('table');
 
         $instance = new Instance();
-        // TODO: use setters.
+
+        // TODO: use setters and get rid of exchangeArray!
+
         $instance->setDbAdapter($instanceTable->getDb());
         $instance->setLanguage($this->getLanguage());
         $toExchange = $data['instance'];
@@ -367,7 +394,7 @@ class AnrInstanceService extends InstanceService
 
                         $class = $this->get('scaleImpactTypeTable')->getEntityClass();
                         $scaleImpT = new $class();
-                        $scaleImpT->setDbAdapter($this->get('table')->getDb());
+                        $scaleImpT->setDbAdapter($instanceTable->getDb());
                         $scaleImpT->setLanguage($this->getLanguage());
                         $scaleImpT->exchangeArray($toExchange);
                         $this->setDependencies($scaleImpT, ['anr', 'scale']);
@@ -407,48 +434,58 @@ class AnrInstanceService extends InstanceService
                 $instanceConsequenceTable->getDb()->flush();
             }
         } else {
-            // on génère celles par défaut
-
             $this->createInstanceConsequences($instance->getId(), $anr->getId(), $monarcObject);
         }
 
-        // Update impacts from brothers for global assets
-
-        $instanceBrothers = current($this->get('table')->getEntityByFields([ // Get instance risk of brother
-            'id' => ['op' => '!=', 'value' => $instance->getId()],
+        /*
+         * Update impacts from brothers for global assets.
+         */
+        $instanceBrothers = current($instanceTable->getEntityByFields([
             'anr' => $anr->getId(),
-            'asset' => ['anr' => $anr->getId(), 'uuid' => (string)$instance->get('asset')->get('uuid')],
-            'object' => ['anr' => $anr->getId(), 'uuid' => (string)$instance->get('object')->get('uuid')]
+            'id' => [
+                'op' => '!=',
+                'value' => $instance->getId(),
+            ],
+            'asset' => [
+                'anr' => $anr->getId(),
+                'uuid' => $instance->getAsset()->getUuid(),
+            ],
+            'object' => [
+                'anr' => $anr->getId(),
+                'uuid' => $instance->getObject()->getUuid(),
+            ],
         ]));
 
-        if (!empty($instanceBrothers)) {
-            if ($instance->get('object')->get('scope') == MonarcObject::SCOPE_GLOBAL
-                && $modeImport == 'merge'
-            ) {
-                $instanceConseqBrothers = $instanceConsequenceTable->getEntityByFields([ // Get consequences of brother
+        if (!empty($instanceBrothers)
+            && $modeImport === 'merge'
+            && $instance->getObject()->isScopeGlobal()
+        ) {
+            $instanceConseqBrothers = $instanceConsequenceTable->getEntityByFields([
+                'anr' => $anr->getId(),
+                'instance' => $instanceBrothers,
+                'object' => [
                     'anr' => $anr->getId(),
-                    'instance' => $instanceBrothers,
-                    'object' => ['anr' => $anr->getId(), 'uuid' => (string)$instance->get('object')->get('uuid')]
-                ]);
+                    'uuid' => $instance->getObject()->getUuid()
+                ],
+            ]);
 
-                foreach ($instanceConseqBrothers as $icb) { //Update consequences for all brothers
-                    $this->get('instanceConsequenceService')->updateBrothersConsequences(
-                        $anr->getId(),
-                        $icb->get('id')
-                    );
-                }
-                $ts = ['c', 'i', 'd'];
-                foreach ($ts as $t) { //Update impacts in instance
-                    if ($instanceBrothers->get($t . 'h') == 0) {
-                        $instance->set($t . 'h', 0);
-                        $instance->set($t, $instanceBrothers->$t);
-                    } elseif ($instance->get('parent')) {
-                        $instance->set($t . 'h', 1);
-                        $instance->set($t, $instance->get('parent')->get($t));
-                    } else {
-                        $instance->set($t . 'h', 1);
-                        $instance->set($t, $instanceBrothers->$t);
-                    }
+            foreach ($instanceConseqBrothers as $icb) { //Update consequences for all brothers
+                $this->get('instanceConsequenceService')->updateBrothersConsequences(
+                    $anr->getId(),
+                    $icb->getId()
+                );
+            }
+            $ts = ['c', 'i', 'd'];
+            foreach ($ts as $t) { //Update impacts in instance
+                if ($instanceBrothers->get($t . 'h') == 0) {
+                    $instance->set($t . 'h', 0);
+                    $instance->set($t, $instanceBrothers->$t);
+                } elseif ($instance->get('parent')) {
+                    $instance->set($t . 'h', 1);
+                    $instance->set($t, $instance->get('parent')->get($t));
+                } else {
+                    $instance->set($t . 'h', 1);
+                    $instance->set($t, $instanceBrothers->$t);
                 }
             }
         }
@@ -456,6 +493,12 @@ class AnrInstanceService extends InstanceService
         $this->refreshImpactsInherited($instance);
 
         $this->createSetOfRecommendations($data, $anr, $monarcVersion);
+
+        /** ThreatTable $threatTable */
+        $threatTable = $this->get('threatTable');
+        /** @var VulnerabilityTable $vulnerabilityTable */
+        // TODO: inject vulnerabilityTable here.
+        $vulnerabilityTable = $instanceRiskService->get('vulnerabilityTable');
 
         if (!empty($data['risks'])) {
             // load of the existing value
@@ -465,43 +508,43 @@ class AnrInstanceService extends InstanceService
                 foreach ($data['threats'] as $t) {
                     $tCodes[] = $t['uuid'];
                 }
-                $existingRisks = $instanceRiskService->get('threatTable')->getEntityByFields([
+                $existingThreats = $threatTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'uuid' => $tCodes
                 ]);
-                foreach ($existingRisks as $t) {
-                    $this->sharedData['ithreats'][] = (string)$t->get('uuid');
+                foreach ($existingThreats as $t) {
+                    $this->sharedData['ithreats'][] = $t->getUuid();
                 }
                 foreach ($data['vuls'] as $v) {
                     $vCodes[] = $v['uuid'];
                 }
-                $existingRisks = $instanceRiskService->get('vulnerabilityTable')->getEntityByFields([
+                $existingVulnerabilities = $vulnerabilityTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'uuid' => $vCodes
                 ]);
-                foreach ($existingRisks as $t) {
-                    $this->sharedData['ivuls'][] = (string)$t->get('uuid');
+                foreach ($existingVulnerabilities as $v) {
+                    $this->sharedData['ivuls'][] = $v->getUuid();
                 }
             } else {
                 foreach ($data['threats'] as $t) {
                     $tCodes[$t['code']] = $t['code'];
                 }
-                $existingRisks = $instanceRiskService->get('threatTable')->getEntityByFields([
+                $existingRisks = $threatTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'code' => $tCodes
                 ]);
                 foreach ($existingRisks as $t) {
-                    $this->sharedData['ithreats'][$t->get('code')] = (string)$t->get('uuid');
+                    $this->sharedData['ithreats'][$t->getCode()] = $t->getUuid();
                 }
                 foreach ($data['vuls'] as $v) {
                     $vCodes[$v['code']] = $v['code'];
                 }
-                $existingRisks = $instanceRiskService->get('vulnerabilityTable')->getEntityByFields([
+                $existingRisks = $vulnerabilityTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'code' => $vCodes
                 ]);
-                foreach ($existingRisks as $t) {
-                    $this->sharedData['ivuls'][$t->get('code')] = (string)$t->get('uuid');
+                foreach ($existingRisks as $v) {
+                    $this->sharedData['ivuls'][$v->getCode()] = $v->getUuid();
                 }
             }
 
@@ -513,7 +556,7 @@ class AnrInstanceService extends InstanceService
             foreach ($data['risks'] as $risk) {
                 //uuid id now the pivot instead of code
                 if ($risk['specific']) {
-                    // TODO: remove the support of the old version because it's a mess.
+                    // TODO: remove the support of the old version.
                     // on doit le créer localement mais pour ça il nous faut les pivots sur les menaces et vulnérabilités
                     // on checke si on a déjà les menaces et les vulnérabilités liées, si c'est pas le cas, faut les créer
                     if ((!in_array($risk['threat'], $this->sharedData['ithreats'])
@@ -526,13 +569,14 @@ class AnrInstanceService extends InstanceService
                         $toExchange = $data['threats'][$risk['threat']];
                         unset($toExchange['id']);
                         $toExchange['anr'] = $anr->getId();
-                        $class = $this->get('threatTable')->getEntityClass();
-                        $threat = new $class();
-                        $threat->setDbAdapter($instanceConsequenceTable->getDb());
+                        $threat = new Threat();
+                        $threat->setDbAdapter($threatTable->getDb());
                         $threat->setLanguage($this->getLanguage());
                         $threat->exchangeArray($toExchange);
-                        $this->setDependencies($threat, ['anr']);
-                        $tuuid = $instanceConsequenceTable->save($threat, false);
+                        $threat->setAnr($anr);
+                        // TODO: replace with saveEntity everywhere.
+                        $tuuid = $threatTable->save($threat, false);
+                        // TODO: save the threat OBJECT (not uuid) anyway to the shared data.
                         if (!version_compare($monarcVersion, '2.8.2') === -1) {
                             $this->sharedData['ithreats'][$data['threats'][$risk['threat']]['code']] = $tuuid;
                         }
@@ -547,38 +591,40 @@ class AnrInstanceService extends InstanceService
                         $toExchange = $data['vuls'][$risk['vulnerability']];
                         unset($toExchange['id']);
                         $toExchange['anr'] = $anr->getId();
-                        $class = $instanceRiskService->get('vulnerabilityTable')->getEntityClass();
-                        $vul = new $class();
+                        $vul = new Vulnerability();
                         $vul->setDbAdapter($instanceRiskService->get('vulnerabilityTable')->getDb());
                         $vul->setLanguage($this->getLanguage());
                         $vul->exchangeArray($toExchange);
-                        $this->setDependencies($vul, ['anr']);
-                        $vuuid = $instanceRiskService->get('vulnerabilityTable')->save($vul, false);
+                        $vul->setAnr($anr);
+                        $vuuid = $vulnerabilityTable->save($vul, false);
                         if (version_compare($monarcVersion, "2.8.2") == -1) {
                             $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']] = $vuuid;
                         }
                     }
 
-                    $instanceBrothers = $this->get('table')->getEntityByFields([ // Get the Instance of brothers
+                    /**
+                     * Retrieve the linked(brother) instances.
+                     * @var Instance[] $instanceBrothers
+                     */
+                    $instanceBrothers = $instanceTable->getEntityByFields([
                         'id' => ['op' => '!=', 'value' => $instance->getId()],
                         'anr' => $anr->getId(),
                         'asset' => [
                             'anr' => $anr->getId(),
-                            'uuid' => (string)$instance->get('asset')->get('uuid')
+                            'uuid' => $instance->getAsset()->getUuid()
                         ],
                         'object' => [
                             'anr' => $anr->getId(),
-                            'uuid' => (string)$monarcObject->getUuid()
+                            'uuid' => $monarcObject->getUuid(),
                         ]
                     ]);
 
-                    // Creation of specific risks to brothers
+                    /*
+                     * Create specific risks linked to the brother instances.
+                     */
                     foreach ($instanceBrothers as $ib) {
                         $toExchange = $risk;
                         unset($toExchange['id']);
-                        $toExchange['anr'] = $anr->getId();
-                        $toExchange['instance'] = $ib->get('id');
-                        $toExchange['asset'] = (string)$monarcObject->getAsset()->getUuid();
                         $toExchange['amv'] = null;
                         $toExchange['threat'] = Uuid::isValid($risk['threat'])
                             ? $risk['threat']
@@ -587,22 +633,21 @@ class AnrInstanceService extends InstanceService
                             ? $risk['vulnerability']
                             : $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
                         $rToBrother = new InstanceRisk();
+                        // TODO: drop it when remove setDependencies.
                         $rToBrother->setDbAdapter($instanceRiskTable->getDb());
                         $rToBrother->setLanguage($this->getLanguage());
+                        // TODO: replace with setters usage and set threat and vulnerability from objects.
                         $rToBrother->exchangeArray($toExchange);
-                        $this->setDependencies(
-                            $rToBrother,
-                            ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']
-                        );
-                        $idRiskSpecific = $instanceRiskTable->save($rToBrother, false);
-                        $rToBrother->set('id', $idRiskSpecific);
+                        $rToBrother->setAnr($anr)
+                            ->setInstance($ib)
+                            ->setAsset($monarcObject->getAsset());
+                        $this->setDependencies($rToBrother, ['threat', 'vulnerability']);
+                        // TODO: replace with saveEntity.
+                        $instanceRiskTable->save($rToBrother, false);
                     }
 
                     $toExchange = $risk;
                     unset($toExchange['id']);
-                    $toExchange['anr'] = $anr->getId();
-                    $toExchange['instance'] = $instance->getId();
-                    $toExchange['asset'] = (string)$monarcObject->getAsset()->getUuid();
                     $toExchange['amv'] = null;
                     $toExchange['threat'] = Uuid::isValid($risk['threat'])
                         ? $risk['threat']
@@ -610,13 +655,18 @@ class AnrInstanceService extends InstanceService
                     $toExchange['vulnerability'] = Uuid::isValid($risk['vulnerability'])
                         ? $risk['vulnerability']
                         : $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
-                    $instanceRiskOp = new InstanceRisk();
-                    $instanceRiskOp->setDbAdapter($instanceRiskTable->getDb());
-                    $instanceRiskOp->setLanguage($this->getLanguage());
-                    $instanceRiskOp->exchangeArray($toExchange);
-                    $this->setDependencies($instanceRiskOp, ['anr', 'amv', 'instance', 'asset', 'threat', 'vulnerability']);
-                    $idRisk = $instanceRiskTable->save($instanceRiskOp, false);
-                    $instanceRiskOp->set('id', $idRisk);
+                    $instanceRisk = new InstanceRisk();
+                    // TODO: drop it when remove setDependencies.
+                    $instanceRisk->setDbAdapter($instanceRiskTable->getDb());
+                    $instanceRisk->setLanguage($this->getLanguage());
+                    // TODO: replace with setters usage and set threat and vulnerability from objects.
+                    $instanceRisk->exchangeArray($toExchange);
+                    $instanceRisk->setAnr($anr)
+                        ->setInstance($instance)
+                        ->setAsset($monarcObject->getAsset());
+                    $this->setDependencies($instanceRisk, ['threat', 'vulnerability']);
+                    // TODO: replace with saveEntity.
+                    $instanceRiskTable->save($instanceRisk, false);
                 }
 
                 $tuuid = Uuid::isValid($risk['threat'])
@@ -626,65 +676,71 @@ class AnrInstanceService extends InstanceService
                     ? $risk['vulnerability']
                     : $this->sharedData['ivuls'][$data['vuls'][$risk['vulnerability']]['code']];
 
-                /** @var InstanceRisk $instanceRiskOp */
-                $instanceRiskOp = current($instanceRiskTable->getEntityByFields([
+                /** @var InstanceRisk $instanceRisk */
+                $instanceRisk = current($instanceRiskTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'instance' => $instance->getId(),
                     'asset' => $monarcObject ? [
                         'anr' => $anr->getId(),
-                        'uuid' => (string)$monarcObject->getAsset()->getUuid()
+                        'uuid' => $monarcObject->getAsset()->getUuid(),
                     ] : null,
                     'threat' => ['anr' => $anr->getId(), 'uuid' => $tuuid],
-                    'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $vuuid]
+                    'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $vuuid],
                 ]));
 
-                if ($instanceRiskOp !== null && $includeEval) {
-                    $instanceRiskOp->set('threatRate', $this->approximate(
+                if ($instanceRisk !== null && $includeEval) {
+                    $instanceRisk->set('threatRate', $this->approximate(
                         $risk['threatRate'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_THREAT]['min'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_THREAT]['max'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_THREAT]['min'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_THREAT]['max']
                     ));
-                    $instanceRiskOp->set('vulnerabilityRate', $this->approximate(
+                    $instanceRisk->set('vulnerabilityRate', $this->approximate(
                         $risk['vulnerabilityRate'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['min'],
                         $this->sharedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['max'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['min'],
                         $this->sharedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['max']
                     ));
-                    $instanceRiskOp->set('mh', $risk['mh']);
-                    $instanceRiskOp->set('kindOfMeasure', $risk['kindOfMeasure']);
-                    $instanceRiskOp->set('comment', $risk['comment']);
-                    $instanceRiskOp->set('commentAfter', $risk['commentAfter']);
+                    $instanceRisk->set('mh', $risk['mh']);
+                    $instanceRisk->set('kindOfMeasure', $risk['kindOfMeasure']);
+                    $instanceRisk->set('comment', $risk['comment']);
+                    $instanceRisk->set('commentAfter', $risk['commentAfter']);
 
                     // La valeur -1 pour le reduction_amount n'a pas de sens, c'est 0 le minimum. Le -1 fausse
                     // les calculs.
                     // Cas particulier, faudrait pas mettre n'importe quoi dans cette colonne si on part d'une scale
                     // 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
-                    $instanceRiskOp->set(
+                    $instanceRisk->set(
                         'reductionAmount',
                         $risk['reductionAmount'] != -1
-                            ? $this->approximate($risk['reductionAmount'], 0, $risk['vulnerabilityRate'], 0, $instanceRiskOp->get('vulnerabilityRate'), 0)
+                            ? $this->approximate(
+                            $risk['reductionAmount'],
+                            0,
+                            $risk['vulnerabilityRate'],
+                            0,
+                            $instanceRisk->get('vulnerabilityRate'),
+                            0)
                             : 0
                     );
-                    $instanceRiskTable->saveEntity($instanceRiskOp, false);
+                    $instanceRiskTable->saveEntity($instanceRisk, false);
 
-                    // Merge all fields for global assets
+                    // Merge all fields for global assets.
                     if ($modeImport === 'merge'
-                        && !$instanceRiskOp->isSpecific()
+                        && !$instanceRisk->isSpecific()
                         && $instance->getObject()->isScopeGlobal()
                     ) {
                         $objectIdsBrothers = $instanceTable->findByAnrAndObject($anr, $instance->getObject());
 
                         // TODO: check why do we take only a single one, use query instead of the generic method.
-                        // Get instance risk of brother
+                        /** @var InstanceRisk $instanceRiskBrothers */
                         $instanceRiskBrothers = current($instanceRiskTable->getEntityByFields([
                             'anr' => $anr->getId(),
                             'instance' => ['op' => 'IN', 'value' => $objectIdsBrothers],
                             'amv' => [
                                 'anr' => $anr->getId(),
-                                'uuid' => (string)$instanceRiskOp->getAmv()->getUuid(),
+                                'uuid' => $instanceRisk->getAmv()->getUuid(),
                             ]
                         ]));
 
@@ -693,17 +749,17 @@ class AnrInstanceService extends InstanceService
                             $dataUpdate['anr'] = $anr->getId();
                             $dataUpdate['threatRate'] = $instanceRiskBrothers->threatRate; // Merge threat rate
                             $dataUpdate['vulnerabilityRate'] = $instanceRiskBrothers->vulnerabilityRate; // Merge vulnerability rate
-                            $dataUpdate['kindOfMeasure'] = $instanceRiskBrothers->kindOfMeasure; // Merge kind Of Measure
+                            $dataUpdate['kindOfMeasure'] = $instanceRiskBrothers-kindOfMeasure; // Merge kind Of Measure
                             $dataUpdate['reductionAmount'] = $instanceRiskBrothers->reductionAmount; // Merge reduction amount
-                            if (strcmp($instanceRiskBrothers->comment, $instanceRiskOp->get('comment')) !== 0// Check if comment is different
-                                && strpos($instanceRiskBrothers->comment, $instanceRiskOp->get('comment')) == false
-                            ) { // Check if comment is not exist yet
-                                $dataUpdate['comment'] = $instanceRiskBrothers->comment . "\n\n" . $instanceRiskOp->get('comment'); // Merge comments
+                            if (strcmp($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) !== 0// Check if comment is different
+                                && strpos($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) === false
+                            ) { // Check if comment exists
+                                $dataUpdate['comment'] = $instanceRiskBrothers->getComment() . "\n\n" . $instanceRisk->getComment(); // Merge comments
                             } else {
-                                $dataUpdate['comment'] = $instanceRiskBrothers->comment;
+                                $dataUpdate['comment'] = $instanceRiskBrothers->getComment();
                             }
 
-                            $instanceRiskService->update($instanceRiskOp->get('id'), $dataUpdate); // Finally update the risks
+                            $instanceRiskService->update($instanceRisk->getId(), $dataUpdate);
                         }
                     }
 
@@ -721,44 +777,44 @@ class AnrInstanceService extends InstanceService
                             $recommendationRisk = (new RecommandationRisk())
                                 ->setAnr($anr)
                                 ->setInstance($instance)
-                                ->setInstanceRisk($instanceRiskOp)
+                                ->setInstanceRisk($instanceRisk)
                                 ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
-                                ->setAsset($instanceRiskOp->getAsset())
-                                ->setThreat($instanceRiskOp->getThreat())
-                                ->setVulnerability($instanceRiskOp->getVulnerability())
+                                ->setAsset($instanceRisk->getAsset())
+                                ->setThreat($instanceRisk->getThreat())
+                                ->setVulnerability($instanceRisk->getVulnerability())
                                 ->setCommentAfter((string)$reco['commentAfter'])
                                 ->setRecommandation($recommendation);
 
                             $recommendationRiskTable->saveEntity($recommendationRisk, false);
 
                             // Replicate recommendation to brothers.
-                            if ($recommendationRisk->hasGlobalObjectRelation() && $modeImport === 'merge') {
+                            if ($modeImport === 'merge' && $recommendationRisk->hasGlobalObjectRelation()) {
                                 /** @var Instance[] $brotherInstances */
-                                $brotherInstances = $this->get('table')->getEntityByFields([ // Get the brothers
-                                    'anr' => $anr->getId(),
-                                    'asset' => [
-                                        'anr' => $anr->getId(),
-                                        'uuid' => (string)$monarcObject->get('asset')->get('uuid')
-                                    ],
-                                    'object' => ['anr' => $anr->getId(), 'uuid' => (string)$monarcObject->get('uuid')]
+                                $brotherInstances = $instanceTable->getEntityByFields([ // Get the brothers
+                                                                                        'anr' => $anr->getId(),
+                                                                                        'asset' => [
+                                                                                            'anr' => $anr->getId(),
+                                                                                            'uuid' => $monarcObject->getAsset()->getUuid(),
+                                                                                        ],
+                                                                                        'object' => ['anr' => $anr->getId(), 'uuid' => $monarcObject->getUuid()]
                                 ]);
 
                                 if (!empty($brotherInstances)) {
                                     foreach ($brotherInstances as $brotherInstance) {
                                         // Get the risks of brothers
                                         /** @var InstanceRisk[] $brothers */
-                                        if ($instanceRiskOp->isSpecific()) {
+                                        if ($instanceRisk->isSpecific()) {
                                             $brothers = $recommendationRiskTable->getEntityByFields([
                                                 'anr' => $anr->getId(),
                                                 'specific' => InstanceRisk::TYPE_SPECIFIC,
                                                 'instance' => $brotherInstance->getId(),
                                                 'threat' => [
                                                     'anr' => $anr->getId(),
-                                                    'uuid' => (string)$instanceRiskOp->getThreat()->getUuid()
+                                                    'uuid' => $instanceRisk->getThreat()->getUuid()
                                                 ],
                                                 'vulnerability' => [
                                                     'anr' => $anr->getId(),
-                                                    'uuid' => (string)$instanceRiskOp->get('vulnerability')->get('uuid')
+                                                    'uuid' => $instanceRisk->getVulnerability()->getUuid()
                                                 ]
                                             ]);
                                         } else {
@@ -767,7 +823,7 @@ class AnrInstanceService extends InstanceService
                                                 'instance' => $brotherInstance->getId(),
                                                 'amv' => [
                                                     'anr' => $anr->getId(),
-                                                    'uuid' => (string)$instanceRiskOp->getAmv()->getUuid()
+                                                    'uuid' => $instanceRisk->getAmv()->getUuid()
                                                 ]
                                             ]);
                                         }
@@ -783,9 +839,9 @@ class AnrInstanceService extends InstanceService
                                                     ->setGlobalObject(
                                                         $monarcObject->isScopeGlobal() ? $monarcObject : null
                                                     )
-                                                    ->setAsset($instanceRiskOp->getAsset())
-                                                    ->setThreat($instanceRiskOp->getThreat())
-                                                    ->setVulnerability($instanceRiskOp->getVulnerability())
+                                                    ->setAsset($instanceRisk->getAsset())
+                                                    ->setThreat($instanceRisk->getThreat())
+                                                    ->setVulnerability($instanceRisk->getVulnerability())
                                                     ->setCommentAfter((string)$reco['commentAfter'])
                                                     ->setRecommandation($recommendation);
 
@@ -806,16 +862,16 @@ class AnrInstanceService extends InstanceService
                 $instanceBrother = current($instanceTable->getEntityByFields([
                     'id' => ['op' => '!=', 'value' => $instance->getId()],
                     'anr' => $anr->getId(),
-                    'asset' => ['anr' => $anr->getId(), 'uuid' => (string)$monarcObject->get('asset')->get('uuid')],
-                    'object' => ['anr' => $anr->getId(), 'uuid' => (string)$monarcObject->get('uuid')]
+                    'asset' => ['anr' => $anr->getId(), 'uuid' => $monarcObject->getAsset()->getUuid()],
+                    'object' => ['anr' => $anr->getId(), 'uuid' => $monarcObject->getUuid()]
                 ]));
 
-                if ($instanceBrother !== null && $instanceRiskOp !== null && !$instanceRiskOp->isSpecific()) {
+                if ($instanceBrother !== null && $instanceRisk !== null && !$instanceRisk->isSpecific()) {
                     /** @var InstanceRiskTable $instanceRiskTable */
                     $instanceRiskTable = $this->get('instanceRiskTable');
                     $instanceRiskBrothers = $instanceRiskTable->findByInstanceAndAmv(
                         $instanceBrother,
-                        $instanceRiskOp->getAmv()
+                        $instanceRisk->getAmv()
                     );
 
                     foreach ($instanceRiskBrothers as $instanceRiskBrother) {
@@ -827,14 +883,14 @@ class AnrInstanceService extends InstanceService
                             'instance' => ['op' => '!=', 'value' => $instance->getId()],
                             'globalObject' => [
                                 'anr' => $anr->getId(),
-                                'uuid' => (string)$monarcObject->getUuid(),
+                                'uuid' => $monarcObject->getUuid(),
                             ]
                         ]);
 
                         if (!empty($brotherRecoRisks)) {
                             foreach ($brotherRecoRisks as $brotherRecoRisk) {
                                 $recommendationRisk = $recommendationRiskTable->findByInstanceRiskAndRecommendation(
-                                    $instanceRiskOp,
+                                    $instanceRisk,
                                     $brotherRecoRisk->getRecommandation()
                                 );
 
@@ -865,17 +921,17 @@ class AnrInstanceService extends InstanceService
             // TODO: replace all the queries with QueryBuilder. Review the logic.
             /** @var InstanceRisk[] $specificRisks */
             $specificRisks = $instanceRiskTable->getEntityByFields([ // Get all specific risks of instance
-                'anr' => $anr->getId(),
-                'instance' => $instance->getId(),
-                'specific' => 1
+                                                                     'anr' => $anr->getId(),
+                                                                     'instance' => $instance->getId(),
+                                                                     'specific' => 1
             ]);
             foreach ($specificRisks as $specificRisk) {
                 /** @var RecommandationRisk[] $exitingRecoRisks */
                 $exitingRecoRisks = $recommendationRiskTable->getEntityByFields([ // Get recommandations of brothers
-                    'anr' => $anr->getId(),
-                    'asset' => ['anr' => $anr->getId(), 'uuid' => (string)$specificRisk->get('asset')->get('uuid')],
-                    'threat' => ['anr' => $anr->getId(), 'uuid' => (string)$specificRisk->get('threat')->get('uuid')],
-                    'vulnerability' => ['anr' => $anr->getId(), 'uuid' => (string)$specificRisk->get('vulnerability')->get('uuid')]
+                                                                                  'anr' => $anr->getId(),
+                                                                                  'asset' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getAsset()->getUuid()],
+                                                                                  'threat' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getThreat()->getUuid()],
+                                                                                  'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getVulnerability()->getUuid()]
                 ]);
                 foreach ($exitingRecoRisks as $exitingRecoRisk) {
                     if ($instance->getId() !== $exitingRecoRisk->getInstance()->getId()) {
@@ -887,34 +943,34 @@ class AnrInstanceService extends InstanceService
             /** @var RecommandationRisk $recommendationRiskToCreate */
             foreach ($recoToCreate as $recommendationRiskToCreate) {
                 $recoCreated = $recommendationRiskTable->getEntityByFields([ // Check if reco-risk link exist
-                    'recommandation' => [
-                        'anr' => $anr->getId(),
-                        'uuid' => $recommendationRiskToCreate->getRecommandation()->getUuid(),
-                    ],
-                    'instance' => $instance->getId(),
-                    'asset' => [
-                        'anr' => $anr->getId(),
-                        'uuid' => (string)$recommendationRiskToCreate->getAsset()->getUuid(),
-                    ],
-                    'threat' => [
-                        'anr' => $anr->getId(),
-                        'uuid' => (string)$recommendationRiskToCreate->getThreat()->getUuid(),
-                    ],
-                    'vulnerability' => [
-                        'anr' => $anr->getId(),
-                        'uuid' => (string)$recommendationRiskToCreate->getVulnerability()->getUuid(),
-                    ]
+                                                                             'recommandation' => [
+                                                                                 'anr' => $anr->getId(),
+                                                                                 'uuid' => $recommendationRiskToCreate->getRecommandation()->getUuid(),
+                                                                             ],
+                                                                             'instance' => $instance->getId(),
+                                                                             'asset' => [
+                                                                                 'anr' => $anr->getId(),
+                                                                                 'uuid' => $recommendationRiskToCreate->getAsset()->getUuid(),
+                                                                             ],
+                                                                             'threat' => [
+                                                                                 'anr' => $anr->getId(),
+                                                                                 'uuid' => $recommendationRiskToCreate->getThreat()->getUuid(),
+                                                                             ],
+                                                                             'vulnerability' => [
+                                                                                 'anr' => $anr->getId(),
+                                                                                 'uuid' => $recommendationRiskToCreate->getVulnerability()->getUuid(),
+                                                                             ]
                 ]);
 
                 if (empty($recoCreated)) {
-                    // TODO: check if we can get it somehow else.
+                    // TODO: check if we can get it in different way as it is too heavy.
                     $instanceRiskSpecific = current($instanceRiskTable->getEntityByFields([
                         'anr' => $anr->getId(),
                         'instance' => $instance->getId(),
                         'specific' => 1,
-                        'asset' => ['anr' => $anr->getId(), 'uuid' => (string)$recommendationRiskToCreate->getAsset()->getUuid()],
-                        'threat' => ['anr' => $anr->getId(), 'uuid' => (string)$recommendationRiskToCreate->getThreat()->getUuid()],
-                        'vulnerability' => ['anr' => $anr->getId(), 'uuid' => (string)$recommendationRiskToCreate->getVulnerability()->getUuid()]
+                        'asset' => ['anr' => $anr->getId(), 'uuid' => $recommendationRiskToCreate->getAsset()->getUuid()],
+                        'threat' => ['anr' => $anr->getId(), 'uuid' => $recommendationRiskToCreate->getThreat()->getUuid()],
+                        'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $recommendationRiskToCreate->getVulnerability()->getUuid()]
                     ]));
 
                     $recommendationRisk = (new RecommandationRisk())
@@ -962,27 +1018,20 @@ class AnrInstanceService extends InstanceService
             $toApproximate[Scale::TYPE_IMPACT][] = 'brutL';
             $toApproximate[Scale::TYPE_IMPACT][] = 'brutF';
             $toApproximate[Scale::TYPE_IMPACT][] = 'brutP';
-            $k = 0;
 
             /** @var InstanceRiskOpTable $instanceRiskOpTable */
             $instanceRiskOpTable = $this->get('instanceRiskOpTable');
 
+            $k = 0;
             foreach ($data['risksop'] as $ro) {
                 $instanceRiskOp = new InstanceRiskOp();
                 $ro['rolfRisk'] = null;
                 $toExchange = $ro;
                 unset($toExchange['id']);
-                $toExchange['anr'] = $anr->getId();
-                $toExchange['instance'] = $instance->getId();
-                $toExchange['object'] = $idObject;
-                $tagId = $this->get('objectTable')->getEntity([
-                    'anr' => $anr->getId(),
-                    'uuid' => $idObject
-                ])->get('rolfTag');
-                if (null !== $tagId) {
-                    // TODO: seems rolfTag doesn't have risks relation!
-                    $rolfRisks = $tagId->risks;
-                    $toExchange['rolfRisk'] = $rolfRisks[$k]->id;
+                if ($monarcObject->getRolfTag() !== null) {
+                    // TODO: use getter.
+                    $rolfRisks = $monarcObject->getRolfTag()->risks;
+                    $toExchange['rolfRisk'] = $rolfRisks[$k];
                     $toExchange['riskCacheCode'] = $rolfRisks[$k]->code;
                     $k++;
                 }
@@ -1002,10 +1051,16 @@ class AnrInstanceService extends InstanceService
                         }
                     }
                 }
-                $instanceRiskOp->setDbAdapter($instanceRiskOpTable->getDb());
+
                 $instanceRiskOp->setLanguage($this->getLanguage());
                 $instanceRiskOp->exchangeArray($toExchange);
-                $this->setDependencies($instanceRiskOp, ['anr', 'instance', 'object', 'rolfRisk']);
+                $instanceRiskOp->setAnr($anr)
+                    ->setInstance($instance)
+                    ->setObject($monarcObject);
+                if (isset($toExchange['rolfRisk'])) {
+                    $instanceRiskOp->setRolfRisk($toExchange['rolfRisk']);
+                }
+
                 $instanceRiskOpTable->saveEntity($instanceRiskOp, false);
 
                 /** @var RecommandationRiskTable $recommendationRiskTable */
@@ -1057,7 +1112,7 @@ class AnrInstanceService extends InstanceService
      */
     private function importAnrFromArray(
         array $data,
-        AnrSuperClass $anr,
+        Anr $anr,
         ?Instance $parent,
         string $modeImport,
         bool $isRoot = false
@@ -1066,9 +1121,10 @@ class AnrInstanceService extends InstanceService
         $instanceRiskService = $this->get('instanceRiskService');
         /** @var InstanceConsequenceTable $instanceConsequenceTable */
         $instanceConsequenceTable = $this->get('instanceConsequenceTable');
+        /** @var ThreatTable $threatTable */
+        $threatTable = $this->get('threatTable');
 
         $labelKey = 'label' . $this->getLanguage();
-
         // Method information
         if (!empty($data['method'])) { //Steps checkboxes
             if (!empty($data['method']['steps'])) {
@@ -1097,12 +1153,10 @@ class AnrInstanceService extends InstanceService
                 foreach ($data['method']['interviews'] as $key => $v) {
                     $toExchange = $data['method']['interviews'][$key];
                     $toExchange['anr'] = $anr->getId();
-                    $class = $this->get('interviewTable')->getEntityClass();
-                    $newInterview = new $class();
-                    $newInterview->setDbAdapter($this->get('interviewTable')->getDb());
+                    $newInterview = new Interview();
                     $newInterview->setLanguage($this->getLanguage());
                     $newInterview->exchangeArray($toExchange);
-                    $this->setDependencies($newInterview, ['anr']);
+                    $newInterview->setAnr($anr);
                     $this->get('interviewTable')->save($newInterview, false);
                 }
                 $this->get('interviewTable')->getDb()->flush();
@@ -1118,60 +1172,69 @@ class AnrInstanceService extends InstanceService
             }
 
             if (!empty($data['method']['deliveries'])) { // Data of deliveries generation
+                /** @var DeliveryTable $deliveryTable */
+                $deliveryTable = $this->get('deliveryTable');
                 foreach ($data['method']['deliveries'] as $key => $v) {
                     $toExchange = $data['method']['deliveries'][$key];
                     $toExchange['anr'] = $anr->getId();
-                    $class = $this->get('deliveryTable')->getEntityClass();
-                    $newDelivery = new $class();
-                    $newDelivery->setDbAdapter($this->get('deliveryTable')->getDb());
+                    $newDelivery = new Delivery();
                     $newDelivery->setLanguage($this->getLanguage());
                     $newDelivery->exchangeArray($toExchange);
-                    $this->setDependencies($newDelivery, ['anr']);
-                    $this->get('deliveryTable')->save($newDelivery, false);
+                    $newDelivery->setAnr($anr);
+                    // TODO: use saveEntity.
+                    $deliveryTable->save($newDelivery, false);
                 }
-                $this->get('deliveryTable')->getDb()->flush();
+                $deliveryTable->getDb()->flush();
             }
 
             if (!empty($data['method']['questions'])) { // Questions of trends evaluation
-                $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->getId()]);
+                /** @var QuestionTable $questionTable */
+                $questionTable = $this->get('questionTable');
+                /** @var QuestionChoiceTable $questionChoiceTable */
+                $questionChoiceTable = $this->get('questionChoiceTable');
+                // TODO: findByAnr
+                $questions = $questionTable->getEntityByFields(['anr' => $anr->getId()]);
                 foreach ($questions as $question) {
-                    $this->get('questionTable')->delete($question->id);
+                    $questionTable->delete($question->id);
                 }
 
                 foreach ($data['method']['questions'] as $position => $questionData) {
                     $newQuestion = new Question();
-                    $newQuestion->setDbAdapter($this->get('questionTable')->getDb());
                     $newQuestion->setLanguage($this->getLanguage());
-                    $newQuestion->setAnr($anr);
-                    $newQuestion->set('position', $position);
                     $newQuestion->exchangeArray($questionData);
-                    $this->get('questionTable')->save($newQuestion, false);
+                    $newQuestion->setAnr($anr);
+                    // TODO: use setter.
+                    $newQuestion->set('position', $position);
+                    $questionTable->save($newQuestion, false);
 
                     if ((int)$questionData['multichoice'] === 1) {
                         foreach ($data['method']['questionChoice'] as $questionChoiceData) {
                             if ($questionChoiceData['question'] === $questionData['id']) {
                                 $newQuestionChoice = new QuestionChoice();
-                                $newQuestionChoice->setDbAdapter($this->get('questionChoiceTable')->getDb());
                                 $newQuestionChoice->setLanguage($this->getLanguage());
                                 $newQuestionChoice->exchangeArray($questionChoiceData);
-                                $newQuestionChoice->setAnr($anr)->setQuestion($newQuestion);
-                                $this->get('questionChoiceTable')->save($newQuestionChoice, false);
+                                $newQuestionChoice->setAnr($anr)
+                                    ->setQuestion($newQuestion);
+                                $questionChoiceTable->save($newQuestionChoice, false);
                             }
                         }
                     }
                 }
 
-                $this->get('questionTable')->getDb()->flush();
+                $questionTable->getDb()->flush();
 
-                /** @var QuestionSuperClass[] $questions */
-                $questions = $this->get('questionTable')->getEntityByFields(['anr' => $anr->getId()]);
+                /** @var Question[] $questions */
+                // TODO: findByAnr or better use the saved questions before, we don't need to query the db.
+                $questions = $questionTable->getEntityByFields(['anr' => $anr->getId()]);
 
-                /** @var QuestionChoiceSuperClass[] $questionChoices */
-                $questionChoices = $this->get('questionChoiceTable')->getEntityByFields(['anr' => $anr->getId()]);
+                /** @var QuestionChoice[] $questionChoices */
+                // TODO: findByAnr or better use the saved questions before, we don't need to query the db.
+                $questionChoices = $questionChoiceTable->getEntityByFields(['anr' => $anr->getId()]);
 
                 foreach ($data['method']['questions'] as $questionAnswerData) {
                     foreach ($questions as $question) {
                         if ($question->get($labelKey) === $questionAnswerData[$labelKey]) {
+                            // TODO: check if the method exists
                             if ($question->isMultiChoice()) {
                                 $originQuestionChoices = [];
                                 $response = $questionAnswerData['response'] ?? '';
@@ -1188,11 +1251,11 @@ class AnrInstanceService extends InstanceService
                                     }
                                 }
                                 $question->response = '[' . implode(',', $questionChoicesIds) . ']';
-                                $this->get('questionTable')->save($question, false);
                             } else {
                                 $question->response = $questionAnswerData['response'];
-                                $this->get('questionTable')->save($question, false);
                             }
+                            // TODO: saveEntity.
+                            $questionTable->save($question, false);
                         }
                     }
                 }
@@ -1200,206 +1263,245 @@ class AnrInstanceService extends InstanceService
                 $this->get('questionTable')->getDb()->flush();
             }
 
-            if (!empty($data['method']['threats'])) { // Evaluation of threats
+            /*
+             * Process the evaluation of threats.
+             */
+            if (!empty($data['method']['threats'])) {
+                /** @var ThemeTable $themeTable */
+                $themeTable = $this->get('themeTable');
                 foreach ($data['method']['threats'] as $tId => $v) {
                     if (!empty($data['method']['threats'][$tId]['theme'])) {
                         // TODO: avoid such queries or check to add indexes or fetch all for the ANR and iterate in the code.
-                        $themes = $this->get('themeTable')->getEntityByFields([
+                        // TODO: we have findByAnrIdAndLabel() !
+                        $themes = $themeTable->getEntityByFields([
                             'anr' => $anr->getId(),
                             $labelKey => $data['method']['threats'][$tId]['theme'][$labelKey]
                         ], ['id' => 'ASC']);
                         if (empty($themes)) { // Creation of new theme if no exist
                             $toExchange = $data['method']['threats'][$tId]['theme'];
-                            $toExchange['anr'] = $anr->getId();
-                            $class = $this->get('themeTable')->getEntityClass();
-                            $newTheme = new $class();
-                            $newTheme->setDbAdapter($this->get('themeTable')->getDb());
+                            $newTheme = new Theme();
                             $newTheme->setLanguage($this->getLanguage());
                             $newTheme->exchangeArray($toExchange);
-                            $this->setDependencies($newTheme, ['anr']);
-                            $this->get('themeTable')->save($newTheme, false);
-                            $data['method']['threats'][$tId]['theme']['id'] = $newTheme->id;
+                            $newTheme->setAnr($anr);
+                            $themeTable->saveEntity($newTheme);
+                            // TODO: set objects here to avoid querying the db.
+                            $data['method']['threats'][$tId]['theme']['id'] = $newTheme->getId();
                         } else {
                             foreach ($themes as $th) {
-                                $data['method']['threats'][$tId]['theme']['id'] = $th->id;
+                                // TODO: set objects here to avoid querying the db.
+                                $data['method']['threats'][$tId]['theme']['id'] = $th->getId();
                             }
                         }
                     }
-                    $threats = $this->get('threatTable')->getEntityByFields([
+                    /** @var Threat[] $threats */
+                    $threats = $threatTable->getEntityByFields([
                         'anr' => $anr->getId(),
                         'code' => $data['method']['threats'][$tId]['code']
                     ], ['uuid' => 'ASC']);
                     if (empty($threats)) {
                         $toExchange = $data['method']['threats'][$tId];
-                        $toExchange['anr'] = $anr->getId();
                         $toExchange['mode'] = 0;
+                        // TODO: use objects here ans use setter.
                         $toExchange['theme'] = $data['method']['threats'][$tId]['theme']['id'];
-                        $class = $this->get('threatTable')->getEntityClass();
-                        $newThreat = new $class();
-                        $newThreat->setDbAdapter($this->get('threatTable')->getDb());
+                        $newThreat = new Threat();
+                        // TODO: drop it after setDep is removed.
+                        $newThreat->setDbAdapter($threatTable->getDb());
                         $newThreat->setLanguage($this->getLanguage());
                         $newThreat->exchangeArray($toExchange);
-                        $this->setDependencies($newThreat, ['anr', 'theme']);
-                        $this->get('threatTable')->save($newThreat, false);
+                        $this->setDependencies($newThreat, ['theme']);
+                        $newThreat->setAnr($anr);
+                        // TODO: saveEntity
+                        $threatTable->save($newThreat, false);
                     } else {
                         foreach ($threats as $t) {
+                            // TODO: use setters.
                             $t->set('trend', $data['method']['threats'][$tId]['trend']);
                             $t->set('comment', $data['method']['threats'][$tId]['comment']);
                             $t->set('qualification', $data['method']['threats'][$tId]['qualification']);
                             $this->get('threatTable')->save($t, false);
                         }
-                        $this->get('threatTable')->getDb()->flush();
+                        $threatTable->getDb()->flush();
                     }
                 }
             }
         }
 
-        // import the referentials
+        /*
+         * Import the referentials.
+         */
+        /** @var ReferentialTable $referentialTable */
+        $referentialTable = $this->get('referentialTable');
         if (isset($data['referentials'])) {
             foreach ($data['referentials'] as $referentialUUID => $referential_array) {
                 // check if the referential is not already present in the analysis
-                $referentials = $this->get('referentialTable')
+                // TODO: findByAnrAndUuid
+                $referentials = $referentialTable
                     ->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $referentialUUID]);
                 if (empty($referentials)) {
                     $newReferential = new Referential($referential_array);
                     $newReferential->setAnr($anr);
-                    $this->get('referentialTable')->save($newReferential, false);
+                    // TODO: saveEntity
+                    $referentialTable->save($newReferential, false);
                 }
             }
         }
-        // import the soacategories
+
+        /*
+         * Import the soa categories.
+         */
+        /** @var SoaCategoryTable $soaCategoryTable */
+        $soaCategoryTable = $this->get('soaCategoryTable');
         if (isset($data['soacategories'])) {
             foreach ($data['soacategories'] as $soaCategory) {
                 // load the referential linked to the soacategory
-                $referentials = $this->get('referentialTable')->getEntityByFields([
+                // TODO: findByAnrAndUuid
+                $referentials = $referentialTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'uuid' => $soaCategory['referential']
                 ]);
                 if (!empty($referentials)) {
-                    $categories = $this->get('soaCategoryTable')->getEntityByFields(['anr' => $anr->getId(),
-                        $labelKey => $soaCategory[$labelKey],
-                        'referential' => [
-                            'anr' => $anr->getId(),
-                            'uuid' => $referentials[0]->uuid
-                        ]
+                    $categories = $soaCategoryTable->getEntityByFields(['anr' => $anr->getId(),
+                                                                        $labelKey => $soaCategory[$labelKey],
+                                                                        'referential' => [
+                                                                            'anr' => $anr->getId(),
+                                                                            'uuid' => $referentials[0]->getUuid(),
+                                                                        ]
                     ]);
                     if (empty($categories)) {
                         $newSoaCategory = new SoaCategory($soaCategory);
                         $newSoaCategory->setAnr($anr);
                         $newSoaCategory->setReferential($referentials[0]);
-                        $this->get('soaCategoryTable')->save($newSoaCategory, false);
+                        // TODO: saveEntity
+                        $soaCategoryTable->save($newSoaCategory, false);
                     }
                 }
             }
-            $this->get('soaCategoryTable')->getDb()->flush();
+            $soaCategoryTable->getDb()->flush();
         }
 
-        // import the measures
+        /*
+         * Import the measures.
+         */
+        /** @var SoaTable $soaTable */
+        $soaTable = $this->get('soaTable');
+        /** @var MeasureTable $measureTable */
+        $measureTable = $this->get('measureTable');
         $measuresNewIds = [];
         if (isset($data['measures'])) {
             foreach ($data['measures'] as $measureUuid => $measure_array) {
                 // check if the measure is not already in the analysis
-                $measures = $this->get('measureTable')->getEntityByFields([
+                // TODO: findByAnrAndUuid
+                $measures = $measureTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'uuid' => $measureUuid
                 ]);
                 if (empty($measures)) {
                     // load the referential linked to the measure
-                    $referentials = $this->get('referentialTable')
-                        ->getEntityByFields(['anr' => $anr->getId(),
-                            'uuid' => $measure_array['referential']]);
-                    $soaCategories = $this->get('soaCategoryTable')
-                        ->getEntityByFields(['anr' => $anr->getId(),
-                            $labelKey => $measure_array['category']]);
+                    // TODO: findByAnrAndUuid
+                    $referentials = $referentialTable->getEntityByFields([
+                        'anr' => $anr->getId(),
+                        'uuid' => $measure_array['referential']
+                    ]);
+                    $soaCategories = $soaCategoryTable->getEntityByFields([
+                        'anr' => $anr->getId(),
+                        $labelKey => $measure_array['category']
+                    ]);
                     if (!empty($referentials) && !empty($soaCategories)) {
                         // a measure must be linked to a referential and a category
-                        $newMeasure = new \Monarc\FrontOffice\Model\Entity\Measure($measure_array);
+                        $newMeasure = new Measure($measure_array);
                         $newMeasure->setAnr($anr);
                         $newMeasure->setReferential($referentials[0]);
                         $newMeasure->setCategory($soaCategories[0]);
                         $newMeasure->setAmvs(new ArrayCollection()); // need to initialize the amvs link
                         $newMeasure->setRolfRisks(new ArrayCollection());
-                        $this->get('measureTable')->save($newMeasure, false);
+                        $measureTable->save($newMeasure, false);
                         $measuresNewIds[$measureUuid] = $newMeasure;
 
                         if (!isset($data['soas'])) {
                             // if no SOAs in the analysis to import, create new ones
-                            $newSoa = new Soa();
-                            $newSoa->setAnr($anr);
+                            $newSoa = (new Soa())
+                                ->setAnr($anr);
+                            // TODO: return $this in setMeasure and join with previous chain calls.
                             $newSoa->setMeasure($newMeasure);
-                            $this->get('soaTable')->save($newSoa, false);
+                            $soaTable->saveEntity($newSoa, false);
                         }
                     }
                 }
             }
 
-            $this->get('measureTable')->getDb()->flush();
+            $measureTable->getDb()->flush();
         }
         // import the measuresmeasures
         if (isset($data['measuresMeasures'])) {
+            /** @var MeasureMeasureTable $measureMeasureTable */
+            $measureMeasureTable = $this->get('measureMeasureTable');
             foreach ($data['measuresMeasures'] as $measureMeasure) {
                 // check if the measuremeasure is not already in the analysis
-                $measuresmeasures = $this->get('measureMeasureTable')
+                // TODO: findByAnrFatherAndChild(), but before get father/child them from previously saved or find in the db
+                $measuresMeasures = $measureMeasureTable
                     ->getEntityByFields(['anr' => $anr->getId(),
-                        'father' => $measureMeasure['father'],
-                        'child' => $measureMeasure['child']]);
-                if (empty($measuresmeasures)) {
-                    $newMeasureMeasure = new MeasureMeasure($measureMeasure);
-                    $newMeasureMeasure->setAnr($anr);
-                    $this->get('measureMeasureTable')->save($newMeasureMeasure, false);
+                                         'father' => $measureMeasure['father'],
+                                         'child' => $measureMeasure['child']]);
+                if (empty($measuresMeasures)) {
+                    // TODO: change the part with use object setters ->setFather() ->setChild()
+                    $newMeasureMeasure = (new MeasureMeasure($measuresMeasures))
+                        ->setAnr($anr);
+                    $measureMeasureTable->save($newMeasureMeasure, false);
                 }
             }
-
-            $this->get('measureMeasureTable')->getDb()->flush();
+            $measureMeasureTable->getDb()->flush();
         }
 
         // import the SOAs
         if (isset($data['soas'])) {
-            $measuresStoredId = $this->get('measureTable')->fetchAllFiltered(['uuid'], 1, 0, null, null, ['anr' => $anr->getId()], null, null);
+            // TODO: findByAnr and replace the map as it won't work.
+            $measuresStoredId = $measureTable->fetchAllFiltered(['uuid'], 1, 0, null, null, ['anr' => $anr->getId()], null, null);
             $measuresStoredId = array_map(function ($elt) {
                 return (string)$elt['uuid'];
             }, $measuresStoredId);
             foreach ($data['soas'] as $soa) {
-                // check if the corresponding measure has been created during
-                // this import
+                // check if the corresponding measure has been created during this import.
                 if (array_key_exists($soa['measure_id'], $measuresNewIds)) {
-                    $newSoa = new Soa($soa);
-                    $newSoa->setAnr($anr);
+                    $newSoa = (new Soa($soa))
+                        ->setAnr($anr);
+                    // TODO: return $this from setMeasure and join this with chain calls.
                     $newSoa->setMeasure($measuresNewIds[$soa['measure_id']]);
-                    $this->get('soaTable')->save($newSoa, false);
+                    $soaTable->saveEntity($newSoa, false);
                 } elseif (in_array($soa['measure_id'], $measuresStoredId)) { //measure exist so soa exist (normally)
-                    $soaExistant = $this->get('soaTable')->getEntityByFields([
+                    // TODO: findByMeasure or find a measure then $measure->getSoa() if possible
+                    $existedSoa = $soaTable->getEntityByFields([
                         'measure' => [
                             'anr' => $anr->getId(),
                             'uuid' => $soa['measure_id']
                         ]
                     ]);
-                    if (empty($soaExistant)) {
-                        $newSoa = new Soa($soa);
-                        $newSoa->setAnr($anr);
-                        $newSoa->setMeasure($this->get('measureTable')->getEntity([
+                    if (empty($existedSoa)) {
+                        $newSoa = (new Soa($soa))
+                            ->setAnr($anr);
+                        // TODO: join setMeasure with prev chain calls, $measureTable->findByAnrAndUuid
+                        $newSoa->setMeasure($measureTable->getEntity([
                             'anr' => $anr->getId(),
                             'uuid' => $soa['measure_id']
                         ]));
-                        $this->get('soaTable')->save($newSoa, false);
+                        $soaTable->saveEntity($newSoa, false);
                     } else {
-                        $soaExistant = $soaExistant[0];
-                        $soaExistant->remarks = $soa['remarks'];
-                        $soaExistant->evidences = $soa['evidences'];
-                        $soaExistant->actions = $soa['actions'];
-                        $soaExistant->compliance = $soa['compliance'];
-                        $soaExistant->EX = $soa['EX'];
-                        $soaExistant->LR = $soa['LR'];
-                        $soaExistant->CO = $soa['CO'];
-                        $soaExistant->BR = $soa['BR'];
-                        $soaExistant->BP = $soa['BP'];
-                        $soaExistant->RRA = $soa['RRA'];
-                        $this->get('soaTable')->save($soaExistant, false);
+                        $existedSoa = $existedSoa[0];
+                        $existedSoa->remarks = $soa['remarks'];
+                        $existedSoa->evidences = $soa['evidences'];
+                        $existedSoa->actions = $soa['actions'];
+                        $existedSoa->compliance = $soa['compliance'];
+                        $existedSoa->EX = $soa['EX'];
+                        $existedSoa->LR = $soa['LR'];
+                        $existedSoa->CO = $soa['CO'];
+                        $existedSoa->BR = $soa['BR'];
+                        $existedSoa->BP = $soa['BP'];
+                        $existedSoa->RRA = $soa['RRA'];
+                        $soaTable->saveEntity($existedSoa, false);
                     }
                 }
             }
 
-            $this->get('soaTable')->getDb()->flush();
+            $soaTable->getDb()->flush();
         }
 
         // import the GDPR records
@@ -1408,15 +1510,23 @@ class AnrInstanceService extends InstanceService
                 $this->get('recordService')->importFromArray($v, $anr->getId());
             }
         }
-        // import scales
+
+        /*
+         * Import scales.
+         */
+        /** @var InstanceTable $instanceTable */
+        $instanceTable = $this->get('table');
         if (!empty($data['scales'])) {
             //Approximate values from destination analyse
             $ts = ['c', 'i', 'd'];
             /** @var InstanceSuperClass[] $instances */
-            $instances = $this->get('table')->getEntityByFields(['anr' => $anr->getId()]);
+            $instances = $instanceTable->findByAnrId($anr->getId());
+            // TODO: findByAnr
             $consequences = $instanceConsequenceTable->getEntityByFields(['anr' => $anr->getId()]);
             $scalesOrig = [];
-            $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->getId()]);
+            /** @var ScaleTable $scaleTable */
+            $scaleTable = $this->get('scaleTable');
+            $scales = $scaleTable->findByAnr($anr);
             foreach ($scales as $sc) {
                 $scalesOrig[$sc->get('type')]['min'] = $sc->get('min');
                 $scalesOrig[$sc->get('type')]['max'] = $sc->get('max');
@@ -1459,20 +1569,22 @@ class AnrInstanceService extends InstanceService
             }
 
             // Threat Qualification
-            $threats = $this->get('threatTable')->getEntityByFields(['anr' => $anr->getId()]);
-            foreach ($threats as $t) {
-                $t->set('qualification', $this->approximate(
-                    $t->get('qualification'),
+            $threats = $threatTable->findByAnr($anr);
+            foreach ($threats as $threat) {
+                $threat->set('qualification', $this->approximate(
+                    $threat->get('qualification'),
                     $scalesOrig[Scale::TYPE_THREAT]['min'],
                     $scalesOrig[Scale::TYPE_THREAT]['max'],
                     $data['scales'][Scale::TYPE_THREAT]['min'],
                     $data['scales'][Scale::TYPE_THREAT]['max']
                 ));
-                $this->get('threatTable')->save($t, false);
+                $threatTable->saveEntity($threat, false);
             }
 
             // Information Risks
-            $risks = $instanceRiskService->get('table')->getEntityByFields(['anr' => $anr->getId()]);
+            /** @var InstanceRiskTable $instanceRiskTable */
+            $instanceRiskTable = $this->get('instanceRiskTable');
+            $risks = $instanceRiskTable->findByAnr($anr);
             foreach ($risks as $r) {
                 $r->set('threatRate', $this->approximate(
                     $r->get('threatRate'),
@@ -1497,6 +1609,7 @@ class AnrInstanceService extends InstanceService
                         : 0
                 );
 
+                //TODO: find a faster way of updating risks.
                 $instanceRiskService->update($r->id, $risks);
             }
 
@@ -1544,7 +1657,7 @@ class AnrInstanceService extends InstanceService
             }
 
             // Finally update scales from import
-            $scales = $this->get('scaleTable')->getEntityByFields(['anr' => $anr->getId()]);
+            $scales = $scaleTable->findByAnr($anr);
             $types = [
                 Scale::TYPE_IMPACT,
                 Scale::TYPE_THREAT,
@@ -1552,9 +1665,12 @@ class AnrInstanceService extends InstanceService
             ];
             foreach ($types as $type) {
                 foreach ($scales as $s) {
-                    if ($s->type === $type) {
+                    if ($s->getType() === $type) {
+                        // TODO: use setters.
                         $s->min = $data['scales'][$type]['min'];
                         $s->max = $data['scales'][$type]['max'];
+                        // TODO: shell we save the entity ?
+                        // $scaleTable->saveEntity($s, false);
                     }
                 }
             }
@@ -1562,7 +1678,10 @@ class AnrInstanceService extends InstanceService
 
         $first = true;
         $instanceIds = [];
-        $nbScaleImpactTypes = count($this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->getId()]));
+        /** @var ScaleImpactTypeTable $scaleImpactTypeTable */
+        $scaleImpactTypeTable = $this->get('scaleImpactTypeTable');
+        // TODO: findByAnr.
+        $nbScaleImpactTypes = count($scaleImpactTypeTable->getEntityByFields(['anr' => $anr->getId()]));
         usort($data['instances'], function ($a, $b) {
             return $a['instance']['position'] <=> $b['instance']['position'];
         });
@@ -1626,8 +1745,9 @@ class AnrInstanceService extends InstanceService
         }
 
         //Add user consequences to all instances
-        $instances = $this->get('table')->getEntityByFields(['anr' => $anr->getId()]);
-        $scaleImpactTypes = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->getId()]);
+        $instances = $instanceTable->findByAnrId($anr->getId());
+        // TODO: findByAnr
+        $scaleImpactTypes = $scaleImpactTypeTable->getEntityByFields(['anr' => $anr->getId()]);
         foreach ($instances as $instance) {
             foreach ($scaleImpactTypes as $siType) {
                 $instanceConsequence = $instanceConsequenceTable->getEntityByFields([
@@ -1636,15 +1756,14 @@ class AnrInstanceService extends InstanceService
                     'scaleImpactType' => $siType->id
                 ]);
                 if (empty($instanceConsequence)) {
-                    $class = $instanceConsequenceTable->getEntityClass();
-                    $consequence = new $class();
+                    $consequence = new InstanceConsequence();
                     $consequence->setDbAdapter($instanceConsequenceTable->getDb());
                     $consequence->setLanguage($this->getLanguage());
                     $consequence->exchangeArray([
                         'anr' => $anr->getId(),
-                        'instance' => $instance->id,
-                        'object' => $instance->object,
-                        'scaleImpactType' => $siType->id,
+                        'instance' => $instance->getId(),
+                        'object' => $instance->getObject(),
+                        'scaleImpactType' => $siType->getId(),
                     ]);
                     $this->setDependencies($consequence, ['anr', 'object', 'instance', 'scaleImpactType']);
                     $instanceConsequenceTable->save($consequence, false);
@@ -1685,7 +1804,7 @@ class AnrInstanceService extends InstanceService
         return $this->monarcVersion;
     }
 
-    private function createSetOfRecommendations(array $data, AnrSuperClass $anr, ?string $monarcVersion): void
+    private function createSetOfRecommendations(array $data, Anr $anr, ?string $monarcVersion): void
     {
         /** @var RecommandationSetTable $recommendationSetTable */
         $recommendationSetTable = $this->get('recommandationSetTable');
@@ -1772,7 +1891,7 @@ class AnrInstanceService extends InstanceService
      * @throws EntityNotFoundException
      */
     private function processRecommendationDataLinkedToRisk(
-        AnrSuperClass $anr,
+        Anr $anr,
         array $recommendationData,
         bool $isRiskTreated
     ): Recommandation {

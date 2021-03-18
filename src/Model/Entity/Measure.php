@@ -65,7 +65,7 @@ class Measure extends MeasureSuperClass
     /**
      * @var SoaCategory
      *
-     * @ORM\ManyToOne(targetEntity="SoaCategory", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="SoaCategory", cascade={"persist"}, inversedBy="measures")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="soacategory_id", referencedColumnName="id", nullable=true)
      * })

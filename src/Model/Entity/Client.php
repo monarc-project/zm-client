@@ -66,7 +66,7 @@ class Client extends AbstractEntity
     *
     * @ORM\Column(name="contact_email", type="string", length=255, nullable=true)
     */
-    protected $contact_email;
+    protected $contactEmail;
 
     /**
      * @var string
@@ -108,28 +108,37 @@ class Client extends AbstractEntity
                 ],
                 'validators' => [],
             ]);
-
-            $validators = [];
-            if (!$partial) {
-                $validators[] = [
-                    'name' => 'Monarc\FrontOffice\Validator\UniqueClientProxyAlias',
-                    'options' => [
-                        'adapter' => $this->getDbAdapter(),
-                        'id' => $this->get('id'),
-                    ],
-                ];
-            }
-            $this->inputFilter->add([
-                'name' => 'proxyAlias',
-                'required' => ($partial) ? false : true,
-                'filters' => [
-                    [
-                        'name' => 'StringTrim',
-                    ],
-                ],
-                'validators' => $validators
-            ]);
         }
+
         return $this->inputFilter;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return (string)$this->name;
+    }
+
+    public function setName(string $name): Client
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function getContactEmail(): string
+    {
+        return (string)$this->contactEmail;
+    }
+
+    public function setContactEmail(string $contactEmail): Client
+    {
+        $this->contactEmail = $contactEmail;
+
+        return $this;
     }
 }

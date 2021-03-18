@@ -71,17 +71,6 @@ class User extends UserSuperClass
         return $this->userAnrs;
     }
 
-    public function getUserAnrByAnrId(int $anrId): ?UserAnr
-    {
-        foreach ($this->userAnrs as $userAnr) {
-            if ($userAnr->getAnr()->getId() === $anrId) {
-                return $userAnr;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * @param array|UserAnr[] $userAnrs
      */

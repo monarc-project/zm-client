@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -26,7 +25,7 @@ class ScaleTable extends AbstractEntityTable
     }
 
     /**
-     * @return ScaleSuperClass[]
+     * @return Scale[]
      */
     public function findByAnr(AnrSuperClass $anr)
     {

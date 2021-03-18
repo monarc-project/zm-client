@@ -77,6 +77,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         if (count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
+                $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Threat', ['theme']);
             }
         }
 

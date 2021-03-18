@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AmvSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
@@ -87,7 +86,6 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $queryBuilder->getQuery()->getResult();
     }
 
-
     /**
      * @return InstanceRisk[]
      */
@@ -107,6 +105,19 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     /**
      * @return InstanceRisk[]
      */
+    public function findByAnr(Anr $anr)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->where('amv.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceRisk[]
+     */
     public function findByInstanceAndAmv(InstanceSuperClass $instance, AmvSuperClass $amv)
     {
         return $this->getRepository()
@@ -118,6 +129,47 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->setParameter('instance', $instance)
             ->setParameter('amv_uuid', $amv->getUuid())
             ->setParameter('amv_anr', $amv->getAnr())
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findRisksDataForStatsByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->select('
+                ir.id,
+                IDENTITY(ir.asset) as assetId,
+                t.uuid as threatId,
+                v.uuid as vulnerabilityId,
+                ir.cacheMaxRisk,
+                ir.cacheTargetedRisk,
+                ir.threatRate,
+                ir.vulnerabilityRate,
+                i.c as instanceConfidentiality,
+                i.i as instanceIntegrity,
+                i.d as instanceAvailability,
+                t.c as threatConfidentiality,
+                t.i as threatIntegrity,
+                t.a as threatAvailability,
+                t.label1 as threatLabel1,
+                t.label2 as threatLabel2,
+                t.label3 as threatLabel3,
+                t.label4 as threatLabel4,
+                v.label1 as vulnerabilityLabel1,
+                v.label2 as vulnerabilityLabel2,
+                v.label3 as vulnerabilityLabel3,
+                v.label4 as vulnerabilityLabel4,
+                o.scope,
+                o.uuid as objectId
+            ')
+            ->where('ir.anr = :anr')
+            ->setParameter(':anr', $anr)
+            ->andWhere('ir.cacheMaxRisk > -1 OR ir.cacheTargetedRisk > -1')
+            ->innerJoin('ir.instance', 'i')
+            ->innerJoin('ir.threat', 't')
+            ->innerJoin('ir.vulnerability', 'v')
+            ->innerJoin('i.object', 'o')
             ->getQuery()
             ->getResult();
     }

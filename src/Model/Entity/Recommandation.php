@@ -13,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
+use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Monarc\Core\Validator\UniqueCode;
 
 /**
@@ -40,7 +41,7 @@ class Recommandation extends AbstractEntity
     const HIGH_IMPORTANCE = 3;
 
     /**
-     * @var integer
+     * @var LazyUuidFromString|string
      *
      * @ORM\Column(name="uuid", type="uuid", nullable=false)
      * @ORM\Id
@@ -153,14 +154,14 @@ class Recommandation extends AbstractEntity
      */
     protected $tokenImport;
 
-    public function getUuid(): string
+    public function getUuid(): ?string
     {
-        return (string)$this->uuid;
+        return $this->uuid;
     }
 
-    public function setUuid($id): self
+    public function setUuid($uuid): self
     {
-        $this->uuid = $id;
+        $this->uuid = $uuid;
 
         return $this;
     }

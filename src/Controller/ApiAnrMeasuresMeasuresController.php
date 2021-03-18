@@ -60,7 +60,7 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
 
     public function deleteList($data)
     {
-        if ($data === null) { //we delete one measuremeasure
+        if (empty($data)) { //we delete one measuremeasure
             $anrId = (int)$this->params()->fromRoute('anrid');
             $fatherId = $this->params()->fromQuery('father');
             $childId = $this->params()->fromQuery('child');

@@ -1014,7 +1014,7 @@ class DeliverableGenerationService extends AbstractService
 
                     $value = $MxV * $impact;
                     if (isset($cartoRisk['riskInfo']['counters'][$impact]) && isset($cartoRisk['riskInfo']['counters'][$impact][$MxV])) {
-                        $result = $cartoRisk['riskInfo']['counters'][$impact][$MxV] ? $cartoRisk['riskInfo']['counters'][$impact][$MxV] : null;
+                        $result = count($cartoRisk['riskInfo']['counters'][$impact][$MxV]);
                     } else {
                         $result = null;
                     }
@@ -1117,7 +1117,7 @@ class DeliverableGenerationService extends AbstractService
         list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
 
         if (is_array($distrib) && count($distrib) > 0) {
-            $gridmax = ceil(max($distrib) / 10) * 10;
+            $gridmax = ceil(max(array_map('count', $distrib)) / 10) * 10;
 
             $canvas = new \Imagick();
             $canvas->newImage(400, 205, "white");
@@ -1154,26 +1154,26 @@ class DeliverableGenerationService extends AbstractService
                 $draw->line($i, 5, $i, 184);
             }
 
-            if (isset($distrib[2]) && $distrib[2] > 0) {
+            if (isset($distrib[2]) && count($distrib[2]) > 0) {
                 $draw->setFillColor("#FD661F");
                 $draw->setStrokeColor("transparent");
-                $draw->rectangle(29, 195 - (10 + (($distrib[2] * 180) / $gridmax)), 137, 184);
+                $draw->rectangle(29, 195 - (10 + ((count($distrib[2]) * 180) / $gridmax)), 137, 184);
             }
             $draw->setFillColor('#000000');
             $draw->annotation(45, 200, ucfirst($this->anrTranslate('High risks')));
 
-            if (isset($distrib[1]) && $distrib[1] > 0) {
+            if (isset($distrib[1]) && count($distrib[1]) > 0) {
                 $draw->setFillColor("#FFBC1C");
                 $draw->setStrokeColor("transparent");
-                $draw->rectangle(146, 195 - (10 + (($distrib[1] * 180) / $gridmax)), 254, 184);
+                $draw->rectangle(146, 195 - (10 + ((count($distrib[1]) * 180) / $gridmax)), 254, 184);
             }
             $draw->setFillColor('#000000');
             $draw->annotation(160, 200, ucfirst($this->anrTranslate('Medium risks')));
 
-            if (isset($distrib[0]) && $distrib[0] > 0) {
+            if (isset($distrib[0]) && count($distrib[0]) > 0) {
                 $draw->setFillColor("#D6F107");
                 $draw->setStrokeColor("transparent");
-                $draw->rectangle(263, 195 - (10 + (($distrib[0] * 180) / $gridmax)), 371, 184);
+                $draw->rectangle(263, 195 - (10 + ((count($distrib[0]) * 180) / $gridmax)), 371, 184);
             }
             $draw->setFillColor('#000000');
             $draw->annotation(280, 200, ucfirst($this->anrTranslate('Low risks')));
@@ -1195,10 +1195,9 @@ class DeliverableGenerationService extends AbstractService
             unset($canvas);
 
             return $return;
-        } else {
-            return "";
         }
 
+        return '';
     }
 
     /**
@@ -1854,15 +1853,15 @@ class DeliverableGenerationService extends AbstractService
             if (!isset($distrib[$c])) {
                 $distrib[$c] = 0;
             }
-            $sum += $distrib[$c];
+            $sum += count($distrib[$c]);
         }
 
         $intro = sprintf($this->anrTranslate("The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"), $sum);
 
         return $intro .
-            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d critical risk(s) to be treated as priority'), $distrib[2]) .
-            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d medium risk(s) to be partially treated'), $distrib[1]) .
-            '<br/>&nbsp;&nbsp;- ' . sprintf($this->anrTranslate('%d low risk(s) negligible'), $distrib[0]);
+            "<br/>&nbsp;&nbsp;- " . count($distrib[2]) . ' ' . $this->anrTranslate('critical risk(s) to be treated as priority') .
+            "<br/>&nbsp;&nbsp;- " . count($distrib[1]) . ' ' . $this->anrTranslate('medium risk(s) to be partially treated') .
+            "<br/>&nbsp;&nbsp;- " . count($distrib[0]) . ' ' . $this->anrTranslate('low risk(s) negligible');
     }
 
     /**
@@ -2316,7 +2315,7 @@ class DeliverableGenerationService extends AbstractService
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
                     . ' - ' . (
                         $recommendationRisk->hasGlobalObjectRelation()
-                            ? (string)$recommendationRisk->getGlobalObject()->getUuid()
+                            ? $recommendationRisk->getGlobalObject()->getUuid()
                             : ''
                     );
                 if (isset($toUnset[$key])) {
@@ -2949,17 +2948,17 @@ class DeliverableGenerationService extends AbstractService
             $amvs = [];
             $rolfRisks = [];
             foreach ($controlSoa['measure']->amvs as $amv) {
-                array_push($amvs, $amv->uuid->tostring());
+                $amvs[] = $amv->getUuid();
             }
             foreach ($controlSoa['measure']->rolfRisks as $rolfRisk) {
-                array_push($rolfRisks, $rolfRisk->id);
+                $rolfRisksp[] = $rolfRisk->getId();
             }
 
             $controlSoa['measure']->rolfRisks = $riskOpService->getRisksOp($anr->getId(), null, ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']);
             $controlSoa['measure']->amvs = $riskService->getRisks($anr->getId(), null, ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']);
 
             if (!empty($controlSoa['measure']->amvs) || !empty($controlSoa['measure']->rolfRisks)) {
-                if ($controlSoa['measure']->uuid != $previousControlId) {
+                if ($controlSoa['measure']->getUuid() != $previousControlId) {
                     $section->addText(_WT($controlSoa['measure']->code) . ' - ' . _WT($controlSoa['measure']->get('label' . $anr->getLanguage())), $styleContentFontBoldCat);
 
                     if (!empty($controlSoa['measure']->amvs)) {
@@ -3043,7 +3042,7 @@ class DeliverableGenerationService extends AbstractService
                         $tableRiskOp->addCell(Font::centimeterSizeToTwips(2.00), $cellRowContinue);
                     }
                 }
-                $previousControlId = $controlSoa['measure']->uuid;
+                $previousControlId = $controlSoa['measure']->getUuid();
                 if (!empty($controlSoa['measure']->amvs)) {
                     $impacts = ['c', 'i', 'd'];
 

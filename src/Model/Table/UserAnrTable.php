@@ -37,4 +37,26 @@ class UserAnrTable extends AbstractEntityTable
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * @return UserAnr[]
+     */
+    public function findByAnrId(int $anrId)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ua')
+            ->where('ua.anr = :anrId')
+            ->setParameter('anrId', $anrId)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(UserAnr $userAnr, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($userAnr);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

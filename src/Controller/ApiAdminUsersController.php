@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\PasswordService;
-use Monarc\FrontOffice\Validator\User\CreateUserInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
 use Monarc\FrontOffice\Service\UserService;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;

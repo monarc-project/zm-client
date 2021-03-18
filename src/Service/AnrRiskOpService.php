@@ -106,16 +106,22 @@ class AnrRiskOpService extends AbstractService
                             ir.targeted_prob as targetedProb, ir.targeted_r as targetedR, ir.targeted_o as targetedO, ir.targeted_l as targetedL,
                             ir.targeted_f as targetedF, ir.targeted_p as targetedP, ir.cache_targeted_risk as cacheTargetedRisk,
                             IF(ir.kind_of_measure IS NULL OR ir.kind_of_measure = " .  \Monarc\Core\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED . ", false, true) as t,
-                            i.id as iid, i.name$l, i.position, o.scope
+                            i.id as iid, i.name$l, i.position, o.scope, rec.recommendations
                 FROM        instances_risks_op as ir
                 INNER JOIN  instances as i
                 ON          i.id = ir.instance_id
                 INNER JOIN  assets as a
                 ON          a.uuid = i.asset_id
-                and         a.anr_id = i.anr_id
+                AND         a.anr_id = i.anr_id
                 INNER JOIN  objects as o
                 ON          i.object_id = o.uuid
-                and         i.anr_id = o.anr_id
+                AND         i.anr_id = o.anr_id
+                LEFT JOIN  (SELECT rr.instance_risk_op_id, rr.anr_id,
+                            GROUP_CONCAT(rr.recommandation_id) AS recommendations
+                            FROM   recommandations_risks AS rr
+                            GROUP BY rr.instance_risk_op_id) AS rec
+                ON          ir.id = rec.instance_risk_op_id
+                AND         ir.anr_id = rec.anr_id
                 WHERE       ir.anr_id = :anrid
                 AND         a.type = :type ";
         $queryParams = [
@@ -227,7 +233,7 @@ class AnrRiskOpService extends AbstractService
 
         $instance = $this->instanceTable->getEntity($data['instance']);
         $data['instance'] = $instance;
-        $data['object'] = $this->monarcObjectTable->getEntity(['anr' => $data['anr'], 'uuid' => $instance->object->uuid->toString()]);
+        $data['object'] = $this->monarcObjectTable->getEntity(['anr' => $data['anr'], 'uuid' => $instance->getObject()->getUuid()]);
 
         if ($data['source'] == 2) {
             // Create a new risk

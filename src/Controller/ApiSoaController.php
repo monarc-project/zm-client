@@ -81,10 +81,10 @@ class ApiSoaController extends  ApiAnrAbstractController
             $amvs = [];
             $rolfRisks = [];
             foreach ($entity['measure']->amvs as $amv) {
-              array_push($amvs,$amv->uuid->toString());
+              $amvs[] = $amv->getUuid();
             }
             foreach ($entity['measure']->rolfRisks as $rolfRisk) {
-              array_push($rolfRisks,$rolfRisk->id);
+              $rolfRisksp[] = $rolfRisk->getId();
             }
             $entity['measure']->rolfRisks = $riskOpService->getRisksOp($anrId, null, ['rolfRisks' => $rolfRisks, 'limit' => -1 ,'order'=>'cacheNetRisk', 'order_direction' => 'desc']);
             $entity['measure']->amvs = $riskService->getRisks($anrId, null, ['amvs' => $amvs, 'limit' => -1, 'order'=>'maxRisk', 'order_direction' => 'desc']);

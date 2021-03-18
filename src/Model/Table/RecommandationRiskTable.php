@@ -57,11 +57,7 @@ class RecommandationRiskTable extends AbstractEntityTable
             $queryBuilder
                 ->addSelect('ir, irop')
                 ->leftJoin('rr.instanceRisk', 'ir')
-                ->leftJoin('rr.instanceRiskOp', 'irop')
-                ->andWhere($queryBuilder->expr()->orX(
-                    'ir.kindOfMeasure <> ' . InstanceRisk::KIND_NOT_TREATED,
-                    'irop.kindOfMeasure <> ' . InstanceRiskOp::KIND_NOT_TREATED
-                ));
+                ->leftJoin('rr.instanceRiskOp', 'irop');
         }
 
         foreach ($order as $field => $ascendancy) {
