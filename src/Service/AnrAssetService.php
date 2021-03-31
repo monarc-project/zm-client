@@ -255,7 +255,7 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                             $measure = $measureTable->findByAnrAndUuid($anr, $keyMeasure);
                             if ($measure === null) {
                                 /*
-                                 * Backward compatibility issue.
+                                 * Backward compatibility.
                                  * Prior v2.10.3 we did not set referential data when exported.
                                  */
                                 $referentialUuid = $data['measures'][$keyMeasure]['referential']['uuid']
