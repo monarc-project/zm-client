@@ -24,43 +24,13 @@ use Monarc\Core\Model\Entity\InstanceConsequenceSuperClass;
 class InstanceConsequence extends InstanceConsequenceSuperClass
 {
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Instance
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Instance", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $instance;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\MonarcObject
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\MonarcObject", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $object;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\ScaleImpactType
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\ScaleImpactType", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="scale_impact_type_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $scaleImpactType;
 }

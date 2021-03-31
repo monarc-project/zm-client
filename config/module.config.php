@@ -1,5 +1,6 @@
 <?php
 
+use Monarc\FrontOffice\Service\ObjectExportService;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Laminas\Di\Container\AutowireFactory;
@@ -1212,7 +1213,6 @@ return [
             'Monarc\FrontOffice\Service\AnrRolfTagService' => 'Monarc\FrontOffice\Service\AnrRolfTagServiceFactory',
             'Monarc\FrontOffice\Service\AnrRolfRiskService' => 'Monarc\FrontOffice\Service\AnrRolfRiskServiceFactory',
             'Monarc\FrontOffice\Service\AmvService' => 'Monarc\FrontOffice\Service\AmvServiceFactory',
-            'Monarc\FrontOffice\Service\AssetService' => 'Monarc\FrontOffice\Service\AssetServiceFactory',
             ClientService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
             'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
@@ -1235,9 +1235,9 @@ return [
             'Monarc\FrontOffice\Service\AnrInstanceService' => 'Monarc\FrontOffice\Service\AnrInstanceServiceFactory',
             'Monarc\FrontOffice\Service\AnrRiskOpService' => 'Monarc\FrontOffice\Service\AnrRiskOpServiceFactory',
             'Monarc\FrontOffice\Service\AnrObjectCategoryService' => 'Monarc\FrontOffice\Service\AnrObjectCategoryServiceFactory',
-            'Monarc\FrontOffice\Service\ObjectExportService' => 'Monarc\FrontOffice\Service\ObjectExportServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
+            ObjectExportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
 

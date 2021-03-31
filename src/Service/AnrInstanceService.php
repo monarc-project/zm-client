@@ -15,9 +15,6 @@ use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
-use Monarc\Core\Model\Entity\MonarcObject;
-use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
-use Monarc\Core\Model\Entity\QuestionSuperClass;
 use Monarc\Core\Model\Entity\Scale;
 use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Entity\Anr;
@@ -35,6 +32,7 @@ use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 use Monarc\FrontOffice\Model\Entity\Referential;
+use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Entity\Theme;
@@ -48,7 +46,6 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\MeasureMeasureTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
-use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
 use Monarc\FrontOffice\Model\Table\QuestionChoiceTable;
 use Monarc\FrontOffice\Model\Table\QuestionTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
@@ -138,7 +135,9 @@ class AnrInstanceService extends InstanceService
      * @param array $data The data that has been posted to the API
      *
      * @return array An array where the first key is the generated IDs, and the second are import errors
+     * @throws EntityNotFoundException
      * @throws Exception If the uploaded data is invalid, or the ANR invalid
+     * @throws OptimisticLockException
      */
     public function importFromFile($anrId, $data)
     {
@@ -163,7 +162,7 @@ class AnrInstanceService extends InstanceService
         $anrTable = $this->get('anrTable');
         $anr = $anrTable->findById($anrId);
 
-        // When importing huge instances trees, Zend can take up a whole lot of memory
+        // TODO: remove this!!!
         ini_set('max_execution_time', 0);
         ini_set('memory_limit', -1);
 
@@ -219,7 +218,10 @@ class AnrInstanceService extends InstanceService
      * @param bool $isRoot If the imported instance should be treated as a root instance
      *
      * @return array|bool An array of created instances IDs, or false in case of error
+     *
      * @throws Exception
+     * @throws OptimisticLockException
+     * @throws EntityNotFoundException
      */
     public function importFromArray(
         array $data,
@@ -246,7 +248,10 @@ class AnrInstanceService extends InstanceService
 
     /**
      * @return bool|int
+     *
+     * @throws EntityNotFoundException
      * @throws Exception
+     * @throws OptimisticLockException
      */
     private function importInstanceFromArray(
         array $data,
@@ -262,24 +267,33 @@ class AnrInstanceService extends InstanceService
 
         $monarcVersion = $this->getMonarcVersion();
 
-        // On teste avant tout que l'on peux importer le fichier dans cette instance (level != LEVEL_INTER)
-        if ($isRoot && $parent !== null) {
-            // On en profite pour vérifier qu'on n'importe pas le fichier dans une instance qui n'appartient
-            // pas à l'ANR passée en param
-            if ($parent->getLevel() === InstanceSuperClass::LEVEL_INTER
+        // Check if the data can be imported in the anr.
+        if ($isRoot && $parent !== null
+            && (
+                $parent->getLevel() === InstanceSuperClass::LEVEL_INTER
                 || $parent->getAnr() !== $anr
-            ) {
-                return false;
-            }
+            )
+        ) {
+            return false;
         }
+
+        /*
+         * TODO: Global list.
+         * 1. sort out the sharedData (cache) usage, save objects instead of id/uuid
+         * 2. replace all the usages of getEntityByFields to findBy
+         * 3. replace save to saveEntity
+         * 4. replace setting array in the entities constructors to setters usage.
+         * 5. extract peaces of the code to separate private methods
+         * 6. optimize some logic, group maybe.
+         */
 
         // On s'occupe de l'évaluation. Le $data['scales'] n'est présent que sur la première instance, il ne l'est
         // plus après donc ce code n'est exécuté qu'une seule fois.
         $localScaleImpact = null;
         $includeEval = !empty($data['with_eval']);
+        /** @var ScaleTable $scaleTable */
+        $scaleTable = $this->get('scaleTable');
         if ($includeEval && !empty($data['scales'])) {
-            /** @var ScaleTable $scaleTable */
-            $scaleTable = $this->get('scaleTable');
             $scales = $scaleTable->findByAnr($anr);
             $this->sharedData['scales']['dest'] = [];
             $this->sharedData['scales']['orig'] = $data['scales'];
@@ -289,7 +303,7 @@ class AnrInstanceService extends InstanceService
                     // utile pour la gestion des conséquences
                     $localScaleImpact = $scale;
                 }
-                $this->sharedData['scales']['dest'][$scale->get('type')] = [
+                $this->sharedData['scales']['dest'][$scale->getType()] = [
                     'min' => $scale->getMin(),
                     'max' => $scale->getMax(),
                 ];
@@ -303,10 +317,8 @@ class AnrInstanceService extends InstanceService
         }
         /** @var ObjectExportService $objectExportService */
         $objectExportService = $this->get('objectExportService');
-        // TODO: We should not pass the shared data, as it can be heavy, use ObjectExportService prop for the purpose.
-        // TODO: instead of object UUID return the object itself then we don't need to query the db.
-        $idObject = $objectExportService->importFromArray($data['object'], $anr, $modeImport, $this->sharedData);
-        if (!$idObject) {
+        $monarcObject = $objectExportService->importFromArray($data['object'], $anr, $modeImport);
+        if ($monarcObject === null) {
             return false;
         }
 
@@ -323,9 +335,6 @@ class AnrInstanceService extends InstanceService
         unset($toExchange['id']);
         unset($toExchange['position']);
         $toExchange['asset'] = null;
-        /** @var MonarcObjectTable $monarcObjectTable */
-        $monarcObjectTable = $this->get('objectTable');
-        $monarcObject = $monarcObjectTable->findByAnrAndUuid($anr, $idObject);
         if ($modeImport === 'duplicate') {
             for ($i = 1; $i <= 4; $i++) {
                 $toExchange['name' . $i] = $monarcObject->get('name' . $i);
@@ -371,35 +380,37 @@ class AnrInstanceService extends InstanceService
             }
 
             if (!empty($data['consequences'])) {
-                if (empty($localScaleImpact)) {
-                    $localScaleImpact = current($this->get('scaleTable')->getEntityByFields([
-                        'anr' => $anr->getId(),
-                        'type' => Scale::TYPE_IMPACT
-                    ]));
+                if ($localScaleImpact === null) {
+                    $localScaleImpact = $scaleTable->findByAnrAndType($anr, Scale::TYPE_IMPACT);
                 }
-                $scalesImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $anr->getId()]);
-                $localScalesImpactType = [];
-                foreach ($scalesImpactType as $scale) {
-                    $localScalesImpactType[$scale->get($labelKey)] = $scale->get('id');
+                /** @var ScaleImpactTypeTable $scalesImpactTypeTable */
+                $scalesImpactTypeTable = $this->get('scaleImpactTypeTable');
+                $scalesImpactTypes = $scalesImpactTypeTable->findByAnr($anr);
+                $localScalesImpactTypes = [];
+                foreach ($scalesImpactTypes as $scalesImpactType) {
+                    $localScalesImpactTypes[$scalesImpactType->getLabel($labelKey)] = $scalesImpactType;
                 }
-                unset($scalesImpactType);
 
                 foreach ($data['consequences'] as $conseq) {
-                    if (!isset($localScalesImpactType[$conseq['scaleImpactType'][$labelKey]])) {
+                    if (!isset($localScalesImpactTypes[$conseq['scaleImpactType'][$labelKey]])) {
+                        // TODO: replace the part to setters use.
                         $toExchange = $conseq['scaleImpactType'];
                         unset($toExchange['id']);
-                        $toExchange['anr'] = $anr->getId();
-                        $toExchange['scale'] = $localScaleImpact->get('id');
-                        $toExchange['implicitPosition'] = 2;
 
-                        $class = $this->get('scaleImpactTypeTable')->getEntityClass();
-                        $scaleImpT = new $class();
-                        $scaleImpT->setDbAdapter($instanceTable->getDb());
-                        $scaleImpT->setLanguage($this->getLanguage());
-                        $scaleImpT->exchangeArray($toExchange);
-                        $this->setDependencies($scaleImpT, ['anr', 'scale']);
-                        $localScalesImpactType[$conseq['scaleImpactType'][$labelKey]]
-                            = $this->get('scaleImpactTypeTable')->save($scaleImpT, false);
+                        $scaleImpactType = new ScaleImpactType();
+
+                        // TODO: remove after setter use.
+                        $scaleImpactType->setLanguage($this->getLanguage());
+                        $scaleImpactType->exchangeArray($toExchange);
+
+                        $maxPosition = $scalesImpactTypeTable->findMaxPositionByAnrAndScale($anr, $localScaleImpact);
+
+                        $scaleImpactType->setAnr($anr)
+                            ->setScale($localScaleImpact)
+                            ->setPosition($maxPosition + 1);
+                        $scalesImpactTypeTable->saveEntity($scaleImpactType, false);
+
+                        $localScalesImpactTypes[$conseq['scaleImpactType'][$labelKey]] = $scaleImpactType;
                     }
 
                     $ts = ['c', 'i', 'd'];
@@ -414,22 +425,24 @@ class AnrInstanceService extends InstanceService
                             $this->sharedData['scales']['dest'][Scale::TYPE_IMPACT]['max']
                         );
                     }
+
+                    // TODO: replace with setters use.
                     $toExchange = $conseq;
                     unset($toExchange['id']);
-                    $toExchange['anr'] = $anr->getId();
-                    $toExchange['instance'] = $instance->getId();
-                    $toExchange['object'] = $idObject;
-                    $toExchange['scale'] = $localScaleImpact->get('id');
-                    $toExchange['scaleImpactType'] =
-                        $localScalesImpactType[$conseq['scaleImpactType'][$labelKey]];
-                    $class = $instanceConsequenceTable->getEntityClass();
-                    $consequence = new $class();
-                    $consequence->setDbAdapter($instanceConsequenceTable->getDb());
+
+                    $consequence = new InstanceConsequence();
+
+                    // TODO: remove the setLang, and exchange array.
                     $consequence->setLanguage($this->getLanguage());
                     $consequence->exchangeArray($toExchange);
-                    $this->setDependencies($consequence, ['anr', 'object', 'instance', 'scaleImpactType']);
-                    $instanceConsequenceTable->save($consequence, false);
+
+                    $consequence->setAnr($anr)
+                        ->setObject($monarcObject)
+                        ->setInstance($instance)
+                        ->setScaleImpactType($localScalesImpactTypes[$conseq['scaleImpactType'][$labelKey]]);
+                    $instanceConsequenceTable->saveEntity($consequence, false);
                 }
+                unset($localScalesImpactTypes);
 
                 $instanceConsequenceTable->getDb()->flush();
             }
@@ -918,20 +931,22 @@ class AnrInstanceService extends InstanceService
 
             // Check recommandations from specific risk of brothers
             $recoToCreate = [];
+            // Get all specific risks of instance
             // TODO: replace all the queries with QueryBuilder. Review the logic.
             /** @var InstanceRisk[] $specificRisks */
-            $specificRisks = $instanceRiskTable->getEntityByFields([ // Get all specific risks of instance
-                                                                     'anr' => $anr->getId(),
-                                                                     'instance' => $instance->getId(),
-                                                                     'specific' => 1
+            $specificRisks = $instanceRiskTable->getEntityByFields([
+                'anr' => $anr->getId(),
+                'instance' => $instance->getId(),
+                'specific' => 1,
             ]);
             foreach ($specificRisks as $specificRisk) {
+                // Get recommandations of brothers
                 /** @var RecommandationRisk[] $exitingRecoRisks */
-                $exitingRecoRisks = $recommendationRiskTable->getEntityByFields([ // Get recommandations of brothers
-                                                                                  'anr' => $anr->getId(),
-                                                                                  'asset' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getAsset()->getUuid()],
-                                                                                  'threat' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getThreat()->getUuid()],
-                                                                                  'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getVulnerability()->getUuid()]
+                $exitingRecoRisks = $recommendationRiskTable->getEntityByFields([
+                    'anr' => $anr->getId(),
+                    'asset' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getAsset()->getUuid()],
+                    'threat' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getThreat()->getUuid()],
+                    'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getVulnerability()->getUuid()],
                 ]);
                 foreach ($exitingRecoRisks as $exitingRecoRisk) {
                     if ($instance->getId() !== $exitingRecoRisk->getInstance()->getId()) {
@@ -942,24 +957,25 @@ class AnrInstanceService extends InstanceService
 
             /** @var RecommandationRisk $recommendationRiskToCreate */
             foreach ($recoToCreate as $recommendationRiskToCreate) {
-                $recoCreated = $recommendationRiskTable->getEntityByFields([ // Check if reco-risk link exist
-                                                                             'recommandation' => [
-                                                                                 'anr' => $anr->getId(),
-                                                                                 'uuid' => $recommendationRiskToCreate->getRecommandation()->getUuid(),
-                                                                             ],
-                                                                             'instance' => $instance->getId(),
-                                                                             'asset' => [
-                                                                                 'anr' => $anr->getId(),
-                                                                                 'uuid' => $recommendationRiskToCreate->getAsset()->getUuid(),
-                                                                             ],
-                                                                             'threat' => [
-                                                                                 'anr' => $anr->getId(),
-                                                                                 'uuid' => $recommendationRiskToCreate->getThreat()->getUuid(),
-                                                                             ],
-                                                                             'vulnerability' => [
-                                                                                 'anr' => $anr->getId(),
-                                                                                 'uuid' => $recommendationRiskToCreate->getVulnerability()->getUuid(),
-                                                                             ]
+                // Check if reco-risk link exist
+                $recoCreated = $recommendationRiskTable->getEntityByFields([
+                     'recommandation' => [
+                         'anr' => $anr->getId(),
+                         'uuid' => $recommendationRiskToCreate->getRecommandation()->getUuid(),
+                     ],
+                     'instance' => $instance->getId(),
+                     'asset' => [
+                         'anr' => $anr->getId(),
+                         'uuid' => $recommendationRiskToCreate->getAsset()->getUuid(),
+                     ],
+                     'threat' => [
+                         'anr' => $anr->getId(),
+                         'uuid' => $recommendationRiskToCreate->getThreat()->getUuid(),
+                     ],
+                     'vulnerability' => [
+                         'anr' => $anr->getId(),
+                         'uuid' => $recommendationRiskToCreate->getVulnerability()->getUuid(),
+                     ]
                 ]);
 
                 if (empty($recoCreated)) {
@@ -968,9 +984,18 @@ class AnrInstanceService extends InstanceService
                         'anr' => $anr->getId(),
                         'instance' => $instance->getId(),
                         'specific' => 1,
-                        'asset' => ['anr' => $anr->getId(), 'uuid' => $recommendationRiskToCreate->getAsset()->getUuid()],
-                        'threat' => ['anr' => $anr->getId(), 'uuid' => $recommendationRiskToCreate->getThreat()->getUuid()],
-                        'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $recommendationRiskToCreate->getVulnerability()->getUuid()]
+                        'asset' => [
+                            'anr' => $anr->getId(),
+                            'uuid' => $recommendationRiskToCreate->getAsset()->getUuid(),
+                        ],
+                        'threat' => [
+                            'anr' => $anr->getId(),
+                            'uuid' => $recommendationRiskToCreate->getThreat()->getUuid(),
+                        ],
+                        'vulnerability' => [
+                            'anr' => $anr->getId(),
+                            'uuid' => $recommendationRiskToCreate->getVulnerability()->getUuid(),
+                        ],
                     ]));
 
                     $recommendationRisk = (new RecommandationRisk())
@@ -1360,12 +1385,13 @@ class AnrInstanceService extends InstanceService
                     'uuid' => $soaCategory['referential']
                 ]);
                 if (!empty($referentials)) {
-                    $categories = $soaCategoryTable->getEntityByFields(['anr' => $anr->getId(),
-                                                                        $labelKey => $soaCategory[$labelKey],
-                                                                        'referential' => [
-                                                                            'anr' => $anr->getId(),
-                                                                            'uuid' => $referentials[0]->getUuid(),
-                                                                        ]
+                    $categories = $soaCategoryTable->getEntityByFields([
+                        'anr' => $anr->getId(),
+                        $labelKey => $soaCategory[$labelKey],
+                        'referential' => [
+                            'anr' => $anr->getId(),
+                            'uuid' => $referentials[0]->getUuid(),
+                        ]
                     ]);
                     if (empty($categories)) {
                         $newSoaCategory = new SoaCategory($soaCategory);
@@ -1680,8 +1706,7 @@ class AnrInstanceService extends InstanceService
         $instanceIds = [];
         /** @var ScaleImpactTypeTable $scaleImpactTypeTable */
         $scaleImpactTypeTable = $this->get('scaleImpactTypeTable');
-        // TODO: findByAnr.
-        $nbScaleImpactTypes = count($scaleImpactTypeTable->getEntityByFields(['anr' => $anr->getId()]));
+        $nbScaleImpactTypes = \count($scaleImpactTypeTable->findByAnr($anr));
         usort($data['instances'], function ($a, $b) {
             return $a['instance']['position'] <=> $b['instance']['position'];
         });
@@ -1729,7 +1754,10 @@ class AnrInstanceService extends InstanceService
                 }
                 $OrigPosition = $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position'] ?? 0;
                 $position = ($OrigPosition > 8) ? $OrigPosition + ($nbScaleImpactTypes - 8) : $OrigPosition;
-                $scaleImpactType = $this->get('scaleImpactTypeTable')->getEntityByFields([
+                /** @var ScaleImpactTypeTable $scaleImpactTypeTable */
+                $scaleImpactTypeTable = $this->get('scaleImpactTypeTable');
+                // TODO: findBy...
+                $scaleImpactType = $scaleImpactTypeTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'position' => $position
                 ]);
@@ -1746,8 +1774,7 @@ class AnrInstanceService extends InstanceService
 
         //Add user consequences to all instances
         $instances = $instanceTable->findByAnrId($anr->getId());
-        // TODO: findByAnr
-        $scaleImpactTypes = $scaleImpactTypeTable->getEntityByFields(['anr' => $anr->getId()]);
+        $scaleImpactTypes = $scaleImpactTypeTable->findByAnr($anr);
         foreach ($instances as $instance) {
             foreach ($scaleImpactTypes as $siType) {
                 $instanceConsequence = $instanceConsequenceTable->getEntityByFields([

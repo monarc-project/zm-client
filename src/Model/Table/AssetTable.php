@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Asset;
 
 /**
@@ -21,5 +22,18 @@ class AssetTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Asset::class, $connectedUserService);
+    }
+
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Asset
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('a')
+            ->where('a.anr = :anr')
+            ->andWhere('a.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

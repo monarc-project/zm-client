@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrObjectService;
 
 /**
  * Api ANR Objects Import Controller
@@ -27,7 +29,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
         $filter = $this->params()->fromQuery("filter");
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $objects = $this->getService()->getCommonObjects($anrId,$filter);
         return new JsonModel([
@@ -43,14 +45,19 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
-        $newid = $this->getService()->importFromCommon($id, $data);
+        /** @var AnrObjectService $anrObjectService */
+        $anrObjectService = $this->getService();
+        $monarcObject = $anrObjectService->importFromCommon($id, $data);
+        if ($monarcObject === null) {
+            throw new Exception('An error occurred during the import of the object.', 412);
+        }
 
         return new JsonModel([
             'status' => 'ok',
-            'id' => $newid
+            'id' => $monarcObject->getUuid()
         ]);
     }
 
@@ -61,7 +68,7 @@ class ApiAnrObjectsImportController extends ApiAnrImportAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $object = $this->getService()->getCommonEntity($anrId, $id);

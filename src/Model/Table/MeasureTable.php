@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Measure;
 
 /**
@@ -21,5 +22,18 @@ class MeasureTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Measure::class, $connectedUserService);
+    }
+
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Measure
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('m')
+            ->where('m.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->andWhere('m.uuid = :uuid')
+            ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

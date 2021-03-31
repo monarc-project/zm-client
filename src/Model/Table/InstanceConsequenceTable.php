@@ -45,4 +45,13 @@ class InstanceConsequenceTable extends AbstractEntityTable
 
         return $res > 0;
     }
+
+    public function saveEntity(InstanceConsequence $instanceConsequence, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($instanceConsequence);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

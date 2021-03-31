@@ -46,51 +46,6 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
     ];
 
     /**
-     * Imports an asset that has been exported into a file.
-     * @param int $anrId The target ANR ID
-     * @param array $data The data that has been posted to the API (password, file)
-     * @return array An array where the first key is an array of generated IDs, and the second the eventual errors
-     * @throws Exception If the posted data is invalid, or ANR ID is ivalid
-     */
-    public function importFromFile($anrId, $data)
-    {
-        // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
-        if (empty($data['file'])) {
-            throw new Exception('File missing', 412);
-        }
-
-        $ids = $errors = [];
-        $anr = $this->get('anrTable')->getEntity($anrId); // throws Monarc\Core\Exception\Exception if invalid
-
-        foreach ($data['file'] as $f) {
-            if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
-                $file = [];
-                if (empty($data['password'])) {
-                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
-                    if ($file == false) { // support legacy export which were base64 encoded
-                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), '')), true);
-                    }
-                } else {
-                    // Decrypt the file and store the JSON data as an array in memory
-                    $key = $data['password'];
-                    $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
-                    if ($file == false) { // support legacy export which were base64 encoded
-                      $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
-                    }
-                }
-
-                if ($file !== false && ($id = $this->get('objectExportService')->importFromArray($file, $anr)) !== false) {
-                    $ids[] = $id;
-                } else {
-                    $errors[] = 'The file "' . $f['name'] . '" can\'t be imported';
-                }
-            }
-        }
-
-        return [$ids, $errors];
-    }
-
-    /**
      * Imports an asset from a data array. This data is generally what has been exported into a file.
      * @param string $monarc_version version of monarc which the assets come from
      * @param array $data The asset's data fields
@@ -100,8 +55,9 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
      */
     public function importFromArray($monarc_version, $data, $anr, &$objectsCache = [])
     {
-        if(isset($data['type']) && $data['type'] == 'asset')
-        {
+        // TODO: remove the param and use local cache $this->cachedData, check AnrInstanceService if the keys from here are used.
+
+        if(isset($data['type']) && $data['type'] == 'asset') {
           $referentialPresent = false;
 
           if (version_compare ($monarc_version, "2.8.2")>=0 ) { //TO DO:set the right value with the uuid version

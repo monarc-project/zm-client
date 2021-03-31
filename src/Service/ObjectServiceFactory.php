@@ -31,7 +31,7 @@ class ObjectServiceFactory extends AbstractServiceFactory
         'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
         'objectObjectTable' => 'Monarc\FrontOffice\Model\Table\ObjectObjectTable',
         'rolfTagTable' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
-        'assetService' => 'Monarc\FrontOffice\Service\AssetService',
+        'assetService' => 'Monarc\FrontOffice\Service\AnrAssetService',
         'objectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectService',
         'instanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpService',
     ];

@@ -20,38 +20,4 @@ use Monarc\Core\Model\Entity\RolfTagSuperClass;
  */
 class RolfTag extends RolfTagSuperClass
 {
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
-    /**
-     * @return Anr
-     */
-    public function getAnr()
-    {
-        return $this->anr;
-    }
-
-    /**
-     * @param Anr $anr
-     * @return RolfTag
-     */
-    public function setAnr($anr)
-    {
-        $this->anr = $anr;
-        return $this;
-    }
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\RolfRisk
-     *
-     * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RolfRisk", mappedBy="tags", cascade={"persist"})
-     */
-    protected $risks;
 }
