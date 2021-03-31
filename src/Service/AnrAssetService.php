@@ -254,16 +254,32 @@ class AnrAssetService extends \Monarc\Core\Service\AbstractService
                         foreach ($valueAmv['measures'] as $keyMeasure) {
                             $measure = $measureTable->findByAnrAndUuid($anr, $keyMeasure);
                             if ($measure === null) {
+                                /*
+                                 * Backward compatibility issue.
+                                 * Prior v2.10.3 we did not set referential data when exported.
+                                 */
+                                $referentialUuid = $data['measures'][$keyMeasure]['referential']['uuid']
+                                    ?? $data['measures'][$keyMeasure]['referential'];
+
                                 $referential = $referentialTable->findByAnrAndUuid(
                                     $anr,
-                                    $data['measures'][$keyMeasure]['referential']['uuid']
+                                    $referentialUuid
                                 );
-                                if ($referential === null) {
+
+                                // For backward compatibility issue.
+                                if ($referential === null
+                                    && isset($data['measures'][$keyMeasure]['referential']['label' . $this->getLanguage()])
+                                ) {
                                     $referential = (new Referential())
                                         ->setAnr($anr)
                                         ->setUuid($data['measures'][$keyMeasure]['referential']['uuid'])
                                         ->{'setLabel' . $this->getLanguage()}($data['measures'][$keyMeasure]['referential']['label' . $this->getLanguage()]);
                                     $referentialTable->saveEntity($referential);
+                                }
+
+                                // For backward compatibility issue.
+                                if ($referential === null) {
+                                    continue;
                                 }
 
                                 $category = $this->get('soaCategoryTable')->getEntityByFields([
