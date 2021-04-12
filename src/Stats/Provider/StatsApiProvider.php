@@ -43,6 +43,7 @@ class StatsApiProvider
         }
 
         $this->apiKey = $config['statsApi']['apiKey'];
+        $this->userAgent = $config['statsApi']['userAgent'];
     }
 
     /**
@@ -56,7 +57,7 @@ class StatsApiProvider
     public function getStatsData(array $params): array
     {
         $response = $this->guzzleClient->get(self::BASE_URI . '/stats/', [
-            'headers' => $this->getAuthHeaders(),
+            'headers' => $this->getHeaders(),
             'json' => $params,
         ]);
 
@@ -78,7 +79,7 @@ class StatsApiProvider
     public function getProcessedStatsData(array $params): array
     {
         $response = $this->guzzleClient->get(self::BASE_URI . '/stats/processed/', [
-            'headers' => $this->getAuthHeaders(),
+            'headers' => $this->getHeaders(),
             'json' => $params,
         ]);
 
@@ -97,7 +98,7 @@ class StatsApiProvider
     public function sendStatsDataInBatch(array $data): void
     {
         $response = $this->guzzleClient->post(self::BASE_URI . '/stats/', [
-            'headers' => $this->getAuthHeaders(),
+            'headers' => $this->getHeaders(),
             'json' => $data,
         ]);
 
@@ -115,7 +116,7 @@ class StatsApiProvider
     public function deleteStatsForAnr(string $anrUuid): void
     {
         $response = $this->guzzleClient->delete(self::BASE_URI . '/stats/' . $anrUuid, [
-            'headers' => $this->getAuthHeaders(),
+            'headers' => $this->getHeaders(),
         ]);
 
         if ($response->getStatusCode() !== 204) {
@@ -127,7 +128,7 @@ class StatsApiProvider
     public function getClient(): array
     {
         $response = $this->guzzleClient->get(self::BASE_URI . '/client/me', [
-            'headers' => $this->getAuthHeaders(),
+            'headers' => $this->getHeaders(),
         ]);
 
         if ($response->getStatusCode() !== 200) {
@@ -140,7 +141,7 @@ class StatsApiProvider
     public function updateClient(array $data): array
     {
         $response = $this->guzzleClient->patch(self::BASE_URI . '/client/me', [
-            'headers' => $this->getAuthHeaders(),
+            'headers' => $this->getHeaders(),
             'json' => $data,
         ]);
 
@@ -151,10 +152,11 @@ class StatsApiProvider
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    private function getAuthHeaders(): array
+    private function getHeaders(): array
     {
         return [
             'X-API-KEY' => $this->apiKey,
+            'User-Agent' => $this->userAgent,
         ];
     }
 
