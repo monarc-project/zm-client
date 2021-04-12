@@ -168,6 +168,9 @@ class StatsApiProvider
         if (empty($config['statsApi']['baseUrl'])) {
             throw new InvalidConfigurationException(['statsApi.baseUrl']);
         }
+        if (empty($config['statsApi']['userAgent'])) {
+            throw new InvalidConfigurationException(['statsApi.userAgent']);
+        }
     }
 
     /**
