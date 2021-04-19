@@ -92,6 +92,7 @@ class AnrInstanceService extends InstanceService
     protected $measureMeasureTable;
     protected $soaTable;
     protected $recordService;
+    protected $objectImportService;
 
     /** @var string|null */
     private $monarcVersion;
@@ -315,9 +316,9 @@ class AnrInstanceService extends InstanceService
         if (!isset($this->sharedData['objects'])) {
             $this->sharedData['objects'] = [];
         }
-        /** @var ObjectExportService $objectExportService */
-        $objectExportService = $this->get('objectExportService');
-        $monarcObject = $objectExportService->importFromArray($data['object'], $anr, $modeImport);
+        /** @var ObjectImportService $objectImportService */
+        $objectImportService = $this->get('objectImportService');
+        $monarcObject = $objectImportService->importFromArray($data['object'], $anr, $modeImport);
         if ($monarcObject === null) {
             return false;
         }
@@ -1290,6 +1291,7 @@ class AnrInstanceService extends InstanceService
 
             /*
              * Process the evaluation of threats.
+             * TODO: we process all the threats in themes in AssetImportService, might be we can reuse the data from there.
              */
             if (!empty($data['method']['threats'])) {
                 /** @var ThemeTable $themeTable */

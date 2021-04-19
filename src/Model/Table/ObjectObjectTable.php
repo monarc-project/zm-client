@@ -43,8 +43,7 @@ class ObjectObjectTable extends CoreObjectObjectTable
 
     public function findMaxPositionByAnrAndFather(Anr $anr, MonarcObject $father): int
     {
-        return (int)$this->getRepository()
-            ->createQueryBuilder('oo')
+        return (int)$this->getRepository()->createQueryBuilder('oo')
             ->select('MAX(oo.position)')
             ->where('oo.anr = :anr')
             ->andWhere('oo.father = :father')
@@ -52,6 +51,24 @@ class ObjectObjectTable extends CoreObjectObjectTable
             ->setParameter('father', $father)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * @return ObjectObject[]
+     */
+    public function findChildrenByFather(MonarcObject $father, array $order = []): array
+    {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('oo')
+            ->where('oo.father = :father')
+            ->setParameter('father', $father);
+
+        if (!empty($order)) {
+            foreach ($order as $field => $direction) {
+                $queryBuilder->orderBy('oo.' . $field, $direction);
+            }
+        }
+
+        return $queryBuilder->getQuery()->getResult();
     }
 
     public function saveEntity(ObjectObjectSuperClass $objectObject, bool $flushAll = true): void

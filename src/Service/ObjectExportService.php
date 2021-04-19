@@ -3,343 +3,280 @@
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\NonUniqueResultException;
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
+use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\ObjectCategory;
-use Monarc\FrontOffice\Model\Entity\ObjectObject;
-use Monarc\FrontOffice\Model\Entity\RolfRisk;
-use Monarc\FrontOffice\Model\Entity\RolfTag;
-use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
-use Monarc\FrontOffice\Model\Table\AssetTable;
-use Monarc\FrontOffice\Model\Table\MeasureTable;
 use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
-use Monarc\FrontOffice\Model\Table\ObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\ObjectObjectTable;
-use Monarc\FrontOffice\Model\Table\RolfRiskTable;
-use Monarc\FrontOffice\Model\Table\RolfTagTable;
 
 class ObjectExportService
 {
     /** @var MonarcObjectTable */
     private $monarcObjectTable;
 
-    /** @var AnrAssetService */
-    private $assetService;
-
-    /** @var RolfTagTable */
-    private $rolfTagTable;
-
-    /** @var RolfRiskTable */
-    private $rolfRiskTable;
-
-    /** @var MeasureTable */
-    private $measureTable;
+    /** @var AssetExportService */
+    private $assetExportService;
 
     /** @var ObjectObjectTable */
     private $objectObjectTable;
 
-    /** @var AssetTable */
-    private $assetTable;
+    /** @var ConfigService */
+    private $configService;
 
     public function __construct(
         MonarcObjectTable $monarcObjectTable,
         ObjectObjectTable $objectObjectTable,
-        AnrAssetService $assetService,
-        RolfTagTable $rolfTagTable,
-        RolfRiskTable $rolfRiskTable,
-        MeasureTable $measureTable,
-        AssetTable $assetTable
+        AssetExportService $assetExportService,
+        ConfigService $configService
     ) {
         $this->monarcObjectTable = $monarcObjectTable;
         $this->objectObjectTable = $objectObjectTable;
-        $this->assetService = $assetService;
-        $this->rolfTagTable = $rolfTagTable;
-        $this->rolfRiskTable = $rolfRiskTable;
-        $this->measureTable = $measureTable;
-        // TODO: remove after refactoring.
-        $this->assetTable = $assetTable;
+        $this->assetExportService = $assetExportService;
+        $this->configService = $configService;
     }
-
-    /** @var array */
-    private $cachedData = [];
 
     /**
-     * @param array $data The object data
-     * @param Anr $anr The ANR object
-     * @param string $modeImport The import mode possible values: 'merge', 'duplicate'.
+     * @throws EntityNotFoundException
+     * @throws Exception
      */
-    public function importFromArray(array $data, Anr $anr, string $modeImport = 'merge'): ?MonarcObject
+    public function generateExportArray(string $uuid, Anr $anr, bool $withEval = false)
     {
-        if (!isset($data['type']) || $data['type'] !== 'object') {
-            return null;
+        $monarcObject = $this->monarcObjectTable->findByAnrAndUuid($anr, $uuid);
+
+        $result = [
+            'monarc_version' => $this->configService->getAppVersion()['appVersion'],
+            'type' => 'object',
+            'object' => [
+                'uuid' => $monarcObject->getUuid(),
+                'mode' => $monarcObject->getMode(),
+                'scope' => $monarcObject->getScope(),
+                'name1' => $monarcObject->getName(1),
+                'name2' => $monarcObject->getName(2),
+                'name3' => $monarcObject->getName(3),
+                'name4' => $monarcObject->getName(4),
+                'label1' => $monarcObject->getLabel(1),
+                'label2' => $monarcObject->getLabel(2),
+                'label3' => $monarcObject->getLabel(3),
+                'label4' => $monarcObject->getLabel(4),
+                'disponibility' => $monarcObject->getDisponibility(),
+                'position' => $monarcObject->getPosition(),
+                'category' => null,
+                'asset' => null,
+                'rolfTag' => null,
+            ],
+            'categories' => [],
+            'asset' => null,
+            'rolfTags' => [],
+            'rolfRisks' => [],
+            'children' => [],
+        ];
+
+        if ($monarcObject->getCategory() !== null) {
+            $result['object']['category'] = $monarcObject->getCategory()->getId();
+            $result['object']['categories'] = $this->getCategoryDataWithItsParents($monarcObject->getCategory());
         }
 
-        $objectData = $data['object'];
-
-        if (isset($this->cachedData['objects'][$objectData['uuid']])) {
-            return $this->cachedData['objects'][$objectData['uuid']];
-        }
-
-        // TODO: return the asset object.
-        // This is a temporary solution. has to be removed when done the refactoring and the assetTable dependency also.
-        $assetUuid = $this->assetService->importFromArray($this->getMonarcVersion($data), $data['asset'], $anr);
-        if ($assetUuid === null) {
-            return null;
-        }
-        $asset = $this->assetTable->findByAnrAndUuid($anr, $assetUuid);
-//        $asset = $this->assetService->importFromArray($this->getMonarcVersion($data), $data['asset'], $anr);
-//        if ($asset === null) {
-//            return null;
-//        }
-
-        $objectCategory = $this->importObjectCategories($data['categories'], (int)$objectData['category'], $anr);
-        if ($objectCategory === null) {
-            return null;
-        }
-
-        /*
-         * Import Operational Risks.
-         */
-        $rolfTag = $this->processRolfTagAndRolfRisks($data, $anr);
-
-        /*
-         * We merge objects with "local" scope or when the scope is "global" and the mode is by "merge".
-         * Matching criteria: name, asset type, scope, category.
-         */
-        $objectScope = (int)$objectData['scope'];
-        $nameFiledKey = 'name' . $anr->getLanguage();
-        $monarcObject = null;
-        if ($objectScope === MonarcObject::SCOPE_LOCAL
-            || (
-                $objectScope === MonarcObject::SCOPE_GLOBAL
-                && $modeImport === 'merge'
-            )
-        ) {
-            $monarcObject = $this->monarcObjectTable->findOneByAnrAssetNameScopeAndCategory(
+        if ($monarcObject->getAsset() !== null) {
+            $result['object']['asset'] = $monarcObject->getAsset()->getUuid();
+            $result['asset'] = $this->assetExportService->generateExportArray(
+                $monarcObject->getAsset()->getUuid(),
                 $anr,
-                $nameFiledKey,
-                $objectData[$nameFiledKey],
-                $asset,
-                $objectScope,
-                $objectCategory
-            );
-            if ($monarcObject !== null) {
-                $this->objectObjectTable->deleteAllByFather($monarcObject);
-            }
-        }
-
-        if ($monarcObject === null) {
-            $labelKey = 'label' . $anr->getLanguage();
-            $monarcObject = (new MonarcObject())
-                ->setAnr($anr)
-                ->setAsset($asset)
-                ->setCategory($objectCategory)
-                ->setRolfTag($rolfTag)
-                ->addAnr($anr)
-                ->setMode($objectData['mode'])
-                ->setScope($objectData['scope'])
-                ->setLabel($labelKey, $objectData[$labelKey])
-                ->setDisponibility($objectData['disponibility'])
-                ->setPosition($objectData['position']);
-            try {
-                $this->monarcObjectTable->findByAnrAndUuid($anr, $objectData['uuid']);
-            } catch (EntityNotFoundException $e) {
-                $monarcObject->setUuid($objectData['uuid']);
-            }
-
-            $this->setMonarcObjectName($monarcObject, $objectData, $nameFiledKey);
-        }
-
-        $monarcObject->addAnr($anr);
-
-        $this->monarcObjectTable->saveEntity($monarcObject);
-
-        $this->cachedData['objects'][$objectData['uuid']] = $monarcObject;
-
-        if (!empty($data['children'])) {
-            usort($data['children'], static function ($a, $b) {
-                if (isset($a['object']['position'], $b['object']['position'])) {
-                    return $a['object']['position'] <=> $b['object']['position'];
-                }
-
-                return 0;
-            });
-
-            foreach ($data['children'] as $childObjectData) {
-                $childMonarcObject = $this->importFromArray($childObjectData, $anr, $modeImport);
-
-                if ($childMonarcObject !== null) {
-                    $maxPosition = $this->objectObjectTable->findMaxPositionByAnrAndFather($anr, $monarcObject);
-                    $objectsRelation = (new ObjectObject())
-                        ->setAnr($anr)
-                        ->setFather($monarcObject)
-                        ->setChild($childMonarcObject)
-                        ->setPosition($maxPosition + 1);
-
-                    $this->objectObjectTable->saveEntity($objectsRelation);
-                }
-            }
-        }
-
-        return $monarcObject;
-    }
-
-    private function importObjectCategories(
-        array $categories,
-        int $categoryId,
-        Anr $anr
-    ): ?ObjectCategory {
-        if (empty($categories[$categoryId])) {
-            return null;
-        }
-
-        $parentCategory = $categories[$categoryId]['parent'] === null
-            ? null
-            : $this->importObjectCategories($categories, (int)$categories[$categoryId]['parent'], $anr);
-
-        $labelKey = 'label' . $this->getLanguage();
-
-        /** @var ObjectCategoryTable $objectCategoryTable */
-        $objectCategoryTable = $this->get('categoryTable');
-        $objectCategory = $objectCategoryTable->findByAnrParentAndLabel(
-            $anr,
-            $parentCategory,
-            $labelKey,
-            $categories[$categoryId][$labelKey]
-        );
-
-        if ($objectCategory === null) {
-            $maxPosition = $objectCategoryTable->findMaxPositionByAnrAndParent($anr, $parentCategory);
-            $objectCategory = (new ObjectCategory())
-                ->setAnr($anr)
-                ->setParent($parentCategory)
-                ->setRoot($categories[$categoryId] ?? null)
-                ->setLabels($categories[$categoryId])
-                ->setPosition($maxPosition + 1);
-
-            $objectCategoryTable->saveEntity($objectCategory);
-        }
-
-        if ($objectCategory->getParent() === null) {
-            $this->checkAndCreateAnrObjectCategoryLink($objectCategory);
-        }
-
-        return $objectCategory;
-    }
-
-    private function checkAndCreateAnrObjectCategoryLink(ObjectCategory $objectCategory): void
-    {
-        /** @var AnrObjectCategoryTable $anrObjectCategoryTable */
-        $anrObjectCategoryTable = $this->get('anrObjectCategoryTable');
-        $anrObjectCategory = $anrObjectCategoryTable->findOneByAnrAndObjectCategory(
-            $objectCategory->getAnr(),
-            $objectCategory
-        );
-        if ($anrObjectCategory === null) {
-            $maxPosition = $anrObjectCategoryTable->findMaxPositionByAnr($objectCategory->getAnr());
-            $anrObjectCategoryTable->saveEntity(
-                (new AnrObjectCategory())
-                    ->setAnr($objectCategory->getAnr())
-                    ->setCategory($objectCategory)
-                    ->setPosition($maxPosition)
+                $withEval
             );
         }
-    }
 
-    private function processRolfTagAndRolfRisks(array $data, Anr $anr): ?RolfTag
-    {
-        if (empty($data['object']['rolfTag']) || empty($data['rolfTags'][$data['object']['rolfTag']])) {
-            return null;
-        }
+        $rolfTag = $monarcObject->getRolfTag();
+        if ($rolfTag !== null) {
+            $result['object']['rolfTag'] = $rolfTag->getId();
+            $result['rolfTags'][$rolfTag->getId()] = [
+                'id' => $rolfTag->getId(),
+                'code' => $rolfTag->getCode(),
+                'label1' => $rolfTag->getLabel(1),
+                'label2' => $rolfTag->getLabel(2),
+                'label3' => $rolfTag->getLabel(3),
+                'label4' => $rolfTag->getLabel(4),
+                'risks' => [],
+            ];
 
-        $rolfTagId = (int)$data['object']['rolfTag'];
-        if (isset($this->cachedData['rolfTags'][$rolfTagId])) {
-            return $this->cachedData['rolfTags'][$rolfTagId];
-        }
-
-        $rolfTagData = $data['rolfTags'][$rolfTagId];
-        $rolfTag = $this->rolfTagTable->findByAnrAndCode($anr, $rolfTagData['code']);
-        if ($rolfTag === null) {
-            $rolfTag = (new RolfTag())
-                ->setAnr($anr)
-                ->setCode($rolfTagData['code'])
-                ->setLabels($rolfTagData['label']);
-        }
-
-        if (!empty($rolfTagData['risks'])) {
-            foreach ($rolfTagData['risks'] as $riskId) {
-                if (!isset($data['rolfRisks'][$riskId])) {
-                    continue;
-                }
-
-                $rolfRiskData = $data['rolfRisks'][$riskId];
-
-                if (!isset($this->cachedData['rolfRisks'][$rolfRiskData['id']])) {
-                    $rolfRiskCode = (string)$rolfRiskData['code'];
-                    $rolfRisk = $this->rolfRiskTable->findByAnrAndCode($anr, $rolfRiskCode);
-                    if ($rolfRisk === null) {
-                        $rolfRisk = (new RolfRisk())
-                            ->setAnr($anr)
-                            ->setCode($rolfRiskCode)
-                            ->setLabels($rolfRiskData)
-                            ->setDescriptions($rolfRiskData);
+            $rolfRisks = $rolfTag->getRisks();
+            if (!empty($rolfRisks)) {
+                foreach ($rolfRisks as $rolfRisk) {
+                    $rolfRiskId = $rolfRisk->getId();
+                    $result['rolfTags'][$rolfTag->getId()]['risks'][$rolfRiskId] = $rolfRiskId;
+                    $result['rolfRisks'][$rolfRiskId] = [
+                        'id' => $rolfRiskId,
+                        'code' => $rolfRisk->getCode(),
+                        'label1' => $rolfRisk->getLabel(1),
+                        'label2' => $rolfRisk->getLabel(2),
+                        'label3' => $rolfRisk->getLabel(3),
+                        'label4' => $rolfRisk->getLabel(4),
+                        'description1' => $rolfRisk->getDescription(1),
+                        'description2' => $rolfRisk->getDescription(2),
+                        'description3' => $rolfRisk->getDescription(3),
+                        'description4' => $rolfRisk->getDescription(4),
+                        'measures' => [],
+                    ];
+                    foreach ($rolfRisk->getMeasures() as $measure) {
+                        $result['rolfRisks'][$rolfRiskId]['measures'] = [
+                            'uuid' => $measure->getUuid(),
+                            'category' => $measure->getCategory()
+                                ? [
+                                    'id' => $measure->getCategory()->getId(),
+                                    'status' => $measure->getCategory()->getStatus(),
+                                    'label1' => $measure->getCategory()->getlabel1(),
+                                    'label2' => $measure->getCategory()->getlabel2(),
+                                    'label3' => $measure->getCategory()->getlabel3(),
+                                    'label4' => $measure->getCategory()->getlabel4(),
+                                ]
+                                : null,
+                            'referential' => [
+                                'uuid' => $measure->getReferential()->getUuid(),
+                                'label1' => $measure->getReferential()->getLabel1(),
+                                'label2' => $measure->getReferential()->getLabel2(),
+                                'label3' => $measure->getReferential()->getLabel3(),
+                                'label4' => $measure->getReferential()->getLabel4(),
+                            ],
+                            'code' => $measure->getCode(),
+                            'label1' => $measure->getLabel1(),
+                            'label2' => $measure->getLabel2(),
+                            'label3' => $measure->getLabel3(),
+                            'label4' => $measure->getLabel4(),
+                        ];
                     }
-
-                    $measures = null;
-                    foreach ($rolfRiskData['measures'] as $measureUuid) {
-                        // TODO: reuse/replace the part from feature/320 from zm_core, move to a separate method.
-                        $measure = $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
-                        if ($measure !== null) {
-                            $measure->addOpRisk($rolfRisk);
-                            $measures[] = $measure;
-                        }
-                    }
-
-                    $rolfRisk->setMeasures($measures);
-
-                    $this->rolfRiskTable->saveEntity($rolfRisk);
-
-                    $this->cachedData['rolfRisks'][$rolfRiskData['id']] = $rolfRisk;
                 }
-
-                $rolfTag->addRisk($this->cachedData['rolfRisks'][$rolfRiskData['id']]);
             }
         }
 
-        $this->rolfTagTable->saveEntity($rolfTag);
-
-        $this->cachedData['rolfTags'][$rolfTagId] = $rolfTag;
-
-        return $rolfTag;
-    }
-
-    private function setMonarcObjectName(
-        MonarcObject $monarcObject,
-        array $objectData,
-        string $nameFiledKey,
-        int $index = 1
-    ): MonarcObject {
-        $existedObject = $this->monarcObjectTable->findOneByAnrAndName(
-            $monarcObject->getAnr(),
-            $nameFiledKey,
-            $objectData[$nameFiledKey]
-        );
-        if ($existedObject !== null) {
-            $objectData[$nameFiledKey] .= ' - Imp. #' . $index;
-
-            return $this->setMonarcObjectName($monarcObject, $objectData, $nameFiledKey, $index + 1);
+        $children = $this->objectObjectTable->findChildrenByFather($monarcObject, ['position' => 'ASC']);
+        if (!empty($children)) {
+            $position = 1;
+            foreach ($children as $child) {
+                $childObjectUuid = $child->getChild()->getUuid();
+                $result['children'][$childObjectUuid] = $this->generateExportArray(
+                    $childObjectUuid,
+                    $anr,
+                    $withEval
+                );
+                $result['children'][$childObjectUuid]['object']['position'] = $position++;
+            }
         }
 
-        return $monarcObject->setName($nameFiledKey, $objectData[$nameFiledKey]);
+        return $result;
     }
 
-    private function getMonarcVersion(array $data): string
+    private function getCategoryDataWithItsParents(ObjectCategorySuperClass $objectCategory): array
     {
-        if (isset($data['monarc_version'])) {
-            return strpos($data['monarc_version'], 'master') === false ? $data['monarc_version'] : '99';
+        $objectCategories[$objectCategory->getId()] = [
+            'id' => $objectCategory->getId(),
+            'label1' => $objectCategory->getLabel(1),
+            'label2' => $objectCategory->getLabel(2),
+            'label3' => $objectCategory->getLabel(3),
+            'label4' => $objectCategory->getLabel(4),
+            'parent' => null,
+        ];
+        if ($objectCategory->getParent() !== null) {
+            $objectCategories[$objectCategory->getId()]['parent'] = $objectCategory->getParent()->getId();
+            $objectCategories = array_merge(
+                $objectCategories,
+                $this->getCategoryDataWithItsParents($objectCategory->getParent())
+            );
         }
 
-        return '1';
+        return $objectCategories;
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     * @throws Exception
+     */
+    public function generateExportMospArray(string $uuid, Anr $anr): array
+    {
+        $languageIndex = $anr->getLanguage();
+        $languageCode = $this->configService->getLanguageCodes()[$languageIndex];
+
+        $monarcObject = $this->monarcObjectTable->findByAnrAndUuid($anr, $uuid);
+
+        $result = [
+            'object' => [
+                'uuid' => $monarcObject->getUuid(),
+                'scope' => $monarcObject->getScopeName(),
+                'name' => $monarcObject->getName($languageIndex),
+                'label' => $monarcObject->getLabel($languageIndex),
+                'language' => $languageCode,
+                'version' => 1,
+            ],
+            'asset' => null,
+            'rolfRisks' => [],
+            'rolfTags' => [],
+            'children' => [],
+        ];
+
+        if ($monarcObject->getAsset() !== null) {
+            $result['asset'] = $this->assetExportService->generateExportMospArray(
+                $monarcObject->getAsset()->getUuid(),
+                $anr,
+                $languageCode
+            );
+        }
+
+        $rolfTag = $monarcObject->getRolfTag();
+        if ($rolfTag !== null) {
+            $result['rolfTags'][] = [
+                'code' => $rolfTag->getCode(),
+                'label' => $rolfTag->getLabel($languageIndex),
+            ];
+
+            if (!empty($rolfTag->getRisks())) {
+                foreach ($rolfTag->getRisks() as $rolfRisk) {
+                    $measuresData = [];
+                    foreach ($rolfRisk->getMeasures() as $measure) {
+                        $measuresData[] = [
+                            'uuid' => $measure->getUuid(),
+                            'code' => $measure->getCode(),
+                            'label' => $measure->{'getLabel' . $languageIndex}(),
+                            'category' => $measure->getCategory()->{'getLabel' . $languageIndex}(),
+                            'referential' => $measure->getReferential()->getUuid(),
+                            'referential_label' => $measure->getReferential()->{'getLabel' . $languageIndex}(),
+                        ];
+                    }
+
+                    $result['rolfRisks'][] = [
+                        'code' => $rolfRisk->getCode(),
+                        'label' => $rolfRisk->getLabel($languageIndex),
+                        'description' => $rolfRisk->getDescription($languageIndex),
+                        'measures' => $measuresData,
+                    ];
+                }
+            }
+        }
+
+        $children = $this->objectObjectTable->findChildrenByFather($monarcObject, ['position' => 'ASC']);
+        if (!empty($children)) {
+            foreach ($children as $child) {
+                $result['children'][] = $this->generateExportMospArray(
+                    $child->getChild()->getUuid(),
+                    $anr
+                );
+            }
+        }
+
+        return ['object' => $result];
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     * @throws NonUniqueResultException
+     */
+    public function generateExportFileName(string $uuid, Anr $anr, bool $isForMosp = false): string
+    {
+        $monarcObject = $this->monarcObjectTable->findByAnrAndUuid($anr, $uuid);
+
+        return preg_replace(
+            "/[^a-z0-9._-]+/i",
+            '',
+            $monarcObject->getName($anr->getLanguage()) . $isForMosp ? '_MOSP' : ''
+        );
     }
 }

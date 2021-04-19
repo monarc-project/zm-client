@@ -61,8 +61,9 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'recordService' => AnrRecordService::class,
         'configService' => ConfigService::class,
 
-        // Export (Services)
+        // Export/Import (Services)
         'objectExportService' => ObjectExportService::class,
+        'objectImportService' => ObjectImportService::class,
         'amvService' => AmvService::class,
         'scaleCommentService' => AnrScaleCommentService::class,
     ];

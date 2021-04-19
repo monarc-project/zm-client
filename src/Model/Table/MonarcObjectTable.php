@@ -14,6 +14,7 @@ use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Model\Table\MonarcObjectTable as CoreMonarcObjectTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 
 /**
@@ -49,6 +50,21 @@ class MonarcObjectTable extends CoreMonarcObjectTable
         }
 
         return $monarcObject;
+    }
+
+    /**
+     * @return MonarcObject[]
+     */
+    public function findByAnrAndAsset(AnrSuperClass $anr, Asset $asset): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('mo')
+            ->where('mo.anr = :anr')
+            ->andWhere('mo.asset = :asset')
+            ->setParameter('anr', $anr)
+            ->setParameter('asset', $asset)
+            ->getQuery()
+            ->getResult();
     }
 
     public function findOneByAnrAssetNameScopeAndCategory(

@@ -33,6 +33,7 @@ class AnrObjectServiceFactory extends AbstractServiceFactory
         'modelService' => 'Monarc\Core\Service\ModelService',
         'objectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectService',
         'objectExportService' => 'Monarc\FrontOffice\Service\ObjectExportService',
+        'objectImportService' => ObjectImportService::class,
         'selfCoreService' => 'Monarc\Core\Service\ObjectService',
         'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
         'instanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpService',

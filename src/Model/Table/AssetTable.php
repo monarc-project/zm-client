@@ -36,4 +36,13 @@ class AssetTable extends AbstractEntityTable
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function saveEntity(Asset $asset, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($asset);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

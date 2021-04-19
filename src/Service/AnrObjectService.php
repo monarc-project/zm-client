@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 
@@ -21,6 +23,7 @@ class AnrObjectService extends \Monarc\Core\Service\ObjectService
 {
     protected $selfCoreService;
     protected $userAnrTable;
+    protected $objectImportService;
 
     /**
      * Imports a previously exported object from an uploaded file into the current ANR. It may be imported using two
@@ -66,11 +69,11 @@ class AnrObjectService extends \Monarc\Core\Service\ObjectService
                     }
                 }
 
-                /** @var ObjectExportService $objectExportService */
-                $objectExportService = $this->get('objectExportService');
+                /** @var ObjectImportService $objectImportService */
+                $objectImportService = $this->get('objectImportService');
                 $monarcObject = null;
                 if ($file !== false) {
-                    $monarcObject = $objectExportService->importFromArray($file, $anr, $mode);
+                    $monarcObject = $objectImportService->importFromArray($file, $anr, $mode);
                     if ($monarcObject !== null) {
                         $ids[] = $monarcObject->getUuid();
                     }
@@ -193,13 +196,52 @@ class AnrObjectService extends \Monarc\Core\Service\ObjectService
             // Export
             $json = $this->get('selfCoreService')->get('objectExportService')->generateExportArray($id);
             if ($json) {
-                /** @var ObjectExportService $objectExportService */
-                $objectExportService = $this->get('objectExportService');
+                /** @var ObjectImportService $objectImportService */
+                $objectImportService = $this->get('objectImportService');
 
-                return $objectExportService->importFromArray($json, $anr, isset($data['mode']) ? $data['mode'] : 'merge');
+                return $objectImportService->importFromArray($json, $anr, isset($data['mode']) ? $data['mode'] : 'merge');
             }
         } else {
             throw new Exception('Object not found', 412);
+        }
+    }
+
+    public function export(&$data)
+    {
+        if (empty($data['id'])) {
+            throw new Exception('Object to export is required', 412);
+        }
+
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anr = $anrTable->findById($data['anr']);
+
+        /** @var ObjectExportService $objectExportService */
+        $objectExportService = $this->get('objectExportService');
+
+        $isForMosp = !empty($data['mosp']);
+
+        $prepareObjectData = json_encode($isForMosp
+            ? $objectExportService->generateExportMospArray($data['id'], $anr)
+            : $objectExportService->generateExportArray($data['id'], $anr, false)
+        );
+
+        $data['filename'] = $objectExportService->generateExportFileName($data['id'], $anr, $isForMosp);
+
+        if (!empty($data['password'])) {
+            $prepareObjectData = $this->encrypt($prepareObjectData, $data['password']);
+        }
+
+        return $prepareObjectData;
+    }
+
+    protected function importFromMosp(array $data, AnrSuperClass $anr): ?ObjectSuperClass
+    {
+        if (!empty($data['mosp'])) {
+            /** @var ObjectImportService $objectImportService */
+            $objectImportService = $this->get('objectImportService');
+
+            return $objectImportService->importFromArray($data, $anr, $data['mode'] ?? 'merge');
         }
     }
 }

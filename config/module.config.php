@@ -1,6 +1,5 @@
 <?php
 
-use Monarc\FrontOffice\Service\ObjectExportService;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Laminas\Di\Container\AutowireFactory;
@@ -11,7 +10,6 @@ use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service;
-use Monarc\FrontOffice\Service\ClientService;
 use Monarc\FrontOffice\Stats\Controller\StatsController;
 use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
 use Monarc\FrontOffice\Stats\Controller\StatsGeneralSettingsController;
@@ -1213,7 +1211,7 @@ return [
             'Monarc\FrontOffice\Service\AnrRolfTagService' => 'Monarc\FrontOffice\Service\AnrRolfTagServiceFactory',
             'Monarc\FrontOffice\Service\AnrRolfRiskService' => 'Monarc\FrontOffice\Service\AnrRolfRiskServiceFactory',
             'Monarc\FrontOffice\Service\AmvService' => 'Monarc\FrontOffice\Service\AmvServiceFactory',
-            ClientService::class => AutowireFactory::class,
+            Service\ClientService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
             'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
             'Monarc\FrontOffice\Service\ModelService' => 'Monarc\FrontOffice\Service\ModelServiceFactory',
@@ -1237,7 +1235,9 @@ return [
             'Monarc\FrontOffice\Service\AnrObjectCategoryService' => 'Monarc\FrontOffice\Service\AnrObjectCategoryServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
-            ObjectExportService::class => AutowireFactory::class,
+            Service\ObjectExportService::class => AutowireFactory::class,
+            Service\ObjectImportService::class => AutowireFactory::class,
+            Service\AssetImportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
 

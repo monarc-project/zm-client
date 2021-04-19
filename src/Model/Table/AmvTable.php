@@ -13,6 +13,8 @@ use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Amv;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
 
 /**
  * Class AmvTable
@@ -27,6 +29,19 @@ class AmvTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Amv::class, $connectedUserService);
+    }
+
+    /**
+     * @return Amv[]
+     */
+    public function findByAnrIndexedByUuid(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('amv', 'amv.uuid')
+            ->where('amv.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
@@ -105,5 +120,22 @@ class AmvTable extends AbstractEntityTable
         return $queryBuilder
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('amv')
+            ->where('amv.anr = :anr')
+            ->andWhere('amv.asset = :asset')
+            ->setParameter('anr', $anr)
+            ->setParameter('asset', $asset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function deleteEntities(array $entities): void
+    {
+        return $this->getDb()->deleteAll($entities);
     }
 }
