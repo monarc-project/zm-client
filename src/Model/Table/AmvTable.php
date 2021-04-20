@@ -136,6 +136,6 @@ class AmvTable extends AbstractEntityTable
 
     public function deleteEntities(array $entities): void
     {
-        return $this->getDb()->deleteAll($entities);
+        $this->getDb()->deleteAll($entities);
     }
 }
