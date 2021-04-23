@@ -46,7 +46,7 @@ class StatsController extends AbstractRestfulController
             $stats = $this->statsAnrService->getStats($this->getStatsQueryParamsValidator->getValidData());
         } catch (UserNotAuthorizedException | AccessForbiddenException $e) {
             $stats = [];
-            $this->getResponse()->setStatusCode(401);
+            $this->getResponse()->setStatusCode(403);
         }
 
         return new JsonModel([
@@ -68,7 +68,7 @@ class StatsController extends AbstractRestfulController
             $stats = $this->statsAnrService->getProcessedStats($this->getProcessedStatsQueryParamsValidator->getValidData());
         } catch (UserNotAuthorizedException | AccessForbiddenException $e) {
             $stats = [];
-            $this->getResponse()->setStatusCode(401);
+            $this->getResponse()->setStatusCode(403);
         }
 
         return new JsonModel([
