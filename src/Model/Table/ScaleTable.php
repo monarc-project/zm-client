@@ -50,4 +50,13 @@ class ScaleTable extends AbstractEntityTable
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function saveEntity(Scale $scale, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($scale);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

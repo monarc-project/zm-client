@@ -5,6 +5,7 @@ use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
@@ -1049,7 +1050,7 @@ return [
             Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
             Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
             Controller\ApiAnrInstancesRisksOpController::class => Controller\ApiAnrInstancesRisksOpControllerFactory::class,
-            Controller\ApiAnrInstancesImportController::class => Controller\ApiAnrInstancesImportControllerFactory::class,
+            Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesExportController::class => Controller\ApiAnrInstancesExportControllerFactory::class,
             Controller\ApiAnrObjectsCategoriesController::class => Controller\ApiAnrObjectsCategoriesControllerFactory::class,
             Controller\ApiAnrObjectsExportController::class => Controller\ApiAnrObjectsExportControllerFactory::class,
@@ -1238,6 +1239,7 @@ return [
             Service\ObjectExportService::class => AutowireFactory::class,
             Service\ObjectImportService::class => AutowireFactory::class,
             Service\AssetImportService::class => AutowireFactory::class,
+            Service\InstanceImportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
 

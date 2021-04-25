@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -52,7 +53,7 @@ class ScaleImpactTypeTable extends AbstractEntityTable
             ->getSingleScalarResult();
     }
 
-    public function saveEntity(ScaleImpactType $scaleImpactType, bool $flushAll = true): void
+    public function saveEntity(ScaleImpactTypeSuperClass $scaleImpactType, bool $flushAll = true): void
     {
         $em = $this->getDb()->getEntityManager();
         $em->persist($scaleImpactType);

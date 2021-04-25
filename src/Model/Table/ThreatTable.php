@@ -78,7 +78,24 @@ class ThreatTable extends AbstractEntityTable
         return $threat;
     }
 
-    public function saveEntity(Threat $threat, bool $flushAll = true): void
+    /**
+     * @param Anr $anr
+     * @param string[] $uuids
+     *
+     * @return array
+     */
+    public function findByAnrAndUuidsIndexedByField(Anr $anr, array $uuids, string $indexField = 'uuid'): array
+    {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.' . $indexField);
+
+        return $queryBuilder->where('t.anr = :anr')
+            ->andWhere($queryBuilder->expr()->in('t.uuid', $uuids))
+            ->setParameter(':anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(ThreatSuperClass $threat, bool $flushAll = true): void
     {
         $em = $this->getDb()->getEntityManager();
         $em->persist($threat);

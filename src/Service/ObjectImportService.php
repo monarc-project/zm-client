@@ -57,6 +57,9 @@ class ObjectImportService
     /** @var AnrObjectCategoryTable */
     private $anrObjectCategoryTable;
 
+    /** @var array */
+    private $cachedData = [];
+
     public function __construct(
         MonarcObjectTable $monarcObjectTable,
         ObjectObjectTable $objectObjectTable,
@@ -81,15 +84,12 @@ class ObjectImportService
         $this->anrObjectCategoryTable = $anrObjectCategoryTable;
     }
 
-    /** @var array */
-    private $cachedData = [];
-
     /**
      * @throws NonUniqueResultException
      */
     public function importFromArray(array $data, Anr $anr, string $modeImport = 'merge'): ?MonarcObject
     {
-        if (!isset($data['type']) || $data['type'] !== 'object') {
+        if (!isset($data['type'], $data['object']) || $data['type'] !== 'object') {
             return null;
         }
 

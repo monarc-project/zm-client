@@ -7,9 +7,14 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\InstanceConsequenceSuperClass;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 
 /**
@@ -46,7 +51,38 @@ class InstanceConsequenceTable extends AbstractEntityTable
         return $res > 0;
     }
 
-    public function saveEntity(InstanceConsequence $instanceConsequence, bool $flushAll = true): void
+    /**
+     * @return InstanceConsequence[]
+     */
+    public function findByAnrInstanceAndObject(AnrSuperClass $anr, Instance $instance, ObjectSuperClass $object): array
+    {
+        return $this->getRepository()->createQueryBuilder('ic')
+            ->innerJoin('ic.object', 'obj')
+            ->where('ic.anr = :anr')
+            ->andWhere('ic.instance = :instance')
+            ->andWhere('obj.uuid = :objUuid')
+            ->andWhere('obj.anr = :objAnr')
+            ->setParameter('anr', $anr)
+            ->setParameter('instance', $instance)
+            ->setParameter('objUuid', $object->getUuid())
+            ->setParameter('objAnr', $object->getAnr())
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceConsequence[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('ic')
+            ->where('ic.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(InstanceConsequenceSuperClass $instanceConsequence, bool $flushAll = true): void
     {
         $em = $this->getDb()->getEntityManager();
         $em->persist($instanceConsequence);

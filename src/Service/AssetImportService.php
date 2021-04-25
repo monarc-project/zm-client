@@ -2,6 +2,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Model\Entity\Amv;
@@ -10,6 +11,7 @@ use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\Referential;
+use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
@@ -92,8 +94,6 @@ class AssetImportService
 
     public function importFromArray($monarcVersion, array $data, Anr $anr): ?Asset
     {
-        // TODO: remove the param and use local cache $this->cachedData, check AnrInstanceService if the keys from here are used.
-
         if (!isset($data['type']) || $data['type'] !== 'asset') {
             return null;
         }
@@ -148,6 +148,7 @@ class AssetImportService
                 }
                 $threat = new Threat();
                 $threat->setLanguage($languageIndex);
+                // TODO: Can be replaced with setters use, example in InstanceImportService.
                 $threat->exchangeArray($valueThreat);
                 $threat->setAnr($anr);
                 $threat->setTheme($theme);
@@ -336,12 +337,12 @@ class AssetImportService
                 }
                 $this->instanceRiskTable->getDb()->flush();
 
-                // TODO: check why it happens.
+                // TODO: check why it happens(ed).
 //                foreach ($oldIRs as $oldIR) { //set the value DB because the set amv=null erase the value
 //                    $oldIR->set('anr', $anr);
-//                    $this->get('instanceRiskTable')->save($oldIR, false);
+//                    $this->instanceRiskTable->saveEntity($oldIR, false);
 //                }
-//                $this->get('instanceRiskTable')->getDb()->flush();
+//                $this->instanceRiskTable->getDb()->flush();
 
                 $amvsToDelete[] = $oldAmv;
             }
@@ -352,6 +353,14 @@ class AssetImportService
         }
 
         return $asset;
+    }
+
+    /**
+     * @return object[]
+     */
+    public function getCachedDataByKey(string $key): array
+    {
+        return $this->cachedData[$key] ?? [];
     }
 
     /**
@@ -383,9 +392,9 @@ class AssetImportService
         $localAmv = [];
         if (!empty($data['amvs']) && !empty($idAsset)) {
             $localThemes = [];
-            $themes = $this->get('themeTable')->getEntityByFields(['anr' => $anr->getId()]);
+            $themes = $this->themeTable->getEntityByFields(['anr' => $anr->getId()]);
             foreach ($themes as $t) {
-                $localThemes[$t->get('label' . $languageIndex)] = $t->get('id');
+                $localThemes[$t->get('label' . $languageIndex)] = $t->getId();
             }
             unset($themes);
 
@@ -406,20 +415,19 @@ class AssetImportService
                             } elseif (!empty($data['themes'][$data['threats'][$amvArray['threat']]['theme']]['newid'])) {
                                 $idTheme = $localThemes[$t['label' . $languageIndex]] = $data['themes'][$data['threats'][$amvArray['threat']]['theme']]['newid'];
                             } else {
-                                $c = $this->get('themeTable')->getEntityClass();
-                                $theme = new $c();
-                                $theme->setDbAdapter($this->get('themeTable')->getDb());
+                                $theme = new Theme();
+                                $theme->setDbAdapter($this->themeTable->getDb());
                                 $theme->setLanguage($languageIndex);
                                 $t['id'] = null;
                                 $theme->exchangeArray($t);
                                 $theme->set('anr', $anr->getId());
                                 $this->setDependencies($theme, ['anr']);
-                                $idTheme = $this->get('themeTable')->save($theme);
+                                $idTheme = $this->themeTable->save($theme);
                                 $localThemes[$t['label' . $languageIndex]] = $data['themes'][$data['threats'][$amvArray['threat']]['theme']]['newid'] = $idTheme;
                             }
                         }
 
-                        $threat = $this->get('threatTable')->getEntityByFields([
+                        $threat = $this->threatTable->getEntityByFields([
                             'anr' => $anr->getId(),
                             'code' => $data['threats'][$amvArray['threat']]['code'],
                         ]);
@@ -428,26 +436,28 @@ class AssetImportService
                             $data['threats'][$amvArray['threat']] = $threat->getUuid();
 
                             // Update du theme
-                            $theme = $threat->get('theme');
-                            $oldTheme = empty($theme) ? null : $theme->get('id');
+                            $theme = $threat->getTheme();
+                            $oldTheme = empty($theme) ? null : $theme->getId();
                             if ($oldTheme != $idTheme) {
-                                $threat->setDbAdapter($this->get('threatTable')->getDb());
+                                $threat->setDbAdapter($this->threatTable->getDb());
                                 $threat->set('theme', $idTheme);
                                 $this->setDependencies($threat, ['anr', 'theme']);
-                                $this->get('threatTable')->save($threat);
+                                $this->threatTable->save($threat);
                             }
                         } else {
-                            $c = $this->get('threatTable')->getEntityClass();
-                            $threat = new $c();
-                            $threat->setDbAdapter($this->get('threatTable')->getDb());
+                            $threat = new Threat();
+                            $threat->setDbAdapter($this->threatTable->getDb());
                             $threat->setLanguage($languageIndex);
                             $data['threats'][$amvArray['threat']]['id'] = null;
 
                             $data['threats'][$amvArray['threat']]['theme'] = $idTheme;
                             $threat->exchangeArray($data['threats'][$amvArray['threat']]);
-                            $threat->set('anr', $anr->getId());
-                            $this->setDependencies($threat, ['anr', 'theme']);
-                            $this->cachedData['threats'][$amvArray['threat']] = $data['threats'][$amvArray['threat']] = $this->get('threatTable')->save($threat);
+                            $this->setDependencies($threat, ['theme']);
+                            $threat->setAnr($anr);
+                            $this->threatTable->saveEntity($threat);
+
+                            $this->cachedData['threats'][$amvArray['threat']] = $threat;
+                            $data['threats'][$amvArray['threat']] = $threat;
                         }
                     }
                     $amvData['threat'] = $data['threats'][$amvArray['threat']];
@@ -463,15 +473,17 @@ class AssetImportService
                             $vul = current($vul);
                             $data['vuls'][$amvArray['vulnerability']] = $vul->getUuid();
                         } else {
-                            $c = $this->vulnerabilityTable->getEntityClass();
-                            $vul = new $c();
+                            $vul = new Vulnerability();
                             $vul->setDbAdapter($this->vulnerabilityTable->getDb());
                             $vul->setLanguage($languageIndex);
                             $data['vuls'][$amvArray['vulnerability']]['id'] = null;
                             $vul->exchangeArray($data['vuls'][$amvArray['vulnerability']]);
-                            $vul->set('anr', $anr->getId());
                             $this->setDependencies($vul, ['anr']);
-                            $this->cachedData['vuls'][$amvArray['vulnerability']] = $data['vuls'][$amvArray['vulnerability']] = $this->vulnerabilityTable->save($vul);
+                            $vul->setAnr($anr);
+                            $this->vulnerabilityTable->saveEntity($vul);
+
+                            $this->cachedData['vulnerabilities'][$amvArray['vulnerability']] = $vul;
+                            $data['vuls'][$amvArray['vulnerability']] = $vul;
                         }
                     }
                     $amvData['vulnerability'] = $data['vuls'][$amvArray['vulnerability']];
@@ -479,26 +491,32 @@ class AssetImportService
                 if (array_key_exists('measure1', $amvArray)) { //old version without uuid
                     //we need to create ISO 27002, we check if the common if it's present or not
                     $referential = false;
-                    $referentialCli = current($this->get('referentialTable')->getEntityByFields([
+                    $referentialCli = current($this->referentialTable->getEntityByFields([
                         'anr' => $anr->getId(),
                         'uuid' => '98ca84fb-db87-11e8-ac77-0800279aaa2b',
                     ]));
                     if (!$referentialCli) {
-                        $referential = current($this->get('referentialCommonTable')->getEntityByFields(['uuid' => '98ca84fb-db87-11e8-ac77-0800279aaa2b']));
+                        // TODO: this will not work, we need to fetch it from common.
+                        $referential = (new Referential())
+                            ->setUuid('98ca84fb-db87-11e8-ac77-0800279aaa2b')
+                            ->setLabel1('ISO 27002')
+                            ->setLabel2('ISO 27002')
+                            ->setLabel3('ISO 27002')
+                            ->setLabel4('ISO 27002');
                     }
                     if ($referential) {
                         $measures = $referential->getMeasures();
                         $referential->setMeasures(null);
 
                         // duplicate the referential
-                        $newReferential = new \Monarc\FrontOffice\Model\Entity\Referential($referential);
+                        $newReferential = new Referential($referential);
                         $newReferential->setAnr($anr);
 
                         // duplicate categories
                         $categoryNewIds = [];
-                        $category = $referential->categories;
+                        $category = $referential->getCategories();
                         foreach ($category as $cat) {
-                            $newCategory = new \Monarc\FrontOffice\Model\Entity\SoaCategory($cat);
+                            $newCategory = new SoaCategory($cat);
                             $newCategory->set('id', null);
                             $newCategory->setAnr($anr);
                             $newCategory->setMeasures(null);
@@ -511,27 +529,28 @@ class AssetImportService
                         // duplicate the measures
                         foreach ($measures as $measure) {
                             // duplicate and link the measures to the current referential
-                            $newMeasure = new \Monarc\FrontOffice\Model\Entity\Measure($measure);
+                            $newMeasure = new Measure($measure);
                             $newMeasure->setAnr($anr);
                             $newMeasure->setReferential($newReferential);
-                            $newMeasure->setCategory($categoryNewIds[$measure->category->id]);
-                            $newMeasure->rolfRisks = new \Doctrine\Common\Collections\ArrayCollection;
-                            $newMeasure->amvs = new \Doctrine\Common\Collections\ArrayCollection; // need to initialize the amvs link
+                            $newMeasure->setCategory($categoryNewIds[$measure->getCategory()->getId()]);
+                            $newMeasure->setRolfRisks(new ArrayCollection());
+                            $newMeasure->setAmvs(new ArrayCollection()); // need to initialize the amvs link
                             $newMeasure->setMeasuresLinked(new ArrayCollection()); //old analysis can't have measuresLinked
-                            $this->get('measureTable')->save($newMeasure, false);
-                            $newSoa = new \Monarc\FrontOffice\Model\Entity\Soa();
+                            $this->measureTable->save($newMeasure, false);
+                            $newSoa = new Soa();
                             $newSoa->setAnr($anr);
                             $newSoa->setMeasure($newMeasure);
-                            $this->get('soaTable')->save($newSoa, false);
+                            // TODO: not injected.
+                            $this->soaTable->save($newSoa, false);
                         }
 
-                        $this->get('measureTable')->getDb()->flush();
+                        $this->measureTable->getDb()->flush();
                     }
 
                     for ($i = 1; $i <= 3; $i++) {
                         if (isset($data['measures'][$amvArray['measure' . $i]])) { // Measure 1 / 2 / 3
                             if (is_array($data['measures'][$amvArray['measure' . $i]])) {
-                                $measure = $this->get('measureTable')->getEntityByFields([
+                                $measure = $this->measureTable->getEntityByFields([
                                     'anr' => $anr->getId(),
                                     'code' => $data['measures'][$amvArray['measure' . $i]]['code'],
                                 ]);
@@ -545,26 +564,25 @@ class AssetImportService
                     }
                 }
 
-                $amvTest = current($this->get('amvTable')->getEntityByFields([
+                $amvTest = current($this->amvTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'asset' => ['anr' => $anr->getId(), 'uuid' => $amvData['asset']],
                     'threat' => ['anr' => $anr->getId(), 'uuid' => $amvData['threat']],
                     'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $amvData['vulnerability']],
                 ]));
                 if (empty($amvTest)) { // on test que cet AMV sur cette ANR n'existe pas
-                    $c = $this->get('amvTable')->getEntityClass();
-                    $amv = new $c();
-                    $amv->setDbAdapter($this->get('amvTable')->getDb());
+                    $amv = new Amv();
+                    $amv->setDbAdapter($this->amvTable->getDb());
                     $amv->setLanguage($languageIndex);
                     $measuresAmvs = (array_key_exists('measures', $amvData)) ? $amvData['measures'] : null;
                     unset($amvData['measures']);
                     $amv->exchangeArray($amvData, true);
                     $this->setDependencies($amv, ['anr', 'asset', 'threat', 'vulnerability',]);
-                    $idAmv = $this->get('amvTable')->save($amv);
+                    $idAmv = $this->amvTable->save($amv);
                     if (isset($amvArray['measures'])) { //version with uuid
                         foreach ($amvArray['measures'] as $m) {
                             try {
-                                $measure = $this->get('measureTable')->getEntity([
+                                $measure = $this->measureTable->getEntity([
                                     'anr' => $anr->getId(),
                                     'uuid' => $m,
                                 ]);
@@ -576,7 +594,7 @@ class AssetImportService
                         if (isset($measuresAmvs)) { // old version without uuid
                             foreach ($measuresAmvs as $m) {
                                 try {
-                                    $measure = $this->get('measureTable')->getEntity([
+                                    $measure = $this->measureTable->getEntity([
                                         'anr' => $anr->getId(),
                                         'uuid' => $m,
                                     ]);
@@ -589,8 +607,7 @@ class AssetImportService
                     $localAmv[] = $idAmv;
 
                     // On met à jour les instances
-                    $monarcObjectTable = $this->get('MonarcObjectTable');
-                    $objects = $monarcObjectTable->getEntityByFields([
+                    $objects = $this->monarcObjectTable->getEntityByFields([
                         'anr' => $anr->getId(),
                         'asset' => [
                             'anr' => $anr->getId(),
@@ -598,9 +615,7 @@ class AssetImportService
                         ],
                     ]);
                     foreach ($objects as $object) {
-                        /** @var InstanceTable $instanceTable */
-                        $instanceTable = $this->get('instanceTable');
-                        $instances = $instanceTable->getEntityByFields([
+                        $instances = $this->instanceTable->getEntityByFields([
                             'anr' => $anr->getId(),
                             'object' => [
                                 'anr' => $anr->getId(),
@@ -610,10 +625,9 @@ class AssetImportService
                         $i = 1;
                         $nbInstances = count($instances);
                         foreach ($instances as $instance) {
-                            $c = $this->get('instanceRiskTable')->getEntityClass();
-                            $instanceRisk = new $c();
+                            $instanceRisk = new InstanceRisk();
                             $instanceRisk->setLanguage($languageIndex);
-                            $instanceRisk->setDbAdapter($this->get('instanceRiskTable')->getDb());
+                            $instanceRisk->setDbAdapter($this->instanceRiskTable->getDb());
                             $instanceRisk->setAnr($anr);
                             $instanceRisk->set('amv', $idAmv);
                             $instanceRisk->set('asset', $amvData['asset']);
@@ -622,7 +636,7 @@ class AssetImportService
                             $instanceRisk->set('vulnerability', $amvData['vulnerability']);
                             $this->setDependencies($instanceRisk, ['amv', 'asset', 'threat', 'vulnerability']);
 
-                            $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
+                            $this->instanceRiskTable->save($instanceRisk, ($i == $nbInstances));
                             $i++;
                         }
                     }
@@ -631,7 +645,7 @@ class AssetImportService
                     if (isset($amvArray['measures'])) { //version with uuid
                         foreach ($amvArray['measures'] as $m) {
                             try {
-                                $measure = $this->get('measureTable')->getEntity([
+                                $measure = $this->measureTable->getEntity([
                                     'anr' => $anr->getId(),
                                     'uuid' => $m,
                                 ]);
@@ -643,7 +657,7 @@ class AssetImportService
                         if (isset($amvData['measures'])) { //old version before uuid
                             foreach ($amvData['measures'] as $m) {
                                 try {
-                                    $measure = $this->get('measureTable')->getEntity([
+                                    $measure = $this->measureTable->getEntity([
                                         'anr' => $anr->getId(),
                                         'uuid' => $m,
                                     ]);
@@ -662,13 +676,13 @@ class AssetImportService
         on passe les risques liés en spécifiques et on supprime les liens AMVs
         */
         if (empty($localAmv)) {
-            $risks = $this->get('instanceRiskTable')->getEntityByFields([
+            $risks = $this->instanceRiskTable->getEntityByFields([
                 'asset' => ['anr' => $anr->getId(), 'uuid' => $idAsset],
                 'anr' => $anr->getId(),
                 'amv' => ['op' => '!=', 'value' => ['anr' => $anr->getId(), 'uuid' => null]],
             ]);
         } else {
-            $risks = $this->get('instanceRiskTable')->getEntityByFields([
+            $risks = $this->instanceRiskTable->getEntityByFields([
                 'asset' => ['anr' => $anr->getId(), 'uuid' => $idAsset],
                 'anr' => $anr->getId(),
                 'amv' => ['op' => 'NOT IN', 'value' => ['anr' => $anr->getId(), 'uuid' => $localAmv]],
@@ -677,23 +691,23 @@ class AssetImportService
         if (!empty($risks)) {
             $amvs = [];
             foreach ($risks as $a) {
-                $amv = $a->get('amv');
+                $amv = $a->getAmv();
                 if (!empty($amv)) {
                     $amvs[] = ['anr' => $anr->getId(), 'uuid' => $amv->getUuid()];
                     $a->set('amv', null);
                     $a->set('anr', null);
-                    $this->get('instanceRiskTable')->save($a);
+                    $this->instanceRiskTable->save($a);
                     $a->setAnr($anr); //TO IMPROVE we set the anr because it's delete by the line before amv = [uuid + anr]
                     $a->set('specific', 1);
-                    $this->get('instanceRiskTable')->save($a);
+                    $this->instanceRiskTable->save($a);
                 }
             }
             if (!empty($amvs)) {
-                $this->get('amvTable')->deleteList($amvs);
+                $this->amvTable->deleteList($amvs);
             }
         }
         if (empty($risks)) {
-            $amvs = $this->get('amvTable')->getEntityByFields([
+            $amvs = $this->amvTable->getEntityByFields([
                 'asset' => ['anr' => $anr->getId(), 'uuid' => $idAsset],
                 'uuid' => ['op' => 'NOT IN', 'value' => $localAmv],
             ]);
@@ -702,7 +716,7 @@ class AssetImportService
                 $idsAmv[] = ['anr' => $anr->getId(), 'uuid' => $amv->getUuid()];
             }
             if (!empty($idsAmv)) {
-                $this->get('amvTable')->deleteList($idsAmv);
+                $this->amvTable->deleteList($idsAmv);
             }
         }
 

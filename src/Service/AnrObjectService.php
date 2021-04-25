@@ -25,6 +25,8 @@ class AnrObjectService extends \Monarc\Core\Service\ObjectService
     protected $userAnrTable;
     protected $objectImportService;
 
+    // TODO: move all the import functionality to the ObjectImportService.
+
     /**
      * Imports a previously exported object from an uploaded file into the current ANR. It may be imported using two
      * different modes: 'merge', which will update the existing objects using the file's data, or 'duplicate' which
