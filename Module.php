@@ -196,7 +196,7 @@ class Module
 
         if (! $isGranted) {
             $response = $e->getResponse();
-            $response->setStatusCode(403);
+            $response->setStatusCode($connectedUser === null ? 401 : 403);
 
             return $response;
         }
