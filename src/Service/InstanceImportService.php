@@ -404,6 +404,7 @@ class InstanceImportService
 
         $instanceData = $data['instance'];
         $instance = (new Instance())
+            ->setAnr($anr)
             ->setLabels($instanceData)
             ->setNames($instanceData)
             ->setDisponibility((float)$instanceData['disponibility'])
