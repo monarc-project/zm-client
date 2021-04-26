@@ -406,7 +406,7 @@ class InstanceImportService
         $instance = (new Instance())
             ->setLabels($instanceData)
             ->setNames($instanceData)
-            ->setDisponibility($instanceData['disponibility'])
+            ->setDisponibility((float)$instanceData['disponibility'])
             ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
             ->setRoot($parentInstance === null ? null : $parentInstance->getRoot())
             ->setParent($parentInstance)
