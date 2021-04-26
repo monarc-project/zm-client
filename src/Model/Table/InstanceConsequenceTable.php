@@ -7,9 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceConsequenceSuperClass;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -54,18 +53,18 @@ class InstanceConsequenceTable extends AbstractEntityTable
     /**
      * @return InstanceConsequence[]
      */
-    public function findByAnrInstanceAndObject(AnrSuperClass $anr, Instance $instance, ObjectSuperClass $object): array
-    {
+    public function findByAnrInstanceAndScaleImpactType(
+        Anr $anr,
+        Instance $instance,
+        ScaleImpactTypeSuperClass $scaleImpactType
+    ): array {
         return $this->getRepository()->createQueryBuilder('ic')
-            ->innerJoin('ic.object', 'obj')
             ->where('ic.anr = :anr')
             ->andWhere('ic.instance = :instance')
-            ->andWhere('obj.uuid = :objUuid')
-            ->andWhere('obj.anr = :objAnr')
+            ->andWhere('ic.scaleImpactType = :scaleImpactType')
             ->setParameter('anr', $anr)
             ->setParameter('instance', $instance)
-            ->setParameter('objUuid', $object->getUuid())
-            ->setParameter('objAnr', $object->getAnr())
+            ->setParameter('scaleImpactType', $scaleImpactType)
             ->getQuery()
             ->getResult();
     }

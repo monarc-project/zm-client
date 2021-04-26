@@ -92,9 +92,6 @@ class InstanceImportService
     /** @var AnrInstanceService */
     private $anrInstanceService;
 
-    /** @var AnrInstanceConsequenceService */
-    private $anrInstanceConsequenceService;
-
     /** @var AssetImportService */
     private $assetImportService;
 
@@ -185,7 +182,6 @@ class InstanceImportService
     public function __construct(
         AnrInstanceRiskService $anrInstanceRiskService,
         AnrInstanceService $anrInstanceService,
-        AnrInstanceConsequenceService $anrInstanceConsequenceService,
         AssetImportService $assetImportService,
         ObjectImportService $objectImportService,
         AnrRecordService $anrRecordService,
@@ -218,7 +214,6 @@ class InstanceImportService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
         $this->anrInstanceService = $anrInstanceService;
-        $this->anrInstanceConsequenceService = $anrInstanceConsequenceService;
         $this->objectImportService = $objectImportService;
         $this->anrRecordService = $anrRecordService;
         $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
@@ -247,7 +242,7 @@ class InstanceImportService
         $this->deliveryTable = $deliveryTable;
         $this->scaleImpactTypeTable = $scaleImpactTypeTable;
         $this->scaleCommentTable = $scaleCommentTable;
-        // TODO: remove after the usage refactoring,
+        // TODO: remove after the usage refactoring.
         $this->anrScaleCommentService = $anrScaleCommentService;
     }
 
@@ -1944,24 +1939,8 @@ class InstanceImportService
         if ($modeImport === 'merge' && $instance->getObject()->isScopeGlobal()) {
             $instanceBrothers = $this->getInstanceBrothers($instance);
             if (!empty($instanceBrothers)) {
-                // We take only one related (brother) global instance as the impacts are the same.
+                // Update impacts of the instance. We use only one brother global instance as the impacts are the same.
                 $instanceBrother = current($instanceBrothers);
-                $instanceConsequencesBrothers = $this->instanceConsequenceTable->findByAnrInstanceAndObject(
-                    $instance->getAnr(),
-                    $instanceBrother,
-                    $instance->getObject()
-                );
-
-                // Update consequences for all brothers.
-                foreach ($instanceConsequencesBrothers as $icb) {
-                    // TODO: refactor the method.
-                    $this->anrInstanceConsequenceService->updateBrothersConsequences(
-                        $instance->getAnr()->getId(),
-                        $icb->getId()
-                    );
-                }
-
-                // Update impacts of the instance.
                 foreach (InstanceConsequence::getAvailableScalesCriteria() as $scaleCriteria) {
                     if ($instanceBrother->{'getInherited' . $scaleCriteria}() === 0) {
                         $instance->{'setInherited' . $scaleCriteria}(0);
@@ -1974,6 +1953,29 @@ class InstanceImportService
                         $instance->{'set' . $scaleCriteria}($instanceBrother->{'get' . $scaleCriteria}());
                     }
                 }
+
+                // Update consequences for all brothers.
+                foreach ($instanceBrothers as $instanceBrother) {
+                    foreach ($instanceBrother->getInstanceConsequences() as $instanceConsequence) {
+                        $instanceConsequenceBrothers = $this->instanceConsequenceTable
+                            ->findByAnrInstanceAndScaleImpactType(
+                                $instance->getAnr(),
+                                $instance,
+                                $instanceConsequence->getScaleImpactType()
+                            );
+                        foreach ($instanceConsequenceBrothers as $instanceConsequenceBrother) {
+                            $instanceConsequenceBrother->setIsHidden($instanceConsequence->getIsHidden())
+                                ->setLocallyTouched($instanceConsequence->getLocallyTouched())
+                                ->setConfidentiality($instanceConsequence->getConfidentiality())
+                                ->setIntegrity($instanceConsequence->getIntegrity())
+                                ->setAvailability($instanceConsequence->getAvailability());
+
+                            $this->instanceConsequenceTable->saveEntity($instanceConsequenceBrother, false);
+                        }
+                    }
+                }
+
+                $this->instanceTable->saveEntity($instance);
             }
         }
     }

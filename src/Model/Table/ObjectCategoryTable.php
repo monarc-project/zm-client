@@ -38,7 +38,7 @@ class ObjectCategoryTable extends AbstractEntityTable
     ): ?ObjectCategory {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('oc')
-            ->where('oc.anr = :anr', $anr)
+            ->where('oc.anr = :anr')
             ->setParameter('anr', $anr);
 
         if ($parentCategory !== null) {

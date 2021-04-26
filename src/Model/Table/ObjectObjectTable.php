@@ -35,8 +35,11 @@ class ObjectObjectTable extends CoreObjectObjectTable
     {
         $this->getRepository()->createQueryBuilder('oo')
             ->delete('oo')
-            ->where('oo.father = :father')
-            ->setParameter('father', $monarcObject)
+            ->innerJoin('oo.father', 'father')
+            ->where('father.uuid = :fatherUuid')
+            ->andWhere('father.anr = :fatherAnr')
+            ->setParameter('fatherUuid', $monarcObject->getUuid())
+            ->setParameter('fatherAnr', $monarcObject->getAnr())
             ->getQuery()
             ->execute();
     }
@@ -45,10 +48,13 @@ class ObjectObjectTable extends CoreObjectObjectTable
     {
         return (int)$this->getRepository()->createQueryBuilder('oo')
             ->select('MAX(oo.position)')
+            ->innerJoin('oo.father', 'father')
             ->where('oo.anr = :anr')
-            ->andWhere('oo.father = :father')
+            ->andWhere('father.uuid = :fatherUuid')
+            ->andWhere('father.anr = :fatherAnr')
             ->setParameter('anr', $anr)
-            ->setParameter('father', $father)
+            ->setParameter('fatherUuid', $father->getUuid())
+            ->setParameter('fatherAnr', $anr)
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -59,8 +65,11 @@ class ObjectObjectTable extends CoreObjectObjectTable
     public function findChildrenByFather(MonarcObject $father, array $order = []): array
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('oo')
-            ->where('oo.father = :father')
-            ->setParameter('father', $father);
+            ->innerJoin('oo.father', 'father')
+            ->where('father.uuid = :fatherUuid')
+            ->andWhere('father.anr = :fatherAnr')
+            ->setParameter('fatherUuid', $father->getUuid())
+            ->setParameter('fatherAnr', $father->getAnr());
 
         if (!empty($order)) {
             foreach ($order as $field => $direction) {

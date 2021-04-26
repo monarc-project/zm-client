@@ -90,10 +90,13 @@ class RecommandationRiskTable extends AbstractEntityTable
     ): ?RecommandationRisk {
         return $this->getRepository()
             ->createQueryBuilder('rr')
+            ->innerJoin('rr.recommandation', 'r')
             ->where('rr.instanceRisk = :instanceRisk')
-            ->andWhere('rr.recommandation = :recommendation')
+            ->andWhere('r.uuid = :recommendationUuid')
+            ->andWhere('r.anr = :recommendationAnr')
             ->setParameter('instanceRisk', $instanceRisk)
-            ->setParameter('recommendation', $recommendation)
+            ->setParameter('recommendationUuid', $recommendation->getUuid())
+            ->setParameter('recommendationAnr', $recommendation->getAnr())
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

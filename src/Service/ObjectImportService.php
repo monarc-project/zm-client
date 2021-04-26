@@ -223,7 +223,7 @@ class ObjectImportService
             $objectCategory = (new ObjectCategory())
                 ->setAnr($anr)
                 ->setParent($parentCategory)
-                ->setRoot($categories[$categoryId] ?? null)
+                ->setRoot($parentCategory ? $parentCategory->getRoot() : null)
                 ->setLabels($categories[$categoryId])
                 ->setPosition($maxPosition + 1);
 

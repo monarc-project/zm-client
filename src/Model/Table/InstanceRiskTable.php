@@ -61,23 +61,23 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         if ($instanceRisk->getAmv() !== null) {
             $queryBuilder
                 ->innerJoin('ir.amv', 'amv')
-                ->andWhere('amv.uuid = :amv_uuid')
-                ->andWhere('amv.anr = :amv_anr')
-                ->setParameter('amv_uuid', $instanceRisk->getAmv()->getUuid())
-                ->setParameter('amv_anr', $instanceRisk->getAmv()->getAnr());
+                ->andWhere('amv.uuid = :amvUuid')
+                ->andWhere('amv.anr = :amvAnr')
+                ->setParameter('amvUuid', $instanceRisk->getAmv()->getUuid())
+                ->setParameter('amvAnr', $instanceRisk->getAmv()->getAnr());
         }
 
         $queryBuilder
             ->innerJoin('ir.threat', 'thr')
             ->innerJoin('ir.vulnerability', 'vuln')
-            ->andWhere('thr.uuid = :threat_uuid')
-            ->andWhere('thr.anr = :threat_anr')
-            ->andWhere('vuln.uuid = :vulnerability_uuid')
-            ->andWhere('vuln.anr = :vulnerability_anr')
-            ->setParameter('threat_uuid', $instanceRisk->getThreat()->getUuid())
-            ->setParameter('threat_anr', $instanceRisk->getThreat()->getAnr())
-            ->setParameter('vulnerability_uuid', $instanceRisk->getVulnerability()->getUuid())
-            ->setParameter('vulnerability_anr', $instanceRisk->getVulnerability()->getAnr());
+            ->andWhere('thr.uuid = :threatUuid')
+            ->andWhere('thr.anr = :threatAnr')
+            ->andWhere('vuln.uuid = :vulnerabilityUuid')
+            ->andWhere('vuln.anr = :vulnerabilityAnr')
+            ->setParameter('threatUuid', $instanceRisk->getThreat()->getUuid())
+            ->setParameter('threatAnr', $instanceRisk->getThreat()->getAnr())
+            ->setParameter('vulnerabilityUuid', $instanceRisk->getVulnerability()->getUuid())
+            ->setParameter('vulnerabilityAnr', $instanceRisk->getVulnerability()->getAnr());
 
         if ($instanceRisk->isSpecific()) {
             $queryBuilder->andWhere('ir.specific = ' . InstanceRiskSuperClass::TYPE_SPECIFIC);
@@ -94,10 +94,10 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $this->getRepository()
             ->createQueryBuilder('ir')
             ->innerJoin('ir.amv', 'amv')
-            ->where('amv.uuid = :amv_uuid')
-            ->andWhere('amv.anr = :amv_anr')
-            ->setParameter('amv_uuid', $amv->getUuid())
-            ->setParameter('amv_anr', $amv->getAnr())
+            ->where('amv.uuid = :amvUuid')
+            ->andWhere('amv.anr = :amvAnr')
+            ->setParameter('amvUuid', $amv->getUuid())
+            ->setParameter('amvAnr', $amv->getAnr())
             ->getQuery()
             ->getResult();
     }
@@ -124,11 +124,11 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->createQueryBuilder('ir')
             ->innerJoin('ir.amv', 'amv')
             ->where('ir.instance = :instance')
-            ->andWhere('amv.uuid = :amv_uuid')
-            ->andWhere('amv.anr = :amv_anr')
+            ->andWhere('amv.uuid = :amvUuid')
+            ->andWhere('amv.anr = :amvAnr')
             ->setParameter('instance', $instance)
-            ->setParameter('amv_uuid', $amv->getUuid())
-            ->setParameter('amv_anr', $amv->getAnr())
+            ->setParameter('amvUuid', $amv->getUuid())
+            ->setParameter('amvAnr', $amv->getAnr())
             ->getQuery()
             ->getResult();
     }

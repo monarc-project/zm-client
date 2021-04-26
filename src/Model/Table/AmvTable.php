@@ -98,23 +98,23 @@ class AmvTable extends AbstractEntityTable
             ->innerJoin('amv.asset', 'a')
             ->innerJoin('amv.threat', 't')
             ->innerJoin('amv.vulnerability', 'v')
-            ->andWhere('a.uuid = :asset_uuid')
-            ->andWhere('t.uuid = :threat_uuid')
-            ->andWhere('v.uuid = :vulnerability_uuid')
-            ->setParameter('asset_uuid', $assetUuid)
-            ->setParameter('threat_uuid', $threatUuid)
-            ->setParameter('vulnerability_uuid', $vulnerabilityUuid);
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('t.uuid = :threatUuid')
+            ->andWhere('v.uuid = :vulnerabilityUuid')
+            ->setParameter('assetUuid', $assetUuid)
+            ->setParameter('threatUuid', $threatUuid)
+            ->setParameter('vulnerabilityUuid', $vulnerabilityUuid);
 
         if ($anrId !== null) {
             $queryBuilder
                 ->andWhere('amv.anr = :anrId')
                 ->setParameter('anrId', $anrId)
-                ->andWhere('a.anr = :asset_anr')
-                ->andWhere('t.anr = :threat_anr')
-                ->andWhere('v.anr = :vulnerability_anr')
-                ->setParameter('asset_anr', $anrId)
-                ->setParameter('threat_anr', $anrId)
-                ->setParameter('vulnerability_anr', $anrId);
+                ->andWhere('a.anr = :assetAnr')
+                ->andWhere('t.anr = :threatAnr')
+                ->andWhere('v.anr = :vulnerabilityAnr')
+                ->setParameter('assetAnr', $anrId)
+                ->setParameter('threatAnr', $anrId)
+                ->setParameter('vulnerabilityAnr', $anrId);
         }
 
         return $queryBuilder
@@ -126,10 +126,13 @@ class AmvTable extends AbstractEntityTable
     {
         return $this->getRepository()
             ->createQueryBuilder('amv')
+            ->innerJoin('amv.asset', 'a')
             ->where('amv.anr = :anr')
-            ->andWhere('amv.asset = :asset')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :assetAnr')
             ->setParameter('anr', $anr)
-            ->setParameter('asset', $asset)
+            ->setParameter('assetUuid', $asset->getUuid())
+            ->setParameter('assetAnr', $anr)
             ->getQuery()
             ->getResult();
     }
