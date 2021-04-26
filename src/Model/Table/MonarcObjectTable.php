@@ -59,7 +59,7 @@ class MonarcObjectTable extends CoreMonarcObjectTable
     {
         return $this->getRepository()
             ->createQueryBuilder('mo')
-            ->innerJoin('amv.asset', 'a')
+            ->innerJoin('mo.asset', 'a')
             ->where('mo.anr = :anr')
             ->andWhere('a.uuid = :assetUuid')
             ->andWhere('a.anr = :assetAnr')
@@ -80,7 +80,7 @@ class MonarcObjectTable extends CoreMonarcObjectTable
     ): ?MonarcObject {
         return $this->getRepository()
             ->createQueryBuilder('mo')
-            ->innerJoin('amv.asset', 'a')
+            ->innerJoin('mo.asset', 'a')
             ->where('mo.anr = :anr')
             ->andWhere('a.uuid = :assetUuid')
             ->andWhere('a.anr = :assetAnr')
