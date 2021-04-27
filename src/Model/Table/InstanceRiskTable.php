@@ -51,14 +51,15 @@ class InstanceRiskTable extends CoreInstanceRiskTable
 
     public function findByInstanceAndInstanceRiskRelations(
         InstanceSuperClass $instance,
-        InstanceRiskSuperClass $instanceRisk
+        InstanceRiskSuperClass $instanceRisk,
+        bool $excludeAmvFilter = false
     ) {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('ir')
             ->where('ir.instance = :instance')
             ->setParameter('instance', $instance);
 
-        if ($instanceRisk->getAmv() !== null) {
+        if (!$excludeAmvFilter && $instanceRisk->getAmv() !== null) {
             $queryBuilder
                 ->innerJoin('ir.amv', 'amv')
                 ->andWhere('amv.uuid = :amvUuid')

@@ -1437,17 +1437,17 @@ class InstanceImportService
                     ->setIsHidden((bool)$consequenceData['isHidden'])
                     ->setLocallyTouched($consequenceData['locallyTouched']);
 
-                foreach (InstanceConsequence::getAvailableScalesCriteria() as $scaleCriteria) {
+                foreach (InstanceConsequence::getAvailableScalesCriteria() as $scaleCriteriaKey => $scaleCriteria) {
                     $instanceConsequence->{'set' . $scaleCriteria}(
                         $instanceConsequence->isHidden()
                             ? -1
                             : $this->approximate(
-                                $consequenceData[$scaleCriteria],
-                                $this->cachedData['scales']['orig'][Scale::TYPE_IMPACT]['min'],
-                                $this->cachedData['scales']['orig'][Scale::TYPE_IMPACT]['max'],
-                                $this->cachedData['scales']['dest'][Scale::TYPE_IMPACT]['min'],
-                                $this->cachedData['scales']['dest'][Scale::TYPE_IMPACT]['max']
-                            )
+                            $consequenceData[$scaleCriteriaKey],
+                            $this->cachedData['scales']['orig'][Scale::TYPE_IMPACT]['min'],
+                            $this->cachedData['scales']['orig'][Scale::TYPE_IMPACT]['max'],
+                            $this->cachedData['scales']['dest'][Scale::TYPE_IMPACT]['min'],
+                            $this->cachedData['scales']['dest'][Scale::TYPE_IMPACT]['max']
+                        )
                     );
                 }
 
@@ -1730,28 +1730,16 @@ class InstanceImportService
                                     // Get the risks of brothers
                                     /** @var InstanceRisk[] $brothers */
                                     if ($instanceRisk->isSpecific()) {
-                                        $brothers = $this->recommendationRiskTable->getEntityByFields([
-                                            'anr' => $anr->getId(),
-                                            'specific' => InstanceRisk::TYPE_SPECIFIC,
-                                            'instance' => $brotherInstance->getId(),
-                                            'threat' => [
-                                                'anr' => $anr->getId(),
-                                                'uuid' => $instanceRisk->getThreat()->getUuid()
-                                            ],
-                                            'vulnerability' => [
-                                                'anr' => $anr->getId(),
-                                                'uuid' => $instanceRisk->getVulnerability()->getUuid()
-                                            ]
-                                        ]);
+                                        $brothers = $this->instanceRiskTable->findByInstanceAndInstanceRiskRelations(
+                                            $brotherInstance,
+                                            $instanceRisk,
+                                            true
+                                        );
                                     } else {
-                                        $brothers = $this->recommendationRiskTable->getEntityByFields([
-                                            'anr' => $anr->getId(),
-                                            'instance' => $brotherInstance->getId(),
-                                            'amv' => [
-                                                'anr' => $anr->getId(),
-                                                'uuid' => $instanceRisk->getAmv()->getUuid()
-                                            ]
-                                        ]);
+                                        $brothers = $this->instanceRiskTable->findByInstanceAndAmv(
+                                            $brotherInstance,
+                                            $instanceRisk->getAmv()
+                                        );
                                     }
 
                                     foreach ($brothers as $brother) {
@@ -1965,7 +1953,7 @@ class InstanceImportService
                                 $instanceConsequence->getScaleImpactType()
                             );
                         foreach ($instanceConsequenceBrothers as $instanceConsequenceBrother) {
-                            $instanceConsequenceBrother->setIsHidden($instanceConsequence->getIsHidden())
+                            $instanceConsequenceBrother->setIsHidden($instanceConsequence->isHidden())
                                 ->setLocallyTouched($instanceConsequence->getLocallyTouched())
                                 ->setConfidentiality($instanceConsequence->getConfidentiality())
                                 ->setIntegrity($instanceConsequence->getIntegrity())
