@@ -24,6 +24,17 @@ use Monarc\Core\Model\Entity\InstanceConsequenceSuperClass;
 class InstanceConsequence extends InstanceConsequenceSuperClass
 {
     /**
+     * @var Anr
+     *
+     * @ORM\Id
+     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $anr;
+
+    /**
      * @var MonarcObject
      *
      * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
