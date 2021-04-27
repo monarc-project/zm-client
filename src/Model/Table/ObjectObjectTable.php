@@ -31,17 +31,28 @@ class ObjectObjectTable extends CoreObjectObjectTable
         return ObjectObject::class;
     }
 
+    /**
+     * Unfortunately, due to the 2 fields multi relation we can't make it in a single query.
+     *
+     * @param MonarcObject $monarcObject
+     */
     public function deleteAllByFather(MonarcObject $monarcObject): void
     {
-        $this->getRepository()->createQueryBuilder('oo')
-            ->delete('oo')
+        $childrenObjects = $this->getRepository()->createQueryBuilder('oo')
             ->innerJoin('oo.father', 'father')
-            ->where('father.uuid = :fatherUuid')
+            ->where('father.uuid = :fatherUuuid')
             ->andWhere('father.anr = :fatherAnr')
-            ->setParameter('fatherUuid', $monarcObject->getUuid())
+            ->setParameter('fatherUuuid', $monarcObject->getUuid())
             ->setParameter('fatherAnr', $monarcObject->getAnr())
             ->getQuery()
-            ->execute();
+            ->getResult();
+
+        if (!empty($childrenObjects)) {
+            foreach ($childrenObjects as $childObject) {
+                $this->getDb()->getEntityManager()->remove($childObject);
+            }
+            $this->getDb()->flush();
+        }
     }
 
     public function findMaxPositionByAnrAndFather(Anr $anr, MonarcObject $father): int
