@@ -110,7 +110,7 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     {
         return $this->getRepository()
             ->createQueryBuilder('ir')
-            ->where('amv.anr = :anr')
+            ->where('ir.anr = :anr')
             ->setParameter('anr', $anr)
             ->getQuery()
             ->getResult();
