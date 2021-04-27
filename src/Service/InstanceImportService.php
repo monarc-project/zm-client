@@ -1406,7 +1406,7 @@ class InstanceImportService
             $scalesImpactTypes = $this->scalesImpactTypeTable->findByAnr($anr);
             $localScalesImpactTypes = [];
             foreach ($scalesImpactTypes as $scalesImpactType) {
-                $localScalesImpactTypes[$scalesImpactType->getLabel($labelKey)] = $scalesImpactType;
+                $localScalesImpactTypes[$scalesImpactType->getLabel($anr->getLanguage())] = $scalesImpactType;
             }
             $scaleImpactTypeMaxPosition = $this->scalesImpactTypeTable
                 ->findMaxPositionByAnrAndScale($anr, $localScaleImpact);
