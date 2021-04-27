@@ -1267,12 +1267,12 @@ class InstanceImportService
                             ->setRecommandationSet(
                                 $this->cachedData['recSets'][$recommendationData['recommandationSet']]
                             )
-                            ->setComment($recommendationData['comment'])
-                            ->setResponsable($recommendationData['responsable'])
+                            ->setComment($recommendationData['comment'] ?? '')
+                            ->setResponsable($recommendationData['responsable'] ?? '')
                             ->setStatus($recommendationData['status'])
                             ->setImportance($recommendationData['importance'])
                             ->setCode($recommendationData['code'])
-                            ->setDescription($recommendationData['description'])
+                            ->setDescription($recommendationData['description'] ?? '')
                             ->setCounterTreated($recommendationData['counterTreated']);
 
                         if (!empty($recommendationData['duedate']['date'])) {
