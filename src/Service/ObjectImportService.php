@@ -31,7 +31,7 @@ class ObjectImportService
     private $monarcObjectTable;
 
     /** @var AssetImportService */
-    private $assetService;
+    private $assetImportService;
 
     /** @var RolfTagTable */
     private $rolfTagTable;
@@ -74,7 +74,7 @@ class ObjectImportService
     ) {
         $this->monarcObjectTable = $monarcObjectTable;
         $this->objectObjectTable = $objectObjectTable;
-        $this->assetService = $assetImportService;
+        $this->assetImportService = $assetImportService;
         $this->rolfTagTable = $rolfTagTable;
         $this->rolfRiskTable = $rolfRiskTable;
         $this->measureTable = $measureTable;
@@ -99,7 +99,7 @@ class ObjectImportService
             return $this->cachedData['objects'][$objectData['uuid']];
         }
 
-        $asset = $this->assetService->importFromArray($this->getMonarcVersion($data), $data['asset'], $anr);
+        $asset = $this->assetImportService->importFromArray($this->getMonarcVersion($data), $data['asset'], $anr);
         if ($asset === null) {
             return null;
         }
@@ -279,6 +279,10 @@ class ObjectImportService
         }
 
         if (!empty($rolfTagData['risks'])) {
+            $this->cachedData['measures'] = array_merge(
+                $this->cachedData['measures'] ?? [],
+                $this->assetImportService->getCachedDataByKey('measures')
+            );
             foreach ($rolfTagData['risks'] as $riskId) {
                 if (!isset($data['rolfRisks'][$riskId])) {
                     continue;
@@ -303,7 +307,8 @@ class ObjectImportService
                          * Prior v2.10.3 we did not set the measures data when exported.
                          */
                         $measureUuid = $newMeasure['uuid'] ?? $newMeasure;
-                        $measure = $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
+                        $measure = $this->cachedData['measures'][$measureUuid]
+                            ?? $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
                         if ($measure === null
                             && isset($newMeasure['referential'], $newMeasure['category'])
                         ) {
@@ -350,8 +355,11 @@ class ObjectImportService
                                 ->setLabels($newMeasure);
                             $this->measureTable->saveEntity($measure, false);
                         }
+
                         if ($measure !== null) {
                             $measure->addOpRisk($rolfRisk);
+
+                            $this->cachedData['measures'][$measureUuid] = $measure;
                         }
                     }
 
@@ -398,5 +406,13 @@ class ObjectImportService
         }
 
         return '1';
+    }
+
+    /**
+     * @return object[]
+     */
+    public function getCachedDataByKey(string $key): array
+    {
+        return $this->cachedData[$key] ?? [];
     }
 }

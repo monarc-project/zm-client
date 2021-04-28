@@ -686,10 +686,14 @@ class InstanceImportService
          */
         $measuresNewIds = [];
         if (isset($data['measures'])) {
+            $this->cachedData['measures'] = array_merge(
+                $this->cachedData['measures'] ?? [],
+                $this->assetImportService->getCachedDataByKey('measures'),
+                $this->objectImportService->getCachedDataByKey('measures'),
+            );
             foreach ($data['measures'] as $measureUuid => $measureData) {
-                // check if the measure is not already in the analysis
-                // TODO: Add a cache for the uuids of measures and prefetch all of them for the data['measures'].
-                $measure = $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
+                $measure = $this->cachedData['measures'][$measureUuid]
+                    ?? $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
                 if ($measure === null) {
                     // load the referential linked to the measure
                     $referential = $this->referentialTable->findByAnrAndUuid($anr, $measureData['referential']);
@@ -718,6 +722,8 @@ class InstanceImportService
                             $this->soaTable->saveEntity($newSoa, false);
                         }
                     }
+                } else {
+                    $this->cachedData['measures'][$measureUuid] = $measure;
                 }
             }
 

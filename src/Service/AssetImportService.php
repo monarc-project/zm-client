@@ -263,27 +263,28 @@ class AssetImportService
 
             if (!empty($valueAmv['measures'])) {
                 $labelName = 'label' . $languageIndex;
-                foreach ($valueAmv['measures'] as $keyMeasure) {
-                    $measure = $this->measureTable->findByAnrAndUuid($anr, $keyMeasure);
+                foreach ($valueAmv['measures'] as $measureUuid) {
+                    $measure = $this->cachedData['measures'][$measureUuid]
+                        ?? $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
                     if ($measure === null) {
                         /*
                          * Backward compatibility.
                          * Prior v2.10.3 we did not set referential data when exported.
                          */
-                        $referentialUuid = $data['measures'][$keyMeasure]['referential']['uuid']
-                            ?? $data['measures'][$keyMeasure]['referential'];
+                        $referentialUuid = $data['measures'][$measureUuid]['referential']['uuid']
+                            ?? $data['measures'][$measureUuid]['referential'];
 
                         $referential = $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
 
                         // For backward compatibility issue.
                         if ($referential === null
-                            && isset($data['measures'][$keyMeasure]['referential'][$labelName])
+                            && isset($data['measures'][$measureUuid]['referential'][$labelName])
                         ) {
                             $referential = (new Referential())
                                 ->setAnr($anr)
-                                ->setUuid($data['measures'][$keyMeasure]['referential']['uuid'])
-                                ->{'setLabel' . $languageIndex}($data['measures'][$keyMeasure]['referential'][$labelName]);
-                            $this->referentialTable->saveEntity($referential);
+                                ->setUuid($data['measures'][$measureUuid]['referential']['uuid'])
+                                ->{'setLabel' . $languageIndex}($data['measures'][$measureUuid]['referential'][$labelName]);
+                            $this->referentialTable->saveEntity($referential, false);
                         }
 
                         // For backward compatibility issue.
@@ -293,7 +294,7 @@ class AssetImportService
 
                         $category = $this->soaCategoryTable->getEntityByFields([
                             'anr' => $anr->getId(),
-                            $labelName => $data['measures'][$keyMeasure]['category'][$labelName],
+                            $labelName => $data['measures'][$measureUuid]['category'][$labelName],
                             'referential' => [
                                 'anr' => $anr->getId(),
                                 'uuid' => $referential->getUuid(),
@@ -303,7 +304,7 @@ class AssetImportService
                             $category = (new SoaCategory())
                                 ->setAnr($anr)
                                 ->setReferential($referential)
-                                ->{'setLabel' . $languageIndex}($data['measures'][$keyMeasure]['category'][$labelName]);
+                                ->{'setLabel' . $languageIndex}($data['measures'][$measureUuid]['category'][$labelName]);
                             /** @var SoaCategoryTable $soaCategoryTable */
                             $this->soaCategoryTable->saveEntity($category, false);
                         } else {
@@ -312,16 +313,18 @@ class AssetImportService
 
                         $measure = (new Measure())
                             ->setAnr($anr)
-                            ->setUuid($keyMeasure)
+                            ->setUuid($measureUuid)
                             ->setCategory($category)
                             ->setReferential($referential)
-                            ->setCode($data['measures'][$keyMeasure]['code'])
-                            ->setLabels($data['measures'][$keyMeasure]);
+                            ->setCode($data['measures'][$measureUuid]['code'])
+                            ->setLabels($data['measures'][$measureUuid]);
                     }
 
                     $measure->addAmv($currentAmvs[$keyAmv]);
 
                     $this->measureTable->saveEntity($measure, false);
+
+                    $this->cachedData['measures'][$measureUuid] = $measure;
                 }
             }
         }
