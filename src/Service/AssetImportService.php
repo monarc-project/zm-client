@@ -305,7 +305,7 @@ class AssetImportService
                                 ->setReferential($referential)
                                 ->{'setLabel' . $languageIndex}($data['measures'][$keyMeasure]['category'][$labelName]);
                             /** @var SoaCategoryTable $soaCategoryTable */
-                            $this->soaCategoryTable->saveEntity($category);
+                            $this->soaCategoryTable->saveEntity($category, false);
                         } else {
                             $category = current($category);
                         }

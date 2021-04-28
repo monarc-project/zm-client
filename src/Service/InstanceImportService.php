@@ -386,17 +386,6 @@ class InstanceImportService
         ?InstanceSuperClass $parentInstance,
         string $modeImport
     ) {
-        /*
-         * TODO: Global list.
-         * 1. sort out the cachedData (cache) usage, save objects instead of id/uuid
-         * 2. replace all the usages of getEntityByFields to findBy
-         * 3. replace save to saveEntity
-         * 4. replace setting array in the entities constructors to setters usage.
-         * 5. extract peaces of the code to separate private methods
-         * 6. optimize some logic, group maybe.
-         * 7. cover with tests.
-         */
-
         $monarcObject = $this->objectImportService->importFromArray($data['object'], $anr, $modeImport);
         if ($monarcObject === null) {
             return false;
@@ -420,97 +409,7 @@ class InstanceImportService
 
         $this->processInstanceRisks($data, $anr, $instance, $monarcObject, $includeEval, $modeImport);
 
-        // TODO: extract to a method, refactor/optimize.
-        if (!empty($data['risksop'])) {
-            $toApproximate = [
-                Scale::TYPE_THREAT => [
-                    'netProb',
-                    'targetedProb',
-                ],
-                Scale::TYPE_IMPACT => [
-                    'netR',
-                    'netO',
-                    'netL',
-                    'netF',
-                    'netP',
-                    'targetedR',
-                    'targetedO',
-                    'targetedL',
-                    'targetedF',
-                    'targetedP',
-                ],
-            ];
-            $toApproximate[Scale::TYPE_THREAT][] = 'brutProb';
-            $toApproximate[Scale::TYPE_IMPACT][] = 'brutR';
-            $toApproximate[Scale::TYPE_IMPACT][] = 'brutO';
-            $toApproximate[Scale::TYPE_IMPACT][] = 'brutL';
-            $toApproximate[Scale::TYPE_IMPACT][] = 'brutF';
-            $toApproximate[Scale::TYPE_IMPACT][] = 'brutP';
-
-            $k = 0;
-            foreach ($data['risksop'] as $ro) {
-                $instanceRiskOp = new InstanceRiskOp();
-                $ro['rolfRisk'] = null;
-                $toExchange = $ro;
-                unset($toExchange['id']);
-                if ($monarcObject->getRolfTag() !== null) {
-                    $rolfRisks = $monarcObject->getRolfTag()->getRisks();
-                    $toExchange['rolfRisk'] = $rolfRisks[$k];
-                    $toExchange['riskCacheCode'] = $rolfRisks[$k]->getCode();
-                    $k++;
-                }
-
-                // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
-                if ($includeEval) {
-                    // pas d'impact des subscales, on prend les échelles nominales
-                    foreach ($toApproximate as $type => $list) {
-                        foreach ($list as $i) {
-                            $toExchange[$i] = $this->approximate(
-                                $toExchange[$i],
-                                $this->cachedData['scales']['orig'][$type]['min'],
-                                $this->cachedData['scales']['orig'][$type]['max'],
-                                $this->cachedData['scales']['dest'][$type]['min'],
-                                $this->cachedData['scales']['dest'][$type]['max']
-                            );
-                        }
-                    }
-                }
-
-                $instanceRiskOp->setLanguage($anr->getLanguage());
-                $instanceRiskOp->exchangeArray($toExchange);
-                $instanceRiskOp->setAnr($anr)
-                    ->setInstance($instance)
-                    ->setObject($monarcObject);
-                if (isset($toExchange['rolfRisk'])) {
-                    $instanceRiskOp->setRolfRisk($toExchange['rolfRisk']);
-                }
-
-                $this->instanceRiskOpTable->saveEntity($instanceRiskOp, false);
-
-                // Process recommendations related to the operational risk.
-                if ($includeEval && !empty($data['recosop'][$ro['id']])) {
-                    foreach ($data['recosop'][$ro['id']] as $reco) {
-                        $recommendation = $this->processRecommendationDataLinkedToRisk(
-                            $anr,
-                            $reco,
-                            $ro['kindOfMeasure'] !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
-                        );
-
-                        $recommendationRisk = (new RecommandationRisk())
-                            ->setAnr($anr)
-                            ->setInstance($instance)
-                            ->setInstanceRiskOp($instanceRiskOp)
-                            ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
-                            ->setCommentAfter($reco['commentAfter'])
-                            ->setRecommandation($recommendation);
-
-                        $this->recommendationRiskTable->saveEntity($recommendationRisk, false);
-                    }
-                }
-
-                $this->recommendationRiskTable->getDb()->flush();
-            }
-        }
+        $this->processInstanceOperationalRisks($data, $anr, $instance, $monarcObject, $includeEval);
 
         if (!empty($data['children'])) {
             usort($data['children'], function ($a, $b) {
@@ -519,7 +418,7 @@ class InstanceImportService
             foreach ($data['children'] as $child) {
                 $this->importInstanceFromArray($child, $anr, $instance, $modeImport);
             }
-            $this->updateChildrenImpacts($instance->getId());
+            $this->anrInstanceService->updateChildrenImpacts($instance);
         }
 
         $this->instanceTable->getDb()->flush();
@@ -1177,11 +1076,6 @@ class InstanceImportService
         return $defaultvalue;
     }
 
-    private function getMonarcVersion(): ?string
-    {
-        return $this->monarcVersion;
-    }
-
     private function isMonarcVersionLoverThen(string $version): bool
     {
         return version_compare($this->monarcVersion, $version) < 0;
@@ -1596,6 +1490,7 @@ class InstanceImportService
                 : $this->cachedData['ivuls'][$data['vuls'][$instanceRiskData['vulnerability']]['code']];
 
             /** @var InstanceRisk $instanceRisk */
+            // TODO: findBy...
             $instanceRisk = current($this->instanceRiskTable->getEntityByFields([
                 'anr' => $anr->getId(),
                 'instance' => $instance->getId(),
@@ -1622,10 +1517,10 @@ class InstanceImportService
                     $this->cachedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['min'],
                     $this->cachedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['max']
                 ));
-                $instanceRisk->set('mh', $instanceRiskData['mh']);
-                $instanceRisk->set('kindOfMeasure', $instanceRiskData['kindOfMeasure']);
-                $instanceRisk->set('comment', $instanceRiskData['comment']);
-                $instanceRisk->set('commentAfter', $instanceRiskData['commentAfter']);
+                $instanceRisk->setMh($instanceRiskData['mh']);
+                $instanceRisk->setKindOfMeasure($instanceRiskData['kindOfMeasure']);
+                $instanceRisk->setComment($instanceRiskData['comment'] ?? '');
+                $instanceRisk->setCommentAfter($instanceRiskData['commentAfter'] ?? '');
 
                 // La valeur -1 pour le reduction_amount n'a pas de sens, c'est 0 le minimum. Le -1 fausse
                 // les calculs.
@@ -1754,17 +1649,10 @@ class InstanceImportService
             }
 
             // Check recommendations from a brother
-            /** @var Instance $instanceBrother */
-            $instanceBrother = current($this->instanceTable->getEntityByFields([
-                'id' => ['op' => '!=', 'value' => $instance->getId()],
-                'anr' => $anr->getId(),
-                'asset' => ['anr' => $anr->getId(), 'uuid' => $monarcObject->getAsset()->getUuid()],
-                'object' => ['anr' => $anr->getId(), 'uuid' => $monarcObject->getUuid()]
-            ]));
-
-            if ($instanceBrother !== null && $instanceRisk !== null && !$instanceRisk->isSpecific()) {
+            $instanceBrothers = $this->getInstanceBrothers($instance);
+            if (!empty($instanceBrothers) && $instanceRisk !== null && !$instanceRisk->isSpecific()) {
                 $instanceRiskBrothers = $this->instanceRiskTable->findByInstanceAndAmv(
-                    $instanceBrother,
+                    current($instanceBrothers),
                     $instanceRisk->getAmv()
                 );
 
@@ -1813,14 +1701,9 @@ class InstanceImportService
         // Check recommandations from specific risk of brothers
         $recoToCreate = [];
         // Get all specific risks of instance
-        // TODO: replace all the queries with QueryBuilder. Review the logic.
-        /** @var InstanceRisk[] $specificRisks */
-        $specificRisks = $this->instanceRiskTable->getEntityByFields([
-            'anr' => $anr->getId(),
-            'instance' => $instance->getId(),
-            'specific' => 1,
-        ]);
+        $specificRisks = $this->instanceRiskTable->findByInstance($instance, true);
         foreach ($specificRisks as $specificRisk) {
+            // TODO: replace all the queries with QueryBuilder. Review the logic.
             // Get recommandations of brothers
             /** @var RecommandationRisk[] $exitingRecoRisks */
             $exitingRecoRisks = $this->recommendationRiskTable->getEntityByFields([
@@ -1897,6 +1780,105 @@ class InstanceImportService
 
         // on met finalement à jour les risques en cascade
         $this->anrInstanceService->updateRisks($instance);
+    }
+
+    private function processInstanceOperationalRisks(
+        array $data,
+        Anr $anr,
+        Instance $instance,
+        MonarcObject $monarcObject,
+        bool $includeEval
+    ): void {
+        if (!empty($data['risksop'])) {
+            $toApproximate = [
+                Scale::TYPE_THREAT => [
+                    'netProb',
+                    'targetedProb',
+                    'brutProb',
+                ],
+                Scale::TYPE_IMPACT => [
+                    'netR',
+                    'netO',
+                    'netL',
+                    'netF',
+                    'netP',
+                    'targetedR',
+                    'targetedO',
+                    'targetedL',
+                    'targetedF',
+                    'targetedP',
+                    'brutR',
+                    'brutO',
+                    'brutL',
+                    'brutF',
+                    'brutP',
+                ],
+            ];
+
+            $k = 0;
+            foreach ($data['risksop'] as $ro) {
+                $instanceRiskOp = new InstanceRiskOp();
+                $ro['rolfRisk'] = null;
+                $toExchange = $ro;
+                unset($toExchange['id']);
+                if ($monarcObject->getRolfTag() !== null) {
+                    $rolfRisks = $monarcObject->getRolfTag()->getRisks();
+                    $toExchange['rolfRisk'] = $rolfRisks[$k];
+                    $toExchange['riskCacheCode'] = $rolfRisks[$k]->getCode();
+                    $k++;
+                }
+
+                // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
+                if ($includeEval) {
+                    // pas d'impact des subscales, on prend les échelles nominales
+                    foreach ($toApproximate as $type => $list) {
+                        foreach ($list as $i) {
+                            $toExchange[$i] = $this->approximate(
+                                $toExchange[$i],
+                                $this->cachedData['scales']['orig'][$type]['min'],
+                                $this->cachedData['scales']['orig'][$type]['max'],
+                                $this->cachedData['scales']['dest'][$type]['min'],
+                                $this->cachedData['scales']['dest'][$type]['max']
+                            );
+                        }
+                    }
+                }
+
+                $instanceRiskOp->setLanguage($anr->getLanguage());
+                $instanceRiskOp->exchangeArray($toExchange);
+                $instanceRiskOp->setAnr($anr)
+                    ->setInstance($instance)
+                    ->setObject($monarcObject);
+                if (isset($toExchange['rolfRisk'])) {
+                    $instanceRiskOp->setRolfRisk($toExchange['rolfRisk']);
+                }
+
+                $this->instanceRiskOpTable->saveEntity($instanceRiskOp, false);
+
+                // Process recommendations related to the operational risk.
+                if ($includeEval && !empty($data['recosop'][$ro['id']])) {
+                    foreach ($data['recosop'][$ro['id']] as $reco) {
+                        $recommendation = $this->processRecommendationDataLinkedToRisk(
+                            $anr,
+                            $reco,
+                            $ro['kindOfMeasure'] !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
+                        );
+
+                        $recommendationRisk = (new RecommandationRisk())
+                            ->setAnr($anr)
+                            ->setInstance($instance)
+                            ->setInstanceRiskOp($instanceRiskOp)
+                            ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
+                            ->setCommentAfter($reco['commentAfter'] ?? '')
+                            ->setRecommandation($recommendation);
+
+                        $this->recommendationRiskTable->saveEntity($recommendationRisk, false);
+                    }
+                }
+
+                $this->recommendationRiskTable->getDb()->flush();
+            }
+        }
     }
 
     /**
