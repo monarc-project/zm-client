@@ -689,7 +689,7 @@ class InstanceImportService
             $this->cachedData['measures'] = array_merge(
                 $this->cachedData['measures'] ?? [],
                 $this->assetImportService->getCachedDataByKey('measures'),
-                $this->objectImportService->getCachedDataByKey('measures'),
+                $this->objectImportService->getCachedDataByKey('measures')
             );
             foreach ($data['measures'] as $measureUuid => $measureData) {
                 $measure = $this->cachedData['measures'][$measureUuid]
