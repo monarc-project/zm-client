@@ -402,33 +402,15 @@ class InstanceImportService
             return false;
         }
 
-        $instanceData = $data['instance'];
-        $instance = (new Instance())
-            ->setAnr($anr)
-            ->setLabels($instanceData)
-            ->setNames($instanceData)
-            ->setDisponibility((float)$instanceData['disponibility'])
-            ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
-            ->setRoot($parentInstance === null ? null : $parentInstance->getRoot())
-            ->setParent($parentInstance)
-            ->setAssetType($instanceData['assetType'])
-            ->setExportable($instanceData['exportable'])
-            ->setPosition(++$this->currentMaxInstancePosition)
-            ->setConfidentiality($instanceData['c'])
-            ->setIntegrity($instanceData['i'])
-            ->setAvailability($instanceData['d'])
-            ->setInheritedConfidentiality($instanceData['ch'])
-            ->setInheritedIntegrity($instanceData['ih'])
-            ->setInheritedAvailability($instanceData['dh'])
-            ->setObject($monarcObject)
-            ->setAsset($monarcObject->getAsset());
+        $instance = $this->createInstance($data, $anr, $parentInstance, $monarcObject);
 
-        $this->instanceTable->saveEntity($instance);
+        $includeEval = !empty($data['with_eval']);
+
+        $localScaleImpact = $this->prepareScalesImpact($data, $anr, $includeEval);
 
         $this->anrInstanceRiskService->createInstanceRisks($instance, $anr, $monarcObject);
 
-        $includeEval = !empty($data['with_eval']);
-        $this->prepareInstanceConsequences($data, $anr, $instance, $monarcObject, $includeEval);
+        $this->prepareInstanceConsequences($data, $anr, $instance, $monarcObject, $localScaleImpact, $includeEval);
 
         $this->updateInstanceImpactsFromBrothers($instance, $modeImport);
 
@@ -438,6 +420,7 @@ class InstanceImportService
 
         $this->processInstanceRisks($data, $anr, $instance, $monarcObject, $includeEval, $modeImport);
 
+        // TODO: extract to a method, refactor/optimize.
         if (!empty($data['risksop'])) {
             $toApproximate = [
                 Scale::TYPE_THREAT => [
@@ -804,29 +787,23 @@ class InstanceImportService
          */
         $measuresNewIds = [];
         if (isset($data['measures'])) {
-            foreach ($data['measures'] as $measureUuid => $measure_array) {
+            foreach ($data['measures'] as $measureUuid => $measureData) {
                 // check if the measure is not already in the analysis
-                // TODO: findByAnrAndUuid
-                $measures = $this->measureTable->getEntityByFields([
-                    'anr' => $anr->getId(),
-                    'uuid' => $measureUuid
-                ]);
-                if (empty($measures)) {
+                // TODO: Add a cache for the uuids of measures and prefetch all of them for the data['measures'].
+                $measure = $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
+                if ($measure === null) {
                     // load the referential linked to the measure
-                    // TODO: findByAnrAndUuid
-                    $referentials = $this->referentialTable->getEntityByFields([
-                        'anr' => $anr->getId(),
-                        'uuid' => $measure_array['referential']
-                    ]);
+                    $referential = $this->referentialTable->findByAnrAndUuid($anr, $measureData['referential']);
+                    // TODO: findBy...
                     $soaCategories = $this->soaCategoryTable->getEntityByFields([
                         'anr' => $anr->getId(),
-                        $labelKey => $measure_array['category']
+                        $labelKey => $measureData['category']
                     ]);
-                    if (!empty($referentials) && !empty($soaCategories)) {
+                    if ($referential !== null && !empty($soaCategories)) {
                         // a measure must be linked to a referential and a category
-                        $newMeasure = new Measure($measure_array);
+                        $newMeasure = new Measure($measureData);
                         $newMeasure->setAnr($anr);
-                        $newMeasure->setReferential($referentials[0]);
+                        $newMeasure->setReferential($referential);
                         $newMeasure->setCategory($soaCategories[0]);
                         $newMeasure->setAmvs(new ArrayCollection()); // need to initialize the amvs link
                         $newMeasure->setRolfRisks(new ArrayCollection());
@@ -1369,10 +1346,10 @@ class InstanceImportService
         Anr $anr,
         InstanceSuperClass $instance,
         MonarcObject $monarcObject,
+        ?Scale $localScaleImpact,
         bool $includeEval
     ): void {
         $labelKey = 'label' . $anr->getLanguage();
-
         if (!$includeEval) {
             // TODO: improve the method.
             $this->anrInstanceService->createInstanceConsequences($instance->getId(), $anr->getId(), $monarcObject);
@@ -1399,7 +1376,6 @@ class InstanceImportService
         }
 
         if (!empty($data['consequences'])) {
-            $localScaleImpact = $this->prepareScalesImpact($data, $anr, $includeEval);
             if ($localScaleImpact === null) {
                 $localScaleImpact = $this->scaleTable->findByAnrAndType($anr, Scale::TYPE_IMPACT);
             }
@@ -1537,14 +1513,20 @@ class InstanceImportService
                         ->setCode($threatData['code'])
                         ->setLabels($threatData)
                         ->setDescriptions($threatData)
-                        ->setConfidentiality($threatData['c'])
-                        ->setIntegrity($threatData['i'])
-                        ->setAvailability($threatData['a'])
                         ->setMode($threatData['mode'])
                         ->setStatus($threatData['status'])
                         ->setTrend($threatData['trend'])
                         ->setQualification($threatData['qualification'])
                         ->setComment($threatData['comment']);
+                    if (isset($threatData['c'])) {
+                        $threat->setConfidentiality((int)$threatData['c']);
+                    }
+                    if (isset($threatData['i'])) {
+                        $threat->setIntegrity((int)$threatData['i']);
+                    }
+                    if (isset($threatData['a'])) {
+                        $threat->setAvailability((int)$threatData['a']);
+                    }
                     if (!$this->isMonarcVersionLoverThen('2.8.2')) {
                         $threat->setUuid($threatData['uuid']);
                     }
@@ -2013,5 +1995,55 @@ class InstanceImportService
             ->setRiskConfidentiality($instanceRiskData['riskC'])
             ->setRiskIntegrity($instanceRiskData['riskI'])
             ->setRiskAvailability($instanceRiskData['riskD']);
+    }
+
+    // toto: finish, threat setConf from MonarcAppFO
+
+    /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function createInstance(
+        array $data,
+        Anr $anr,
+        ?InstanceSuperClass $parentInstance,
+        MonarcObject $monarcObject
+    ): Instance  {
+        $instanceData = $data['instance'];
+        $instance = (new Instance())
+            ->setAnr($anr)
+            ->setLabels($instanceData)
+            ->setNames($instanceData)
+            ->setDisponibility((float)$instanceData['disponibility'])
+            ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
+            ->setRoot($parentInstance === null ? null : $parentInstance->getRoot())
+            ->setParent($parentInstance)
+            ->setAssetType($instanceData['assetType'])
+            ->setExportable($instanceData['exportable'])
+            ->setPosition(++$this->currentMaxInstancePosition)
+            ->setObject($monarcObject)
+            ->setAsset($monarcObject->getAsset());
+        if (isset($threatData['c'])) {
+            $instance->setConfidentiality((int)$instanceData['c']);
+        }
+        if (isset($threatData['i'])) {
+            $instance->setIntegrity((int)$instanceData['i']);
+        }
+        if (isset($threatData['d'])) {
+            $instance->setAvailability((int)$instanceData['d']);
+        }
+        if (isset($threatData['ch'])) {
+            $instance->setInheritedConfidentiality((int)$instanceData['ch']);
+        }
+        if (isset($threatData['ih'])) {
+            $instance->setInheritedIntegrity((int)$instanceData['ih']);
+        }
+        if (isset($threatData['dh'])) {
+            $instance->setInheritedAvailability((int)$instanceData['dh']);
+        }
+
+        $this->instanceTable->saveEntity($instance);
+
+        return $instance;
     }
 }
