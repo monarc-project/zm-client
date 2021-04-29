@@ -2002,7 +2002,7 @@ class InstanceImportService
             ->setAnr($anr)
             ->setLabels($instanceData)
             ->setNames($instanceData)
-            ->setDisponibility((float)$instanceData['disponibility'])
+            ->setDisponibility(!empty($instanceData['disponibility']) ? (float)$instanceData['disponibility'] : 0)
             ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
             ->setRoot($parentInstance === null ? null : $parentInstance->getRoot())
             ->setParent($parentInstance)
