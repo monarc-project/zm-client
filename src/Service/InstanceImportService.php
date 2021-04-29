@@ -1532,16 +1532,15 @@ class InstanceImportService
                 // les calculs.
                 // Cas particulier, faudrait pas mettre n'importe quoi dans cette colonne si on part d'une scale
                 // 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
-                $instanceRisk->set(
-                    'reductionAmount',
-                    $instanceRiskData['reductionAmount'] != -1
+                $instanceRisk->setReductionAmount(
+                    $instanceRiskData['reductionAmount'] !== -1
                         ? $this->approximate(
-                        $instanceRiskData['reductionAmount'],
-                        0,
-                        $instanceRiskData['vulnerabilityRate'],
-                        0,
-                        $instanceRisk->getVulnerabilityRate(),
-                        0)
+                            $instanceRiskData['reductionAmount'],
+                            0,
+                            $instanceRiskData['vulnerabilityRate'],
+                            0,
+                            $instanceRisk->getVulnerabilityRate(),
+                            0)
                         : 0
                 );
                 $this->instanceRiskTable->saveEntity($instanceRisk, false);
@@ -1944,16 +1943,17 @@ class InstanceImportService
      */
     private function getInstanceBrothers(InstanceSuperClass $instance): array
     {
-        if (!isset($this->cachedData['instanceBrothers'])) {
-            $this->cachedData['instanceBrothers'] = $this->instanceTable->findByAnrAssetAndObjectExcludeInstance(
-                $instance->getAnr(),
-                $instance->getAsset(),
-                $instance->getObject(),
-                $instance
-            );
+        if (!isset($this->cachedData['instanceBrothers'][$instance->getId()])) {
+            $this->cachedData['instanceBrothers'][$instance->getId()] = $this->instanceTable
+                ->findByAnrAssetAndObjectExcludeInstance(
+                    $instance->getAnr(),
+                    $instance->getAsset(),
+                    $instance->getObject(),
+                    $instance
+                );
         }
 
-        return $this->cachedData['instanceBrothers'];
+        return $this->cachedData['instanceBrothers'][$instance->getId()];
     }
 
     private function createInstanceRiskFromData(
