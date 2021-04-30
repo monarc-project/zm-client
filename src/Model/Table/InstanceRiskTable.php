@@ -49,10 +49,14 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $res > 0;
     }
 
+    /**
+     * @return InstanceRisk[]
+     */
     public function findByInstanceAndInstanceRiskRelations(
         InstanceSuperClass $instance,
         InstanceRiskSuperClass $instanceRisk,
-        bool $excludeAmvFilter = false
+        bool $excludeAmvFilter = false,
+        bool $includeAssetFilter = false
     ) {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('ir')
@@ -66,6 +70,14 @@ class InstanceRiskTable extends CoreInstanceRiskTable
                 ->andWhere('amv.anr = :amvAnr')
                 ->setParameter('amvUuid', $instanceRisk->getAmv()->getUuid())
                 ->setParameter('amvAnr', $instanceRisk->getAmv()->getAnr());
+        }
+        if ($includeAssetFilter) {
+            $queryBuilder
+                ->innerJoin('ir.asset', 'a')
+                ->andWhere('a.uuid = :assetUuid')
+                ->andWhere('a.anr = :assetAnr')
+                ->setParameter('assetUuid', $instanceRisk->getAsset()->getUuid())
+                ->setParameter('assetAnr', $instanceRisk->getAsset()->getAnr());
         }
 
         $queryBuilder

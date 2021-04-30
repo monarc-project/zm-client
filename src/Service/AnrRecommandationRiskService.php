@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
@@ -489,7 +488,7 @@ class AnrRecommandationRiskService extends AbstractService
                 /** @var RecommendationHistoricTable $recoHistoTable */
                 $recoHistoTable = $this->get('recommandationHistoricTable');
                 $riskRecoHistos = $recoHistoTable->getEntityByFields([
-                    'instanceRiskOp' => $recommendationRisk->get('instanceRiskOp')->get('id')
+                    'instanceRiskOp' => $recommendationRisk->getInstanceRiskOp()->getId()
                 ], ['id' => 'DESC']);
                 $c = 0;
 
@@ -508,7 +507,7 @@ class AnrRecommandationRiskService extends AbstractService
                         break;
                     }
                 }
-                $instanceRiskOp = $recommendationRisk->get('instanceRiskOp');
+                $instanceRiskOp = $recommendationRisk->getInstanceRiskOp();
                 $instanceRiskOp->comment = implode("\n\n", array_reverse($cacheCommentAfter)); // array_reverse because "['id' => 'DESC']"
                 $instanceRiskOp->mitigation = '';
                 $instanceRiskOp->netProb = $instanceRiskOp->get('targetedProb');
@@ -546,7 +545,7 @@ class AnrRecommandationRiskService extends AbstractService
                 /** @var RecommendationHistoricTable $recoHistoTable */
                 $recoHistoTable = $this->get('recommandationHistoricTable');
                 $riskRecoHistos = $recoHistoTable->getEntityByFields([
-                    'instanceRisk' => $recommendationRisk->get('instanceRisk')->get('id')
+                    'instanceRisk' => $recommendationRisk->getInstanceRisk()->getId()
                 ], ['id' => 'DESC']);
                 $c = 0;
 
@@ -569,93 +568,105 @@ class AnrRecommandationRiskService extends AbstractService
                 // Update instance risk
                 $instanceRisk = $recommendationRisk->getInstanceRisk();
 
-                $instanceRisk->comment = implode("\n\n", array_reverse($cacheCommentAfter)); // array_reverse because "['id' => 'DESC']"
-                $instanceRisk->commentAfter = '';
+                $instanceRisk->setComment(
+                    implode("\n\n", array_reverse($cacheCommentAfter))
+                ); // array_reverse because "['id' => 'DESC']"
+                $instanceRisk->setCommentAfter('');
 
                 // Apply reduction vulnerability on risk
-                $oldVulRate = $instanceRisk->get('vulnerabilityRate');
-                $newVulnerabilityRate = $instanceRisk->get('vulnerabilityRate') - $instanceRisk->get('reductionAmount');
-                $instanceRisk->vulnerabilityRate = $newVulnerabilityRate >= 0 ? $newVulnerabilityRate : 0;
+                $oldVulRate = $instanceRisk->getVulnerabilityRate();
+                $newVulnerabilityRate = $instanceRisk->getVulnerabilityRate() - $instanceRisk->getReductionAmount();
+                $instanceRisk->setVulnerabilityRate($newVulnerabilityRate >= 0 ? $newVulnerabilityRate : 0);
 
-                $instanceRisk->riskC = $this->getRiskC($instanceRisk->get('instance')->get('c'), $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'));
-                $instanceRisk->riskI = $this->getRiskI($instanceRisk->get('instance')->get('i'), $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'));
-                $instanceRisk->riskD = $this->getRiskD($instanceRisk->get('instance')->get('d'), $instanceRisk->get('threatRate'), $instanceRisk->get('vulnerabilityRate'));
+                $instanceRisk->setRiskConfidentiality(
+                    $this->getRiskC(
+                        $instanceRisk->getInstance()->getConfidentiality(),
+                        $instanceRisk->getThreatRate(),
+                        $instanceRisk->getVulnerabilityRate()
+                    )
+                );
+                $instanceRisk->setRiskIntegrity(
+                    $this->getRiskI(
+                        $instanceRisk->getInstance()->getIntegrity(),
+                        $instanceRisk->getThreatRate(),
+                        $instanceRisk->getVulnerabilityRate()
+                    )
+                );
+                $instanceRisk->setRiskAvailability(
+                    $this->getRiskD(
+                        $instanceRisk->getInstance()->getAvailability(),
+                        $instanceRisk->getThreatRate(),
+                        $instanceRisk->getVulnerabilityRate()
+                    )
+                );
 
                 $risks = [];
                 $impacts = [];
-                if ($instanceRisk->getThreat()-c) {
+                if ($instanceRisk->getThreat()->getConfidentiality()) {
                     $risks[] = $instanceRisk->getRiskConfidentiality();
                     $impacts[] = $instanceRisk->getInstance()->getConfidentiality();
                 }
-                if ($instanceRisk->getThreat()->i) {
+                if ($instanceRisk->getThreat()->getIntegrity()) {
                     $risks[] = $instanceRisk->getRiskIntegrity();
                     $impacts[] = $instanceRisk->getInstance()->getIntegrity();
                 }
-                if ($instanceRisk->getThreat()->a) {
+                if ($instanceRisk->getThreat()->getAvailability()) {
                     $risks[] = $instanceRisk->getRiskAvailability();
                     $impacts[] = $instanceRisk->getInstance()->getAvailability();
                 }
 
-                $instanceRisk->cacheMaxRisk = \count($risks) ? max($risks) : -1;
-                $instanceRisk->cacheTargetedRisk = $this->getTargetRisk($impacts, $instanceRisk->get('threatRate'), $oldVulRate, $instanceRisk->get('reductionAmount'));
+                $instanceRisk->setCacheMaxRisk(\count($risks) ? max($risks) : -1);
+                $instanceRisk->setCacheTargetedRisk(
+                    $this->getTargetRisk(
+                        $impacts,
+                        $instanceRisk->getThreatRate(),
+                        $oldVulRate,
+                        $instanceRisk->getReductionAmount()
+                    )
+                );
 
                 // Set reduction amount to 0
-                $instanceRisk->reductionAmount = 0;
+                $instanceRisk->setReductionAmount(0);
 
                 // Change status to NOT_TREATED
-                $instanceRisk->kindOfMeasure = InstanceRisk::KIND_NOT_TREATED;
+                $instanceRisk->setKindOfMeasure(InstanceRisk::KIND_NOT_TREATED);
 
-                /** @var InstanceRiskTable $instanceRiskOpTable */
+                /** @var InstanceRiskTable $instanceRiskTable */
                 $instanceRiskTable = $this->get('instanceRiskTable');
-                $instanceRiskTable->save($instanceRisk);
+                $instanceRiskTable->saveEntity($instanceRisk);
 
                 // Impact on brothers
                 if ($recommendationRisk->hasGlobalObjectRelation()) {
 
                     /** @var InstanceTable $instanceTable */
                     $instanceTable = $this->get('instanceTable');
-                    /** @var Instance[] $brothersInstances */
-                    $brothersInstances = $instanceTable->getEntityByFields([
-                        'anr' => $recommendationRisk->get('anr')->get('id'),
-                        'object' => [
-                            'anr' => $recommendationRisk->getAnr()->getId(),
-                            'uuid' => $recommendationRisk->getGlobalObject()->getUuid()
-                        ],
-                    ]);
+                    $brothersInstances = $instanceTable->findByAnrAndObject(
+                        $recommendationRisk->getAnr(),
+                        $recommendationRisk->getGlobalObject()
+                    );
                     foreach ($brothersInstances as $brotherInstance) {
-                        $brothersInstancesRisks = $instanceRiskTable->getEntityByFields([
-                            'anr' => $recommendationRisk->getAnr()->getId(),
-                            'asset' => [
-                                'anr' => $recommendationRisk->getAnr()->getId(),
-                                'uuid' => $instanceRisk->getAsset()->getUuid(),
-                            ],
-                            'threat' => [
-                                'anr' => $recommendationRisk->getAnr()->getId(),
-                                'uuid' => $instanceRisk->getThreat()->getUuid(),
-                            ],
-                            'vulnerability' => [
-                                'anr' => $recommendationRisk->getAnr()->getId(),
-                                'uuid' => $instanceRisk->getVulnerability()->getUuid()
-                            ],
-                            'instance' => $brotherInstance->getId(),
-                        ]);
+                        $brothersInstancesRisks = $instanceRiskTable->findByInstanceAndInstanceRiskRelations(
+                            $brotherInstance,
+                            $instanceRisk,
+                            false,
+                            true
+                        );
 
-                        $i = 1;
-                        $nbBrothersInstancesRisks = count($brothersInstancesRisks);
                         foreach ($brothersInstancesRisks as $brotherInstanceRisk) {
-                            $brotherInstanceRisk->comment = $instanceRisk->getComment();
-                            $brotherInstanceRisk->commentAfter = $instanceRisk->commentAfter;
-                            $brotherInstanceRisk->vulnerabilityRate = $instanceRisk->vulnerabilityRate;
-                            $brotherInstanceRisk->riskC = $instanceRisk->getRiskConfidentiality();
-                            $brotherInstanceRisk->riskI = $instanceRisk->getRiskIntegrity();
-                            $brotherInstanceRisk->riskD = $instanceRisk->getRiskAvailability();
-                            $brotherInstanceRisk->cacheMaxRisk = $instanceRisk->getCacheMaxRisk();
-                            $brotherInstanceRisk->cacheTargetedRisk = $instanceRisk->getCacheTargetedRisk();
-                            $brotherInstanceRisk->reductionAmount = $instanceRisk->reductionAmount;
-                            $brotherInstanceRisk->kindOfMeasure = $instanceRisk->kindOfMeasure;
+                            $brotherInstanceRisk->setComment($instanceRisk->getComment())
+                                ->setCommentAfter($instanceRisk->getCommentAfter())
+                                ->setVulnerabilityRate($instanceRisk->getVulnerabilityRate())
+                                ->setRiskConfidentiality($instanceRisk->getRiskConfidentiality())
+                                ->setRiskIntegrity($instanceRisk->getRiskIntegrity())
+                                ->setRiskAvailability($instanceRisk->getRiskAvailability())
+                                ->setCacheMaxRisk($instanceRisk->getCacheMaxRisk())
+                                ->setCacheTargetedRisk($instanceRisk->getCacheTargetedRisk())
+                                ->setReductionAmount($instanceRisk->getReductionAmount())
+                                ->setKindOfMeasure($instanceRisk->getKindOfMeasure());
 
-                            $instanceRiskTable->save($instanceRisk, $i++ === $nbBrothersInstancesRisks);
+                            $instanceRiskTable->saveEntity($instanceRisk, false);
                         }
+                        $instanceRiskTable->getDb()->flush();
                     }
                 }
             }
