@@ -52,6 +52,7 @@ use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Model\Entity\Asset;
@@ -1268,7 +1269,9 @@ class AnrService extends AbstractService
                 }
 
                 //duplicate recommandations risks
-                $recommandationsRisks = $this->get('recommandationRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
+                /** @var RecommandationRiskTable $recommendationRiskTable */
+                $recommendationRiskTable = $this->get('recommandationRiskCliTable');
+                $recommandationsRisks = $recommendationRiskTable->findByAnr($anr);
                 foreach ($recommandationsRisks as $recommandationRisk) {
                     $newRecommendationRisk = new RecommandationRisk($recommandationRisk);
                     $newRecommendationRisk->setId(null);
@@ -1289,25 +1292,30 @@ class AnrService extends AbstractService
                     $newRecommendationRisk->setInstance(
                         $instancesNewIds[$newRecommendationRisk->get('instance')->get('id')]
                     );
-                    if ($newRecommendationRisk->getGlobalObject() && isset($objectsNewIds[$newRecommendationRisk->getGlobalObject()->getUuid()])) {
-                        $newRecommendationRisk->setGlobalObject($objectsNewIds[$newRecommendationRisk->getGlobalObject()->getUuid()]);
+                    if ($newRecommendationRisk->getGlobalObject()
+                        && isset($objectsNewIds[$newRecommendationRisk->getGlobalObject()->getUuid()])
+                    ) {
+                        $newRecommendationRisk->setGlobalObject(
+                            $objectsNewIds[$newRecommendationRisk->getGlobalObject()->getUuid()]
+                        );
                     } else {
                         $newRecommendationRisk->setGlobalObject(null);
                     }
-                    if ($newRecommendationRisk->get('asset')) {
-                        $newRecommendationRisk->set('asset', $assetsNewIds[$newRecommendationRisk->getAsset()->getUuid()]);
+
+                    if ($newRecommendationRisk->getAsset()) {
+                        $newRecommendationRisk->setAsset($assetsNewIds[$newRecommendationRisk->getAsset()->getUuid()]);
                     }
-                    if ($newRecommendationRisk->get('threat')) {
-                        $newRecommendationRisk->set('threat', $threatsNewIds[$newRecommendationRisk->getThreat()->getUuid()]);
+                    if ($newRecommendationRisk->getThreat()) {
+                        $newRecommendationRisk->setThreat(
+                            $threatsNewIds[$newRecommendationRisk->getThreat()->getUuid()]
+                        );
                     }
-                    if ($newRecommendationRisk->get('vulnerability')) {
-                        $newRecommendationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommendationRisk->getVulnerability()->getUuid()]);
+                    if ($newRecommendationRisk->getVulnerability()) {
+                        $newRecommendationRisk->setVulnerability(
+                            $vulnerabilitiesNewIds[$newRecommendationRisk->getVulnerability()->getUuid()]
+                        );
                     }
-                    // TODO: check why do we need the following manipulation and remove the double save call.
-                    $newRecommendationRisk->setAnr(null);
-                    $this->get('recommandationRiskCliTable')->save($newRecommendationRisk);
-                    $newRecommendationRisk->setAnr($newAnr);
-                    $this->get('recommandationRiskCliTable')->save($newRecommendationRisk, false);
+                    $recommendationRiskTable->saveEntity($newRecommendationRisk, false);
                 }
             }
 

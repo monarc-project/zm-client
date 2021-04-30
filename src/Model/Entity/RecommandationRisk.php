@@ -46,7 +46,7 @@ class RecommandationRisk extends AbstractEntity
     /**
      * @var Recommandation
      *
-     * @ORM\ManyToOne(targetEntity="Recommandation", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Recommandation", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -153,12 +153,12 @@ class RecommandationRisk extends AbstractEntity
         return $this;
     }
 
-    public function getAnr(): ?Anr
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    public function setAnr(?Anr $anr): self
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 
