@@ -153,12 +153,12 @@ class RecommandationRisk extends AbstractEntity
         return $this;
     }
 
-    public function getAnr(): Anr
+    public function getAnr(): ?Anr
     {
         return $this->anr;
     }
 
-    public function setAnr(Anr $anr): self
+    public function setAnr(?Anr $anr): self
     {
         $this->anr = $anr;
 

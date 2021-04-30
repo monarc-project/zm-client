@@ -1870,14 +1870,15 @@ class InstanceImportService
                         );
 
                         $recommendationRisk = (new RecommandationRisk())
-                            ->setAnr($anr)
                             ->setInstance($instance)
                             ->setInstanceRiskOp($instanceRiskOp)
                             ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
                             ->setCommentAfter($reco['commentAfter'] ?? '')
                             ->setRecommandation($recommendation);
 
-                        $this->recommendationRiskTable->saveEntity($recommendationRisk, false);
+                        // TODO: remove the trick when #240 is done.
+                        $this->recommendationRiskTable->saveEntity($recommendationRisk);
+                        $this->recommendationRiskTable->saveEntity($recommendationRisk->setAnr($anr), false);
                     }
                 }
 
