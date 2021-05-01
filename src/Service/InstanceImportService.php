@@ -2008,22 +2008,22 @@ class InstanceImportService
             ->setPosition(++$this->currentMaxInstancePosition)
             ->setObject($monarcObject)
             ->setAsset($monarcObject->getAsset());
-        if (isset($threatData['c'])) {
+        if (isset($instanceData['c'])) {
             $instance->setConfidentiality((int)$instanceData['c']);
         }
-        if (isset($threatData['i'])) {
+        if (isset($instanceData['i'])) {
             $instance->setIntegrity((int)$instanceData['i']);
         }
-        if (isset($threatData['d'])) {
+        if (isset($instanceData['d'])) {
             $instance->setAvailability((int)$instanceData['d']);
         }
-        if (isset($threatData['ch'])) {
+        if (isset($instanceData['ch'])) {
             $instance->setInheritedConfidentiality((int)$instanceData['ch']);
         }
-        if (isset($threatData['ih'])) {
+        if (isset($instanceData['ih'])) {
             $instance->setInheritedIntegrity((int)$instanceData['ih']);
         }
-        if (isset($threatData['dh'])) {
+        if (isset($instanceData['dh'])) {
             $instance->setInheritedAvailability((int)$instanceData['dh']);
         }
 
