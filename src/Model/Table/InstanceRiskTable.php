@@ -125,8 +125,9 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->setParameter('threatAnr', $instance->getAnr())
             ->setParameter('vulnerabilityUuid', $vulnerabilityUuid)
             ->setParameter('vulnerabilityAnr', $instance->getAnr())
+            ->setMaxResults(1)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
     }
 
     /**
