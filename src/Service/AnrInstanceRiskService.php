@@ -9,6 +9,7 @@ use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Service\InstanceRiskService;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
+use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 class AnrInstanceRiskService extends InstanceRiskService
@@ -59,5 +60,25 @@ class AnrInstanceRiskService extends InstanceRiskService
         parent::updateRisks($instanceRisk, $last);
 
         $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
+    }
+
+    protected function duplicateRecommendationRisk(
+        InstanceRiskSuperClass $instanceRisk,
+        InstanceRiskSuperClass $newInstanceRisk
+    ): void {
+        /** @var RecommandationRiskTable $recommandationRiskTable */
+        $recommandationRiskTable = $this->get('recommandationRiskTable');
+        $recommendationRisks = $recommandationRiskTable->findByAnrAndInstanceRisk(
+            $newInstanceRisk->getAnr(),
+            $instanceRisk
+        );
+        foreach ($recommendationRisks as $recommandationRisk) {
+            $newRecommendationRisk = (clone $recommandationRisk)
+                ->setId(null)
+                ->setInstance($newInstanceRisk->getInstance())
+                ->setInstanceRisk($newInstanceRisk);
+
+            $recommandationRiskTable->saveEntity($newRecommendationRisk, false);
+        }
     }
 }

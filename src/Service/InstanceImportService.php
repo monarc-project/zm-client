@@ -1972,21 +1972,19 @@ class InstanceImportService
             ->setThreat($threat)
             ->setVulnerability($vulnerability)
             ->setSpecific($instanceRiskData['specific'])
-            ->setMh($instanceRiskData['mh'])
-            ->setThreatRate($instanceRiskData['threatRate'])
-            ->setVulnerabilityRate($instanceRiskData['vulnerabilityRate'])
+            ->setMh((int)$instanceRiskData['mh'])
+            ->setThreatRate((int)$instanceRiskData['threatRate'])
+            ->setVulnerabilityRate((int)$instanceRiskData['vulnerabilityRate'])
             ->setKindOfMeasure($instanceRiskData['kindOfMeasure'])
-            ->setReductionAmount($instanceRiskData['reductionAmount'])
+            ->setReductionAmount((int)$instanceRiskData['reductionAmount'])
             ->setComment($instanceRiskData['comment'])
             ->setCommentafter($instanceRiskData['commentAfter'])
-            ->setCacheMaxRisk($instanceRiskData['cacheMaxRisk'])
-            ->setCacheTargetedRisk($instanceRiskData['cacheTargetedRisk'])
-            ->setRiskConfidentiality($instanceRiskData['riskC'])
-            ->setRiskIntegrity($instanceRiskData['riskI'])
-            ->setRiskAvailability($instanceRiskData['riskD']);
+            ->setCacheMaxRisk((int)$instanceRiskData['cacheMaxRisk'])
+            ->setCacheTargetedRisk((int)$instanceRiskData['cacheTargetedRisk'])
+            ->setRiskConfidentiality((int)$instanceRiskData['riskC'])
+            ->setRiskIntegrity((int)$instanceRiskData['riskI'])
+            ->setRiskAvailability((int)$instanceRiskData['riskD']);
     }
-
-    // toto: finish, threat setConf from MonarcAppFO
 
     /**
      * @throws ORMException

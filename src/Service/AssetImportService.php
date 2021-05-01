@@ -333,7 +333,7 @@ class AssetImportService
         // Set old amvs to specific and delete them.
         $amvsToDelete = [];
         /** @var Amv[] $oldAmvs */
-        $oldAmvs = $this->amvTable->findByAnrAndAsset($anr, $asset);
+        $oldAmvs = $this->amvTable->findByAsset($asset);
         foreach ($oldAmvs as $oldAmv) {
             if (!isset($newAmvs[$oldAmv->getUuid()])) {
                 // We fetch the instances risks which contains the amv to set the risk to specific.

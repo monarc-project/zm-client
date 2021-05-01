@@ -9,12 +9,12 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AmvSuperClass;
+use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
 
 /**
  * Class AmvTable
@@ -122,7 +122,11 @@ class AmvTable extends AbstractEntityTable
             ->getOneOrNullResult();
     }
 
-    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
+    /**
+     * TODO: the Core AmvTable has the same method, after #240 is done and the core table is inherited, can be removed.
+     * @return AmvSuperClass[]
+     */
+    public function findByAsset(AssetSuperClass $asset)
     {
         return $this->getRepository()
             ->createQueryBuilder('amv')
@@ -130,9 +134,9 @@ class AmvTable extends AbstractEntityTable
             ->where('amv.anr = :anr')
             ->andWhere('a.uuid = :assetUuid')
             ->andWhere('a.anr = :assetAnr')
-            ->setParameter('anr', $anr)
+            ->setParameter('anr', $asset->getAnr())
             ->setParameter('assetUuid', $asset->getUuid())
-            ->setParameter('assetAnr', $anr)
+            ->setParameter('assetAnr', $asset->getAnr())
             ->getQuery()
             ->getResult();
     }
