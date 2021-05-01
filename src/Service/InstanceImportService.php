@@ -1401,12 +1401,13 @@ class InstanceImportService
             }
         }
 
-        foreach ($data['risks'] as $instanceRiskData) {
-            if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
-                $threatData = $data['threats'][$instanceRiskData['threat']];
-                $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
-                $indexFiled = $this->isMonarcVersionLoverThen('2.8.2') ? 'code' : 'uuid';
+        $indexFiled = $this->isMonarcVersionLoverThen('2.8.2') ? 'code' : 'uuid';
 
+        foreach ($data['risks'] as $instanceRiskData) {
+            $threatData = $data['threats'][$instanceRiskData['threat']];
+            $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
+
+            if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
                 if (!isset($this->cachedData['threats'][$threatData[$indexFiled]])) {
                     $threat = (new Threat())
                         ->setAnr($anr)
@@ -1442,7 +1443,7 @@ class InstanceImportService
                     $this->cachedData['threats'][$threatData[$indexFiled]] = $threat;
                 }
 
-                if (!isset($this->cachedData['ivuls'][$vulnerabilityData[$indexFiled]])) {
+                if (!isset($this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]])) {
                     $vulnerability = (new Vulnerability())
                         ->setAnr($anr)
                         ->setLabels($vulnerabilityData)
@@ -1488,41 +1489,38 @@ class InstanceImportService
                 }
             }
 
-            $tuuid = Uuid::isValid($instanceRiskData['threat'])
-                ? $instanceRiskData['threat']
-                : $this->cachedData['ithreats'][$data['threats'][$instanceRiskData['threat']]['code']];
-            $vuuid = Uuid::isValid($instanceRiskData['vulnerability'])
-                ? $instanceRiskData['vulnerability']
-                : $this->cachedData['ivuls'][$data['vuls'][$instanceRiskData['vulnerability']]['code']];
+            $threatUuid = isset($this->cachedData['threats'][$threatData[$indexFiled]])
+                ? $this->cachedData['threats'][$threatData[$indexFiled]]->getUuid()
+                : $instanceRiskData['threat'];
+            $vulnerabilityUuid = isset($this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]])
+                ? $this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]]->getUuid()
+                : $instanceRiskData['vulnerability'];
 
-            /** @var InstanceRisk $instanceRisk */
-            // TODO: findBy...
-            $instanceRisk = current($this->instanceRiskTable->getEntityByFields([
-                'anr' => $anr->getId(),
-                'instance' => $instance->getId(),
-                'asset' => $monarcObject ? [
-                    'anr' => $anr->getId(),
-                    'uuid' => $monarcObject->getAsset()->getUuid(),
-                ] : null,
-                'threat' => ['anr' => $anr->getId(), 'uuid' => $tuuid],
-                'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $vuuid],
-            ]));
-
+            $instanceRisk = $this->instanceRiskTable->findByInstanceAssetThreatUuidAndVulnerabilityUuid(
+                $instance,
+                $monarcObject->getAsset(),
+                $threatUuid,
+                $vulnerabilityUuid
+            );
             if ($instanceRisk !== null && $includeEval) {
-                $instanceRisk->set('threatRate', $this->approximate(
-                    $instanceRiskData['threatRate'],
-                    $this->cachedData['scales']['orig'][Scale::TYPE_THREAT]['min'],
-                    $this->cachedData['scales']['orig'][Scale::TYPE_THREAT]['max'],
-                    $this->cachedData['scales']['dest'][Scale::TYPE_THREAT]['min'],
-                    $this->cachedData['scales']['dest'][Scale::TYPE_THREAT]['max']
-                ));
-                $instanceRisk->set('vulnerabilityRate', $this->approximate(
-                    $instanceRiskData['vulnerabilityRate'],
-                    $this->cachedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['min'],
-                    $this->cachedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['max'],
-                    $this->cachedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['min'],
-                    $this->cachedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['max']
-                ));
+                $instanceRisk->setThreatRate(
+                    $this->approximate(
+                        $instanceRiskData['threatRate'],
+                        $this->cachedData['scales']['orig'][Scale::TYPE_THREAT]['min'],
+                        $this->cachedData['scales']['orig'][Scale::TYPE_THREAT]['max'],
+                        $this->cachedData['scales']['dest'][Scale::TYPE_THREAT]['min'],
+                        $this->cachedData['scales']['dest'][Scale::TYPE_THREAT]['max']
+                    )
+                );
+                $instanceRisk->setVulnerabilityRate(
+                    $this->approximate(
+                        $instanceRiskData['vulnerabilityRate'],
+                        $this->cachedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['min'],
+                        $this->cachedData['scales']['orig'][Scale::TYPE_VULNERABILITY]['max'],
+                        $this->cachedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['min'],
+                        $this->cachedData['scales']['dest'][Scale::TYPE_VULNERABILITY]['max']
+                    )
+                );
                 $instanceRisk->setMh($instanceRiskData['mh']);
                 $instanceRisk->setKindOfMeasure($instanceRiskData['kindOfMeasure']);
                 $instanceRisk->setComment($instanceRiskData['comment'] ?? '');
@@ -1552,7 +1550,7 @@ class InstanceImportService
                 ) {
                     $objectIdsBrothers = $this->instanceTable->findByAnrAndObject($anr, $instance->getObject());
 
-                    // TODO: check why do we take only a single one, use query instead of the generic method.
+                    // TODO: findBy...
                     /** @var InstanceRisk $instanceRiskBrothers */
                     $instanceRiskBrothers = current($this->instanceRiskTable->getEntityByFields([
                         'anr' => $anr->getId(),

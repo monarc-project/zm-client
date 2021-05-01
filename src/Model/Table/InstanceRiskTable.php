@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Model\Entity\AmvSuperClass;
+use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
@@ -97,6 +98,35 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         }
 
         return $queryBuilder->getQuery()->getResult();
+    }
+
+    public function findByInstanceAssetThreatUuidAndVulnerabilityUuid(
+        InstanceSuperClass $instance,
+        AssetSuperClass $asset,
+        string $threatUuid,
+        string $vulnerabilityUuid
+    ): ?InstanceRisk {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->innerJoin('ir.asset', 'a')
+            ->innerJoin('ir.threat', 'thr')
+            ->innerJoin('ir.vulnerability', 'vuln')
+            ->where('ir.instance = :instance')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :assetAnr')
+            ->andWhere('thr.uuid = :threatUuid')
+            ->andWhere('thr.anr = :threatAnr')
+            ->andWhere('vuln.uuid = :vulnerabilityUuid')
+            ->andWhere('vuln.anr = :vulnerabilityAnr')
+            ->setParameter('instance', $instance)
+            ->setParameter('assetUuid', $asset->getUuid())
+            ->setParameter('assetAnr', $asset->getAnr())
+            ->setParameter('threatUuid', $threatUuid)
+            ->setParameter('threatAnr', $instance->getAnr())
+            ->setParameter('vulnerabilityUuid', $vulnerabilityUuid)
+            ->setParameter('vulnerabilityAnr', $instance->getAnr())
+            ->getQuery()
+            ->getResult();
     }
 
     /**
