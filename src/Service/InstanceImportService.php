@@ -1265,7 +1265,7 @@ class InstanceImportService
                 $instance->{'setInherited' . $scaleCriteria}(0);
                 $instance->{'set' . $scaleCriteria}(
                     $this->approximate(
-                        $instance->get($scaleCriteria),
+                        $instance->{'get' . $scaleCriteria}(),
                         $this->cachedData['scales']['orig'][Scale::TYPE_IMPACT]['min'],
                         $this->cachedData['scales']['orig'][Scale::TYPE_IMPACT]['max'],
                         $this->cachedData['scales']['dest'][Scale::TYPE_IMPACT]['min'],
