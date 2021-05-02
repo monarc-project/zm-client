@@ -178,10 +178,7 @@ class ObjectExportService
         ];
         if ($objectCategory->getParent() !== null) {
             $objectCategories[$objectCategory->getId()]['parent'] = $objectCategory->getParent()->getId();
-            $objectCategories = array_merge(
-                $objectCategories,
-                $this->getCategoryDataWithItsParents($objectCategory->getParent())
-            );
+            $objectCategories += $this->getCategoryDataWithItsParents($objectCategory->getParent());
         }
 
         return $objectCategories;
