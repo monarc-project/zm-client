@@ -75,7 +75,7 @@ class ObjectExportService
 
         if ($monarcObject->getCategory() !== null) {
             $result['object']['category'] = $monarcObject->getCategory()->getId();
-            $result['object']['categories'] = $this->getCategoryDataWithItsParents($monarcObject->getCategory());
+            $result['categories'] = $this->getCategoryDataWithItsParents($monarcObject->getCategory());
         }
 
         if ($monarcObject->getAsset() !== null) {
