@@ -153,6 +153,8 @@ class RecommandationRisk extends AbstractEntity
         return $this;
     }
 
+    // TODO: the nullable value is added for the multi-fields relation issue (when we remove a relation, e.g. asset).
+    // TODO: remove when #240 is done.
     public function getAnr(): ?Anr
     {
         return $this->anr;

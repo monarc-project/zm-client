@@ -5,6 +5,7 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Table\ReferentialTable as CoreReferentialTable;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Asset;
@@ -70,6 +71,9 @@ class AssetImportService
     /** @var SoaTable */
     private $soaTable;
 
+    /** @var CoreReferentialTable */
+    private $coreReferentialTable;
+
     public function __construct(
         AssetTable $assetTable,
         ThemeTable $themeTable,
@@ -82,7 +86,8 @@ class AssetImportService
         InstanceRiskTable $instanceRiskTable,
         ReferentialTable $referentialTable,
         SoaCategoryTable $soaCategoryTable,
-        SoaTable $soaTable
+        SoaTable $soaTable,
+        CoreReferentialTable $coreReferentialTable
     ) {
         $this->assetTable = $assetTable;
         $this->themeTable = $themeTable;
@@ -96,6 +101,7 @@ class AssetImportService
         $this->referentialTable = $referentialTable;
         $this->soaCategoryTable = $soaCategoryTable;
         $this->soaTable = $soaTable;
+        $this->coreReferentialTable = $coreReferentialTable;
     }
 
     public function importFromArray($monarcVersion, array $data, Anr $anr): ?Asset
@@ -337,21 +343,23 @@ class AssetImportService
         foreach ($oldAmvs as $oldAmv) {
             if (!isset($newAmvs[$oldAmv->getUuid()])) {
                 // We fetch the instances risks which contains the amv to set the risk to specific.
-                $oldIRs = $this->instanceRiskTable->findByAmv($oldAmv);
-                foreach ($oldIRs as $oldIR) {
-                    $oldIR->setAmv(null);
-//                    $oldIR->setAnr(null);
-                    $oldIR->setSpecific(InstanceRisk::TYPE_SPECIFIC);
-                    $this->instanceRiskTable->saveEntity($oldIR, false);
+                $instanceRisks = $this->instanceRiskTable->findByAmv($oldAmv);
+
+                // TODO: remove the double iteration when #240 is done.
+                // We do it due to multi-fields relation issue. When amv is set to null, anr is set to null as well.
+                foreach ($instanceRisks as $instanceRisk) {
+                    $instanceRisk->setAmv(null);
+                    $instanceRisk->setAnr(null);
+                    $instanceRisk->setSpecific(InstanceRisk::TYPE_SPECIFIC);
+                    $this->instanceRiskTable->saveEntity($instanceRisk, false);
                 }
                 $this->instanceRiskTable->getDb()->flush();
 
-                // TODO: check why it happens(ed).
-//                foreach ($oldIRs as $oldIR) { //set the value DB because the set amv=null erase the value
-//                    $oldIR->set('anr', $anr);
-//                    $this->instanceRiskTable->saveEntity($oldIR, false);
-//                }
-//                $this->instanceRiskTable->getDb()->flush();
+                foreach ($instanceRisks as $instanceRisk) {
+                    $instanceRisk->setAnr($anr);
+                    $this->instanceRiskTable->saveEntity($instanceRisk, false);
+                }
+                $this->instanceRiskTable->getDb()->flush();
 
                 $amvsToDelete[] = $oldAmv;
             }
@@ -505,13 +513,11 @@ class AssetImportService
                         'uuid' => '98ca84fb-db87-11e8-ac77-0800279aaa2b',
                     ]));
                     if (!$referentialCli) {
-                        // TODO: this will not work, we need to fetch it from common.
-                        $referential = (new Referential())
-                            ->setUuid('98ca84fb-db87-11e8-ac77-0800279aaa2b')
-                            ->setLabel1('ISO 27002')
-                            ->setLabel2('ISO 27002')
-                            ->setLabel3('ISO 27002')
-                            ->setLabel4('ISO 27002');
+                        $referential = current(
+                            $this->coreReferentialTable->getEntityByFields(
+                                ['uuid' => '98ca84fb-db87-11e8-ac77-0800279aaa2b']
+                            )
+                        );
                     }
                     if ($referential) {
                         $measures = $referential->getMeasures();
