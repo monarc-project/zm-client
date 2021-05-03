@@ -49,7 +49,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
 
         return new JsonModel([
             'count' => $service->getFilteredCount($filter, $asset, $category, null, $anr),
-            $this->name => $objects
+            $this->name => $objects,
         ]);
     }
 
@@ -87,7 +87,9 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
             throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
-        $data['asset'] = ['uuid'=>$data['asset'], 'anr'=>$anrId];
+        if (!empty($data['asset'])) {
+            $data['asset'] = ['uuid' => $data['asset'], 'anr' => $anrId];
+        }
         /** @var ObjectService $service */
         $service = $this->getService();
         $id = $service->create($data, true, AbstractEntity::FRONT_OFFICE);

@@ -33,6 +33,7 @@ class ObjectServiceFactory extends AbstractServiceFactory
         'rolfTagTable' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
         'assetService' => 'Monarc\FrontOffice\Service\AssetService',
         'objectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectService',
+        'objectExportService' => 'Monarc\FrontOffice\Service\ObjectExportService',
         'instanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpService',
     ];
 }

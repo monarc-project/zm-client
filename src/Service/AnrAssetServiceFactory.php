@@ -36,6 +36,7 @@ class AnrAssetServiceFactory extends AbstractServiceFactory
         'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
         'referentialCommonTable' => 'Monarc\Core\Model\Table\ReferentialTable',
         'referentialTable'  => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
+        'soaCategoryTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
         'soaCategoryCommonTable' => 'Monarc\Core\Model\Table\SoaCategoryTable',
         'soaTable' => 'Monarc\FrontOffice\Model\Table\SoaTable',
     ];

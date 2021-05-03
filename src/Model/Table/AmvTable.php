@@ -13,6 +13,7 @@ use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Amv;
+use Monarc\FrontOffice\Model\Entity\Anr;
 
 /**
  * Class AmvTable
@@ -27,6 +28,19 @@ class AmvTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Amv::class, $connectedUserService);
+    }
+
+    /**
+     * @return Amv[]
+     */
+    public function findByAnrIndexedByUuid(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('amv', 'amv.uuid')
+            ->where('amv.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
