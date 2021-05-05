@@ -26,7 +26,7 @@ class StatsApiProvider
     private $apiKey;
 
     /** @var string */
-    private $monarcVersion;
+    private $appVersion;
 
     /**
      * @throws InvalidConfigurationException
@@ -46,7 +46,7 @@ class StatsApiProvider
         }
 
         $this->apiKey = $config['statsApi']['apiKey'];
-        $this->monarcVersion = $config['appVersion'];
+        $this->appVersion = $config['appVersion'];
     }
 
     /**
@@ -159,7 +159,7 @@ class StatsApiProvider
     {
         return [
             'X-API-KEY' => $this->apiKey,
-            'User-Agent' => 'MONARC/' . $this->monarcVersion,
+            'User-Agent' => 'MONARC/' . $this->appVersion,
         ];
     }
 
@@ -171,8 +171,8 @@ class StatsApiProvider
         if (empty($config['statsApi']['baseUrl'])) {
             throw new InvalidConfigurationException(['statsApi.baseUrl']);
         }
-        if (empty($config['monarcVersion'])) {
-            throw new InvalidConfigurationException(['monarcVersion']);
+        if (empty($config['appVersion'])) {
+            throw new InvalidConfigurationException(['appVersion']);
         }
     }
 
