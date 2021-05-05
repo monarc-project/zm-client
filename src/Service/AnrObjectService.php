@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
@@ -237,13 +238,23 @@ class AnrObjectService extends \Monarc\Core\Service\ObjectService
         return $prepareObjectData;
     }
 
-    protected function importFromMosp(array $data, AnrSuperClass $anr): ?ObjectSuperClass
+    /**
+     * @param array $data
+     * @param AnrSuperClass|null $anr The nullable value possibility is to comply with the core definition.
+     *
+     * @return ObjectSuperClass|null
+     *
+     * @throws NonUniqueResultException
+     */
+    protected function importFromMosp(array $data, ?AnrSuperClass $anr): ?ObjectSuperClass
     {
-        if (!empty($data['mosp'])) {
-            /** @var ObjectImportService $objectImportService */
-            $objectImportService = $this->get('objectImportService');
-
-            return $objectImportService->importFromArray($data, $anr, $data['mode'] ?? 'merge');
+        if (empty($data['mosp']) || $anr === null) {
+            return null;
         }
+
+        /** @var ObjectImportService $objectImportService */
+        $objectImportService = $this->get('objectImportService');
+
+        return $objectImportService->importFromArray($data, $anr, $data['mode'] ?? 'merge');
     }
 }
