@@ -5,7 +5,6 @@ namespace Monarc\FrontOffice\Stats\Validator;
 use Interop\Container\ContainerInterface;
 use Laminas\InputFilter\Factory;
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use Monarc\FrontOffice\Model\Table\AnrTable;
 
 class GetProcessedStatsQueryParamsValidatorFactory implements FactoryInterface
 {
@@ -14,7 +13,7 @@ class GetProcessedStatsQueryParamsValidatorFactory implements FactoryInterface
         /** @var Factory $inputFilterFactory */
         $inputFilterFactory = $container->get(Factory::class);
 
-        return new $requestedName($inputFilterFactory->createInputFilter([]), $container->get(AnrTable::class));
+        return new $requestedName($inputFilterFactory->createInputFilter([]));
     }
 }
 
