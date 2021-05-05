@@ -121,16 +121,18 @@ class CreateUserInputValidator extends AbstractMonarcInputValidator
                             'userTable' => $this->userTable,
                             'currentUserId' => $this->connectedUserService->getConnectedUser()->getId(),
                         ],
-                        // TODO: The following code requires the Db classes refactoring.
-//                        'name' => NoRecordExists::class,
-//                        'options' => [
-//                            'adapter' => $this->dbCli,
-//                            'table' => $this->dbCli->getEntityManager()->getClassMetadata(User::class)->getTableName(),
-//                            'field' => 'email',
-//                        ],
-//                        'messages' => [
-//                            NoRecordExists::ERROR_RECORD_FOUND => 'This email is already used',
-//                        ],
+                        // TODO: The following code requires the Db classes refactoring, also an issue with Laminas.
+                        /*
+                        'name' => NoRecordExists::class,
+                        'options' => [
+                            'adapter' => $this->userTable->getDb(),
+                            'table' => $this->userTable->getDb()->getEntityManager()->getClassMetadata(User::class)->getTableName(),
+                            'field' => 'email',
+                        ],
+                        'messages' => [
+                            NoRecordExists::ERROR_RECORD_FOUND => 'This email is already used',
+                        ],
+                        */
                     ],
                 ],
             ],

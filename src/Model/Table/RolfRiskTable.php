@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 
 /**
@@ -21,5 +22,27 @@ class RolfRiskTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, RolfRisk::class, $connectedUserService);
+    }
+
+    public function findByAnrAndCode(Anr $anr, string $code): ?RolfRisk
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('rr')
+            ->where('rr.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->andWhere('rr.code = :code')
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function saveEntity(RolfRisk $rolfRisk, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($rolfRisk);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

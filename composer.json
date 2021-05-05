@@ -45,6 +45,7 @@
         "ext-imagick": "*",
         "ext-json": "*",
         "ext-bcmath": "*",
+        "ext-openssl": "*",
         "doctrine/doctrine-orm-module": "^2.1",
         "monarc/core": "^2.9.15",
         "monarc/phpword": "^1.0",
@@ -64,7 +65,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Monarc\\FrontOffice\\": "/src"
+            "Monarc\\FrontOffice\\": "src/"
         }
     },
     "bin": ["bin/console"],

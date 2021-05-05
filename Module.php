@@ -125,7 +125,6 @@ class Module
 
         //setting to view
         $e->getViewModel()->rbac = $rbac;
-
     }
 
     /**
@@ -194,7 +193,7 @@ class Module
             }
         }
 
-        if (! $isGranted) {
+        if (!$isGranted) {
             $response = $e->getResponse();
             $response->setStatusCode($connectedUser === null ? 401 : 403);
 

@@ -5,12 +5,12 @@ use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service;
-use Monarc\FrontOffice\Service\ClientService;
 use Monarc\FrontOffice\Stats\Controller\StatsController;
 use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
 use Monarc\FrontOffice\Stats\Controller\StatsGeneralSettingsController;
@@ -1050,7 +1050,7 @@ return [
             Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
             Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
             Controller\ApiAnrInstancesRisksOpController::class => Controller\ApiAnrInstancesRisksOpControllerFactory::class,
-            Controller\ApiAnrInstancesImportController::class => Controller\ApiAnrInstancesImportControllerFactory::class,
+            Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesExportController::class => Controller\ApiAnrInstancesExportControllerFactory::class,
             Controller\ApiAnrObjectsCategoriesController::class => Controller\ApiAnrObjectsCategoriesControllerFactory::class,
             Controller\ApiAnrObjectsExportController::class => Controller\ApiAnrObjectsExportControllerFactory::class,
@@ -1212,8 +1212,7 @@ return [
             'Monarc\FrontOffice\Service\AnrRolfTagService' => 'Monarc\FrontOffice\Service\AnrRolfTagServiceFactory',
             'Monarc\FrontOffice\Service\AnrRolfRiskService' => 'Monarc\FrontOffice\Service\AnrRolfRiskServiceFactory',
             'Monarc\FrontOffice\Service\AmvService' => 'Monarc\FrontOffice\Service\AmvServiceFactory',
-            'Monarc\FrontOffice\Service\AssetService' => 'Monarc\FrontOffice\Service\AssetServiceFactory',
-            ClientService::class => AutowireFactory::class,
+            Service\ClientService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
             'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
             'Monarc\FrontOffice\Service\ModelService' => 'Monarc\FrontOffice\Service\ModelServiceFactory',
@@ -1235,9 +1234,12 @@ return [
             'Monarc\FrontOffice\Service\AnrInstanceService' => 'Monarc\FrontOffice\Service\AnrInstanceServiceFactory',
             'Monarc\FrontOffice\Service\AnrRiskOpService' => 'Monarc\FrontOffice\Service\AnrRiskOpServiceFactory',
             'Monarc\FrontOffice\Service\AnrObjectCategoryService' => 'Monarc\FrontOffice\Service\AnrObjectCategoryServiceFactory',
-            'Monarc\FrontOffice\Service\ObjectExportService' => 'Monarc\FrontOffice\Service\ObjectExportServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
+            Service\ObjectExportService::class => AutowireFactory::class,
+            Service\ObjectImportService::class => AutowireFactory::class,
+            Service\AssetImportService::class => AutowireFactory::class,
+            Service\InstanceImportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
 

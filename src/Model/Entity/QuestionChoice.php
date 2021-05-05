@@ -8,7 +8,9 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
+use Monarc\Core\Model\Entity\QuestionSuperClass;
 
 /**
  * Question Choice
@@ -22,9 +24,9 @@ use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
 class QuestionChoice extends QuestionChoiceSuperClass
 {
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Question
+     * @var Question
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Question")
+     * @ORM\ManyToOne(targetEntity="Question")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="question_id", referencedColumnName="id", nullable=true)
      * })
@@ -32,9 +34,9 @@ class QuestionChoice extends QuestionChoiceSuperClass
     protected $question;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var AnrSuperClass
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -42,7 +44,7 @@ class QuestionChoice extends QuestionChoiceSuperClass
     protected $anr;
 
     /**
-     * @return Question
+     * @return QuestionSuperClass
      */
     public function getQuestion()
     {
@@ -50,17 +52,17 @@ class QuestionChoice extends QuestionChoiceSuperClass
     }
 
     /**
-     * @param Question $question
-     * @return QuestionChoice
+     * @param QuestionSuperClass $question
      */
-    public function setQuestion($question)
+    public function setQuestion($question): self
     {
         $this->question = $question;
+
         return $this;
     }
 
     /**
-     * @return Anr
+     * @return AnrSuperClass
      */
     public function getAnr()
     {
@@ -68,12 +70,12 @@ class QuestionChoice extends QuestionChoiceSuperClass
     }
 
     /**
-     * @param Anr $anr
-     * @return QuestionChoice
+     * @param AnrSuperClass $anr
      */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 }

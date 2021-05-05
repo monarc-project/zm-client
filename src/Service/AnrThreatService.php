@@ -7,13 +7,14 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 
 /**
  * This class is the service that handles threats within an ANR.
  * @package Monarc\FrontOffice\Service
  */
-class AnrThreatService extends \Monarc\Core\Service\AbstractService
+class AnrThreatService extends AbstractService
 {
     protected $dependencies = ['anr', 'theme'];
     protected $anrTable;
@@ -48,6 +49,7 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
     /**
      * Updates the qualifications for the specified threat whenever they are created or updated. This noticeably
      * handles qualification values inheritance.
+     *
      * @param int $id The threat ID
      * @param array $data The qualification data
      */
@@ -59,8 +61,8 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
                 'threat' => $id,
             ];
 
-            // If qualification is not forced, retrieve only inherited instance risks
-            if ((!isset($data['forceQualification'])) || $data['forceQualification'] == 0) {
+            // If qualification is not forced, retrieve only inherited instance risksx
+            if (!isset($data['forceQualification']) || $data['forceQualification'] === 0) {
                 $filter['mh'] = 1;
             }
 
@@ -68,25 +70,24 @@ class AnrThreatService extends \Monarc\Core\Service\AbstractService
             $instanceRiskTable = $this->get('instanceRiskTable');
             $instancesRisks = $instanceRiskTable->getEntityByFields($filter);
 
-            $i = 1;
-            $nbInstancesRisks = count($instancesRisks);
-            foreach ($instancesRisks as $instanceRisk) {
+            /** @var AnrInstanceRiskService $instanceRiskService */
+            $instanceRiskService = $this->get('instanceRiskService');
+
+            foreach ($instancesRisks as $i => $instanceRisk) {
                 $instanceRisk->threatRate = $data['qualification'];
 
                 // If qualification is forced, instances risks become inherited
-                if ((isset($data['forceQualification'])) && $data['forceQualification'] == 1) {
+                if (isset($data['forceQualification']) && $data['forceQualification'] === 1) {
                     $instanceRisk->mh = 1;
                 }
 
-                $instanceRiskTable->save($instanceRisk, ($i == $nbInstancesRisks));
+                $instanceRiskTable->saveEntity($instanceRisk, false);
 
-                /** @var AnrInstanceRiskService $instanceRiskService */
-                $instanceRiskService = $this->get('instanceRiskService');
-                $instanceRiskService->updateRisks($instanceRisk->id);
+                $instanceRiskService->updateRisks($instanceRisk);
                 $instanceRiskService->updateInstanceRiskRecommendationsPositions($instanceRisk);
-
-                $i++;
             }
+
+            $instanceRiskTable->getDb()->flush();
         }
     }
 }

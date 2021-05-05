@@ -119,6 +119,13 @@ class AnrObjectCategory extends AbstractEntity
         return $this;
     }
 
+    public function setPosition(int $position): self
+    {
+        $this->position = $position;
+
+        return $this;
+    }
+
     protected $parameters = [
         'implicitPosition' => [
             'field' => 'anr'

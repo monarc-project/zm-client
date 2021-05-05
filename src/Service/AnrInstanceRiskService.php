@@ -9,6 +9,7 @@ use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Service\InstanceRiskService;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
+use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 class AnrInstanceRiskService extends InstanceRiskService
@@ -54,23 +55,30 @@ class AnrInstanceRiskService extends InstanceRiskService
         return true;
     }
 
-    /**
-     * @param InstanceRisk|InstanceRiskSuperClass|int $instanceRisk
-     * @param bool $last
-     *
-     * @throws EntityNotFoundException
-     */
-    public function updateRisks($instanceRisk, $last = true)
+    public function updateRisks(InstanceRiskSuperClass $instanceRisk, bool $last = true): void
     {
-        // TODO: Always pass the object. Will be improved in https://github.com/monarc-project/MonarcAppFO/issues/248
-        if (!$instanceRisk instanceof InstanceRiskSuperClass) {
-            /** @var InstanceRiskTable $instanceRiskTable */
-            $instanceRiskTable = $this->get('table');
-            $instanceRisk = $instanceRiskTable->findById($instanceRisk);
-        }
-
         parent::updateRisks($instanceRisk, $last);
 
         $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
+    }
+
+    protected function duplicateRecommendationRisk(
+        InstanceRiskSuperClass $instanceRisk,
+        InstanceRiskSuperClass $newInstanceRisk
+    ): void {
+        /** @var RecommandationRiskTable $recommandationRiskTable */
+        $recommandationRiskTable = $this->get('recommandationRiskTable');
+        $recommendationRisks = $recommandationRiskTable->findByAnrAndInstanceRisk(
+            $newInstanceRisk->getAnr(),
+            $instanceRisk
+        );
+        foreach ($recommendationRisks as $recommandationRisk) {
+            $newRecommendationRisk = (clone $recommandationRisk)
+                ->setId(null)
+                ->setInstance($newInstanceRisk->getInstance())
+                ->setInstanceRisk($newInstanceRisk);
+
+            $recommandationRiskTable->saveEntity($newRecommendationRisk, false);
+        }
     }
 }

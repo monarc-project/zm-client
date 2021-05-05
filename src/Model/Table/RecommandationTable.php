@@ -8,14 +8,12 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\Query\Expr;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
-use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 
 /**

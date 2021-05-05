@@ -7,8 +7,8 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AmvSuperClass;
+use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
@@ -50,35 +50,48 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $res > 0;
     }
 
+    /**
+     * @return InstanceRisk[]
+     */
     public function findByInstanceAndInstanceRiskRelations(
         InstanceSuperClass $instance,
-        InstanceRiskSuperClass $instanceRisk
+        InstanceRiskSuperClass $instanceRisk,
+        bool $excludeAmvFilter = false,
+        bool $includeAssetFilter = false
     ) {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('ir')
             ->where('ir.instance = :instance')
             ->setParameter('instance', $instance);
 
-        if ($instanceRisk->getAmv() !== null) {
+        if (!$excludeAmvFilter && $instanceRisk->getAmv() !== null) {
             $queryBuilder
                 ->innerJoin('ir.amv', 'amv')
-                ->andWhere('amv.uuid = :amv_uuid')
-                ->andWhere('amv.anr = :amv_anr')
-                ->setParameter('amv_uuid', $instanceRisk->getAmv()->getUuid())
-                ->setParameter('amv_anr', $instanceRisk->getAmv()->getAnr());
+                ->andWhere('amv.uuid = :amvUuid')
+                ->andWhere('amv.anr = :amvAnr')
+                ->setParameter('amvUuid', $instanceRisk->getAmv()->getUuid())
+                ->setParameter('amvAnr', $instanceRisk->getAmv()->getAnr());
+        }
+        if ($includeAssetFilter) {
+            $queryBuilder
+                ->innerJoin('ir.asset', 'a')
+                ->andWhere('a.uuid = :assetUuid')
+                ->andWhere('a.anr = :assetAnr')
+                ->setParameter('assetUuid', $instanceRisk->getAsset()->getUuid())
+                ->setParameter('assetAnr', $instanceRisk->getAsset()->getAnr());
         }
 
         $queryBuilder
             ->innerJoin('ir.threat', 'thr')
             ->innerJoin('ir.vulnerability', 'vuln')
-            ->andWhere('thr.uuid = :threat_uuid')
-            ->andWhere('thr.anr = :threat_anr')
-            ->andWhere('vuln.uuid = :vulnerability_uuid')
-            ->andWhere('vuln.anr = :vulnerability_anr')
-            ->setParameter('threat_uuid', $instanceRisk->getThreat()->getUuid())
-            ->setParameter('threat_anr', $instanceRisk->getThreat()->getAnr())
-            ->setParameter('vulnerability_uuid', $instanceRisk->getVulnerability()->getUuid())
-            ->setParameter('vulnerability_anr', $instanceRisk->getVulnerability()->getAnr());
+            ->andWhere('thr.uuid = :threatUuid')
+            ->andWhere('thr.anr = :threatAnr')
+            ->andWhere('vuln.uuid = :vulnerabilityUuid')
+            ->andWhere('vuln.anr = :vulnerabilityAnr')
+            ->setParameter('threatUuid', $instanceRisk->getThreat()->getUuid())
+            ->setParameter('threatAnr', $instanceRisk->getThreat()->getAnr())
+            ->setParameter('vulnerabilityUuid', $instanceRisk->getVulnerability()->getUuid())
+            ->setParameter('vulnerabilityAnr', $instanceRisk->getVulnerability()->getAnr());
 
         if ($instanceRisk->isSpecific()) {
             $queryBuilder->andWhere('ir.specific = ' . InstanceRiskSuperClass::TYPE_SPECIFIC);
@@ -87,8 +100,37 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $queryBuilder->getQuery()->getResult();
     }
 
+    public function findByInstanceAssetThreatUuidAndVulnerabilityUuid(
+        InstanceSuperClass $instance,
+        AssetSuperClass $asset,
+        string $threatUuid,
+        string $vulnerabilityUuid
+    ): ?InstanceRisk {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->innerJoin('ir.asset', 'a')
+            ->innerJoin('ir.threat', 'thr')
+            ->innerJoin('ir.vulnerability', 'vuln')
+            ->where('ir.instance = :instance')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :assetAnr')
+            ->andWhere('thr.uuid = :threatUuid')
+            ->andWhere('thr.anr = :threatAnr')
+            ->andWhere('vuln.uuid = :vulnerabilityUuid')
+            ->andWhere('vuln.anr = :vulnerabilityAnr')
+            ->setParameter('instance', $instance)
+            ->setParameter('assetUuid', $asset->getUuid())
+            ->setParameter('assetAnr', $asset->getAnr())
+            ->setParameter('threatUuid', $threatUuid)
+            ->setParameter('threatAnr', $instance->getAnr())
+            ->setParameter('vulnerabilityUuid', $vulnerabilityUuid)
+            ->setParameter('vulnerabilityAnr', $instance->getAnr())
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
-     * @throws Exception
      * @return InstanceRisk[]
      */
     public function findByAmv(AmvSuperClass $amv)
@@ -96,10 +138,41 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $this->getRepository()
             ->createQueryBuilder('ir')
             ->innerJoin('ir.amv', 'amv')
-            ->where('amv.uuid = :amv_uuid')
-            ->andWhere('amv.anr = :amv_anr')
-            ->setParameter('amv_uuid', $amv->getUuid())
-            ->setParameter('amv_anr', $amv->getAnr())
+            ->where('amv.uuid = :amvUuid')
+            ->andWhere('amv.anr = :amvAnr')
+            ->setParameter('amvUuid', $amv->getUuid())
+            ->setParameter('amvAnr', $amv->getAnr())
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceRisk[]
+     */
+    public function findByAnr(Anr $anr)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->where('ir.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceRisk[]
+     */
+    public function findByInstanceAndAmv(InstanceSuperClass $instance, AmvSuperClass $amv)
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ir')
+            ->innerJoin('ir.amv', 'amv')
+            ->where('ir.instance = :instance')
+            ->andWhere('amv.uuid = :amvUuid')
+            ->andWhere('amv.anr = :amvAnr')
+            ->setParameter('instance', $instance)
+            ->setParameter('amvUuid', $amv->getUuid())
+            ->setParameter('amvAnr', $amv->getAnr())
             ->getQuery()
             ->getResult();
     }

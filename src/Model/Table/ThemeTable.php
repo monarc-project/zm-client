@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\ThemeTable as CoreThemeTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Theme;
 
 /**
@@ -26,5 +27,17 @@ class ThemeTable extends CoreThemeTable
     public function getEntityClass(): string
     {
         return Theme::class;
+    }
+
+    /**
+     * @return Theme[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('t')
+            ->where('t.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 }

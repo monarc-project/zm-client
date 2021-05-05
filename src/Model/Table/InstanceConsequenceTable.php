@@ -7,9 +7,13 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\InstanceConsequenceSuperClass;
+use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 
 /**
@@ -44,5 +48,45 @@ class InstanceConsequenceTable extends AbstractEntityTable
             ))->getQuery()->getSingleScalarResult();
 
         return $res > 0;
+    }
+
+    /**
+     * @return InstanceConsequence[]
+     */
+    public function findByAnrInstanceAndScaleImpactType(
+        Anr $anr,
+        Instance $instance,
+        ScaleImpactTypeSuperClass $scaleImpactType
+    ): array {
+        return $this->getRepository()->createQueryBuilder('ic')
+            ->where('ic.anr = :anr')
+            ->andWhere('ic.instance = :instance')
+            ->andWhere('ic.scaleImpactType = :scaleImpactType')
+            ->setParameter('anr', $anr)
+            ->setParameter('instance', $instance)
+            ->setParameter('scaleImpactType', $scaleImpactType)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceConsequence[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('ic')
+            ->where('ic.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(InstanceConsequenceSuperClass $instanceConsequence, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($instanceConsequence);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

@@ -7,9 +7,14 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\AssetSuperClass;
+use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Model\Table\MonarcObjectTable as CoreMonarcObjectTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 
 /**
@@ -26,5 +31,95 @@ class MonarcObjectTable extends CoreMonarcObjectTable
     public function getEntityClass(): string
     {
         return MonarcObject::class;
+    }
+
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): MonarcObject
+    {
+        $monarcObject = $this->getRepository()
+            ->createQueryBuilder('mo')
+            ->where('mo.anr = :anr')
+            ->andWhere('mo.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($monarcObject === null) {
+            throw EntityNotFoundException::fromClassNameAndIdentifier(\get_class($this), [$anr->getId(), $uuid]);
+        }
+
+        return $monarcObject;
+    }
+
+    /**
+     * @return MonarcObject[]
+     */
+    public function findByAnrAndAsset(AnrSuperClass $anr, Asset $asset): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('mo')
+            ->innerJoin('mo.asset', 'a')
+            ->where('mo.anr = :anr')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :assetAnr')
+            ->setParameter('anr', $anr)
+            ->setParameter('assetUuid', $asset->getUuid())
+            ->setParameter('assetAnr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findOneByAnrAssetNameScopeAndCategory(
+        AnrSuperClass $anr,
+        string $nameKey,
+        string $nameValue,
+        AssetSuperClass $asset,
+        int $scope,
+        ObjectCategorySuperClass $category
+    ): ?MonarcObject {
+        return $this->getRepository()
+            ->createQueryBuilder('mo')
+            ->innerJoin('mo.asset', 'a')
+            ->where('mo.anr = :anr')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :assetAnr')
+            ->andWhere('mo.' . $nameKey . ' = :name')
+            ->andWhere('mo.scope = :scope')
+            ->andWhere('mo.category = :category')
+            ->setParameter('anr', $anr)
+            ->setParameter('assetUuid', $asset->getUuid())
+            ->setParameter('assetAnr', $anr)
+            ->setParameter('name', $nameValue)
+            ->setParameter('scope', $scope)
+            ->setParameter('category', $category)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findOneByAnrAndName(
+        AnrSuperClass $anr,
+        string $nameKey,
+        string $nameValue
+    ): ?MonarcObject {
+        return $this->getRepository()
+            ->createQueryBuilder('mo')
+            ->where('mo.anr = :anr')
+            ->andWhere('mo.' . $nameKey . ' = :name')
+            ->setParameter('anr', $anr)
+            ->setParameter('name', $nameValue)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function saveEntity(MonarcObject $monarcObject, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($monarcObject);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

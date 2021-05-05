@@ -87,4 +87,17 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return InstanceRiskOp[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('oprisk')
+            ->where('oprisk.anr = :anr')
+            ->setParameter(':anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
 }

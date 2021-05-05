@@ -32,6 +32,7 @@ class AssetTable extends AbstractEntityTable
             ->andWhere('a.uuid = :uuid')
             ->setParameter('anr', $anr)
             ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }

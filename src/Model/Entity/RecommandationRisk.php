@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
@@ -154,99 +153,66 @@ class RecommandationRisk extends AbstractEntity
         return $this;
     }
 
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    // TODO: the nullable value is added for the multi-fields relation issue (when we remove a relation, e.g. asset).
+    // TODO: remove when #240 is done.
+    public function getAnr(): ?Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param Anr $anr
-     */
-    public function setAnr($anr): self
+    public function setAnr(?Anr $anr): self
     {
         $this->anr = $anr;
 
         return $this;
     }
 
-    /**
-     * @return Recommandation
-     */
-    public function getRecommandation()
+    public function getRecommandation(): ?Recommandation
     {
         return $this->recommandation;
     }
 
-    /**
-     * @param Recommandation $recommandation
-     * @return RecommandationRisk
-     */
-    public function setRecommandation($recommandation)
+    public function setRecommandation(?Recommandation $recommandation): self
     {
         $this->recommandation = $recommandation;
+
         return $this;
     }
 
-    /**
-     * @return InstanceRisk|null
-     */
-    public function getInstanceRisk()
+    public function getInstanceRisk(): ?InstanceRisk
     {
         return $this->instanceRisk;
     }
 
-    /**
-     * @param InstanceRisk $instanceRisk
-     * @return RecommandationRisk
-     */
-    public function setInstanceRisk($instanceRisk)
+    public function setInstanceRisk(?InstanceRisk $instanceRisk): self
     {
         $this->instanceRisk = $instanceRisk;
+
         return $this;
     }
 
-    /**
-     * @return InstanceRiskOp|null
-     */
-    public function getInstanceRiskOp()
+    public function getInstanceRiskOp(): ?InstanceRiskOp
     {
         return $this->instanceRiskOp;
     }
 
-    /**
-     * @param InstanceRiskOp $instanceRiskOp
-     * @return RecommandationRisk
-     */
-    public function setInstanceRiskOp($instanceRiskOp)
+    public function setInstanceRiskOp(?InstanceRiskOp $instanceRiskOp)
     {
         $this->instanceRiskOp = $instanceRiskOp;
+
         return $this;
     }
 
-    /**
-     * @return Instance
-     */
-    public function getInstance()
+    public function getInstance(): ?Instance
     {
         return $this->instance;
     }
 
-    /**
-     * @param Instance $instance
-     * @return RecommandationRisk
-     */
-    public function setInstance($instance)
+    public function setInstance(?Instance $instance): self
     {
         $this->instance = $instance;
-        return $this;
-    }
 
-    public function getGlobalObject(): ?ObjectSuperClass
-    {
-        return $this->globalObject;
+        return $this;
     }
 
     public function hasGlobalObjectRelation(): bool
@@ -254,69 +220,69 @@ class RecommandationRisk extends AbstractEntity
         return $this->globalObject !== null;
     }
 
-    public function setGlobalObject(?ObjectSuperClass $globalObject): self
+    public function getGlobalObject(): ?MonarcObject
+    {
+        return $this->globalObject;
+    }
+
+    public function setGlobalObject(?MonarcObject $globalObject): self
     {
         $this->globalObject = $globalObject;
 
         return $this;
     }
 
-    /**
-     * @return Asset
-     */
-    public function getAsset()
+    public function getAsset(): ?Asset
     {
         return $this->asset;
     }
 
-    /**
-     * @param Asset $asset
-     * @return RecommandationRisk
-     */
-    public function setAsset($asset)
+    public function setAsset(?Asset $asset): self
     {
         $this->asset = $asset;
+
         return $this;
     }
 
-    /**
-     * @return Threat
-     */
-    public function getThreat()
+    public function getThreat(): ?Threat
     {
         return $this->threat;
     }
 
-    /**
-     * @param Threat $threat
-     * @return RecommandationRisk
-     */
-    public function setThreat($threat)
+    public function setThreat(?Threat $threat): self
     {
         $this->threat = $threat;
+
         return $this;
     }
 
-    /**
-     * @return Vulnerability
-     */
-    public function getVulnerability()
+    public function getVulnerability(): ?Vulnerability
     {
         return $this->vulnerability;
     }
 
-    /**
-     * @param Vulnerability $vulnerability
-     * @return RecommandationRisk
-     */
-    public function setVulnerability($vulnerability)
+    public function setVulnerability(?Vulnerability $vulnerability): self
     {
         $this->vulnerability = $vulnerability;
+
+        return $this;
+    }
+
+    public function getCommentAfter(): string
+    {
+        return (string)$this->commentAfter;
+    }
+
+    public function setCommentAfter(string $commentAfter): self
+    {
+        $this->commentAfter = $commentAfter;
+
         return $this;
     }
 
     /**
      * @param bool $partial
+     *
      * @return mixed
      */
     public function getInputFilter($partial = true)
@@ -326,25 +292,25 @@ class RecommandationRisk extends AbstractEntity
 
             $this->inputFilter->add([
                 'name' => 'anr',
-                'required' => ($partial) ? false : true,
+                'required' => !$partial,
                 'allow_empty' => false,
             ]);
 
             $this->inputFilter->add([
                 'name' => 'recommandation',
-                'required' => ($partial) ? false : true,
+                'required' => !$partial,
                 'allow_empty' => false,
             ]);
 
             $this->inputFilter->add([
                 'name' => 'risk',
-                'required' => ($partial) ? false : true,
+                'required' => !$partial,
                 'allow_empty' => false,
             ]);
 
             $this->inputFilter->add([
                 'name' => 'op',
-                'required' => ($partial) ? false : true,
+                'required' => !$partial,
                 'allow_empty' => false,
                 'validators' => [
                     [
@@ -361,7 +327,8 @@ class RecommandationRisk extends AbstractEntity
         return $this->inputFilter;
     }
 
-    public function getFiltersForService(){
+    public function getFiltersForService()
+    {
         $filterJoin = [
             [
                 'as' => 'r',
@@ -380,6 +347,7 @@ class RecommandationRisk extends AbstractEntity
             'r.anr',
             'r.code',
         ];
-        return [$filterJoin,$filterLeft,$filtersCol];
+
+        return [$filterJoin, $filterLeft, $filtersCol];
     }
 }

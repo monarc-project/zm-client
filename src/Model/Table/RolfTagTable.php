@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\RolfTag;
 
 /**
@@ -21,5 +22,27 @@ class RolfTagTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, RolfTag::class, $connectedUserService);
+    }
+
+    public function findByAnrAndCode(Anr $anr, string $code): ?RolfTag
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('rt')
+            ->where('rt.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->andWhere('rt.code = :code')
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function saveEntity(RolfTag $rolfTag, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($rolfTag);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

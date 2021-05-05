@@ -35,21 +35,12 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
         'instanceConsequenceTable' => Table\InstanceConsequenceTable::class,
         'instanceRiskTable' => Table\InstanceRiskTable::class,
+        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
         'instanceConsequenceEntity' => InstanceConsequence::class,
         'recommandationRiskTable' => Table\RecommandationRiskTable::class,
         'recommandationTable' => Table\RecommandationTable::class,
         'recommandationSetTable' => Table\RecommandationSetTable::class,
-        'questionTable' => Table\QuestionTable::class,
-        'questionChoiceTable' => Table\QuestionChoiceTable::class,
-        'threatTable' => Table\ThreatTable::class,
-        'interviewTable' => Table\InterviewTable::class,
         'themeTable' => Table\ThemeTable::class,
-        'deliveryTable' => Table\DeliveryTable::class,
-        'referentialTable' => Table\ReferentialTable::class,
-        'soaCategoryTable' => Table\SoaCategoryTable::class,
-        'measureTable' => Table\MeasureTable::class,
-        'measureMeasureTable' => Table\MeasureMeasureTable::class,
-        'soaTable' => Table\SoaTable::class,
 
         // Services
         'instanceConsequenceService' => AnrInstanceConsequenceService::class,
@@ -57,13 +48,11 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceRiskOpService' => AnrInstanceRiskOpService::class,
         'objectObjectService' => ObjectObjectService::class,
         'translateService' => TranslateService::class,
-        'recordService' => AnrRecordService::class,
         'configService' => ConfigService::class,
 
-        // Export (Services)
+        // Export Services
         'objectExportService' => ObjectExportService::class,
         'amvService' => AmvService::class,
-        'scaleCommentService' => AnrScaleCommentService::class,
     ];
 
     // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.

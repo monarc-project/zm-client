@@ -21,24 +21,4 @@ use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
  */
 class ScaleImpactType extends ScaleImpactTypeSuperClass
 {
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Scale
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Scale", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="scale_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $scale;
 }

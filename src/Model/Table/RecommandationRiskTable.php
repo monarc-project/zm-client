@@ -76,12 +76,30 @@ class RecommandationRiskTable extends AbstractEntityTable
     {
         return $this->getRepository()
             ->createQueryBuilder('rr')
-            ->andWhere('rr.anr = :anr')
-            ->andWhere('rr.instanceRisk = :instance_risk')
+            ->where('rr.anr = :anr')
+            ->andWhere('rr.instanceRisk = :instanceRisk')
             ->setParameter('anr', $anr)
-            ->setParameter('instance_risk', $instanceRisk)
+            ->setParameter('instanceRisk', $instanceRisk)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findByInstanceRiskAndRecommendation(
+        InstanceRisk $instanceRisk,
+        Recommandation $recommendation
+    ): ?RecommandationRisk {
+        return $this->getRepository()
+            ->createQueryBuilder('rr')
+            ->innerJoin('rr.recommandation', 'r')
+            ->where('rr.instanceRisk = :instanceRisk')
+            ->andWhere('r.uuid = :recommendationUuid')
+            ->andWhere('r.anr = :recommendationAnr')
+            ->setParameter('instanceRisk', $instanceRisk)
+            ->setParameter('recommendationUuid', $recommendation->getUuid())
+            ->setParameter('recommendationAnr', $recommendation->getAnr())
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
@@ -91,7 +109,7 @@ class RecommandationRiskTable extends AbstractEntityTable
     {
         return $this->getRepository()
             ->createQueryBuilder('rr')
-            ->andWhere('rr.anr = :anr')
+            ->where('rr.anr = :anr')
             ->andWhere('rr.instanceRiskOp = :instance_risk_op')
             ->setParameter('anr', $anr)
             ->setParameter('instance_risk_op', $instanceRiskOp)
@@ -141,6 +159,15 @@ class RecommandationRiskTable extends AbstractEntityTable
     {
         $em = $this->getDb()->getEntityManager();
         $em->remove($recommendationRisk);
+        if ($flush) {
+            $em->flush();
+        }
+    }
+
+    public function saveEntity(RecommandationRisk $recommendationRisk, bool $flush = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($recommendationRisk);
         if ($flush) {
             $em->flush();
         }

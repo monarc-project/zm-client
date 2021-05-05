@@ -14,6 +14,7 @@ use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
+use Monarc\Core\Validator\UniqueCode;
 
 /**
  * Recommandation
@@ -283,6 +284,13 @@ class Recommandation extends AbstractEntity
         return $this->position <= $position;
     }
 
+    public function setImportance(int $importance): self
+    {
+        $this->importance = $importance;
+
+        return $this;
+    }
+
     public function isImportanceLowerThan(int $importance): bool
     {
         return $this->importance < $importance;
@@ -298,9 +306,23 @@ class Recommandation extends AbstractEntity
         return $this->code;
     }
 
+    public function setCode(string $code): self
+    {
+        $this->code = $code;
+
+        return $this;
+    }
+
     public function getDescription(): string
     {
         return (string)$this->description;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
     }
 
     public function getComment(): string
@@ -308,33 +330,28 @@ class Recommandation extends AbstractEntity
         return (string)$this->comment;
     }
 
-    public function getStatus(): int
-    {
-        return $this->status;
-    }
-
-    public function getResponsable(): string
-    {
-        return (string)$this->responsable;
-    }
-
-    /**
-     * @param mixed $inputFilter
-     *
-     * @return Recommandation
-     */
-    public function setInputFilter($inputFilter)
-    {
-        $this->inputFilter = $inputFilter;
-
-        return $this;
-    }
-
     public function setComment(string $comment): Recommandation
     {
         $this->comment = $comment;
 
         return $this;
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status;
+    }
+
+    public function setStatus(int $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getResponsable(): string
+    {
+        return (string)$this->responsable;
     }
 
     public function setResponsable(string $responsable): Recommandation
@@ -347,6 +364,13 @@ class Recommandation extends AbstractEntity
     public function getCounterTreated(): int
     {
         return $this->counterTreated;
+    }
+
+    public function setCounterTreated(int $counterTreated): self
+    {
+        $this->counterTreated = $counterTreated;
+
+        return $this;
     }
 
     public function incrementCounterTreated(): self
@@ -390,9 +414,10 @@ class Recommandation extends AbstractEntity
 
             $validatorsCode = [];
             if (!$partial) {
+                // TODO: fix the validator as far as the code is unique within a set.
                 $validatorsCode = [
                     [
-                        'name' => 'Monarc\Core\Validator\UniqueCode',
+                        'name' => UniqueCode::class,
                         'options' => [
                             'entity' => $this
                         ],
@@ -402,7 +427,7 @@ class Recommandation extends AbstractEntity
 
             $this->inputFilter->add([
                 'name' => 'code',
-                'required' => ($partial) ? false : true,
+                'required' => !$partial,
                 'allow_empty' => false,
                 'filters' => [],
                 'validators' => $validatorsCode
@@ -410,7 +435,7 @@ class Recommandation extends AbstractEntity
 
             $this->inputFilter->add([
                 'name' => 'anr',
-                'required' => ($partial) ? false : true,
+                'required' => !$partial,
                 'allow_empty' => false,
             ]);
 

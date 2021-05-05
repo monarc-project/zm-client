@@ -7,9 +7,11 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\ObjectCategory;
 
 /**
@@ -26,5 +28,59 @@ class ObjectCategoryTable extends AbstractEntityTable
     public function getEntityClass(): string
     {
         return ObjectCategory::class;
+    }
+
+    public function findByAnrParentAndLabel(
+        Anr $anr,
+        ?ObjectCategory $parentCategory,
+        string $labelKey,
+        string $labelValue
+    ): ?ObjectCategory {
+        $queryBuilder = $this->getRepository()
+            ->createQueryBuilder('oc')
+            ->where('oc.anr = :anr')
+            ->setParameter('anr', $anr);
+
+        if ($parentCategory !== null) {
+            $queryBuilder
+                ->andWhere('oc.parent = :parent')
+                ->setParameter('parent', $parentCategory);
+        }
+
+        return $queryBuilder
+            ->andWhere('oc.' . $labelKey . ' = :' . $labelKey)
+            ->setParameter($labelKey, $labelValue)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findMaxPositionByAnrAndParent(Anr $anr, ?ObjectCategory $parentObjectCategory): int
+    {
+        $queryBuilder = $this->getRepository()
+            ->createQueryBuilder('oc')
+            ->select('MAX(oc.position)')
+            ->where('oc.anr = :anr')
+            ->setParameter('anr', $anr);
+
+        if ($parentObjectCategory !== null) {
+            $queryBuilder
+                ->andWhere('oc.parent = :parent')
+                ->setParameter('parent', $parentObjectCategory);
+        }
+
+        return (int)$queryBuilder
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function saveEntity(ObjectCategorySuperClass $objectCategory, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($objectCategory);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

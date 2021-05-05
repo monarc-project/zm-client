@@ -52,6 +52,7 @@ use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Model\Entity\Asset;
@@ -323,9 +324,10 @@ class AnrService extends AbstractService
         // link new referentials to an ANR
         foreach ($uuidArray as $uuid) {
             // check if referential already linked to the anr
-            $referentials = $this->get('referentialCliTable')
-                ->getEntityByFields(['anr' => $anr->id,
-                    'uuid' => $uuid]);
+            $referentials = $this->get('referentialCliTable')->getEntityByFields([
+                'anr' => $anr->id,
+                'uuid' => $uuid
+            ]);
             if (! empty($referentials)) {
                 // if referential already linked to the anr, go to next iteration
                 continue;
@@ -409,10 +411,11 @@ class AnrService extends AbstractService
                 }
                 foreach ($rolfRisks as $rolfRisk_common) {
                     // match the risks from common with risks from cli
-                    $risk_cli = $this->get('rolfRiskCliTable')
-                        ->getEntityByFields(['anr' => $anr->id,
-                            'label'.$this->getLanguage() => $rolfRisk_common->get('label'.$this->getLanguage()),
-                            'code' => $rolfRisk_common->code]);
+                    $risk_cli = $this->get('rolfRiskCliTable')->getEntityByFields([
+                        'anr' => $anr->id,
+                        'label' . $this->getLanguage() => $rolfRisk_common->getLabel($this->getLanguage()),
+                        'code' => $rolfRisk_common->getCode()
+                    ]);
                     if (count($risk_cli)) {
                         //$risk_cli = $risk_cli[0];
                         $newMeasure->addOpRisk($risk_cli[0]);
@@ -515,7 +518,7 @@ class AnrService extends AbstractService
 
             /** @var AnrTable $anrCliTable */
             $anrCliTable = $this->get('anrCliTable');
-            $id = $anrCliTable->save($newAnr);
+            $anrCliTable->saveEntity($newAnr);
 
             if (!$isSnapshot && !$isSnapshotCloning) { // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
                 //add user to anr
@@ -1268,56 +1271,71 @@ class AnrService extends AbstractService
                 }
 
                 //duplicate recommandations risks
-                $recommandationsRisks = $this->get('recommandationRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
+                /** @var RecommandationRiskTable $recommendationRiskTable */
+                $recommendationRiskTable = $this->get('recommandationRiskCliTable');
+                $recommandationsRisks = $recommendationRiskTable->findByAnr($anr);
                 foreach ($recommandationsRisks as $recommandationRisk) {
-                    $newRecommendationRisk = new RecommandationRisk($recommandationRisk);
-                    $newRecommendationRisk->setId(null);
-                    $newRecommendationRisk->setAnr($newAnr);
-                    $newRecommendationRisk->setRecommandation(
-                        $recommendationsNewIds[$newRecommendationRisk->getRecommandation()->getUuid()]
-                    );
-                    if ($newRecommendationRisk->getInstanceRisk()) {
+                    $newRecommendationRisk = (new RecommandationRisk())
+                        ->setAnr($newAnr)
+                        ->setCommentAfter($recommandationRisk->getCommentAfter())
+                        ->setRecommandation(
+                            $recommendationsNewIds[$recommandationRisk->getRecommandation()->getUuid()]
+                        )
+                        ->setInstance($instancesNewIds[$recommandationRisk->getInstance()->getId()]);
+
+                    if ($recommandationRisk->getInstanceRisk()) {
                         $newRecommendationRisk->setInstanceRisk(
-                            $instancesRisksNewIds[$newRecommendationRisk->getInstanceRisk()->getId()]
+                            $instancesRisksNewIds[$recommandationRisk->getInstanceRisk()->getId()]
                         );
                     }
-                    if ($newRecommendationRisk->getInstanceRiskOp()) {
+                    if ($recommandationRisk->getInstanceRiskOp()) {
                         $newRecommendationRisk->setInstanceRiskOp(
-                            $instancesRisksOpNewIds[$newRecommendationRisk->getInstanceRiskOp()->getId()]
+                            $instancesRisksOpNewIds[$recommandationRisk->getInstanceRiskOp()->getId()]
+                        );
+                        // TODO: remove when #240 is done.
+                        $newRecommendationRisk->setAnr(null);
+                    }
+                    if ($recommandationRisk->getGlobalObject()
+                        && isset($objectsNewIds[$recommandationRisk->getGlobalObject()->getUuid()])
+                    ) {
+                        $newRecommendationRisk->setGlobalObject(
+                            $objectsNewIds[$recommandationRisk->getGlobalObject()->getUuid()]
                         );
                     }
-                    $newRecommendationRisk->setInstance(
-                        $instancesNewIds[$newRecommendationRisk->get('instance')->get('id')]
-                    );
-                    if ($newRecommendationRisk->getGlobalObject() && isset($objectsNewIds[$newRecommendationRisk->getGlobalObject()->getUuid()])) {
-                        $newRecommendationRisk->setGlobalObject($objectsNewIds[$newRecommendationRisk->getGlobalObject()->getUuid()]);
-                    } else {
-                        $newRecommendationRisk->setGlobalObject(null);
+                    if ($recommandationRisk->getAsset()) {
+                        $newRecommendationRisk->setAsset($assetsNewIds[$recommandationRisk->getAsset()->getUuid()]);
                     }
-                    if ($newRecommendationRisk->get('asset')) {
-                        $newRecommendationRisk->set('asset', $assetsNewIds[$newRecommendationRisk->getAsset()->getUuid()]);
+                    if ($recommandationRisk->getThreat()) {
+                        $newRecommendationRisk->setThreat(
+                            $threatsNewIds[$recommandationRisk->getThreat()->getUuid()]
+                        );
                     }
-                    if ($newRecommendationRisk->get('threat')) {
-                        $newRecommendationRisk->set('threat', $threatsNewIds[$newRecommendationRisk->getThreat()->getUuid()]);
+                    if ($recommandationRisk->getVulnerability()) {
+                        $newRecommendationRisk->setVulnerability(
+                            $vulnerabilitiesNewIds[$recommandationRisk->getVulnerability()->getUuid()]
+                        );
                     }
-                    if ($newRecommendationRisk->get('vulnerability')) {
-                        $newRecommendationRisk->set('vulnerability', $vulnerabilitiesNewIds[$newRecommendationRisk->getVulnerability()->getUuid()]);
+                    /*
+                     * We do this trick becasue the other relations (asset, threat, vulnerability)
+                     * in case of operation risks are null and the anr will be force reset to null.
+                     * TODO: remove when #240 is done.
+                     */
+                    if ($newRecommendationRisk->getAnr() === null) {
+                        $recommendationRiskTable->saveEntity($newRecommendationRisk);
+                        $newRecommendationRisk->setAnr($newAnr);
                     }
-                    // TODO: check why do we need the following manipulation and remove the double save call.
-                    $newRecommendationRisk->setAnr(null);
-                    $this->get('recommandationRiskCliTable')->save($newRecommendationRisk);
-                    $newRecommendationRisk->setAnr($newAnr);
-                    $this->get('recommandationRiskCliTable')->save($newRecommendationRisk, false);
+
+                    $recommendationRiskTable->saveEntity($newRecommendationRisk, false);
                 }
             }
 
             $this->get('table')->getDb()->flush();
 
-            $this->setUserCurrentAnr($newAnr->get('id'));
+            $this->setUserCurrentAnr($newAnr->getId());
 
         } catch (\Exception $e) {
-            if (isset($id) && is_int($id)) {
-                $anrCliTable->delete($id);
+            if (!empty($newAnr)) {
+                $anrCliTable->deleteEntity($newAnr);
             }
             throw new  Exception('Error during analysis creation', 412);
         }

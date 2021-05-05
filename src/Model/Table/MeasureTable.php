@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Model\Entity\MeasureSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
@@ -26,18 +25,15 @@ class MeasureTable extends AbstractEntityTable
         parent::__construct($dbService, Measure::class, $connectedUserService);
     }
 
-    /**
-     * @return Measure|null
-     * @throws NonUniqueResultException
-     */
     public function findByAnrAndUuid(Anr $anr, string $uuid): ?Measure
     {
         return $this->getRepository()
             ->createQueryBuilder('m')
             ->where('m.anr = :anr')
-            ->andWhere('m.uuid = :uuid')
             ->setParameter('anr', $anr)
+            ->andWhere('m.uuid = :uuid')
             ->setParameter('uuid', $uuid)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }

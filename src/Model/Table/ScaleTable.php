@@ -7,11 +7,12 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Scale;
+use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 
 /**
  * Class ScaleTable
@@ -27,7 +28,7 @@ class ScaleTable extends AbstractEntityTable
     /**
      * @return Scale[]
      */
-    public function findByAnr(Anr $anr)
+    public function findByAnr(AnrSuperClass $anr): array
     {
         return $this->getRepository()
             ->createQueryBuilder('s')
@@ -35,5 +36,27 @@ class ScaleTable extends AbstractEntityTable
             ->setParameter('anr', $anr)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findByAnrAndType(AnrSuperClass $anr, int $type): ?Scale
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('s')
+            ->where('s.anr = :anr')
+            ->andWhere('s.type = :type')
+            ->setParameter('anr', $anr)
+            ->setParameter('type', $type)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function saveEntity(Scale $scale, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($scale);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }

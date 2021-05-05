@@ -77,7 +77,7 @@ class RecommandationSet extends AbstractEntity
     protected $label4;
 
     /**
-     * @var Recommandation
+     * @var Recommandation[]
      *
      * @ORM\OneToMany(targetEntity="Recommandation", mappedBy="recommandationSet", cascade={"persist"})
      */
@@ -109,11 +109,11 @@ class RecommandationSet extends AbstractEntity
 
     /**
      * @param Anr $anr
-     * @return RecommandationSet
      */
-    public function setAnr($anr)
+    public function setAnr($anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
@@ -127,11 +127,39 @@ class RecommandationSet extends AbstractEntity
 
     /**
      * @param Recommandation[] $recommandations
-     * @return RecommandationSet
      */
-    public function setRecommandations($recommandations)
+    public function setRecommandations($recommandations): self
     {
         $this->recommandations = $recommandations;
+
+        return $this;
+    }
+
+    public function setLabel1(string $label1): self
+    {
+        $this->label1 = $label1;
+
+        return $this;
+    }
+
+    public function setLabel2(string $label2): self
+    {
+        $this->label2 = $label2;
+
+        return $this;
+    }
+
+    public function setLabel3(string $label3): self
+    {
+        $this->label3 = $label3;
+
+        return $this;
+    }
+
+    public function setLabel4(string $label4): self
+    {
+        $this->label4 = $label4;
+
         return $this;
     }
 
@@ -144,32 +172,14 @@ class RecommandationSet extends AbstractEntity
             foreach ($texts as $text) {
                 $this->inputFilter->add(array(
                     'name' => $text,
-                    'required' => ((strchr($text, (string)$this->getLanguage())) && (!$partial)) ? true : false,
+                    'required' => strpos($text, (string)$this->getLanguage()) !== false && !$partial,
                     'allow_empty' => false,
                     'filters' => array(),
                     'validators' => array(),
                 ));
             }
-            // $validatorsCode = [];
-            // if (!$partial) {
-            //     $validatorsCode = array(
-            //         array(
-            //             'name' => 'Monarc\Core\Validator\UniqueCode',
-            //             'options' => array(
-            //                 'entity' => $this
-            //             ),
-            //         ),
-            //     );
-            // }
-
-            // $this->inputFilter->add(array(
-            //     'name' => 'uuid',
-            //     'required' => true,
-            //     'allow_empty' => false,
-            //     'filters' => array(),
-            //     // 'validators' => $validatorsCode
-            // ));
         }
+
         return $this->inputFilter;
     }
 }

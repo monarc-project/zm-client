@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AnrObjectCategoryTable as CoreAnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
@@ -26,5 +27,26 @@ class AnrObjectCategoryTable extends CoreAnrObjectCategoryTable
     public function getEntityClass(): string
     {
         return AnrObjectCategory::class;
+    }
+
+    public function findMaxPositionByAnr(AnrSuperClass $anr): int
+    {
+        return (int)$this->getRepository()
+            ->createQueryBuilder('aoc')
+            ->select('MAX(aoc.position)')
+            ->where('aoc.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function saveEntity(AnrObjectCategory $anrObjectCategory, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($anrObjectCategory);
+        if ($flushAll) {
+            $em->flush();
+        }
     }
 }
