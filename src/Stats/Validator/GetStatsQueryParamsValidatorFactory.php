@@ -6,7 +6,7 @@ use Interop\Container\ContainerInterface;
 use Laminas\InputFilter\Factory;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 
-class GetProcessedStatsQueryParamsValidatorFactory implements FactoryInterface
+class GetStatsQueryParamsValidatorFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {

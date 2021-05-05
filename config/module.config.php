@@ -5,7 +5,6 @@ use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\FrontOffice\Controller;
-use Monarc\FrontOffice\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
