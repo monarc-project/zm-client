@@ -11,6 +11,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Service\ObjectService;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 
@@ -20,7 +21,7 @@ use Monarc\FrontOffice\Model\Table\AnrTable;
  * @see \Monarc\Core\Service\ObjectService
  * @package Monarc\FrontOffice\Service
  */
-class AnrObjectService extends \Monarc\Core\Service\ObjectService
+class AnrObjectService extends ObjectService
 {
     protected $selfCoreService;
     protected $userAnrTable;
@@ -173,11 +174,11 @@ class AnrObjectService extends \Monarc\Core\Service\ObjectService
 
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
         $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['uuid' => $id], $anr->get('model'), null, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE));
-        if (!empty($object)) {
-            return $this->get('selfCoreService')->getCompleteEntity($id);
-        } else {
+        if (empty($object)) {
             throw new Exception('Object not found', 412);
         }
+
+        return $this->get('selfCoreService')->getCompleteEntity($id);
     }
 
     /**
@@ -248,7 +249,7 @@ class AnrObjectService extends \Monarc\Core\Service\ObjectService
      */
     protected function importFromMosp(array $data, ?AnrSuperClass $anr): ?ObjectSuperClass
     {
-        if (empty($data['mosp']) || $anr === null) {
+        if ($anr === null) {
             return null;
         }
 

@@ -121,8 +121,8 @@ class AssetImportService
                 ->setAnr($anr)
                 ->setLabels($data['asset'])
                 ->setDescriptions($data['asset'])
-                ->setStatus($data['asset']['status'])
-                ->setMode($data['asset']['mode'])
+                ->setStatus($data['asset']['status'] ?? 1)
+                ->setMode($data['asset']['mode'] ?? 0)
                 ->setType($data['asset']['type'])
                 ->setCode($data['asset']['code']);
 
