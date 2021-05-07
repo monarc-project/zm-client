@@ -1121,7 +1121,6 @@ return [
             Table\RecommendationHistoricTable::class => AutowireFactory::class,
             Table\RecommandationRiskTable::class => AutowireFactory::class,
             Table\RecommandationSetTable::class => AutowireFactory::class,
-            Table\SettingTable::class => ClientEntityManagerFactory::class,
             Table\ScaleTable::class => AutowireFactory::class,
             Table\ScaleCommentTable::class => AutowireFactory::class,
             Table\ScaleImpactTypeTable::class => AutowireFactory::class,

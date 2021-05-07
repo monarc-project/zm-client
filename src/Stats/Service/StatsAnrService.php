@@ -12,7 +12,6 @@ use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Scale;
-use Monarc\FrontOffice\Model\Entity\Setting;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserRole;
@@ -21,7 +20,6 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
-use Monarc\FrontOffice\Model\Table\SettingTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Model\Table\UserTable;
@@ -89,9 +87,6 @@ class StatsAnrService
     /** @var SnapshotTable */
     private $snapshotTable;
 
-    /** @var SettingTable */
-    private $settingTable;
-
     /** @var string */
     private $apiKey;
 
@@ -106,7 +101,6 @@ class StatsAnrService
         ConnectedUserService $connectedUserService,
         UserTable $userTable,
         SnapshotTable $snapshotTable,
-        SettingTable $settingTable,
         array $config
     ) {
         $this->anrTable = $anrTable;
@@ -119,7 +113,6 @@ class StatsAnrService
         $this->connectedUserService = $connectedUserService;
         $this->userTable = $userTable;
         $this->snapshotTable = $snapshotTable;
-        $this->settingTable = $settingTable;
         $this->apiKey = $config['statsApi']['apiKey'];
     }
 
@@ -1363,17 +1356,5 @@ class StatsAnrService
         }
 
         return $anrUuids;
-    }
-
-    /**
-     * @return bool
-     *
-     * @throws EntityNotFoundException
-     */
-    private function isStatsSharingEnabled(): bool
-    {
-        $setting = $this->settingTable->findByName(Setting::SETTINGS_STATS);
-
-        return !empty($setting->getValue()[Setting::SETTING_STATS_IS_SHARING_ENABLED]);
     }
 }

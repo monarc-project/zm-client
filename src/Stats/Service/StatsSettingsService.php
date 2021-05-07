@@ -2,10 +2,8 @@
 
 namespace Monarc\FrontOffice\Stats\Service;
 
-use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
-use Monarc\FrontOffice\Model\Entity\Setting;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Stats\Exception\StatsGetClientException;
 use Monarc\FrontOffice\Stats\Exception\StatsUpdateClientException;
