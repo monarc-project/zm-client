@@ -8,6 +8,10 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Model\Table\ObjectObjectTable;
+use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
 
 /**
  * Proxy class to instantiate Monarc\Core's AnrObjectService, in order to provide the common library to a client ANR
@@ -18,10 +22,10 @@ class AnrLibraryServiceFactory extends AbstractServiceFactory
     protected $class = AnrLibraryService::class;
 
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\MonarcObject',
-        'objectObjectTable' => 'Monarc\FrontOffice\Model\Table\ObjectObjectTable',
-        'objectService' => 'Monarc\FrontOffice\Service\ObjectService',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'table' => MonarcObjectTable::class,
+        'entity' => MonarcObject::class,
+        'objectObjectTable' => ObjectObjectTable::class,
+        'objectService' => AnrObjectService::class,
+        'userAnrTable' => UserAnrTable::class,
     ];
 }

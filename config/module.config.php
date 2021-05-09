@@ -1211,7 +1211,6 @@ return [
             'Monarc\FrontOffice\Service\AnrRolfRiskService' => 'Monarc\FrontOffice\Service\AnrRolfRiskServiceFactory',
             'Monarc\FrontOffice\Service\AmvService' => 'Monarc\FrontOffice\Service\AmvServiceFactory',
             Service\ClientService::class => AutowireFactory::class,
-            'Monarc\FrontOffice\Service\ObjectService' => 'Monarc\FrontOffice\Service\ObjectServiceFactory',
             'Monarc\FrontOffice\Service\ObjectObjectService' => 'Monarc\FrontOffice\Service\ObjectObjectServiceFactory',
             'Monarc\FrontOffice\Service\ModelService' => 'Monarc\FrontOffice\Service\ModelServiceFactory',
             'Monarc\FrontOffice\Service\AnrLibraryService' => 'Monarc\FrontOffice\Service\AnrLibraryServiceFactory',

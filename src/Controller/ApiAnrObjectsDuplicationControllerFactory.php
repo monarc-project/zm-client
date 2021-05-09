@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractControllerFactory;
+use Monarc\FrontOffice\Service\AnrObjectService;
 
 /**
  * Api Anr Objects Duplication Controller Factory
@@ -17,5 +18,5 @@ use Monarc\Core\Controller\AbstractControllerFactory;
  */
 class ApiAnrObjectsDuplicationControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = 'Monarc\FrontOffice\Service\ObjectService';
+    protected $serviceName = AnrObjectService::class;
 }
