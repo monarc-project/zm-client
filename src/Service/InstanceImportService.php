@@ -731,19 +731,19 @@ class InstanceImportService
         }
         // import the measuresmeasures
         if (isset($data['measuresMeasures'])) {
-            foreach ($data['measuresMeasures'] as $measureMeasure) {
-                // check if the measuremeasure is not already in the analysis
-                // TODO: findByAnrFatherAndChild(), but before get father/child them from previously saved or find in the db
-                $measuresMeasures = $this->measureMeasureTable
-                    ->getEntityByFields(['anr' => $anr->getId(),
-                                         'father' => $measureMeasure['father'],
-                                         'child' => $measureMeasure['child']]);
-                if (empty($measuresMeasures)) {
-                    // TODO: change the part with use object setters ->setFather() ->setChild()
-                    $newMeasureMeasure = (new MeasureMeasure($measuresMeasures))
-                        ->setAnr($anr);
-                    // TODO: saveEntity
-                    $this->measureMeasureTable->save($newMeasureMeasure, false);
+            foreach ($data['measuresMeasures'] as $measureMeasureData) {
+                $measuresMeasures = $this->measureMeasureTable->findByAnrFatherUuidAndChildUuid(
+                    $anr,
+                    $measureMeasureData['father'],
+                    $measureMeasureData['child']
+                );
+                if ($measuresMeasures === null) {
+                    $measureMeasure = (new MeasureMeasure())
+                        ->setAnr($anr)
+                        ->setFather($measureMeasureData['father'])
+                        ->setChild($measureMeasureData['child']);
+
+                    $this->measureMeasureTable->saveEntity($measureMeasure, false);
                 }
             }
             $this->measureMeasureTable->getDb()->flush();
