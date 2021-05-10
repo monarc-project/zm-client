@@ -151,7 +151,7 @@ class ObjectImportService
                 ->setMode($objectData['mode'] ?? 1)
                 ->setScope($objectData['scope'])
                 ->setLabel($labelKey, $objectData[$labelKey])
-                ->setDisponibility($objectData['disponibility'] ? (float)$objectData['disponibility'] : '0')
+                ->setDisponibility(isset($objectData['disponibility']) ? (float)$objectData['disponibility'] : 0)
                 ->setPosition((int)$objectData['position']);
             try {
                 $this->monarcObjectTable->findByAnrAndUuid($anr, $objectData['uuid']);
