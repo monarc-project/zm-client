@@ -222,6 +222,8 @@ class AssetImportService
             } else {
                 $amv = new Amv();
                 $amv->setLanguage($languageIndex);
+                // TODO: we must remove the business logic from the AmvSuperClass::getInputFilter.
+                $amv->setDbAdapter($this->amvTable->getDb());
                 $amv->exchangeArray($valueAmv);
                 $amv->setAnr($anr)
                     ->setAsset($asset)
