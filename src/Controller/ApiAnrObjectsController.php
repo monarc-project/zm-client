@@ -87,7 +87,7 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
             throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
-        if (!empty($data['asset'])) {
+        if (\is_string($data['asset'])) {
             $data['asset'] = ['uuid' => $data['asset'], 'anr' => $anrId];
         }
         /** @var ObjectService $service */
