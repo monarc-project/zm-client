@@ -148,11 +148,11 @@ class ObjectImportService
                 ->setCategory($objectCategory)
                 ->setRolfTag($rolfTag)
                 ->addAnr($anr)
-                ->setMode($objectData['mode'])
+                ->setMode($objectData['mode'] ?? 1)
                 ->setScope($objectData['scope'])
                 ->setLabel($labelKey, $objectData[$labelKey])
-                ->setDisponibility((float)$objectData['disponibility'])
-                ->setPosition($objectData['position']);
+                ->setDisponibility($objectData['disponibility'] ? (float)$objectData['disponibility'] : '0')
+                ->setPosition((int)$objectData['position']);
             try {
                 $this->monarcObjectTable->findByAnrAndUuid($anr, $objectData['uuid']);
             } catch (EntityNotFoundException $e) {
