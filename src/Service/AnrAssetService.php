@@ -17,6 +17,8 @@ class AnrAssetService extends AbstractService
 {
     protected $userAnrTable;
 
+    protected $dependencies = ['anr'];
+
     protected $filterColumns = [
         'label1',
         'label2',
