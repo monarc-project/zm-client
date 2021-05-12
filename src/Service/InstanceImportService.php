@@ -65,7 +65,6 @@ use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Model\Table\ThemeTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
 use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
-use Ramsey\Uuid\Uuid;
 
 class InstanceImportService
 {
@@ -347,9 +346,7 @@ class InstanceImportService
             return false;
         }
 
-        if (isset($data['monarc_version'])) {
-            $this->monarcVersion = strpos($data['monarc_version'], 'master') === false ? $data['monarc_version'] : '99';
-        }
+        $this->setAndValidateMonarcVersion($data);
 
         $this->initialAnalyseMaxRecommendationPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
         $this->currentAnalyseMaxRecommendationPosition = $this->initialAnalyseMaxRecommendationPosition;
@@ -1368,48 +1365,46 @@ class InstanceImportService
             return;
         }
 
-        $indexFiled = !$this->isMonarcVersionLoverThen('2.8.2') ? 'uuid' : 'code';
         /**
          * First we get the data from the cached data AssetImportService and compute the difference.
          */
         if (empty($this->cachedData['threats'])) {
             $this->cachedData['threats'] = $this->assetImportService->getCachedDataByKey('threats');
             $threatsUuids = array_diff_key(
-                array_column($data['threats'], $indexFiled),
+                array_column($data['threats'], 'uuid'),
                 $this->cachedData['threats']
             );
             if (!empty($threatsUuids)) {
                 $this->cachedData['threats'] = $this->threatTable->findByAnrAndUuidsIndexedByField(
                     $anr,
                     $threatsUuids,
-                    $indexFiled
+                    'uuid'
                 );
             }
         }
         if (empty($this->cachedData['vulnerabilities'])) {
             $this->cachedData['vulnerabilities'] = $this->assetImportService->getCachedDataByKey('vulnerabilities');
             $vulnerabilitiesUuids = array_diff_key(
-                array_column($data['vuls'], $indexFiled),
+                array_column($data['vuls'], 'uuid'),
                 $this->cachedData['vulnerabilities']
             );
             if (!empty($vulnerabilitiesUuids)) {
                 $this->cachedData['vulnerabilities'] = $this->vulnerabilityTable->findByAnrAndUuidsIndexedByField(
                     $anr,
                     $vulnerabilitiesUuids,
-                    $indexFiled
+                    'uuid'
                 );
             }
         }
-
-        $indexFiled = $this->isMonarcVersionLoverThen('2.8.2') ? 'code' : 'uuid';
 
         foreach ($data['risks'] as $instanceRiskData) {
             $threatData = $data['threats'][$instanceRiskData['threat']];
             $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
 
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
-                if (!isset($this->cachedData['threats'][$threatData[$indexFiled]])) {
+                if (!isset($this->cachedData['threats'][$threatData['uuid']])) {
                     $threat = (new Threat())
+                        ->setUuid($threatData['uuid'])
                         ->setAnr($anr)
                         ->setCode($threatData['code'])
                         ->setLabels($threatData)
@@ -1428,9 +1423,6 @@ class InstanceImportService
                     if (isset($threatData['a'])) {
                         $threat->setAvailability((int)$threatData['a']);
                     }
-                    if (!$this->isMonarcVersionLoverThen('2.8.2')) {
-                        $threat->setUuid($threatData['uuid']);
-                    }
 
                     /*
                      * Unfortunately we don't add "themes" on the same level as "risks" and "threats", but only under "asset".
@@ -1440,24 +1432,22 @@ class InstanceImportService
 
                     $this->threatTable->saveEntity($threat, false);
 
-                    $this->cachedData['threats'][$threatData[$indexFiled]] = $threat;
+                    $this->cachedData['threats'][$threatData['uuid']] = $threat;
                 }
 
-                if (!isset($this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]])) {
+                if (!isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])) {
                     $vulnerability = (new Vulnerability())
+                        ->setUuid($vulnerabilityData['uuid'])
                         ->setAnr($anr)
                         ->setLabels($vulnerabilityData)
                         ->setDescriptions($vulnerabilityData)
                         ->setCode($vulnerabilityData['code'])
                         ->setMode($vulnerabilityData['mode'])
                         ->setStatus($vulnerabilityData['status']);
-                    if (!$this->isMonarcVersionLoverThen('2.8.2')) {
-                        $vulnerability->setUuid($vulnerabilityData['uuid']);
-                    }
 
                     $this->vulnerabilityTable->saveEntity($vulnerability, false);
 
-                    $this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]] = $vulnerability;
+                    $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
                 }
 
                 $instanceRisk = $this->createInstanceRiskFromData(
@@ -1465,8 +1455,8 @@ class InstanceImportService
                     $anr,
                     $instance,
                     $monarcObject->getAsset(),
-                    $this->cachedData['threats'][$threatData[$indexFiled]],
-                    $this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]]
+                    $this->cachedData['threats'][$threatData['uuid']],
+                    $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]
                 );
 
                 $this->instanceRiskTable->saveEntity($instanceRisk, false);
@@ -1481,19 +1471,19 @@ class InstanceImportService
                         $anr,
                         $instanceBrother,
                         $monarcObject->getAsset(),
-                        $this->cachedData['threats'][$threatData[$indexFiled]],
-                        $this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]]
+                        $this->cachedData['threats'][$threatData['uuid']],
+                        $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]
                     );
 
                     $this->instanceRiskTable->saveEntity($instanceRiskBrother, false);
                 }
             }
 
-            $threatUuid = isset($this->cachedData['threats'][$threatData[$indexFiled]])
-                ? $this->cachedData['threats'][$threatData[$indexFiled]]->getUuid()
+            $threatUuid = isset($this->cachedData['threats'][$threatData['uuid']])
+                ? $this->cachedData['threats'][$threatData['uuid']]->getUuid()
                 : $instanceRiskData['threat'];
-            $vulnerabilityUuid = isset($this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]])
-                ? $this->cachedData['vulnerabilities'][$vulnerabilityData[$indexFiled]]->getUuid()
+            $vulnerabilityUuid = isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])
+                ? $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]->getUuid()
                 : $instanceRiskData['vulnerability'];
 
             $instanceRisk = $this->instanceRiskTable->findByInstanceAssetThreatUuidAndVulnerabilityUuid(
@@ -2030,5 +2020,21 @@ class InstanceImportService
         $this->instanceTable->saveEntity($instance);
 
         return $instance;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function setAndValidateMonarcVersion($data): void
+    {
+        if (isset($data['monarc_version'])) {
+            $this->monarcVersion = strpos($data['monarc_version'], 'master') === false ? $data['monarc_version'] : '99';
+        }
+
+        if ($this->isMonarcVersionLoverThen('2.8.2')) {
+            throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
+                . ' Please contact us for more details.'
+            );
+        }
     }
 }

@@ -15,6 +15,7 @@ use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Monarc\Core\Validator\UniqueCode;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Recommandation
@@ -162,6 +163,18 @@ class Recommandation extends AbstractEntity
     public function setUuid($uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function generateAndSetUuid(): self
+    {
+        if ($this->uuid === null) {
+            $this->uuid = Uuid::uuid4();
+        }
 
         return $this;
     }

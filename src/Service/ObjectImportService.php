@@ -4,6 +4,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\NonUniqueResultException;
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
@@ -93,6 +94,8 @@ class ObjectImportService
             return null;
         }
 
+        $this->validateMonarcVersion($data);
+
         $objectData = $data['object'];
 
         if (isset($this->cachedData['objects'][$objectData['uuid']])) {
@@ -166,7 +169,7 @@ class ObjectImportService
 
         $this->monarcObjectTable->saveEntity($monarcObject);
 
-        $this->cachedData['objects'][$objectData['uuid']] = $monarcObject;
+        $this->cachedData['objects'][$monarcObject->getUuid()] = $monarcObject;
 
         if (!empty($data['children'])) {
             usort($data['children'], static function ($a, $b) {
@@ -406,6 +409,18 @@ class ObjectImportService
         }
 
         return '1';
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function validateMonarcVersion(array $data): void
+    {
+        if (version_compare($this->getMonarcVersion($data), '2.8.2') < 0) {
+            throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
+                . ' Please contact us for more details.'
+            );
+        }
     }
 
     /**
