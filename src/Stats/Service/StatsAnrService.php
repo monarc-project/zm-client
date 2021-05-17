@@ -248,12 +248,6 @@ class StatsAnrService
      */
     public function collectStats(array $anrIds = [], bool $forceUpdate = false): array
     {
-        if (!$this->isStatsSharingEnabled()) {
-            throw new StatsSendingException(
-                'Stats can\'t be sent for the client because the sharing option is disabled.'
-            );
-        }
-
         $currentDate = (new DateTime())->format('Y-m-d');
         $statsOfToday = $this->statsApiProvider->getStatsData([
             'type' => StatsDataObject::TYPE_RISK,
