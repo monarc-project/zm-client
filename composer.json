@@ -1,6 +1,7 @@
 {
     "name": "monarc/frontoffice",
     "description": "Frontoffice for monarc/monarc application",
+    "license": "AGPL-3.0-or-later",
     "authors": [
         {
             "name": "Cyril Rouyer",
