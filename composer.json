@@ -1,5 +1,5 @@
 {
-    "name": "monarc-project/frontoffice",
+    "name": "monarc/frontoffice",
     "description": "Frontoffice for monarc/monarc application",
     "license": "AGPL-3.0-or-later",
     "authors": [
@@ -49,7 +49,6 @@
         "ext-openssl": "*",
         "doctrine/doctrine-orm-module": "^2.1",
         "monarc/core": "^2.9.15",
-        "phpoffice/phpword": "^0.18.1",
         "robmorgan/phinx": "^0.11.1",
         "laminas/laminas-di": "^3.1",
         "laminas/laminas-mvc": "^3.1",
@@ -59,7 +58,8 @@
         "laminas/laminas-inputfilter": "^2.10",
         "laminas/laminas-dependency-plugin": "^2.0",
         "symfony/console": "^5.0",
-        "guzzlehttp/guzzle": "^6.5"
+        "guzzlehttp/guzzle": "^6.5",
+        "phpoffice/phpword": "^0.18.1"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master"
