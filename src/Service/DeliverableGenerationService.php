@@ -30,6 +30,7 @@ use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\Writer\Word2007;
 use PhpOffice\PhpWord\Writer\Word2007\Part\Document;
+use PhpOffice\PhpWord\Shared\Html;
 
 /**
  * This class is the service that handles the generation of the deliverable Word documents throughout the steps of the
@@ -249,7 +250,7 @@ class DeliverableGenerationService extends AbstractService
         }
 
         $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential, $record, $risksByControl));
-        $values['txt']['TYPE'] = $typeDoc;
+        $values['txt']['SUMMARY_EVAL_RISK'] = isset($data['summaryEvalRisk']) ? $this->generateWordXmlFromHtml($data['summaryEvalRisk']) : '';
 
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
@@ -277,55 +278,23 @@ class DeliverableGenerationService extends AbstractService
         if (!empty($values['txt'])) {
             foreach ($values['txt'] as $key => $value) {
                 $word->setValue($key, $value);
-
             }
         }
-        if (!empty($values['img']) && method_exists($word, 'setImg')) {
+        if (!empty($values['table'])) {
+            foreach ($values['table'] as $key => $value) {
+                $word->setComplexBlock($key, $value);
+            }
+        }
+        if (!empty($values['complex'])) {
+            foreach ($values['complex'] as $key => $value) {
+                $word->replaceXmlBlock($key, $value, 'w:p');
+            }
+        }
+        if (!empty($values['img'])) {
             foreach ($values['img'] as $key => $value) {
                 if (isset($value['path']) && file_exists($value['path'])) {
-                    $word->setImg($key, $value['path'], $value['options']);
+                    $word->setImageValue($key, $value);
                 }
-            }
-        }
-        if (!empty($values['html']) && method_exists($word, 'setHtml')) {
-            foreach ($values['html'] as $key => $value) {
-                $value = str_replace(
-                    ['<br>', '<div>', '</div>', '<!--block-->'],
-                    ['<br/>', '', '', ''],
-                    $value
-                );
-
-                while (strpos($value, '<ul>') !== false) {
-                    if (preg_match_all("'<ul>(.*?)</ul>'", $value, $groups)) {
-                        foreach ($groups as $group) {
-                            $value1 = preg_replace(
-                                ["'<li>'", "'</li>'"],
-                                ['&nbsp;&bull;&nbsp;', '<br />'],
-                                $group[0]);
-
-                            $value = preg_replace("'<ul>(.*?)</ul>'", "<br />$value1", $value, 1);
-
-                        }
-                    }
-                }
-
-                while (strpos($value, '<ol>') !== false) {
-                    if (preg_match_all("'<ol>(.*?)</ol>'", $value, $groups)) {
-                        foreach ($groups as $group) {
-                            $index = 0;
-                            while (strpos($group[0], '<li>') !== false) {
-                                $index += 1;
-                                $group[0] = preg_replace(
-                                    ["'<li>'", "'</li>'"],
-                                    ["&nbsp;[$index]&nbsp;", '<br />'],
-                                    $group[0], 1);
-                            }
-                            $value = preg_replace("'<ol>(.*?)</ol>'", "<br />$group[0]", $value, 1);
-                        }
-                    }
-                }
-
-                $word->setHtml($key, $value);
             }
         }
 
@@ -426,10 +395,10 @@ class DeliverableGenerationService extends AbstractService
             'txt' => [
                 'COMPANY' => $this->getCompanyName(),
             ],
-            'html' => [
-                'CONTEXT_ANA_RISK' => $anr->contextAnaRisk,
-                'CONTEXT_GEST_RISK' => $anr->contextGestRisk,
-                'SYNTH_EVAL_THREAT' => $anr->synthThreat,
+            'complex' => [
+                'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml($anr->contextAnaRisk),
+                'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml($anr->contextGestRisk),
+                'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml($anr->synthThreat),
             ],
         ];
 
@@ -540,8 +509,7 @@ class DeliverableGenerationService extends AbstractService
 
             }
         }
-
-        $values['txt']['SCALE_IMPACT'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['table']['SCALE_IMPACT'] = $table;
         unset($tableWord);
 
         // Generate threat scale table
@@ -574,7 +542,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(17.00), $styleContentCell)->addText(_WT($commentText), $styleContentFont, $styleContentParagraph);
         }
 
-        $values['txt']['SCALE_THREAT'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['table']['SCALE_THREAT'] = $table;
         unset($tableWord);
 
         // Generate vuln table
@@ -608,7 +576,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(17.00), $styleContentCell)->addText(_WT($commentText), $styleContentFont, $styleContentParagraph);
         }
 
-        $values['txt']['SCALE_VULN'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['table']['SCALE_VULN'] = $table;
         unset($tableWord);
 
         // Generate information risks table
@@ -675,7 +643,7 @@ class DeliverableGenerationService extends AbstractService
         }
 
 
-        $values['txt']['TABLE_RISKS'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['table']['TABLE_RISKS'] = $table;
         unset($tableWord);
 
         // Generate operational risks table
@@ -737,11 +705,11 @@ class DeliverableGenerationService extends AbstractService
             }
         }
 
-        $values['txt']['TABLE_OP_RISKS'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['table']['TABLE_OP_RISKS'] = $table;
         unset($tableWord);
 
         // Table which represents "particular attention" threats
-        $values['txt']['TABLE_THREATS'] = $this->generateThreatsTable($anr, false);
+        $values['table']['TABLE_THREATS'] = $this->generateThreatsTable($anr, false);
 
         // Figure A: Trends (Questions / Answers)
         $questions = $this->questionService->getList(1, 0, null, null, ['anr' => $anr->getId()]);
@@ -790,11 +758,11 @@ class DeliverableGenerationService extends AbstractService
             }
         }
 
-        $values['txt']['TABLE_EVAL_TEND'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['table']['TABLE_EVAL_TEND'] = $table;
         unset($tableWord);
 
         // Figure B: Full threats table
-        $values['txt']['TABLE_THREATS_FULL'] = $this->generateThreatsTable($anr, true);
+        $values['table']['TABLE_THREATS_FULL'] = $this->generateThreatsTable($anr, true);
 
         // Figure C: Interviews table
         $interviews = $this->interviewService->getList(1, 0, null, null, ['anr' => $anr->getId()]);
@@ -820,7 +788,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(9.00), $styleContentCell)->addText(_WT($interview['content']), $styleContentFont, $styleContentParagraph);
         }
 
-        $values['txt']['TABLE_INTERVIEW'] = $this->getWordXmlFromWordObject($tableWord);
+        $values['table']['TABLE_INTERVIEW'] = $table;
         unset($tableWord);
 
         return $values;
@@ -838,8 +806,8 @@ class DeliverableGenerationService extends AbstractService
         // Models are incremental, so use values from level-1 model
         $values = $this->buildContextValidationValues($anr);
 
-        $values['html']['SYNTH_ACTIF'] = $anr->synthAct;
-        $values['txt']['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation($anr);
+        $values['complex']['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml($anr->synthAct);
+        $values['table']['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation($anr);
 
         return $values;
     }
@@ -857,19 +825,19 @@ class DeliverableGenerationService extends AbstractService
         $values = [];
         $values = array_merge($values, $this->buildContextModelingValues($anr));
 
-        $values['html']['DISTRIB_EVAL_RISK'] = $this->getRisksDistribution($anr);
+        $values['complex']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
 
         $values['img']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
-        $values['txt']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
-        $values['txt']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
+        $values['complex']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
+        $values['complex']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
 
-        $values['txt']['RISKS_KIND_OF_TREATMENT'] = $this->generateRisksByKindOfTreatment($anr);
-        $values['txt']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr);
-        $values['txt']['OPRISKS_RECO_FULL'] = $this->generateOperationalRisksPlan($anr);
+        $values['complex']['RISKS_KIND_OF_TREATMENT'] = $this->generateRisksByKindOfTreatment($anr);
+        $values['table']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr);
+        $values['table']['OPRISKS_RECO_FULL'] = $this->generateOperationalRisksPlan($anr);
 
-        $values['txt']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
-        $values['txt']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
+        $values['complex']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
+        $values['complex']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
 
 
         return $values;
@@ -887,8 +855,8 @@ class DeliverableGenerationService extends AbstractService
         // Models are incremental, so use values from level-3 model
         $values = [];
         $values = array_merge($values, $this->buildRiskAssessmentValues($anr));
-        $values['txt']['TABLE_IMPLEMENTATION_PLAN'] = $this->generateTableImplementationPlan($anr);
-        $values['txt']['TABLE_IMPLEMENTATION_HISTORY'] = $this->generateTableImplementationHistory($anr);
+        $values['table']['TABLE_IMPLEMENTATION_PLAN'] = $this->generateTableImplementationPlan($anr);
+        $values['table']['TABLE_IMPLEMENTATION_HISTORY'] = $this->generateTableImplementationHistory($anr);
 
         return $values;
     }
@@ -905,9 +873,9 @@ class DeliverableGenerationService extends AbstractService
         // Models are incremental, so use values from level-4 model
         $values = [];
         $values = array_merge($values, $this->buildImplementationPlanValues($anr));
-        $values['txt']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability($anr, $referential);
+        $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability($anr, $referential);
         if ($risksByControl) {
-            $values['txt']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($anr, $referential);
+            $values['complex']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($anr, $referential);
         } else {
             $values['txt']['TABLE_RISKS_BY_CONTROL'] = null;
         }
@@ -927,13 +895,12 @@ class DeliverableGenerationService extends AbstractService
         // Models are incremental, so use values from level-4 model
         $values = [];
         $values = array_merge($values, $this->buildContextModelingValues($anr));
-        //$values['txt']['TABLE_OF_CONTENT'] = $this->generateTOC($anr, $record);
-        $values['txt']['TABLE_RECORD_INFORMATION'] = $this->generateTableRecordGDPR($anr, $record);
-        $values['txt']['TABLE_RECORD_ACTORS'] = $this->generateTableRecordActors($anr, $record);
-        $values['txt']['TABLE_RECORD_PERSONAL_DATA'] = $this->generateTableRecordPersonalData($anr, $record);
-        $values['txt']['TABLE_RECORD_RECIPIENTS'] = $this->generateTableRecordRecipients($anr, $record);
-        $values['txt']['TABLE_RECORD_INTERNATIONAL_TRANSFERS'] = $this->generateTableRecordInternationalTransfers($anr, $record);
-        $values['txt']['TABLE_RECORD_PROCESSORS'] = $this->generateTableRecordProcessors($anr, $record);
+        $values['table']['TABLE_RECORD_INFORMATION'] = $this->generateTableRecordGDPR($anr, $record);
+        $values['table']['TABLE_RECORD_ACTORS'] = $this->generateTableRecordActors($anr, $record);
+        $values['table']['TABLE_RECORD_PERSONAL_DATA'] = $this->generateTableRecordPersonalData($anr, $record);
+        $values['table']['TABLE_RECORD_RECIPIENTS'] = $this->generateTableRecordRecipients($anr, $record);
+        $values['table']['TABLE_RECORD_INTERNATIONAL_TRANSFERS'] = $this->generateTableRecordInternationalTransfers($anr, $record);
+        $values['complex']['TABLE_RECORD_PROCESSORS'] = $this->generateTableRecordProcessors($anr, $record);
 
         return $values;
     }
@@ -949,7 +916,7 @@ class DeliverableGenerationService extends AbstractService
     {
         $values = [];
         $values = array_merge($values, $this->buildContextModelingValues($anr));
-        $values['txt']['TABLE_ALL_RECORDS'] = $this->generateTableAllRecordsGDPR($anr);
+        $values['complex']['TABLE_ALL_RECORDS'] = $this->generateTableAllRecordsGDPR($anr);
 
         return $values;
     }
@@ -1095,7 +1062,6 @@ class DeliverableGenerationService extends AbstractService
                 $tableLegend->addCell(Converter::cmToTwip($maxSize - $highSize), $risksTableRedCellStyle2);
             }
 
-
             return $this->getWordXmlFromWordObject($tableWord);
         } else {
             return $this->anrTranslate('No target risks specified in your risk analysis yet.');
@@ -1189,7 +1155,9 @@ class DeliverableGenerationService extends AbstractService
 
             $return = [
                 'path' => $path,
-                'options' => ['width' => 500, 'height' => 250, 'align' => 'center'],
+                'width' => 500,
+                'height' => 250,
+                'align' => 'center',
             ];
 
             unset($canvas);
@@ -1859,9 +1827,9 @@ class DeliverableGenerationService extends AbstractService
         $intro = sprintf($this->anrTranslate("The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"), $sum);
 
         return $intro .
-            "<br/>&nbsp;&nbsp;- " . count($distrib[2]) . ' ' . $this->anrTranslate('critical risk(s) to be treated as priority') .
-            "<br/>&nbsp;&nbsp;- " . count($distrib[1]) . ' ' . $this->anrTranslate('medium risk(s) to be partially treated') .
-            "<br/>&nbsp;&nbsp;- " . count($distrib[0]) . ' ' . $this->anrTranslate('low risk(s) negligible');
+            "<!--block-->&nbsp;&nbsp;- " . count($distrib[2]) . ' ' . $this->anrTranslate('critical risk(s) to be treated as priority') . "<!--block-->" .
+            "<!--block-->&nbsp;&nbsp;- " . count($distrib[1]) . ' ' . $this->anrTranslate('medium risk(s) to be partially treated') . "<!--block-->" .
+            "<!--block-->&nbsp;&nbsp;- " . count($distrib[0]) . ' ' . $this->anrTranslate('low risk(s) negligible') . "<!--block-->";
     }
 
     /**
@@ -2396,7 +2364,7 @@ class DeliverableGenerationService extends AbstractService
             $previousRecoId = $recommendationRisk->getRecommandation()->getUuid();
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -2535,7 +2503,7 @@ class DeliverableGenerationService extends AbstractService
 
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -2606,7 +2574,7 @@ class DeliverableGenerationService extends AbstractService
                 ->addText($recoDeadline, $styleContentFont, $alignCenter);
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -2759,7 +2727,7 @@ class DeliverableGenerationService extends AbstractService
             $previousRecoRecordId = $recoRecord->id;
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -2885,7 +2853,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(2.00), $styleContentCellCompliance)->addText(_WT($this->anrTranslate($complianceLevel)), $styleContentFont, $alignLeft);
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -3270,7 +3238,7 @@ class DeliverableGenerationService extends AbstractService
         $table->addCell(Converter::cmToTwip(4.00), $styleHeaderCell)->addText($this->anrTranslate('Security measures'), $styleHeaderFont, $alignLeft);
         $table->addCell(Converter::cmToTwip(14.00), $styleContentCell)->addText(_WT($recordEntity->get('secMeasures')), $styleContentFont, $alignLeft);
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -3339,7 +3307,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(6.00), $styleContentCell);
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -3407,7 +3375,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(10.00), $cellTitle)->addText($this->anrTranslate('No category of personal data'), $styleContentFont, $alignLeft);
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -3456,7 +3424,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(10.00), $cellTitle)->addText($this->anrTranslate('No recipient'), $styleContentFont, $alignLeft);
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -3507,7 +3475,7 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip(10.00), $cellTitle)->addText($this->anrTranslate('No international transfer'), $styleContentFont, $alignLeft);
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
 
@@ -3739,7 +3707,7 @@ class DeliverableGenerationService extends AbstractService
             }
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -3829,7 +3797,7 @@ class DeliverableGenerationService extends AbstractService
             }
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return $table;
     }
 
     /**
@@ -3853,23 +3821,44 @@ class DeliverableGenerationService extends AbstractService
     protected function generateWordXmlFromHtml($input)
     {
         // Process trix caveats
-        $input = str_replace(
-            ['<br>', '<div>', '</div>'],
-            ['<br/>', '', ''],
-            $input
-        );
+        $input = str_replace('<br>', '<!--block-->', $input);
+
+        while (strpos($input, '<ul>') !== false) {
+            if (preg_match_all("'<ul>(.*?)</ul>'", $input, $groups)) {
+                foreach ($groups as $group) {
+                    $value1 = preg_replace(
+                        ["'<li><!--block-->'", "'</li>'"],
+                        ['<!--block-->&nbsp;&nbsp;&bull;;&nbsp;', '<!--block-->'],
+                        $group[0]);
+
+                    $input = preg_replace("'<ul>(.*?)</ul>'", "$value1", $input, 1);
+
+                }
+            }
+        }
+
+        while (strpos($input, '<ol>') !== false) {
+            if (preg_match_all("'<ol>(.*?)</ol>'", $input, $groups)) {
+                foreach ($groups as $group) {
+                    $index = 0;
+                    while (strpos($group[0], '<li>') !== false) {
+                        $index += 1;
+                        $group[0] = preg_replace(
+                            ["'<li><!--block-->'", "'</li>'"],
+                            ["<!--block-->&nbsp;&nbsp;[$index]&nbsp;", '<!--block-->'],
+                            $group[0], 1);
+                    }
+                    $input = preg_replace("'<ol>(.*?)</ol>'", "$group[0]", $input, 1);
+                }
+            }
+        }
 
         // Turn it into word data
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
-        \PhpOffice\PhpWord\Shared\Html::addHtml($section, $input);
+        Html::addHtml($section, $input);
 
-        return (
-        str_replace(
-            ['w:val="'],
-            ['w:val="1'],
-            $this->getWordXmlFromWordObject($phpWord, true))
-        );
+        return $this->getWordXmlFromWordObject($phpWord);
     }
 
     /**
@@ -3934,28 +3923,18 @@ class DeliverableGenerationService extends AbstractService
      * Retrieves the WordXml data from a generated PhpWord Object
      *
      * @param PhpWord $phpWord The PhpWord Object
-     * @param bool $useBody Whether to keep the entire <w:body> tag or just <w:r>
-     *
      * @return string The WordXml data
      */
-    protected function getWordXmlFromWordObject($phpWord, $useBody = true)
+    protected function getWordXmlFromWordObject($phpWord)
     {
         $part = new Document();
         $part->setParentWriter(new Word2007($phpWord));
         $docXml = $part->write();
         $matches = [];
-
-        if ($useBody === true) {
-            $regex = '/<w:body>(.*)<w:sectPr>/is';
-        } else {
-            if ($useBody === 'graph') {
-                return $docXml;
-            }
-
-            $regex = '/<w:r>(.*)<\/w:r>/is';
-        }
+        $regex = '/<w:body>(.*)<w:sectPr>/is';
 
         if (preg_match($regex, $docXml, $matches) === 1) {
+            $matches[1] = str_replace([' & '],[' &amp; '], $matches[1]);
             return $matches[1];
         }
 

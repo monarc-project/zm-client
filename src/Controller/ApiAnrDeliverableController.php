@@ -49,9 +49,8 @@ class ApiAnrDeliverableController extends AbstractRestfulController
                 'SMILE' => htmlspecialchars($data['consultants']),
             ],
             'img' => [],
-            'html' => [
-                'SUMMARY_EVAL_RISK' => isset($data['summaryEvalRisk']) ? $data['summaryEvalRisk'] : '',
-            ],
+            'table' => [],
+            'complex' => [],
         ];
 
         // Generate the DOCX file
