@@ -250,7 +250,8 @@ class DeliverableGenerationService extends AbstractService
         }
 
         $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential, $record, $risksByControl));
-        $values['txt']['SUMMARY_EVAL_RISK'] = isset($data['summaryEvalRisk']) ? $this->generateWordXmlFromHtml($data['summaryEvalRisk']) : '';
+        $values['txt']['SUMMARY_EVAL_RISK'] = isset($data['summaryEvalRisk']) ? $this->generateWordXmlFromHtml(_WT($data['summaryEvalRisk'])) : '';
+
 
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
@@ -396,9 +397,9 @@ class DeliverableGenerationService extends AbstractService
                 'COMPANY' => $this->getCompanyName(),
             ],
             'complex' => [
-                'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml($anr->contextAnaRisk),
-                'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml($anr->contextGestRisk),
-                'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml($anr->synthThreat),
+                'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml(_WT($anr->contextAnaRisk)),
+                'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml(_WT($anr->contextGestRisk)),
+                'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml(_WT($anr->synthThreat)),
             ],
         ];
 
@@ -806,7 +807,7 @@ class DeliverableGenerationService extends AbstractService
         // Models are incremental, so use values from level-1 model
         $values = $this->buildContextValidationValues($anr);
 
-        $values['complex']['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml($anr->synthAct);
+        $values['complex']['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml(_WT($anr->synthAct));
         $values['table']['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation($anr);
 
         return $values;
@@ -825,7 +826,7 @@ class DeliverableGenerationService extends AbstractService
         $values = [];
         $values = array_merge($values, $this->buildContextModelingValues($anr));
 
-        $values['complex']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml($this->getRisksDistribution($anr));
+        $values['complex']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution($anr)));
 
         $values['img']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
@@ -1339,7 +1340,7 @@ class DeliverableGenerationService extends AbstractService
 
           foreach ($mem_risks as $data) {
             if (empty($data['tree'])) {
-              $section->addTitle($data['ctx'],4);
+              $section->addTitle(_WT($data['ctx']),4);
               $table = $section->addTable($styleTable);
               $table->addRow(400, ['tblHeader' => true]);
               $table->addCell(Converter::cmToTwip(2.10), $cellColSpan)->addText($this->anrTranslate('Impact'), $styleHeader2Font, $alignCenter);
@@ -1366,7 +1367,7 @@ class DeliverableGenerationService extends AbstractService
             }else {
               for ($i = 0; $i < count($data['tree']); $i++) {
                 if($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id']) {
-                  $section->addTitle($data['tree'][$i]['name' . $this->currentLangAnrIndex],$i + 3);
+                  $section->addTitle(_WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),$i + 3);
                   $title[$i] = $data['tree'][$i]['id'];
                   if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
                     $data['risks'] = true;
@@ -1662,7 +1663,7 @@ class DeliverableGenerationService extends AbstractService
             foreach ($lst as $data) {
               for ($i = 0; $i < count($data['tree']); $i++) {
                 if($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id'] ) {
-                  $section->addTitle($data['tree'][$i]['name' . $this->currentLangAnrIndex],$i + 3);
+                  $section->addTitle(_WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),$i + 3);
                   $title[$i] = $data['tree'][$i]['id'];
                   if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
                     $data['risks'] = true;
@@ -3821,14 +3822,18 @@ class DeliverableGenerationService extends AbstractService
     protected function generateWordXmlFromHtml($input)
     {
         // Process trix caveats
-        $input = str_replace('<br>', '<!--block-->', $input);
+        $input = html_entity_decode($input);
+        $input = str_replace(
+            ['&lt;', '&gt;', '&amp;','<br>'],
+            ['[escape_lt]', '[escape_gt]', '[escape_amp]','<!--block-->'],
+            $input);
 
         while (strpos($input, '<ul>') !== false) {
             if (preg_match_all("'<ul>(.*?)</ul>'", $input, $groups)) {
                 foreach ($groups as $group) {
                     $value1 = preg_replace(
                         ["'<li><!--block-->'", "'</li>'"],
-                        ['<!--block-->&nbsp;&nbsp;&bull;;&nbsp;', '<!--block-->'],
+                        ['<!--block-->&nbsp;&nbsp;&bull;&nbsp;', '<!--block-->'],
                         $group[0]);
 
                     $input = preg_replace("'<ul>(.*?)</ul>'", "$value1", $input, 1);
@@ -3934,7 +3939,10 @@ class DeliverableGenerationService extends AbstractService
         $regex = '/<w:body>(.*)<w:sectPr>/is';
 
         if (preg_match($regex, $docXml, $matches) === 1) {
-            $matches[1] = str_replace([' & '],[' &amp; '], $matches[1]);
+            $matches[1] = str_replace(
+                ['[escape_lt]', '[escape_gt]', '[escape_amp]'],
+                ['&lt;', '&gt;', '&amp;'],
+                $matches[1]);
             return $matches[1];
         }
 
@@ -3960,6 +3968,5 @@ class DeliverableGenerationService extends AbstractService
 
 function _WT($input)
 {
-    // Html::addHtml do that
-    return str_replace(['&quot;', '&amp;lt', '&amp;gt', '&amp;'], ['"', '_lt_', '_gt_', '_amp_'], htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8'));
+    return htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8');
 }
