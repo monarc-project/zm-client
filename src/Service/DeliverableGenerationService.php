@@ -250,8 +250,6 @@ class DeliverableGenerationService extends AbstractService
         }
 
         $values = array_merge_recursive($values, $this->buildValues($anr, $typeDoc, $referential, $record, $risksByControl));
-        $values['txt']['SUMMARY_EVAL_RISK'] = isset($data['summaryEvalRisk']) ? $this->generateWordXmlFromHtml(_WT($data['summaryEvalRisk'])) : '';
-
 
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
@@ -286,8 +284,8 @@ class DeliverableGenerationService extends AbstractService
                 $word->setComplexBlock($key, $value);
             }
         }
-        if (!empty($values['complex'])) {
-            foreach ($values['complex'] as $key => $value) {
+        if (!empty($values['xml'])) {
+            foreach ($values['xml'] as $key => $value) {
                 $word->replaceXmlBlock($key, $value, 'w:p');
             }
         }
@@ -393,10 +391,7 @@ class DeliverableGenerationService extends AbstractService
     {
         // Values read from database
         $values = [
-            'txt' => [
-                'COMPANY' => $this->getCompanyName(),
-            ],
-            'complex' => [
+            'xml' => [
                 'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml(_WT($anr->contextAnaRisk)),
                 'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml(_WT($anr->contextGestRisk)),
                 'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml(_WT($anr->synthThreat)),
@@ -807,7 +802,7 @@ class DeliverableGenerationService extends AbstractService
         // Models are incremental, so use values from level-1 model
         $values = $this->buildContextValidationValues($anr);
 
-        $values['complex']['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml(_WT($anr->synthAct));
+        $values['xml']['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml(_WT($anr->synthAct));
         $values['table']['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation($anr);
 
         return $values;
@@ -826,19 +821,21 @@ class DeliverableGenerationService extends AbstractService
         $values = [];
         $values = array_merge($values, $this->buildContextModelingValues($anr));
 
-        $values['complex']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution($anr)));
+        $values['txt']['SUMMARY_EVAL_RISK'] = isset($data['summaryEvalRisk']) ? $this->generateWordXmlFromHtml(_WT($data['summaryEvalRisk'])) : '';
+
+        $values['xml']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution($anr)));
 
         $values['img']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
-        $values['complex']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
-        $values['complex']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
+        $values['xml']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
+        $values['xml']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
 
-        $values['complex']['RISKS_KIND_OF_TREATMENT'] = $this->generateRisksByKindOfTreatment($anr);
+        $values['xml']['RISKS_KIND_OF_TREATMENT'] = $this->generateRisksByKindOfTreatment($anr);
         $values['table']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr);
         $values['table']['OPRISKS_RECO_FULL'] = $this->generateOperationalRisksPlan($anr);
 
-        $values['complex']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
-        $values['complex']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
+        $values['xml']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
+        $values['xml']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
 
 
         return $values;
@@ -855,7 +852,6 @@ class DeliverableGenerationService extends AbstractService
     {
         // Models are incremental, so use values from level-3 model
         $values = [];
-        $values = array_merge($values, $this->buildRiskAssessmentValues($anr));
         $values['table']['TABLE_IMPLEMENTATION_PLAN'] = $this->generateTableImplementationPlan($anr);
         $values['table']['TABLE_IMPLEMENTATION_HISTORY'] = $this->generateTableImplementationHistory($anr);
 
@@ -873,10 +869,9 @@ class DeliverableGenerationService extends AbstractService
     {
         // Models are incremental, so use values from level-4 model
         $values = [];
-        $values = array_merge($values, $this->buildImplementationPlanValues($anr));
         $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability($anr, $referential);
         if ($risksByControl) {
-            $values['complex']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($anr, $referential);
+            $values['xml']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($anr, $referential);
         } else {
             $values['txt']['TABLE_RISKS_BY_CONTROL'] = null;
         }
@@ -895,13 +890,12 @@ class DeliverableGenerationService extends AbstractService
     {
         // Models are incremental, so use values from level-4 model
         $values = [];
-        $values = array_merge($values, $this->buildContextModelingValues($anr));
         $values['table']['TABLE_RECORD_INFORMATION'] = $this->generateTableRecordGDPR($anr, $record);
         $values['table']['TABLE_RECORD_ACTORS'] = $this->generateTableRecordActors($anr, $record);
         $values['table']['TABLE_RECORD_PERSONAL_DATA'] = $this->generateTableRecordPersonalData($anr, $record);
         $values['table']['TABLE_RECORD_RECIPIENTS'] = $this->generateTableRecordRecipients($anr, $record);
         $values['table']['TABLE_RECORD_INTERNATIONAL_TRANSFERS'] = $this->generateTableRecordInternationalTransfers($anr, $record);
-        $values['complex']['TABLE_RECORD_PROCESSORS'] = $this->generateTableRecordProcessors($anr, $record);
+        $values['xml']['TABLE_RECORD_PROCESSORS'] = $this->generateTableRecordProcessors($anr, $record);
 
         return $values;
     }
@@ -916,8 +910,7 @@ class DeliverableGenerationService extends AbstractService
     protected function buildAllRecordsValues($anr)
     {
         $values = [];
-        $values = array_merge($values, $this->buildContextModelingValues($anr));
-        $values['complex']['TABLE_ALL_RECORDS'] = $this->generateTableAllRecordsGDPR($anr);
+        $values['xml']['TABLE_ALL_RECORDS'] = $this->generateTableAllRecordsGDPR($anr);
 
         return $values;
     }
@@ -3805,7 +3798,7 @@ class DeliverableGenerationService extends AbstractService
      * Retrieves the company name to display within the document
      * @return string The company name
      */
-    protected function getCompanyName()
+    public function getCompanyName()
     {
         $client = current($this->clientTable->fetchAll());
 
