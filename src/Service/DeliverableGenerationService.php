@@ -289,10 +289,12 @@ class DeliverableGenerationService extends AbstractService
                 $word->replaceXmlBlock($key, $value, 'w:p');
             }
         }
-        if (!empty($values['img'])) {
-            foreach ($values['img'] as $key => $value) {
-                if (isset($value['path']) && file_exists($value['path'])) {
-                    $word->setImageValue($key, $value);
+        if (!empty($values['chart'])) {
+            foreach ($values['chart'] as $key => $value) {
+                if (isset($value)) {
+                    $word->setChart($key, $value);
+                }else {
+                    $word->setValue($key, '');
                 }
             }
         }
@@ -313,14 +315,6 @@ class DeliverableGenerationService extends AbstractService
         // //Save it
         // $xmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'PDF');
         // $xmlWriter->save($pathTmp1);
-
-        if (!empty($values['img'])) {
-            foreach ($values['img'] as $key => $value) {
-                if (isset($value['path']) && file_exists($value['path'])) {
-                    unlink($value['path']);
-                }
-            }
-        }
 
         return $pathTmp;
     }
@@ -825,7 +819,7 @@ class DeliverableGenerationService extends AbstractService
 
         $values['xml']['DISTRIB_EVAL_RISK'] = $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution($anr)));
 
-        $values['img']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
+        $values['chart']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
         $values['xml']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
         $values['xml']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
@@ -1077,89 +1071,36 @@ class DeliverableGenerationService extends AbstractService
         list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
 
         if (is_array($distrib) && count($distrib) > 0) {
-            $gridmax = ceil(max(array_map('count', $distrib)) / 10) * 10;
-
-            $canvas = new \Imagick();
-            $canvas->newImage(400, 205, "white");
-            $canvas->setImageFormat("png");
-            $draw = new \ImagickDraw();
-
-            $draw->setFontSize(10);
-            $draw->setFontFamily("NewCenturySchlbk-Roman");
-            $draw->setStrokeAntialias(true);
-
-            //Axes principaux
-            $draw->line(20, 185, 380, 185);
-            $draw->line(20, 5, 20, 185);
-            //petites poignées
-            $draw->line(18, 5, 20, 5);
-            $draw->line(18, 50, 20, 50);
-            $draw->line(18, 95, 20, 95);
-            $draw->line(18, 140, 20, 140);
-
-            //valeurs intermédiaire
-            $draw->annotation(2, 10, $gridmax);
-            $draw->annotation(2, 53, ceil($gridmax - (1 * ($gridmax / 4))));
-            $draw->annotation(2, 98, ceil($gridmax - (2 * ($gridmax / 4))));
-            $draw->annotation(2, 143, ceil($gridmax - (3 * ($gridmax / 4))));
-
-            //grille
-            $draw->setStrokeColor('#DEDEDE');
-            $draw->line(21, 5, 380, 5);
-            $draw->line(21, 50, 380, 50);
-            $draw->line(21, 95, 380, 95);
-            $draw->line(21, 140, 380, 140);
-
-            for ($i = 40; $i <= 400; $i += 20) {
-                $draw->line($i, 5, $i, 184);
-            }
-
-            if (isset($distrib[2]) && count($distrib[2]) > 0) {
-                $draw->setFillColor("#FD661F");
-                $draw->setStrokeColor("transparent");
-                $draw->rectangle(29, 195 - (10 + ((count($distrib[2]) * 180) / $gridmax)), 137, 184);
-            }
-            $draw->setFillColor('#000000');
-            $draw->annotation(45, 200, ucfirst($this->anrTranslate('High risks')));
-
-            if (isset($distrib[1]) && count($distrib[1]) > 0) {
-                $draw->setFillColor("#FFBC1C");
-                $draw->setStrokeColor("transparent");
-                $draw->rectangle(146, 195 - (10 + ((count($distrib[1]) * 180) / $gridmax)), 254, 184);
-            }
-            $draw->setFillColor('#000000');
-            $draw->annotation(160, 200, ucfirst($this->anrTranslate('Medium risks')));
-
-            if (isset($distrib[0]) && count($distrib[0]) > 0) {
-                $draw->setFillColor("#D6F107");
-                $draw->setStrokeColor("transparent");
-                $draw->rectangle(263, 195 - (10 + ((count($distrib[0]) * 180) / $gridmax)), 371, 184);
-            }
-            $draw->setFillColor('#000000');
-            $draw->annotation(280, 200, ucfirst($this->anrTranslate('Low risks')));
-
-            $canvas->drawImage($draw);
-            $datapath = './data/';
-            $appconfdir = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
-            if (!empty($appconfdir)) {
-                $datapath = $appconfdir . '/data/';
-            }
-            $path = $datapath . uniqid("", true) . "_riskgraph.png";
-            $canvas->writeImage($path);
-
-            $return = [
-                'path' => $path,
-                'width' => 500,
-                'height' => 250,
-                'align' => 'center',
+            $categories = [
+                $this->anrTranslate('Low risks'),
+                $this->anrTranslate('Medium risks'),
+                $this->anrTranslate('High risks'),
             ];
 
-            unset($canvas);
+            $series = [
+                count($distrib[0]),
+                count($distrib[1]),
+                count($distrib[2]),
+            ];
 
-            return $return;
+            $style = [
+                'width' => Converter::cmToEmu(17),
+                'height' => Converter::cmToEmu(9.5),
+                'dataLabelOptions' => ['showCatName' => false],
+                'colors' => ['D6F107','FFBC1C','FD661F'],
+                'showAxisLabels' => true,
+                'showGridY' => true,
+            ];
+
+            $PhpWord = new PhpWord();
+            $section = $PhpWord->addSection();
+            $chart = $section->addChart('column',$categories,$series,$style);
+
+
+            return $chart;
         }
 
-        return '';
+        return;
     }
 
     /**
