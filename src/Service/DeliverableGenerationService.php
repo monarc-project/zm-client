@@ -293,8 +293,6 @@ class DeliverableGenerationService extends AbstractService
             foreach ($values['chart'] as $key => $value) {
                 if (isset($value)) {
                     $word->setChart($key, $value);
-                }else {
-                    $word->setValue($key, '');
                 }
             }
         }
@@ -640,15 +638,6 @@ class DeliverableGenerationService extends AbstractService
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable(['align' => 'center', 'cellMarginRight' => '0']);
-
-        $risksTableCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFFFFF'];
-        $risksTableGreenCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'D6F107'];
-        $risksTableOrangeCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFBC1C'];
-        $risksTableRedCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FD661F'];
-        $risksTableFontStyleBlack = ['alignment' => 'center', 'bold' => true, 'color' => '000000'];
-        $risksTableFontStyleWhite = ['alignment' => 'center', 'bold' => true, 'color' => 'FFFFFF'];
-        $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
-
 
         $header = [];
         for ($t = $threatsScale['min']; $t <= $threatsScale['max']; ++$t) {
@@ -1024,38 +1013,40 @@ class DeliverableGenerationService extends AbstractService
             $tableLegend->addRow(Converter::cmToTwip(0.1));
             $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
             $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbLow . ' ' . $this->anrTranslate('Low risks'), $risksTableFontStyleBlack, $alignLeft);
-            $tableLegend->addCell(Converter::cmToTwip($lowSize), $risksTableGreenCellStyle);
+            if ($lowSize > 0) {
+                $tableLegend->addCell(Converter::cmToTwip($lowSize), $risksTableGreenCellStyle);
+            };
 
             if (($maxSize - $lowSize) != 0) {
                 $tableLegend->addCell(Converter::cmToTwip($maxSize - $lowSize), $risksTableGreenCellStyle2);
-            }
+            };
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(Converter::cmToTwip(0.1));
             $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
             $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbMedium . ' ' . $this->anrTranslate('Medium risks'), $risksTableFontStyleBlack, $alignLeft);
-            $tableLegend->addCell(Converter::cmToTwip($mediumSize), $risksTableOrangeCellStyle);
+            if ($mediumSize > 0) {
+                $tableLegend->addCell(Converter::cmToTwip($mediumSize), $risksTableOrangeCellStyle);
+            };
 
             if (($maxSize - $mediumSize) != 0) {
                 $tableLegend->addCell(Converter::cmToTwip($maxSize - $mediumSize), $risksTableOrangeCellStyle2);
-            }
+            };
 
             $tableLegend = $section->addTable();
             $tableLegend->addRow(Converter::cmToTwip(0.1));
             $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
             $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbHigh . ' ' . $this->anrTranslate('High risks'), $risksTableFontStyleBlack, $alignLeft);
-            $tableLegend->addCell(Converter::cmToTwip($highSize), $risksTableRedCellStyle);
+            if ($highSize > 0) {
+                $tableLegend->addCell(Converter::cmToTwip($highSize), $risksTableRedCellStyle);
+            };
 
             if (($maxSize - $highSize) != 0) {
                 $tableLegend->addCell(Converter::cmToTwip($maxSize - $highSize), $risksTableRedCellStyle2);
-            }
+            };
 
             return $this->getWordXmlFromWordObject($tableWord);
-        } else {
-            return $this->anrTranslate('No target risks specified in your risk analysis yet.');
         }
-
-
     }
 
     /**
@@ -1070,37 +1061,33 @@ class DeliverableGenerationService extends AbstractService
         $this->cartoRiskService->buildListScalesAndHeaders($anr->getId());
         list($counters, $distrib) = $this->cartoRiskService->getCountersRisks('raw'); // raw = without target
 
-        if (is_array($distrib) && count($distrib) > 0) {
-            $categories = [
-                $this->anrTranslate('Low risks'),
-                $this->anrTranslate('Medium risks'),
-                $this->anrTranslate('High risks'),
-            ];
+        $categories = [
+            $this->anrTranslate('Low risks'),
+            $this->anrTranslate('Medium risks'),
+            $this->anrTranslate('High risks'),
+        ];
 
-            $series = [
-                count($distrib[0]),
-                count($distrib[1]),
-                count($distrib[2]),
-            ];
+        $series = [
+            $distrib[0] ?? count($distrib[0]),
+            $distrib[1] ?? count($distrib[1]),
+            $distrib[2] ?? count($distrib[2]),
+        ];
 
-            $style = [
-                'width' => Converter::cmToEmu(17),
-                'height' => Converter::cmToEmu(9.5),
-                'dataLabelOptions' => ['showCatName' => false],
-                'colors' => ['D6F107','FFBC1C','FD661F'],
-                'showAxisLabels' => true,
-                'showGridY' => true,
-            ];
+        $style = [
+            'width' => Converter::cmToEmu(17),
+            'height' => Converter::cmToEmu(9.5),
+            'dataLabelOptions' => ['showCatName' => false],
+            'colors' => ['D6F107','FFBC1C','FD661F'],
+            'showAxisLabels' => true,
+            'showGridY' => true,
+        ];
 
-            $PhpWord = new PhpWord();
-            $section = $PhpWord->addSection();
-            $chart = $section->addChart('column',$categories,$series,$style);
+        $PhpWord = new PhpWord();
+        $section = $PhpWord->addSection();
+        $chart = $section->addChart('column',$categories,$series,$style);
 
 
-            return $chart;
-        }
-
-        return;
+        return $chart;
     }
 
     /**
@@ -1423,8 +1410,6 @@ class DeliverableGenerationService extends AbstractService
               }
           }
           return $this->getWordXmlFromWordObject($tableWord);
-        } else {
-            return '';
         }
     }
 
@@ -1733,8 +1718,6 @@ class DeliverableGenerationService extends AbstractService
               }
             }
             return $this->getWordXmlFromWordObject($tableWord);
-        } else {
-            return '';
         }
     }
 
@@ -1754,7 +1737,7 @@ class DeliverableGenerationService extends AbstractService
 
         foreach ($colors as $c) {
             if (!isset($distrib[$c])) {
-                $distrib[$c] = 0;
+                $distrib[$c] = [];
             }
             $sum += count($distrib[$c]);
         }
@@ -3673,18 +3656,18 @@ class DeliverableGenerationService extends AbstractService
 
         $nbThreats = 0;
         foreach ($threats as $threat) {
-            if (($threat['trend'] > 0 && $threat['trend'] != 2) || $fullGen) {
+            if (($threat['trend'] != 1) || $fullGen) {
                 $nbThreats++;
             }
         }
 
-        if ($nbThreats) {
-            $table->addRow(400, ['tblHeader' => true]);
-            $table->addCell(Converter::cmToTwip(7.60), $styleHeaderCell)->addText($this->anrTranslate('Threat'), $styleHeaderFont, $styleContentParagraphCenter);
-            $table->addCell(Converter::cmToTwip(1.50), $styleHeaderCell)->addText($this->anrTranslate('CIA'), $styleHeaderFont, $styleContentParagraphCenter);
-            $table->addCell(Converter::cmToTwip(1.70), $styleHeaderCell)->addText($this->anrTranslate('Tend.'), $styleHeaderFont, $styleContentParagraphCenter);
-            $table->addCell(Converter::cmToTwip(1.60), $styleHeaderCell)->addText($this->anrTranslate('Prob.'), $styleHeaderFont, $styleContentParagraphCenter);
-            $table->addCell(Converter::cmToTwip(6.60), $styleHeaderCell)->addText($this->anrTranslate('Comment'), $styleHeaderFont, $styleContentParagraphCenter);
+        if ($nbThreats > 0) {
+          $table->addRow(400, ['tblHeader' => true]);
+          $table->addCell(Converter::cmToTwip(7.60), $styleHeaderCell)->addText($this->anrTranslate('Threat'), $styleHeaderFont, $styleContentParagraphCenter);
+          $table->addCell(Converter::cmToTwip(1.50), $styleHeaderCell)->addText($this->anrTranslate('CIA'), $styleHeaderFont, $styleContentParagraphCenter);
+          $table->addCell(Converter::cmToTwip(1.70), $styleHeaderCell)->addText($this->anrTranslate('Tend.'), $styleHeaderFont, $styleContentParagraphCenter);
+          $table->addCell(Converter::cmToTwip(1.60), $styleHeaderCell)->addText($this->anrTranslate('Prob.'), $styleHeaderFont, $styleContentParagraphCenter);
+          $table->addCell(Converter::cmToTwip(6.60), $styleHeaderCell)->addText($this->anrTranslate('Comment'), $styleHeaderFont, $styleContentParagraphCenter);
         }
 
         foreach ($threats as $threat) {
@@ -3879,8 +3862,6 @@ class DeliverableGenerationService extends AbstractService
                 $matches[1]);
             return $matches[1];
         }
-
-        return '';
     }
 
     private function getObjectInstancePath(RecommandationRisk $recommendationRisk): string
