@@ -43,7 +43,6 @@
     "require": {
         "php": "^7.2",
         "ext-intl": "*",
-        "ext-imagick": "*",
         "ext-json": "*",
         "ext-bcmath": "*",
         "ext-openssl": "*",
