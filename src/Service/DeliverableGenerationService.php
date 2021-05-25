@@ -923,6 +923,7 @@ class DeliverableGenerationService extends AbstractService
         $cartoRiskService = $this->get('cartoRiskService');
         $cartoRisk = ($type == 'real') ? $cartoRiskService->getCartoReal($anr->getId()) : $cartoRiskService->getCartoTargeted($anr->getId());
 
+        file_put_contents('php://stderr', print_r($cartoRisk , TRUE).PHP_EOL);
         //header
         if (isset($cartoRisk['MxV'])) {
 
@@ -1068,9 +1069,9 @@ class DeliverableGenerationService extends AbstractService
         ];
 
         $series = [
-            $distrib[0] ?? count($distrib[0]),
-            $distrib[1] ?? count($distrib[1]),
-            $distrib[2] ?? count($distrib[2]),
+            isset($distrib[0]) ?? count($distrib[0]),
+            isset($distrib[1]) ?? count($distrib[1]),
+            isset($distrib[2]) ?? count($distrib[2]),
         ];
 
         $style = [
