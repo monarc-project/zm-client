@@ -7,7 +7,6 @@ use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
-use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Stats\Controller\StatsController;

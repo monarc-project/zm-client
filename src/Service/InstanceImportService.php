@@ -571,59 +571,59 @@ class InstanceImportService
              * TODO: we process all the threats in themes in AssetImportService, might be we can reuse the data from there.
              */
             if (!empty($data['method']['threats'])) {
-                foreach ($data['method']['threats'] as $tId => $v) {
-                    if (!empty($data['method']['threats'][$tId]['theme'])) {
-                        // TODO: avoid such queries or check to add indexes or fetch all for the ANR and iterate in the code.
-                        // TODO: we have findByAnrIdAndLabel() !
-                        $themes = $this->themeTable->getEntityByFields([
-                            'anr' => $anr->getId(),
-                            $labelKey => $data['method']['threats'][$tId]['theme'][$labelKey]
-                        ], ['id' => 'ASC']);
-                        if (empty($themes)) { // Creation of new theme if no exist
-                            $toExchange = $data['method']['threats'][$tId]['theme'];
-                            $newTheme = new Theme();
-                            $newTheme->setLanguage($anr->getLanguage());
-                            $newTheme->exchangeArray($toExchange);
-                            $newTheme->setAnr($anr);
-                            $this->themeTable->saveEntity($newTheme);
-                            // TODO: set objects here to avoid querying the db.
-                            $data['method']['threats'][$tId]['theme']['id'] = $newTheme->getId();
-                        } else {
-                            foreach ($themes as $th) {
-                                // TODO: set objects here to avoid querying the db.
-                                $data['method']['threats'][$tId]['theme']['id'] = $th->getId();
+                foreach ($data['method']['threats'] as $threatUuid => $threatData) {
+                    $threat = $this->cachedData['threats'][$threatUuid] ?? null;
+                    if ($threat === null) {
+                        try {
+                            $threat = $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
+                        } catch (EntityNotFoundException $e) {
+                            $threatData = $data['method']['threats'][$threatUuid];
+                            $threat = (new Threat())
+                                ->setUuid($threatData['uuid'])
+                                ->setAnr($anr)
+                                ->setCode($threatData['code'])
+                                ->setLabels($threatData)
+                                ->setDescriptions($threatData);
+                            if (isset($threatData['c'])) {
+                                $threat->setConfidentiality((int)$threatData['c']);
                             }
+                            if (isset($threatData['i'])) {
+                                $threat->setIntegrity((int)$threatData['i']);
+                            }
+                            if (isset($threatData['a'])) {
+                                $threat->setAvailability((int)$threatData['a']);
+                            }
+
+                            if (!empty($data['method']['threats'][$threatUuid]['theme'])) {
+                                $labelValue = $data['method']['threats'][$threatUuid]['theme'][$labelKey];
+                                if (!isset($this->cachedData['themes'][$labelValue])) {
+                                    $theme = $this->themeTable->findByAnrIdAndLabel(
+                                        $anr->getId(),
+                                        $labelKey,
+                                        $labelValue
+                                    );
+                                    if ($theme === null) {
+                                        $themeData = $data['method']['threats'][$threatUuid]['theme'];
+                                        $theme = (new Theme())
+                                            ->setAnr($anr)
+                                            ->setLabels($themeData);
+                                        $this->themeTable->saveEntity($theme, false);
+                                    }
+                                    $this->cachedData['themes'][$labelValue] = $theme;
+                                }
+
+                                $threat->setTheme($this->cachedData['themes'][$labelValue]);
+                            }
+
+                            $this->cachedData['threats'][$threatUuid] = $threat;
                         }
                     }
-                    /** @var Threat[] $threats */
-                    $threats = $this->threatTable->getEntityByFields([
-                        'anr' => $anr->getId(),
-                        'code' => $data['method']['threats'][$tId]['code']
-                    ], ['uuid' => 'ASC']);
-                    if (empty($threats)) {
-                        $toExchange = $data['method']['threats'][$tId];
-                        $toExchange['mode'] = 0;
-                        // TODO: use objects here ans use setter.
-                        $toExchange['theme'] = $data['method']['threats'][$tId]['theme']['id'];
-                        $newThreat = new Threat();
-                        // TODO: drop it after setDep is removed.
-                        $newThreat->setDbAdapter($this->threatTable->getDb());
-                        $newThreat->setLanguage($anr->getLanguage());
-                        $newThreat->exchangeArray($toExchange);
-                        $this->setDependencies($newThreat, ['theme']);
-                        $newThreat->setAnr($anr);
-                        // TODO: saveEntity
-                        $this->threatTable->saveEntity($newThreat, false);
-                    } else {
-                        foreach ($threats as $t) {
-                            // TODO: use setters.
-                            $t->set('trend', $data['method']['threats'][$tId]['trend']);
-                            $t->set('comment', $data['method']['threats'][$tId]['comment']);
-                            $t->set('qualification', $data['method']['threats'][$tId]['qualification']);
-                            $this->threatTable->saveEntity($t, false);
-                        }
-                        $this->threatTable->getDb()->flush();
-                    }
+
+                    $threat->setTrend((int)$data['method']['threats'][$threatUuid]['trend']);
+                    $threat->setComment((string)$data['method']['threats'][$threatUuid]['comment']);
+                    $threat->setQualification((int)$data['method']['threats'][$threatUuid]['qualification']);
+
+                    $this->threatTable->saveEntity($threat);
                 }
             }
         }
