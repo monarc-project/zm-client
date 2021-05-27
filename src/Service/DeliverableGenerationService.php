@@ -923,131 +923,179 @@ class DeliverableGenerationService extends AbstractService
         $cartoRiskService = $this->get('cartoRiskService');
         $cartoRisk = ($type == 'real') ? $cartoRiskService->getCartoReal($anr->getId()) : $cartoRiskService->getCartoTargeted($anr->getId());
 
-        file_put_contents('php://stderr', print_r($cartoRisk , TRUE).PHP_EOL);
-        //header
-        if (isset($cartoRisk['MxV'])) {
-
             // Generate risks table
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            $table = $section->addTable(['align' => 'center', 'cellMarginRight' => '0']);
 
-            $header = $cartoRisk['MxV'];
-            $size = 13 / (count($header) + 2); // 15cm
-            $table->addRow(Converter::cmToTwip($size));
-            $table->addCell(null, ['gridSpan' => 2])->addText('', $risksTableFontStyleBlack, $alignCenter);
-            $table->addCell(null, ['gridSpan' => (count($header))])->addText($this->anrTranslate('TxV'), $risksTableFontStyleBlack, $alignCenter);
+            if (!empty($cartoRisk['riskInfo']['counters'])) {
+              $section->addText($this->anrTranslate('Information risks'),['bold' => true],['indent' => 0.5]);
+              $params  = [
+                'riskType' => 'riskInfo',
+                'axisX' => 'MxV',
+                'labelAxisX' => 'TxV',
+                'thresholds' => [
+                      $anr->seuil1,
+                      $anr->seuil2
+                ],
+              ];
+              $section = $this->generateCartographyMap($cartoRisk,$section,$params);
 
-            $table->addRow(Converter::cmToTwip($size));
-            $table->addCell(null, $cellImpactHeader)->addText($this->anrTranslate('Impact'), $risksTableFontStyleBlack, $alignCenter);
-            $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText(' ', $risksTableFontStyleBlack, $alignCenter);
-            foreach ($header as $MxV) {
-                $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText($MxV, $risksTableFontStyleBlack, $alignCenter);
             }
-
-            //row
-            $impacts = $cartoRisk['Impact'];
-            $nbLow = 0;
-            $nbMedium = 0;
-            $nbHigh = 0;
-            foreach ($impacts as $impact) {
-                $table->addRow(Converter::cmToTwip($size));
-                $table->addCell(null, ['vMerge' => 'continue']);
-                $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText($impact, $risksTableFontStyleBlack, $alignCenter);
-
-                foreach ($header as $MxV) {
-
-                    $value = $MxV * $impact;
-                    if (isset($cartoRisk['riskInfo']['counters'][$impact]) && isset($cartoRisk['riskInfo']['counters'][$impact][$MxV])) {
-                        $result = count($cartoRisk['riskInfo']['counters'][$impact][$MxV]);
-                    } else {
-                        $result = null;
-                    }
-
-                    if ($value <= $anr->seuil1) {
-                        $style = $risksTableGreenCellStyle;
-                        if ($result) {
-                            $nbLow += $result;
-                        } else {
-                            $style['BgColor'] = 'f0f7b2';
-                        }
-                    } else {
-                        if ($value <= $anr->seuil2) {
-                            $style = $risksTableOrangeCellStyle;
-                            if ($result) {
-                                $nbMedium += $result;
-                            } else {
-                                $style['BgColor'] = 'fcdd94';
-                            }
-                        } else {
-                            $style = $risksTableRedCellStyle;
-                            if ($result) {
-                                $nbHigh += $result;
-                            } else {
-                                $style['BgColor'] = 'fcb28f';
-                            }
-                        }
-                    }
-                    $table->addCell(Converter::cmToTwip($size), $style)->addText($result, $risksTableFontStyleBlack, $alignCenter);
-                }
+            if (!empty($cartoRisk['riskOp']['counters'])) {
+              $section->addText($this->anrTranslate('Operational risks'), ['bold' => true], ['indent' => 0.5]);
+              $params  = [
+                  'riskType' => 'riskOp',
+                  'axisX' => 'Probability',
+                  'labelAxisX' => 'Probability',
+                  'thresholds' => [
+                        $anr->seuilRolf1,
+                        $anr->seuilRolf2
+                  ],
+              ];
+              $section = $this->generateCartographyMap($cartoRisk,$section,$params);
             }
-
-
-            $risksTableGreenCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'D6F107', 'BorderTopSize' => 0, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
-            $risksTableGreenCellStyle2 = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'f0f7b2', 'BorderTopSize' => 0, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
-            $risksTableOrangeCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'FFBC1C', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
-            $risksTableOrangeCellStyle2 = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'fcdd94', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
-            $risksTableRedCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'FD661F', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
-            $risksTableRedCellStyle2 = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'fcb28f', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
-
-            //legend
-            $maxSize = 7;
-            $total = $nbLow + $nbMedium + $nbHigh;
-            $lowSize = ($total) ? ($maxSize * $nbLow) / $total : 0;
-            $mediumSize = ($total) ? ($maxSize * $nbMedium) / $total : 0;
-            $highSize = ($total) ? ($maxSize * $nbHigh) / $total : 0;
-
-            $section->addTextBreak(1);
-            $tableLegend = $section->addTable();
-
-            $tableLegend = $section->addTable();
-            $tableLegend->addRow(Converter::cmToTwip(0.1));
-            $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
-            $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbLow . ' ' . $this->anrTranslate('Low risks'), $risksTableFontStyleBlack, $alignLeft);
-            if ($lowSize > 0) {
-                $tableLegend->addCell(Converter::cmToTwip($lowSize), $risksTableGreenCellStyle);
-            };
-
-            if (($maxSize - $lowSize) != 0) {
-                $tableLegend->addCell(Converter::cmToTwip($maxSize - $lowSize), $risksTableGreenCellStyle2);
-            };
-
-            $tableLegend = $section->addTable();
-            $tableLegend->addRow(Converter::cmToTwip(0.1));
-            $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
-            $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbMedium . ' ' . $this->anrTranslate('Medium risks'), $risksTableFontStyleBlack, $alignLeft);
-            if ($mediumSize > 0) {
-                $tableLegend->addCell(Converter::cmToTwip($mediumSize), $risksTableOrangeCellStyle);
-            };
-
-            if (($maxSize - $mediumSize) != 0) {
-                $tableLegend->addCell(Converter::cmToTwip($maxSize - $mediumSize), $risksTableOrangeCellStyle2);
-            };
-
-            $tableLegend = $section->addTable();
-            $tableLegend->addRow(Converter::cmToTwip(0.1));
-            $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
-            $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbHigh . ' ' . $this->anrTranslate('High risks'), $risksTableFontStyleBlack, $alignLeft);
-            if ($highSize > 0) {
-                $tableLegend->addCell(Converter::cmToTwip($highSize), $risksTableRedCellStyle);
-            };
-
-            if (($maxSize - $highSize) != 0) {
-                $tableLegend->addCell(Converter::cmToTwip($maxSize - $highSize), $risksTableRedCellStyle2);
-            };
 
             return $this->getWordXmlFromWordObject($tableWord);
+    }
+
+    /**
+     * Generate Cartography Map
+     *
+     * @param $data
+     * @param object $section
+     * @param object $params
+     *
+     * @return object
+     */
+    protected function generateCartographyMap($data, $section, $params)
+    {
+        $risksTableCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFFFFF'];
+        $risksTableGreenCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'D6F107'];
+        $risksTableOrangeCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FFBC1C'];
+        $risksTableRedCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF', 'BgColor' => 'FD661F'];
+        $risksTableFontStyleBlack = ['alignment' => 'center', 'bold' => true, 'color' => '000000'];
+        $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
+        $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
+        $cellImpactHeader = ['textDirection' => 'btLr', 'valign' => 'center', 'vMerge' => 'restart'];
+
+        $axisX = $data[$params['axisX']];
+        $axisY = $data['Impact'];
+        $labelAxisX = $params['labelAxisX'];
+        $data = $data[$params['riskType']]['counters'];
+        $thresholds = $params['thresholds'];
+        $size = 0.75;
+
+        $table = $section->addTable(['align' => 'center', 'cellMarginRight' => '0']);
+        $table->addRow(Converter::cmToTwip($size));
+        $table->addCell(null, ['gridSpan' => 2])->addText('', $risksTableFontStyleBlack, $alignCenter);
+        $table->addCell(null, ['gridSpan' => (count($axisX))])->addText($this->anrTranslate($labelAxisX), $risksTableFontStyleBlack, $alignCenter);
+
+        $table->addRow(Converter::cmToTwip($size));
+        $table->addCell(null, $cellImpactHeader)->addText($this->anrTranslate('Impact'), $risksTableFontStyleBlack, $alignCenter);
+        $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText(' ', $risksTableFontStyleBlack, $alignCenter);
+        foreach ($axisX as $x) {
+            $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText($x, $risksTableFontStyleBlack, $alignCenter);
         }
+
+        //row
+        $nbLow = 0;
+        $nbMedium = 0;
+        $nbHigh = 0;
+        foreach ($axisY as $y) {
+            $table->addRow(Converter::cmToTwip($size));
+            $table->addCell(null, ['vMerge' => 'continue']);
+            $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText($y, $risksTableFontStyleBlack, $alignCenter);
+
+            foreach ($axisX as $x) {
+                $value = $x * $y;
+                if (isset($data[$y]) && isset($data[$y][$x])) {
+                    $result = count($data[$y][$x]);
+                } else {
+                    $result = null;
+                }
+
+                if ($value <= $thresholds[0]) {
+                    $style = $risksTableGreenCellStyle;
+                    if ($result) {
+                        $nbLow += $result;
+                    } else {
+                        $style['BgColor'] = 'f0f7b2';
+                    }
+                } else {
+                    if ($value <= $thresholds[1]) {
+                        $style = $risksTableOrangeCellStyle;
+                        if ($result) {
+                            $nbMedium += $result;
+                        } else {
+                            $style['BgColor'] = 'fcdd94';
+                        }
+                    } else {
+                        $style = $risksTableRedCellStyle;
+                        if ($result) {
+                            $nbHigh += $result;
+                        } else {
+                            $style['BgColor'] = 'fcb28f';
+                        }
+                    }
+                }
+                $table->addCell(Converter::cmToTwip($size), $style)->addText($result, $risksTableFontStyleBlack, $alignCenter);
+            }
+        }
+
+        $risksTableGreenCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'D6F107', 'BorderTopSize' => 0, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
+        $risksTableGreenCellStyle2 = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'f0f7b2', 'BorderTopSize' => 0, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
+        $risksTableOrangeCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'FFBC1C', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
+        $risksTableOrangeCellStyle2 = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'fcdd94', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
+        $risksTableRedCellStyle = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'FD661F', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
+        $risksTableRedCellStyle2 = ['alignment' => 'center', 'valign' => 'center', 'BgColor' => 'fcb28f', 'BorderTopSize' => 50, 'BorderBottomSize' => 30, 'BorderColor' => 'FFFFFF'];
+
+        //legend
+        $maxSize = 7;
+        $total = $nbLow + $nbMedium + $nbHigh;
+        $lowSize = ($total) ? ($maxSize * $nbLow) / $total : 0;
+        $mediumSize = ($total) ? ($maxSize * $nbMedium) / $total : 0;
+        $highSize = ($total) ? ($maxSize * $nbHigh) / $total : 0;
+
+        $section->addTextBreak(1);
+        $tableLegend = $section->addTable();
+
+        $tableLegend = $section->addTable();
+        $tableLegend->addRow(Converter::cmToTwip(0.1));
+        $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
+        $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbLow . ' ' . $this->anrTranslate('Low risks'), $risksTableFontStyleBlack, $alignLeft);
+        if ($lowSize > 0) {
+            $tableLegend->addCell(Converter::cmToTwip($lowSize), $risksTableGreenCellStyle);
+        };
+
+        if (($maxSize - $lowSize) != 0) {
+            $tableLegend->addCell(Converter::cmToTwip($maxSize - $lowSize), $risksTableGreenCellStyle2);
+        };
+
+        $tableLegend = $section->addTable();
+        $tableLegend->addRow(Converter::cmToTwip(0.1));
+        $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
+        $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbMedium . ' ' . $this->anrTranslate('Medium risks'), $risksTableFontStyleBlack, $alignLeft);
+        if ($mediumSize > 0) {
+            $tableLegend->addCell(Converter::cmToTwip($mediumSize), $risksTableOrangeCellStyle);
+        };
+
+        if (($maxSize - $mediumSize) != 0) {
+            $tableLegend->addCell(Converter::cmToTwip($maxSize - $mediumSize), $risksTableOrangeCellStyle2);
+        };
+
+        $tableLegend = $section->addTable();
+        $tableLegend->addRow(Converter::cmToTwip(0.1));
+        $tableLegend->addCell(Converter::cmToTwip(0.5), ['vMerge' => 'continue']);
+        $tableLegend->addCell(Converter::cmToTwip(5), $risksTableCellStyle)->addText($nbHigh . ' ' . $this->anrTranslate('High risks'), $risksTableFontStyleBlack, $alignLeft);
+        if ($highSize > 0) {
+            $tableLegend->addCell(Converter::cmToTwip($highSize), $risksTableRedCellStyle);
+        };
+
+        if (($maxSize - $highSize) != 0) {
+            $tableLegend->addCell(Converter::cmToTwip($maxSize - $highSize), $risksTableRedCellStyle2);
+        };
+        return $section;
+
     }
 
     /**
