@@ -99,12 +99,10 @@ class AnrRiskOpService extends AbstractService
 
         $sql = "SELECT      ir.id as id, ir.rolf_risk_id as rolfRiskId, ir.`owner` as `owner`, ir.`context` as `context`, ir.risk_cache_label1 as label1, ir.risk_cache_label2 as label2, ir.risk_cache_label3 as label3,
                             ir.risk_cache_label4 as label4, ir.risk_cache_description1 as description1, ir.risk_cache_description2 as description2,
-                            ir.risk_cache_description3 as description3, ir.risk_cache_description4 as description4, ir.net_prob as netProb, ir.net_r as netR,
-                            ir.net_o as netO, ir.net_l as netL, ir.net_f as netF, ir.net_p as netP, ir.cache_net_risk as cacheNetRisk, ir.brut_prob as brutProb,
-                            ir.brut_r as brutR, ir.brut_o as brutO, ir.brut_l as brutL, ir.brut_f as brutF, ir.brut_p as brutP,
+                            ir.risk_cache_description3 as description3, ir.risk_cache_description4 as description4, 
+                            ir.cache_net_risk as cacheNetRisk,
                             ir.cache_brut_risk as cacheBrutRisk, ir.kind_of_measure as kindOfMeasure, ir.`comment`, ir.`specific`,
-                            ir.targeted_prob as targetedProb, ir.targeted_r as targetedR, ir.targeted_o as targetedO, ir.targeted_l as targetedL,
-                            ir.targeted_f as targetedF, ir.targeted_p as targetedP, ir.cache_targeted_risk as cacheTargetedRisk,
+                            ir.cache_targeted_risk as cacheTargetedRisk,
                             IF(ir.kind_of_measure IS NULL OR ir.kind_of_measure = " .  \Monarc\Core\Model\Entity\InstanceRiskOpSuperClass::KIND_NOT_TREATED . ", false, true) as t,
                             i.id as iid, i.name$l, i.position, o.scope, rec.recommendations
                 FROM        instances_risks_op as ir
@@ -194,9 +192,9 @@ class AnrRiskOpService extends AbstractService
             case 'cacheBrutRisk':
                 $sql .= " ir.cache_brut_risk ";
                 break;
-            case 'netProb':
-                $sql .= " ir.net_prob ";
-                break;
+            // case 'netProb':
+            //     $sql .= " ir.net_prob ";
+            //     break;
             case 'cacheTargetedRisk':
                 $sql .= " ir.cache_targeted_risk ";
                 break;

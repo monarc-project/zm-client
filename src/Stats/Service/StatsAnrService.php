@@ -268,9 +268,7 @@ class StatsAnrService
             if (!$anr->isStatsCollected()) {
                 continue;
             }
-            file_put_contents('php://stderr', print_r('TEST1', TRUE).PHP_EOL);
             $anrStatsForRtvc = $this->collectAnrStatsForRiskThreatVulnerabilityAndCartography($anr);
-            file_put_contents('php://stderr', print_r('TEST2', TRUE).PHP_EOL);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_RISK,
