@@ -63,21 +63,10 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
 
     public function findRisksDataForStatsByAnr(Anr $anr): array
     {
+      
         return $this->getRepository()
             ->createQueryBuilder('oprisk')
             ->select('
-                oprisk.netProb as netProb,
-                oprisk.netR as netR,
-                oprisk.netO as netO,
-                oprisk.netL as netL,
-                oprisk.netF as netF,
-                oprisk.netP as netP,
-                oprisk.targetedProb as targetedProb,
-                oprisk.targetedR as targetedR,
-                oprisk.targetedO as targetedO,
-                oprisk.targetedL as targetedL,
-                oprisk.targetedF as targetedF,
-                oprisk.targetedP as targetedP,
                 oprisk.cacheNetRisk as cacheNetRisk,
                 oprisk.cacheTargetedRisk as cacheTargetedRisk
             ')

@@ -268,8 +268,9 @@ class StatsAnrService
             if (!$anr->isStatsCollected()) {
                 continue;
             }
-
+            file_put_contents('php://stderr', print_r('TEST1', TRUE).PHP_EOL);
             $anrStatsForRtvc = $this->collectAnrStatsForRiskThreatVulnerabilityAndCartography($anr);
+            file_put_contents('php://stderr', print_r('TEST2', TRUE).PHP_EOL);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
                 'type' => StatsDataObject::TYPE_RISK,
@@ -320,6 +321,7 @@ class StatsAnrService
 
     private function collectAnrStatsForRiskThreatVulnerabilityAndCartography(Anr $anr): array
     {
+      
         $scalesRanges = $this->prepareScalesRanges($anr);
         $likelihoodScales = $this->calculateScalesColumnValues($scalesRanges);
 
@@ -740,17 +742,19 @@ class StatsAnrService
                 'value' => 0,
             ],
         ];
+        
         $risksData = $this->operationalRiskTable->findRisksDataForStatsByAnr($anr);
         foreach ($risksData as $riskData) {
-            $maxImpact = max(
-                $riskData['netR'],
-                $riskData['netO'],
-                $riskData['netL'],
-                $riskData['netF'],
-                $riskData['netP']
-            );
+            // $maxImpact = max(
+            //     $riskData['netR'],
+            //     $riskData['netO'],
+            //     $riskData['netL'],
+            //     $riskData['netF'],
+            //     $riskData['netP']
+            // );
+            $maxImpact = 0;
             $riskValue = $riskData['cacheNetRisk'];
-            $prob = $riskData['netProb'];
+            $prob = 0; // $riskData['netProb'];
             [$currentRisksCounters, $currentRisksDistributed] = $this->countOperationalRisks(
                 $anr,
                 $riskValue,
@@ -760,15 +764,16 @@ class StatsAnrService
                 $currentRisksDistributed
             );
             if ($riskData['cacheTargetedRisk'] > -1) {
-                $maxImpact = max(
-                    $riskData['targetedR'],
-                    $riskData['targetedO'],
-                    $riskData['targetedL'],
-                    $riskData['targetedF'],
-                    $riskData['targetedP']
-                );
+                // $maxImpact = max(
+                //     $riskData['targetedR'],
+                //     $riskData['targetedO'],
+                //     $riskData['targetedL'],
+                //     $riskData['targetedF'],
+                //     $riskData['targetedP']
+                // );
+                $maxImpact = 0;
                 $riskValue = $riskData['cacheTargetedRisk'];
-                $prob = $riskData['targetedProb'];
+                $prob = 0; //$riskData['targetedProb'];
             }
             [$residualRisksCounters, $residualRisksDistributed] = $this->countOperationalRisks(
                 $anr,
