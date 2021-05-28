@@ -7,7 +7,7 @@ use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
-use Monarc\FrontOffice\Model\Factory\ClientEntityManagerFactory;
+use Monarc\FrontOffice\Model\Table\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Stats\Controller\StatsController;
@@ -1134,6 +1134,10 @@ return [
             Table\VulnerabilityTable::class => AutowireFactory::class,
             Table\QuestionTable::class => AutowireFactory::class,
             Table\QuestionChoiceTable::class => AutowireFactory::class,
+            Table\OperationalRiskScaleTable::class => ClientEntityManagerFactory::class,
+            Table\OperationalRiskScaleCommentTable::class => ClientEntityManagerFactory::class,
+            Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
+            Table\TranslationTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.

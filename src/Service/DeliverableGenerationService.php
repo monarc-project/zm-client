@@ -497,7 +497,7 @@ class DeliverableGenerationService extends AbstractService
                 // Find the appropriate comment
                 $commentText = '';
                 foreach ($impactsComments as $comment) {
-                    if ($comment['scaleImpactType']->id == $impactType['id'] && $comment['val'] == $row) {
+                    if ($comment['scaleImpactType']->id == $impactType['id'] && $comment['scaleIndex'] == $row) {
                         $commentText = $comment['comment' . $anr->getLanguage()];
                         break;
                     }
@@ -526,7 +526,7 @@ class DeliverableGenerationService extends AbstractService
                 // Find the appropriate comment
                 $commentText = '';
                 foreach ($impactsComments as $comment) {
-                    if ($comment['scaleImpactType']->id == $impactType['id'] && $comment['val'] == $row) {
+                    if ($comment['scaleImpactType']->id == $impactType['id'] && $comment['scaleIndex'] == $row) {
                         $commentText = $comment['comment' . $anr->getLanguage()];
                         break;
                     }
@@ -565,7 +565,7 @@ class DeliverableGenerationService extends AbstractService
             // Find the appropriate comment
             $commentText = '';
             foreach ($threatsComments as $comment) {
-                if ($comment['val'] == $row) {
+                if ($comment['scaleIndex'] == $row) {
                     $commentText = $comment['comment' . $anr->getLanguage()];
                     break;
                 }
@@ -599,7 +599,7 @@ class DeliverableGenerationService extends AbstractService
             // Find the appropriate comment
             $commentText = '';
             foreach ($vulnsComments as $comment) {
-                if ($comment['val'] == $row) {
+                if ($comment['scaleIndex'] == $row) {
                     $commentText = $comment['comment' . $anr->getLanguage()];
                     break;
                 }
