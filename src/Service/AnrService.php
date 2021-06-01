@@ -933,6 +933,7 @@ class AnrService extends AbstractService
                 $newInstance->setObject($objectsNewIds[$instance->getObject()->getUuid()]);
                 $newInstance->setRoot(null);
                 $newInstance->setParent(null);
+                $newInstance->resetInstanceConsequences();
                 $this->get('instanceCliTable')->save($newInstance, false);
                 $instancesNewIds[$instance->id] = $newInstance;
             }
@@ -1337,7 +1338,7 @@ class AnrService extends AbstractService
             if (!empty($newAnr)) {
                 $anrCliTable->deleteEntity($newAnr);
             }
-            throw new  Exception('Error during analysis creation', 412);
+            throw new Exception('Error during analysis creation', 412);
         }
 
         return $newAnr;
