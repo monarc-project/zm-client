@@ -1253,7 +1253,7 @@ class AnrService extends AbstractService
                         $newRecommandation = new Recommandation($recommandation);
                         $newRecommandation->setAnr($newAnr);
                         $newRecommandation->setRecommandationSet($newRecommendationSet);
-                        $this->get('recommandationCliTable')->save($newRecommandation, false);
+                        $this->get('recommandationCliTable')->saveEntity($newRecommandation, false);
                         $recommendationSetRecommendations[] = $newRecommandation;
                         $recommendationsNewIds[$recommandation->getUuid()] = $newRecommandation;
                     }

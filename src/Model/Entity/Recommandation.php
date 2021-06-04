@@ -14,7 +14,6 @@ use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
-use Monarc\Core\Validator\UniqueCode;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -54,7 +53,7 @@ class Recommandation extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      * @ORM\Id
      */
@@ -414,45 +413,5 @@ class Recommandation extends AbstractEntity
         ];
 
         return [$filterJoin, $filterLeft, $filtersCol];
-    }
-
-    /**
-     * @param bool $partial
-     * @return mixed
-     */
-    public function getInputFilter($partial = true)
-    {
-        if (!$this->inputFilter) {
-            parent::getInputFilter($partial);
-
-            $validatorsCode = [];
-            if (!$partial) {
-                // TODO: fix the validator as far as the code is unique within a set.
-                $validatorsCode = [
-                    [
-                        'name' => UniqueCode::class,
-                        'options' => [
-                            'entity' => $this
-                        ],
-                    ],
-                ];
-            }
-
-            $this->inputFilter->add([
-                'name' => 'code',
-                'required' => !$partial,
-                'allow_empty' => false,
-                'filters' => [],
-                'validators' => $validatorsCode
-            ]);
-
-            $this->inputFilter->add([
-                'name' => 'anr',
-                'required' => !$partial,
-                'allow_empty' => false,
-            ]);
-
-            return $this->inputFilter;
-        }
     }
 }
