@@ -2,8 +2,6 @@
 
 use Phinx\Migration\AbstractMigration;
 use Phinx\Db\Adapter\MysqlAdapter;
-use Phinx\Util\Literal;
-use Ramsey\Uuid\Uuid;
 
 class AddOwnerContextRisks extends AbstractMigration
 {
@@ -42,14 +40,14 @@ class AddOwnerContextRisks extends AbstractMigration
         $table = $this->table('instances_risks');
         $table
             ->addColumn('owner', 'string', array('null' => true, 'limit' => 255, 'after' => 'instance_id'))
-            ->addColumn('context', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG, 'after' => 'owner'))
+            ->addColumn('context', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_REGULAR, 'after' => 'owner'))
             ->update();
 
         // Migration for table instances_risks_op
         $table = $this->table('instances_risks_op');
         $table
             ->addColumn('owner', 'string', array('null' => true, 'limit' => 255, 'after' => 'instance_id'))
-            ->addColumn('context', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG, 'after' => 'owner'))
+            ->addColumn('context', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_REGULAR, 'after' => 'owner'))
             ->update();
     }
 }

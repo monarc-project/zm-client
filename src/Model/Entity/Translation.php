@@ -8,10 +8,10 @@ use Monarc\Core\Model\Entity\TranslationSuperClass;
 /**
  * @ORM\Table(name="translations",
  *   uniqueConstraints={
- *     @ORM\UniqueConstraint(name="type_key_lang_unq", columns={"anr_id", "type", "key", "lang"})
+ *     @ORM\UniqueConstraint(name="anr_type_key_lang_unq", columns={"anr_id", "type", "key", "lang"})
  *   },
 ,   indexes={
- *    @ORM\Index(name="type_key_indx", columns={"anr_id", "type", "key"})
+ *    @ORM\Index(name="anr_type_key_indx", columns={"anr_id", "type", "key"})
  *  }
  * )
  * @ORM\Entity

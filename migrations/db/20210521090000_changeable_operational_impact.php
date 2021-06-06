@@ -1,8 +1,8 @@
 <?php
 
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Phinx\Migration\AbstractMigration;
-use Phinx\Db\Adapter\MysqlAdapter;
-use Phinx\Util\Literal;
 use Ramsey\Uuid\Uuid;
 
 class ChangeableOperationalImpact extends AbstractMigration
@@ -30,266 +30,243 @@ class ChangeableOperationalImpact extends AbstractMigration
      */
     public function change()
     {
-        $conn = $this->getAdapter()->getConnection();
+        // TODO: replicate the same on BO.
 
-        // Creation of table scales_op
-        $table = $this->table('scales_op');
-        $table
-            ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
-            ->addColumn('type', 'integer', array('null' => true, 'default' => '0', 'limit' => MysqlAdapter::INT_TINY))
-            ->addColumn('min', 'integer', array('null' => true, 'default' => '0'))
-            ->addColumn('max', 'integer', array('null' => true, 'default' => '0'))
-            ->addColumn('label1', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('label2', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('label3', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('label4', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('created_at', 'datetime', array('null' => true))
-            ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('updated_at', 'datetime', array('null' => true))
-            ->addColumn('old_scale_impact_type_id', 'integer', array('null' => true, 'signed' => false))
-            ->addColumn('old_impact_type', 'integer', array('null' => true, 'signed' => false))
-            ->addIndex(array('anr_id'))
-            ->addIndex(array('type'))
-            ->create();
-        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-        $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))->update();
+        $this->execute(
+            'CREATE TABLE IF NOT EXISTS `operational_risks_scales` (
+                `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                `anr_id` int(11) unsigned NOT NULL,
+                `type` tinyint(3) unsigned NOT NULL DEFAULT 0,
+                `min` smallint(6) unsigned NOT NULL DEFAULT 0,
+                `max` smallint(6) unsigned NOT NULL DEFAULT 0,
+                `label_translation_key` varchar(255) NOT NULL,
+                `creator` varchar(255) NOT NULL,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                `updater` varchar(255) DEFAULT NULL,
+                `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                INDEX `op_risks_scales_anr_id_indx` (`anr_id`),
+                FOREIGN KEY op_risks_scales_anr_id_fk (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+        );
 
-        //creation of tabels scales_comments_op
-        $table = $this->table('scales_comments_op');
-        $table
-            ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
-            ->addColumn('scale_op_id', 'integer', array('null' => true, 'signed' => false))
-            ->addColumn('scale_index', 'integer', array('null' => true, 'signed' => false))
-            ->addColumn('val', 'integer', array('null' => true, 'default' => '0'))
-            ->addColumn('comment1', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-            ->addColumn('comment2', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-            ->addColumn('comment3', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-            ->addColumn('comment4', 'text', array('null' => true, 'limit' => MysqlAdapter::TEXT_LONG))
-            ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('created_at', 'datetime', array('null' => true))
-            ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('updated_at', 'datetime', array('null' => true))
-            ->addIndex(array('anr_id'))
-            ->addIndex(array('val'))
-            ->addIndex(array('scale_index'))
-            ->addIndex(array('scale_op_id'))
-            ->create();
-        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-        $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-              ->addForeignKey('scale_op_id', 'scales_op', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-              ->update();
+        $this->execute(
+            'CREATE TABLE IF NOT EXISTS `operational_risks_scales_comments` (
+                `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                `anr_id` int(11) unsigned NOT NULL,
+                `operational_risk_scale_id` int(11) unsigned NOT NULL,
+                `scale_value` int(11) unsigned NOT NULL,
+                `scale_index` smallint(6) unsigned NOT NULL,
+                `comment_translation_key` varchar(255) NOT NULL,
+                `creator` varchar(255) NOT NULL,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                `updater` varchar(255) DEFAULT NULL,
+                `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                INDEX `operational_risks_scales_anr_id_indx` (`anr_id`),
+                FOREIGN KEY op_risks_scales_anr_id_fk (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                FOREIGN KEY op_risks_scales_scale_id_fk (`operational_risk_scale_id`) REFERENCES operational_risks_scales(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+        );
 
+        $this->execute(
+            'CREATE TABLE IF NOT EXISTS `operational_instance_risks_scales` (
+                `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                `anr_id` int(11) unsigned NOT NULL,
+                `instance_risk_op_id` int(11) unsigned NOT NULL,
+                `operational_risk_scale_id` int(11) unsigned NOT NULL,
+                `brut_value` int(11) DEFAULT -1,
+                `net_value` int(11) DEFAULT -1,
+                `targeted_value` int(11) DEFAULT -1,
+                `creator` varchar(255) NOT NULL,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                `updater` varchar(255) DEFAULT NULL,
+                `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                INDEX `oirs_anr_id_instance_risk_op_id_indx`(`anr_id`, `instance_risk_op_id`),
+                INDEX `oirs_op_risk_scale_id_indx`(`operational_risk_scale_id`),
+                UNIQUE `oirs_anr_id_instance_risk_op_id_op_risk_scale_id_unq`(`anr_id`, `instance_risk_op_id`, `operational_risk_scale_id`),
+                FOREIGN KEY `oirs_anr_id_fk`(`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                FOREIGN KEY `oirs_instance_risk_op_id_fk`(`instance_risk_op_id`) REFERENCES `instances_risks_op`(`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                FOREIGN KEY `oirs_operational_risk_scale_id_fk` REFERENCES `operational_risks_scales`(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+        );
 
-        //migration of impact
-        // migration of scales
-        $scales_op_array = [];
-        $scalePdo = $this->query('select scales.id as scale_id, scales.anr_id as anr, scales_impact_types.label1 as label1, scales_impact_types.label2 as label2, scales_impact_types.label3 as label3, scales_impact_types.label4 as label4,
-                                  scales.min as min, scales.max as max, scales_impact_types.id as impact_type,  scales_impact_types.type as old_type
-                                  from scales_impact_types, scales
-                                  where scales.id = scales_impact_types.scale_id
-                                  and scales.type = 1
-                                  and scales_impact_types.type > 3');
-        $scaleRows = $scalePdo->fetchAll();
+        $this->execute(
+            'CREATE TABLE IF NOT EXISTS `translations` (
+                `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                `anr_id` int(11) unsigned NOT NULL,
+                `type` varchar(255) NOT NULL,
+                `key` varchar(255) NOT NULL,
+                `lang` char(2) NOT NULL,
+                `value` TEXT,
+                `creator` varchar(255) NOT NULL,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                `updater` varchar(255) DEFAULT NULL,
+                `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                INDEX `tr_anr_type_key_indx`(`anr_id`, `type`, `key`),
+                UNIQUE `tr_anr_type_key_lang_unq`(`anr_id`, `type`, `key`, `lang`),
+                FOREIGN KEY `tr_anr_id_fk`(`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+        );
 
-        foreach ($scaleRows as $scale) {
-          $scales_op_array[] = [
-              'anr_id' => $scale['anr'],
-              'type' => 1,
-              'min' => $scale['min'],
-              'max' => $scale['max'],
-              'label1' => $scale['label1'],
-              'label2' => $scale['label2'],
-              'label3' => $scale['label3'],
-              'label4' => $scale['label4'],
-              'creator' => 'Migration script',
-              'created_at' => date('Y-m-d H:i:s'),
-              'old_scale_impact_type_id' => $scale['impact_type'], //kind of pivot for the next migration
-              'old_impact_type' => $scale['old_type'] // 3:likelihood 4:R 5:O 6:L 7:F 8:P -- easier to migrate instances_risks_op >8 = custom
-          ];
-        }
-        $this->table('scales_op')->insert($scales_op_array)->save();
+        // Migration of scales, impact types and operational risks values.
+        $scalesQuery = $this->query(
+            'SELECT s.anr_id, s.type AS scale_type, sit.label1, sit.label2, sit.label3, sit.label4, s.min, s.max,
+                    GROUP_CONCAT(sc.val SEPARATOR "-----") as scale_values,
+                    GROUP_CONCAT(sc.comment1 SEPARATOR "-----") comments1,
+                    GROUP_CONCAT(sc.comment2 SEPARATOR "-----") comments2,
+                    GROUP_CONCAT(sc.comment3 SEPARATOR "-----") comments3,
+                    GROUP_CONCAT(sc.comment4 SEPARATOR "-----") comments4,
+                    sit.type AS scale_impact_type
+            FROM scales s
+              INNER JOIN scales_comments sc ON sc.scale_id = s.id
+              LEFT JOIN scales_impact_types sit ON sit.scale_id = s.id
+            WHERE s.type = 1 AND sit.type > 3 OR s.type = 2
+            GROUP BY s.anr_id, s.id, sit.id
+            ORDER BY s.anr_id, s.id'
+        );
 
-        //migration of comment
-        $scales_comment_op_array = [];
-        $scaleCommentPdo = $this->query('select scales_op.id as new_scale_id, scales_comments.id as iid, scales_comments.anr_id as anr, scales_comments.scale_type_impact_id as impact_type, scales_comments.val as val,
-                                        scales_comments.comment1 as comment1,  scales_comments.comment2 as comment2, scales_comments.comment3 as comment3, scales_comments.comment4 as comment4
-                                        from scales_comments, scales_op
-                                        where scales_op.old_scale_impact_type_id = scales_comments.scale_type_impact_id');
-        $scaleCommentRows = $scaleCommentPdo->fetchAll();
-
-        foreach ($scaleCommentRows as $scale) {
-          $scales_comment_op_array[] = [
-            'anr_id' => $scale['anr'],
-            'scale_op_id'	 => $scale['new_scale_id'],
-            'scale_index'	 => $scale['val'],
-            'val'	 => $scale['val'],
-            'comment1' => $scale['comment1'],
-            'comment2' => $scale['comment2'],
-            'comment3'	 => $scale['comment3'],
-            'comment4' => $scale['comment4'],
-            'creator'	 => 'Migration script',
-            'created_at' => date('Y-m-d H:i:s')
-
-          ];
-        }
-        $this->table('scales_comments_op')->insert($scales_comment_op_array)->save();
-
-        $this->table('scales_op')->removeColumn('old_scale_impact_type_id')->update();
-
-        //migration of likelihood
-        //migration of scales
-        $likelihood_op_array = [];
-        $likelihoodPdo = $this->query('select scales.id as scale_id, scales.anr_id as anr, scales.min as min, scales.max as max
-                                      from  scales
-                                      where  scales.type = 2');
-        $likelihoodRows = $likelihoodPdo->fetchAll();
-
-        foreach ($likelihoodRows as $scale) {
-          $likelihood_op_array[] = [
-              'anr_id' => $scale['anr'],
-              'type' => 2,
-              'min' => $scale['min'],
-              'max' => $scale['max'],
-              'label1' => NULL,
-              'label2' => NULL,
-              'label3' => NULL,
-              'label4' => NULL,
-              'old_impact_type' => 3,
-              'creator' => 'Migration script',
-              'created_at' => date('Y-m-d H:i:s'),
-          ];
-        }
-        $this->table('scales_op')->insert($likelihood_op_array)->save();
-
-        // migartion of comment
-        $likelihood_comment_op_array = [];
-        $likelihoodCommentPdo = $this->query('select scales_op.id as new_scale_id, scales.id as old_scale_id, scales.anr_id as anr,
-                                              scales_comments.val as val, scales_comments.comment1 as comment1, scales_comments.comment2 as comment2, scales_comments.comment3 as comment3, scales_comments.comment4 as comment4
-                                              from  scales, scales_op, scales_comments
-                                              where  scales.type = 2 and scales_op.type = 2
-                                              and scales.anr_id = scales_op.anr_id
-                                              and scales_comments.scale_id = scales.id');
-        $likelihoodCommentRows = $likelihoodCommentPdo->fetchAll();
-
-        foreach ($likelihoodCommentRows as $scale) {
-          $likelihood_comment_op_array[] = [
-            'anr_id' => $scale['anr'],
-            'scale_op_id'	 => $scale['new_scale_id'],
-            'scale_index'	 => $scale['val'],
-            'val'	 => $scale['val'],
-            'comment1' => $scale['comment1'],
-            'comment2' => $scale['comment2'],
-            'comment3'	 => $scale['comment3'],
-            'comment4' => $scale['comment4'],
-            'creator'	 => 'Migration script',
-            'created_at' => date('Y-m-d H:i:s')
-
-          ];
-        }
-        $this->table('scales_comments_op')->insert($likelihood_comment_op_array)->save();
-
-        //migration of instances_risks_op
-        // creation of a new n-n relation
-        // Creation of table intances_risks_scales_op
-        $table = $this->table('intances_risks_scales_op');
-        $table
-            ->addColumn('intance_risk_op_id', 'integer', array('null' => true, 'signed' => false))
-            ->addColumn('scale_op_id', 'integer', array('null' => true, 'signed' => false))
-            ->addColumn('brut_value', 'integer', array('null' => true, 'default' => '0'))
-            ->addColumn('net_value', 'integer', array('null' => true, 'default' => '0'))
-            ->addColumn('targeted_value', 'integer', array('null' => true, 'default' => '0'))
-            ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('created_at', 'datetime', array('null' => true))
-            ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))
-            ->addColumn('updated_at', 'datetime', array('null' => true))
-            ->addIndex(array('intance_risk_op_id','scale_op_id'),array('unique'=>true))
-            ->addIndex(array('intance_risk_op_id'))
-            ->create();
-        $table->changeColumn('id', 'integer',array('identity'=>true,'signed'=>false))->update();
-        $table->addForeignKey('intance_risk_op_id', 'instances_risks_op', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))->update();
-        $table->addForeignKey('scale_op_id', 'scales_op', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))->update();
-
-        //fill the table
-        $intances_risks_scales_op_array = [];
-        $instancesRisksOpPdo = $this->query('select id as instances_risks_op_id,anr_id as anr, brut_prob as brut_prob, brut_r as brut_r, brut_o as brut_o, brut_l as brut_l, brut_f as brut_f, brut_p as brut_p,
-                                  net_prob as net_prob, net_r as net_r, net_o as net_o, net_l as  net_l, net_f as net_f, net_p as net_p,
-                                  targeted_prob as targeted_prob, targeted_r as targeted_r, targeted_o as targeted_o, targeted_l as targeted_l, targeted_f as targeted_f, targeted_p as targeted_p
-                                  from instances_risks_op');
-        $instancesRisksOpRows = $instancesRisksOpPdo->fetchAll();
-
-
-        $scalesOPPdo = $this->query('select id as scale_id, anr_id as anr, old_impact_type as impact_type
-                                            from scales_op');
-        $scaleRows = $scalesOPPdo->fetchAll();
-        $impactType = array(3 => '_prob', 4 => '_r', 5 => '_o', 6 => '_l', 7 => '_f', 8 => '_p');
-        $tempID = 0;
-
-        foreach ($instancesRisksOpRows as $instancesRisksOp) {
-          for ($i=3; $i <9 ; $i++) {
-            foreach ($scaleRows as  $scale) {
-              if($i==3 && $scale['anr']==$instancesRisksOp['anr'] && $scale['impact_type']==3)
-                $tempID = $scale['scale_id'];
-              else if($scale['anr']==$instancesRisksOp['anr'] && $scale['impact_type']==$i && $i !=3)
-                $tempID = $scale['scale_id'];
+        $operationalRisksScalesTable = $this->table('operational_risks_scales');
+        $operationalRisksScalesCommentsTable = $this->table('operational_risks_scales_comments');
+        $currentScalesByAnr = [];
+        foreach ($scalesQuery->fetchAll() as $scaleData) {
+            $isLikelihoodScale = $scaleData['scale_type'] === OperationalRiskScale::TYPE_LIKELIHOOD;
+            $labelTranslationKey = $isLikelihoodScale ? '' : (string)Uuid::uuid4();
+            $operationalRisksScalesTable->insert([
+                'anr_id' => $scaleData['anr_id'],
+                'type' => $isLikelihoodScale ? OperationalRiskScale::TYPE_LIKELIHOOD : OperationalRiskScale::TYPE_IMPACT,
+                'min' => $scaleData['min'],
+                'max' => $scaleData['max'],
+                'label_translation_key' => $labelTranslationKey,
+                'creator' => 'Migration script',
+            ])->save();
+            $operationalRiskScaleId = $this->getAdapter()->getConnection()->lastInsertId();
+            if (!$isLikelihoodScale) {
+                $this->createTranslations($scaleData, OperationalRiskScale::class, 'label', $labelTranslationKey);
             }
-            $intances_risks_scales_op_array[] = [
-              'intance_risk_op_id' => $instancesRisksOp['instances_risks_op_id'],
-              'scale_op_id'	 => $tempID,
-              'brut_value'	 => $instancesRisksOp['brut'.$impactType[$i]],
-              'net_value'	 => $instancesRisksOp['net'.$impactType[$i]],
-              'targeted_value' => $instancesRisksOp['targeted'.$impactType[$i]],
-              'creator'	 => 'Migration script',
-              'created_at' => date('Y-m-d H:i:s')
-
-            ];
-          }
-        }
-        //manage custom scales type > 8
-        foreach ($scaleRows as  $scale) {
-          if($scale['impact_type']>8){
-            foreach ($instancesRisksOpRows as $instancesRisksOp) {
-              $intances_risks_scales_op_array[] = [
-                'intance_risk_op_id' => $instancesRisksOp['instances_risks_op_id'],
-                'scale_op_id'	 => $scale['scale_id'],
-                'brut_value'	 => -1,
-                'net_value'	 => -1,
-                'targeted_value' => -1,
-                'creator'	 => 'Migration script',
-                'created_at' => date('Y-m-d H:i:s')
-
-              ];
-
+            $scaleValues = explode('-----', $scaleData['scale_values']);
+            $comments1 = explode('-----', $scaleData['comments1']);
+            $comments2 = explode('-----', $scaleData['comments2']);
+            $comments3 = explode('-----', $scaleData['comments3']);
+            $comments4 = explode('-----', $scaleData['comments4']);
+            foreach ($scaleValues as $valueKey => $scaleValue) {
+                $commentTranslationKey = Uuid::uuid4();
+                $operationalRisksScalesCommentsTable->insert([
+                    'anr_id' => $scaleData['anr_id'],
+                    'operational_risk_scale_id' => $operationalRiskScaleId,
+                    'scale_value' => $scaleValue,
+                    'scale_index' => $scaleValue,
+                    'comment_translation_key' => $commentTranslationKey,
+                    'creator' => 'Migration script',
+                ])->save();
+                $this->createTranslations(
+                    [
+                        'comment1' => $comments1[$valueKey] ?? '',
+                        'comment2' => $comments2[$valueKey] ?? '',
+                        'comment3' => $comments3[$valueKey] ?? '',
+                        'comment4' => $comments4[$valueKey] ?? '',
+                    ],
+                    OperationalRiskScaleComment::class,
+                    'comment',
+                    $commentTranslationKey
+                );
             }
-          }
 
+            if (!empty($currentScalesByAnr) && array_key_first($currentScalesByAnr) !== $scaleData['anr_id']) {
+                // @jerome: 3:likelihood 4:R 5:O 6:L 7:F 8:P -- easier to migrate instances_risks_op > 8 = custom
+                $this->createOperationalInstaceRisksScales($currentScalesByAnr);
+                $currentScalesByAnr = [];
+            }
+
+            $currentScalesByAnr[$scaleData['anr_id']][(int)$scaleData['scale_impact_type']] = $operationalRiskScaleId;
         }
 
-        $this->table('intances_risks_scales_op')->insert($intances_risks_scales_op_array)->save();
+        if (!empty($currentScalesByAnr)) {
+            $this->createOperationalInstaceRisksScales($currentScalesByAnr);
+        }
 
-        // remove the temp column
-        $this->table('scales_op')->removeColumn('old_impact_type')->update();
+        // Migration for table scales_comments
+        $table = $this->table('scales_comments');
+        $table
+            ->addColumn('scale_index', 'integer', array('null' => true, 'signed' => false, 'after' => 'val'))
+            ->update();
 
-        //remove the now useless column of instances_risks_op
-        $this->table('instances_risks_op')->removeColumn('brut_prob')
-                                          ->removeColumn('brut_r')
-                                          ->removeColumn('brut_o')
-                                          ->removeColumn('brut_l')
-                                          ->removeColumn('brut_f')
-                                          ->removeColumn('brut_p')
-                                          ->removeColumn('net_prob')
-                                          ->removeColumn('net_r')
-                                          ->removeColumn('net_o')
-                                          ->removeColumn('net_l')
-                                          ->removeColumn('net_f')
-                                          ->removeColumn('net_p')
-                                          ->removeColumn('targeted_prob')
-                                          ->removeColumn('targeted_r')
-                                          ->removeColumn('targeted_o')
-                                          ->removeColumn('targeted_l')
-                                          ->removeColumn('targeted_f')
-                                          ->removeColumn('targeted_p')
-                                          ->update();
+        $this->execute('update scales_comments set scale_index = val');
 
+        // Remove the deprecated columns from instances_risks_op.
+        $this->table('instances_risks_op')
+            ->removeColumn('brut_prob')
+            ->removeColumn('brut_r')
+            ->removeColumn('brut_o')
+            ->removeColumn('brut_l')
+            ->removeColumn('brut_f')
+            ->removeColumn('brut_p')
+            ->removeColumn('net_prob')
+            ->removeColumn('net_r')
+            ->removeColumn('net_o')
+            ->removeColumn('net_l')
+            ->removeColumn('net_f')
+            ->removeColumn('net_p')
+            ->removeColumn('targeted_prob')
+            ->removeColumn('targeted_r')
+            ->removeColumn('targeted_o')
+            ->removeColumn('targeted_l')
+            ->removeColumn('targeted_f')
+            ->removeColumn('targeted_p')
+            ->update();
+    }
+
+    private function createTranslations(array $data, string $type, string $fieldName, string $translationKey): void
+    {
+        $translations = [];
+        foreach ([1 => 'fr', 2 => 'en', 3 => 'de', 4 => 'nl'] as $langKey => $langLabel) {
+            if (!empty($data[$fieldName . $langKey])) {
+                $translations[] = [
+                    'anr_id' => $data['anr_id'],
+                    'type' => $type,
+                    'key' => $translationKey,
+                    'lang' => $langLabel,
+                    'value' => $data[$fieldName . $langKey],
+                    'creator' => 'Migration script',
+                ];
+            }
+        }
+        $this->table('translations')->insert($translations)->save();
+    }
+
+    private function createOperationalInstaceRisksScales(array $currentScalesByAnr)
+    {
+        $operationalInstanceRisksScalesTable = $this->table('operational_instance_risks_scales');
+        $anrId = array_key_first($currentScalesByAnr);
+        $instanceRisksOpSqlWithAnr = sprintf(
+            'SELECT id, anr_id,
+                    brut_prob, brut_r, brut_o, brut_l, brut_f, brut_p,
+                    net_prob, net_r, net_o, net_l, net_f, net_p,
+                    targeted_prob, targeted_r, targeted_o, targeted_l, targeted_f, targeted_p
+            FROM instances_risks_op
+            WHERE anr_id = %d',
+            $anrId
+        );
+        $impactTypes = [0 => '_prob', 4 => '_r', 5 => '_o', 6 => '_l', 7 => '_f', 8 => '_p'];
+        foreach ($this->query($instanceRisksOpSqlWithAnr)->fetchAll() as $instancesRisksOp) {
+            $operationalInstanceRisksScales = [];
+            foreach ($currentScalesByAnr[$anrId] as $scaleImpactType => $operationalRiskScaleId) {
+                $isSystemScaleImpactType = isset($impactTypes[$scaleImpactType]);
+                $operationalInstanceRisksScales[] = [
+                    'anr_id' => $anrId,
+                    'operational_instance_risk_id' => $instancesRisksOp['id'],
+                    'operational_risk_scale_id' => $operationalRiskScaleId,
+                    'brut_value' => $isSystemScaleImpactType
+                        ? -1
+                        : $instancesRisksOp['brut' . $impactTypes[$scaleImpactType]],
+                    'net_value' => $isSystemScaleImpactType
+                        ? -1
+                        : $instancesRisksOp['net' . $impactTypes[$scaleImpactType]],
+                    'targeted_value' => $isSystemScaleImpactType
+                        ? -1
+                        : $instancesRisksOp['targeted' . $impactTypes[$scaleImpactType]],
+                    'creator' => 'Migration script',
+                ];
+            }
+            $operationalInstanceRisksScalesTable->insert($operationalInstanceRisksScales)->save();
+        }
     }
 }
