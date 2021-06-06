@@ -46,7 +46,8 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 INDEX `op_risks_scales_anr_id_indx` (`anr_id`),
-                FOREIGN KEY op_risks_scales_anr_id_fk (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+                CONSTRAINT `op_risks_scales_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES `anrs` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+            );'
         );
 
         $this->execute(
@@ -63,8 +64,9 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 INDEX `operational_risks_scales_anr_id_indx` (`anr_id`),
-                FOREIGN KEY op_risks_scales_anr_id_fk (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
-                FOREIGN KEY op_risks_scales_scale_id_fk (`operational_risk_scale_id`) REFERENCES operational_risks_scales(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+                CONSTRAINT `op_risks_scales_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                CONSTRAINT `op_risks_scales_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+            );'
         );
 
         $this->execute(
@@ -81,12 +83,13 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updater` varchar(255) DEFAULT NULL,
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                INDEX `oirs_anr_id_instance_risk_op_id_indx`(`anr_id`, `instance_risk_op_id`),
-                INDEX `oirs_op_risk_scale_id_indx`(`operational_risk_scale_id`),
-                UNIQUE `oirs_anr_id_instance_risk_op_id_op_risk_scale_id_unq`(`anr_id`, `instance_risk_op_id`, `operational_risk_scale_id`),
-                FOREIGN KEY `oirs_anr_id_fk`(`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-                FOREIGN KEY `oirs_instance_risk_op_id_fk`(`instance_risk_op_id`) REFERENCES `instances_risks_op`(`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-                FOREIGN KEY `oirs_operational_risk_scale_id_fk` REFERENCES `operational_risks_scales`(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+                INDEX `oirs_anr_id_instance_risk_op_id_indx` (`anr_id`, `instance_risk_op_id`),
+                INDEX `oirs_op_risk_scale_id_indx` (`operational_risk_scale_id`),
+                UNIQUE `oirs_anr_id_instance_risk_op_id_op_risk_scale_id_unq` (`anr_id`, `instance_risk_op_id`, `operational_risk_scale_id`),
+                CONSTRAINT `oirs_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                CONSTRAINT `oirs_instance_risk_op_id_fk` FOREIGN KEY (`instance_risk_op_id`) REFERENCES `instances_risks_op` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                CONSTRAINT `oirs_operational_risk_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+            );'
         );
 
         $this->execute(
@@ -102,9 +105,10 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updater` varchar(255) DEFAULT NULL,
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                INDEX `tr_anr_type_key_indx`(`anr_id`, `type`, `key`),
-                UNIQUE `tr_anr_type_key_lang_unq`(`anr_id`, `type`, `key`, `lang`),
-                FOREIGN KEY `tr_anr_id_fk`(`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT;'
+                INDEX `tr_anr_type_key_indx` (`anr_id`, `type`, `key`),
+                UNIQUE `tr_anr_type_key_lang_unq` (`anr_id`, `type`, `key`, `lang`),
+                CONSTRAINT `tr_anr_id_fk` FOREIGN KEY(`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+            );'
         );
 
         // Migration of scales, impact types and operational risks values.
