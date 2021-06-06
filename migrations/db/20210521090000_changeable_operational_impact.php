@@ -86,8 +86,8 @@ class ChangeableOperationalImpact extends AbstractMigration
                 INDEX `oirs_anr_id_instance_risk_op_id_indx` (`anr_id`, `instance_risk_op_id`),
                 INDEX `oirs_op_risk_scale_id_indx` (`operational_risk_scale_id`),
                 UNIQUE `oirs_anr_id_instance_risk_op_id_op_risk_scale_id_unq` (`anr_id`, `instance_risk_op_id`, `operational_risk_scale_id`),
-                CONSTRAINT `oirs_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-                CONSTRAINT `oirs_instance_risk_op_id_fk` FOREIGN KEY (`instance_risk_op_id`) REFERENCES `instances_risks_op` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                CONSTRAINT `oirs_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                CONSTRAINT `oirs_instance_risk_op_id_fk` FOREIGN KEY (`instance_risk_op_id`) REFERENCES `instances_risks_op` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT `oirs_operational_risk_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
