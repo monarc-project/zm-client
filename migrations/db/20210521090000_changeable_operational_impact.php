@@ -105,8 +105,8 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updater` varchar(255) DEFAULT NULL,
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                INDEX `translations_anr_type_key_indx` (`anr_id`, `type`, `key`),
-                UNIQUE `translations_anr_type_key_lang_unq` (`anr_id`, `type`, `key`, `lang`),
+                INDEX `translations_key_indx` (`key`),
+                UNIQUE `translations_anr_key_lang_unq` (`anr_id`, `key`, `lang`),
                 CONSTRAINT `translations_anr_id_fk` FOREIGN KEY(`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
@@ -163,6 +163,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 ])->save();
                 $this->createTranslations(
                     [
+                        'anr_id' => $scaleData['anr_id'],
                         'comment1' => $comments1[$valueKey] ?? '',
                         'comment2' => $comments2[$valueKey] ?? '',
                         'comment3' => $comments3[$valueKey] ?? '',
@@ -256,17 +257,17 @@ class ChangeableOperationalImpact extends AbstractMigration
                 $isSystemScaleImpactType = isset($impactTypes[$scaleImpactType]);
                 $operationalInstanceRisksScales[] = [
                     'anr_id' => $anrId,
-                    'operational_instance_risk_id' => $instancesRisksOp['id'],
+                    'instance_risk_op_id' => $instancesRisksOp['id'],
                     'operational_risk_scale_id' => $operationalRiskScaleId,
                     'brut_value' => $isSystemScaleImpactType
-                        ? -1
-                        : $instancesRisksOp['brut' . $impactTypes[$scaleImpactType]],
+                        ? $instancesRisksOp['brut' . $impactTypes[$scaleImpactType]]
+                        : -1,
                     'net_value' => $isSystemScaleImpactType
-                        ? -1
-                        : $instancesRisksOp['net' . $impactTypes[$scaleImpactType]],
+                        ? $instancesRisksOp['net' . $impactTypes[$scaleImpactType]]
+                        : -1,
                     'targeted_value' => $isSystemScaleImpactType
-                        ? -1
-                        : $instancesRisksOp['targeted' . $impactTypes[$scaleImpactType]],
+                        ? $instancesRisksOp['targeted' . $impactTypes[$scaleImpactType]]
+                        : -1,
                     'creator' => 'Migration script',
                 ];
             }
