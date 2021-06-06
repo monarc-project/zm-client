@@ -63,9 +63,9 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updater` varchar(255) DEFAULT NULL,
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                INDEX `operational_risks_scales_anr_id_indx` (`anr_id`),
-                CONSTRAINT `op_risks_scales_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
-                CONSTRAINT `op_risks_scales_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                INDEX `operational_risks_scales_comments_anr_id_indx` (`anr_id`),
+                CONSTRAINT `op_risks_scales_comments_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                CONSTRAINT `op_risks_scales_comments_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
 
@@ -105,9 +105,9 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updater` varchar(255) DEFAULT NULL,
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                INDEX `tr_anr_type_key_indx` (`anr_id`, `type`, `key`),
-                UNIQUE `tr_anr_type_key_lang_unq` (`anr_id`, `type`, `key`, `lang`),
-                CONSTRAINT `tr_anr_id_fk` FOREIGN KEY(`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                INDEX `translations_anr_type_key_indx` (`anr_id`, `type`, `key`),
+                UNIQUE `translations_anr_type_key_lang_unq` (`anr_id`, `type`, `key`, `lang`),
+                CONSTRAINT `translations_anr_id_fk` FOREIGN KEY(`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
 
