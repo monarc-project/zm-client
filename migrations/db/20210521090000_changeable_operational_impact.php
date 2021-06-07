@@ -123,7 +123,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                     sit.type AS scale_impact_type
             FROM scales s
               INNER JOIN scales_comments sc ON sc.scale_id = s.id
-              LEFT JOIN scales_impact_types sit ON sit.scale_id = s.id
+              LEFT JOIN scales_impact_types sit ON sit.scale_id = s.id AND sit.id = sc.scale_type_impact_id
             WHERE s.type = 1 AND sit.type > 3 OR s.type = 2
             GROUP BY s.anr_id, s.id, sit.id
             ORDER BY s.anr_id, s.id'
@@ -133,7 +133,7 @@ class ChangeableOperationalImpact extends AbstractMigration
         $operationalRisksScalesCommentsTable = $this->table('operational_risks_scales_comments');
         $currentScalesByAnr = [];
         foreach ($scalesQuery->fetchAll() as $scaleData) {
-            $isLikelihoodScale = $scaleData['scale_type'] === OperationalRiskScale::TYPE_LIKELIHOOD;
+            $isLikelihoodScale = (int)$scaleData['scale_type'] === OperationalRiskScale::TYPE_LIKELIHOOD;
             $labelTranslationKey = $isLikelihoodScale ? '' : (string)Uuid::uuid4();
             $operationalRisksScalesTable->insert([
                 'anr_id' => $scaleData['anr_id'],
