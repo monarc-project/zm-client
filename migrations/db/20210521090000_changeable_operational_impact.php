@@ -106,6 +106,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 INDEX `translations_key_indx` (`key`),
+                INDEX `translations_anr_ib_type_indx` (`anr_id`, `type`),
                 UNIQUE `translations_anr_key_lang_unq` (`anr_id`, `key`, `lang`),
                 CONSTRAINT `translations_anr_id_fk` FOREIGN KEY(`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'

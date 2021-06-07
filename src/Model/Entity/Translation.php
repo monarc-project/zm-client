@@ -11,7 +11,8 @@ use Monarc\Core\Model\Entity\TranslationSuperClass;
  *     @ORM\UniqueConstraint(name="anr_key_lang_unq", columns={"anr_id", "key", "lang"})
  *   },
  *   indexes={
- *    @ORM\Index(name="key_indx", columns={"key"})
+ *    @ORM\Index(name="key_indx", columns={"key"}),
+ *    @ORM\Index(name="anr_type_indx", columns={"anr", "type"})
  *  }
  * )
  * @ORM\Entity
