@@ -196,7 +196,7 @@ class ChangeableOperationalImpact extends AbstractMigration
             ->renameColumn('val', 'scale_value')
             ->update();
 
-        $this->execute('update scales_comments set scale_index = val');
+        $this->execute('update scales_comments set scale_index = scale_value');
 
         // Remove the deprecated columns from instances_risks_op.
         $this->table('instances_risks_op')
