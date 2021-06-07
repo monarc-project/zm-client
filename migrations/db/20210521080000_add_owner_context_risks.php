@@ -28,8 +28,6 @@ class AddOwnerContextRisks extends AbstractMigration
      */
     public function change()
     {
-        $conn = $this->getAdapter()->getConnection();
-
         // Migration for table instances
         $table = $this->table('instances');
         $table
