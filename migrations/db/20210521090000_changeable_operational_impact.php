@@ -193,6 +193,7 @@ class ChangeableOperationalImpact extends AbstractMigration
         $table = $this->table('scales_comments');
         $table
             ->addColumn('scale_index', 'integer', array('null' => true, 'signed' => false, 'after' => 'val'))
+            ->renameColumn('val', 'scale_value')
             ->update();
 
         $this->execute('update scales_comments set scale_index = val');
