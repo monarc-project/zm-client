@@ -1062,6 +1062,7 @@ return [
             StatsController::class => AutowireFactory::class,
             StatsAnrsSettingsController::class => AutowireFactory::class,
             StatsGeneralSettingsController::class => AutowireFactory::class,
+            Controller\ApiOperationalRisksScalesController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1243,6 +1244,7 @@ return [
             Service\InstanceImportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
+            Service\OperationalRiskScaleService::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,

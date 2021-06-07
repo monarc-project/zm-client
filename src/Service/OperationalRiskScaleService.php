@@ -52,4 +52,32 @@ class OperationalRiskScaleService
 
         $this->operationalRiskScaleTable->save($operationalRiskScale);
     }
+
+    public function getOperationalRiskScales(int $anrId): array
+    {
+        $anr = $this->anrTable->findById($anrId);
+        $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnr($anr);
+        $result = [];
+        //TODO: fetch all the translations by anr + types OpRisksScales and OpRisksScalesComments and set them as array.
+        foreach ($operationalRiskScales as $operationalRiskScale) {
+            $comments = [];
+            foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+                $comments[] = [
+                    'scaleIndex' => $operationalRiskScaleComment->getScaleIndex(),
+                    'scaleValue' => $operationalRiskScaleComment->getScaleValue(),
+                    'comments' => [], // TODO: get translations and get by key here.
+                ];
+            }
+            $result[] = [
+                'id' => $operationalRiskScale->getId(),
+                'max' => $operationalRiskScale->getMax(),
+                'min' => $operationalRiskScale->getMin(),
+                'type' => $operationalRiskScale->getType(),
+                'labels' => [],  // TODO: get translations and get by key here.
+                'comments' => $comments,
+            ];
+        }
+
+        return $result;
+    }
 }
