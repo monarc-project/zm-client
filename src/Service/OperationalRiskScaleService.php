@@ -4,41 +4,42 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
+use Monarc\FrontOffice\Model\Table\TranslationTable;
 
 class OperationalRiskScaleService
 {
-    /** @var AnrTable */
-    private $anrTable;
+    private AnrTable $anrTable;
 
-    /** @var User */
-    private $connectedUser;
+    private User $connectedUser;
 
-    /** @var OperationalRiskScaleTable */
-    private $operationalRiskScaleTable;
+    private OperationalRiskScaleTable $operationalRiskScaleTable;
 
-    /** @var OperationalRiskScaleCommentTable */
-    private $operationalRiskScaleCommentTable;
+    private OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
 
-    /** @var OperationalInstanceRiskScaleTable */
-    private $operationalInstanceRiskScaleTable;
+    private OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable;
+
+    private TranslationTable $translationTable;
 
     public function __construct(
         AnrTable $anrTable,
         ConnectedUserService $connectedUserService,
         OperationalRiskScaleTable $operationalRiskScaleTable,
         OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
-        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable
+        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
+        TranslationTable $translationTable
     ) {
         $this->anrTable = $anrTable;
         $this->connectedUser = $connectedUserService->getConnectedUser();
         $this->operationalRiskScaleTable = $operationalRiskScaleTable;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
+        $this->translationTable = $translationTable;
     }
 
     public function createOperationalRiskScale(int $anrId, array $data): int
@@ -58,22 +59,37 @@ class OperationalRiskScaleService
         $anr = $this->anrTable->findById($anrId);
         $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnr($anr);
         $result = [];
-        //TODO: fetch all the translations by anr + types OpRisksScales and OpRisksScalesComments and set them as array.
+        $translations = $this->translationTable->findByAnrAndTypesIndexedByKey(
+            $anr,
+            [OperationalRiskScale::class, OperationalRiskScaleComment::class]
+        );
         foreach ($operationalRiskScales as $operationalRiskScale) {
             $comments = [];
             foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+                $translationComments = $translations[$operationalRiskScaleComment->getCommentTranslationKey()];
+                $translationCommentValues = [];
+                foreach ($translationComments as $translationComment) {
+                    $translationCommentValues[] = $translationComment->getValue();
+                }
                 $comments[] = [
                     'scaleIndex' => $operationalRiskScaleComment->getScaleIndex(),
                     'scaleValue' => $operationalRiskScaleComment->getScaleValue(),
-                    'comments' => [], // TODO: get translations and get by key here.
+                    'comments' => $translationCommentValues,
                 ];
+            }
+            $translationLabels = [];
+            if (!empty($operationalRiskScale->getLabelTranslationKey())) {
+                $translationScales = $translations[$operationalRiskScale->getLabelTranslationKey()];
+                foreach ($translationScales as $translationScale) {
+                    $translationLabels[] = $translationScale->getValue();
+                }
             }
             $result[] = [
                 'id' => $operationalRiskScale->getId(),
                 'max' => $operationalRiskScale->getMax(),
                 'min' => $operationalRiskScale->getMin(),
                 'type' => $operationalRiskScale->getType(),
-                'labels' => [],  // TODO: get translations and get by key here.
+                'labels' => $translationLabels,
                 'comments' => $comments,
             ];
         }
