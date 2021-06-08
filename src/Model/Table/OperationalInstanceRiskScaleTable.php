@@ -4,6 +4,7 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Entity\OperationalInstanceRiskScale;
+use Monarc\Core\Model\Table\AbstractTable;
 
 class OperationalInstanceRiskScaleTable extends AbstractTable
 {
