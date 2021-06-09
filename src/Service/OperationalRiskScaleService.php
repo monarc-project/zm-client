@@ -5,12 +5,13 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
-use Monarc\FrontOffice\Model\Entity\User;
+use Monarc\Core\Model\Entity\User;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\Core\Service\ConfigService;
 
 class OperationalRiskScaleService
 {
@@ -26,13 +27,16 @@ class OperationalRiskScaleService
 
     private TranslationTable $translationTable;
 
+    private ConfigService $configService;
+
     public function __construct(
         AnrTable $anrTable,
         ConnectedUserService $connectedUserService,
         OperationalRiskScaleTable $operationalRiskScaleTable,
         OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
         OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
-        TranslationTable $translationTable
+        TranslationTable $translationTable,
+        ConfigService $configService
     ) {
         $this->anrTable = $anrTable;
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -40,6 +44,7 @@ class OperationalRiskScaleService
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
         $this->translationTable = $translationTable;
+        $this->configService = $configService;
     }
 
     public function createOperationalRiskScale(int $anrId, array $data): int
@@ -59,37 +64,31 @@ class OperationalRiskScaleService
         $anr = $this->anrTable->findById($anrId);
         $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnr($anr);
         $result = [];
-        $translations = $this->translationTable->findByAnrAndTypesIndexedByKey(
+        $translations = $this->translationTable->findByAnrAndTypesAndLanguageIndexedByKey(
             $anr,
-            [OperationalRiskScale::class, OperationalRiskScaleComment::class]
+            [OperationalRiskScale::class, OperationalRiskScaleComment::class],
+            strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]) //fetch the language
         );
         foreach ($operationalRiskScales as $operationalRiskScale) {
             $comments = [];
             foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
-                $translationComments = $translations[$operationalRiskScaleComment->getCommentTranslationKey()];
-                $translationCommentValues = [];
-                foreach ($translationComments as $translationComment) {
-                    $translationCommentValues[] = $translationComment->getValue();
-                }
+                $translationComment = $translations[$operationalRiskScaleComment->getCommentTranslationKey()];
                 $comments[] = [
                     'scaleIndex' => $operationalRiskScaleComment->getScaleIndex(),
                     'scaleValue' => $operationalRiskScaleComment->getScaleValue(),
-                    'comments' => $translationCommentValues,
+                    'comments' => $translationComment->getValue(),
                 ];
             }
             $translationLabels = [];
             if (!empty($operationalRiskScale->getLabelTranslationKey())) {
-                $translationScales = $translations[$operationalRiskScale->getLabelTranslationKey()];
-                foreach ($translationScales as $translationScale) {
-                    $translationLabels[] = $translationScale->getValue();
-                }
+                $translationScale = $translations[$operationalRiskScale->getLabelTranslationKey()];
             }
             $result[] = [
                 'id' => $operationalRiskScale->getId(),
                 'max' => $operationalRiskScale->getMax(),
                 'min' => $operationalRiskScale->getMin(),
                 'type' => $operationalRiskScale->getType(),
-                'labels' => $translationLabels,
+                'labels' => $translationScale->getValue(),
                 'comments' => $comments,
             ];
         }
