@@ -97,7 +97,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
                 `anr_id` int(11) unsigned NOT NULL,
                 `type` varchar(255) NOT NULL,
-                `key` varchar(255) NOT NULL,
+                `translation_key` varchar(255) NOT NULL,
                 `lang` char(2) NOT NULL,
                 `value` TEXT,
                 `creator` varchar(255) NOT NULL,
@@ -105,9 +105,9 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updater` varchar(255) DEFAULT NULL,
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                INDEX `translations_key_indx` (`key`),
+                INDEX `translations_key_indx` (`translation_key`),
                 INDEX `translations_anr_ib_type_indx` (`anr_id`, `type`),
-                UNIQUE `translations_anr_key_lang_unq` (`anr_id`, `key`, `lang`),
+                UNIQUE `translations_anr_key_lang_unq` (`anr_id`, `translation_key`, `lang`),
                 CONSTRAINT `translations_anr_id_fk` FOREIGN KEY(`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
@@ -229,7 +229,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 $translations[] = [
                     'anr_id' => $data['anr_id'],
                     'type' => $type,
-                    'key' => $translationKey,
+                    'translation_key' => $translationKey,
                     'lang' => $langLabel,
                     'value' => $data[$fieldName . $langKey],
                     'creator' => 'Migration script',
