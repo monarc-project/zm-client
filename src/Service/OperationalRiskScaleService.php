@@ -3,6 +3,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\Core\Model\Entity\User;
@@ -12,6 +13,7 @@ use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\Core\Service\ConfigService;
+use Ramsey\Uuid\Uuid;
 
 class OperationalRiskScaleService
 {
@@ -54,9 +56,26 @@ class OperationalRiskScaleService
 
         $operationalRiskScale = (new OperationalRiskScale())
             ->setAnr($anr)
-            ->setCreator($this->connectedUser->getEmail());
+            ->setCreator($this->connectedUser->getEmail())
+            ->setType($data['type'])
+            ->setMin($data['min'])
+            ->setMax($data['max'])
+            ->setLabelTranslationKey(Uuid::uuid4()->toString());
 
-        $this->operationalRiskScaleTable->save($operationalRiskScale);
+        $this->operationalRiskScaleTable->save($operationalRiskScale,false);
+
+        //save the translation
+        $translation = (new Translation())
+            ->setAnr($anr)
+            ->setCreator($this->connectedUser->getEmail())
+            ->setType(OperationalRiskScale::class)
+            ->setKey($operationalRiskScale->getLabelTranslationKey())
+            ->setLang(strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]))
+            ->setValue($data['Label']);
+
+        $this->translationTable->save($translation);
+
+        return $operationalRiskScale->getId();
     }
 
     public function getOperationalRiskScales(int $anrId): array
