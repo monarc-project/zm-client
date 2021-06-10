@@ -79,16 +79,17 @@ class OperationalRiskScaleService
                     'comments' => $translationComment->getValue(),
                 ];
             }
-            $translationLabels = [];
+            $translationLabel = null;
             if (!empty($operationalRiskScale->getLabelTranslationKey())) {
                 $translationScale = $translations[$operationalRiskScale->getLabelTranslationKey()];
+                $translationLabel = $translationScale->getValue();
             }
             $result[] = [
                 'id' => $operationalRiskScale->getId(),
                 'max' => $operationalRiskScale->getMax(),
                 'min' => $operationalRiskScale->getMin(),
                 'type' => $operationalRiskScale->getType(),
-                'labels' => $translationScale->getValue(),
+                'labels' => $translationLabel,
                 'comments' => $comments,
             ];
         }
