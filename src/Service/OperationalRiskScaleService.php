@@ -62,9 +62,34 @@ class OperationalRiskScaleService
             ->setMax($data['max'])
             ->setLabelTranslationKey(Uuid::uuid4()->toString());
 
-        $this->operationalRiskScaleTable->save($operationalRiskScale,false);
 
-        //save the translation
+        // create the scale comments
+        if(isset($data['comments'])&&($data['comments'] != null)){
+          for ($i=0; $i < count($data['comments']); $i++) {
+            $scaleComment = (new OperationalRiskScaleComment())
+              ->setCreator($this->connectedUser->getEmail())
+              ->setAnr($anr)
+              ->setScaleIndex($data['comments'][$i]['index'])
+              ->setScaleValue($data['comments'][$i]['value'])
+              ->setCommentTranslationKey(Uuid::uuid4()->toString());
+            $operationalRiskScale->addOperationalRiskScaleComments($scaleComment);
+            $this->operationalRiskScaleCommentTable->save($scaleComment,false);
+            //save the translation for the scaleComment (init with blank value)
+            $translation = (new Translation())
+                ->setAnr($anr)
+                ->setCreator($this->connectedUser->getEmail())
+                ->setType(OperationalRiskScaleComment::class)
+                ->setKey($scaleComment->getCommentTranslationKey())
+                ->setLang(strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]))
+                ->setValue('');
+            $this->translationTable->save($translation,false);
+          }
+
+        }
+
+        $this->operationalRiskScaleTable->save($operationalRiskScale);
+
+        //save the translation for the scale
         $translation = (new Translation())
             ->setAnr($anr)
             ->setCreator($this->connectedUser->getEmail())
@@ -74,6 +99,7 @@ class OperationalRiskScaleService
             ->setValue($data['Label']);
 
         $this->translationTable->save($translation);
+
 
         return $operationalRiskScale->getId();
     }
@@ -95,13 +121,13 @@ class OperationalRiskScaleService
                 $comments[] = [
                     'scaleIndex' => $operationalRiskScaleComment->getScaleIndex(),
                     'scaleValue' => $operationalRiskScaleComment->getScaleValue(),
-                    'comments' => $translationComment->getValue(),
+                    'comments' => $translationComment!=null?$translationComment->getValue():null,
                 ];
             }
             $translationLabel = null;
             if (!empty($operationalRiskScale->getLabelTranslationKey())) {
                 $translationScale = $translations[$operationalRiskScale->getLabelTranslationKey()];
-                $translationLabel = $translationScale->getValue();
+                $translationLabel = $translationScale==null?null:$translationScale->getValue();
             }
             $result[] = [
                 'id' => $operationalRiskScale->getId(),
