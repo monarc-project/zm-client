@@ -29,6 +29,9 @@ class TranslationTable extends AbstractTable
             ->getResult();
     }
 
+    /**
+     * @return Translation[]
+     */
     public function findByAnrAndTypesAndLanguageIndexedByKey(Anr $anr, array $types, string $lang): array
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.key');
