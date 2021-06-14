@@ -113,13 +113,4 @@ class MonarcObjectTable extends CoreMonarcObjectTable
             ->getQuery()
             ->getOneOrNullResult();
     }
-
-    public function saveEntity(MonarcObject $monarcObject, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($monarcObject);
-        if ($flushAll) {
-            $em->flush();
-        }
-    }
 }
