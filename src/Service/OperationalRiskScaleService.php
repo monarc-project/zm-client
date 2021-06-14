@@ -69,8 +69,8 @@ class OperationalRiskScaleService
             $scaleComment = (new OperationalRiskScaleComment())
               ->setCreator($this->connectedUser->getEmail())
               ->setAnr($anr)
-              ->setScaleIndex($data['comments'][$i]['index'])
-              ->setScaleValue($data['comments'][$i]['value'])
+              ->setScaleIndex($data['comments'][$i]['scaleIndex'])
+              ->setScaleValue($data['comments'][$i]['scaleValue'])
               ->setCommentTranslationKey(Uuid::uuid4()->toString());
             $operationalRiskScale->addOperationalRiskScaleComments($scaleComment);
             $this->operationalRiskScaleCommentTable->save($scaleComment,false);
