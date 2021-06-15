@@ -422,6 +422,19 @@ return [
                             ],
                         ],
                     ],
+                    'operational_scales_comment' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'operational-scales/:scaleid/comments[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                                'scaleid' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiOperationalRisksScalesCommentsController::class,
+                            ],
+                        ],
+                    ],
                     'scales_types' => [
                         'type' => 'segment',
                         'options' => [
@@ -1075,6 +1088,7 @@ return [
             StatsAnrsSettingsController::class => AutowireFactory::class,
             StatsGeneralSettingsController::class => AutowireFactory::class,
             Controller\ApiOperationalRisksScalesController::class => AutowireFactory::class,
+            Controller\ApiOperationalRisksScalesCommentsController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1392,6 +1406,7 @@ return [
             'monarc_api_global_client_anr/scales_types',
             'monarc_api_global_client_anr/scales_comments',
             'monarc_api_global_client_anr/operational_scales',
+            'monarc_api_global_client_anr/operational_scales_comment',
             'monarc_api_global_client_anr/recommandations',
             'monarc_api_global_client_anr/recommandations_historics',
             'monarc_api_global_client_anr/recommandations_risks',
