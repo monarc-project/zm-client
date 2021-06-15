@@ -48,5 +48,23 @@ class OperationalRiskScaleCommentService
         $this->configService = $configService;
     }
 
-    
+    public function update($id, $data):int
+    {
+      $anr = $this->anrTable->findById($data['anr']);
+      $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
+      $operationalRiskScaleComment = $this->operationalRiskScaleCommentTable->findById((int)$id);
+
+      if(isset($data['scaleValue'])){
+        $operationalRiskScaleComment->setScaleValue((int)$data['scaleValue']);
+      }
+      if(isset($data['comment'])){
+          $translationKey = $operationalRiskScaleComment->getCommentTranslationKey();
+          $translation = $this->translationTable->findByAnrAndKeyAndLanguage($anr, $translationKey,$anrLanguageCode);
+          $translation->setValue($data['comment']);
+          $this->translationTable->save($translation,false);
+      }
+      $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment);
+
+      return  $operationalRiskScaleComment->getId();
+    }
 }

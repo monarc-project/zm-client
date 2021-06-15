@@ -18,13 +18,19 @@ class ApiOperationalRisksScalesCommentsController extends AbstractRestfulControl
 
     public function update($id, $data)
     {
-      file_put_contents('php://stderr', print_r('$data', TRUE).PHP_EOL);
-      file_put_contents('php://stderr', print_r($data, TRUE).PHP_EOL);
-      file_put_contents('php://stderr', print_r('$id', TRUE).PHP_EOL);
-      file_put_contents('php://stderr', print_r($id, TRUE).PHP_EOL);
+      $anrId = (int)$this->params()->fromRoute('anrid');
+      if (empty($anrId)) {
+          throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+      }
+      $data['anr'] = $anrId;
 
-
-        return new JsonModel(['status' => 'ok']);
+      if($this->operationalRiskScaleCommentService->update($id, $data))
+        {
+          return new JsonModel(['status' => 'ok']);
+        }
+      else {
+          return new JsonModel(['status' => 'ko']);
+      }
     }
 
 }
