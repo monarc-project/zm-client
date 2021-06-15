@@ -199,26 +199,26 @@ class ChangeableOperationalImpact extends AbstractMigration
         $this->execute('update scales_comments set scale_index = scale_value');
 
         // Remove the deprecated columns from instances_risks_op.
-        $this->table('instances_risks_op')
-            ->removeColumn('brut_prob')
-            ->removeColumn('brut_r')
-            ->removeColumn('brut_o')
-            ->removeColumn('brut_l')
-            ->removeColumn('brut_f')
-            ->removeColumn('brut_p')
-            ->removeColumn('net_prob')
-            ->removeColumn('net_r')
-            ->removeColumn('net_o')
-            ->removeColumn('net_l')
-            ->removeColumn('net_f')
-            ->removeColumn('net_p')
-            ->removeColumn('targeted_prob')
-            ->removeColumn('targeted_r')
-            ->removeColumn('targeted_o')
-            ->removeColumn('targeted_l')
-            ->removeColumn('targeted_f')
-            ->removeColumn('targeted_p')
-            ->update();
+//        $this->table('instances_risks_op')
+//            ->removeColumn('brut_prob')
+//            ->removeColumn('brut_r')
+//            ->removeColumn('brut_o')
+//            ->removeColumn('brut_l')
+//            ->removeColumn('brut_f')
+//            ->removeColumn('brut_p')
+//            ->removeColumn('net_prob')
+//            ->removeColumn('net_r')
+//            ->removeColumn('net_o')
+//            ->removeColumn('net_l')
+//            ->removeColumn('net_f')
+//            ->removeColumn('net_p')
+//            ->removeColumn('targeted_prob')
+//            ->removeColumn('targeted_r')
+//            ->removeColumn('targeted_o')
+//            ->removeColumn('targeted_l')
+//            ->removeColumn('targeted_f')
+//            ->removeColumn('targeted_p')
+//            ->update();
     }
 
     private function createTranslations(array $data, string $type, string $fieldName, string $translationKey): void

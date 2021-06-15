@@ -5,6 +5,7 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
@@ -22,7 +23,7 @@ class OperationalRiskScaleService
 {
     private AnrTable $anrTable;
 
-    private User $connectedUser;
+    private UserSuperClass $connectedUser;
 
     private OperationalRiskScaleTable $operationalRiskScaleTable;
 
