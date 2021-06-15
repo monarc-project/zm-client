@@ -132,6 +132,8 @@ class OperationalRiskScaleService
             foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
                 $translationComment = $translations[$operationalRiskScaleComment->getCommentTranslationKey()] ?? null;
                 $comments[] = [
+                    'id' => $operationalRiskScaleComment->getId(),
+                    'scaleId' => $operationalRiskScale->getId(),
                     'scaleIndex' => $operationalRiskScaleComment->getScaleIndex(),
                     'scaleValue' => $operationalRiskScaleComment->getScaleValue(),
                     'comment' => $translationComment !== null ? $translationComment->getValue() : '',
