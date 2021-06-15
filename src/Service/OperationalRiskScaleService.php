@@ -156,4 +156,23 @@ class OperationalRiskScaleService
 
         return $result;
     }
+
+    public function deleteOperationalRiskScales($data): void
+    {
+      $translationsKeys = [];
+      $scaleToDelete = null;
+
+      foreach ($data as $id) {
+
+        $scaleToDelete = $this->operationalRiskScaleTable->findById($id);
+        $translationsKeys[] = $scaleToDelete->getLabelTranslationKey();
+
+        foreach ($scaleToDelete->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+          $translationsKeys[] = $operationalRiskScaleComment->getCommentTranslationKey();
+        }
+         $this->operationalRiskScaleTable->remove($scaleToDelete,true);
+      }
+      $this->translationTable->deleteListByKey($translationsKeys);
+
+    }
 }

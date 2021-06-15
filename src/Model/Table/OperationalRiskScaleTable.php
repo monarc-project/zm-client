@@ -26,4 +26,9 @@ class OperationalRiskScaleTable extends AbstractTable
             ->getQuery()
             ->getResult();
     }
+
+    public function getEntityById(int $id)
+    {
+      return parent::getEntityById(OperationalRiskScale::class, $id);
+    }
 }

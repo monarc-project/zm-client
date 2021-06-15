@@ -45,4 +45,14 @@ class TranslationTable extends AbstractTable
             ->getQuery()
             ->getResult();
     }
+
+    public function deleteListByKey(array $keys): void
+    {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('t');
+        $queryBuilder
+            ->delete()
+            ->Where($queryBuilder->expr()->in('t.key', $keys))
+            ->getQuery()
+            ->getResult();
+    }
 }

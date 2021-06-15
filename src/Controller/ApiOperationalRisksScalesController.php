@@ -33,4 +33,10 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
             'id' => $this->operationalRiskScaleService->createOperationalRiskScale($anrId, $data),
         ]);
     }
+
+    public function deleteList($data)
+    {
+        $this->operationalRiskScaleService->deleteOperationalRiskScales($data);
+        return new JsonModel(['status' => 'ok']);
+    }
 }
