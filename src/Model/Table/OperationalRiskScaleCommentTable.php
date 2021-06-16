@@ -14,18 +14,17 @@ class OperationalRiskScaleCommentTable extends AbstractTable
         parent::__construct($entityManager, OperationalRiskScaleComment::class);
     }
 
-
     /**
      * @return OperationalRiskScaleComment[]
      */
     public function findAllByAnrAndIndex(Anr $anr, int $scaleIndex): array
     {
-      return $this->getRepository()->createQueryBuilder('t')
-          ->where('t.anr = :anr')
-          ->andWhere('t.scaleIndex = :scaleIndex')
-          ->setParameter('anr', $anr)
-          ->setParameter('scaleIndex', $scaleIndex)
-          ->getQuery()
-          ->getResult();
+        return $this->getRepository()->createQueryBuilder('t')
+            ->where('t.anr = :anr')
+            ->andWhere('t.scaleIndex = :scaleIndex')
+            ->setParameter('anr', $anr)
+            ->setParameter('scaleIndex', $scaleIndex)
+            ->getQuery()
+            ->getResult();
     }
 }

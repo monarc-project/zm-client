@@ -24,6 +24,7 @@ class OperationalInstanceRiskScaleTable extends AbstractTable
                 $queryBuilder->expr()->neq('oirs.netValue', -1),
                 $queryBuilder->expr()->neq('oirs.targetedValue', -1),
             ))
+            ->setParameter('anr', $anr)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

@@ -158,7 +158,7 @@ class OperationalRiskScaleService
         return $result;
     }
 
-    public function deleteOperationalRiskScales($data): void
+    public function deleteOperationalRiskScales(array $data): void
     {
         $translationsKeys = [];
 
@@ -183,22 +183,21 @@ class OperationalRiskScaleService
         }
     }
 
-    public function update($id, $data): int
+    public function update(int $id, array $data): int
     {
-        $anr = $this->anrTable->findById((int)$data['anr']);
+        $anr = $this->anrTable->findById($data['anr']);
 
         /** @var OperationalRiskScale $operationalRiskScale */
-        $operationalRiskScale = $this->operationalRiskScaleTable->findById((int)$id);
+        $operationalRiskScale = $this->operationalRiskScaleTable->findById($id);
         $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
 
         $operationalRiskScale->setIsHidden(!empty($data['isHidden']));
 
         if (!empty($data['label'])) {
             $translationKey = $operationalRiskScale->getLabelTranslationKey();
-            if (empty($translationKey)) {
-                //TODO:
-            } else {
-                $translation = $this->translationTable->findByAnrKeyAndLanguage($anr, $translationKey, $anrLanguageCode);
+            if (!empty($translationKey)) {
+                $translation = $this->translationTable
+                    ->findByAnrKeyAndLanguage($anr, $translationKey, $anrLanguageCode);
                 $translation->setValue($data['label']);
                 $this->translationTable->save($translation, false);
             }
@@ -208,25 +207,21 @@ class OperationalRiskScaleService
         return $operationalRiskScale->getId();
     }
 
-    public function patchList($data)
+    public function patchList(array $data)
     {
+        $anr = $this->anrTable->findById($data['anr']);
 
-      $anrId = (int)$data['anr'];
-      $anr = $this->anrTable->findById($anrId);
+        // we update the value for all the scales
+        if (isset($data['scaleValue']) && isset($data['scaleIndex'])) {
+            $scaleValue = (int)$data['scaleValue'];
 
-      // we update the value for all the scales
-      if(isset($data['scaleValue'])&&isset($data['scaleIndex']))
-      {
-        $scaleValue = (int) $data['scaleValue'];
-        $scaleIndex = (int) $data['scaleIndex'];
+            $operationalRiskScaleComments = $this->operationalRiskScaleCommentTable
+                ->findAllByAnrAndIndex($anr, (int)$data['scaleIndex']);
 
-        $operationalRiskScaleComments = $this->operationalRiskScaleCommentTable->findAllByAnrAndIndex($anr,$scaleIndex);
-
-        foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
-          $operationalRiskScaleComment->setScaleValue($scaleValue);
-          $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment);
+            foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
+                $operationalRiskScaleComment->setScaleValue($scaleValue);
+                $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment);
+            }
         }
-
-      }
     }
 }
