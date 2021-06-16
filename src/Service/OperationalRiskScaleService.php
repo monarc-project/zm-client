@@ -184,7 +184,16 @@ class OperationalRiskScaleService
       $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
       $operationalRiskScale = $this->operationalRiskScaleTable->findById((int)$id);
 
-      if(isset($data['label'])){
+      if(isset($data['isHidden']))
+      {
+        if($data['isHidden']==true)
+          $operationalRiskScale->setIsHidden(1);
+        else
+          $operationalRiskScale->setIsHidden(0);
+      }
+
+      if(isset($data['label']))
+      {
 
           $translationKey = $operationalRiskScale->getLabelTranslationKey();
           $translation = $this->translationTable->findByAnrAndKeyAndLanguage($anr, $translationKey,$anrLanguageCode);
