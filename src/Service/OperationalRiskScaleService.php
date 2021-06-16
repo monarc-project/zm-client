@@ -177,4 +177,22 @@ class OperationalRiskScaleService
       $this->translationTable->deleteListByKey($translationsKeys);
 
     }
+
+    public function update($id, $data):int
+    {
+      $anr = $this->anrTable->findById($data['anr']);
+      $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
+      $operationalRiskScale = $this->operationalRiskScaleTable->findById((int)$id);
+
+      if(isset($data['label'])){
+
+          $translationKey = $operationalRiskScale->getLabelTranslationKey();
+          $translation = $this->translationTable->findByAnrAndKeyAndLanguage($anr, $translationKey,$anrLanguageCode);
+          $translation->setValue($data['label']);
+          $this->translationTable->save($translation,false);
+      }
+      $this->operationalRiskScaleTable->save($operationalRiskScale);
+
+      return  $operationalRiskScale->getId();
+    }
 }
