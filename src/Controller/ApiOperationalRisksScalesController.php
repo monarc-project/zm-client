@@ -51,4 +51,13 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
 
         return new JsonModel(['status' => 'ko']);
     }
+
+    public function patchList($data)
+    {
+        $data['anr'] = (int)$this->params()->fromRoute('anrid');
+        $this->operationalRiskScaleService->patchList($data);
+        return new JsonModel(['status' => 'ok']);
+
+
+    }
 }

@@ -207,4 +207,26 @@ class OperationalRiskScaleService
 
         return $operationalRiskScale->getId();
     }
+
+    public function patchList($data)
+    {
+
+      $anrId = (int)$data['anr'];
+      $anr = $this->anrTable->findById($anrId);
+
+      // we update the value for all the scales
+      if(isset($data['scaleValue'])&&isset($data['scaleIndex']))
+      {
+        $scaleValue = (int) $data['scaleValue'];
+        $scaleIndex = (int) $data['scaleIndex'];
+
+        $operationalRiskScaleComments = $this->operationalRiskScaleCommentTable->findAllByAnrAndIndex($anr,$scaleIndex);
+
+        foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
+          $operationalRiskScaleComment->setScaleValue($scaleValue);
+          $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment);
+        }
+
+      }
+    }
 }
