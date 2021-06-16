@@ -17,7 +17,7 @@ class AnrScaleServiceFactory extends \Monarc\Core\Service\AbstractServiceFactory
         'table' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\Scale',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'AnrCheckStartedService' => 'Monarc\FrontOffice\Service\AnrCheckStartedService',
+        'anrCheckStartedService' => 'Monarc\FrontOffice\Service\AnrCheckStartedService',
         'scaleImpactTypeService' => 'Monarc\FrontOffice\Service\AnrScaleTypeService',
         'config' => 'Monarc\Core\Service\ConfigService',
     ];

@@ -1252,7 +1252,7 @@ return [
             'Monarc\FrontOffice\Service\AnrScaleService' => 'Monarc\FrontOffice\Service\AnrScaleServiceFactory',
             'Monarc\FrontOffice\Service\AnrScaleTypeService' => 'Monarc\FrontOffice\Service\AnrScaleTypeServiceFactory',
             'Monarc\FrontOffice\Service\AnrScaleCommentService' => 'Monarc\FrontOffice\Service\AnrScaleCommentServiceFactory',
-            'Monarc\FrontOffice\Service\AnrCheckStartedService' => 'Monarc\FrontOffice\Service\AnrCheckStartedServiceFactory',
+            Service\AnrCheckStartedService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\AnrCartoRiskService' => 'Monarc\FrontOffice\Service\AnrCartoRiskServiceFactory',
             'Monarc\FrontOffice\Service\AnrRiskService' => 'Monarc\FrontOffice\Service\AnrRiskServiceFactory',
             'Monarc\FrontOffice\Service\AnrObjectService' => 'Monarc\FrontOffice\Service\AnrObjectServiceFactory',

@@ -59,7 +59,7 @@ class OperationalRiskScaleCommentService
       }
       if(isset($data['comment'])){
           $translationKey = $operationalRiskScaleComment->getCommentTranslationKey();
-          $translation = $this->translationTable->findByAnrAndKeyAndLanguage($anr, $translationKey,$anrLanguageCode);
+          $translation = $this->translationTable->findByAnrKeyAndLanguage($anr, $translationKey,$anrLanguageCode);
           $translation->setValue($data['comment']);
           $this->translationTable->save($translation,false);
       }

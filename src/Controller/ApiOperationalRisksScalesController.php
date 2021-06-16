@@ -20,7 +20,7 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
         $anrId = (int)$this->params()->fromRoute('anrid');
 
         return new JsonModel([
-            'data' => $this->operationalRiskScaleService->getOperationalRiskScales($anrId)
+            'data' => $this->operationalRiskScaleService->getOperationalRiskScales($anrId),
         ]);
     }
 
@@ -37,23 +37,18 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
     public function deleteList($data)
     {
         $this->operationalRiskScaleService->deleteOperationalRiskScales($data);
+
         return new JsonModel(['status' => 'ok']);
     }
 
     public function update($id, $data)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if (empty($anrId)) {
-          throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-      }
-      $data['anr'] = $anrId;
+        $data['anr'] = (int)$this->params()->fromRoute('anrid');
 
-      if($this->operationalRiskScaleService->update($id, $data))
-        {
-          return new JsonModel(['status' => 'ok']);
+        if ($this->operationalRiskScaleService->update($id, $data)) {
+            return new JsonModel(['status' => 'ok']);
         }
-      else {
-          return new JsonModel(['status' => 'ko']);
-      }
+
+        return new JsonModel(['status' => 'ko']);
     }
 }

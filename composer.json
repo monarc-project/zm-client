@@ -48,7 +48,7 @@
         "ext-bcmath": "*",
         "ext-openssl": "*",
         "doctrine/doctrine-orm-module": "^2.1",
-        "monarc/core": "^2.9.15",
+        "monarc/core": "dev-feature/353 as 2.10.3",
         "monarc/phpword": "^1.0",
         "robmorgan/phinx": "^0.11.1",
         "laminas/laminas-di": "^3.1",

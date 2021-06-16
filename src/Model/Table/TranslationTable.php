@@ -32,7 +32,7 @@ class TranslationTable extends AbstractTable
     /**
      * @return Translation[]
      */
-    public function findByAnrAndTypesAndLanguageIndexedByKey(Anr $anr, array $types, string $lang): array
+    public function findByAnrTypesAndLanguageIndexedByKey(Anr $anr, array $types, string $lang): array
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.key');
 
@@ -46,10 +46,7 @@ class TranslationTable extends AbstractTable
             ->getResult();
     }
 
-    /**
-     * @return Translation
-     */
-    public function findByAnrAndKeyAndLanguage(Anr $anr,string $key, string $lang): Translation
+    public function findByAnrKeyAndLanguage(Anr $anr, string $key, string $lang): Translation
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.key');
 
@@ -60,16 +57,17 @@ class TranslationTable extends AbstractTable
             ->setParameter('key', $key)
             ->setParameter('lang', $lang)
             ->setParameter('anr', $anr)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
-    public function deleteListByKey(array $keys): void
+    public function deleteListByKeys(array $keys): void
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('t');
         $queryBuilder
             ->delete()
-            ->Where($queryBuilder->expr()->in('t.key', $keys))
+            ->where($queryBuilder->expr()->in('t.key', $keys))
             ->getQuery()
             ->getResult();
     }

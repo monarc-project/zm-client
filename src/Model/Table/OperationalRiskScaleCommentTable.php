@@ -3,7 +3,7 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Entity\OperationalRiskScaleComment;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\Core\Model\Table\AbstractTable;
 
 class OperationalRiskScaleCommentTable extends AbstractTable

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
  * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\ModelTable;
+use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
+use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
 
 /**
@@ -19,52 +19,58 @@ use Monarc\FrontOffice\Model\Table\ThreatTable;
  * as scales values).
  * @package Monarc\FrontOffice\Service
  */
-class AnrCheckStartedService extends \Monarc\Core\Service\AbstractService
+class AnrCheckStartedService
 {
-    /** @var ModelTable */
-    protected $modelTable;
-    /** @var InstanceRiskTable */
-    protected $instanceRiskTable;
-    /** @var InstanceConsequenceTable */
-    protected $instanceConsequenceTable;
-    /** @var ThreatTable */
-    protected $threatTable;
-    /** @var InstanceRiskOpTable */
-    protected $instanceRiskOpTable;
+    private AnrTable $anrTable;
+
+    protected ModelTable $modelTable;
+
+    protected InstanceRiskTable $instanceRiskTable;
+
+    protected InstanceConsequenceTable $instanceConsequenceTable;
+
+    protected ThreatTable $threatTable;
+
+    protected OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable;
+
+    public function __construct(
+        AnrTable $anrTable,
+        ModelTable $modelTable,
+        InstanceRiskTable $instanceRiskTable,
+        InstanceConsequenceTable $instanceConsequenceTable,
+        ThreatTable $threatTable,
+        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable
+    ) {
+        $this->anrTable = $anrTable;
+        $this->modelTable = $modelTable;
+        $this->instanceRiskTable = $instanceRiskTable;
+        $this->instanceConsequenceTable = $instanceConsequenceTable;
+        $this->threatTable = $threatTable;
+        $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
+    }
 
     /**
-     * Returns whether or not the ANR sensitive values (scales values) can be changed safely. It is not possible to
-     * change the scales thresholds when:
+     * Returns whether or not the ANR sensitive values (scales values) can be changed safely.
+     * It is not possible to change the scales thresholds when:
      *  - It has been explicitly disabled in the model ANR
      *  - Risks have been evaluated
      *  - Consequences have been evaluated
      *  - Threats have been evaluated
-     * @param \Monarc\FrontOffice\Model\Entity\Anr|array|int $anr The ANR entity, data array, or ID
-     * @return bool True if the ANR sensitive values can be safely edited, false otherwise
-     * @throws \Monarc\Core\Exception\Exception If the ANR in parameter is invalid
      */
-    public function canChange($anr)
+    public function canChange(int $anrId): bool
     {
-        if (is_object($anr)) {
-            if (!$anr instanceof AnrSuperClass) {
-                throw new \Monarc\Core\Exception\Exception('Anr missing', 412);
-            }
-        } elseif (is_int($anr)) {
-            $anr = $this->get('table')->getEntity($anr);
-        } else {
-            throw new \Monarc\Core\Exception\Exception('Anr missing', 412);
+        $anr = $this->anrTable->findById($anrId);
+
+        $isScalesEditable = true;
+        if ($anr->getModel()) {
+            $model = $this->modelTable->getEntity($anr->getModel());
+            $isScalesEditable = $model->get('isScalesUpdatable');
         }
 
-        $isScalesUpdatable = true;
-        if ($anr->get('model')) {
-            $model = $this->modelTable->getEntity($anr->get('model'));
-            $isScalesUpdatable = $model->get('isScalesUpdatable');
-        }
-
-        return !$this->instanceRiskTable->started($anr->get('id')) &&
-            !$this->instanceConsequenceTable->started($anr->get('id')) &&
-            !$this->threatTable->started($anr->get('id')) &&
-            !$this->instanceRiskOpTable->started($anr->get('id')) &&
-            $isScalesUpdatable;
+        return $isScalesEditable
+            && !$this->instanceRiskTable->started($anr->getId())
+            && !$this->instanceConsequenceTable->started($anr->getId())
+            && !$this->threatTable->started($anr->getId())
+            && !$this->operationalInstanceRiskScaleTable->isRisksEvaluationStartedForAnr($anr);
     }
 }

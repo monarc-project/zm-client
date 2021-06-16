@@ -11,7 +11,6 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\FrontOffice\Model\Entity\Translation;
-use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
@@ -121,7 +120,7 @@ class OperationalRiskScaleService
         $anr = $this->anrTable->findById($anrId);
         $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnr($anr);
         $result = [];
-        $translations = $this->translationTable->findByAnrAndTypesAndLanguageIndexedByKey(
+        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
             [OperationalRiskScale::class, OperationalRiskScaleComment::class],
             strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()])
@@ -161,47 +160,51 @@ class OperationalRiskScaleService
 
     public function deleteOperationalRiskScales($data): void
     {
-      $translationsKeys = [];
-      $scaleToDelete = null;
+        $translationsKeys = [];
 
-      foreach ($data as $id) {
+        foreach ($data as $id) {
+            /** @var OperationalRiskScale $scaleToDelete */
+            $scaleToDelete = $this->operationalRiskScaleTable->findById($id);
+            if ($scaleToDelete === null) {
+                throw new EntityNotFoundException(sprintf('Scale with ID %d is not found', $id));
+            }
+            $translationsKeys[] = $scaleToDelete->getLabelTranslationKey();
 
-        $scaleToDelete = $this->operationalRiskScaleTable->findById($id);
-        $translationsKeys[] = $scaleToDelete->getLabelTranslationKey();
+            foreach ($scaleToDelete->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+                $translationsKeys[] = $operationalRiskScaleComment->getCommentTranslationKey();
+            }
 
-        foreach ($scaleToDelete->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
-          $translationsKeys[] = $operationalRiskScaleComment->getCommentTranslationKey();
+            $this->operationalRiskScaleTable->remove($scaleToDelete, true);
+
         }
-         $this->operationalRiskScaleTable->remove($scaleToDelete,true);
-      }
-      $this->translationTable->deleteListByKey($translationsKeys);
 
+        if (!empty($translationsKeys)) {
+            $this->translationTable->deleteListByKeys($translationsKeys);
+        }
     }
 
-    public function update($id, $data):int
+    public function update($id, $data): int
     {
-      $anr = $this->anrTable->findById($data['anr']);
-      $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
-      $operationalRiskScale = $this->operationalRiskScaleTable->findById((int)$id);
+        $anr = $this->anrTable->findById((int)$data['anr']);
 
-      if(isset($data['isHidden']))
-      {
-        if($data['isHidden']==true)
-          $operationalRiskScale->setIsHidden(1);
-        else
-          $operationalRiskScale->setIsHidden(0);
-      }
+        /** @var OperationalRiskScale $operationalRiskScale */
+        $operationalRiskScale = $this->operationalRiskScaleTable->findById((int)$id);
+        $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
 
-      if(isset($data['label']))
-      {
+        $operationalRiskScale->setIsHidden(!empty($data['isHidden']));
 
-          $translationKey = $operationalRiskScale->getLabelTranslationKey();
-          $translation = $this->translationTable->findByAnrAndKeyAndLanguage($anr, $translationKey,$anrLanguageCode);
-          $translation->setValue($data['label']);
-          $this->translationTable->save($translation,false);
-      }
-      $this->operationalRiskScaleTable->save($operationalRiskScale);
+        if (!empty($data['label'])) {
+            $translationKey = $operationalRiskScale->getLabelTranslationKey();
+            if (empty($translationKey)) {
+                //TODO:
+            } else {
+                $translation = $this->translationTable->findByAnrKeyAndLanguage($anr, $translationKey, $anrLanguageCode);
+                $translation->setValue($data['label']);
+                $this->translationTable->save($translation, false);
+            }
+        }
+        $this->operationalRiskScaleTable->save($operationalRiskScale);
 
-      return  $operationalRiskScale->getId();
+        return $operationalRiskScale->getId();
     }
 }

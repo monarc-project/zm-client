@@ -41,21 +41,21 @@ class Anr extends AnrSuperClass
      *
      * @ORM\Column(name="model_id", type="integer", options={"unsigned":true, "default":0})
      */
-    protected $model = '0';
+    protected $model = 0;
 
     /**
      * @var int
      *
      * @ORM\Column(name="model_impacts", type="smallint", options={"unsigned":true, "default":0})
      */
-    protected $modelImpacts = '0';
+    protected $modelImpacts = 0;
 
     /**
      * @var int
      *
      * @ORM\Column(name="cache_model_is_scales_updatable", type="smallint", options={"unsigned":true, "default":0})
      */
-    protected $cacheModelIsScalesUpdatable = '0';
+    protected $cacheModelIsScalesUpdatable = 0;
 
     /**
      * @var int
@@ -198,5 +198,10 @@ class Anr extends AnrSuperClass
         $this->label4 = $label;
 
         return $this;
+    }
+
+    public function getModel(): int
+    {
+        return $this->model;
     }
 }
