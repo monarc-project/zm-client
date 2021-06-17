@@ -49,7 +49,7 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
             return new JsonModel(['status' => 'ok']);
         }
 
-        return new JsonModel(['status' => 'ko']);
+        return new JsonModel(['status' => 'ok']);
     }
 
     public function patchList($data)
