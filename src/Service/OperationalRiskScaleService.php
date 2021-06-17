@@ -227,8 +227,9 @@ class OperationalRiskScaleService
         }
 
         //we change the number of level in the scale
-        if(isset($data['numberOfLevelForOperationalImpact '])){
-          $max = (int)$data['numberOfLevelForOperationalImpact '];
+        if(isset($data['numberOfLevelForOperationalImpact'])){
+          $max = (int)$data['numberOfLevelForOperationalImpact'];
+
 
           $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnrAndType($anr,1);
 
