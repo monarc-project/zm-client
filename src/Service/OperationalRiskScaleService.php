@@ -150,6 +150,7 @@ class OperationalRiskScaleService
                 'max' => $operationalRiskScale->getMax(),
                 'min' => $operationalRiskScale->getMin(),
                 'type' => $operationalRiskScale->getType(),
+                'isHidden' => $operationalRiskScale->getIsHidden(),
                 'label' => $translationLabel,
                 'comments' => $comments,
             ];
