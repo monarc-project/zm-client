@@ -30,5 +30,6 @@ class AnrInstanceRiskOpServiceFactory extends AbstractServiceFactory
         'rolfTagTable' => Table\RolfTagTable::class,
         'scaleTable' => Table\ScaleTable::class,
         'recommandationTable' => Table\RecommandationTable::class,
+        'operationalInstanceRiskScaleTable' => Table\OperationalInstanceRiskScaleTable::class,
     ];
 }
