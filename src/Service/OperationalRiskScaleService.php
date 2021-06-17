@@ -211,6 +211,7 @@ class OperationalRiskScaleService
     public function patchList(array $data)
     {
         $anr = $this->anrTable->findById($data['anr']);
+        $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
 
         // we update the value for all the scales
         if (isset($data['scaleValue']) && isset($data['scaleIndex'])) {
@@ -223,6 +224,54 @@ class OperationalRiskScaleService
                 $operationalRiskScaleComment->setScaleValue($scaleValue);
                 $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment);
             }
+        }
+
+        //we change the number of level in the scale
+        if(isset($data['max'])){
+          $max = (int)$data['max'];
+
+          $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnrAndType($anr,1);
+
+          foreach ($operationalRiskScales as $operationalRiskScale) {
+            $maxScaleValue = 0;
+            $operationalRiskScaleComments = $operationalRiskScale->getOperationalRiskScaleComments();
+            $commentsSize = count($operationalRiskScaleComments);
+
+            foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
+                 if($operationalRiskScaleComment->getScaleValue() > $maxScaleValue)
+                    $maxScaleValue=$operationalRiskScaleComment->getScaleValue();
+            }
+
+              if($max>$commentsSize){ // we have to create new operationalScaleComment
+                  for ($i=$commentsSize; $i <$max ; $i++) {
+                    $maxScaleValue++;
+                    $scaleComment = (new OperationalRiskScaleComment())
+                        ->setCreator($this->connectedUser->getEmail())
+                        ->setAnr($anr)
+                        ->setScaleIndex($i)
+                        ->setScaleValue($maxScaleValue)
+                        ->setCommentTranslationKey((string)Uuid::uuid4())
+                        ->setOperationalRiskScale($operationalRiskScale);
+
+                    $this->operationalRiskScaleCommentTable->save($scaleComment, false);
+
+                    // Create a translation for the scaleComment (init with blank value).
+                    $translation = (new Translation())
+                        ->setAnr($anr)
+                        ->setCreator($this->connectedUser->getEmail())
+                        ->setType(OperationalRiskScaleComment::class)
+                        ->setKey($scaleComment->getCommentTranslationKey())
+                        ->setLang($anrLanguageCode)
+                        ->setValue('');
+
+                    $this->translationTable->save($translation, false);
+                  }
+              }
+
+            $operationalRiskScale->setMax($max-1); //-1 because in the range we count the 0
+            $this->operationalRiskScaleTable->save($operationalRiskScale);
+          }
+
         }
     }
 }
