@@ -62,10 +62,23 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
         }
 
         if (isset($data['numberOfLevelForOperationalImpact'])) {
+            $numberOfLevelForOperationalImpact = (int)$data['numberOfLevelForOperationalImpact'];
+
+            if($numberOfLevelForOperationalImpact > 20 )
+                throw new \Monarc\Core\Exception\Exception('Scales level must remain below 20 ', 412);
+
             $this->operationalRiskScaleService->updateNumberOfLevelForOperationalRiskScale($data);
         }
 
         if (isset($data['probabilityMin']) && isset($data['probabilityMax'])) {
+            $probabilityMin = (int)$data['probabilityMin'];
+            $probabilityMax = (int)$data['probabilityMax'];
+
+            if($probabilityMin > 20 || $probabilityMax > 20)
+                throw new \Monarc\Core\Exception\Exception('Scales level must remain below 20 ', 412);
+            if($probabilityMin >= $probabilityMax)
+                throw new \Monarc\Core\Exception\Exception('Minimum cannot be greater than Maximum', 412);
+
             $this->operationalRiskScaleService->updateMinMaxForOperationalRiskProbability($data);
         }
 

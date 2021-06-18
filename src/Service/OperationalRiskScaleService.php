@@ -212,17 +212,29 @@ class OperationalRiskScaleService
     public function updateValueForAllScale(array $data): void
     {
         $anr = $this->anrTable->findById($data['anr']);
+        $scaleIndex = (int)$data['scaleIndex'];
 
         // Update the value for all the scales.
         $scaleValue = (int)$data['scaleValue'];
+        $nextCommentValue = $scaleValue;
 
         $operationalRiskScaleComments = $this->operationalRiskScaleCommentTable
-            ->findAllByAnrAndIndexAndScaleType($anr, (int)$data['scaleIndex'], 1);
+            ->findAllByAnrAndIndexAndScaleType($anr, $scaleIndex, 1);
 
         foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
             $operationalRiskScaleComment->setScaleValue($scaleValue);
             $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment);
         }
+
+        $nextOperationalRiskScaleComments = $this->operationalRiskScaleCommentTable
+            ->findNextCommentsToUpdateByAnrAndIndexAndType($anr, $scaleIndex, 1);
+
+        foreach ($nextOperationalRiskScaleComments as $nextOperationalRiskScaleComment) {
+            $nextCommentValue++;
+            $nextOperationalRiskScaleComment->setScaleValue($nextCommentValue);
+            $this->operationalRiskScaleCommentTable->save($nextOperationalRiskScaleComment,false);
+        }
+        $this->operationalRiskScaleCommentTable->flush();
     }
 
     public function updateNumberOfLevelForOperationalRiskScale(array $data)
