@@ -65,6 +65,10 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
             $this->operationalRiskScaleService->updateNumberOfLevelForOperationalRiskScale($data);
         }
 
+        if (isset($data['probabilityMin']) && isset($data['probabilityMax'])) {
+            $this->operationalRiskScaleService->updateMinMaxForOperationalRiskProbability($data);
+        }
+
         return new JsonModel(['status' => 'ok']);
     }
 }

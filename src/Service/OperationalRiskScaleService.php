@@ -273,4 +273,79 @@ class OperationalRiskScaleService
             $this->operationalRiskScaleTable->save($operationalRiskScale);
         }
     }
+
+    public function updateMinMaxForOperationalRiskProbability($data):void
+    {
+      $probabilityMin = (int)$data['probabilityMin'];
+      $probabilityMax = (int)$data['probabilityMax'];
+
+      $anr = $this->anrTable->findById($data['anr']);
+      $anrLanguageCode = strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
+
+      $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnrAndType($anr, 2);
+
+      foreach ($operationalRiskScales as $operationalRiskScale) {
+        $actualMin = null;
+        $actualMax = null;
+        $operationalRiskScaleComments = $operationalRiskScale->getOperationalRiskScaleComments();
+        foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
+          if($actualMax==null || $actualMax<$operationalRiskScaleComment->getScaleValue())
+            $actualMax = $operationalRiskScaleComment->getScaleValue();
+          if($actualMin==null || $actualMin>$operationalRiskScaleComment->getScaleValue())
+            $actualMin = $operationalRiskScaleComment->getScaleValue();
+        }
+        if($probabilityMin < $actualMin){
+          for ($i=$probabilityMin; $i < $actualMin; $i++) {
+            $scaleComment = (new OperationalRiskScaleComment())
+                ->setCreator($this->connectedUser->getEmail())
+                ->setAnr($anr)
+                ->setScaleIndex($i)
+                ->setScaleValue($i)
+                ->setCommentTranslationKey((string)Uuid::uuid4())
+                ->setOperationalRiskScale($operationalRiskScale);
+
+            $this->operationalRiskScaleCommentTable->save($scaleComment, false);
+
+            // Create a translation for the scaleComment (init with blank value).
+            $translation = (new Translation())
+                ->setAnr($anr)
+                ->setCreator($this->connectedUser->getEmail())
+                ->setType(OperationalRiskScaleComment::class)
+                ->setKey($scaleComment->getCommentTranslationKey())
+                ->setLang($anrLanguageCode)
+                ->setValue('');
+
+            $this->translationTable->save($translation, false);
+          }
+        }
+        if($probabilityMax > $actualMax){
+          for ($i=$actualMax+1; $i <= $probabilityMax; $i++) {
+            $scaleComment = (new OperationalRiskScaleComment())
+                ->setCreator($this->connectedUser->getEmail())
+                ->setAnr($anr)
+                ->setScaleIndex($i)
+                ->setScaleValue($i)
+                ->setCommentTranslationKey((string)Uuid::uuid4())
+                ->setOperationalRiskScale($operationalRiskScale);
+
+            $this->operationalRiskScaleCommentTable->save($scaleComment, false);
+
+            // Create a translation for the scaleComment (init with blank value).
+            $translation = (new Translation())
+                ->setAnr($anr)
+                ->setCreator($this->connectedUser->getEmail())
+                ->setType(OperationalRiskScaleComment::class)
+                ->setKey($scaleComment->getCommentTranslationKey())
+                ->setLang($anrLanguageCode)
+                ->setValue('');
+
+            $this->translationTable->save($translation, false);
+          }
+        }
+        $operationalRiskScale->setMin($probabilityMin);
+        $operationalRiskScale->setMax($probabilityMax);
+
+        $this->operationalRiskScaleTable->save($operationalRiskScale);
+      }
+    }
 }
