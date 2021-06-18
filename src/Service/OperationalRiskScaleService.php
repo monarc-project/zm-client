@@ -291,15 +291,17 @@ class OperationalRiskScaleService
       $operationalRiskScales = $this->operationalRiskScaleTable->findWithCommentsByAnrAndType($anr, 2);
 
       foreach ($operationalRiskScales as $operationalRiskScale) {
-        $actualMin = null;
-        $actualMax = null;
+        $actualMin = 999; //init with a high value
+        $actualMax = 0;
         $operationalRiskScaleComments = $operationalRiskScale->getOperationalRiskScaleComments();
+
         foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
-          if($actualMax==null || $actualMax<$operationalRiskScaleComment->getScaleValue())
+          if($actualMax<=$operationalRiskScaleComment->getScaleValue())
             $actualMax = $operationalRiskScaleComment->getScaleValue();
-          if($actualMin==null || $actualMin>$operationalRiskScaleComment->getScaleValue())
+          if($actualMin>=$operationalRiskScaleComment->getScaleValue())
             $actualMin = $operationalRiskScaleComment->getScaleValue();
         }
+
         if($probabilityMin < $actualMin){
           for ($i=$probabilityMin; $i < $actualMin; $i++) {
             $scaleComment = (new OperationalRiskScaleComment())
