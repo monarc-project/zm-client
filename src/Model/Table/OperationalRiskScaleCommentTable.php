@@ -30,4 +30,25 @@ class OperationalRiskScaleCommentTable extends AbstractTable
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * If we modify the value which the index correspond to the max of the scale, we have to find the comment with higher index to update them to avoid error
+     * @return OperationalRiskScaleComment[]
+     */
+    public function findNextCommentsToUpdateByAnrAndIndexAndType(Anr $anr, int $scaleIndex, int $type): array
+    {
+        return $this->getRepository()->createQueryBuilder('t')
+            ->innerJoin('t.operationalRiskScale', 'ors')
+            ->where('t.anr = :anr')
+            ->andWhere('t.scaleIndex > :scaleIndex')
+            ->andWhere('ors.type = :type')
+            ->andWhere('ors.max = :scaleIndex')
+            ->setParameter('anr', $anr)
+            ->setParameter('type', $type)
+            ->setParameter('scaleIndex', $scaleIndex)
+            ->getQuery()
+            ->getResult();
+    }
+
+
 }
