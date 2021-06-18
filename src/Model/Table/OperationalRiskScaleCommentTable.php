@@ -17,17 +17,6 @@ class OperationalRiskScaleCommentTable extends AbstractTable
     /**
      * @return OperationalRiskScaleComment[]
      */
-    public function findAllByAnrAndIndex(Anr $anr, int $scaleIndex): array
-    {
-        return $this->getRepository()->createQueryBuilder('t')
-            ->where('t.anr = :anr')
-            ->andWhere('t.scaleIndex = :scaleIndex')
-            ->setParameter('anr', $anr)
-            ->setParameter('scaleIndex', $scaleIndex)
-            ->getQuery()
-            ->getResult();
-    }
-
     public function findAllByAnrAndIndexAndScaleType(Anr $anr, int $scaleIndex, int $type): array
     {
         return $this->getRepository()->createQueryBuilder('t')
