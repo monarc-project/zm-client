@@ -55,7 +55,12 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
     public function patchList($data)
     {
         $data['anr'] = (int)$this->params()->fromRoute('anrid');
-        $this->operationalRiskScaleService->patchList($data);
+
+        if (isset($data['scaleValue']) && isset($data['scaleIndex']))
+            $this->operationalRiskScaleService->updateValueForAllScale($data);
+
+        if(isset($data['numberOfLevelForOperationalImpact']))
+            $this->operationalRiskScaleService->updateNumberOfLevelForOperationalRiskScale($data);
 
         return new JsonModel(['status' => 'ok']);
     }
