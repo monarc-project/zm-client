@@ -216,7 +216,7 @@ class OperationalRiskScaleService
         $scaleValue = (int)$data['scaleValue'];
 
         $operationalRiskScaleComments = $this->operationalRiskScaleCommentTable
-            ->findAllByAnrAndIndex($anr, (int)$data['scaleIndex']);
+            ->findAllByAnrAndIndexAndScaleType($anr, (int)$data['scaleIndex'],1);
 
         foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
             $operationalRiskScaleComment->setScaleValue($scaleValue);

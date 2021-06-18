@@ -27,4 +27,18 @@ class OperationalRiskScaleCommentTable extends AbstractTable
             ->getQuery()
             ->getResult();
     }
+
+    public function findAllByAnrAndIndexAndScaleType(Anr $anr, int $scaleIndex, int $type): array
+    {
+        return $this->getRepository()->createQueryBuilder('t')
+            ->innerJoin('t.operationalRiskScale', 'ors')
+            ->where('t.anr = :anr')
+            ->andWhere('t.scaleIndex = :scaleIndex')
+            ->andWhere('ors.type = :type')
+            ->setParameter('anr', $anr)
+            ->setParameter('type', $type)
+            ->setParameter('scaleIndex', $scaleIndex)
+            ->getQuery()
+            ->getResult();
+    }
 }
