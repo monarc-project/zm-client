@@ -139,6 +139,12 @@ class OperationalRiskScaleService
                 ];
             }
 
+            usort($comments, function ($a, $b) {
+                return $a['scaleIndex'] <=> $b['scaleIndex'];
+            });
+
+            array_splice($comments, $operationalRiskScale->getMax() + 1);
+
             $translationLabel = '';
             if (!empty($operationalRiskScale->getLabelTranslationKey())) {
                 $translationScale = $translations[$operationalRiskScale->getLabelTranslationKey()] ?? null;
