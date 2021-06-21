@@ -18,9 +18,8 @@ class ApiOperationalRisksScalesCommentsController extends AbstractRestfulControl
     public function update($id, $data)
     {
         $data['anr'] = (int)$this->params()->fromRoute('anrid');
-        $id = (int)$id;
 
-        if ($this->operationalRiskScaleCommentService->update($id, $data)) {
+        if ($this->operationalRiskScaleCommentService->update((int)$id, $data)) {
             return new JsonModel(['status' => 'ok']);
         }
 

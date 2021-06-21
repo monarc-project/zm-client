@@ -4,6 +4,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\OperationalRiskScaleService;
 
 class ApiOperationalRisksScalesController extends AbstractRestfulController
@@ -64,20 +65,23 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
         if (isset($data['numberOfLevelForOperationalImpact'])) {
             $numberOfLevelForOperationalImpact = (int)$data['numberOfLevelForOperationalImpact'];
 
-            if($numberOfLevelForOperationalImpact > 20 )
-                throw new \Monarc\Core\Exception\Exception('Scales level must remain below 20 ', 412);
+            if ($numberOfLevelForOperationalImpact > 20) {
+                throw new Exception('Scales level must remain below 20 ', 412);
+            }
 
             $this->operationalRiskScaleService->updateNumberOfLevelForOperationalRiskScale($data);
         }
 
-        if (isset($data['probabilityMin']) && isset($data['probabilityMax'])) {
+        if (isset($data['probabilityMin'], $data['probabilityMax'])) {
             $probabilityMin = (int)$data['probabilityMin'];
             $probabilityMax = (int)$data['probabilityMax'];
 
-            if($probabilityMin > 20 || $probabilityMax > 20)
-                throw new \Monarc\Core\Exception\Exception('Scales level must remain below 20 ', 412);
-            if($probabilityMin >= $probabilityMax)
-                throw new \Monarc\Core\Exception\Exception('Minimum cannot be greater than Maximum', 412);
+            if ($probabilityMin > 20 || $probabilityMax > 20) {
+                throw new Exception('Scales level must remain below 20 ', 412);
+            }
+            if ($probabilityMin >= $probabilityMax) {
+                throw new Exception('Minimum cannot be greater than Maximum', 412);
+            }
 
             $this->operationalRiskScaleService->updateMinMaxForOperationalRiskProbability($data);
         }
