@@ -3,6 +3,7 @@
 namespace Monarc\FrontOffice\Service\Traits;
 
 use Doctrine\ORM\OptimisticLockException;
+use LogicException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
@@ -95,8 +96,7 @@ trait RecommendationsPositionsUpdateTrait
      */
     protected function resetRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
     {
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
+        $recommendationTable = $this->getRecommendationTable();
         $linkedRecommendations = $recommendationTable
             ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                 $anr,
@@ -126,8 +126,7 @@ trait RecommendationsPositionsUpdateTrait
 
     private function updateRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
     {
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
+        $recommendationTable = $this->getRecommendationTable();
         $linkedRecommendations = $recommendationTable
             ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                 $anr,
@@ -226,5 +225,24 @@ trait RecommendationsPositionsUpdateTrait
         }
 
         return true;
+    }
+
+    /**
+     * TODO: remove the method when all the services, that use the trait will use dependencies' injection via constructor.
+     */
+    private function getRecommendationTable(): RecommandationTable
+    {
+        if (method_exists($this, 'get')) {
+            return $this->get('recommandationTable');
+        }
+        if (property_exists(\get_class($this), 'recommendationTable')) {
+            return $this->recommendationTable;
+        }
+
+        throw new LogicException(sprintf(
+            'The property "recommendationTable" should be defined in the class "%s" to be able to use the trait "%s"',
+            __CLASS__,
+            __TRAIT__
+        ));
     }
 }
