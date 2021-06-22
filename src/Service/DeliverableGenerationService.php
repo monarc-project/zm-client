@@ -638,10 +638,11 @@ class DeliverableGenerationService extends AbstractService
 
         // Generate operational risk impacts table
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($anr->getId());
-        $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1;}));
+        $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1 && $scale['isHidden'] == false;}));
         $opRisksImpactsScaleMin = $opRisksImpactsScales[0]['min'];
         $opRisksImpactsScaleMax = $opRisksImpactsScales[0]['max'];
         $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;}))[0];
+        $sizeColumn = 17 / count($opRisksImpactsScales);
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($styleTable);
@@ -649,14 +650,14 @@ class DeliverableGenerationService extends AbstractService
         $table->addRow(400, ['tblHeader' => true]);
         $table->addCell(Converter::cmToTwip(2.00), $styleHeaderCell)->addText($this->anrTranslate('Level'), $styleHeaderFont, $styleHeaderParagraph);
         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-            $table->addCell(Converter::cmToTwip(2.00), $styleHeaderCell)->addText($opRiskImpactScale['label'], $styleHeaderFont, $styleHeaderParagraph);
+            $table->addCell(Converter::cmToTwip($sizeColumn), $styleHeaderCell)->addText($opRiskImpactScale['label'], $styleHeaderFont, $styleHeaderParagraph);
         }
 
         for ($row = $opRisksImpactsScaleMin; $row <= $opRisksImpactsScaleMax; ++$row) {
             $table->addRow(400);
             $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText($opRisksImpactsScales[0]['comments'][$row]['scaleValue'], $styleContentFont, $styleLevelParagraph);
             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                  $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText(_WT($opRiskImpactScale['comments'][$row]['comment']), $styleContentFont, $styleContentParagraph);
+                  $table->addCell(Converter::cmToTwip($sizeColumn), $cellRowSpan)->addText(_WT($opRiskImpactScale['comments'][$row]['comment']), $styleContentFont, $styleContentParagraph);
             }
         }
 
