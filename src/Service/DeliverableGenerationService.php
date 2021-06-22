@@ -641,7 +641,7 @@ class DeliverableGenerationService extends AbstractService
         $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1;}));
         $opRisksImpactsScaleMin = $opRisksImpactsScales[0]['min'];
         $opRisksImpactsScaleMax = $opRisksImpactsScales[0]['max'];
-        $opRisksLikelihoodScale = array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;});
+        $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;}));
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($styleTable);
@@ -653,7 +653,7 @@ class DeliverableGenerationService extends AbstractService
         }
 
         for ($row = $opRisksImpactsScaleMin; $row <= $opRisksImpactsScaleMax; ++$row) {
-            $table->addRow();
+            $table->addRow(400);
             $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText($opRisksImpactsScales[0]['comments'][$row]['scaleValue'], $styleContentFont, $styleLevelParagraph);
             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                   $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText(_WT($opRiskImpactScale['comments'][$row]['comment']), $styleContentFont, $styleContentParagraph);
@@ -661,6 +661,24 @@ class DeliverableGenerationService extends AbstractService
         }
 
         $values['table']['OP_RISKS_SCALE_IMPACT'] = $table;
+        unset($tableWord);
+
+        // Generate operational risk likelihood table
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable($styleTable);
+
+        $table->addRow(400, ['tblHeader' => true]);
+        $table->addCell(Converter::cmToTwip(2.00), $styleHeaderCell)->addText($this->anrTranslate('Level'), $styleHeaderFont, $styleHeaderParagraph);
+        $table->addCell(Converter::cmToTwip(17.00), $styleHeaderCell)->addText($this->anrTranslate('Comment'), $styleHeaderFont, $styleHeaderParagraph);
+
+        foreach ($opRisksLikelihoodScale[0]['comments'] as $comment) {
+            $table->addRow(400);
+            $table->addCell(Converter::cmToTwip(2.00), $styleContentCell)->addText($comment['scaleValue'], $styleContentFont, $styleLevelParagraph);
+            $table->addCell(Converter::cmToTwip(2.00), $styleContentCell)->addText(_WT($comment['comment']), $styleContentFont, $styleContentParagraph);
+        }
+
+        $values['table']['OP_RISKS_SCALE_LIKELIHOOD'] = $table;
         unset($tableWord);
 
         // Generate operational risks table
