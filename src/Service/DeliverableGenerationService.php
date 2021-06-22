@@ -56,6 +56,8 @@ class DeliverableGenerationService extends AbstractService
     protected $scaleTypeService;
     /** @var AnrScaleCommentService */
     protected $scaleCommentService;
+    /** @var OperationalRiskScaleService */
+    protected $operationalRiskScaleService;
     /** @var QuestionService */
     protected $questionService;
     /** @var QuestionChoiceService */
@@ -632,6 +634,33 @@ class DeliverableGenerationService extends AbstractService
 
 
         $values['table']['TABLE_RISKS'] = $table;
+        unset($tableWord);
+
+        // Generate operational risk impacts table
+        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($anr->getId());
+        $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1;}));
+        $opRisksImpactsScaleMin = $opRisksImpactsScales[0]['min'];
+        $opRisksImpactsScaleMax = $opRisksImpactsScales[0]['max'];
+        $opRisksLikelihoodScale = array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;});
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable($styleTable);
+
+        $table->addRow(400, ['tblHeader' => true]);
+        $table->addCell(Converter::cmToTwip(2.00), $styleHeaderCell)->addText($this->anrTranslate('Level'), $styleHeaderFont, $styleHeaderParagraph);
+        foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+            $table->addCell(Converter::cmToTwip(2.00), $styleHeaderCell)->addText($opRiskImpactScale['label'], $styleHeaderFont, $styleHeaderParagraph);
+        }
+
+        for ($row = $opRisksImpactsScaleMin; $row <= $opRisksImpactsScaleMax; ++$row) {
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText($opRisksImpactsScales[0]['comments'][$row]['scaleValue'], $styleContentFont, $styleLevelParagraph);
+            foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                  $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText(_WT($opRiskImpactScale['comments'][$row]['comment']), $styleContentFont, $styleContentParagraph);
+            }
+        }
+
+        $values['table']['OP_RISKS_SCALE_IMPACT'] = $table;
         unset($tableWord);
 
         // Generate operational risks table

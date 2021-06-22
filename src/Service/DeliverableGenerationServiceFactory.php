@@ -29,6 +29,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'scaleService' => Service\AnrScaleService::class,
         'scaleTypeService' => Service\AnrScaleTypeService::class,
         'scaleCommentService' => Service\AnrScaleCommentService::class,
+        'operationalRiskScaleService' => Service\OperationalRiskScaleService::class,
         'questionService' => Service\AnrQuestionService::class,
         'questionChoiceService' => Service\AnrQuestionChoiceService::class,
         'interviewService' => Service\AnrInterviewService::class,
