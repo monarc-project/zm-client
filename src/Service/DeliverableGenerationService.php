@@ -641,7 +641,7 @@ class DeliverableGenerationService extends AbstractService
         $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1;}));
         $opRisksImpactsScaleMin = $opRisksImpactsScales[0]['min'];
         $opRisksImpactsScaleMax = $opRisksImpactsScales[0]['max'];
-        $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;}));
+        $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;}))[0];
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($styleTable);
@@ -672,7 +672,7 @@ class DeliverableGenerationService extends AbstractService
         $table->addCell(Converter::cmToTwip(2.00), $styleHeaderCell)->addText($this->anrTranslate('Level'), $styleHeaderFont, $styleHeaderParagraph);
         $table->addCell(Converter::cmToTwip(17.00), $styleHeaderCell)->addText($this->anrTranslate('Comment'), $styleHeaderFont, $styleHeaderParagraph);
 
-        foreach ($opRisksLikelihoodScale[0]['comments'] as $comment) {
+        foreach ($opRisksLikelihoodScale['comments'] as $comment) {
             $table->addRow(400);
             $table->addCell(Converter::cmToTwip(2.00), $styleContentCell)->addText($comment['scaleValue'], $styleContentFont, $styleLevelParagraph);
             $table->addCell(Converter::cmToTwip(2.00), $styleContentCell)->addText(_WT($comment['comment']), $styleContentFont, $styleContentParagraph);
@@ -687,7 +687,7 @@ class DeliverableGenerationService extends AbstractService
         $table = $section->addTable(['align' => 'center', 'cellMarginRight' => '0']);
 
         $header = [];
-        for ($t = $threatsScale['min']; $t <= $threatsScale['max']; ++$t) {
+        for ($t = $opRisksLikelihoodScale['min']; $t <= $opRisksLikelihoodScale['max']; ++$t) {
             $header[] = $t;
             $cellColSpanHeader = ['gridSpan' => (count($header)), 'size' => 10, 'valign' => 'center', 'align' => 'center', 'Alignment' => 'center'];
 
@@ -706,13 +706,13 @@ class DeliverableGenerationService extends AbstractService
             $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText($Prob, $risksTableFontStyleBlack, $alignCenter);
         }
 
-        for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
+        for ($row = $opRisksImpactsScaleMin; $row <= $opRisksImpactsScaleMax; ++$row) {
+            $impactValue = $opRisksImpactsScales[0]['comments'][$row]['scaleValue'];
             $table->addRow(Converter::cmToTwip($size));
             $table->addCell(null, ['vMerge' => 'continue']);
-            $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText($row, $risksTableFontStyleBlack, $alignCenter);
-
+            $table->addCell(Converter::cmToTwip($size), $risksTableCellStyle)->addText($impactValue, $risksTableFontStyleBlack, $alignCenter);
             foreach ($header as $Prob) {
-                $value = $Prob * $row;
+                $value = $Prob * $impactValue;
 
                 if ($value <= $anr->seuilRolf1) {
                     $style = $risksTableGreenCellStyle;
@@ -727,7 +727,7 @@ class DeliverableGenerationService extends AbstractService
                     }
                 }
 
-                $table->addCell(null, $style)->addText($Prob * $row, $fontStyle, $alignCenter);
+                $table->addCell(null, $style)->addText($Prob * $impactValue, $fontStyle, $alignCenter);
             }
         }
 
