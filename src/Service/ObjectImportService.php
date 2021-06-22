@@ -278,7 +278,7 @@ class ObjectImportService
             $rolfTag = (new RolfTag())
                 ->setAnr($anr)
                 ->setCode($rolfTagData['code'])
-                ->setLabels($rolfTagData['label']);
+                ->setLabels($rolfTagData);
         }
 
         if (!empty($rolfTagData['risks'])) {
