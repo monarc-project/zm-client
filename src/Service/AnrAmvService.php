@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AmvSuperClass;
 use Monarc\Core\Service\AmvService;
 use Monarc\FrontOffice\Model\Entity\Amv;
@@ -77,14 +76,6 @@ class AnrAmvService extends AmvService
      */
     public function update($id, $data)
     {
-        // TODO: validate/filter the data before, in the controller.
-        if (empty($data)) {
-            throw new Exception('Data missing', 412);
-        }
-        if ($id['anr'] !== $data['anr']) {
-            throw new Exception('Anr Id doesn\'t match Amv related Anr Id', 412);
-        }
-
         /** @var AmvTable $amvTable */
         $amvTable = $this->get('table');
         /** @var Amv $amv */
@@ -147,7 +138,7 @@ class AnrAmvService extends AmvService
             $amv = $newAmv;
         }
 
-        return $amvTable->saveEntity($amv);
+        $amvTable->saveEntity($amv);
     }
 
     /**
@@ -155,50 +146,16 @@ class AnrAmvService extends AmvService
      */
     public function patch($id, $data)
     {
-        /** @var Amv $amv */
-        $amv = $this->get('table')->getEntity($id);
-        if (!$amv) {
-            throw new Exception('Entity does not exist', 412);
+        /** @var AmvTable $amvTable */
+        $amvTable = $this->get('table');
+        $amv = $amvTable->findByUuidAndAnrId($id, (int)$data['anr']);
+
+        if (isset($data['status'])) {
+            $amv->setStatus((int)$data['status']);
         }
-        if ($amv->get('anr')->get('id') != $data['anr']) {
-            throw new Exception('Anr id error', 412);
-        }
+        $amv->setUpdater($this->getConnectedUser()->getFirstname() . ' ' . $this->getConnectedUser()->getLastname());
 
-        // on ne permet pas de modifier l'asset
-        $data['asset'] = ['anr' => $amv->get('asset')->get('anr')->get('id'), 'uuid' => $amv->getAsset()->getUuid()]; // asset can not be changed
-
-        $amv->setLanguage($this->getLanguage());
-
-        foreach ($this->dependencies as $dependency) {
-            if (!isset($data[$dependency]) && $amv->$dependency) {
-                $data[$dependency] = $amv->$dependency->id;
-            }
-        }
-        if (isset($data['measures'])) {
-            //manage the measures separatly because it's the slave of the relation amv<-->measures
-            foreach ($data['measures'] as $measure) {
-                $measureEntity = $this->get('measureTable')->getEntity($measure);
-                $measureEntity->addAmv($amv);
-            }
-
-            foreach ($amv->measures as $m) {
-                if (false === array_search($m->getUuid(), array_column($data['measures'], 'uuid'), true)) {
-                    $m->removeAmv($amv);
-                }
-            }
-            unset($data['measures']);
-        }
-
-        $amv->exchangeArray($data, true);
-
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($amv, $dependencies);
-
-        $amv->setUpdater(
-            $this->getConnectedUser()->getFirstname() . ' ' . $this->getConnectedUser()->getLastname()
-        );
-
-        return $this->get('table')->save($amv);
+        $amvTable->saveEntity($amv);
     }
 
     /**

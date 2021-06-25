@@ -47,7 +47,7 @@ class AmvTable extends AbstractEntityTable
     /**
      * @throws EntityNotFoundException
      */
-    public function findByUuidAndAnrId(string $uuid, int $anrId)
+    public function findByUuidAndAnrId(string $uuid, int $anrId): Amv
     {
         $amv = $this->getRepository()
             ->createQueryBuilder('a')
@@ -57,6 +57,7 @@ class AmvTable extends AbstractEntityTable
             ->andWhere('a.anr = :anrId')
             ->setParameter('uuid', $uuid)
             ->setParameter('anrId', $anrId)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
 

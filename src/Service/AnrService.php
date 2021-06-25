@@ -503,6 +503,7 @@ class AnrService extends AbstractService
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
             $newAnr->setReferentials(null);
+            $newAnr->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
             if (!empty($model) && is_object($model)) {
                 $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
                 $newAnr->set('cacheModelIsScalesUpdatable', $model->isScalesUpdatable);
@@ -522,14 +523,15 @@ class AnrService extends AbstractService
 
             if (!$isSnapshot && !$isSnapshotCloning) { // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
                 //add user to anr
-                $userCliTable = $this->get('userCliTable');
                 $user = $userCliTable->findById($connectedUser->getId());
-                $userAnr = new UserAnr();
-                $userAnr->set('id', null);
-                $userAnr->setUser($user);
-                $userAnr->setAnr($newAnr);
-                $userAnr->setRwd(1);
-                $this->get('userAnrCliTable')->save($userAnr, false);
+                $userAnr = (new UserAnr())
+                    ->setUser($user)
+                    ->setAnr($newAnr)
+                    ->setRwd(1)
+                    ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
+                /** @var UserAnrTable $userAnrCliTable */
+                $userAnrCliTable = $this->get('userAnrCliTable');
+                $userAnrCliTable->saveEntity($userAnr, false);
             }
 
             // duplicate themes
