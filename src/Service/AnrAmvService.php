@@ -148,7 +148,7 @@ class AnrAmvService extends AmvService
     {
         /** @var AmvTable $amvTable */
         $amvTable = $this->get('table');
-        $amv = $amvTable->findByUuidAndAnrId($id, (int)$data['anr']);
+        $amv = $amvTable->findByUuidAndAnrId($id['uuid'], (int)$data['anr']);
 
         if (isset($data['status'])) {
             $amv->setStatus((int)$data['status']);
