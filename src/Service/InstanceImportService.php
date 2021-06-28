@@ -632,18 +632,16 @@ class InstanceImportService
          * Import the referentials.
          */
         if (isset($data['referentials'])) {
-            foreach ($data['referentials'] as $referentialUUID => $referential_array) {
-                // check if the referential is not already present in the analysis
-                // TODO: findByAnrAndUuid
-                $referentials = $this->referentialTable
-                    ->getEntityByFields(['anr' => $anr->getId(), 'uuid' => $referentialUUID]);
-                if (empty($referentials)) {
-                    $newReferential = new Referential($referential_array);
-                    $newReferential->setAnr($anr);
-                    // TODO: saveEntity
-                    $this->referentialTable->saveEntity($newReferential, false);
+            foreach ($data['referentials'] as $referentialUuid => $referentialData) {
+                $referential = $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
+                if ($referential === null) {
+                    $referential = (new Referential($referentialData))->setAnr($anr);
+                    $this->referentialTable->saveEntity($referential, false);
                 }
+                $this->cachedData['referential'][$referentialUuid] = $referential;
             }
+
+            $this->referentialTable->getDb()->flush();
         }
 
         /*
@@ -651,27 +649,22 @@ class InstanceImportService
          */
         if (isset($data['soacategories'])) {
             foreach ($data['soacategories'] as $soaCategory) {
-                // load the referential linked to the soacategory
-                // TODO: findByAnrAndUuid
-                $referentials = $this->referentialTable->getEntityByFields([
-                    'anr' => $anr->getId(),
-                    'uuid' => $soaCategory['referential']
-                ]);
-                if (!empty($referentials)) {
+                if (isset($this->cachedData['referential'][$soaCategory['referential']])) {
+                    $referential = $this->cachedData['referential'][$soaCategory['referential']];
                     $categories = $this->soaCategoryTable->getEntityByFields([
                         'anr' => $anr->getId(),
                         $labelKey => $soaCategory[$labelKey],
                         'referential' => [
                             'anr' => $anr->getId(),
-                            'uuid' => $referentials[0]->getUuid(),
+                            'uuid' => $referential->getUuid(),
                         ]
                     ]);
                     if (empty($categories)) {
-                        $newSoaCategory = new SoaCategory($soaCategory);
-                        $newSoaCategory->setAnr($anr);
-                        $newSoaCategory->setReferential($referentials[0]);
-                        // TODO: saveEntity
-                        $this->soaCategoryTable->save($newSoaCategory, false);
+                        // TODO: set labels and status, remove the constructor set.
+                        $newSoaCategory = (new SoaCategory($soaCategory))
+                            ->setAnr($anr)
+                            ->setReferential($referential);
+                        $this->soaCategoryTable->saveEntity($newSoaCategory, false);
                     }
                 }
             }
@@ -692,14 +685,15 @@ class InstanceImportService
                 $measure = $this->cachedData['measures'][$measureUuid]
                     ?? $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
                 if ($measure === null) {
-                    // load the referential linked to the measure
-                    $referential = $this->referentialTable->findByAnrAndUuid($anr, $measureData['referential']);
                     // TODO: findBy...
                     $soaCategories = $this->soaCategoryTable->getEntityByFields([
                         'anr' => $anr->getId(),
                         $labelKey => $measureData['category']
                     ]);
-                    if ($referential !== null && !empty($soaCategories)) {
+                    if (isset($this->cachedData['referential'][$measureData['referential']])
+                        && !empty($soaCategories)
+                    ) {
+                        $referential = $this->cachedData['referential'][$measureData['referential']];
                         // a measure must be linked to a referential and a category
                         $newMeasure = new Measure($measureData);
                         $newMeasure->setAnr($anr);
@@ -713,15 +707,14 @@ class InstanceImportService
                         if (!isset($data['soas'])) {
                             // if no SOAs in the analysis to import, create new ones
                             $newSoa = (new Soa())
-                                ->setAnr($anr);
-                            // TODO: return $this in setMeasure and join with previous chain calls.
-                            $newSoa->setMeasure($newMeasure);
+                                ->setAnr($anr)
+                                ->setMeasure($newMeasure);
                             $this->soaTable->saveEntity($newSoa, false);
                         }
                     }
-                } else {
-                    $this->cachedData['measures'][$measureUuid] = $measure;
                 }
+
+                $this->cachedData['measures'][$measureUuid] = $measure;
             }
 
             $this->measureTable->getDb()->flush();
@@ -748,48 +741,34 @@ class InstanceImportService
 
         // import the SOAs
         if (isset($data['soas'])) {
-            // TODO: findByAnr and replace the map as it won't work.
-            $measuresStoredId = $this->measureTable->fetchAllFiltered(['uuid'], 1, 0, null, null, ['anr' => $anr->getId()], null, null);
-            $measuresStoredId = array_map(function ($elt) {
-                return (string)$elt['uuid'];
-            }, $measuresStoredId);
+            $existedMeasures = $this->measureTable->findByAnrIndexedByUuid($anr);
             foreach ($data['soas'] as $soa) {
                 // check if the corresponding measure has been created during this import.
-                if (array_key_exists($soa['measure_id'], $measuresNewIds)) {
+                if (isset($measuresNewIds[$soa['measure_id']])) {
                     $newSoa = (new Soa($soa))
-                        ->setAnr($anr);
-                    // TODO: return $this from setMeasure and join this with chain calls.
-                    $newSoa->setMeasure($measuresNewIds[$soa['measure_id']]);
+                        ->setAnr($anr)
+                        ->setMeasure($measuresNewIds[$soa['measure_id']]);
                     $this->soaTable->saveEntity($newSoa, false);
-                } elseif (in_array($soa['measure_id'], $measuresStoredId)) { //measure exist so soa exist (normally)
-                    // TODO: findByMeasure or find a measure then $measure->getSoa() if possible
-                    $existedSoa = $this->soaTable->getEntityByFields([
-                        'measure' => [
-                            'anr' => $anr->getId(),
-                            'uuid' => $soa['measure_id']
-                        ]
-                    ]);
-                    if (empty($existedSoa)) {
+                } elseif (isset($existedMeasures[$soa['measure_id']])) { //measure exist so soa exist (normally)
+                    // TODO: why not $existedMeasure->getSoa() ...
+                    $existedMeasure = $existedMeasures[$soa['measure_id']];
+                    $existedSoa = $this->soaTable->findByMeasure($existedMeasure);
+                    if ($existedSoa === null) {
                         $newSoa = (new Soa($soa))
-                            ->setAnr($anr);
-                        // TODO: join setMeasure with prev chain calls, $measureTable->findByAnrAndUuid
-                        $newSoa->setMeasure($this->measureTable->getEntity([
-                            'anr' => $anr->getId(),
-                            'uuid' => $soa['measure_id']
-                        ]));
+                            ->setAnr($anr)
+                            ->setMeasure($existedMeasure);
                         $this->soaTable->saveEntity($newSoa, false);
                     } else {
-                        $existedSoa = $existedSoa[0];
-                        $existedSoa->remarks = $soa['remarks'];
-                        $existedSoa->evidences = $soa['evidences'];
-                        $existedSoa->actions = $soa['actions'];
-                        $existedSoa->compliance = $soa['compliance'];
-                        $existedSoa->EX = $soa['EX'];
-                        $existedSoa->LR = $soa['LR'];
-                        $existedSoa->CO = $soa['CO'];
-                        $existedSoa->BR = $soa['BR'];
-                        $existedSoa->BP = $soa['BP'];
-                        $existedSoa->RRA = $soa['RRA'];
+                        $existedSoa->setRemarks($soa['remarks'])
+                            ->setEvidences($soa['evidences'])
+                            ->setActions($soa['actions'])
+                            ->setCompliance($soa['compliance'])
+                            ->setEX($soa['EX'])
+                            ->setLR($soa['LR'])
+                            ->setCO($soa['CO'])
+                            ->setBR($soa['BR'])
+                            ->setBP($soa['BP'])
+                            ->setRRA($soa['RRA']);
                         $this->soaTable->saveEntity($existedSoa, false);
                     }
                 }
