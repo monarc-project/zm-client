@@ -1007,7 +1007,8 @@ class AnrService extends AbstractService
                     ->setLabelTranslationKey($scale->getLabelTranslationKey())
                     ->setCreator($connectedUser->getEmail());
 
-                $translationToFetchFromCore[] = $scale->getLabelTranslationKey();
+                if($scale->getType()==1)
+                    $translationToFetchFromCore[$scale->getLabelTranslationKey()] = OperationalRiskScale::class;
                 // manage the operationalRiskScaleComments
                 foreach ($scale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
                   $newScaleComment = (new OperationalRiskScaleComment())
@@ -1020,7 +1021,7 @@ class AnrService extends AbstractService
 
                   $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
 
-                  $translationToFetchFromCore[] = $operationalRiskScaleComment->getCommentTranslationKey();
+                  $translationToFetchFromCore[$operationalRiskScaleComment->getCommentTranslationKey()] = OperationalRiskScaleComment::class;
                 }
                 $operationalRiskScaleCliTable->save($newScale, false);
                 $operationalScaleNewIds[$scale->getId()] = $newScale;
@@ -1401,7 +1402,7 @@ class AnrService extends AbstractService
             if($source === MonarcObject::SOURCE_COMMON){
                 $translationTable = $this->get('translationTable');
                 $translations = $translationTable->findByKeysAndLang(
-                    $translationToFetchFromCore,
+                    array_keys($translationToFetchFromCore),
                     strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
                     );
             }else {
@@ -1413,7 +1414,7 @@ class AnrService extends AbstractService
               $newTranslation = (new Translation())
                   ->setAnr($newAnr)
                   ->setCreator($connectedUser->getEmail())
-                  ->setType($translation->getType())
+                  ->setType($translationToFetchFromCore[$translation->getKey()])
                   ->setKey($translation->getKey())
                   ->setLang($translation->getLang())
                   ->setValue($translation->getValue());
@@ -1427,8 +1428,7 @@ class AnrService extends AbstractService
 
         } catch (\Exception $e) {
             if (!empty($newAnr)) {
-                //$anrCliTable->deleteEntity($newAnr);
-                file_put_contents('php://stderr', print_r($e, TRUE).PHP_EOL);
+                $anrCliTable->deleteEntity($newAnr);
             }
             throw new Exception('Error during analysis creation', 412);
         }
