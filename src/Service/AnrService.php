@@ -42,6 +42,9 @@ use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\RolfTag;
 use Monarc\FrontOffice\Model\Entity\Scale;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
+use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
@@ -97,6 +100,9 @@ class AnrService extends AbstractService
     protected $soaTable;
     protected $soaCategoryTable;
     protected $referentialTable;
+    protected $operationalRiskScaleTable;
+    protected $operationalRiskScaleCommentTable;
+    protected $translationTable;
 
 
     protected $amvCliTable;
@@ -140,12 +146,16 @@ class AnrService extends AbstractService
     protected $recordRecipientCliTable;
     protected $referentialCliTable;
     protected $measureMeasureCliTable;
+    protected $operationalRiskScaleCliTable;
+    protected $operationalRiskScaleCommentCliTable;
+    protected $translationCliTable;
 
     protected $instanceService;
     protected $recordService;
     protected $recordProcessorService;
 
     protected $statsAnrService;
+    protected $configService;
 
     /**
      * @inheritdoc
@@ -484,6 +494,9 @@ class AnrService extends AbstractService
         /** @var CoreUser $connectedUser */
         $connectedUser = $userCliTable->getConnectedUser();
 
+        /** @var ConfigService $configService */
+        $configService = $this->get('configService');
+
         if ($source == MonarcObject::SOURCE_CLIENT && !$isSnapshotCloning) {
             /** @var UserAnrTable $userAnrCliTable */
             $userAnrCliTable = $this->get('userAnrCliTable');
@@ -533,6 +546,11 @@ class AnrService extends AbstractService
                 $userAnrCliTable = $this->get('userAnrCliTable');
                 $userAnrCliTable->saveEntity($userAnr, false);
             }
+
+            //duplicate translations
+            // store the trasnslation key to fetch from Core
+            $translationToFetchFromCore = [];
+
 
             // duplicate themes
             $themesNewIds = [];
@@ -966,6 +984,50 @@ class AnrService extends AbstractService
                 $scalesNewIds[$scale->id] = $newScale;
             }
 
+            //duplicate operational scales && operational risk scale comment
+            $operationalScaleNewIds = [];
+            $operationalRiskScaleTable = $source === MonarcObject::SOURCE_COMMON
+                ? $this->get('operationalRiskScaleTable')
+                : $this->get('operationalRiskScaleCliTable');
+            $operationalRiskScaleCliTable = $this->get('operationalRiskScaleCliTable');
+
+
+            $operationalRiskScaleCommentTable = $source === MonarcObject::SOURCE_COMMON
+                ? $this->get('operationalRiskScaleCommentTable')
+                : $this->get('operationalRiskScaleCommentCliTable');
+            $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
+
+            $scales = $operationalRiskScaleTable->findWithCommentsByAnr($anr);
+            foreach ($scales as $scale) {
+                $newScale = (new OperationalRiskScale())
+                    ->setAnr($newAnr)
+                    ->setType($scale->getType())
+                    ->setMin($scale->getMin())
+                    ->setMax($scale->getMax())
+                    ->setLabelTranslationKey($scale->getLabelTranslationKey())
+                    ->setCreator($connectedUser->getEmail());
+
+                $translationToFetchFromCore[] = $scale->getLabelTranslationKey();
+                // manage the operationalRiskScaleComments
+                foreach ($scale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+                  $newScaleComment = (new OperationalRiskScaleComment())
+                      ->setCreator($connectedUser->getEmail())
+                      ->setAnr($newAnr)
+                      ->setScaleIndex($operationalRiskScaleComment->getScaleIndex())
+                      ->setScaleValue($operationalRiskScaleComment->getScaleValue())
+                      ->setCommentTranslationKey($operationalRiskScaleComment->getCommentTranslationKey())
+                      ->setOperationalRiskScale($newScale);
+
+                  $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
+
+                  $translationToFetchFromCore[] = $operationalRiskScaleComment->getCommentTranslationKey();
+                }
+                $operationalRiskScaleCliTable->save($newScale, false);
+                $operationalScaleNewIds[$scale->getId()] = $newScale;
+            }
+
+
+
             //duplicate scales impact types
             $scalesImpactTypesNewIds = [];
             $scaleImpactTypeTable = $source === MonarcObject::SOURCE_COMMON
@@ -1332,13 +1394,41 @@ class AnrService extends AbstractService
                 }
             }
 
+            //manage Translation
+
+            $translationCliTable = $this->get('translationCliTable');
+
+            if($source === MonarcObject::SOURCE_COMMON){
+                $translationTable = $this->get('translationTable');
+                $translations = $translationTable->findByKeysAndLang(
+                    $translationToFetchFromCore,
+                    strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
+                    );
+            }else {
+                $translationTable = $this->get('translationCliTable');
+                $translations = $translationTable->findByAnr($anr);
+            }
+
+            foreach ($translations as $translation) {
+              $newTranslation = (new Translation())
+                  ->setAnr($newAnr)
+                  ->setCreator($connectedUser->getEmail())
+                  ->setType($translation->getType())
+                  ->setKey($translation->getKey())
+                  ->setLang($translation->getLang())
+                  ->setValue($translation->getValue());
+
+              $translationCliTable->save($newTranslation, false);
+            }
+
             $this->get('table')->getDb()->flush();
 
             $this->setUserCurrentAnr($newAnr->getId());
 
         } catch (\Exception $e) {
             if (!empty($newAnr)) {
-                $anrCliTable->deleteEntity($newAnr);
+                //$anrCliTable->deleteEntity($newAnr);
+                file_put_contents('php://stderr', print_r($e, TRUE).PHP_EOL);
             }
             throw new Exception('Error during analysis creation', 412);
         }

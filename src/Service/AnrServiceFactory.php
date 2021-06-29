@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
+use Monarc\Core\Service\ConfigService;
 
 /**
  * Factory class attached to AnrService
@@ -47,6 +48,10 @@ class AnrServiceFactory extends AbstractServiceFactory
         'questionChoiceTable' => 'Monarc\Core\Model\Table\QuestionChoiceTable',
         'soaCategoryTable' => 'Monarc\Core\Model\Table\SoaCategoryTable',
         'referentialTable' => 'Monarc\Core\Model\Table\ReferentialTable',
+        'operationalRiskScaleTable' => 'Monarc\Core\Model\Table\OperationalRiskScaleTable',
+        'operationalRiskScaleCommentTable' => 'Monarc\Core\Model\Table\OperationalRiskScaleCommentTable',
+        'translationTable' => 'Monarc\Core\Model\Table\TranslationTable',
+
 
         //fo
         'anrCliTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
@@ -90,7 +95,9 @@ class AnrServiceFactory extends AbstractServiceFactory
         'recordRecipientCliTable' => 'Monarc\FrontOffice\Model\Table\RecordRecipientTable',
         'referentialCliTable' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
         'measureMeasureCliTable' => 'Monarc\FrontOffice\Model\Table\MeasureMeasureTable',
-
+        'operationalRiskScaleCliTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable',
+        'operationalRiskScaleCommentCliTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable',
+        'translationCliTable' => 'Monarc\FrontOffice\Model\Table\TranslationTable',
 
         // export
         'instanceService' => 'Monarc\FrontOffice\Service\AnrInstanceService',
@@ -99,5 +106,8 @@ class AnrServiceFactory extends AbstractServiceFactory
 
         // Stats Service
         'statsAnrService' => StatsAnrService::class,
+
+        // other Service
+        'configService' => ConfigService::class,
     ];
 }
