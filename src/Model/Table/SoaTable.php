@@ -11,6 +11,7 @@ use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 
@@ -69,5 +70,20 @@ class SoaTable extends AbstractEntityTable
         }
 
         return $queryBuilder->getQuery()->getResult();
+    }
+
+
+    public function findByMeasure(Measure $measure): ?Soa
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('s')
+            ->innerJoin('s.measure', 'm')
+            ->where('m.uuid = :measure_uuid')
+            ->andWhere('m.anr = :measure_anr')
+            ->setParameter('measure_uuid', $measure->getUuid())
+            ->setParameter('measure_anr', $measure->getAnr())
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

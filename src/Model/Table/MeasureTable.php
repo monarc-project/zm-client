@@ -25,6 +25,19 @@ class MeasureTable extends AbstractEntityTable
         parent::__construct($dbService, Measure::class, $connectedUserService);
     }
 
+    /**
+     * @return Measure[]
+     */
+    public function findByAnrIndexedByUuid(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('m', 'm.uuid')
+            ->where('m.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findByAnrAndUuid(Anr $anr, string $uuid): ?Measure
     {
         return $this->getRepository()

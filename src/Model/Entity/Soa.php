@@ -154,7 +154,6 @@ class Soa extends AbstractEntity
 
     /**
      * @param int $id
-     *
      */
     public function setId($id)
     {
@@ -173,9 +172,11 @@ class Soa extends AbstractEntity
      * @param Measure $measure
      *
      */
-    public function setMeasure($measure)
+    public function setMeasure($measure): self
     {
         $this->measure = $measure;
+
+        return $this;
     }
 
     /**
@@ -208,11 +209,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param string $remarks
-     *
      */
-    public function setRemarks($remarks)
+    public function setRemarks($remarks): self
     {
         $this->remarks = $remarks;
+
+        return $this;
     }
 
     /**
@@ -225,11 +227,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param string $evidences
-     *
      */
-    public function setEvidences($evidences)
+    public function setEvidences($evidences): self
     {
         $this->evidences = $evidences;
+
+        return $this;
     }
 
     /**
@@ -242,11 +245,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param string $actions
-     *
      */
-    public function setActions($actions)
+    public function setActions($actions): self
     {
         $this->actions = $actions;
+
+        return $this;
     }
 
     /**
@@ -259,11 +263,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param integer $compliance
-     *
      */
-    public function setCompliance($compliance)
+    public function setCompliance($compliance): self
     {
         $this->compliance = $compliance;
+
+        return $this;
     }
 
     /**
@@ -276,11 +281,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param int $EX
-     *
      */
-    public function setEx($EX)
+    public function setEx($EX): self
     {
         $this->EX = $EX;
+
+        return $this;
     }
 
     /**
@@ -293,11 +299,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param int $LR
-     *
      */
-    public function setLr($LR)
+    public function setLr($LR): self
     {
         $this->LR = $LR;
+
+        return $this;
     }
 
     /**
@@ -310,11 +317,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param int $CO
-     *
      */
-    public function setCo($CO)
+    public function setCo($CO): self
     {
         $this->CO = $CO;
+
+        return $this;
     }
 
     /**
@@ -327,11 +335,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param int $BR
-     *
      */
-    public function setBr($BR)
+    public function setBr($BR): self
     {
         $this->BR = $BR;
+
+        return $this;
     }
 
     /**
@@ -344,11 +353,12 @@ class Soa extends AbstractEntity
 
     /**
      * @param int $BP
-     *
      */
-    public function setBp($BP)
+    public function setBp($BP): self
     {
         $this->BP = $BP;
+
+        return $this;
     }
 
     /**
@@ -361,10 +371,11 @@ class Soa extends AbstractEntity
 
     /**
      * @param int $RRA
-     *
      */
-    public function setRra($RRA)
+    public function setRra($RRA): self
     {
         $this->RRA = $RRA;
+
+        return $this;
     }
 }
