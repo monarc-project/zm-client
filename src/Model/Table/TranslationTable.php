@@ -17,21 +17,6 @@ class TranslationTable extends AbstractTable
     /**
      * @return Translation[]
      */
-    public function findByAnrAndTypesIndexedByKey(Anr $anr, array $types): array
-    {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.key');
-
-        return $queryBuilder
-            ->where('t.anr = :anr')
-            ->andWhere($queryBuilder->expr()->in('t.type', $types))
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return Translation[]
-     */
     public function findByAnrTypesAndLanguageIndexedByKey(Anr $anr, array $types, string $lang): array
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.key');
@@ -51,9 +36,7 @@ class TranslationTable extends AbstractTable
      */
     public function findByAnr(Anr $anr): array
     {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t');
-
-        return $queryBuilder
+        return $this->getRepository()->createQueryBuilder('t')
             ->where('t.anr = :anr')
             ->setParameter('anr', $anr)
             ->getQuery()
@@ -62,9 +45,7 @@ class TranslationTable extends AbstractTable
 
     public function findByAnrKeyAndLanguage(Anr $anr, string $key, string $lang): Translation
     {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.key');
-
-        return $queryBuilder
+        return $this->getRepository()->createQueryBuilder('t')
             ->where('t.anr = :anr')
             ->andWhere('t.key = :key')
             ->andWhere('t.lang = :lang')

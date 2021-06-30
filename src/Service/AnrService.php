@@ -547,10 +547,8 @@ class AnrService extends AbstractService
                 $userAnrCliTable->saveEntity($userAnr, false);
             }
 
-            //duplicate translations
-            // store the trasnslation key to fetch from Core
+            // store the translation key to fetch from Core
             $translationToFetchFromCore = [];
-
 
             // duplicate themes
             $themesNewIds = [];
@@ -975,7 +973,7 @@ class AnrService extends AbstractService
             $scaleTable = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('scaleTable')
                 : $this->get('scaleCliTable');
-            $scales = $scaleTable->getEntityByFields(['anr' => $anr->id]);
+            $scales = $scaleTable->getEntityByFields(['anr' => $anr->getId()]);
             foreach ($scales as $scale) {
                 $newScale = new Scale($scale);
                 $newScale->set('id', null);
@@ -985,18 +983,12 @@ class AnrService extends AbstractService
             }
 
             //duplicate operational scales && operational risk scale comment
-            $operationalScaleNewIds = [];
             $operationalRiskScaleTable = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('operationalRiskScaleTable')
                 : $this->get('operationalRiskScaleCliTable');
             $operationalRiskScaleCliTable = $this->get('operationalRiskScaleCliTable');
 
-
-            $operationalRiskScaleCommentTable = $source === MonarcObject::SOURCE_COMMON
-                ? $this->get('operationalRiskScaleCommentTable')
-                : $this->get('operationalRiskScaleCommentCliTable');
             $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
-
             $scales = $operationalRiskScaleTable->findWithCommentsByAnr($anr);
             foreach ($scales as $scale) {
                 $newScale = (new OperationalRiskScale())
@@ -1007,27 +999,25 @@ class AnrService extends AbstractService
                     ->setLabelTranslationKey($scale->getLabelTranslationKey())
                     ->setCreator($connectedUser->getEmail());
 
-                if($scale->getType()==1)
+                if ($scale->getType() == 1) {
                     $translationToFetchFromCore[$scale->getLabelTranslationKey()] = OperationalRiskScale::class;
+                }
                 // manage the operationalRiskScaleComments
                 foreach ($scale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
-                  $newScaleComment = (new OperationalRiskScaleComment())
-                      ->setCreator($connectedUser->getEmail())
-                      ->setAnr($newAnr)
-                      ->setScaleIndex($operationalRiskScaleComment->getScaleIndex())
-                      ->setScaleValue($operationalRiskScaleComment->getScaleValue())
-                      ->setCommentTranslationKey($operationalRiskScaleComment->getCommentTranslationKey())
-                      ->setOperationalRiskScale($newScale);
+                    $newScaleComment = (new OperationalRiskScaleComment())
+                        ->setCreator($connectedUser->getEmail())
+                        ->setAnr($newAnr)
+                        ->setScaleIndex($operationalRiskScaleComment->getScaleIndex())
+                        ->setScaleValue($operationalRiskScaleComment->getScaleValue())
+                        ->setCommentTranslationKey($operationalRiskScaleComment->getCommentTranslationKey())
+                        ->setOperationalRiskScale($newScale);
 
-                  $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
+                    $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
 
-                  $translationToFetchFromCore[$operationalRiskScaleComment->getCommentTranslationKey()] = OperationalRiskScaleComment::class;
+                    $translationToFetchFromCore[$operationalRiskScaleComment->getCommentTranslationKey()] = OperationalRiskScaleComment::class;
                 }
                 $operationalRiskScaleCliTable->save($newScale, false);
-                $operationalScaleNewIds[$scale->getId()] = $newScale;
             }
-
-
 
             //duplicate scales impact types
             $scalesImpactTypesNewIds = [];
@@ -1395,31 +1385,29 @@ class AnrService extends AbstractService
                 }
             }
 
-            //manage Translation
-
+            // Manage Translations.
             $translationCliTable = $this->get('translationCliTable');
-
-            if($source === MonarcObject::SOURCE_COMMON){
+            if ($source === MonarcObject::SOURCE_COMMON) {
                 $translationTable = $this->get('translationTable');
                 $translations = $translationTable->findByKeysAndLang(
                     array_keys($translationToFetchFromCore),
                     strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
-                    );
-            }else {
+                );
+            } else {
                 $translationTable = $this->get('translationCliTable');
                 $translations = $translationTable->findByAnr($anr);
             }
 
             foreach ($translations as $translation) {
-              $newTranslation = (new Translation())
-                  ->setAnr($newAnr)
-                  ->setCreator($connectedUser->getEmail())
-                  ->setType($translationToFetchFromCore[$translation->getKey()])
-                  ->setKey($translation->getKey())
-                  ->setLang($translation->getLang())
-                  ->setValue($translation->getValue());
+                $newTranslation = (new Translation())
+                    ->setAnr($newAnr)
+                    ->setCreator($connectedUser->getEmail())
+                    ->setType($translationToFetchFromCore[$translation->getKey()])
+                    ->setKey($translation->getKey())
+                    ->setLang($translation->getLang())
+                    ->setValue($translation->getValue());
 
-              $translationCliTable->save($newTranslation, false);
+                $translationCliTable->save($newTranslation, false);
             }
 
             $this->get('table')->getDb()->flush();
