@@ -3,42 +3,13 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 
-class OperationalRiskScaleTable extends AbstractTable
+class OperationalRiskScaleTable extends CoreOperationalRiskScaleTable
 {
-    public function __construct(EntityManager $entityManager)
+    public function __construct(EntityManager $entityManager, string $entityName = OperationalRiskScale::class)
     {
-        parent::__construct($entityManager, OperationalRiskScale::class);
-    }
-
-    /**
-     * @return OperationalRiskScale[]
-     */
-    public function findWithCommentsByAnr(Anr $anr): array
-    {
-        return $this->getRepository()->createQueryBuilder('ors')
-            ->innerJoin('ors.operationalRiskScaleComments', 'orsc')
-            ->where('ors.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return OperationalRiskScale[]
-     */
-    public function findWithCommentsByAnrAndType(Anr $anr, int $type): array
-    {
-        return $this->getRepository()->createQueryBuilder('ors')
-            ->innerJoin('ors.operationalRiskScaleComments', 'orsc')
-            ->where('ors.anr = :anr')
-            ->andWhere('ors.type = :type')
-            ->setParameter('anr', $anr)
-            ->setParameter('type', $type)
-            ->getQuery()
-            ->getResult();
+        parent::__construct($entityManager, $entityName);
     }
 }
