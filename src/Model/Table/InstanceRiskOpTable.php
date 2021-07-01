@@ -143,6 +143,10 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
                 // TODO: disable it on the Frontend as it is hard to implement
                 // $queryBuilder->orderBy('iro.brutProb', $filterParams['order_direction']);
                 break;
+            case 'netProb':
+                // TODO: disable it on the Frontend as it is hard to implement
+                // $queryBuilder->orderBy('iro.netProb', $filterParams['order_direction']);
+                break;
             case 'cacheBrutRisk':
                 $queryBuilder->orderBy('iro.cacheBrutRisk', $filterParams['order_direction'])
                     ->addOrderBy('i.name' . $language);
