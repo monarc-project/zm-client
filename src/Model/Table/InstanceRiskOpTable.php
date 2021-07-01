@@ -78,6 +78,9 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             ->getResult();
     }
 
+    /**
+     * @return InstanceRiskOp[]
+     */
     public function findByAnrInstancesAndFilterParams(Anr $anr, array $instancesIds, array $filterParams = []): array
     {
         $language = $anr->getLanguage();
@@ -140,12 +143,10 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
                     ->addOrderBy('i.name' . $language);
                 break;
             case 'brutProb':
-                // TODO: disable it on the Frontend as it is hard to implement
-                // $queryBuilder->orderBy('iro.brutProb', $filterParams['order_direction']);
+                $queryBuilder->orderBy('iro.brutProb', $filterParams['order_direction']);
                 break;
             case 'netProb':
-                // TODO: disable it on the Frontend as it is hard to implement
-                // $queryBuilder->orderBy('iro.netProb', $filterParams['order_direction']);
+                $queryBuilder->orderBy('iro.netProb', $filterParams['order_direction']);
                 break;
             case 'cacheBrutRisk':
                 $queryBuilder->orderBy('iro.cacheBrutRisk', $filterParams['order_direction'])

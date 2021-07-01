@@ -5,10 +5,14 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
@@ -16,7 +20,6 @@ use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
-use Monarc\FrontOffice\Model\Table\RolfTagTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
@@ -32,8 +35,6 @@ class AnrInstanceRiskOpService
 
     private OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable;
 
-    private RolfTagTable $rolfTagTable;
-
     private TranslationTable $translationTable;
 
     private RolfRiskTable $rolfRiskTable;
@@ -41,6 +42,10 @@ class AnrInstanceRiskOpService
     private UserSuperClass $connectedUser;
 
     private OperationalRiskScaleTable $operationalRiskScaleTable;
+
+    private ConfigService $configService;
+
+    private TranslateService$translateService;
 
     public function __construct(
         AnrTable $anrTable,
@@ -50,11 +55,10 @@ class AnrInstanceRiskOpService
         ConnectedUserService $connectedUserService,
         OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         OperationalRiskScaleTable $operationalRiskScaleTable,
-
-        RolfTagTable $rolfTagTable,
-        TranslationTable $translationTable
+        TranslationTable $translationTable,
+        ConfigService $configService,
+        TranslateService $translateService
     ) {
-        // TODO: do we need the parent Core class usage/injection, maybe it's not used, also params not needed then
         $this->anrTable = $anrTable;
         $this->instanceTable = $instanceTable;
         $this->instanceRiskOpTable = $instanceRiskOpTable;
@@ -62,9 +66,9 @@ class AnrInstanceRiskOpService
         $this->connectedUser = $connectedUserService->getConnectedUser();
         $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
         $this->operationalRiskScaleTable = $operationalRiskScaleTable;
-
-        $this->rolfTagTable = $rolfTagTable;
         $this->translationTable = $translationTable;
+        $this->configService = $configService;
+        $this->translateService = $translateService;
     }
 
     public function createSpecificRiskOp(array $data): int
@@ -158,6 +162,7 @@ class AnrInstanceRiskOpService
         }
 
         $anr = $this->anrTable->findById($anrId);
+        $anrLanguage = $anr->getLanguage();
 
         $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrInstancesAndFilterParams(
             $anr,
@@ -166,17 +171,62 @@ class AnrInstanceRiskOpService
         );
 
         $result = [];
+        $operationalRisksScalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [OperationalRiskScale::class, OperationalRiskScaleComment::class],
+            strtolower($this->configService->getLanguageCodes()[$anrLanguage])
+        );
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
+            $recommendationUuids = [];
+            foreach ($operationalInstanceRisk->getRecommendationRisks() as $recommendationRisk) {
+                $recommendationUuids[] = $recommendationRisk->getRecommandation()->getUuid();
+            }
+
+            $scalesData = [];
+            foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+                $scalesData[] = [
+                    'id' => $operationalInstanceRiskScale->getId(),
+                    'label' => $operationalRisksScalesTranslations[
+                        $operationalInstanceRiskScale->getOperationalRiskScale()->getLabelTranslationKey()
+                    ]->getValue(),
+                    'values' => [
+                        'net' => $operationalInstanceRiskScale->getNetValue(),
+                        'brut' => $operationalInstanceRiskScale->getBrutValue(),
+                        'target' => $operationalInstanceRiskScale->getTargetedValue(),
+                    ],
+                ];
+            }
+
             $result[] = [
-
+                'id' => $operationalInstanceRisk->getId(),
+                'rolfRisk' => $operationalInstanceRisk->getRolfRisk()->getId(),
+                'label1' => $operationalInstanceRisk->getRiskCacheLabel(1),
+                'label2' => $operationalInstanceRisk->getRiskCacheLabel(2),
+                'label3' => $operationalInstanceRisk->getRiskCacheLabel(3),
+                'label4' => $operationalInstanceRisk->getRiskCacheLabel(4),
+                'description1' => $operationalInstanceRisk->getRiskCacheDescription(1),
+                'description2' => $operationalInstanceRisk->getRiskCacheDescription(2),
+                'description3' => $operationalInstanceRisk->getRiskCacheDescription(3),
+                'description4' => $operationalInstanceRisk->getRiskCacheDescription(4),
+                'netProb' => $operationalInstanceRisk->getNetProb(),
+                'brutProb' => $operationalInstanceRisk->getBrutProb(),
+                'targetProb' => $operationalInstanceRisk->getTargetedProb(),
+                'scales' => $scalesData,
+                'cacheNetRisk' => $operationalInstanceRisk->getCacheNetRisk(),
+                'cacheBrutRisk' => $operationalInstanceRisk->getCacheBrutRisk(),
+                'cacheTargetRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
+                'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
+                'comment' => $operationalInstanceRisk->getComment(),
+                'specific' => $operationalInstanceRisk->getSpecific(),
+                't' => $operationalInstanceRisk->getKindOfMeasure() === InstanceRiskOp::KIND_NOT_TREATED ? 0 : 1,
+                'position' => $operationalInstanceRisk->getInstance()->getPosition(),
+                'instanceInfos' => [
+                    'id' => $operationalInstanceRisk->getInstance()->getId(),
+                    'scope' => $operationalInstanceRisk->getInstance()->getObject()->getScope(),
+                    'name' . $anrLanguage => $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
+                ],
+                'recommendations' => implode(',', $recommendationUuids),
             ];
-
-
-//                $row['instanceInfos'] = [
-//                    'id' => $row['iid'],
-//                    'scope' => $row['scope'],
-//                    'name' . $language => $row['name' . $language],
-//                ];
         }
 
         return $result;
@@ -184,78 +234,78 @@ class AnrInstanceRiskOpService
 
     public function getOperationalRisksInCsv(int $anrId, int $instance = null, array $params = []): string
     {
-        $translate = $this->get('translateService');
-
-        // TODO: it was moved out. this method should be as well.
-        $risks = $this->getOperationalRisks($anrId, $instance, $params);
-        $lang = $this->anrTable->getEntity($anrId)->language;
-        $ShowBrut = $this->anrTable->getEntity($anrId)->showRolfBrut;
+        $operationalRisks = $this->getOperationalRisks($anrId, $instance, $params);
+        $anr = $this->anrTable->findById($anrId);
+        $lang = $anr->getLanguage();
 
         $output = '';
-        if (count($risks) > 0) {
+        if (!empty($operationalRisks)) {
             $fields_1 = [
-                'instanceInfos' => $translate->translate('Asset', $lang),
-                'label' . $lang => $translate->translate('Risk description', $lang),
+                'instanceInfos' => $this->translateService->translate('Asset', $lang),
+                'label' . $lang => $this->translateService->translate('Risk description', $lang),
             ];
-            if ($ShowBrut == 1) {
+            if ($anr->getShowRolfBrut() === 1) {
                 $fields_2 = [
-                    'brutProb' => $translate->translate('Prob.', $lang) . "(" . $translate->translate('Inherent risk', $lang) . ")",
-                    'brutR' => 'R' . " (" . $translate->translate('Inherent risk', $lang) . ")",
-                    'brutO' => 'O' . " (" . $translate->translate('Inherent risk', $lang) . ")",
-                    'brutL' => 'L' . " (" . $translate->translate('Inherent risk', $lang) . ")",
-                    'brutF' => 'F' . " (" . $translate->translate('Inherent risk', $lang) . ")",
-                    'brutF' => 'P' . " (" . $translate->translate('Inherent risk', $lang) . ")",
-                    'cacheBrutRisk' => $translate->translate('Inherent risk', $lang),
+                    'brutProb' => $this->translateService->translate('Prob.', $lang)
+                        . "(" . $this->translateService->translate('Inherent risk', $lang) . ")",
+                    'brutR' => 'R' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
+                    'brutO' => 'O' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
+                    'brutL' => 'L' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
+                    'brutF' => 'F' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
+                    'brutF' => 'P' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
+                    'cacheBrutRisk' => $this->translateService->translate('Inherent risk', $lang),
                 ];
             } else {
                 $fields_2 = [];
             }
             $fields_3 = [
-                'netProb' => $translate->translate('Prob.', $lang) . "(" . $translate->translate('Net risk', $lang) . ")",
-                'netR' => 'R' . " (" . $translate->translate('Net risk', $lang) . ")",
-                'netO' => 'O' . " (" . $translate->translate('Net risk', $lang) . ")",
-                'netL' => 'L' . " (" . $translate->translate('Net risk', $lang) . ")",
-                'netF' => 'F' . " (" . $translate->translate('Net risk', $lang) . ")",
-                'netF' => 'P' . " (" . $translate->translate('Net risk', $lang) . ")",
-                'cacheNetRisk' => $translate->translate('Current risk', $lang) . " (" . $translate->translate('Net risk', $lang) . ")",
-                'comment' => $translate->translate('Existing controls', $lang),
-                'kindOfMeasure' => $translate->translate('Treatment', $lang),
-                'cacheTargetedRisk' => $translate->translate('Residual risk', $lang),
+                'netProb' => $this->translateService->translate('Prob.', $lang) . "("
+                    . $this->translateService->translate('Net risk', $lang) . ")",
+                'netR' => 'R' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
+                'netO' => 'O' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
+                'netL' => 'L' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
+                'netF' => 'F' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
+                'netF' => 'P' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
+                'cacheNetRisk' => $this->translateService->translate('Current risk', $lang) . " ("
+                    . $this->translateService->translate('Net risk', $lang) . ")",
+                'comment' => $this->translateService->translate('Existing controls', $lang),
+                'kindOfMeasure' => $this->translateService->translate('Treatment', $lang),
+                'cacheTargetedRisk' => $this->translateService->translate('Residual risk', $lang),
             ];
             $fields = $fields_1 + $fields_2 + $fields_3;
 
             // Fill in the headers
             $output .= implode(',', array_values($fields)) . "\n";
-            foreach ($risks as $risk) {
+            foreach ($operationalRisks as $risk) {
                 foreach ($fields as $k => $v) {
-                    if ($k == 'kindOfMeasure') {
+                    if ($k === 'kindOfMeasure') {
                         switch ($risk[$k]) {
                             case 1:
-                                $array_values[] = 'Reduction';
+                                $arrayValues[] = 'Reduction';
                                 break;
                             case 2:
-                                $array_values[] = 'Denied';
+                                $arrayValues[] = 'Denied';
                                 break;
                             case 3:
-                                $array_values[] = 'Accepted';
+                                $arrayValues[] = 'Accepted';
                                 break;
                             default:
-                                $array_values[] = 'Not treated';
+                                $arrayValues[] = 'Not treated';
                         }
-                    } elseif ($k == 'instanceInfos') {
-                        $array_values[] = $risk[$k]['name' . $lang];
-                    } elseif ($risk[$k] == '-1') {
-                        $array_values[] = null;
+                    } elseif ($k === 'instanceInfos') {
+                        $arrayValues[] = $risk[$k]['name' . $lang];
+                    } elseif ($risk[$k] === -1) {
+                        $arrayValues[] = null;
                     } else {
-                        $array_values[] = $risk[$k];
+                        $arrayValues[] = $risk[$k];
                     }
                 }
                 $output .= '"';
                 $search = ['"', "\n"];
                 $replace = ["'", ' '];
-                $output .= implode('","', str_replace($search, $replace, $array_values));
+                $output .= implode('","', str_replace($search, $replace, $arrayValues));
                 $output .= "\"\r\n";
-                $array_values = null;
+                $arrayValues = null;
             }
         }
 
@@ -278,6 +328,8 @@ class AnrInstanceRiskOpService
 
     /**
      * @param Instance[] $instances
+     *
+     * @return array
      */
     private function extractInstancesAndTheirChildrenIds(array $instances): array
     {
