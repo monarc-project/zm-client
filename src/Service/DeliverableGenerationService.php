@@ -858,15 +858,15 @@ class DeliverableGenerationService extends AbstractService
 
         $values['chart']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
-        $values['xml']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
-        $values['xml']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
+        // $values['xml']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
+        // $values['xml']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
 
         $values['xml']['RISKS_KIND_OF_TREATMENT'] = $this->generateRisksByKindOfTreatment($anr);
         $values['table']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr);
         $values['table']['OPRISKS_RECO_FULL'] = $this->generateOperationalRisksPlan($anr);
 
         $values['xml']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
-        $values['xml']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
+        // $values['xml']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
 
 
         return $values;
@@ -956,9 +956,7 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateCurrentRiskMap($anr, $type = 'real')
     {
-        /** @var AnrCartoRiskService $cartoRiskService */
-        $cartoRiskService = $this->get('cartoRiskService');
-        $cartoRisk = ($type == 'real') ? $cartoRiskService->getCartoReal($anr->getId()) : $cartoRiskService->getCartoTargeted($anr->getId());
+        $cartoRisk = ($type == 'real') ? $this->cartoRiskService->getCartoReal($anr->getId()) : $this->cartoRiskService->getCartoTargeted($anr->getId());
 
             // Generate risks table
             $tableWord = new PhpWord();
@@ -1847,30 +1845,36 @@ class DeliverableGenerationService extends AbstractService
     {
         $result = null;
         $instanceTable = $this->get('instanceService')->get('table');
+        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($anr->getId());
+        $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1 && $scale['isHidden'] == false;}));
+
+        //css
+        $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
+        $styleHeaderFont = ['bold' => true, 'size' => 9];
+        $styleTitleFont = ['bold' => true, 'size' => 12];
+        $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 9];
+        $styleContentFont = ['bold' => false, 'size' => 9];
+        $styleContentFontBoldCat = ['bold' => true, 'size' => 11];
+        $styleContentFontBoldSubCat = ['bold' => true, 'size' => 10];
+        $styleContentFontBold = ['bold' => true, 'size' => 9];
+        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
+        $alignVerticalCenter = ['Alignment' => 'center'];
+        $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $cellTitle = ['gridSpan' => 13, 'borderColor' => 'FFFFFF', 'borderSize' => 0];
+        $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
+        $cellColSpan2 = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
+        $cellOpRiskImpactSpan = ['gridSpan' => count($opRisksImpactsScales), 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
+        $cellColSpan7 = ['gridSpan' => 7, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
+        $cellColSpan8 = ['gridSpan' => 8, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
+        $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
+        $cellRotate90RowSpan = ['vMerge' => 'restart', 'valign' => 'top', 'textDirection' => 'btLr', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
+        $cellRowContinue = ['vMerge' => 'continue', 'valign' => 'center', 'bgcolor' => 'DFDFDF'];
+
         for ($i = 1; $i <= 4; $i++) {
 
             $risksByTreatment = $this->get('riskService')->getRisks($anr->getId(), null, ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
             $risksOpByTreatment = $this->get('riskOpService')->getRisksOp($anr->getId(), null, ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
 
-            //css
-            $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
-            $styleHeaderFont = ['bold' => true, 'size' => 9];
-            $styleTitleFont = ['bold' => true, 'size' => 12];
-            $styleContentCell = ['align' => 'left', 'valign' => 'center', 'size' => 9];
-            $styleContentFont = ['bold' => false, 'size' => 9];
-            $styleContentFontBoldCat = ['bold' => true, 'size' => 11];
-            $styleContentFontBoldSubCat = ['bold' => true, 'size' => 10];
-            $styleContentFontBold = ['bold' => true, 'size' => 9];
-            $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
-            $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
-            $cellTitle = ['gridSpan' => 13, 'borderColor' => 'FFFFFF', 'borderSize' => 0];
-            $cellColSpan = ['gridSpan' => 3, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
-            $cellColSpan2 = ['gridSpan' => 2, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
-            $cellColSpan5 = ['gridSpan' => 5, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
-            $cellColSpan7 = ['gridSpan' => 7, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
-            $cellColSpan8 = ['gridSpan' => 8, 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
-            $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'align' => 'center', 'Alignment' => 'center'];
-            $cellRowContinue = ['vMerge' => 'continue', 'valign' => 'center', 'bgcolor' => 'DFDFDF'];
 
             switch ($i) {
                 case 1:
@@ -2021,33 +2025,31 @@ class DeliverableGenerationService extends AbstractService
                 $tableRiskOp->addCell(Converter::cmToTwip(10.00), $cellRowContinue);
                 if ($anr->showRolfBrut == 1) {
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Prob.'), $styleHeaderFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(3.50), $cellColSpan5)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(3.50), $cellOpRiskImpactSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
                 }
                 $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Prob.'), $styleHeaderFont, $alignCenter);
-                $tableRiskOp->addCell(Converter::cmToTwip(3.50), $cellColSpan5)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
+                $tableRiskOp->addCell(Converter::cmToTwip(3.50), $cellOpRiskImpactSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
                 $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
                 $tableRiskOp->addCell(Converter::cmToTwip(8.00), $cellRowSpan)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
                 $tableRiskOp->addCell(Converter::cmToTwip(2.00), $cellRowContinue);
 
-                $tableRiskOp->addRow(400);
+                $tableRiskOp->addRow(Converter::cmToTwip(1.00));
                 $tableRiskOp->addCell(Converter::cmToTwip(3.00), $cellRowContinue);
                 $tableRiskOp->addCell(Converter::cmToTwip(10.00), $cellRowContinue);
                 if ($anr->showRolfBrut == 1) {
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowContinue);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('R', $styleHeaderFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('O', $styleHeaderFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('L', $styleHeaderFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('F', $styleHeaderFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('P', $styleHeaderFont, $alignCenter);
+                    foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                        $label = mb_substr(_WT($opRiskImpactScale['label']),0,3) . '.';
+                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRotate90RowSpan)->addText($label, $styleHeaderFont, $alignVerticalCenter);
+                    }
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowContinue);
                 }
                 $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowContinue);
-                $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('R', $styleHeaderFont, $alignCenter);
-                $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('O', $styleHeaderFont, $alignCenter);
-                $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('L', $styleHeaderFont, $alignCenter);
-                $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('F', $styleHeaderFont, $alignCenter);
-                $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRowSpan)->addText('P', $styleHeaderFont, $alignCenter);
+                foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                    $label = mb_substr(_WT($opRiskImpactScale['label']),0,3) . '.';
+                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $cellRotate90RowSpan)->addText($label, $styleHeaderFont, $alignVerticalCenter);
+                }
                 $tableRiskOp->addCell(Converter::cmToTwip(1.00), $cellRowContinue);
                 $tableRiskOp->addCell(Converter::cmToTwip(8.00), $cellRowContinue);
                 $tableRiskOp->addCell(Converter::cmToTwip(2.00), $cellRowContinue);
@@ -2093,20 +2095,20 @@ class DeliverableGenerationService extends AbstractService
                     $tableRiskOp->addCell(Converter::cmToTwip(3.00), $styleContentCell)->addText(_WT($path), $styleContentFont, $alignLeft);
                     $tableRiskOp->addCell(Converter::cmToTwip(10.00), $styleContentCell)->addText(_WT($r['label' . $anr->getLanguage()]), $styleContentFont, $alignLeft);
                     if ($anr->showRolfBrut == 1) {
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText($r['brutProb'], $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutR'], $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutO'], $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutL'], $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutF'], $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutP'], $styleContentFont, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
                         $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCellcacheBrutRisk)->addText($r['cacheBrutRisk'], $styleContentFontBold, $alignCenter);
                     }
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText($r['netProb'], $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netR'], $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netO'], $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netL'], $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netF'], $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netP'], $styleContentFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCellcacheNetRisk)->addText($r['cacheNetRisk'], $styleContentFontBold, $alignCenter);
                     $tableRiskOp->addCell(Converter::cmToTwip(8.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
                     if ($r['cacheTargetedRisk'] == '-') {
