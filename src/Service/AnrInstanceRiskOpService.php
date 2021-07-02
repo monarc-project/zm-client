@@ -154,8 +154,8 @@ class AnrInstanceRiskOpService
             $operationalInstanceRisk->setComment($data['comment']);
         }
         if (!empty($data['netProb']) && $operationalInstanceRisk->getNetProb() !== $data['netProb']) {
-            $this->verifyScaleProbabilityNetValue($operationalInstanceRisk->getAnr(), $data['netProb']);
-            $operationalInstanceRisk->setNetProb($data['netProb']);
+            $this->verifyScaleProbabilityNetValue($operationalInstanceRisk->getAnr(), (int)$data['netProb']);
+            $operationalInstanceRisk->setNetProb((int)$data['netProb']);
         }
 
         $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk);
@@ -182,9 +182,9 @@ class AnrInstanceRiskOpService
             );
         }
 
-        $this->verifyScaleNetValue($operationInstanceRiskScale, $data['netValue']);
+        $this->verifyScaleNetValue($operationInstanceRiskScale, (int)$data['netValue']);
 
-        $operationInstanceRiskScale->setNetValue($data['netValue'])
+        $operationInstanceRiskScale->setNetValue((int)$data['netValue'])
             ->setUpdater($this->connectedUser->getEmail());
 
         /** @var InstanceRiskOp $operationalInstanceRisk */
