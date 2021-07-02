@@ -40,7 +40,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
         'soaService' => Service\SoaService::class,
         'measureService' => Service\AnrMeasureService::class,
-        'riskOpService' => Service\AnrRiskOpService::class,
+        'anrInstanceRiskOpService' => Service\AnrInstanceRiskOpService::class,
         'riskService' => Service\AnrRiskService::class,
         'recordService' => Service\AnrRecordService::class,
         'translateService' => TranslateService::class,

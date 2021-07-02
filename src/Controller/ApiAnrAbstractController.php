@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\AbstractController;
 use Monarc\Core\Exception\Exception;
 use Ramsey\Uuid\Uuid;
 use Laminas\View\Model\JsonModel;
@@ -15,7 +16,7 @@ use Laminas\View\Model\JsonModel;
  * Abstract controller for all ANR-based routes. Allows easy permissions filtering for routes below this one.
  * @package Monarc\FrontOffice\Controller
  */
-abstract class ApiAnrAbstractController extends \Monarc\Core\Controller\AbstractController
+abstract class ApiAnrAbstractController extends AbstractController
 {
     /**
      * @inheritdoc

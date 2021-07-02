@@ -78,8 +78,8 @@ class DeliverableGenerationService extends AbstractService
     protected $soaService;
     /** @var AnrMeasureService */
     protected $measureService;
-    /** @var AnrRiskOpService */
-    protected $riskOpService;
+    /** @var AnrInstanceRiskOpService */
+    protected $anrInstanceRiskOpService;
     /** @var AnrRiskService */
     protected $riskService;
     /** @var AnrRecordService */
@@ -1855,7 +1855,7 @@ class DeliverableGenerationService extends AbstractService
         for ($i = 1; $i <= 4; $i++) {
 
             $risksByTreatment = $this->get('riskService')->getRisks($anr->getId(), null, ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
-            $risksOpByTreatment = $this->get('riskOpService')->getRisksOp($anr->getId(), null, ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
+            $risksOpByTreatment = $this->get('anrInstanceRiskOpService')->getRisksOp($anr->getId(), null, ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
 
 
             switch ($i) {
@@ -2896,9 +2896,6 @@ class DeliverableGenerationService extends AbstractService
 
         $previousControlId = null;
 
-        $riskOpService = $this->riskOpService;
-        $riskService = $this->riskService;
-
         foreach ($controlSoaList as $controlSoa) {
 
             $amvs = [];
@@ -2910,8 +2907,16 @@ class DeliverableGenerationService extends AbstractService
                 $rolfRisksp[] = $rolfRisk->getId();
             }
 
-            $controlSoa['measure']->rolfRisks = $riskOpService->getRisksOp($anr->getId(), null, ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']);
-            $controlSoa['measure']->amvs = $riskService->getRisks($anr->getId(), null, ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']);
+            $controlSoa['measure']->rolfRisks = $this->get('anrInstanceRiskOpService')->getOperationalRisks(
+                $anr->getId(),
+                null,
+                ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc'])
+            ;
+            $controlSoa['measure']->amvs = $this->get('riskService')->getRisks(
+                $anr->getId(),
+                null,
+                ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']
+            );
 
             if (!empty($controlSoa['measure']->amvs) || !empty($controlSoa['measure']->rolfRisks)) {
                 if ($controlSoa['measure']->getUuid() != $previousControlId) {

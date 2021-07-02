@@ -8,8 +8,8 @@
 
 namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\Entity\Soa;
-use Monarc\FrontOffice\Model\Table\SoaTable;
 
 /**
  * Anr Object Service Factory
@@ -19,14 +19,10 @@ use Monarc\FrontOffice\Model\Table\SoaTable;
  */
 class SoaServiceFactory extends AbstractServiceFactory
 {
-
     protected $ressources = [
-      'entity' => 'Monarc\FrontOffice\Model\Entity\Soa',
-      'table' => 'Monarc\FrontOffice\Model\Table\SoaTable',
-      'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-      'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-      'measureService' => 'Monarc\FrontOffice\Service\AnrMeasureService',
-      'riskService' => 'Monarc\FrontOffice\Service\AnrRiskService',
-      'riskOpService' => 'Monarc\FrontOffice\Service\AnrRiskOpService',
+        'entity' => Soa::class,
+        'table' => Table\SoaTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
     ];
 }

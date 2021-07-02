@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -22,6 +23,21 @@ class RolfRiskTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, RolfRisk::class, $connectedUserService);
+    }
+
+    public function findById(int $id): RolfRisk
+    {
+        $rolfRisk = $this->getRepository()
+            ->createQueryBuilder('rr')
+            ->where('rr.id = :id')
+            ->setParameter('id', $id)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($rolfRisk === null) {
+            throw EntityNotFoundException::fromClassNameAndIdentifier(\get_class($this), [$id]);
+        }
     }
 
     public function findByAnrAndCode(Anr $anr, string $code): ?RolfRisk

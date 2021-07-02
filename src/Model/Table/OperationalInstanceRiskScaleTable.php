@@ -3,15 +3,15 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
+use Monarc\Core\Model\Table\OperationalInstanceRiskScaleTable as COreOperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
-use Monarc\Core\Model\Table\AbstractTable;
 use Monarc\FrontOffice\Model\Entity\Anr;
 
-class OperationalInstanceRiskScaleTable extends AbstractTable
+class OperationalInstanceRiskScaleTable extends COreOperationalInstanceRiskScaleTable
 {
-    public function __construct(EntityManager $entityManager)
+    public function __construct(EntityManager $entityManager, string $entityName = OperationalInstanceRiskScale::class)
     {
-        parent::__construct($entityManager, OperationalInstanceRiskScale::class);
+        parent::__construct($entityManager, $entityName);
     }
 
     public function isRisksEvaluationStartedForAnr(Anr $anr): bool
