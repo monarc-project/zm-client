@@ -72,7 +72,7 @@ class OperationalRiskScaleService
             ->setType(OperationalRiskScale::class)
             ->setKey($operationalRiskScale->getLabelTranslationKey())
             ->setLang($anrLanguageCode)
-            ->setValue($data['Label'][$anrLanguageCode]);
+            ->setValue($data['label'][$anrLanguageCode]);
 
         $this->translationTable->save($translation, false);
 

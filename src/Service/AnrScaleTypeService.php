@@ -99,6 +99,8 @@ class AnrScaleTypeService extends \Monarc\Core\Service\AbstractService
         $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
         $this->setDependencies($entity, $dependencies);
 
+        $entity->setLabels($data['labels']);
+
         $id = $this->get('table')->save($entity);
 
         // Retrieve all instances for the current ANR
