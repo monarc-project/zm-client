@@ -3,7 +3,10 @@
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
@@ -136,20 +139,60 @@ class AnrInstanceRiskOpService
 
     /**
      * @throws EntityNotFoundException
+     * @throws Exception
      */
     public function update(int $id, array $data)
     {
         // TODO: implement Permissions validator and inject it here. similar to \Monarc\Core\Service\AbstractService::deleteFromAnr
 
+        /** @var InstanceRiskOp $operationalInstanceRisk */
         $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
-//        $operationalInstanceRisk->set
+        if (!empty($data['kindOfMeasure'])) {
+            $operationalInstanceRisk->setKindOfMeasure((int)$data['kindOfMeasure']);
+        }
+        if (!empty($data['comment'])) {
+            $operationalInstanceRisk->setComment($data['comment']);
+        }
+        if (!empty($data['netProb']) && $operationalInstanceRisk->getNetProb() !== $data['netProb']) {
+            $this->verifyScaleProbabilityNetValue($operationalInstanceRisk->getAnr(), $data['netProb']);
+            $operationalInstanceRisk->setNetProb($data['netProb']);
+        }
 
-        /** @var InstanceRiskOp $instanceRiskOp */
-        $instanceRiskOp = $this->instanceRiskOpTable->findById($id);
+        $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk);
 
-        $this->updateInstanceRiskRecommendationsPositions($instanceRiskOp);
+        $this->updateInstanceRiskRecommendationsPositions($operationalInstanceRisk);
 
-        return $operationalInstanceRisk->getId();
+        return $operationalInstanceRisk->getJsonArray();
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     * @throws Exception
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function updateScaleValue($id, $data): void
+    {
+        /** @var OperationalInstanceRiskScale $operationInstanceRiskScale */
+        $operationInstanceRiskScale = $this->operationalInstanceRiskScaleTable->findById($data['scaleId']);
+        if ($operationInstanceRiskScale === null) {
+            throw EntityNotFoundException::fromClassNameAndIdentifier(
+                \get_class($this->operationalInstanceRiskScaleTable),
+                $data['scaleId']
+            );
+        }
+
+        $this->verifyScaleNetValue($operationInstanceRiskScale, $data['netValue']);
+
+        $operationInstanceRiskScale->setNetValue($data['netValue'])
+            ->setUpdater($this->connectedUser->getEmail());
+
+        /** @var InstanceRiskOp $operationalInstanceRisk */
+        $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
+
+        $this->updateRiskCacheValues($operationalInstanceRisk);
+
+        $this->operationalInstanceRiskScaleTable->save($operationInstanceRiskScale);
     }
 
     public function getOperationalRisks(int $anrId, int $instanceId = null, array $params = [])
@@ -245,29 +288,31 @@ class AnrInstanceRiskOpService
                 'label' . $lang => $this->translateService->translate('Risk description', $lang),
             ];
             if ($anr->getShowRolfBrut() === 1) {
+                $translatedRiskValueDescription = $this->translateService->translate('Inherent risk', $lang);
                 $fields_2 = [
                     'brutProb' => $this->translateService->translate('Prob.', $lang)
-                        . "(" . $this->translateService->translate('Inherent risk', $lang) . ")",
-                    'brutR' => 'R' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
-                    'brutO' => 'O' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
-                    'brutL' => 'L' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
-                    'brutF' => 'F' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
-                    'brutF' => 'P' . " (" . $this->translateService->translate('Inherent risk', $lang) . ")",
-                    'cacheBrutRisk' => $this->translateService->translate('Inherent risk', $lang),
+                        . "(" . $translatedRiskValueDescription . ")",
+                    'brutR' => 'R' . " (" . $translatedRiskValueDescription . ")",
+                    'brutO' => 'O' . " (" . $translatedRiskValueDescription . ")",
+                    'brutL' => 'L' . " (" . $translatedRiskValueDescription . ")",
+                    'brutF' => 'F' . " (" . $translatedRiskValueDescription . ")",
+                    'brutP' => 'P' . " (" . $translatedRiskValueDescription . ")",
+                    'cacheBrutRisk' => $translatedRiskValueDescription,
                 ];
             } else {
                 $fields_2 = [];
             }
+            $translatedNetRiskDescription = $this->translateService->translate('Net risk', $lang);
             $fields_3 = [
                 'netProb' => $this->translateService->translate('Prob.', $lang) . "("
-                    . $this->translateService->translate('Net risk', $lang) . ")",
-                'netR' => 'R' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
-                'netO' => 'O' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
-                'netL' => 'L' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
-                'netF' => 'F' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
-                'netF' => 'P' . " (" . $this->translateService->translate('Net risk', $lang) . ")",
+                    . $translatedNetRiskDescription . ")",
+                'netR' => 'R' . " (" . $translatedNetRiskDescription . ")",
+                'netO' => 'O' . " (" . $translatedNetRiskDescription . ")",
+                'netL' => 'L' . " (" . $translatedNetRiskDescription . ")",
+                'netF' => 'F' . " (" . $translatedNetRiskDescription . ")",
+                'netP' => 'P' . " (" . $translatedNetRiskDescription . ")",
                 'cacheNetRisk' => $this->translateService->translate('Current risk', $lang) . " ("
-                    . $this->translateService->translate('Net risk', $lang) . ")",
+                    . $translatedNetRiskDescription . ")",
                 'comment' => $this->translateService->translate('Existing controls', $lang),
                 'kindOfMeasure' => $this->translateService->translate('Treatment', $lang),
                 'cacheTargetedRisk' => $this->translateService->translate('Residual risk', $lang),
@@ -341,5 +386,67 @@ class AnrInstanceRiskOpService
         }
 
         return array_merge($instancesIds, $childInstancesIds);
+    }
+
+    private function updateRiskCacheValues(InstanceRiskOp $operationalInstanceRisk, bool $flushChanges = false): void
+    {
+        foreach (['Brut', 'Net', 'Targeted'] as $valueType) {
+            $max = -1;
+            $probVal = $operationalInstanceRisk->{'get' . $valueType . 'Prob'}();
+            if ($probVal !== -1) {
+                foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $riskScale) {
+                    $scaleValue = $riskScale->{'get' . $valueType . 'Value'}();
+                    if ($scaleValue > -1 && ($probVal * $scaleValue) > $max) {
+                        $max = $probVal * $scaleValue;
+                    }
+                }
+            }
+
+            if ($operationalInstanceRisk->{'getCache' . $valueType . 'Risk'}() !== $max) {
+                $operationalInstanceRisk
+                    ->setUpdater($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname())
+                    {'setCache' . $valueType . 'Risk'}($max);
+                $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
+            }
+        }
+
+        if ($flushChanges === true) {
+            $this->instanceRiskOpTable->getDb()->flush();
+        }
+    }
+
+    private function verifyScaleNetValue(
+        OperationalInstanceRiskScale $operationalInstanceRiskScale,
+        int $scaleNetValue
+    ): void {
+        $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
+        if ($scaleNetValue !== -1
+            && ($scaleNetValue < $operationalRiskScale->getMin() || $scaleNetValue > $operationalRiskScale->getMax())
+        ) {
+            throw new Exception(sprintf(
+                'The value %d should be between %d and %d.',
+                $scaleNetValue,
+                $operationalRiskScale->getMin(),
+                $operationalRiskScale->getMax()
+            ), 412);
+        }
+    }
+
+    private function verifyScaleProbabilityNetValue(AnrSuperClass $anr, int $scaleProbabilityNetValue): void
+    {
+        $operationalRiskScale = $this->operationalRiskScaleTable->findByAnrAndType(
+            $anr,
+            OperationalRiskScale::TYPE_LIKELIHOOD
+        );
+        if ($scaleProbabilityNetValue !== -1
+            && ($scaleProbabilityNetValue < $operationalRiskScale->getMin() || $scaleProbabilityNetValue > $operationalRiskScale->getMax())
+        ) {
+            throw new Exception(sprintf(
+                'The value %d should be between %d and %d.',
+                $scaleProbabilityNetValue,
+                $operationalRiskScale->getMin(),
+                $operationalRiskScale->getMax()
+            ), 412);
+        }
     }
 }
