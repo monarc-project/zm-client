@@ -420,14 +420,16 @@ class AnrInstanceRiskOpService
         int $scaleNetValue
     ): void {
         $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
-        if ($scaleNetValue !== -1
-            && ($scaleNetValue < $operationalRiskScale->getMin() || $scaleNetValue > $operationalRiskScale->getMax())
-        ) {
+        $allowedValues = [];
+        foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+            $allowedValues[] = $operationalRiskScaleComment->getScaleValue();
+        }
+
+        if ($scaleNetValue !== -1 && !\in_array($scaleNetValue, $allowedValues, true)) {
             throw new Exception(sprintf(
-                'The value %d should be between %d and %d.',
+                'The value %d should be between one of [%s]',
                 $scaleNetValue,
-                $operationalRiskScale->getMin(),
-                $operationalRiskScale->getMax()
+                implode(', ', $allowedValues)
             ), 412);
         }
     }
