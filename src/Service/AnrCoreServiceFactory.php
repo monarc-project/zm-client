@@ -48,5 +48,6 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'configService' => 'Monarc\Core\Service\ConfigService',
         'operationalRiskScaleTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable',
         'operationalRiskScaleCommentTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable',
+        'translationTable' => 'Monarc\FrontOffice\Model\Table\TranslationTable',
     ];
 }
