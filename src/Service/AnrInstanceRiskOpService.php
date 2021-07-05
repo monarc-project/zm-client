@@ -175,7 +175,7 @@ class AnrInstanceRiskOpService
     public function updateScaleValue($id, $data): void
     {
         /** @var OperationalInstanceRiskScale $operationInstanceRiskScale */
-        $operationInstanceRiskScale = $this->operationalInstanceRiskScaleTable->findById($data['scaleId']);
+        $operationInstanceRiskScale = $this->operationalInstanceRiskScaleTable->findById($data['instanceRiskScaleId']);
         if ($operationInstanceRiskScale === null) {
             throw EntityNotFoundException::fromClassNameAndIdentifier(
                 \get_class($this->operationalInstanceRiskScaleTable),
@@ -278,6 +278,48 @@ class AnrInstanceRiskOpService
         $anr = $this->anrTable->findById($anrId);
         $anrLanguage = $anr->getLanguage();
 
+        $operationalRiskScales = $this->operationalRiskScaleTable->findByAnrAndType(
+            $anr,
+            OperationalRiskScale::TYPE_IMPACT
+        );
+        $operationalRisksScalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [OperationalRiskScale::class, OperationalRiskScaleComment::class],
+            strtolower($this->configService->getLanguageCodes()[$anrLanguage])
+        );
+
+        $tableHeaders = [
+            'instanceData' => $this->translateService->translate('Asset', $anrLanguage),
+            'label' => $this->translateService->translate('Risk description', $anrLanguage),
+        ];
+
+        if ($anr->getShowRolfBrut() === 1) {
+            $translatedRiskValueDescription = $this->translateService->translate('Inherent risk', $anrLanguage);
+            $tableHeaders['brutProb'] = $this->translateService->translate('Prob.', $anrLanguage)
+                . "(" . $translatedRiskValueDescription . ")";
+            foreach ($operationalRiskScales as $operationalRiskScale) {
+                $label = $operationalRisksScalesTranslations[$operationalRiskScale->getLabelTranslationKey()]
+                    ->getValue();
+                $tableHeaders[$label] = $label . " (" . $translatedRiskValueDescription . ")";
+            }
+            $tableHeaders['cacheBrutRisk'] = $translatedRiskValueDescription;
+        }
+
+        $translatedNetRiskDescription = $this->translateService->translate('Net risk', $anrLanguage);
+        $tableHeaders['netProb'] = $this->translateService->translate('Prob.', $anrLanguage) . "("
+            . $translatedNetRiskDescription . ")";
+        foreach ($operationalRiskScales as $operationalRiskScale) {
+            $label = $operationalRisksScalesTranslations[$operationalRiskScale->getLabelTranslationKey()]
+                ->getValue();
+            $tableHeaders[$label] = $label . " (" . $translatedNetRiskDescription . ")";
+        }
+        $tableHeaders['cacheNetRisk'] = $translatedNetRiskDescription;
+        $tableHeaders['comment'] = $this->translateService->translate('Existing controls', $anrLanguage);
+        $tableHeaders['kindOfMeasure'] = $this->translateService->translate('Treatment', $anrLanguage);
+        $tableHeaders['cacheTargetedRisk'] = $this->translateService->translate('Residual risk', $anrLanguage);
+
+        $output = implode(',', array_values($tableHeaders)) . "\n";
+
         /* CSV export is done for all the risks. */
         unset($params['limit']);
 
@@ -286,93 +328,33 @@ class AnrInstanceRiskOpService
             $instancesIds,
             $params
         );
-
-        $operationalRisksScalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $anr,
-            [OperationalRiskScale::class, OperationalRiskScaleComment::class],
-            strtolower($this->configService->getLanguageCodes()[$anrLanguage])
-        );
-
-        $output = '';
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
+            $values = [
+                $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
+                $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
+            ];
+            if ($anr->getShowRolfBrut() === 1) {
+                $values[] = $operationalInstanceRisk->getBrutProb();
+                foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $instanceRiskScale) {
+                    $values[] = $instanceRiskScale->getBrutValue();
+                }
+                $values[] = $operationalInstanceRisk->getCacheBrutRisk();
+            }
+            $values[] = $operationalInstanceRisk->getNetProb();
+            foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $instanceRiskScale) {
+                $values[] = $instanceRiskScale->getNetValue();
+            }
+            $values[] = $operationalInstanceRisk->getCacheNetRisk();
+            $values[] = $operationalInstanceRisk->getComment();
+            $values[] = InstanceRiskOp::getAvailableMeasureTypes()[$operationalInstanceRisk->getKindOfMeasure()];
+            $values[] = $operationalInstanceRisk->getCacheTargetedRisk();
 
+            $output .= '"';
+            $search = ['"', "\n"];
+            $replace = ["'", ' '];
+            $output .= implode('","', str_replace($search, $replace, $values));
+            $output .= "\"\r\n";
         }
-
-
-//        if (!empty($operationalRisks)) {
-//            $fields_1 = [
-//                'instanceInfos' => $this->translateService->translate('Asset', $lang),
-//                'label' . $lang => $this->translateService->translate('Risk description', $lang),
-//            ];
-//            if ($anr->getShowRolfBrut() === 1) {
-//                $translatedRiskValueDescription = $this->translateService->translate('Inherent risk', $lang);
-//                $fields_2 = [
-//                    'brutProb' => $this->translateService->translate('Prob.', $lang)
-//                        . "(" . $translatedRiskValueDescription . ")",
-//                ];
-//                foreach ($operationalRisks) {
-////                    'brutR' => 'R' . " (" . $translatedRiskValueDescription . ")",
-////                    'brutO' => 'O' . " (" . $translatedRiskValueDescription . ")",
-////                    'brutL' => 'L' . " (" . $translatedRiskValueDescription . ")",
-////                    'brutF' => 'F' . " (" . $translatedRiskValueDescription . ")",
-////                    'brutP' => 'P' . " (" . $translatedRiskValueDescription . ")",
-//                }
-//                $fields_2['cacheBrutRisk'] = $translatedRiskValueDescription;
-//            } else {
-//                $fields_2 = [];
-//            }
-//            $translatedNetRiskDescription = $this->translateService->translate('Net risk', $lang);
-//            $fields_3 = [
-//                'netProb' => $this->translateService->translate('Prob.', $lang) . "("
-//                    . $translatedNetRiskDescription . ")",
-//                'netR' => 'R' . " (" . $translatedNetRiskDescription . ")",
-//                'netO' => 'O' . " (" . $translatedNetRiskDescription . ")",
-//                'netL' => 'L' . " (" . $translatedNetRiskDescription . ")",
-//                'netF' => 'F' . " (" . $translatedNetRiskDescription . ")",
-//                'netP' => 'P' . " (" . $translatedNetRiskDescription . ")",
-//                'cacheNetRisk' => $this->translateService->translate('Current risk', $lang) . " ("
-//                    . $translatedNetRiskDescription . ")",
-//                'comment' => $this->translateService->translate('Existing controls', $lang),
-//                'kindOfMeasure' => $this->translateService->translate('Treatment', $lang),
-//                'cacheTargetedRisk' => $this->translateService->translate('Residual risk', $lang),
-//            ];
-//            $fields = $fields_1 + $fields_2 + $fields_3;
-//
-//            // Populate the headers.
-//            $output .= implode(',', array_values($fields)) . "\n";
-//            foreach ($operationalRisks as $risk) {
-//                $arrayValues = [];
-//                foreach ($fields as $k => $v) {
-//                    if ($k === 'kindOfMeasure') {
-//                        switch ($risk[$k]) {
-//                            case 1:
-//                                $arrayValues[] = 'Reduction';
-//                                break;
-//                            case 2:
-//                                $arrayValues[] = 'Denied';
-//                                break;
-//                            case 3:
-//                                $arrayValues[] = 'Accepted';
-//                                break;
-//                            default:
-//                                $arrayValues[] = 'Not treated';
-//                        }
-//                    } elseif ($k === 'instanceInfos') {
-//                        $arrayValues[] = $risk[$k]['name' . $lang];
-//                    } elseif ($risk[$k] === -1) {
-//                        $arrayValues[] = null;
-//                    } else {
-//                        $arrayValues[] = $risk[$k];
-//                    }
-//                }
-//                $output .= '"';
-//                $search = ['"', "\n"];
-//                $replace = ["'", ' '];
-//                $output .= implode('","', str_replace($search, $replace, $arrayValues));
-//                $output .= "\"\r\n";
-//                $arrayValues = null;
-//            }
-//        }
 
         return $output;
     }
@@ -469,12 +451,16 @@ class AnrInstanceRiskOpService
 
     private function verifyScaleProbabilityNetValue(AnrSuperClass $anr, int $scaleProbabilityNetValue): void
     {
-        $operationalRiskScale = $this->operationalRiskScaleTable->findByAnrAndType(
+        $operationalRiskScales = $this->operationalRiskScaleTable->findByAnrAndType(
             $anr,
             OperationalRiskScale::TYPE_LIKELIHOOD
         );
+        /* There is only one scale of the TYPE_LIKELIHOOD. */
+        $operationalRiskScale = $operationalRiskScales->current();
         if ($scaleProbabilityNetValue !== -1
-            && ($scaleProbabilityNetValue < $operationalRiskScale->getMin() || $scaleProbabilityNetValue > $operationalRiskScale->getMax())
+            && ($scaleProbabilityNetValue < $operationalRiskScale->getMin()
+                || $scaleProbabilityNetValue > $operationalRiskScale->getMax()
+            )
         ) {
             throw new Exception(sprintf(
                 'The value %d should be between %d and %d.',
