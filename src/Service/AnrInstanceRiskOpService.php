@@ -264,7 +264,7 @@ class AnrInstanceRiskOpService
                 'description4' => $operationalInstanceRisk->getRiskCacheDescription(4),
                 'netProb' => $operationalInstanceRisk->getNetProb(),
                 'brutProb' => $operationalInstanceRisk->getBrutProb(),
-                'targetProb' => $operationalInstanceRisk->getTargetedProb(),
+                'targetedProb' => $operationalInstanceRisk->getTargetedProb(),
                 'scales' => $scalesData,
                 'cacheNetRisk' => $operationalInstanceRisk->getCacheNetRisk(),
                 'cacheBrutRisk' => $operationalInstanceRisk->getCacheBrutRisk(),
