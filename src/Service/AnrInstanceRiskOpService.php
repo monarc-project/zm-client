@@ -167,6 +167,8 @@ class AnrInstanceRiskOpService
             $this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname()
         );
 
+        $this->updateRiskCacheValues($operationalInstanceRisk);
+
         $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk);
 
         $this->updateInstanceRiskRecommendationsPositions($operationalInstanceRisk);
