@@ -3,11 +3,11 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\OperationalInstanceRiskScaleTable as COreOperationalInstanceRiskScaleTable;
+use Monarc\Core\Model\Table\OperationalInstanceRiskScaleTable as CoreOperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
 use Monarc\FrontOffice\Model\Entity\Anr;
 
-class OperationalInstanceRiskScaleTable extends COreOperationalInstanceRiskScaleTable
+class OperationalInstanceRiskScaleTable extends CoreOperationalInstanceRiskScaleTable
 {
     public function __construct(EntityManager $entityManager, string $entityName = OperationalInstanceRiskScale::class)
     {
