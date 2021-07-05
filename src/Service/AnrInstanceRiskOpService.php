@@ -7,6 +7,7 @@ use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
@@ -390,6 +391,19 @@ class AnrInstanceRiskOpService
     }
 
     /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function deleteOperationalRisks(InstanceSuperClass $instance): void
+    {
+        $operationalRisks = $this->instanceRiskOpTable->findByInstance($instance);
+        foreach ($operationalRisks as $operationalRisk) {
+            $this->instanceRiskOpTable->deleteEntity($operationalRisk, false);
+        }
+        $this->instanceRiskOpTable->getDb()->flush();
+    }
+
+    /**
      * @param Instance[] $instances
      *
      * @return array
@@ -423,7 +437,7 @@ class AnrInstanceRiskOpService
             if ($operationalInstanceRisk->{'getCache' . $valueType . 'Risk'}() !== $max) {
                 $operationalInstanceRisk
                     ->setUpdater($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname())
-                    {'setCache' . $valueType . 'Risk'}($max);
+                    ->{'setCache' . $valueType . 'Risk'}($max);
                 $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
             }
         }
