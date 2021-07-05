@@ -227,8 +227,8 @@ class AnrInstanceRiskOpService
 
             $scalesData = [];
             foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
-                $scalesData[] = [
-                    'id' => $operationalInstanceRiskScale->getId(),
+                $scalesData[$operationalInstanceRiskScale->getOperationalRiskScale()->getId()] = [
+                    'id' => $operationalInstanceRiskScale->getOperationalRiskScale()->getId(),
                     'label' => $operationalRisksScalesTranslations[
                         $operationalInstanceRiskScale->getOperationalRiskScale()->getLabelTranslationKey()
                     ]->getValue(),
