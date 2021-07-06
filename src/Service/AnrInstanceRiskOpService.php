@@ -256,6 +256,7 @@ class AnrInstanceRiskOpService
                     'netValue' => $operationalInstanceRiskScale->getNetValue(),
                     'brutValue' => $operationalInstanceRiskScale->getBrutValue(),
                     'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
+                    'isHidden' => $operationalRiskScale->isHidden(),
                 ];
             }
 
