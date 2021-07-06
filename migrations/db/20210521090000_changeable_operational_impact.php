@@ -216,6 +216,14 @@ class ChangeableOperationalImpact extends AbstractMigration
 //            ->removeColumn('targeted_f')
 //            ->removeColumn('targeted_p')
 //            ->update();
+
+        $this->table('recommandations_historics')
+            ->removeColumn('net_r_before')
+            ->removeColumn('net_o_before')
+            ->removeColumn('net_l_before')
+            ->removeColumn('net_f_before')
+            ->removeColumn('net_p_before')
+            ->update();
     }
 
     private function createTranslations(array $data, string $type, string $fieldName, string $translationKey): void

@@ -25,12 +25,9 @@ use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
-use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 class AnrInstanceRiskOpService
 {
-    use RecommendationsPositionsUpdateTrait;
-
     private AnrTable $anrTable;
 
     private InstanceTable $instanceTable;
@@ -50,6 +47,8 @@ class AnrInstanceRiskOpService
     private ConfigService $configService;
 
     private TranslateService$translateService;
+
+    private $operationalRiskScales;
 
     public function __construct(
         AnrTable $anrTable,
@@ -142,7 +141,7 @@ class AnrInstanceRiskOpService
      * @throws EntityNotFoundException
      * @throws Exception
      */
-    public function update(int $id, array $data)
+    public function update(int $id, array $data): array
     {
         // TODO: implement Permissions validator and inject it here. similar to \Monarc\Core\Service\AbstractService::deleteFromAnr
 
@@ -162,6 +161,10 @@ class AnrInstanceRiskOpService
             $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['brutProb']);
             $operationalInstanceRisk->setBrutProb((int)$data['brutProb']);
         }
+        if (!empty($data['targetProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetProb']) {
+            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['targetProb']);
+            $operationalInstanceRisk->setTargetedProb((int)$data['targetProb']);
+        }
 
         $operationalInstanceRisk->setUpdater(
             $this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname()
@@ -170,8 +173,6 @@ class AnrInstanceRiskOpService
         $this->updateRiskCacheValues($operationalInstanceRisk);
 
         $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk);
-
-        $this->updateInstanceRiskRecommendationsPositions($operationalInstanceRisk);
 
         return $operationalInstanceRisk->getJsonArray();
     }
@@ -182,7 +183,7 @@ class AnrInstanceRiskOpService
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function updateScaleValue($id, $data): void
+    public function updateScaleValue($id, $data): array
     {
         /** @var OperationalInstanceRiskScale $operationInstanceRiskScale */
         $operationInstanceRiskScale = $this->operationalInstanceRiskScaleTable->findById($data['instanceRiskScaleId']);
@@ -201,6 +202,12 @@ class AnrInstanceRiskOpService
             $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['brutValue']);
             $operationInstanceRiskScale->setBrutValue((int)$data['brutValue']);
         }
+        if (!empty($data['targetValue'])
+            && $operationInstanceRiskScale->getTargetedValue() !== (int)$data['targetValue']
+        ) {
+            $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['targetValue']);
+            $operationInstanceRiskScale->setTargetedValue((int)$data['targetValue']);
+        }
 
         $operationInstanceRiskScale->setUpdater($this->connectedUser->getEmail());
 
@@ -210,9 +217,11 @@ class AnrInstanceRiskOpService
         $this->updateRiskCacheValues($operationalInstanceRisk);
 
         $this->operationalInstanceRiskScaleTable->save($operationInstanceRiskScale);
+
+        return $operationalInstanceRisk->getJsonArray();
     }
 
-    public function getOperationalRisks(int $anrId, int $instanceId = null, array $params = [])
+    public function getOperationalRisks(int $anrId, int $instanceId = null, array $params = []): array
     {
         $instancesIds = $this->determineInstancesIdsFromParam($instanceId);
 
@@ -464,12 +473,12 @@ class AnrInstanceRiskOpService
 
     private function verifyScaleProbabilityValue(AnrSuperClass $anr, int $scaleProbabilityValue): void
     {
-        $operationalRiskScales = $this->operationalRiskScaleTable->findByAnrAndType(
-            $anr,
-            OperationalRiskScale::TYPE_LIKELIHOOD
-        );
+        if (!isset($this->operationalRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD])) {
+            $this->operationalRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD] = $this->operationalRiskScaleTable
+                ->findByAnrAndType($anr, OperationalRiskScale::TYPE_LIKELIHOOD);
+        }
         /* There is only one scale of the TYPE_LIKELIHOOD. */
-        $operationalRiskScale = $operationalRiskScales->current();
+        $operationalRiskScale = current($this->operationalRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD]);
         if ($scaleProbabilityValue !== -1
             && ($scaleProbabilityValue < $operationalRiskScale->getMin()
                 || $scaleProbabilityValue > $operationalRiskScale->getMax()

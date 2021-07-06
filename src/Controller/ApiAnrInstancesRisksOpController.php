@@ -30,8 +30,9 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulController
 
     public function patch($id, $data)
     {
-        $this->anrInstanceRiskOpService->updateScaleValue((int)$id, $data);
+        $risk = $this->anrInstanceRiskOpService->updateScaleValue((int)$id, $data);
+        unset($risk['anr'], $risk['instance'], $risk['object'], $risk['rolfRisk']);
 
-        return new JsonModel(['status' => 'ok']);
+        return new JsonModel($risk);
     }
 }
