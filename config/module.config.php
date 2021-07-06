@@ -1165,6 +1165,7 @@ return [
             Table\OperationalRiskScaleCommentTable::class => ClientEntityManagerFactory::class,
             Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\TranslationTable::class => ClientEntityManagerFactory::class,
+            Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.

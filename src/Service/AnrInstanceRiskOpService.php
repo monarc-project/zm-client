@@ -21,6 +21,7 @@ use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
@@ -49,7 +50,9 @@ class AnrInstanceRiskOpService
 
     private TranslateService$translateService;
 
-    private $operationalRiskScales;
+    private array $operationalRiskScales = [];
+
+    private InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
     public function __construct(
         AnrTable $anrTable,
@@ -61,7 +64,8 @@ class AnrInstanceRiskOpService
         OperationalRiskScaleTable $operationalRiskScaleTable,
         TranslationTable $translationTable,
         ConfigService $configService,
-        TranslateService $translateService
+        TranslateService $translateService,
+        InstanceRiskOwnerTable $instanceRiskOwnerTable
     ) {
         $this->anrTable = $anrTable;
         $this->instanceTable = $instanceTable;
@@ -73,6 +77,7 @@ class AnrInstanceRiskOpService
         $this->translationTable = $translationTable;
         $this->configService = $configService;
         $this->translateService = $translateService;
+        $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
     }
 
     public function createSpecificRiskOp(array $data): int
@@ -148,29 +153,48 @@ class AnrInstanceRiskOpService
 
         /** @var InstanceRiskOp $operationalInstanceRisk */
         $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
-        if (!empty($data['kindOfMeasure'])) {
+        if (isset($data['kindOfMeasure'])) {
             $operationalInstanceRisk->setKindOfMeasure((int)$data['kindOfMeasure']);
         }
-        if (!empty($data['comment'])) {
+        if (isset($data['comment'])) {
             $operationalInstanceRisk->setComment($data['comment']);
         }
-        if (!empty($data['netProb']) && $operationalInstanceRisk->getNetProb() !== $data['netProb']) {
+        if (isset($data['netProb']) && $operationalInstanceRisk->getNetProb() !== $data['netProb']) {
             $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['netProb']);
             $operationalInstanceRisk->setNetProb((int)$data['netProb']);
         }
-        if (!empty($data['brutProb']) && $operationalInstanceRisk->getBrutProb() !== $data['brutProb']) {
+        if (isset($data['brutProb']) && $operationalInstanceRisk->getBrutProb() !== $data['brutProb']) {
             $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['brutProb']);
             $operationalInstanceRisk->setBrutProb((int)$data['brutProb']);
         }
-        if (!empty($data['targetedProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetedProb']) {
+        if (isset($data['targetedProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetedProb']) {
             $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['targetedProb']);
             $operationalInstanceRisk->setTargetedProb((int)$data['targetedProb']);
         }
-        if (!empty($data['owner'])) {
-            $new_owner = (new InstanceRiskOwner())
-                ->setAnr($operationalInstanceRisk->getAnr())
-                ->setName($data['owner']);
-            $operationalInstanceRisk->setOwner($new_owner);
+        if (isset($data['owner'])) {
+            if (empty($data['owner'])) {
+                $operationalInstanceRisk->setOwner(null);
+            } else {
+                $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName(
+                    $operationalInstanceRisk->getAnr(),
+                    $data['owner']
+                );
+                if ($instanceRiskOwner === null) {
+                    $instanceRiskOwner = (new InstanceRiskOwner())
+                        ->setAnr($operationalInstanceRisk->getAnr())
+                        ->setName($data['owner'])
+                        ->setCreator($this->connectedUser->getEmail());
+
+                    $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
+
+                    $operationalInstanceRisk->setOwner($instanceRiskOwner);
+                } elseif ($operationalInstanceRisk->getOwner() !== $instanceRiskOwner) {
+                    $operationalInstanceRisk->setOwner($instanceRiskOwner);
+                }
+            }
+        }
+        if (isset($data['context'])) {
+            $operationalInstanceRisk->setContext($data['context']);
         }
 
         $operationalInstanceRisk->setUpdater(
@@ -201,15 +225,15 @@ class AnrInstanceRiskOpService
             );
         }
 
-        if (!empty($data['netValue']) && $operationInstanceRiskScale->getNetValue() !== (int)$data['netValue']) {
+        if (isset($data['netValue']) && $operationInstanceRiskScale->getNetValue() !== (int)$data['netValue']) {
             $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['netValue']);
             $operationInstanceRiskScale->setNetValue((int)$data['netValue']);
         }
-        if (!empty($data['brutValue']) && $operationInstanceRiskScale->getBrutValue() !== (int)$data['brutValue']) {
+        if (isset($data['brutValue']) && $operationInstanceRiskScale->getBrutValue() !== (int)$data['brutValue']) {
             $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['brutValue']);
             $operationInstanceRiskScale->setBrutValue((int)$data['brutValue']);
         }
-        if (!empty($data['targetValue'])
+        if (isset($data['targetValue'])
             && $operationInstanceRiskScale->getTargetedValue() !== (int)$data['targetValue']
         ) {
             $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['targetValue']);
