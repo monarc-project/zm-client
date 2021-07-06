@@ -161,9 +161,9 @@ class AnrInstanceRiskOpService
             $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['brutProb']);
             $operationalInstanceRisk->setBrutProb((int)$data['brutProb']);
         }
-        if (!empty($data['targetProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetProb']) {
-            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['targetProb']);
-            $operationalInstanceRisk->setTargetedProb((int)$data['targetProb']);
+        if (!empty($data['targetedProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetedProb']) {
+            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['targetedProb']);
+            $operationalInstanceRisk->setTargetedProb((int)$data['targetedProb']);
         }
 
         $operationalInstanceRisk->setUpdater(
