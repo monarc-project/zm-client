@@ -270,6 +270,7 @@ class AnrInstanceRiskOpService
                 'description2' => $operationalInstanceRisk->getRiskCacheDescription(2),
                 'description3' => $operationalInstanceRisk->getRiskCacheDescription(3),
                 'description4' => $operationalInstanceRisk->getRiskCacheDescription(4),
+                'owner' => $operationalInstanceRisk->getOwner() ? $operationalInstanceRisk->getOwner()->getName() : '',
                 'netProb' => $operationalInstanceRisk->getNetProb(),
                 'brutProb' => $operationalInstanceRisk->getBrutProb(),
                 'targetedProb' => $operationalInstanceRisk->getTargetedProb(),
