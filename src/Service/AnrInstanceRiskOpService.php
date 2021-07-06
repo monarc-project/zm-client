@@ -18,6 +18,7 @@ use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
@@ -164,6 +165,12 @@ class AnrInstanceRiskOpService
         if (!empty($data['targetedProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetedProb']) {
             $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['targetedProb']);
             $operationalInstanceRisk->setTargetedProb((int)$data['targetedProb']);
+        }
+        if (!empty($data['owner'])) {
+            $new_owner = (new InstanceRiskOwner())
+                ->setAnr($operationalInstanceRisk->getAnr())
+                ->setName($data['owner']);
+            $operationalInstanceRisk->setOwner($new_owner);
         }
 
         $operationalInstanceRisk->setUpdater(
