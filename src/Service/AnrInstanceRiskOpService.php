@@ -155,9 +155,19 @@ class AnrInstanceRiskOpService
             $operationalInstanceRisk->setComment($data['comment']);
         }
         if (!empty($data['netProb']) && $operationalInstanceRisk->getNetProb() !== $data['netProb']) {
-            $this->verifyScaleProbabilityNetValue($operationalInstanceRisk->getAnr(), (int)$data['netProb']);
+            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['netProb']);
             $operationalInstanceRisk->setNetProb((int)$data['netProb']);
         }
+        if (!empty($data['brutProb']) && $operationalInstanceRisk->getBrutProb() !== $data['brutProb']) {
+            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['brutProb']);
+            $operationalInstanceRisk->setBrutProb((int)$data['brutProb']);
+        }
+
+        $operationalInstanceRisk->setUpdater(
+            $this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname()
+        );
+
+        $this->updateRiskCacheValues($operationalInstanceRisk);
 
         $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk);
 
@@ -179,14 +189,20 @@ class AnrInstanceRiskOpService
         if ($operationInstanceRiskScale === null) {
             throw EntityNotFoundException::fromClassNameAndIdentifier(
                 \get_class($this->operationalInstanceRiskScaleTable),
-                $data['scaleId']
+                $data['instanceRiskScaleId']
             );
         }
 
-        $this->verifyScaleNetValue($operationInstanceRiskScale, (int)$data['netValue']);
+        if (!empty($data['netValue']) && $operationInstanceRiskScale->getNetValue() !== (int)$data['netValue']) {
+            $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['netValue']);
+            $operationInstanceRiskScale->setNetValue((int)$data['netValue']);
+        }
+        if (!empty($data['brutValue']) && $operationInstanceRiskScale->getBrutValue() !== (int)$data['brutValue']) {
+            $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['brutValue']);
+            $operationInstanceRiskScale->setBrutValue((int)$data['brutValue']);
+        }
 
-        $operationInstanceRiskScale->setNetValue((int)$data['netValue'])
-            ->setUpdater($this->connectedUser->getEmail());
+        $operationInstanceRiskScale->setUpdater($this->connectedUser->getEmail());
 
         /** @var InstanceRiskOp $operationalInstanceRisk */
         $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
@@ -223,17 +239,15 @@ class AnrInstanceRiskOpService
 
             $scalesData = [];
             foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
-                $scalesData[$operationalInstanceRiskScale->getOperationalRiskScale()->getId()] = [
-                    'label' => $operationalRisksScalesTranslations[
-                        $operationalInstanceRiskScale->getOperationalRiskScale()->getLabelTranslationKey()
-                    ]->getValue(),
-                    'values' => [
-                        'operationalInstanceRiskId' => $operationalInstanceRisk->getId(),
-                        'instanceRiskScaleId' => $operationalInstanceRiskScale->getId(),
-                        'net' => $operationalInstanceRiskScale->getNetValue(),
-                        'brut' => $operationalInstanceRiskScale->getBrutValue(),
-                        'target' => $operationalInstanceRiskScale->getTargetedValue(),
-                    ],
+                $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
+                $scalesData[$operationalRiskScale->getId()] = [
+                    'operationalInstanceRiskId' => $operationalInstanceRisk->getId(),
+                    'instanceRiskScaleId' => $operationalInstanceRiskScale->getId(),
+                    'label' => $operationalRisksScalesTranslations[$operationalRiskScale->getLabelTranslationKey()]
+                        ->getValue(),
+                    'netValue' => $operationalInstanceRiskScale->getNetValue(),
+                    'brutValue' => $operationalInstanceRiskScale->getBrutValue(),
+                    'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
                 ];
             }
 
@@ -250,7 +264,7 @@ class AnrInstanceRiskOpService
                 'description4' => $operationalInstanceRisk->getRiskCacheDescription(4),
                 'netProb' => $operationalInstanceRisk->getNetProb(),
                 'brutProb' => $operationalInstanceRisk->getBrutProb(),
-                'targetProb' => $operationalInstanceRisk->getTargetedProb(),
+                'targetedProb' => $operationalInstanceRisk->getTargetedProb(),
                 'scales' => $scalesData,
                 'cacheNetRisk' => $operationalInstanceRisk->getCacheNetRisk(),
                 'cacheBrutRisk' => $operationalInstanceRisk->getCacheBrutRisk(),
@@ -430,9 +444,9 @@ class AnrInstanceRiskOpService
         }
     }
 
-    private function verifyScaleNetValue(
+    private function verifyScaleValue(
         OperationalInstanceRiskScale $operationalInstanceRiskScale,
-        int $scaleNetValue
+        int $scaleValue
     ): void {
         $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
         $allowedValues = [];
@@ -440,16 +454,16 @@ class AnrInstanceRiskOpService
             $allowedValues[] = $operationalRiskScaleComment->getScaleValue();
         }
 
-        if ($scaleNetValue !== -1 && !\in_array($scaleNetValue, $allowedValues, true)) {
+        if ($scaleValue !== -1 && !\in_array($scaleValue, $allowedValues, true)) {
             throw new Exception(sprintf(
                 'The value %d should be between one of [%s]',
-                $scaleNetValue,
+                $scaleValue,
                 implode(', ', $allowedValues)
             ), 412);
         }
     }
 
-    private function verifyScaleProbabilityNetValue(AnrSuperClass $anr, int $scaleProbabilityNetValue): void
+    private function verifyScaleProbabilityValue(AnrSuperClass $anr, int $scaleProbabilityValue): void
     {
         $operationalRiskScales = $this->operationalRiskScaleTable->findByAnrAndType(
             $anr,
@@ -457,14 +471,14 @@ class AnrInstanceRiskOpService
         );
         /* There is only one scale of the TYPE_LIKELIHOOD. */
         $operationalRiskScale = $operationalRiskScales->current();
-        if ($scaleProbabilityNetValue !== -1
-            && ($scaleProbabilityNetValue < $operationalRiskScale->getMin()
-                || $scaleProbabilityNetValue > $operationalRiskScale->getMax()
+        if ($scaleProbabilityValue !== -1
+            && ($scaleProbabilityValue < $operationalRiskScale->getMin()
+                || $scaleProbabilityValue > $operationalRiskScale->getMax()
             )
         ) {
             throw new Exception(sprintf(
                 'The value %d should be between %d and %d.',
-                $scaleProbabilityNetValue,
+                $scaleProbabilityValue,
                 $operationalRiskScale->getMin(),
                 $operationalRiskScale->getMax()
             ), 412);
