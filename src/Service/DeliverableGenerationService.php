@@ -1636,14 +1636,15 @@ class DeliverableGenerationService extends AbstractService
             $styleContentFontBold = ['bold' => true, 'size' => 10];
             $cellOpRiskImpactSpan = ['gridSpan' => count($opRisksImpactsScales), 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
             $cellPathColSpan = ['gridSpan' => 6 + count($opRisksImpactsScales), 'valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 10];
-            $cellColSpan7 = ['gridSpan' => 7, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
-            $cellColSpan8 = ['gridSpan' => 8, 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+            $cellBrutRiskColSpan = ['gridSpan' => 2 + count($opRisksImpactsScales), 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
+            $cellNetRiskColSpan = ['gridSpan' => 3 + count($opRisksImpactsScales), 'valign' => 'center', 'bgcolor' => '444444', 'size' => 10];
             $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center', 'bgcolor' => '444444', 'align' => 'center', 'Alignment' => 'center'];
             $cellRotate90RowSpan = ['vMerge' => 'restart', 'valign' => 'top', 'textDirection' => 'btLr', 'bgcolor' => '444444', 'align' => 'center', 'Alignment' => 'center'];
             $cellRowContinue = ['vMerge' => 'continue', 'valign' => 'center', 'bgcolor' => '444444'];
             $alignCenter = ['align' => 'center', 'spaceAfter' => '0'];
             $alignVerticalCenter = ['Alignment' => 'center'];
             $alignLeft = ['align' => 'left', 'spaceAfter' => '0'];
+            $sizeCellImpact = count($opRisksImpactsScales) * 0.70;
 
             $risks = ['brutRisk', 'netRisk', 'targetedRisk'];
 
@@ -1672,9 +1673,9 @@ class DeliverableGenerationService extends AbstractService
                     $table->addRow(400, ['tblHeader' => true]);
                     $table->addCell(Converter::cmToTwip(10.00), $cellRowSpan)->addText($this->anrTranslate('Risk description'), $styleHeaderFont, $alignCenter);
                     if ($anr->showRolfBrut == 1) {
-                        $table->addCell(Converter::cmToTwip(5.50), $cellColSpan7)->addText($this->anrTranslate('Inherent risk'), $styleHeaderFont, $alignCenter);
+                        $table->addCell(Converter::cmToTwip(5.50), $cellBrutRiskColSpan)->addText($this->anrTranslate('Inherent risk'), $styleHeaderFont, $alignCenter);
                     }
-                    $table->addCell(Converter::cmToTwip(15.00), $cellColSpan8)->addText($this->anrTranslate('Net risk'), $styleHeaderFont, $alignCenter);
+                    $table->addCell(Converter::cmToTwip(15.00), $cellNetRiskColSpan)->addText($this->anrTranslate('Net risk'), $styleHeaderFont, $alignCenter);
                     $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText($this->anrTranslate('Treatment'), $styleHeaderFont, $alignCenter);
                     $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText($this->anrTranslate('Residual risk'), $styleHeaderFont, $alignCenter);
 
@@ -1682,11 +1683,11 @@ class DeliverableGenerationService extends AbstractService
                     $table->addCell(Converter::cmToTwip(10.00), $cellRowContinue);
                     if ($anr->showRolfBrut == 1) {
                         $table->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Prob.'), $styleHeaderFont, $alignCenter);
-                        $table->addCell(Converter::cmToTwip(3.50), $cellOpRiskImpactSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
+                        $table->addCell(Converter::cmToTwip($sizeCellImpact), $cellOpRiskImpactSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
                         $table->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
                     }
                     $table->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Prob.'), $styleHeaderFont, $alignCenter);
-                    $table->addCell(Converter::cmToTwip(3.50), $cellOpRiskImpactSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
+                    $table->addCell(Converter::cmToTwip($sizeCellImpact), $cellOpRiskImpactSpan)->addText($this->anrTranslate('Impact'), $styleHeaderFont, $alignCenter);
                     $table->addCell(Converter::cmToTwip(1.00), $cellRowSpan)->addText($this->anrTranslate('Current risk'), $styleHeaderFont, $alignCenter);
                     $table->addCell(Converter::cmToTwip(8.00), $cellRowSpan)->addText($this->anrTranslate('Existing controls'), $styleHeaderFont, $alignCenter);
                     $table->addCell(Converter::cmToTwip(2.00), $cellRowContinue);
@@ -1717,7 +1718,7 @@ class DeliverableGenerationService extends AbstractService
 
               if (!empty($data['risks']) && $data['risks'] !== true) {
                 if ($anr->showRolfBrut == 1) {
-                    $cellPathColSpan['gridSpan'] = 13 + count($opRisksImpactsScales);
+                    $cellPathColSpan['gridSpan'] = 8 + count($opRisksImpactsScales) * 2;
                 }
                 $table = $section->addTable($styleTable);
                 $table->addRow(400);
