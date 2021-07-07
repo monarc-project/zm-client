@@ -79,6 +79,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
+            'OpRiskImpact' => $this->listOpRiskScales[OperationalRiskScale::TYPE_IMPACT],
+            'Likelihood' => $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD],
             'MxV' => $this->headers,
             'riskInfo' => [
               'counters' => $counters,
