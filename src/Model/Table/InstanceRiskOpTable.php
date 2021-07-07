@@ -109,8 +109,8 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
                     'iro.kindOfMeasure IS NULL OR iro.kindOfMeasure = ' . InstanceRiskOp::KIND_NOT_TREATED
                 );
             } else {
-                $queryBuilder->andWhere('iro.kindOfMeasure = :kindOfMeasure');
-                $queryParams['kindOfMeasure'] = $filterParams['kindOfMeasure'];
+                $queryBuilder->andWhere('iro.kindOfMeasure = :kindOfMeasure')
+                    ->setParameter('kindOfMeasure', $filterParams['kindOfMeasure']);
             }
         }
 
