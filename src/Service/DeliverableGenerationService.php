@@ -1510,7 +1510,7 @@ class DeliverableGenerationService extends AbstractService
         $result = $query->select([
             'i.id', 'i.name' . $anr->getLanguage() . ' as name', 'IDENTITY(i.root)',
             'IDENTITY(i.parent) AS parent', 'i.level', 'i.position',
-            'ir AS instanceRisksOP',
+            'ir AS instanceRiskOp',
             'ir.riskCacheLabel' . $anr->getLanguage() . ' AS label',
             'ir.brutProb AS brutProb',
             'ir.cacheBrutRisk AS cacheBrutRisk',
@@ -1583,7 +1583,7 @@ class DeliverableGenerationService extends AbstractService
             }
           }
 
-          foreach ($r['instanceRisksOP']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+          foreach ($r['instanceRiskOp']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
               $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
               $scalesData[$operationalRiskScale->getId()] = [
                   'netValue' => $operationalInstanceRiskScale->getNetValue() >= 0 ? $operationalInstanceRiskScale->getNetValue() : '-',
@@ -2042,9 +2042,20 @@ class DeliverableGenerationService extends AbstractService
                 $tableRiskOp->addCell(Converter::cmToTwip(8.00), $cellRowContinue);
                 $tableRiskOp->addCell(Converter::cmToTwip(2.00), $cellRowContinue);
 
-                $kindOfRisks = ['cacheBrutRisk', 'cacheNetRisk', 'cacheTargetedRisk'];
+                $kindOfRisks = ['cacheBrutRisk', 'cacheNetRisk', 'cacheTargetRisk'];
 
                 foreach ($risksOpByTreatment as $r) {
+                    $instanceRiskOp = $this->get('instanceRiskOpTable')->findById($r['id']);
+                    foreach ($instanceRiskOp->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+                        $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
+                        $scalesData[$operationalRiskScale->getId()] = [
+                            'netValue' => $operationalInstanceRiskScale->getNetValue() >= 0 ? $operationalInstanceRiskScale->getNetValue() : '-',
+                            'brutValue' => $operationalInstanceRiskScale->getBrutValue() >= 0 ? $operationalInstanceRiskScale->getBrutValue() : '-',
+                        ];
+                    }
+
+                    $r['scales'] = $scalesData;
+
                     foreach ($kindOfRisks as $risk) {
                         $bgcolor = 'FFBC1C';
                         if ($r[$risk] == -1) {
@@ -2083,26 +2094,22 @@ class DeliverableGenerationService extends AbstractService
                     $tableRiskOp->addCell(Converter::cmToTwip(3.00), $styleContentCell)->addText(_WT($path), $styleContentFont, $alignLeft);
                     $tableRiskOp->addCell(Converter::cmToTwip(10.00), $styleContentCell)->addText(_WT($r['label' . $anr->getLanguage()]), $styleContentFont, $alignLeft);
                     if ($anr->showRolfBrut == 1) {
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText($r['brutProb'], $styleContentFont, $alignCenter);
+                        foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                            $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['scales'][$opRiskImpactScale['id']]['brutValue'], $styleContentFont, $alignCenter);
+                        }
                         $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCellcacheBrutRisk)->addText($r['cacheBrutRisk'], $styleContentFontBold, $alignCenter);
                     }
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText('-', $styleContentFont, $alignCenter);
+                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText($r['netProb'], $styleContentFont, $alignCenter);
+                    foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['scales'][$opRiskImpactScale['id']]['netValue'], $styleContentFont, $alignCenter);
+                    }
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCellcacheNetRisk)->addText($r['cacheNetRisk'], $styleContentFontBold, $alignCenter);
                     $tableRiskOp->addCell(Converter::cmToTwip(8.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
-                    if ($r['cacheTargetedRisk'] == '-') {
+                    if ($r['cacheTargetRisk'] == '-') {
                         $tableRiskOp->addCell(Converter::cmToTwip(2.00), $styleContentCellcacheNetRisk)->addText($r['cacheNetRisk'], $styleContentFontBold, $alignCenter);
                     } else {
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $styleContentCellcacheTargetedRisk)->addText($r['cacheTargetedRisk'], $styleContentFontBold, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $styleContentCellcacheTargetRisk)->addText($r['cacheTargetRisk'], $styleContentFontBold, $alignCenter);
                     }
                 }
                 $section->addTextBreak();
