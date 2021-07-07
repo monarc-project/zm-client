@@ -27,9 +27,12 @@ use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 class AnrInstanceRiskOpService
 {
+    use RecommendationsPositionsUpdateTrait;
+
     private AnrTable $anrTable;
 
     private InstanceTable $instanceTable;
@@ -204,6 +207,8 @@ class AnrInstanceRiskOpService
         $this->updateRiskCacheValues($operationalInstanceRisk);
 
         $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk);
+
+        $this->updateInstanceRiskRecommendationsPositions($operationalInstanceRisk);
 
         return $operationalInstanceRisk->getJsonArray();
     }

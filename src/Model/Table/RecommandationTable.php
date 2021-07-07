@@ -85,6 +85,19 @@ class RecommandationTable extends AbstractEntityTable
     }
 
     /**
+     * @return Recommandation[]
+     */
+    public function findByAnr(AnrSuperClass $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @throws EntityNotFoundException
      */
     public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): Recommandation

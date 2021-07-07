@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
@@ -52,6 +51,19 @@ class RecommandationSetTable extends AbstractEntityTable
         }
 
         return $recommendationSet;
+    }
+
+    /**
+     * @return RecommandationSet[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('rs')
+            ->where('rs.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
