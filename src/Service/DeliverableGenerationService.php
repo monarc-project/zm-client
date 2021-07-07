@@ -858,8 +858,8 @@ class DeliverableGenerationService extends AbstractService
 
         $values['chart']['GRAPH_EVAL_RISK'] = $this->generateRisksGraph($anr);
 
-        // $values['xml']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
-        // $values['xml']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
+        $values['xml']['CURRENT_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'real');
+        $values['xml']['TARGET_RISK_MAP'] = $this->generateCurrentRiskMap($anr, 'targeted');
 
         $values['xml']['RISKS_KIND_OF_TREATMENT'] = $this->generateRisksByKindOfTreatment($anr);
         $values['table']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr);
@@ -967,6 +967,7 @@ class DeliverableGenerationService extends AbstractService
               $params  = [
                 'riskType' => 'riskInfo',
                 'axisX' => 'MxV',
+                'axisY' => 'Impact',
                 'labelAxisX' => 'TxV',
                 'thresholds' => [
                       $anr->seuil1,
@@ -980,7 +981,8 @@ class DeliverableGenerationService extends AbstractService
               $section->addText($this->anrTranslate('Operational risks'), ['bold' => true], ['indent' => 0.5]);
               $params  = [
                   'riskType' => 'riskOp',
-                  'axisX' => 'Probability',
+                  'axisX' => 'Likelihood',
+                  'axisY' => 'OpRiskImpact',
                   'labelAxisX' => 'Probability',
                   'thresholds' => [
                         $anr->seuilRolf1,
@@ -1014,7 +1016,7 @@ class DeliverableGenerationService extends AbstractService
         $cellImpactHeader = ['textDirection' => 'btLr', 'valign' => 'center', 'vMerge' => 'restart'];
 
         $axisX = $data[$params['axisX']];
-        $axisY = $data['Impact'];
+        $axisY = $data[$params['axisY']];
         $labelAxisX = $params['labelAxisX'];
         $data = $data[$params['riskType']]['counters'];
         $thresholds = $params['thresholds'];
