@@ -1510,6 +1510,7 @@ class DeliverableGenerationService extends AbstractService
         $result = $query->select([
             'i.id', 'i.name' . $anr->getLanguage() . ' as name', 'IDENTITY(i.root)',
             'IDENTITY(i.parent) AS parent', 'i.level', 'i.position',
+            'ir AS instanceRisksOP',
             'ir.riskCacheLabel' . $anr->getLanguage() . ' AS label',
             'ir.brutProb AS brutProb',
             'ir.cacheBrutRisk AS cacheBrutRisk',
@@ -1582,12 +1583,21 @@ class DeliverableGenerationService extends AbstractService
             }
           }
 
+          foreach ($r['instanceRisksOP']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+              $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
+              $scalesData[$operationalRiskScale->getId()] = [
+                  'netValue' => $operationalInstanceRiskScale->getNetValue() >= 0 ? $operationalInstanceRiskScale->getNetValue() : '-',
+                  'brutValue' => $operationalInstanceRiskScale->getBrutValue() >= 0 ? $operationalInstanceRiskScale->getBrutValue() : '-',
+              ];
+          }
+
           $lst[$r['id']]['risks'][] = [
               'label' => $r['label'],
               'brutProb' => $r['brutProb'],
               'brutRisk' => $r['cacheBrutRisk'],
               'netProb' => $r['netProb'],
               'netRisk' => $r['cacheNetRisk'],
+              'scales' => $scalesData,
               'comment' => $r['comment'],
               'targetedRisk' => $r['cacheTargetedRisk'],
               'kindOfMeasure' => $r['kindOfMeasure']
@@ -1758,19 +1768,15 @@ class DeliverableGenerationService extends AbstractService
                     $table->addCell(Converter::cmToTwip(10.00), $styleContentCell)->addText(_WT($r['label']), $styleContentFont, $alignLeft);
                     if ($anr->showRolfBrut == 1) {
                         $table->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText($r['brutProb'], $styleContentFont, $alignCenter);
-                        $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutR'], $styleContentFont, $alignCenter);
-                        $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutO'], $styleContentFont, $alignCenter);
-                        $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutL'], $styleContentFont, $alignCenter);
-                        $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutF'], $styleContentFont, $alignCenter);
-                        $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['brutP'], $styleContentFont, $alignCenter);
+                        foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                            $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['scales'][$opRiskImpactScale['id']]['brutValue'], $styleContentFont, $alignCenter);
+                        }
                         $table->addCell(Converter::cmToTwip(1.00), $styleContentCellbrutRisk)->addText($r['brutRisk'], $styleContentFontBold, $alignCenter);
                     }
                     $table->addCell(Converter::cmToTwip(1.00), $styleContentCell)->addText($r['netProb'], $styleContentFont, $alignCenter);
-                    $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netR'], $styleContentFont, $alignCenter);
-                    $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netO'], $styleContentFont, $alignCenter);
-                    $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netL'], $styleContentFont, $alignCenter);
-                    $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netF'], $styleContentFont, $alignCenter);
-                    $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['netP'], $styleContentFont, $alignCenter);
+                    foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                        $table->addCell(Converter::cmToTwip(0.70), $styleContentCell)->addText($r['scales'][$opRiskImpactScale['id']]['netValue'], $styleContentFont, $alignCenter);
+                    }
                     $table->addCell(Converter::cmToTwip(1.00), $styleContentCellnetRisk)->addText($r['netRisk'], $styleContentFontBold, $alignCenter);
                     $table->addCell(Converter::cmToTwip(8.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
                     $table->addCell(Converter::cmToTwip(2.00), $styleContentCell)->addText($this->anrTranslate($Treatment), $styleContentFont, $alignLeft);
@@ -1855,7 +1861,7 @@ class DeliverableGenerationService extends AbstractService
         for ($i = 1; $i <= 4; $i++) {
 
             $risksByTreatment = $this->get('riskService')->getRisks($anr->getId(), null, ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
-            $risksOpByTreatment = $this->get('anrInstanceRiskOpService')->getRisksOp($anr->getId(), null, ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
+            $risksOpByTreatment = $this->get('anrInstanceRiskOpService')->getOperationalRisks($anr->getId(), null, ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
 
 
             switch ($i) {
