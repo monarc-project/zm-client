@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use \Monarc\Core\Model\Entity\Scale;
+use \Monarc\Core\Model\Entity\OperationalRiskScale;
 use \Monarc\Core\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 
@@ -23,11 +24,13 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     protected $instanceRiskTable;
     protected $instanceRiskOpTable;
     protected $instanceConsequenceTable;
+    protected $operationalRiskScaleTable;
     protected $threatTable;
     protected $filterColumns = [];
     protected $dependencies = [];
     private $anr = null;
     private $listScales = null;
+    private $listOpRiskScales = null;
     private $headers = null;
 
     /**
@@ -38,6 +41,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     public function getCartoReal($anrId)
     {
         $this->buildListScalesAndHeaders($anrId);
+        $this->buildListScalesOpRisk($anrId);
 
         list($counters, $distrib) = $this->getCountersRisks('raw');
         list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('raw');
@@ -45,6 +49,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
             'Probability' => $this->listScales[Scale::TYPE_THREAT],
+            'OpRiskImpact' => $this->listOpRiskScales[OperationalRiskScale::TYPE_IMPACT],
+            'Likelihood' => $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD],
             'MxV' => $this->headers,
             'riskInfo' => [
               'counters' => $counters,
@@ -65,6 +71,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     public function getCartoTargeted($anrId)
     {
         $this->buildListScalesAndHeaders($anrId);
+        $this->buildListScalesOpRisk($anrId);
 
         list($counters, $distrib) = $this->getCountersRisks('target');
         list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('target');
@@ -128,6 +135,38 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 }
             }
             sort($this->headers);
+        }
+    }
+
+    /**
+     * Computes and builds the List Scales for the operational risk table (Impact and likelihood fields)
+     * @param int $anrId The ANR ID
+     */
+    public function buildListScalesOpRisk($anrId)
+    {
+        // Only load the ANR if we don't have the ANR already loaded, or a different one.
+        if (!$this->anr || $this->anr->get('id') != $anrId) {
+            $this->anr = $this->get('anrTable')->getEntity($anrId);
+        }
+
+        // Only compute the listScales and headers fields if we didn't already
+        if ($this->listOpRiskScales === null) {
+            /** @var OperationalRiskScaleTable $operationalRiskScaleTable */
+            $operationalRiskScaleTable = $this->get('operationalRiskScaleTable');
+            $likelihoodScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_LIKELIHOOD));
+            $impactsScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_IMPACT));
+            $impactScaleComments = $impactsScale->getOperationalRiskScaleComments();
+
+            foreach ($impactScaleComments as $comment) {
+                $impactScaleValues[] = $comment->getScaleValue();
+            }
+
+            usort($impactScaleValues, static function ($a, $b) {
+                return $a <=> $b;
+            });
+
+            $this->listOpRiskScales[OperationalRiskScale::TYPE_IMPACT] = $impactScaleValues;
+            $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD] = range($likelihoodScale->getMin(),$likelihoodScale->getMax());
         }
     }
 
@@ -238,11 +277,10 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
      */
     public function getCountersOpRisks($mode = 'raw')
     {
-        $valuesField = ['IDENTITY(iro.rolfRisk) as id', 'iro.netProb as netProb', 'iro.netR as netR', 'iro.netO as netO','iro.netL as netL','iro.netF as netF','iro.netP as netP',
-                        'iro.targetedProb as targetedProb', 'iro.targetedR as targetedR', 'iro.targetedO as targetedO','iro.targetedL as targetedL','iro.targetedF as targetedF','iro.targetedP as targetedP'];
+        $valuesField = ['IDENTITY(iro.rolfRisk) as id', 'iro.netProb as netProb','iro.targetedProb as targetedProb'];
         $query = $this->get('instanceRiskOpTable')->getRepository()->createQueryBuilder('iro');
         $result = $query->select([
-            'iro.cacheNetRisk as netRisk', 'iro.cacheTargetedRisk as targetedRisk',
+            'iro as instanceRiskOp', 'iro.cacheNetRisk as netRisk', 'iro.cacheTargetedRisk as targetedRisk',
             implode(',', $valuesField)
         ])->where('iro.anr = :anrid')
             ->setParameter(':anrid', $this->anr->get('id'))
@@ -252,15 +290,29 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
         $countersRiskOP = $distribRiskOp = $temp = [];
         foreach ($result as $r) {
-            if ($mode == 'raw' || $r['targetedRisk'] == -1) {
-              $imax = max($r['netR'], $r['netO'],$r['netL'], $r['netF'], $r['netP']);
-              $max = $r['netRisk'];
-              $prob = $r['netProb'];
-            }else {
-              $imax =  max($r['targetedR'], $r['targetedO'],$r['targetedL'], $r['targetedF'], $r['targetedP']);
-              $max = $r['targetedRisk'];
-              $prob = $r['targetedProb'];
+            foreach ($r['instanceRiskOp']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+                $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
+                $scalesData[$operationalRiskScale->getId()] = [
+                    'netValue' => $operationalInstanceRiskScale->getNetValue(),
+                    'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
+                ];
             }
+            if ($mode == 'raw' || $r['targetedRisk'] == -1) {
+                $imax = array_reduce($scalesData, function($a, $b){
+                    return $a ? ($a['netValue'] > $b['netValue'] ? $a : $b) : $b;
+                });
+                $imax = $imax['netValue'];
+                $max = $r['netRisk'];
+                $prob = $r['netProb'];
+            }else {
+                $imax = array_reduce($scalesData, function($a, $b){
+                    return $a ? ($a['targetValue'] > $b['targetValue'] ? $a : $b) : $b;
+                });
+                $imax = $imax['targetValue'];
+                $max = $r['targetedRisk'];
+                $prob = $r['targetedProb'];
+            }
+
             $id = $r['id'];
             $color = $this->getColor($max,'riskOp');
 
