@@ -12,4 +12,9 @@ class InstanceRiskOwnerTable extends CoreInstanceRiskOwnerTable
     {
         parent::__construct($entityManager, $entityName);
     }
+
+    public function getEntityClass(): string
+    {
+        return InstanceRiskOwner::class;
+    }
 }

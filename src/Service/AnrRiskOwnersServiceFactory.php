@@ -20,7 +20,6 @@ class AnrRiskOwnersServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => Table\InstanceRiskOwnerTable::class,
         'anrTable' => Table\AnrTable::class,
-        'userAnrTable' => Table\UserAnrTable::class,
         'entity' => InstanceRiskOwner::class
     ];
 }
