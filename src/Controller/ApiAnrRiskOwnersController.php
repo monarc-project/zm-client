@@ -33,14 +33,29 @@ class ApiAnrRiskOwnersController extends AbstractRestfulController
         $anrId = (int)$this->params()->fromRoute('anrid');
         $params = $this->prepareParams();
         
-        $owners = $this->anrRiskOwnersService->getOwners($anrId, null, $params);
-        
-        return new JsonModel([
-            'count' => \count($owners),
-            'owners' => $params['limit'] > 0
-                ? \array_slice($owners, ($params['page'] - 1) * $params['limit'], $params['limit'])
-                : $owners,
+        $owners = $this->anrRiskOwnersService->getOwners($anrId, $params, false);
+
+        // return new JsonModel([
+        //     'count' => \count($owners),
+        //     'owners' => $params['limit'] > 0
+        //         ? \array_slice($owners, ($params['page'] - 1) * $params['limit'], $params['limit'])
+        //         : $owners,
+        // ]);
+
+        $result = [];
+        foreach ($owners as $owner) {
+            array_push($result, [
+                "name" => $owner->getName(),
+                "created_at" => $owner->getCreatedAt()->format('Y-m-d H:i:s'),
+                "creator" => $owner->getCreator()
+            ]);
+        }
+
+        $viewModel =  new JsonModel([
+            'count' => \count($owners)
         ]);
+         $viewModel->setVariable('owners', $result);
+         return $viewModel;
     }
     
     protected function prepareParams(): array
