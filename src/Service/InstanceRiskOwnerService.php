@@ -22,11 +22,11 @@ class InstanceRiskOwnerService
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
     }
 
-    public function getInstanceRiskOwners(int $anrId, array $params = []): array
+    public function getList(int $anrId, array $params = []): array
     {
         $anr = $this->anrTable->findById($anrId);
         $result = [];
-        foreach ($this->instanceRiskOwnerTable->findByAnr($anr) as $instanceRiskOwner) {
+        foreach ($this->instanceRiskOwnerTable->findByAnrAndFilterParams($anr, $params) as $instanceRiskOwner) {
             $result[] = [
                 'id' => $instanceRiskOwner->getId(),
                 'name' => $instanceRiskOwner->getName(),

@@ -30,7 +30,7 @@ class ApiAnrRiskOwnersController extends AbstractRestfulController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
 
-        $instanceRiskOwners = $this->instanceRiskOwnerService->getInstanceRiskOwners($anrId, $this->prepareParams());
+        $instanceRiskOwners = $this->instanceRiskOwnerService->getList($anrId, $this->prepareParams());
 
         return new JsonModel([
             'instanceRiskOwners' => $instanceRiskOwners,
@@ -43,6 +43,7 @@ class ApiAnrRiskOwnersController extends AbstractRestfulController
         $params = $this->params();
 
         return [
+            'name' => $params->fromQuery('filter', ''),
             'order' => $params->fromQuery('order', 'maxRisk'),
             'order_direction' => $params->fromQuery('order_direction', 'desc'),
             'page' => $params->fromQuery('page', 1),
