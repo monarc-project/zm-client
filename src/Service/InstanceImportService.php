@@ -701,7 +701,7 @@ class InstanceImportService
                         $newMeasure->setCategory($soaCategories[0]);
                         $newMeasure->setAmvs(new ArrayCollection()); // need to initialize the amvs link
                         $newMeasure->setRolfRisks(new ArrayCollection());
-                        $this->measureTable->saveEntity($newMeasure, false);
+                        $this->measureTable->saveEntity($newMeasure);
                         $measuresNewIds[$measureUuid] = $newMeasure;
 
                         if (!isset($data['soas'])) {

@@ -1269,7 +1269,6 @@ return [
             Service\AnrCheckStartedService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\AnrCartoRiskService' => 'Monarc\FrontOffice\Service\AnrCartoRiskServiceFactory',
             'Monarc\FrontOffice\Service\AnrRiskService' => 'Monarc\FrontOffice\Service\AnrRiskServiceFactory',
-            'Monarc\FrontOffice\Service\AnrRiskOwnersService' => 'Monarc\FrontOffice\Service\AnrRiskOwnersServiceFactory',
             'Monarc\FrontOffice\Service\AnrObjectService' => 'Monarc\FrontOffice\Service\AnrObjectServiceFactory',
             'Monarc\FrontOffice\Service\AnrInstanceConsequenceService' => 'Monarc\FrontOffice\Service\AnrInstanceConsequenceServiceFactory',
             Service\AnrInstanceRiskOpService::class => AutowireFactory::class,
@@ -1285,6 +1284,7 @@ return [
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
             Service\OperationalRiskScaleService::class => AutowireFactory::class,
+            Service\InstanceRiskOwnerService::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,

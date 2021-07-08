@@ -7,10 +7,9 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
-use Monarc\FrontOffice\Service\AnrRiskOwnersService;
+use Monarc\FrontOffice\Service\InstanceRiskOwnerService;
 
 /**
  * Api ANR Risk Owners Controller
@@ -20,44 +19,25 @@ use Monarc\FrontOffice\Service\AnrRiskOwnersService;
  */
 class ApiAnrRiskOwnersController extends AbstractRestfulController
 {
-    /** @var AnrRiskOwnersService */
-    private $anrRiskOwnersService;
+    private InstanceRiskOwnerService $instanceRiskOwnerService;
 
-    public function __construct(AnrRiskOwnersService $anrRiskOwnersService)
+    public function __construct(InstanceRiskOwnerService $instanceRiskOwnerService)
     {
-        $this->anrRiskOwnersService = $anrRiskOwnersService;
+        $this->instanceRiskOwnerService = $instanceRiskOwnerService;
     }
 
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $params = $this->prepareParams();
-        
-        $owners = $this->anrRiskOwnersService->getOwners($anrId, $params, false);
 
-        // return new JsonModel([
-        //     'count' => \count($owners),
-        //     'owners' => $params['limit'] > 0
-        //         ? \array_slice($owners, ($params['page'] - 1) * $params['limit'], $params['limit'])
-        //         : $owners,
-        // ]);
+        $instanceRiskOwners = $this->instanceRiskOwnerService->getInstanceRiskOwners($anrId, $this->prepareParams());
 
-        $result = [];
-        foreach ($owners as $owner) {
-            array_push($result, [
-                "name" => $owner->getName(),
-                "created_at" => $owner->getCreatedAt()->format('Y-m-d H:i:s'),
-                "creator" => $owner->getCreator()
-            ]);
-        }
-
-        $viewModel =  new JsonModel([
-            'count' => \count($owners)
+        return new JsonModel([
+            'instanceRiskOwners' => $instanceRiskOwners,
+            'count' => \count($instanceRiskOwners),
         ]);
-         $viewModel->setVariable('owners', $result);
-         return $viewModel;
     }
-    
+
     protected function prepareParams(): array
     {
         $params = $this->params();
@@ -66,7 +46,7 @@ class ApiAnrRiskOwnersController extends AbstractRestfulController
             'order' => $params->fromQuery('order', 'maxRisk'),
             'order_direction' => $params->fromQuery('order_direction', 'desc'),
             'page' => $params->fromQuery('page', 1),
-            'limit' => $params->fromQuery('limit', 50)
+            'limit' => $params->fromQuery('limit', 50),
         ];
     }
 }
