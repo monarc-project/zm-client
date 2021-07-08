@@ -677,6 +677,18 @@ return [
                             ],
                         ],
                     ],
+                    'risk_owners' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'risk-owners[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRiskOwnersController::class,
+                            ],
+                        ],
+                    ],
                     'risks' => [
                         'type' => 'segment',
                         'options' => [
@@ -1067,6 +1079,7 @@ return [
             Controller\ApiAnrScalesCommentsController::class => Controller\ApiAnrScalesCommentsControllerFactory::class,
             Controller\ApiDashboardAnrCartoRisksController::class => Controller\ApiDashboardAnrCartoRisksControllerFactory::class,
             Controller\ApiAnrRisksController::class => AutowireFactory::class,
+            Controller\ApiAnrRiskOwnersController::class => AutowireFactory::class,
             Controller\ApiDashboardAnrRisksController::class => Controller\ApiDashboardAnrRisksControllerFactory::class,
             Controller\ApiAnrRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrLibraryController::class => Controller\ApiAnrLibraryControllerFactory::class,
@@ -1256,6 +1269,7 @@ return [
             Service\AnrCheckStartedService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\AnrCartoRiskService' => 'Monarc\FrontOffice\Service\AnrCartoRiskServiceFactory',
             'Monarc\FrontOffice\Service\AnrRiskService' => 'Monarc\FrontOffice\Service\AnrRiskServiceFactory',
+            'Monarc\FrontOffice\Service\AnrRiskOwnersService' => 'Monarc\FrontOffice\Service\AnrRiskOwnersServiceFactory',
             'Monarc\FrontOffice\Service\AnrObjectService' => 'Monarc\FrontOffice\Service\AnrObjectServiceFactory',
             'Monarc\FrontOffice\Service\AnrInstanceConsequenceService' => 'Monarc\FrontOffice\Service\AnrInstanceConsequenceServiceFactory',
             Service\AnrInstanceRiskOpService::class => AutowireFactory::class,
@@ -1309,7 +1323,7 @@ return [
         ],
     ],
     'roles' => [
-        // Super Admin : Gestion des droits des utilisateurs uniquement (Carnet d’adresses)
+        // Super Admin : Management of users (and guides, models, referentials, etc.)
         Entity\UserRole::SUPER_ADMIN_FO => [
             'monarc_api_doc_models',
             'monarc_api_admin_users',
@@ -1324,11 +1338,11 @@ return [
             'monarc_api_models',
             'monarc_api_referentials',
             'monarc_api_client',
-            'monarc_api_anr_carto_risks',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_stats',
+            'monarc_api_global_client_anr/risk_owners',
         ],
-        // Utilisateur : Accès RWD par analyse
+        // User : RWD access per analysis
         Entity\UserRole::USER_FO => [
             'monarc_api_doc_models',
             'monarc_api_models',
@@ -1387,7 +1401,6 @@ return [
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
             'monarc_api_user_profile',
-            'monarc_api_anr_carto_risks',
             'monarc_api_client_anr_scales',
             'monarc_api_client_anr_scales_types',
             'monarc_api_client_anr_scales_comments',
@@ -1401,6 +1414,7 @@ return [
             'monarc_api_anr_client_objects_categories',
             'monarc_api_user_password',
             'monarc_api_model_verify_language',
+            'monarc_api_global_client_anr/risk_owners',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_global_client_anr/scales',
             'monarc_api_global_client_anr/scales_types',
