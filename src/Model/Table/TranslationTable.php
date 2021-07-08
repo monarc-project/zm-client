@@ -29,11 +29,13 @@ class TranslationTable extends CoreTranslationTable
     /**
      * @return Translation[]
      */
-    public function findByAnrIndexedByKey(Anr $anr): array
+    public function findByAnrAndLanguageIndexedByKey(Anr $anr, string $lang): array
     {
         return $this->getRepository()->createQueryBuilder('t', 't.key')
             ->where('t.anr = :anr')
+            ->andWhere('t.lang = :lang')
             ->setParameter('anr', $anr)
+            ->setParameter('lang', $lang)
             ->getQuery()
             ->getResult();
     }

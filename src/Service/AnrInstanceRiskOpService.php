@@ -41,8 +41,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
     protected RolfRiskTable $rolfRiskTable;
 
-    protected ConfigService $configService;
-
     protected InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
     private array $operationalRiskScales = [];

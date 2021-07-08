@@ -1023,7 +1023,8 @@ class AnrService extends AbstractService
 
                     $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
 
-                    $scalesTranslationsFromSource[$operationalRiskScaleComment->getCommentTranslationKey()] = OperationalRiskScaleComment::class;
+                    $scalesTranslationsFromSource[$operationalRiskScaleComment->getCommentTranslationKey()]
+                        = OperationalRiskScaleComment::class;
                 }
                 $operationalRiskScaleCliTable->save($newScale, false);
             }
@@ -1408,7 +1409,10 @@ class AnrService extends AbstractService
             } else {
                 /** @var TranslationTable $translationTable */
                 $translationTable = $this->get('translationCliTable');
-                $translations = $translationTable->findByAnrIndexedByKey($anr);
+                $translations = $translationTable->findByAnrAndLanguageIndexedByKey(
+                    $anr,
+                    strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
+                );
             }
 
             foreach ($translations as $translation) {
