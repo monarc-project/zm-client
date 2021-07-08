@@ -356,7 +356,8 @@ class ObjectImportService
                                 ->setReferential($referential)
                                 ->setCode($newMeasure['code'])
                                 ->setLabels($newMeasure);
-                            $this->measureTable->saveEntity($measure, false);
+
+                            $this->measureTable->saveEntity($measure);
                         }
 
                         if ($measure !== null) {
