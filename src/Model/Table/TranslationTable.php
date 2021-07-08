@@ -3,15 +3,15 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\AbstractTable;
+use Monarc\Core\Model\Table\TranslationTable as CoreTranslationTable;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Translation;
 
-class TranslationTable extends AbstractTable
+class TranslationTable extends CoreTranslationTable
 {
-    public function __construct(EntityManager $entityManager)
+    public function __construct(EntityManager $entityManager, $entityName = Translation::class)
     {
-        parent::__construct($entityManager, Translation::class);
+        parent::__construct($entityManager, $entityName);
     }
 
     /**
@@ -55,15 +55,5 @@ class TranslationTable extends AbstractTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    public function deleteListByKeys(array $keys): void
-    {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t');
-        $queryBuilder
-            ->delete()
-            ->where($queryBuilder->expr()->in('t.key', $keys))
-            ->getQuery()
-            ->getResult();
     }
 }

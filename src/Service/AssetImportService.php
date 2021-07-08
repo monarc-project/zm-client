@@ -318,7 +318,7 @@ class AssetImportService
 
                     $measure->addAmv($currentAmvs[$keyAmv]);
 
-                    $this->measureTable->saveEntity($measure, false);
+                    $this->measureTable->saveEntity($measure);
 
                     $this->cachedData['measures'][$measureUuid] = $measure;
                 }

@@ -14,7 +14,10 @@ use Monarc\Core\Model\Entity\Model;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Table\ModelTable;
+use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
+use Monarc\Core\Model\Table\TranslationTable as CoreTranslationTable;
 use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
@@ -55,8 +58,11 @@ use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
+use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
+use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
@@ -548,7 +554,7 @@ class AnrService extends AbstractService
             }
 
             // store the translation key to fetch from Core
-            $translationToFetchFromCore = [];
+            $scalesTranslationsFromSource = [];
 
             // duplicate themes
             $themesNewIds = [];
@@ -983,12 +989,15 @@ class AnrService extends AbstractService
             }
 
             //duplicate operational scales && operational risk scale comment
+            /** @var OperationalRiskScaleTable|CoreOperationalRiskScaleTable $operationalRiskScaleTable */
             $operationalRiskScaleTable = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('operationalRiskScaleTable')
                 : $this->get('operationalRiskScaleCliTable');
+            /** @var OperationalRiskScaleTable $operationalRiskScaleCliTable */
             $operationalRiskScaleCliTable = $this->get('operationalRiskScaleCliTable');
-
+            /** @var OperationalRiskScaleCommentTable $operationalRiskScaleCommentCliTable */
             $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
+
             $scales = $operationalRiskScaleTable->findWithCommentsByAnr($anr);
             foreach ($scales as $scale) {
                 $newScale = (new OperationalRiskScale())
@@ -999,8 +1008,8 @@ class AnrService extends AbstractService
                     ->setLabelTranslationKey($scale->getLabelTranslationKey())
                     ->setCreator($connectedUser->getEmail());
 
-                if ($scale->getType() == 1) {
-                    $translationToFetchFromCore[$scale->getLabelTranslationKey()] = OperationalRiskScale::class;
+                if ($scale->getType() === 1) {
+                    $scalesTranslationsFromSource[$scale->getLabelTranslationKey()] = OperationalRiskScale::class;
                 }
                 // manage the operationalRiskScaleComments
                 foreach ($scale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
@@ -1014,7 +1023,7 @@ class AnrService extends AbstractService
 
                     $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
 
-                    $translationToFetchFromCore[$operationalRiskScaleComment->getCommentTranslationKey()] = OperationalRiskScaleComment::class;
+                    $scalesTranslationsFromSource[$operationalRiskScaleComment->getCommentTranslationKey()] = OperationalRiskScaleComment::class;
                 }
                 $operationalRiskScaleCliTable->save($newScale, false);
             }
@@ -1386,14 +1395,17 @@ class AnrService extends AbstractService
             }
 
             // Manage Translations.
+            /** @var TranslationTable $translationCliTable */
             $translationCliTable = $this->get('translationCliTable');
             if ($source === MonarcObject::SOURCE_COMMON) {
+                /** @var CoreTranslationTable $translationTable */
                 $translationTable = $this->get('translationTable');
-                $translations = $translationTable->findByKeysAndLang(
-                    array_keys($translationToFetchFromCore),
+                $translations = $translationTable->findByKeysAndLanguageIndexedByKey(
+                    array_keys($scalesTranslationsFromSource),
                     strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
                 );
             } else {
+                /** @var TranslationTable $translationTable */
                 $translationTable = $this->get('translationCliTable');
                 $translations = $translationTable->findByAnr($anr);
             }
@@ -1402,7 +1414,7 @@ class AnrService extends AbstractService
                 $newTranslation = (new Translation())
                     ->setAnr($newAnr)
                     ->setCreator($connectedUser->getEmail())
-                    ->setType($translationToFetchFromCore[$translation->getKey()])
+                    ->setType($scalesTranslationsFromSource[$translation->getKey()])
                     ->setKey($translation->getKey())
                     ->setLang($translation->getLang())
                     ->setValue($translation->getValue());
