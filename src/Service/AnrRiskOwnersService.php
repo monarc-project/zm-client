@@ -12,7 +12,7 @@ class AnrRiskOwnersService extends AbstractService
 {
     protected $table;
     protected $anrTable;
-    
+
     /**
      * Computes and returns the list of owners for the entire ANR.
      * @param int $anrId The ANR ID
