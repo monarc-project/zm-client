@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Query\Expr\Join;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\FrontOffice\Model\DbCli;
@@ -27,11 +26,8 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, $connectedUserService);
-    }
 
-    public function getEntityClass(): string
-    {
-        return InstanceRiskOp::class;
+        $this->entityClass = InstanceRiskOp::class;
     }
 
     public function findByAnrInstanceAndRolfRisk(Anr $anr, Instance $instance, RolfRisk $rolfRisk): ?InstanceRiskOp

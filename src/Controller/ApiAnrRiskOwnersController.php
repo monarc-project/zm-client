@@ -40,14 +40,8 @@ class ApiAnrRiskOwnersController extends AbstractRestfulController
 
     protected function prepareParams(): array
     {
-        $params = $this->params();
-
         return [
-            'name' => $params->fromQuery('filter', ''),
-            'order' => $params->fromQuery('order', 'maxRisk'),
-            'order_direction' => $params->fromQuery('order_direction', 'desc'),
-            'page' => $params->fromQuery('page', 1),
-            'limit' => $params->fromQuery('limit', 50),
+            'name' => $this->params()->fromQuery('filter', ''),
         ];
     }
 }
