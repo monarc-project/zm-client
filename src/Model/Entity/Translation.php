@@ -28,16 +28,4 @@ class Translation extends TranslationSuperClass
      * })
      */
     protected $anr;
-
-    public function getAnr(): Anr
-    {
-        return $this->anr;
-    }
-
-    public function setAnr(Anr $anr): self
-    {
-        $this->anr = $anr;
-
-        return $this;
-    }
 }

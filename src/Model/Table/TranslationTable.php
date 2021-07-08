@@ -17,16 +17,11 @@ class TranslationTable extends CoreTranslationTable
     /**
      * @return Translation[]
      */
-    public function findByAnrTypesAndLanguageIndexedByKey(Anr $anr, array $types, string $lang): array
+    public function findByAnr(Anr $anr): array
     {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.key');
-
-        return $queryBuilder
+        return $this->getRepository()->createQueryBuilder('t')
             ->where('t.anr = :anr')
-            ->andWhere($queryBuilder->expr()->in('t.type', $types))
-            ->andWhere('t.lang = :lang')
             ->setParameter('anr', $anr)
-            ->setParameter('lang', $lang)
             ->getQuery()
             ->getResult();
     }
@@ -34,9 +29,9 @@ class TranslationTable extends CoreTranslationTable
     /**
      * @return Translation[]
      */
-    public function findByAnr(Anr $anr): array
+    public function findByAnrIndexedByKey(Anr $anr): array
     {
-        return $this->getRepository()->createQueryBuilder('t')
+        return $this->getRepository()->createQueryBuilder('t', 't.key')
             ->where('t.anr = :anr')
             ->setParameter('anr', $anr)
             ->getQuery()

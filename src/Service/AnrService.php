@@ -1400,14 +1400,15 @@ class AnrService extends AbstractService
             if ($source === MonarcObject::SOURCE_COMMON) {
                 /** @var CoreTranslationTable $translationTable */
                 $translationTable = $this->get('translationTable');
-                $translations = $translationTable->findByKeysAndLanguageIndexedByKey(
+                $translations = $translationTable->findByAnrKeysAndLanguageIndexedByKey(
+                    $anr,
                     array_keys($scalesTranslationsFromSource),
                     strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
                 );
             } else {
                 /** @var TranslationTable $translationTable */
                 $translationTable = $this->get('translationCliTable');
-                $translations = $translationTable->findByAnr($anr);
+                $translations = $translationTable->findByAnrIndexedByKey($anr);
             }
 
             foreach ($translations as $translation) {
