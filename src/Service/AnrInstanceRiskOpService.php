@@ -8,9 +8,11 @@ use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\InstanceRiskOpService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
@@ -57,6 +59,8 @@ class AnrInstanceRiskOpService
 
     private InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
+    private InstanceRiskOpService $coreInstanceRiskOpService;
+
     public function __construct(
         AnrTable $anrTable,
         InstanceTable $instanceTable,
@@ -68,7 +72,8 @@ class AnrInstanceRiskOpService
         TranslationTable $translationTable,
         ConfigService $configService,
         TranslateService $translateService,
-        InstanceRiskOwnerTable $instanceRiskOwnerTable
+        InstanceRiskOwnerTable $instanceRiskOwnerTable,
+        InstanceRiskOpService $coreInstanceRiskOpService
     ) {
         $this->anrTable = $anrTable;
         $this->instanceTable = $instanceTable;
@@ -81,6 +86,12 @@ class AnrInstanceRiskOpService
         $this->configService = $configService;
         $this->translateService = $translateService;
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
+        $this->coreInstanceRiskOpService = $coreInstanceRiskOpService;
+    }
+
+    public function createInstanceRisksOp(InstanceSuperClass $instance, ObjectSuperClass $object): void
+    {
+        $this->coreInstanceRiskOpService->createInstanceRisksOp($instance, $object);
     }
 
     public function createSpecificRiskOp(array $data): int
