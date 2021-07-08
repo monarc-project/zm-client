@@ -1154,9 +1154,9 @@ class DeliverableGenerationService extends AbstractService
         ];
 
         $series = [
-            isset($distrib[0]) ?? count($distrib[0]),
-            isset($distrib[1]) ?? count($distrib[1]),
-            isset($distrib[2]) ?? count($distrib[2]),
+            count($distrib[0] ?? []),
+            count($distrib[1] ?? []),
+            count($distrib[2] ?? []),
         ];
 
         $style = [
