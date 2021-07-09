@@ -37,8 +37,6 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `type` tinyint(3) unsigned NOT NULL DEFAULT 0,
                 `min` smallint(6) unsigned NOT NULL DEFAULT 0,
                 `max` smallint(6) unsigned NOT NULL DEFAULT 0,
-                `label_translation_key` varchar(255) NOT NULL,
-                `is_hidden` tinyint(1) NOT NULL DEFAULT 0,
                 `creator` varchar(255) NOT NULL,
                 `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
                 `updater` varchar(255) DEFAULT NULL,
@@ -46,6 +44,27 @@ class ChangeableOperationalImpact extends AbstractMigration
                 PRIMARY KEY (`id`),
                 INDEX `op_risks_scales_anr_id_indx` (`anr_id`),
                 CONSTRAINT `op_risks_scales_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES `anrs` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+            );'
+        );
+
+        $this->execute(
+            'CREATE TABLE IF NOT EXISTS `operational_risks_scales_types` (
+                `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                `anr_id` int(11) unsigned NOT NULL,
+                `operational_risk_scale_id` int(11) unsigned NOT NULL,
+                `label_translation_key` varchar(255) NOT NULL,
+                `is_hidden` tinyint(1) NOT NULL DEFAULT 0,
+                `is_system` tinyint(1) NOT NULL DEFAULT 0,
+                `position` tinyint(3) NOT NULL,
+                `creator` varchar(255) NOT NULL,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                `updater` varchar(255) DEFAULT NULL,
+                `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                INDEX `op_risks_scales_types_anr_id_indx` (`anr_id`),
+                INDEX `op_risks_scales_types_scale_id_indx` (`operational_risk_scale_id`),
+                CONSTRAINT `op_risks_scales_types_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES `anrs` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                CONSTRAINT `op_risks_scales_types_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
 
@@ -73,7 +92,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
                 `anr_id` int(11) unsigned NOT NULL,
                 `instance_risk_op_id` int(11) unsigned NOT NULL,
-                `operational_risk_scale_id` int(11) unsigned NOT NULL,
+                `operational_risk_scale_type_id` int(11) unsigned NOT NULL,
                 `brut_value` int(11) NOT NULL DEFAULT -1,
                 `net_value` int(11) NOT NULL DEFAULT -1,
                 `targeted_value` int(11) NOT NULL DEFAULT -1,
@@ -83,11 +102,11 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 INDEX `oirs_anr_id_instance_risk_op_id_indx` (`anr_id`, `instance_risk_op_id`),
-                INDEX `oirs_op_risk_scale_id_indx` (`operational_risk_scale_id`),
-                UNIQUE `oirs_anr_id_instance_risk_op_id_op_risk_scale_id_unq` (`anr_id`, `instance_risk_op_id`, `operational_risk_scale_id`),
+                INDEX `oirs_op_risk_scale_type_id_indx` (`operational_risk_scale_type_id`),
+                UNIQUE `oirs_anr_id_instance_risk_op_id_op_risk_scale_id_unq` (`anr_id`, `instance_risk_op_id`, `operational_risk_scale_type_id`),
                 CONSTRAINT `oirs_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs(`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT `oirs_instance_risk_op_id_fk` FOREIGN KEY (`instance_risk_op_id`) REFERENCES `instances_risks_op` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
-                CONSTRAINT `oirs_operational_risk_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                CONSTRAINT `oirs_operational_risk_scale_type_id_fk` FOREIGN KEY (`operational_risk_scale_type_id`) REFERENCES `operational_risks_scales_types` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
 
@@ -119,7 +138,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                     GROUP_CONCAT(sc.comment2 SEPARATOR "-----") comments2,
                     GROUP_CONCAT(sc.comment3 SEPARATOR "-----") comments3,
                     GROUP_CONCAT(sc.comment4 SEPARATOR "-----") comments4,
-                    sit.type AS scale_impact_type
+                    sit.type AS scale_impact_type, sit.position, sit.is_sys, sit.is_hidden
             FROM scales s
               INNER JOIN scales_comments sc ON sc.scale_id = s.id
               LEFT JOIN scales_impact_types sit ON sit.scale_id = s.id AND sit.id = sc.scale_type_impact_id
@@ -129,23 +148,40 @@ class ChangeableOperationalImpact extends AbstractMigration
         );
 
         $operationalRisksScalesTable = $this->table('operational_risks_scales');
+        $operationalRisksScalesTypesTable = $this->table('operational_risks_scales_types');
         $operationalRisksScalesCommentsTable = $this->table('operational_risks_scales_comments');
-        $currentScalesByAnr = [];
+        $currentScaleTypesByAnr = [];
+        $currentScalesByAnrAndType = [];
         foreach ($scalesQuery->fetchAll() as $scaleData) {
             $isLikelihoodScale = (int)$scaleData['scale_type'] === OperationalRiskScale::TYPE_LIKELIHOOD;
-            $labelTranslationKey = $isLikelihoodScale ? '' : (string)Uuid::uuid4();
-            $operationalRisksScalesTable->insert([
-                'anr_id' => $scaleData['anr_id'],
-                'type' => $isLikelihoodScale ? OperationalRiskScale::TYPE_LIKELIHOOD : OperationalRiskScale::TYPE_IMPACT,
-                'min' => $scaleData['min'],
-                'max' => $scaleData['max'],
-                'label_translation_key' => $labelTranslationKey,
-                'creator' => 'Migration script',
-            ])->save();
-            $operationalRiskScaleId = $this->getAdapter()->getConnection()->lastInsertId();
+            $scaleType = $isLikelihoodScale ? OperationalRiskScale::TYPE_LIKELIHOOD : OperationalRiskScale::TYPE_IMPACT;
+            if (!isset($currentScalesByAnrAndType[$scaleData['anr_id']][$scaleType])) {
+                $operationalRisksScalesTable->insert([
+                    'anr_id' => $scaleData['anr_id'],
+                    'type' => $scaleType,
+                    'min' => $scaleData['min'],
+                    'max' => $scaleData['max'],
+                    'creator' => 'Migration script',
+                ])->save();
+                $currentScalesByAnrAndType[$scaleData['anr_id']][$scaleType] = $this->getAdapter()->getConnection()->lastInsertId();
+            }
+
+            $operationalRiskScaleTypeId = null;
             if (!$isLikelihoodScale) {
+                $labelTranslationKey = (string)Uuid::uuid4();
+                $operationalRisksScalesTypesTable->insert([
+                    'anr_id' => $scaleData['anr_id'],
+                    'operational_risk_scale_id' => $currentScalesByAnrAndType[$scaleData['anr_id']][$scaleType],
+                    'label_translation_key' => $labelTranslationKey,
+                    'is_system' => $scaleData['is_sys'],
+                    'position' => $scaleData['position'],
+                    'is_hidden' => $scaleData['is_hidden'],
+                    'creator' => 'Migration script',
+                ])->save();
+                $operationalRiskScaleTypeId = $this->getAdapter()->getConnection()->lastInsertId();
                 $this->createTranslations($scaleData, OperationalRiskScale::class, 'label', $labelTranslationKey);
             }
+
             $scaleValues = explode('-----', $scaleData['scale_values']);
             $comments1 = explode('-----', $scaleData['comments1']);
             $comments2 = explode('-----', $scaleData['comments2']);
@@ -155,7 +191,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 $commentTranslationKey = Uuid::uuid4();
                 $operationalRisksScalesCommentsTable->insert([
                     'anr_id' => $scaleData['anr_id'],
-                    'operational_risk_scale_id' => $operationalRiskScaleId,
+                    'operational_risk_scale_id' => $currentScalesByAnrAndType[$scaleData['anr_id']][$scaleType],
                     'scale_value' => $scaleValue,
                     'scale_index' => $scaleValue,
                     'comment_translation_key' => $commentTranslationKey,
@@ -175,17 +211,19 @@ class ChangeableOperationalImpact extends AbstractMigration
                 );
             }
 
-            if (!empty($currentScalesByAnr) && array_key_first($currentScalesByAnr) !== $scaleData['anr_id']) {
+            if (!empty($currentScaleTypesByAnr) && array_key_first($currentScaleTypesByAnr) !== $scaleData['anr_id']) {
                 // @jerome: 4:R 5:O 6:L 7:F 8:P -- easier to migrate instances_risks_op > 8 = custom
-                $this->createOperationalInstaceRisksScales($currentScalesByAnr);
-                $currentScalesByAnr = [];
+                $this->createOperationalInstanceRisksScales($currentScaleTypesByAnr);
+                $currentScaleTypesByAnr = [];
             }
 
-            $currentScalesByAnr[$scaleData['anr_id']][(int)$scaleData['scale_impact_type']] = $operationalRiskScaleId;
+            if ($operationalRiskScaleTypeId !== null) {
+                $currentScaleTypesByAnr[$scaleData['anr_id']][(int)$scaleData['scale_impact_type']] = $operationalRiskScaleTypeId;
+            }
         }
 
-        if (!empty($currentScalesByAnr)) {
-            $this->createOperationalInstaceRisksScales($currentScalesByAnr);
+        if (!empty($currentScaleTypesByAnr)) {
+            $this->createOperationalInstanceRisksScales($currentScaleTypesByAnr);
         }
 
         // Migration for table scales_comments
@@ -243,10 +281,10 @@ class ChangeableOperationalImpact extends AbstractMigration
         $this->table('translations')->insert($translations)->save();
     }
 
-    private function createOperationalInstaceRisksScales(array $currentScalesByAnr)
+    private function createOperationalInstanceRisksScales(array $currentScaleTypesByAnr): void
     {
         $operationalInstanceRisksScalesTable = $this->table('operational_instance_risks_scales');
-        $anrId = array_key_first($currentScalesByAnr);
+        $anrId = array_key_first($currentScaleTypesByAnr);
         $instanceRisksOpSqlWithAnr = sprintf(
             'SELECT id, anr_id,
                     brut_r, brut_o, brut_l, brut_f, brut_p,
@@ -259,7 +297,7 @@ class ChangeableOperationalImpact extends AbstractMigration
         $impactTypes = [4 => '_r', 5 => '_o', 6 => '_l', 7 => '_f', 8 => '_p'];
         foreach ($this->query($instanceRisksOpSqlWithAnr)->fetchAll() as $instancesRisksOp) {
             $operationalInstanceRisksScales = [];
-            foreach ($currentScalesByAnr[$anrId] as $scaleImpactType => $operationalRiskScaleId) {
+            foreach ($currentScaleTypesByAnr[$anrId] as $scaleImpactType => $operationalRiskScaleTypeId) {
                 if ($scaleImpactType < 4) {
                     continue;
                 }
@@ -267,7 +305,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 $operationalInstanceRisksScales[] = [
                     'anr_id' => $anrId,
                     'instance_risk_op_id' => $instancesRisksOp['id'],
-                    'operational_risk_scale_id' => $operationalRiskScaleId,
+                    'operational_risk_scale_type_id' => $operationalRiskScaleTypeId,
                     'brut_value' => $isSystemScaleImpactType
                         ? $instancesRisksOp['brut' . $impactTypes[$scaleImpactType]]
                         : -1,
