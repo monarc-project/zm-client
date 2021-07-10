@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
  * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
@@ -14,6 +14,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
@@ -29,6 +30,7 @@ use Monarc\FrontOffice\Model\Entity\Interview;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\Question;
 use Monarc\FrontOffice\Model\Entity\QuestionChoice;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
@@ -51,6 +53,7 @@ use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\InterviewTable;
 use Monarc\FrontOffice\Model\Table\MeasureMeasureTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
+use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\QuestionChoiceTable;
 use Monarc\FrontOffice\Model\Table\QuestionTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
@@ -70,113 +73,79 @@ class InstanceImportService
 {
     use EncryptDecryptHelperTrait;
 
-    /** @var string|null */
-    private $monarcVersion;
+    private string $monarcVersion;
 
-    /** @var array */
-    private $cachedData = [];
+    private array $cachedData = [];
 
-    /** @var int */
-    private $currentAnalyseMaxRecommendationPosition;
+    private int $currentAnalyseMaxRecommendationPosition;
 
-    /** @var int */
-    private $initialAnalyseMaxRecommendationPosition;
+    private int $initialAnalyseMaxRecommendationPosition;
 
-    /** @var int */
-    private $currentMaxInstancePosition;
+    private int $currentMaxInstancePosition;
 
-    /** @var AnrInstanceRiskService */
-    private $anrInstanceRiskService;
+    private AnrInstanceRiskService $anrInstanceRiskService;
 
-    /** @var AnrInstanceService */
-    private $anrInstanceService;
+    private AnrInstanceService $anrInstanceService;
 
-    /** @var AssetImportService */
-    private $assetImportService;
+    private AssetImportService $assetImportService;
 
-    /** @var AnrRecordService */
-    private $anrRecordService;
+    private AnrRecordService $anrRecordService;
 
-    /** @var AnrInstanceRiskOpService */
-    private $anrInstanceRiskOpService;
+    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
 
-    /** @var InstanceTable */
-    private $instanceTable;
+    private InstanceTable $instanceTable;
 
-    /** @var AnrTable */
-    private $anrTable;
+    private AnrTable $anrTable;
 
-    /** @var RecommandationTable */
-    private $recommendationTable;
+    private RecommandationTable $recommendationTable;
 
-    /** @var InstanceConsequenceTable */
-    private $instanceConsequenceTable;
+    private InstanceConsequenceTable $instanceConsequenceTable;
 
-    /** @var ScaleTable */
-    private $scaleTable;
+    private ScaleTable $scaleTable;
 
-    /** @var ScaleImpactTypeTable */
-    private $scalesImpactTypeTable;
+    private ScaleImpactTypeTable $scalesImpactTypeTable;
 
-    /** @var ThreatTable */
-    private $threatTable;
+    private ThreatTable $threatTable;
 
-    /** @var VulnerabilityTable */
-    private $vulnerabilityTable;
+    private VulnerabilityTable $vulnerabilityTable;
 
-    /** @var RecommandationSetTable */
-    private $recommendationSetTable;
+    private RecommandationSetTable $recommendationSetTable;
 
-    /** @var InstanceRiskTable */
-    private $instanceRiskTable;
+    private InstanceRiskTable $instanceRiskTable;
 
-    /** @var InstanceRiskOpTable */
-    private $instanceRiskOpTable;
+    private InstanceRiskOpTable $instanceRiskOpTable;
 
-    /** @var RecommandationRiskTable */
-    private $recommendationRiskTable;
+    private RecommandationRiskTable $recommendationRiskTable;
 
-    /** @var QuestionTable */
-    private $questionTable;
+    private QuestionTable $questionTable;
 
-    /** @var QuestionChoiceTable */
-    private $questionChoiceTable;
+    private QuestionChoiceTable $questionChoiceTable;
 
-    /** @var SoaTable */
-    private $soaTable;
+    private SoaTable $soaTable;
 
-    /** @var MeasureTable */
-    private $measureTable;
+    private MeasureTable $measureTable;
 
-    /** @var MeasureMeasureTable */
-    private $measureMeasureTable;
+    private MeasureMeasureTable $measureMeasureTable;
 
-    /** @var ThemeTable */
-    private $themeTable;
+    private ThemeTable $themeTable;
 
-    /** @var ReferentialTable */
-    private $referentialTable;
+    private ReferentialTable $referentialTable;
 
-    /** @var SoaCategoryTable */
-    private $soaCategoryTable;
+    private SoaCategoryTable $soaCategoryTable;
 
-    /** @var ObjectImportService */
-    private $objectImportService;
+    private ObjectImportService $objectImportService;
 
-    /** @var InterviewTable */
-    private $interviewTable;
+    private InterviewTable $interviewTable;
 
-    /** @var DeliveryTable */
-    private $deliveryTable;
+    private DeliveryTable $deliveryTable;
 
-    /** @var ScaleImpactTypeTable */
-    private $scaleImpactTypeTable;
+    private ScaleImpactTypeTable $scaleImpactTypeTable;
 
-    /** @var ScaleCommentTable */
-    private $scaleCommentTable;
+    private ScaleCommentTable $scaleCommentTable;
 
-    /** @var AnrScaleCommentService */
-    private $anrScaleCommentService;
+    private AnrScaleCommentService $anrScaleCommentService;
+
+    private OperationalRiskScaleTable $operationalRiskScaleTable;
 
     public function __construct(
         AnrInstanceRiskService $anrInstanceRiskService,
@@ -209,6 +178,7 @@ class InstanceImportService
         DeliveryTable $deliveryTable,
         ScaleImpactTypeTable $scaleImpactTypeTable,
         ScaleCommentTable $scaleCommentTable,
+        OperationalRiskScaleTable $operationalRiskScaleTable,
         AnrScaleCommentService $anrScaleCommentService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
@@ -241,6 +211,7 @@ class InstanceImportService
         $this->deliveryTable = $deliveryTable;
         $this->scaleImpactTypeTable = $scaleImpactTypeTable;
         $this->scaleCommentTable = $scaleCommentTable;
+        $this->operationalRiskScaleTable = $operationalRiskScaleTable;
         // TODO: remove after the usage refactoring.
         $this->anrScaleCommentService = $anrScaleCommentService;
     }
@@ -788,24 +759,19 @@ class InstanceImportService
          * Import scales.
          */
         if (!empty($data['scales'])) {
-            //Approximate values from destination analyse
+            // Approximate values from the destination analysis
+
+            $scalesOrigin = $this->prepareOriginScales($anr);
+            $minScaleImpactOrigin = $scalesOrigin[Scale::TYPE_IMPACT]['min'];
+            $maxScaleImpactOrigin = $scalesOrigin[Scale::TYPE_IMPACT]['max'];
+            $minScaleImpactDestination = $data['scales'][Scale::TYPE_IMPACT]['min'];
+            $maxScaleImpactDestination = $data['scales'][Scale::TYPE_IMPACT]['max'];
+
             $ts = ['c', 'i', 'd'];
-            /** @var InstanceSuperClass[] $instances */
             $instances = $this->instanceTable->findByAnrId($anr->getId());
             $consequences = $this->instanceConsequenceTable->findByAnr($anr);
-            $scalesOrig = [];
-            $scales = $this->scaleTable->findByAnr($anr);
-            foreach ($scales as $sc) {
-                $scalesOrig[$sc->get('type')]['min'] = $sc->get('min');
-                $scalesOrig[$sc->get('type')]['max'] = $sc->get('max');
-            }
 
-            $minScaleImpOrig = $scalesOrig[Scale::TYPE_IMPACT]['min'];
-            $maxScaleImpOrig = $scalesOrig[Scale::TYPE_IMPACT]['max'];
-            $minScaleImpDest = $data['scales'][Scale::TYPE_IMPACT]['min'];
-            $maxScaleImpDest = $data['scales'][Scale::TYPE_IMPACT]['max'];
-
-            //Instances
+            // Instances
             foreach ($ts as $t) {
                 foreach ($instances as $instance) {
                     if ($instance->get($t . 'h')) {
@@ -815,10 +781,10 @@ class InstanceImportService
                         $instance->set($t . 'h', 0);
                         $instance->set($t, $this->approximate(
                             $instance->get($t),
-                            $minScaleImpOrig,
-                            $maxScaleImpOrig,
-                            $minScaleImpDest,
-                            $maxScaleImpDest
+                            $minScaleImpactOrigin,
+                            $maxScaleImpactOrigin,
+                            $minScaleImpactDestination,
+                            $maxScaleImpactDestination
                         ));
                     }
 
@@ -828,62 +794,83 @@ class InstanceImportService
                 foreach ($consequences as $conseq) {
                     $conseq->set($t, $conseq->isHidden ? -1 : $this->approximate(
                         $conseq->get($t),
-                        $minScaleImpOrig,
-                        $maxScaleImpOrig,
-                        $minScaleImpDest,
-                        $maxScaleImpDest
+                        $minScaleImpactOrigin,
+                        $maxScaleImpactOrigin,
+                        $minScaleImpactDestination,
+                        $maxScaleImpactDestination
                     ));
                     $this->instanceConsequenceTable->saveEntity($conseq, false);
                 }
             }
 
+            $minScaleThreatOrigin = $scalesOrigin[Scale::TYPE_THREAT]['min'];
+            $maxScaleThreatOrigin = $scalesOrigin[Scale::TYPE_THREAT]['max'];
+            $minScaleThreatDestination = $data['scales'][Scale::TYPE_THREAT]['min'];
+            $maxScaleThreatDestination = $data['scales'][Scale::TYPE_THREAT]['max'];
+
             // Threat Qualification
             $threats = $this->threatTable->findByAnr($anr);
             foreach ($threats as $threat) {
-                $threat->set('qualification', $this->approximate(
+                $threat->setQualification($this->approximate(
                     $threat->getQualification(),
-                    $scalesOrig[Scale::TYPE_THREAT]['min'],
-                    $scalesOrig[Scale::TYPE_THREAT]['max'],
-                    $data['scales'][Scale::TYPE_THREAT]['min'],
-                    $data['scales'][Scale::TYPE_THREAT]['max']
+                    $minScaleThreatOrigin,
+                    $maxScaleThreatOrigin,
+                    $minScaleThreatDestination,
+                    $maxScaleThreatDestination
                 ));
                 $this->threatTable->saveEntity($threat, false);
             }
 
-            // Information Risks
-            $risks = $this->instanceRiskTable->findByAnr($anr);
-            foreach ($risks as $r) {
-                $r->set('threatRate', $this->approximate(
-                    $r->getThreatRate(),
-                    $scalesOrig[Scale::TYPE_THREAT]['min'],
-                    $scalesOrig[Scale::TYPE_THREAT]['max'],
-                    $data['scales'][Scale::TYPE_THREAT]['min'],
-                    $data['scales'][Scale::TYPE_THREAT]['max']
+            // Informational Risks
+            $instanceRisks = $this->instanceRiskTable->findByAnr($anr);
+            foreach ($instanceRisks as $instanceRisk) {
+                $instanceRisk->setThreatRate($this->approximate(
+                    $instanceRisk->getThreatRate(),
+                    $minScaleThreatOrigin,
+                    $maxScaleThreatOrigin,
+                    $minScaleThreatDestination,
+                    $maxScaleThreatDestination
                 ));
-                $oldVulRate = $r->getVulnerabilityRate();
-                $r->set('vulnerabilityRate', $this->approximate(
-                    $r->getVulnerabilityRate(),
-                    $scalesOrig[Scale::TYPE_VULNERABILITY]['min'],
-                    $scalesOrig[Scale::TYPE_VULNERABILITY]['max'],
+                $oldVulRate = $instanceRisk->getVulnerabilityRate();
+                $instanceRisk->setVulnerabilityRate($this->approximate(
+                    $instanceRisk->getVulnerabilityRate(),
+                    $scalesOrigin[Scale::TYPE_VULNERABILITY]['min'],
+                    $scalesOrigin[Scale::TYPE_VULNERABILITY]['max'],
                     $data['scales'][Scale::TYPE_VULNERABILITY]['min'],
                     $data['scales'][Scale::TYPE_VULNERABILITY]['max']
                 ));
-                $newVulRate = $r->getVulnerabilityRate();
-                $r->set(
-                    'reductionAmount',
-                    $r->getReductionAmount() !== 0
-                        ? $this->approximate($r->getReductionAmount(), 0, $oldVulRate, 0, $newVulRate, 0)
-                        : 0
+                $newVulRate = $instanceRisk->getVulnerabilityRate();
+                $instanceRisk->setReductionAmount($instanceRisk->getReductionAmount() !== 0
+                    ? $this->approximate($instanceRisk->getReductionAmount(), 0, $oldVulRate, 0, $newVulRate, 0)
+                    : 0
                 );
 
-                //TODO: find a faster way of updating risks.
-                $this->anrInstanceRiskService->update($r->getId(), $risks);
+                $this->anrInstanceRiskService->updateRisks($instanceRisk);
             }
 
-            //Operational Risks
-            $risksOp = $this->instanceRiskOpTable->findByAnr($anr);
-            if (!empty($risksOp)) {
-                foreach ($risksOp as $rOp) {
+            // Operational Risks
+            $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnr($anr);
+            if (!empty($operationalInstanceRisks)) {
+                $operationalScalesOrigin = $this->prepareOriginOperationalScales($anr);
+
+                $minScaleLikelihoodDestination = $data['scales'][Scale::TYPE_THREAT]['min'];
+                $maxScaleLikelihoodDestination = $data['scales'][Scale::TYPE_THREAT]['max'];
+                $minScaleImpactDestination = $data['scales'][Scale::TYPE_IMPACT]['min'];
+                $maxScaleImpactDestination = $data['scales'][Scale::TYPE_IMPACT]['max'];
+                if (isset($data['operationalRiskScales'])) {
+                    $operationalLikelihoodScale = current(
+                        $data['operationalRiskScales'][OperationalRiskScale::TYPE_LIKELIHOOD]
+                    );
+                    $operationalImpactScale = current(
+                        $data['operationalRiskScales'][OperationalRiskScale::TYPE_LIKELIHOOD]
+                    )
+                    if ($operationalLikelihoodScale !== false) {
+                        $minScaleLikelihoodDestination = $operationalLikelihoodScale['min'];
+                        $maxScaleLikelihoodDestination = $operationalLikelihoodScale['max'];
+                    }
+                }
+
+                foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
                     $toApproximate = [
                         Scale::TYPE_THREAT => [
                             'netProb',
@@ -908,18 +895,27 @@ class InstanceImportService
                             'targetedP',
                         ],
                     ];
+
+                    $operationalInstanceRisk->set($i, $this->approximate(
+                        $operationalInstanceRisk->get($i),
+                        $scalesOrigin[$type]['min'],
+                        $scalesOrigin[$type]['max'],
+                        $destScaleLikelihoodMinIndex,
+                        $destScaleLikelihoodMaxIndex
+                    ));
                     foreach ($toApproximate as $type => $list) {
                         foreach ($list as $i) {
-                            $rOp->set($i, $this->approximate(
-                                $rOp->get($i),
-                                $scalesOrig[$type]['min'],
-                                $scalesOrig[$type]['max'],
-                                $data['scales'][$type]['min'],
-                                $data['scales'][$type]['max']
+                            $operationalInstanceRisk->set($i, $this->approximate(
+                                $operationalInstanceRisk->get($i),
+                                $scalesOrigin[$type]['min'],
+                                $scalesOrigin[$type]['max'],
+                                $destScaleLikelihoodMinIndex,
+                                $destScaleLikelihoodMaxIndex
                             ));
                         }
                     }
-                    $this->anrInstanceRiskOpService->update($rOp->getId(), $risksOp);
+                    // todo: only cache risks vals upd.
+                    $this->anrInstanceRiskOpService->updateRiskCacheValues();
                 }
             }
 
@@ -931,16 +927,17 @@ class InstanceImportService
                 Scale::TYPE_VULNERABILITY,
             ];
             foreach ($types as $type) {
-                foreach ($scales as $s) {
-                    if ($s->getType() === $type) {
-                        // TODO: use setters.
-                        $s->min = $data['scales'][$type]['min'];
-                        $s->max = $data['scales'][$type]['max'];
+                foreach ($scales as $scale) {
+                    if ($scale->getType() === $type) {
+                        $scale->setMin((int)$data['scales'][$type]['min']);
+                        $scale->setMax((int)$data['scales'][$type]['max']);
 
-                        $this->scaleTable->saveEntity($s, false);
+                        $this->scaleTable->saveEntity($scale, false);
                     }
                 }
             }
+
+            // TODO: import scales and comments.
         }
 
         $first = true;
@@ -968,17 +965,17 @@ class InstanceImportService
             $scIds = null;
             $sId = null;
 
-            foreach ($data['scalesComments'] as $sc) {
-                $scIds[$pos] = $sc['id'];
+            foreach ($data['scalesComments'] as $scale) {
+                $scIds[$pos] = $scale['id'];
                 $pos++;
             }
             // TODO: findBy...
             $scaleComment = $this->scaleCommentTable->getEntityByFields(
                 ['anr' => $anr->getId()]
             );
-            foreach ($scaleComment as $sc) {
-                if ($sc->scaleImpactType === null || $sc->scaleImpactType->isSys === 1) {
-                    $this->scaleCommentTable->delete($sc->id);
+            foreach ($scaleComment as $scale) {
+                if ($scale->scaleImpactType === null || $scale->scaleImpactType->isSys === 1) {
+                    $this->scaleCommentTable->delete($scale->id);
                 }
             }
             $nbComment = count($data['scalesComments']);
@@ -1035,6 +1032,44 @@ class InstanceImportService
         return $instanceIds;
     }
 
+    private function prepareOriginScales(AnrSuperClass $anr): array
+    {
+        $scalesOrigin = [];
+        $scales = $this->scaleTable->findByAnr($anr);
+        foreach ($scales as $scale) {
+            $scalesValuesByIndex = [];
+            foreach ($scale->getScaleComments() as $scaleComment) {
+                $scalesValuesByIndex[$scaleComment->getScaleIndex()] = $scaleComment->getScaleValue();
+            }
+            $scalesOrigin[$scale->getType()] = [
+                'min' => $scale->getMin(),
+                'max' => $scale->getMax(),
+                'values' => $scalesValuesByIndex,
+            ];
+        }
+
+        return $scalesOrigin;
+    }
+
+    private function prepareOriginOperationalScales(AnrSuperClass $anr): array
+    {
+        $operationalScalesOrigin = [];
+        $operationalRisksScales = $this->operationalRiskScaleTable->findByAnr($anr);
+        foreach ($operationalRisksScales as $operationalRisksScale) {
+            $scalesValuesByIndex = [];
+            foreach ($operationalRisksScale->getOperationalRiskScaleComments() as $scaleComment) {
+                $scalesValuesByIndex[$scaleComment->getScaleIndex()] = $scaleComment->getScaleValue();
+            }
+            $operationalScalesOrigin[$operationalRisksScale->getType()] = [
+                'min' => $operationalRisksScale->getMin(),
+                'max' => $operationalRisksScale->getMax(),
+                'values' => $scalesValuesByIndex,
+            ];
+        }
+
+        return $operationalScalesOrigin;
+    }
+
     /**
      * Method to approximate the value within new bounds, typically when the exported object had a min/max bound
      * bigger than the target's ANR bounds.
@@ -1044,15 +1079,27 @@ class InstanceImportService
      * @param int $maxorig The source max bound
      * @param int $mindest The target min bound
      * @param int $maxdest The target max bound
+     * @param int $defaultvalue
      *
      * @return int|mixed The approximated value
      */
-    private function approximate($x, $minorig, $maxorig, $mindest, $maxdest, $defaultvalue = -1)
-    {
-        if ($x == $maxorig) {
+    private function approximate(
+        int $x,
+        int $minorig,
+        int $maxorig,
+        int $mindest,
+        int $maxdest,
+        int $defaultvalue = -1
+    ): int {
+        if ($x === $maxorig) {
             return $maxdest;
-        } elseif ($x != -1 && ($maxorig - $minorig) != -1) {
-            return min(max(round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)), $mindest), $maxdest);
+        }
+
+        if ($x !== -1 && ($maxorig - $minorig) !== -1) {
+            return (int)min(max(
+                round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)),
+                $mindest
+            ), $maxdest);
         }
 
         return $defaultvalue;

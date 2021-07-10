@@ -8,12 +8,12 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\OperationalRiskScaleCommentTable as CoreOperationalRiskScaleCommentTable;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
+use Monarc\Core\Model\Table\OperationalRiskScaleTypeTable as CoreOperationalRiskScaleTypeTableAlias;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
 
-class OperationalRiskScaleCommentTable extends CoreOperationalRiskScaleCommentTable
+class OperationalRiskScaleTypeTable extends CoreOperationalRiskScaleTypeTableAlias
 {
-    public function __construct(EntityManager $entityManager, $entityName = OperationalRiskScaleComment::class)
+    public function __construct(EntityManager $entityManager, string $entityName = OperationalRiskScaleType::class)
     {
         parent::__construct($entityManager, $entityName);
     }

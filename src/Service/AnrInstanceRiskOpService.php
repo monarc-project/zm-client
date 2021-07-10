@@ -432,6 +432,33 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $this->processRemovedInstanceRiskRecommendationsPositions($operationalInstanceRisk);
     }
 
+    public function updateRiskCacheValues(InstanceRiskOp $operationalInstanceRisk, bool $flushChanges = false): void
+    {
+        foreach (['Brut', 'Net', 'Targeted'] as $valueType) {
+            $max = -1;
+            $probVal = $operationalInstanceRisk->{'get' . $valueType . 'Prob'}();
+            if ($probVal !== -1) {
+                foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $riskScale) {
+                    $scaleValue = $riskScale->{'get' . $valueType . 'Value'}();
+                    if ($scaleValue > -1 && ($probVal * $scaleValue) > $max) {
+                        $max = $probVal * $scaleValue;
+                    }
+                }
+            }
+
+            if ($operationalInstanceRisk->{'getCache' . $valueType . 'Risk'}() !== $max) {
+                $operationalInstanceRisk
+                    ->setUpdater($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname())
+                    ->{'setCache' . $valueType . 'Risk'}($max);
+                $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
+            }
+        }
+
+        if ($flushChanges === true) {
+            $this->instanceRiskOpTable->getDb()->flush();
+        }
+    }
+
     /**
      * Called from InstanceRiskOpService::createInstanceRisksOp
      */
@@ -489,33 +516,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         }
 
         return array_merge($instancesIds, $childInstancesIds);
-    }
-
-    private function updateRiskCacheValues(InstanceRiskOp $operationalInstanceRisk, bool $flushChanges = false): void
-    {
-        foreach (['Brut', 'Net', 'Targeted'] as $valueType) {
-            $max = -1;
-            $probVal = $operationalInstanceRisk->{'get' . $valueType . 'Prob'}();
-            if ($probVal !== -1) {
-                foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $riskScale) {
-                    $scaleValue = $riskScale->{'get' . $valueType . 'Value'}();
-                    if ($scaleValue > -1 && ($probVal * $scaleValue) > $max) {
-                        $max = $probVal * $scaleValue;
-                    }
-                }
-            }
-
-            if ($operationalInstanceRisk->{'getCache' . $valueType . 'Risk'}() !== $max) {
-                $operationalInstanceRisk
-                    ->setUpdater($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname())
-                    ->{'setCache' . $valueType . 'Risk'}($max);
-                $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
-            }
-        }
-
-        if ($flushChanges === true) {
-            $this->instanceRiskOpTable->getDb()->flush();
-        }
     }
 
     private function verifyScaleValue(
