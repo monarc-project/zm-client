@@ -22,6 +22,7 @@ use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Table\AnrTable;
@@ -265,7 +266,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $result = [];
         $operationalRisksScalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [OperationalRiskScale::class, OperationalRiskScaleComment::class],
+            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
             strtolower($this->configService->getLanguageCodes()[$anrLanguage])
         );
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
@@ -337,7 +338,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         );
         $operationalRisksScalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [OperationalRiskScale::class, OperationalRiskScaleComment::class],
+            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
             strtolower($this->configService->getLanguageCodes()[$anrLanguage])
         );
 

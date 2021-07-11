@@ -853,6 +853,7 @@ class InstanceImportService
             if (!empty($operationalInstanceRisks)) {
                 $operationalScalesOrigin = $this->prepareOriginOperationalScales($anr);
 
+                // TODO: complete when all the refactoring is done!!!
                 $minScaleLikelihoodDestination = $data['scales'][Scale::TYPE_THREAT]['min'];
                 $maxScaleLikelihoodDestination = $data['scales'][Scale::TYPE_THREAT]['max'];
                 $minScaleImpactDestination = $data['scales'][Scale::TYPE_IMPACT]['min'];
@@ -863,7 +864,7 @@ class InstanceImportService
                     );
                     $operationalImpactScale = current(
                         $data['operationalRiskScales'][OperationalRiskScale::TYPE_LIKELIHOOD]
-                    )
+                    );
                     if ($operationalLikelihoodScale !== false) {
                         $minScaleLikelihoodDestination = $operationalLikelihoodScale['min'];
                         $maxScaleLikelihoodDestination = $operationalLikelihoodScale['max'];
@@ -896,21 +897,21 @@ class InstanceImportService
                         ],
                     ];
 
-                    $operationalInstanceRisk->set($i, $this->approximate(
-                        $operationalInstanceRisk->get($i),
-                        $scalesOrigin[$type]['min'],
-                        $scalesOrigin[$type]['max'],
-                        $destScaleLikelihoodMinIndex,
-                        $destScaleLikelihoodMaxIndex
-                    ));
+//                    $operationalInstanceRisk->set($i, $this->approximate(
+//                        $operationalInstanceRisk->get($i),
+//                        $scalesOrigin[$type]['min'],
+//                        $scalesOrigin[$type]['max'],
+//                        $destScaleLikelihoodMinIndex,
+//                        $destScaleLikelihoodMaxIndex
+//                    ));
                     foreach ($toApproximate as $type => $list) {
                         foreach ($list as $i) {
                             $operationalInstanceRisk->set($i, $this->approximate(
                                 $operationalInstanceRisk->get($i),
                                 $scalesOrigin[$type]['min'],
                                 $scalesOrigin[$type]['max'],
-                                $destScaleLikelihoodMinIndex,
-                                $destScaleLikelihoodMaxIndex
+                                $minScaleLikelihoodDestination,
+                                $maxScaleLikelihoodDestination
                             ));
                         }
                     }

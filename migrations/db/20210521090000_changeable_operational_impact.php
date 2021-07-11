@@ -55,7 +55,6 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `label_translation_key` varchar(255) NOT NULL,
                 `is_hidden` tinyint(1) NOT NULL DEFAULT 0,
                 `is_system` tinyint(1) NOT NULL DEFAULT 0,
-                `position` tinyint(3) NOT NULL,
                 `creator` varchar(255) NOT NULL,
                 `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
                 `updater` varchar(255) DEFAULT NULL,
@@ -73,6 +72,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
                 `anr_id` int(11) unsigned NOT NULL,
                 `operational_risk_scale_id` int(11) unsigned NOT NULL,
+                `operational_risk_scale_type_id` int(11) unsigned,
                 `scale_value` int(11) unsigned NOT NULL,
                 `scale_index` smallint(6) unsigned NOT NULL,
                 `comment_translation_key` varchar(255) NOT NULL,
@@ -81,9 +81,12 @@ class ChangeableOperationalImpact extends AbstractMigration
                 `updater` varchar(255) DEFAULT NULL,
                 `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                INDEX `operational_risks_scales_comments_anr_id_indx` (`anr_id`),
+                INDEX `op_risks_scales_comments_anr_id_indx` (`anr_id`),
+                INDEX `op_risks_scales_comments_scale_id_indx` (`operational_risk_scale_id`),
+                INDEX `op_risks_scales_comments_scale_type_id_indx` (`operational_risk_scale_type_id`),
                 CONSTRAINT `op_risks_scales_comments_anr_id_fk` FOREIGN KEY (`anr_id`) REFERENCES anrs (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
-                CONSTRAINT `op_risks_scales_comments_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                CONSTRAINT `op_risks_scales_comments_scale_id_fk` FOREIGN KEY (`operational_risk_scale_id`) REFERENCES `operational_risks_scales` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                CONSTRAINT `op_risks_scales_comments_scale_type_id_fk` FOREIGN KEY (`operational_risk_scale_type_id`) REFERENCES `operational_risks_scales_types` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
             );'
         );
 
@@ -138,7 +141,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                     GROUP_CONCAT(sc.comment2 SEPARATOR "-----") comments2,
                     GROUP_CONCAT(sc.comment3 SEPARATOR "-----") comments3,
                     GROUP_CONCAT(sc.comment4 SEPARATOR "-----") comments4,
-                    sit.type AS scale_impact_type, sit.position, sit.is_sys, sit.is_hidden
+                    sit.type AS scale_impact_type, sit.is_sys, sit.is_hidden
             FROM scales s
               INNER JOIN scales_comments sc ON sc.scale_id = s.id
               LEFT JOIN scales_impact_types sit ON sit.scale_id = s.id AND sit.id = sc.scale_type_impact_id
@@ -174,7 +177,6 @@ class ChangeableOperationalImpact extends AbstractMigration
                     'operational_risk_scale_id' => $currentScalesByAnrAndType[$scaleData['anr_id']][$scaleType],
                     'label_translation_key' => $labelTranslationKey,
                     'is_system' => $scaleData['is_sys'],
-                    'position' => $scaleData['position'],
                     'is_hidden' => $scaleData['is_hidden'],
                     'creator' => 'Migration script',
                 ])->save();
@@ -192,6 +194,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 $operationalRisksScalesCommentsTable->insert([
                     'anr_id' => $scaleData['anr_id'],
                     'operational_risk_scale_id' => $currentScalesByAnrAndType[$scaleData['anr_id']][$scaleType],
+                    'operational_risk_scale_type_id' => $operationalRiskScaleTypeId,
                     'scale_value' => $scaleValue,
                     'scale_index' => $scaleValue,
                     'comment_translation_key' => $commentTranslationKey,

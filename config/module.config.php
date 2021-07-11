@@ -1175,6 +1175,7 @@ return [
             Table\QuestionTable::class => AutowireFactory::class,
             Table\QuestionChoiceTable::class => AutowireFactory::class,
             Table\OperationalRiskScaleTable::class => ClientEntityManagerFactory::class,
+            Table\OperationalRiskScaleTypeTable::class => ClientEntityManagerFactory::class,
             Table\OperationalRiskScaleCommentTable::class => ClientEntityManagerFactory::class,
             Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\TranslationTable::class => ClientEntityManagerFactory::class,
@@ -1285,6 +1286,7 @@ return [
             StatsSettingsService::class => AutowireFactory::class,
             Service\OperationalRiskScaleService::class => AutowireFactory::class,
             Service\InstanceRiskOwnerService::class => AutowireFactory::class,
+            Service\OperationalRiskScaleCommentService::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,

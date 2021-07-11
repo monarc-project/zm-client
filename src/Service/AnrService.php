@@ -1024,7 +1024,7 @@ class AnrService extends AbstractService
                     $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
 
                     $scalesTranslationsFromSource[$operationalRiskScaleComment->getCommentTranslationKey()]
-                        = OperationalRiskScaleComment::class;
+                        = OperationalRiskScaleComment::TRANSLATION_TYPE_NAME;
                 }
                 $operationalRiskScaleCliTable->save($newScale, false);
             }
