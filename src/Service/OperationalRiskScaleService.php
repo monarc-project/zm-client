@@ -75,28 +75,28 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
     protected function createScaleComment(
         AnrSuperClass $anr,
         OperationalRiskScaleSuperClass $operationalRiskScale,
-        OperationalRiskScaleTypeSuperClass $operationalRiskScaleType,
+        ?OperationalRiskScaleTypeSuperClass $operationalRiskScaleType,
         int $scaleIndex,
-        int $maxScaleValue,
-        array $anrLanguageCodes
+        int $scaleValue,
+        array $languageCodes
     ): void {
         $scaleComment = (new OperationalRiskScaleComment())
             ->setAnr($anr)
             ->setOperationalRiskScale($operationalRiskScale)
             ->setOperationalRiskScaleType($operationalRiskScaleType)
             ->setScaleIndex($scaleIndex)
-            ->setScaleValue($maxScaleValue)
+            ->setScaleValue($scaleValue)
             ->setCommentTranslationKey((string)Uuid::uuid4())
             ->setCreator($this->connectedUser->getEmail());
 
         $this->operationalRiskScaleCommentTable->save($scaleComment, false);
 
-        foreach ($anrLanguageCodes as $anrLanguageCode) {
+        foreach ($languageCodes as $languageCode) {
             // Create a translation for the scaleComment (init with blank value).
             $translation = $this->createTranslationObject(
                 OperationalRiskScaleComment::TRANSLATION_TYPE_NAME,
                 $scaleComment->getCommentTranslationKey(),
-                $anrLanguageCode,
+                $languageCode,
                 ''
             );
 
