@@ -44,18 +44,4 @@ class TranslationTable extends CoreTranslationTable
             ->getQuery()
             ->getResult();
     }
-
-    public function findByAnrKeyAndLanguage(Anr $anr, string $key, string $lang): Translation
-    {
-        return $this->getRepository()->createQueryBuilder('t')
-            ->where('t.anr = :anr')
-            ->andWhere('t.key = :key')
-            ->andWhere('t.lang = :lang')
-            ->setParameter('key', $key)
-            ->setParameter('lang', $lang)
-            ->setParameter('anr', $anr)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
 }

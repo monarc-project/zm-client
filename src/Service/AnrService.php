@@ -998,7 +998,7 @@ class AnrService extends AbstractService
             /** @var OperationalRiskScaleCommentTable $operationalRiskScaleCommentCliTable */
             $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
 
-            $scales = $operationalRiskScaleTable->findWithCommentsByAnr($anr);
+            $scales = $operationalRiskScaleTable->findWithTypesAndCommentsByAnr($anr);
             foreach ($scales as $scale) {
                 $newScale = (new OperationalRiskScale())
                     ->setAnr($newAnr)

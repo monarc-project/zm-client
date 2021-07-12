@@ -155,6 +155,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         if ($this->listOpRiskScales === null) {
             /** @var OperationalRiskScaleTable $operationalRiskScaleTable */
             $operationalRiskScaleTable = $this->get('operationalRiskScaleTable');
+            // TODO: we use findByAnr.
             $likelihoodScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_LIKELIHOOD));
             $impactsScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_IMPACT));
             $impactScaleComments = $impactsScale->getOperationalRiskScaleComments();
