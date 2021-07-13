@@ -192,8 +192,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $result[] = [
                 'id' => $operationalInstanceRisk->getId(),
                 'rolfRisk' => $operationalInstanceRisk->getRolfRisk()->getId(),
-                'label' => $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
-                'description' => $operationalInstanceRisk->getRiskCacheDescription($anrLanguage),
+                'label' . $anrLanguage => $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
+                'description' . $anrLanguage => $operationalInstanceRisk->getRiskCacheDescription($anrLanguage),
                 'context' => $operationalInstanceRisk->getContext(),
                 'owner' => $operationalInstanceRisk->getOwner() ? $operationalInstanceRisk->getOwner()->getName() : '',
                 'netProb' => $operationalInstanceRisk->getNetProb(),
@@ -211,7 +211,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                 'instanceInfos' => [
                     'id' => $operationalInstanceRisk->getInstance()->getId(),
                     'scope' => $operationalInstanceRisk->getInstance()->getObject()->getScope(),
-                    'name' => $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
+                    'name' . $anrLanguage => $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
                 ],
                 'recommendations' => implode(',', $recommendationUuids),
             ];
