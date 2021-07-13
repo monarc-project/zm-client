@@ -638,9 +638,10 @@ class DeliverableGenerationService extends AbstractService
 
         // Generate operational risk impacts table
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($anr->getId());
-        $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1 && $scale['isHidden'] == false;}));
-        $opRisksImpactsScaleMin = $opRisksImpactsScales[0]['min'];
-        $opRisksImpactsScaleMax = $opRisksImpactsScales[0]['max'];
+        $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function($scale) { return $scale['type'] == 1; }));
+        $opRisksImpactsScaleMin = $opRisksImpactsScaleType[0]['min'];
+        $opRisksImpactsScaleMax = $opRisksImpactsScaleType[0]['max'];
+        $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function($scale) { return $scale['isHidden'] == false; });
         $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;}))[0];
         $sizeColumn = 17 / count($opRisksImpactsScales);
         $tableWord = new PhpWord();
@@ -1586,8 +1587,8 @@ class DeliverableGenerationService extends AbstractService
           }
 
           foreach ($r['instanceRiskOp']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
-              $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
-              $scalesData[$operationalRiskScale->getId()] = [
+              $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
+              $scalesData[$operationalRiskScaleType->getId()] = [
                   'netValue' => $operationalInstanceRiskScale->getNetValue() >= 0 ? $operationalInstanceRiskScale->getNetValue() : '-',
                   'brutValue' => $operationalInstanceRiskScale->getBrutValue() >= 0 ? $operationalInstanceRiskScale->getBrutValue() : '-',
               ];
@@ -1627,7 +1628,8 @@ class DeliverableGenerationService extends AbstractService
 
         if (!empty($lst)) {
             $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($anr->getId());
-            $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1 && $scale['isHidden'] == false;}));
+            $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function($scale) { return $scale['type'] == 1; }));
+            $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function($scale) { return $scale['isHidden'] == false; });
 
 
             $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
@@ -1837,8 +1839,8 @@ class DeliverableGenerationService extends AbstractService
         $result = null;
         $instanceTable = $this->get('instanceService')->get('table');
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($anr->getId());
-        $opRisksImpactsScales = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 1 && $scale['isHidden'] == false;}));
-
+        $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function($scale) { return $scale['type'] == 1; }));
+        $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function($scale) { return $scale['isHidden'] == false; });
         //css
         $styleHeaderCell = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'size' => 9];
         $styleHeaderFont = ['bold' => true, 'size' => 9];
@@ -1866,7 +1868,6 @@ class DeliverableGenerationService extends AbstractService
 
             $risksByTreatment = $this->get('riskService')->getRisks($anr->getId(), null, ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
             $risksOpByTreatment = $this->get('anrInstanceRiskOpService')->getOperationalRisks($anr->getId(), null, ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]);
-
 
             switch ($i) {
                 case 1:
@@ -2051,8 +2052,8 @@ class DeliverableGenerationService extends AbstractService
                 foreach ($risksOpByTreatment as $r) {
                     $instanceRiskOp = $this->get('instanceRiskOpTable')->findById($r['id']);
                     foreach ($instanceRiskOp->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
-                        $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
-                        $scalesData[$operationalRiskScale->getId()] = [
+                        $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
+                        $scalesData[$operationalRiskScaleType->getId()] = [
                             'netValue' => $operationalInstanceRiskScale->getNetValue() >= 0 ? $operationalInstanceRiskScale->getNetValue() : '-',
                             'brutValue' => $operationalInstanceRiskScale->getBrutValue() >= 0 ? $operationalInstanceRiskScale->getBrutValue() : '-',
                         ];
