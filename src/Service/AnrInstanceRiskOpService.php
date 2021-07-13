@@ -11,8 +11,9 @@ use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\OperationalInstanceRiskScaleSuperClass;
-use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
+use Monarc\Core\Model\Entity\OperationalRiskScaleTypeSuperClass;
 use Monarc\Core\Model\Entity\RolfRiskSuperClass;
+use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\InstanceRiskOpService;
@@ -31,6 +32,7 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
+use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfTagTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
@@ -40,38 +42,47 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 {
     use RecommendationsPositionsUpdateTrait;
 
+    /** @var InstanceRiskOpTable $instanceRiskOpTable */
+    protected CoreInstanceRiskOpTable $instanceRiskOpTable;
+
     protected RolfRiskTable $rolfRiskTable;
 
     protected InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
     private array $operationalRiskScales = [];
 
+    private OperationalRiskScaleTable $operationalRiskScaleTable;
+
     public function __construct(
         AnrTable $anrTable,
         InstanceTable $instanceTable,
         InstanceRiskOpTable $instanceRiskOpTable,
+        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         RolfRiskTable $rolfRiskTable,
         RolfTagTable $rolfTagTable,
         ConnectedUserService $connectedUserService,
-        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         OperationalRiskScaleTable $operationalRiskScaleTable,
+        OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         TranslationTable $translationTable,
         ConfigService $configService,
         TranslateService $translateService,
         InstanceRiskOwnerTable $instanceRiskOwnerTable
     ) {
-        $this->anrTable = $anrTable;
-        $this->instanceTable = $instanceTable;
-        $this->instanceRiskOpTable = $instanceRiskOpTable;
+        parent::__construct(
+            $anrTable,
+            $instanceTable,
+            $instanceRiskOpTable,
+            $operationalInstanceRiskScaleTable,
+            $rolfTagTable,
+            $connectedUserService,
+            $translationTable,
+            $translateService,
+            $operationalRiskScaleTypeTable,
+            $configService
+        );
         $this->rolfRiskTable = $rolfRiskTable;
-        $this->rolfTagTable = $rolfTagTable;
-        $this->connectedUser = $connectedUserService->getConnectedUser();
-        $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
-        $this->operationalRiskScaleTable = $operationalRiskScaleTable;
-        $this->translationTable = $translationTable;
-        $this->configService = $configService;
-        $this->translateService = $translateService;
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
+        $this->operationalRiskScaleTable = $operationalRiskScaleTable;
     }
 
     public function createSpecificRiskOp(array $data): int
@@ -122,12 +133,15 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
         $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
 
-        $operationalRiskScales = $this->operationalRiskScaleTable->findByAnr($instance->getAnr());
-        foreach ($operationalRiskScales as $operationalRiskScale) {
+        $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(
+            $instance->getAnr(),
+            OperationalRiskScale::TYPE_IMPACT
+        );
+        foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
             $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
                 ->setAnr($anr)
                 ->setOperationalInstanceRisk($operationalInstanceRisk)
-                ->setOperationalRiskScale($operationalRiskScale)
+                ->setOperationalRiskScaleType($operationalRiskScaleType)
                 ->setCreator($this->connectedUser->getEmail());
             $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
         }
@@ -135,6 +149,75 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $this->instanceRiskOpTable->getDb()->flush();
 
         return $operationalInstanceRisk->getId();
+    }
+
+    public function getOperationalRisks(int $anrId, int $instanceId = null, array $params = []): array
+    {
+        $instancesIds = $this->determineInstancesIdsFromParam($instanceId);
+
+        $anr = $this->anrTable->findById($anrId);
+        $anrLanguage = $anr->getLanguage();
+
+        $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrInstancesAndFilterParams(
+            $anr,
+            $instancesIds,
+            $params
+        );
+
+        $result = [];
+        $scaleTypesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
+            $this->getAnrLanguageCode($anr)
+        );
+        foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
+            $recommendationUuids = [];
+            foreach ($operationalInstanceRisk->getRecommendationRisks() as $recommendationRisk) {
+                $recommendationUuids[] = $recommendationRisk->getRecommandation()->getUuid();
+            }
+
+            $scalesData = [];
+            foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+                $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
+                $scalesData[$operationalRiskScaleType->getId()] = [
+                    'instanceRiskScaleId' => $operationalInstanceRiskScale->getId(),
+                    'label' => $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]->getValue(),
+                    'netValue' => $operationalInstanceRiskScale->getNetValue(),
+                    'brutValue' => $operationalInstanceRiskScale->getBrutValue(),
+                    'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
+                    'isHidden' => $operationalRiskScaleType->isHidden(),
+                ];
+            }
+
+            $result[] = [
+                'id' => $operationalInstanceRisk->getId(),
+                'rolfRisk' => $operationalInstanceRisk->getRolfRisk()->getId(),
+                'label' => $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
+                'description' => $operationalInstanceRisk->getRiskCacheDescription($anrLanguage),
+                'context' => $operationalInstanceRisk->getContext(),
+                'owner' => $operationalInstanceRisk->getOwner() ? $operationalInstanceRisk->getOwner()->getName() : '',
+                'netProb' => $operationalInstanceRisk->getNetProb(),
+                'brutProb' => $operationalInstanceRisk->getBrutProb(),
+                'targetedProb' => $operationalInstanceRisk->getTargetedProb(),
+                'scales' => $scalesData,
+                'cacheNetRisk' => $operationalInstanceRisk->getCacheNetRisk(),
+                'cacheBrutRisk' => $operationalInstanceRisk->getCacheBrutRisk(),
+                'cacheTargetRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
+                'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
+                'comment' => $operationalInstanceRisk->getComment(),
+                'specific' => $operationalInstanceRisk->getSpecific(),
+                't' => $operationalInstanceRisk->getKindOfMeasure() === InstanceRiskOp::KIND_NOT_TREATED ? 0 : 1,
+                'position' => $operationalInstanceRisk->getInstance()->getPosition(),
+                'instanceInfos' => [
+                    'id' => $operationalInstanceRisk->getInstance()->getId(),
+                    'scope' => $operationalInstanceRisk->getInstance()->getObject()->getScope(),
+                    'name' => $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
+                ],
+                'recommendations' => implode(',', $recommendationUuids),
+            ];
+        }
+
+        return $result;
     }
 
     /**
@@ -168,26 +251,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $operationalInstanceRisk->setTargetedProb((int)$data['targetedProb']);
         }
         if (isset($data['owner'])) {
-            if (empty($data['owner'])) {
-                $operationalInstanceRisk->setOwner(null);
-            } else {
-                $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName(
-                    $operationalInstanceRisk->getAnr(),
-                    $data['owner']
-                );
-                if ($instanceRiskOwner === null) {
-                    $instanceRiskOwner = (new InstanceRiskOwner())
-                        ->setAnr($operationalInstanceRisk->getAnr())
-                        ->setName($data['owner'])
-                        ->setCreator($this->connectedUser->getEmail());
-
-                    $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
-
-                    $operationalInstanceRisk->setOwner($instanceRiskOwner);
-                } elseif ($operationalInstanceRisk->getOwner() !== $instanceRiskOwner) {
-                    $operationalInstanceRisk->setOwner($instanceRiskOwner);
-                }
-            }
+            $this->processRiskOwnerName((string)$data['owner'], $operationalInstanceRisk);
         }
         if (isset($data['context'])) {
             $operationalInstanceRisk->setContext($data['context']);
@@ -250,96 +314,20 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         return $operationalInstanceRisk->getJsonArray();
     }
 
-    public function getOperationalRisks(int $anrId, int $instanceId = null, array $params = []): array
-    {
-        $instancesIds = $this->determineInstancesIdsFromParam($instanceId);
-
-        $anr = $this->anrTable->findById($anrId);
-        $anrLanguage = $anr->getLanguage();
-
-        $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrInstancesAndFilterParams(
-            $anr,
-            $instancesIds,
-            $params
-        );
-
-        $result = [];
-        $operationalRisksScalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $anr,
-            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
-            strtolower($this->configService->getLanguageCodes()[$anrLanguage])
-        );
-        foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
-            $recommendationUuids = [];
-            foreach ($operationalInstanceRisk->getRecommendationRisks() as $recommendationRisk) {
-                $recommendationUuids[] = $recommendationRisk->getRecommandation()->getUuid();
-            }
-
-            $scalesData = [];
-            foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
-                $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
-                $scalesData[$operationalRiskScale->getId()] = [
-                    'instanceRiskScaleId' => $operationalInstanceRiskScale->getId(),
-                    'label' => $operationalRisksScalesTranslations[$operationalRiskScale->getLabelTranslationKey()]
-                        ->getValue(),
-                    'netValue' => $operationalInstanceRiskScale->getNetValue(),
-                    'brutValue' => $operationalInstanceRiskScale->getBrutValue(),
-                    'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
-                    'isHidden' => $operationalRiskScale->isHidden(),
-                ];
-            }
-
-            $result[] = [
-                'id' => $operationalInstanceRisk->getId(),
-                'rolfRisk' => $operationalInstanceRisk->getRolfRisk()->getId(),
-                'label1' => $operationalInstanceRisk->getRiskCacheLabel(1),
-                'label2' => $operationalInstanceRisk->getRiskCacheLabel(2),
-                'label3' => $operationalInstanceRisk->getRiskCacheLabel(3),
-                'label4' => $operationalInstanceRisk->getRiskCacheLabel(4),
-                'description1' => $operationalInstanceRisk->getRiskCacheDescription(1),
-                'description2' => $operationalInstanceRisk->getRiskCacheDescription(2),
-                'description3' => $operationalInstanceRisk->getRiskCacheDescription(3),
-                'description4' => $operationalInstanceRisk->getRiskCacheDescription(4),
-                'context' => $operationalInstanceRisk->getContext(),
-                'owner' => $operationalInstanceRisk->getOwner() ? $operationalInstanceRisk->getOwner()->getName() : '',
-                'netProb' => $operationalInstanceRisk->getNetProb(),
-                'brutProb' => $operationalInstanceRisk->getBrutProb(),
-                'targetedProb' => $operationalInstanceRisk->getTargetedProb(),
-                'scales' => $scalesData,
-                'cacheNetRisk' => $operationalInstanceRisk->getCacheNetRisk(),
-                'cacheBrutRisk' => $operationalInstanceRisk->getCacheBrutRisk(),
-                'cacheTargetRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
-                'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
-                'comment' => $operationalInstanceRisk->getComment(),
-                'specific' => $operationalInstanceRisk->getSpecific(),
-                't' => $operationalInstanceRisk->getKindOfMeasure() === InstanceRiskOp::KIND_NOT_TREATED ? 0 : 1,
-                'position' => $operationalInstanceRisk->getInstance()->getPosition(),
-                'instanceInfos' => [
-                    'id' => $operationalInstanceRisk->getInstance()->getId(),
-                    'scope' => $operationalInstanceRisk->getInstance()->getObject()->getScope(),
-                    'name' . $anrLanguage => $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
-                ],
-                'recommendations' => implode(',', $recommendationUuids),
-            ];
-        }
-
-        return $result;
-    }
-
     public function getOperationalRisksInCsv(int $anrId, int $instanceId = null, array $params = []): string
     {
         $instancesIds = $this->determineInstancesIdsFromParam($instanceId);
         $anr = $this->anrTable->findById($anrId);
         $anrLanguage = $anr->getLanguage();
 
-        $operationalRiskScales = $this->operationalRiskScaleTable->findByAnrAndType(
+        $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(
             $anr,
             OperationalRiskScale::TYPE_IMPACT
         );
-        $operationalRisksScalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+        $scaleTypesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
-            strtolower($this->configService->getLanguageCodes()[$anrLanguage])
+            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME],
+            $this->getAnrLanguageCode($anr)
         );
 
         $tableHeaders = [
@@ -351,8 +339,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $translatedRiskValueDescription = $this->translateService->translate('Inherent risk', $anrLanguage);
             $tableHeaders['brutProb'] = $this->translateService->translate('Prob.', $anrLanguage)
                 . "(" . $translatedRiskValueDescription . ")";
-            foreach ($operationalRiskScales as $operationalRiskScale) {
-                $label = $operationalRisksScalesTranslations[$operationalRiskScale->getLabelTranslationKey()]
+            foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
+                $label = $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]
                     ->getValue();
                 $tableHeaders[$label] = $label . " (" . $translatedRiskValueDescription . ")";
             }
@@ -362,8 +350,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $translatedNetRiskDescription = $this->translateService->translate('Net risk', $anrLanguage);
         $tableHeaders['netProb'] = $this->translateService->translate('Prob.', $anrLanguage) . "("
             . $translatedNetRiskDescription . ")";
-        foreach ($operationalRiskScales as $operationalRiskScale) {
-            $label = $operationalRisksScalesTranslations[$operationalRiskScale->getLabelTranslationKey()]
+        foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
+            $label = $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]
                 ->getValue();
             $tableHeaders[$label] = $label . " (" . $translatedNetRiskDescription . ")";
         }
@@ -493,12 +481,12 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
      */
     protected function createOperationalInstanceRiskScaleObject(
         InstanceRiskOpSuperClass $instanceRiskOp,
-        OperationalRiskScaleSuperClass $operationalRiskScale
+        OperationalRiskScaleTypeSuperClass $operationalRiskScaleType
     ): OperationalInstanceRiskScaleSuperClass {
         return (new OperationalInstanceRiskScale())
             ->setAnr($instanceRiskOp->getAnr())
             ->setOperationalInstanceRisk($instanceRiskOp)
-            ->setOperationalRiskScale($operationalRiskScale)
+            ->setOperationalRiskScaleType($operationalRiskScaleType)
             ->setCreator($this->connectedUser->getEmail());
     }
 
@@ -523,9 +511,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         OperationalInstanceRiskScale $operationalInstanceRiskScale,
         int $scaleValue
     ): void {
-        $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
+        $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
         $allowedValues = [];
-        foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+        foreach ($operationalRiskScaleType->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
             $allowedValues[] = $operationalRiskScaleComment->getScaleValue();
         }
 
@@ -570,5 +558,37 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         }
 
         return $instancesIds;
+    }
+
+    /**
+     * @param string $riskOwnerName
+     * @param InstanceRiskOp $operationalInstanceRisk
+     *
+     * @return string
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function processRiskOwnerName(string $riskOwnerName, InstanceRiskOp $operationalInstanceRisk): void
+    {
+        if (empty($riskOwnerName)) {
+            $operationalInstanceRisk->setOwner(null);
+        } else {
+            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName(
+                $operationalInstanceRisk->getAnr(),
+                $riskOwnerName
+            );
+            if ($instanceRiskOwner === null) {
+                $instanceRiskOwner = (new InstanceRiskOwner())
+                    ->setAnr($operationalInstanceRisk->getAnr())
+                    ->setName($riskOwnerName)
+                    ->setCreator($this->connectedUser->getEmail());
+
+                $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
+
+                $operationalInstanceRisk->setOwner($instanceRiskOwner);
+            } elseif ($operationalInstanceRisk->getOwner() !== $instanceRiskOwner) {
+                $operationalInstanceRisk->setOwner($instanceRiskOwner);
+            }
+        }
     }
 }
