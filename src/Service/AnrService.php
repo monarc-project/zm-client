@@ -11,6 +11,12 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Model;
+use Monarc\Core\Model\Entity\OperationalRiskScaleCommentSuperClass;
+use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
+use Monarc\Core\Model\Entity\OperationalRiskScaleTypeSuperClass;
+use Monarc\Core\Model\Entity\ScaleCommentSuperClass;
+use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
+use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
@@ -1571,8 +1577,6 @@ class AnrService extends AbstractService
         $scaleTable = $sourceName === MonarcObject::SOURCE_COMMON
             ? $this->get('scaleTable')
             : $scaleCliTable;
-        /** @var ScaleCommentTable $scaleCommentCliTable */
-        $scaleCommentCliTable = $this->get('scaleCommentCliTable');
         /** @var ScaleImpactTypeTable $scaleImpactTypeCliTable */
         $scaleImpactTypeCliTable = $this->get('scaleImpactTypeCliTable');
 
@@ -1603,28 +1607,55 @@ class AnrService extends AbstractService
                     ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
 
                 $scaleImpactTypeCliTable->saveEntity($newScaleImpactType, false);
+
+                foreach ($scaleImpactType->getScaleComments() as $scaleComment) {
+                    $this->createScaleCommentsFromSource(
+                        $newAnr,
+                        $newScale,
+                        $newScaleImpactType,
+                        $scaleComment,
+                        $connectedUser
+                    );
+                }
             }
 
             foreach ($scale->getScaleComments() as $scaleComment) {
-                $newScaleComment = (new ScaleComment())
-                    ->setAnr($newAnr)
-                    ->setScale($newScale)
-                    ->setScaleIndex($scaleComment->getScaleIndex())
-                    ->setScaleValue($scaleComment->getScaleValue())
-                    ->setComments([
-                        'comment1' => $scaleComment->getComment(1),
-                        'comment2' => $scaleComment->getComment(2),
-                        'comment3' => $scaleComment->getComment(3),
-                        'comment4' => $scaleComment->getComment(4),
-                    ])
-                    ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
                 if ($scaleComment->getScaleImpactType() !== null) {
-                    $newScaleComment->setScaleImpactType($scaleComment->getScaleImpactType());
+                    continue;
                 }
 
-                $scaleCommentCliTable->saveEntity($newScaleComment, false);
+                $this->createScaleCommentsFromSource($newAnr, $newScale, null, $scaleComment, $connectedUser);
             }
         }
+    }
+
+    private function createScaleCommentsFromSource(
+        Anr $newAnr,
+        ScaleSuperClass $newScale,
+        ?ScaleImpactTypeSuperClass $newScaleImpactType,
+        ScaleCommentSuperClass $sourceScaleComment,
+        UserSuperClass $connectedUser
+    ): void {
+        /** @var ScaleCommentTable $scaleCommentCliTable */
+        $scaleCommentCliTable = $this->get('scaleCommentCliTable');
+
+        $newScaleComment = (new ScaleComment())
+            ->setAnr($newAnr)
+            ->setScale($newScale)
+            ->setScaleIndex($sourceScaleComment->getScaleIndex())
+            ->setScaleValue($sourceScaleComment->getScaleValue())
+            ->setComments([
+                'comment1' => $sourceScaleComment->getComment(1),
+                'comment2' => $sourceScaleComment->getComment(2),
+                'comment3' => $sourceScaleComment->getComment(3),
+                'comment4' => $sourceScaleComment->getComment(4),
+            ])
+            ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
+        if ($newScaleImpactType !== null) {
+            $newScaleComment->setScaleImpactType($newScaleImpactType);
+        }
+
+        $scaleCommentCliTable->saveEntity($newScaleComment, false);
     }
 
     private function createOperationalRiskScalesFromSourceAnr(
@@ -1639,8 +1670,6 @@ class AnrService extends AbstractService
         $sourceOperationalRiskScaleTable = $sourceName === MonarcObject::SOURCE_COMMON
             ? $this->get('operationalRiskScaleTable')
             : $operationalRiskScaleCliTable;
-        /** @var OperationalRiskScaleCommentTable $operationalRiskScaleCommentCliTable */
-        $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
         /** @var OperationalRiskScaleTypeTable $operationalRiskScaleTypeCliTable */
         $operationalRiskScaleTypeCliTable = $this->get('operationalRiskScaleTypeCliTable');
         /** @var TranslationTable|CoreTranslationTable $sourceTranslationTable */
@@ -1679,34 +1708,64 @@ class AnrService extends AbstractService
                     $sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()],
                     $connectedUser
                 );
+
+                foreach ($operationalRiskScaleType->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+                    $this->createOperationalRiskScaleCommentsFromSource(
+                        $newAnr,
+                        $newOperationalRiskScale,
+                        $newOperationalRiskScaleType,
+                        $operationalRiskScaleComment,
+                        $sourceTranslations[$operationalRiskScaleComment->getCommentTranslationKey()],
+                        $connectedUser
+                    );
+                }
             }
 
             foreach ($newOperationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
-                $newOperationalRiskScaleComment = (new OperationalRiskScaleComment())
-                    ->setAnr($newAnr)
-                    ->setScaleIndex($operationalRiskScaleComment->getScaleIndex())
-                    ->setScaleValue($operationalRiskScaleComment->getScaleValue())
-                    ->setCommentTranslationKey($operationalRiskScaleComment->getCommentTranslationKey())
-                    ->setOperationalRiskScale($newOperationalRiskScale)
-                    ->setIsHidden($operationalRiskScaleComment->isHidden())
-                    ->setCreator($connectedUser->getEmail());
                 if ($operationalRiskScaleComment->getOperationalRiskScaleType() !== null) {
-                    $newOperationalRiskScaleComment->setOperationalRiskScaleType(
-                        $operationalRiskScaleComment->getOperationalRiskScaleType()
-                    );
+                    continue;
                 }
 
-                $operationalRiskScaleCommentCliTable->save($newOperationalRiskScaleComment, false);
-
-                $this->createTranslationFromSource(
+                $this->createOperationalRiskScaleCommentsFromSource(
                     $newAnr,
-                    $sourceTranslations[$newOperationalRiskScaleComment->getCommentTranslationKey()],
+                    $newOperationalRiskScale,
+                    null,
+                    $operationalRiskScaleComment,
+                    $sourceTranslations[$operationalRiskScaleComment->getCommentTranslationKey()],
                     $connectedUser
                 );
             }
 
             $operationalRiskScaleCliTable->save($newOperationalRiskScale, false);
         }
+    }
+
+    private function createOperationalRiskScaleCommentsFromSource(
+        Anr $newAnr,
+        OperationalRiskScaleSuperClass $newOperationalRiskScale,
+        ?OperationalRiskScaleTypeSuperClass $newOperationalRiskScaleType,
+        OperationalRiskScaleCommentSuperClass $sourceOperationalRiskScaleComment,
+        TranslationSuperClass $sourceTranslation,
+        UserSuperClass $connectedUser
+    ): void {
+        /** @var OperationalRiskScaleCommentTable $operationalRiskScaleCommentCliTable */
+        $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
+
+        $newOperationalRiskScaleComment = (new OperationalRiskScaleComment())
+            ->setAnr($newAnr)
+            ->setScaleIndex($sourceOperationalRiskScaleComment->getScaleIndex())
+            ->setScaleValue($sourceOperationalRiskScaleComment->getScaleValue())
+            ->setCommentTranslationKey($sourceOperationalRiskScaleComment->getCommentTranslationKey())
+            ->setOperationalRiskScale($newOperationalRiskScale)
+            ->setIsHidden($sourceOperationalRiskScaleComment->isHidden())
+            ->setCreator($connectedUser->getEmail());
+        if ($newOperationalRiskScaleType !== null) {
+            $newOperationalRiskScaleComment->setOperationalRiskScaleType($newOperationalRiskScaleType);
+        }
+
+        $operationalRiskScaleCommentCliTable->save($newOperationalRiskScaleComment, false);
+
+        $this->createTranslationFromSource($newAnr, $sourceTranslation, $connectedUser);
     }
 
     private function createTranslationFromSource(
