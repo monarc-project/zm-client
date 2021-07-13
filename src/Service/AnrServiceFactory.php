@@ -8,9 +8,9 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
-use Monarc\FrontOffice\Model\Table\SoaTable;
-use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\Core\Service\ConfigService;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 
 /**
  * Factory class attached to AnrService
@@ -84,7 +84,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'vulnerabilityCliTable' => 'Monarc\FrontOffice\Model\Table\VulnerabilityTable',
         'questionCliTable' => 'Monarc\FrontOffice\Model\Table\QuestionTable',
         'questionChoiceCliTable' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',
-        'soaTable' => SoaTable::class,
+        'soaTable' => Table\SoaTable::class,
         'soaCategoryCliTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
         'recordCliTable' => 'Monarc\FrontOffice\Model\Table\RecordTable',
         'recordActorCliTable' => 'Monarc\FrontOffice\Model\Table\RecordActorTable',
@@ -95,9 +95,10 @@ class AnrServiceFactory extends AbstractServiceFactory
         'recordRecipientCliTable' => 'Monarc\FrontOffice\Model\Table\RecordRecipientTable',
         'referentialCliTable' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
         'measureMeasureCliTable' => 'Monarc\FrontOffice\Model\Table\MeasureMeasureTable',
-        'operationalRiskScaleCliTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable',
-        'operationalRiskScaleCommentCliTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable',
-        'translationCliTable' => 'Monarc\FrontOffice\Model\Table\TranslationTable',
+        'operationalRiskScaleCliTable' => Table\OperationalRiskScaleTable::class,
+        'operationalRiskScaleTypeCliTable' => Table\OperationalRiskScaleTypeTable::class,
+        'operationalRiskScaleCommentCliTable' => Table\OperationalRiskScaleCommentTable::class,
+        'translationCliTable' => Table\TranslationTable::class,
 
         // export
         'instanceService' => 'Monarc\FrontOffice\Service\AnrInstanceService',

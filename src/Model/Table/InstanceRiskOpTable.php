@@ -64,19 +64,6 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
     /**
      * @return InstanceRiskOp[]
      */
-    public function findByAnr(Anr $anr): array
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('oprisk')
-            ->where('oprisk.anr = :anr')
-            ->setParameter(':anr', $anr)
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return InstanceRiskOp[]
-     */
     public function findByAnrInstancesAndFilterParams(Anr $anr, array $instancesIds, array $filterParams = []): array
     {
         $language = $anr->getLanguage();

@@ -11,10 +11,13 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Model;
+use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\Core\Model\Table\ModelTable;
 use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
+use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
 use Monarc\Core\Model\Table\TranslationTable as CoreTranslationTable;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\ConfigService;
@@ -30,6 +33,7 @@ use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
 use Monarc\FrontOffice\Model\Entity\ObjectCategory;
 use Monarc\FrontOffice\Model\Entity\ObjectObject;
+use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
 use Monarc\FrontOffice\Model\Entity\Question;
 use Monarc\FrontOffice\Model\Entity\QuestionChoice;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
@@ -57,10 +61,15 @@ use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
+use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
+use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
+use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
+use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
@@ -153,6 +162,7 @@ class AnrService extends AbstractService
     protected $referentialCliTable;
     protected $measureMeasureCliTable;
     protected $operationalRiskScaleCliTable;
+    protected $operationalRiskScaleTypeCliTable;
     protected $operationalRiskScaleCommentCliTable;
     protected $translationCliTable;
 
@@ -500,9 +510,6 @@ class AnrService extends AbstractService
         /** @var CoreUser $connectedUser */
         $connectedUser = $userCliTable->getConnectedUser();
 
-        /** @var ConfigService $configService */
-        $configService = $this->get('configService');
-
         if ($source == MonarcObject::SOURCE_CLIENT && !$isSnapshotCloning) {
             /** @var UserAnrTable $userAnrCliTable */
             $userAnrCliTable = $this->get('userAnrCliTable');
@@ -552,9 +559,6 @@ class AnrService extends AbstractService
                 $userAnrCliTable = $this->get('userAnrCliTable');
                 $userAnrCliTable->saveEntity($userAnr, false);
             }
-
-            // store the translation key to fetch from Core
-            $scalesTranslationsFromSource = [];
 
             // duplicate themes
             $themesNewIds = [];
@@ -974,91 +978,9 @@ class AnrService extends AbstractService
                 }
             }
 
-            //duplicate scales
-            $scalesNewIds = [];
-            $scaleTable = $source === MonarcObject::SOURCE_COMMON
-                ? $this->get('scaleTable')
-                : $this->get('scaleCliTable');
-            $scales = $scaleTable->getEntityByFields(['anr' => $anr->getId()]);
-            foreach ($scales as $scale) {
-                $newScale = new Scale($scale);
-                $newScale->set('id', null);
-                $newScale->setAnr($newAnr);
-                $this->get('scaleCliTable')->save($newScale, false);
-                $scalesNewIds[$scale->id] = $newScale;
-            }
+            $this->createScalesFromSourceAnr($newAnr, $anr, $source, $connectedUser);
 
-            //duplicate operational scales && operational risk scale comment
-            /** @var OperationalRiskScaleTable|CoreOperationalRiskScaleTable $operationalRiskScaleTable */
-            $operationalRiskScaleTable = $source === MonarcObject::SOURCE_COMMON
-                ? $this->get('operationalRiskScaleTable')
-                : $this->get('operationalRiskScaleCliTable');
-            /** @var OperationalRiskScaleTable $operationalRiskScaleCliTable */
-            $operationalRiskScaleCliTable = $this->get('operationalRiskScaleCliTable');
-            /** @var OperationalRiskScaleCommentTable $operationalRiskScaleCommentCliTable */
-            $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
-
-            $scales = $operationalRiskScaleTable->findWithTypesAndCommentsByAnr($anr);
-            foreach ($scales as $scale) {
-                $newScale = (new OperationalRiskScale())
-                    ->setAnr($newAnr)
-                    ->setType($scale->getType())
-                    ->setMin($scale->getMin())
-                    ->setMax($scale->getMax())
-                    ->setLabelTranslationKey($scale->getLabelTranslationKey())
-                    ->setCreator($connectedUser->getEmail());
-
-                if ($scale->getType() === 1) {
-                    $scalesTranslationsFromSource[$scale->getLabelTranslationKey()] = OperationalRiskScale::class;
-                }
-                // manage the operationalRiskScaleComments
-                foreach ($scale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
-                    $newScaleComment = (new OperationalRiskScaleComment())
-                        ->setCreator($connectedUser->getEmail())
-                        ->setAnr($newAnr)
-                        ->setScaleIndex($operationalRiskScaleComment->getScaleIndex())
-                        ->setScaleValue($operationalRiskScaleComment->getScaleValue())
-                        ->setCommentTranslationKey($operationalRiskScaleComment->getCommentTranslationKey())
-                        ->setOperationalRiskScale($newScale);
-
-                    $operationalRiskScaleCommentCliTable->save($newScaleComment, false);
-
-                    $scalesTranslationsFromSource[$operationalRiskScaleComment->getCommentTranslationKey()]
-                        = OperationalRiskScaleComment::TRANSLATION_TYPE_NAME;
-                }
-                $operationalRiskScaleCliTable->save($newScale, false);
-            }
-
-            //duplicate scales impact types
-            $scalesImpactTypesNewIds = [];
-            $scaleImpactTypeTable = $source === MonarcObject::SOURCE_COMMON
-                ? $this->get('scaleImpactTypeTable')
-                : $this->get('scaleImpactTypeCliTable');
-            $scalesImpactTypes = $scaleImpactTypeTable->getEntityByFields(['anr' => $anr->id]);
-            foreach ($scalesImpactTypes as $scaleImpactType) {
-                $newScaleImpactType = new ScaleImpactType($scaleImpactType);
-                $newScaleImpactType->set('id', null);
-                $newScaleImpactType->setAnr($newAnr);
-                $newScaleImpactType->setScale($scalesNewIds[$scaleImpactType->scale->id]);
-                $this->get('scaleImpactTypeCliTable')->save($newScaleImpactType, false);
-                $scalesImpactTypesNewIds[$scaleImpactType->id] = $newScaleImpactType;
-            }
-
-            // duplicate scales comments
-            $scaleCommentTable = $source === MonarcObject::SOURCE_COMMON
-                ? $this->get('scaleCommentTable')
-                : $this->get('scaleCommentCliTable');
-            $scalesComments = $scaleCommentTable->getEntityByFields(['anr' => $anr->id]);
-            foreach ($scalesComments as $scaleComment) {
-                $newScaleComment = new ScaleComment($scaleComment);
-                $newScaleComment->set('id', null);
-                $newScaleComment->setAnr($newAnr);
-                $newScaleComment->setScale($scalesNewIds[$scaleComment->scale->id]);
-                if ($scaleComment->scaleImpactType) {
-                    $newScaleComment->setScaleImpactType($scalesImpactTypesNewIds[$scaleComment->scaleImpactType->id]);
-                }
-                $this->get('scaleCommentCliTable')->save($newScaleComment, false);
-            }
+            $this->createOperationalRiskScalesFromSourceAnr($newAnr, $anr, $source, $connectedUser);
 
             // duplicate instances risks
             $instanceRiskTable = $source === MonarcObject::SOURCE_COMMON
@@ -1090,10 +1012,13 @@ class AnrService extends AbstractService
             }
 
             // duplicate instances risks op
+            /** @var InstanceRiskOpTable $instanceRiskOpCliTable */
+            $instanceRiskOpCliTable = $this->get('instanceRiskOpCliTable');
+            /** @var CoreInstanceRiskOpTable|InstanceRiskOpTable $instanceRiskOpTable */
             $instanceRiskOpTable = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('instanceRiskOpTable')
-                : $this->get('instanceRiskOpCliTable');
-            $instancesRisksOp = $instanceRiskOpTable->getEntityByFields(['anr' => $anr->getId()]);
+                : $instanceRiskOpCliTable;
+            $instancesRisksOp = $instanceRiskOpTable->findByAnr($anr);
             $instancesRisksOpNewIds = [];
             foreach ($instancesRisksOp as $instanceRiskOp) {
                 $newInstanceRiskOp = new InstanceRiskOp($instanceRiskOp);
@@ -1101,10 +1026,10 @@ class AnrService extends AbstractService
                 $newInstanceRiskOp->setAnr($newAnr);
                 $newInstanceRiskOp->setInstance($instancesNewIds[$instanceRiskOp->getInstance()->getId()]);
                 $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->getObject()->getUuid()]);
-                if ($instanceRiskOp->rolfRisk) {
-                    $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->rolfRisk->id]);
+                if ($instanceRiskOp->getRolfRisk()) {
+                    $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->getRolfRisk()->getId()]);
                 }
-                $this->get('instanceRiskOpCliTable')->save($newInstanceRiskOp, false);
+                $instanceRiskOpCliTable->save($newInstanceRiskOp, false);
                 $instancesRisksOpNewIds[$instanceRiskOp->getId()] = $newInstanceRiskOp;
             }
 
@@ -1395,38 +1320,6 @@ class AnrService extends AbstractService
                 }
             }
 
-            // Manage Translations.
-            /** @var TranslationTable $translationCliTable */
-            $translationCliTable = $this->get('translationCliTable');
-            if ($source === MonarcObject::SOURCE_COMMON) {
-                /** @var CoreTranslationTable $translationTable */
-                $translationTable = $this->get('translationTable');
-                $translations = $translationTable->findByAnrKeysAndLanguageIndexedByKey(
-                    $anr,
-                    array_keys($scalesTranslationsFromSource),
-                    strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
-                );
-            } else {
-                /** @var TranslationTable $translationTable */
-                $translationTable = $this->get('translationCliTable');
-                $translations = $translationTable->findByAnrAndLanguageIndexedByKey(
-                    $anr,
-                    strtolower($configService->getLanguageCodes()[$newAnr->getLanguage()])
-                );
-            }
-
-            foreach ($translations as $translation) {
-                $newTranslation = (new Translation())
-                    ->setAnr($newAnr)
-                    ->setCreator($connectedUser->getEmail())
-                    ->setType($scalesTranslationsFromSource[$translation->getKey()])
-                    ->setKey($translation->getKey())
-                    ->setLang($translation->getLang())
-                    ->setValue($translation->getValue());
-
-                $translationCliTable->save($newTranslation, false);
-            }
-
             $this->get('table')->getDb()->flush();
 
             $this->setUserCurrentAnr($newAnr->getId());
@@ -1664,5 +1557,182 @@ class AnrService extends AbstractService
         }
 
         return $success;
+    }
+
+    private function createScalesFromSourceAnr(
+        Anr $newAnr,
+        AnrSuperClass $sourceAnr,
+        string $sourceName,
+        UserSuperClass $connectedUser
+    ): void {
+        /** @var ScaleTable $scaleCliTable */
+        $scaleCliTable = $this->get('scaleCliTable');
+        /** @var ScaleTable|CoreScaleTable $scaleTable */
+        $scaleTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('scaleTable')
+            : $scaleCliTable;
+        /** @var ScaleCommentTable $scaleCommentCliTable */
+        $scaleCommentCliTable = $this->get('scaleCommentCliTable');
+        /** @var ScaleImpactTypeTable $scaleImpactTypeCliTable */
+        $scaleImpactTypeCliTable = $this->get('scaleImpactTypeCliTable');
+
+        $scales = $scaleTable->findByAnr($sourceAnr);
+        foreach ($scales as $scale) {
+            $newScale = (new Scale())
+                ->setAnr($newAnr)
+                ->setMin($scale->getMin())
+                ->setMax($scale->getMax())
+                ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
+
+            $scaleCliTable->saveEntity($newScale, false);
+
+            foreach ($scale->getScaleImpactTypes() as $scaleImpactType) {
+                $newScaleImpactType = (new ScaleImpactType())
+                    ->setAnr($newAnr)
+                    ->setScale($newScale)
+                    ->setIsHidden($scaleImpactType->isHidden())
+                    ->setIsSys($scaleImpactType->isSys())
+                    ->setLabels([
+                        'label1' => $scaleImpactType->getLabel(1),
+                        'label2' => $scaleImpactType->getLabel(2),
+                        'label3' => $scaleImpactType->getLabel(3),
+                        'label4' => $scaleImpactType->getLabel(4),
+                    ])
+                    ->setType($scaleImpactType->getType())
+                    ->setPosition($scaleImpactType->getPosition())
+                    ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
+
+                $scaleImpactTypeCliTable->saveEntity($newScaleImpactType, false);
+            }
+
+            foreach ($scale->getScaleComments() as $scaleComment) {
+                $newScaleComment = (new ScaleComment())
+                    ->setAnr($newAnr)
+                    ->setScale($newScale)
+                    ->setScaleIndex($scaleComment->getScaleIndex())
+                    ->setScaleValue($scaleComment->getScaleValue())
+                    ->setComments([
+                        'comment1' => $scaleComment->getComment(1),
+                        'comment2' => $scaleComment->getComment(2),
+                        'comment3' => $scaleComment->getComment(3),
+                        'comment4' => $scaleComment->getComment(4),
+                    ])
+                    ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
+                if ($scaleComment->getScaleImpactType() !== null) {
+                    $newScaleComment->setScaleImpactType($scaleComment->getScaleImpactType());
+                }
+
+                $scaleCommentCliTable->saveEntity($newScaleComment, false);
+            }
+        }
+    }
+
+    private function createOperationalRiskScalesFromSourceAnr(
+        Anr $newAnr,
+        AnrSuperClass $sourceAnr,
+        string $sourceName,
+        UserSuperClass $connectedUser
+    ): void {
+        /** @var OperationalRiskScaleTable $operationalRiskScaleCliTable */
+        $operationalRiskScaleCliTable = $this->get('operationalRiskScaleCliTable');
+        /** @var OperationalRiskScaleTable|CoreOperationalRiskScaleTable $sourceOperationalRiskScaleTable */
+        $sourceOperationalRiskScaleTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('operationalRiskScaleTable')
+            : $operationalRiskScaleCliTable;
+        /** @var OperationalRiskScaleCommentTable $operationalRiskScaleCommentCliTable */
+        $operationalRiskScaleCommentCliTable = $this->get('operationalRiskScaleCommentCliTable');
+        /** @var OperationalRiskScaleTypeTable $operationalRiskScaleTypeCliTable */
+        $operationalRiskScaleTypeCliTable = $this->get('operationalRiskScaleTypeCliTable');
+        /** @var TranslationTable|CoreTranslationTable $sourceTranslationTable */
+        $sourceTranslationTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('translationTable')
+            : $this->get('translationCliTable');
+
+        $sourceTranslations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $sourceAnr,
+            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
+            $this->getAnrLanguageCode($newAnr)
+        );
+
+        $operationalRiskScales = $sourceOperationalRiskScaleTable->findByAnr($sourceAnr);
+        foreach ($operationalRiskScales as $operationalRiskScale) {
+            $newOperationalRiskScale = (new OperationalRiskScale())
+                ->setAnr($newAnr)
+                ->setType($operationalRiskScale->getType())
+                ->setMin($operationalRiskScale->getMin())
+                ->setMax($operationalRiskScale->getMax())
+                ->setCreator($connectedUser->getEmail());
+
+            foreach ($operationalRiskScale->getOperationalRiskScaleTypes() as $operationalRiskScaleType) {
+                $newOperationalRiskScaleType = (new OperationalRiskScaleType())
+                    ->setAnr($newAnr)
+                    ->setOperationalRiskScale($newOperationalRiskScale)
+                    ->setLabelTranslationKey($operationalRiskScaleType->getLabelTranslationKey())
+                    ->setIsHidden($operationalRiskScaleType->isHidden())
+                    ->setIsSystem($operationalRiskScaleType->isSystem())
+                    ->setCreator($connectedUser->getEmail());
+
+                $operationalRiskScaleTypeCliTable->save($newOperationalRiskScaleType, false);
+
+                $this->createTranslationFromSource(
+                    $newAnr,
+                    $sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()],
+                    $connectedUser
+                );
+            }
+
+            foreach ($newOperationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+                $newOperationalRiskScaleComment = (new OperationalRiskScaleComment())
+                    ->setAnr($newAnr)
+                    ->setScaleIndex($operationalRiskScaleComment->getScaleIndex())
+                    ->setScaleValue($operationalRiskScaleComment->getScaleValue())
+                    ->setCommentTranslationKey($operationalRiskScaleComment->getCommentTranslationKey())
+                    ->setOperationalRiskScale($newOperationalRiskScale)
+                    ->setIsHidden($operationalRiskScaleComment->isHidden())
+                    ->setCreator($connectedUser->getEmail());
+                if ($operationalRiskScaleComment->getOperationalRiskScaleType() !== null) {
+                    $newOperationalRiskScaleComment->setOperationalRiskScaleType(
+                        $operationalRiskScaleComment->getOperationalRiskScaleType()
+                    );
+                }
+
+                $operationalRiskScaleCommentCliTable->save($newOperationalRiskScaleComment, false);
+
+                $this->createTranslationFromSource(
+                    $newAnr,
+                    $sourceTranslations[$newOperationalRiskScaleComment->getCommentTranslationKey()],
+                    $connectedUser
+                );
+            }
+
+            $operationalRiskScaleCliTable->save($newOperationalRiskScale, false);
+        }
+    }
+
+    private function createTranslationFromSource(
+        Anr $newAnr,
+        TranslationSuperClass $sourceTranslation,
+        UserSuperClass $connectedUser
+    ): void {
+        /** @var TranslationTable $translationCliTable */
+        $translationCliTable = $this->get('translationCliTable');
+
+        $newTranslation = (new Translation())
+            ->setAnr($newAnr)
+            ->setType($sourceTranslation->getType())
+            ->setKey($sourceTranslation->getKey())
+            ->setLang($sourceTranslation->getLang())
+            ->setValue($sourceTranslation->getValue())
+            ->setCreator($connectedUser->getEmail());
+
+        $translationCliTable->save($newTranslation, false);
+    }
+
+    private function getAnrLanguageCode(AnrSuperClass $anr): string
+    {
+        /** @var ConfigService $configService */
+        $configService = $this->get('configService');
+
+        return strtolower($configService->getLanguageCodes()[$anr->getLanguage()]);
     }
 }

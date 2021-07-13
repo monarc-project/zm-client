@@ -6,7 +6,9 @@
  */
 
 namespace Monarc\FrontOffice\Controller;
+
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
 
 /**
  * Api ANR Scales Type Controller
@@ -23,17 +25,9 @@ class ApiAnrScalesTypesController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
-        $rightCommLanguage ="label".$data['langue'];
-			$data[$rightCommLanguage] = $data['Label'];
-
-			if(isset($data['langue']))
-			{
-				unset($data['Label']);
-				unset($data['langue']);
-			}
 
         $id = $this->getService()->create($data);
 

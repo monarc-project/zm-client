@@ -22,34 +22,4 @@ use Monarc\Core\Model\Entity\ScaleCommentSuperClass;
  */
 class ScaleComment extends ScaleCommentSuperClass
 {
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $anr;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\Scale
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Scale", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="scale_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $scale;
-
-    /**
-     * @var \Monarc\FrontOffice\Model\Entity\ScaleImpactType
-     *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\ScaleImpactType", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="scale_type_impact_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $scaleImpactType;
-
 }
