@@ -158,7 +158,9 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             $operationalRiskScaleTable = $this->get('operationalRiskScaleTable');
             $likelihoodScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_LIKELIHOOD));
             $impactsScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_IMPACT));
-            $impactScaleComments = $impactsScale->getOperationalRiskScaleComments();
+            $impactScaleTypes = $impactsScale->getOperationalRiskScaleTypes();
+            $impactScaleComments = $impactScaleTypes[0]->getOperationalRiskScaleComments();
+
 
             foreach ($impactScaleComments as $comment) {
                 $impactScaleValues[] = $comment->getScaleValue();
@@ -294,8 +296,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $countersRiskOP = $distribRiskOp = $temp = [];
         foreach ($result as $r) {
             foreach ($r['instanceRiskOp']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
-                $operationalRiskScale = $operationalInstanceRiskScale->getOperationalRiskScale();
-                $scalesData[$operationalRiskScale->getId()] = [
+                $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
+                $scalesData[$operationalRiskScaleType->getId()] = [
                     'netValue' => $operationalInstanceRiskScale->getNetValue(),
                     'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
                 ];
