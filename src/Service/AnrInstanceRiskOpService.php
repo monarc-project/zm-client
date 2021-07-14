@@ -8,6 +8,7 @@ use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskOwnerSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\OperationalInstanceRiskScaleSuperClass;
@@ -47,12 +48,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
     protected RolfRiskTable $rolfRiskTable;
 
-    protected InstanceRiskOwnerTable $instanceRiskOwnerTable;
-
-    private array $operationalRiskScales = [];
-
-    private OperationalRiskScaleTable $operationalRiskScaleTable;
-
     public function __construct(
         AnrTable $anrTable,
         InstanceTable $instanceTable,
@@ -77,12 +72,12 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $connectedUserService,
             $translationTable,
             $translateService,
+            $operationalRiskScaleTable,
             $operationalRiskScaleTypeTable,
+            $instanceRiskOwnerTable,
             $configService
         );
         $this->rolfRiskTable = $rolfRiskTable;
-        $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
-        $this->operationalRiskScaleTable = $operationalRiskScaleTable;
     }
 
     public function createSpecificRiskOp(array $data): int
@@ -220,100 +215,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         return $result;
     }
 
-    /**
-     * @throws EntityNotFoundException
-     * @throws Exception
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function update(int $id, array $data): array
-    {
-        // TODO: implement Permissions validator and inject it here. similar to \Monarc\Core\Service\AbstractService::deleteFromAnr
-
-        /** @var InstanceRiskOp $operationalInstanceRisk */
-        $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
-        if (isset($data['kindOfMeasure'])) {
-            $operationalInstanceRisk->setKindOfMeasure((int)$data['kindOfMeasure']);
-        }
-        if (isset($data['comment'])) {
-            $operationalInstanceRisk->setComment($data['comment']);
-        }
-        if (isset($data['netProb']) && $operationalInstanceRisk->getNetProb() !== $data['netProb']) {
-            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['netProb']);
-            $operationalInstanceRisk->setNetProb((int)$data['netProb']);
-        }
-        if (isset($data['brutProb']) && $operationalInstanceRisk->getBrutProb() !== $data['brutProb']) {
-            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['brutProb']);
-            $operationalInstanceRisk->setBrutProb((int)$data['brutProb']);
-        }
-        if (isset($data['targetedProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetedProb']) {
-            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['targetedProb']);
-            $operationalInstanceRisk->setTargetedProb((int)$data['targetedProb']);
-        }
-        if (isset($data['owner'])) {
-            $this->processRiskOwnerName((string)$data['owner'], $operationalInstanceRisk);
-        }
-        if (isset($data['context'])) {
-            $operationalInstanceRisk->setContext($data['context']);
-        }
-
-        $operationalInstanceRisk->setUpdater(
-            $this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname()
-        );
-
-        $this->updateRiskCacheValues($operationalInstanceRisk);
-
-        $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk);
-
-        $this->updateInstanceRiskRecommendationsPositions($operationalInstanceRisk);
-
-        return $operationalInstanceRisk->getJsonArray();
-    }
-
-    /**
-     * @throws EntityNotFoundException
-     * @throws Exception
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function updateScaleValue($id, $data): array
-    {
-        /** @var OperationalInstanceRiskScale $operationInstanceRiskScale */
-        $operationInstanceRiskScale = $this->operationalInstanceRiskScaleTable->findById($data['instanceRiskScaleId']);
-        if ($operationInstanceRiskScale === null) {
-            throw EntityNotFoundException::fromClassNameAndIdentifier(
-                \get_class($this->operationalInstanceRiskScaleTable),
-                $data['instanceRiskScaleId']
-            );
-        }
-
-        if (isset($data['netValue']) && $operationInstanceRiskScale->getNetValue() !== (int)$data['netValue']) {
-            $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['netValue']);
-            $operationInstanceRiskScale->setNetValue((int)$data['netValue']);
-        }
-        if (isset($data['brutValue']) && $operationInstanceRiskScale->getBrutValue() !== (int)$data['brutValue']) {
-            $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['brutValue']);
-            $operationInstanceRiskScale->setBrutValue((int)$data['brutValue']);
-        }
-        if (isset($data['targetValue'])
-            && $operationInstanceRiskScale->getTargetedValue() !== (int)$data['targetValue']
-        ) {
-            $this->verifyScaleValue($operationInstanceRiskScale, (int)$data['targetValue']);
-            $operationInstanceRiskScale->setTargetedValue((int)$data['targetValue']);
-        }
-
-        $operationInstanceRiskScale->setUpdater($this->connectedUser->getEmail());
-
-        /** @var InstanceRiskOp $operationalInstanceRisk */
-        $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
-
-        $this->updateRiskCacheValues($operationalInstanceRisk);
-
-        $this->operationalInstanceRiskScaleTable->save($operationInstanceRiskScale);
-
-        return $operationalInstanceRisk->getJsonArray();
-    }
-
     public function getOperationalRisksInCsv(int $anrId, int $instanceId = null, array $params = []): string
     {
         $instancesIds = $this->determineInstancesIdsFromParam($instanceId);
@@ -405,6 +306,23 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
      * @throws EntityNotFoundException
      * @throws Exception
      * @throws ORMException
+     */
+    public function update(int $id, array $data): array
+    {
+        $result = parent::update($id, $data);
+
+        /** @var InstanceRiskOp $operationalInstanceRisk */
+        $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
+
+        $this->updateInstanceRiskRecommendationsPositions($operationalInstanceRisk);
+
+        return $result;
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     * @throws Exception
+     * @throws ORMException
      * @throws OptimisticLockException
      */
     public function deleteFromAnr(int $id, int $anrId): void
@@ -419,33 +337,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $this->instanceRiskOpTable->deleteEntity($operationalInstanceRisk);
 
         $this->processRemovedInstanceRiskRecommendationsPositions($operationalInstanceRisk);
-    }
-
-    public function updateRiskCacheValues(InstanceRiskOp $operationalInstanceRisk, bool $flushChanges = false): void
-    {
-        foreach (['Brut', 'Net', 'Targeted'] as $valueType) {
-            $max = -1;
-            $probVal = $operationalInstanceRisk->{'get' . $valueType . 'Prob'}();
-            if ($probVal !== -1) {
-                foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $riskScale) {
-                    $scaleValue = $riskScale->{'get' . $valueType . 'Value'}();
-                    if ($scaleValue > -1 && ($probVal * $scaleValue) > $max) {
-                        $max = $probVal * $scaleValue;
-                    }
-                }
-            }
-
-            if ($operationalInstanceRisk->{'getCache' . $valueType . 'Risk'}() !== $max) {
-                $operationalInstanceRisk
-                    ->setUpdater($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname())
-                    ->{'setCache' . $valueType . 'Risk'}($max);
-                $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
-            }
-        }
-
-        if ($flushChanges === true) {
-            $this->instanceRiskOpTable->getDb()->flush();
-        }
     }
 
     /**
@@ -490,6 +381,14 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             ->setCreator($this->connectedUser->getEmail());
     }
 
+    protected function createInstanceRiskOwnerObject(AnrSuperClass $anr, string $ownerName): InstanceRiskOwnerSuperClass
+    {
+        return (new InstanceRiskOwner())
+            ->setAnr($anr)
+            ->setName($ownerName)
+            ->setCreator($this->connectedUser->getEmail());
+    }
+
     /**
      * @param Instance[] $instances
      *
@@ -507,47 +406,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         return array_merge($instancesIds, $childInstancesIds);
     }
 
-    private function verifyScaleValue(
-        OperationalInstanceRiskScale $operationalInstanceRiskScale,
-        int $scaleValue
-    ): void {
-        $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
-        $allowedValues = [];
-        foreach ($operationalRiskScaleType->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
-            $allowedValues[] = $operationalRiskScaleComment->getScaleValue();
-        }
-
-        if ($scaleValue !== -1 && !\in_array($scaleValue, $allowedValues, true)) {
-            throw new Exception(sprintf(
-                'The value %d should be between one of [%s]',
-                $scaleValue,
-                implode(', ', $allowedValues)
-            ), 412);
-        }
-    }
-
-    private function verifyScaleProbabilityValue(AnrSuperClass $anr, int $scaleProbabilityValue): void
-    {
-        if (!isset($this->operationalRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD])) {
-            $this->operationalRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD] = $this->operationalRiskScaleTable
-                ->findByAnrAndType($anr, OperationalRiskScale::TYPE_LIKELIHOOD);
-        }
-        /* There is only one scale of the TYPE_LIKELIHOOD. */
-        $operationalRiskScale = current($this->operationalRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD]);
-        if ($scaleProbabilityValue !== -1
-            && ($scaleProbabilityValue < $operationalRiskScale->getMin()
-                || $scaleProbabilityValue > $operationalRiskScale->getMax()
-            )
-        ) {
-            throw new Exception(sprintf(
-                'The value %d should be between %d and %d.',
-                $scaleProbabilityValue,
-                $operationalRiskScale->getMin(),
-                $operationalRiskScale->getMax()
-            ), 412);
-        }
-    }
-
     private function determineInstancesIdsFromParam($instanceId): array
     {
         $instancesIds = [];
@@ -558,37 +416,5 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         }
 
         return $instancesIds;
-    }
-
-    /**
-     * @param string $riskOwnerName
-     * @param InstanceRiskOp $operationalInstanceRisk
-     *
-     * @return string
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    private function processRiskOwnerName(string $riskOwnerName, InstanceRiskOp $operationalInstanceRisk): void
-    {
-        if (empty($riskOwnerName)) {
-            $operationalInstanceRisk->setOwner(null);
-        } else {
-            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName(
-                $operationalInstanceRisk->getAnr(),
-                $riskOwnerName
-            );
-            if ($instanceRiskOwner === null) {
-                $instanceRiskOwner = (new InstanceRiskOwner())
-                    ->setAnr($operationalInstanceRisk->getAnr())
-                    ->setName($riskOwnerName)
-                    ->setCreator($this->connectedUser->getEmail());
-
-                $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
-
-                $operationalInstanceRisk->setOwner($instanceRiskOwner);
-            } elseif ($operationalInstanceRisk->getOwner() !== $instanceRiskOwner) {
-                $operationalInstanceRisk->setOwner($instanceRiskOwner);
-            }
-        }
     }
 }
