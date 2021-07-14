@@ -60,7 +60,7 @@ class AnrInstanceService extends InstanceService
      * The code is extracted to be able to refactor the recommendations export,
      * They are duplicated between instances and the code requires improvements itself.
      */
-    protected function getExportedRecommendationsData(
+    protected function generateExportArrayOfRecommendations(
         InstanceSuperClass $instance,
         bool $withEval,
         bool $withRecommendations,

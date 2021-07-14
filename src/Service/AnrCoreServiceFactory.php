@@ -7,7 +7,10 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use \Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\Core\Service\ConfigService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Table;
 
 /**
  * Anr Instance Consequence Service Factory
@@ -20,34 +23,33 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
     protected $class = AnrCoreService::class;
 
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Anr',
-        'scaleService' => 'Monarc\FrontOffice\Service\AnrScaleService',
-        'anrObjectCategoryTable' => 'Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'instanceConsequenceTable' => 'Monarc\FrontOffice\Model\Table\InstanceConsequenceTable',
-        'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
-        'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'scaleTable' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
-        'scaleImpactTypeTable' => 'Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable',
-        'scaleCommentTable' => 'Monarc\FrontOffice\Model\Table\ScaleCommentTable',
-        'instanceService' => 'Monarc\FrontOffice\Service\AnrInstanceService',
-        'questionTable' => 'Monarc\FrontOffice\Model\Table\QuestionTable',
-        'questionChoiceTable' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',
-        'threatTable' => 'Monarc\FrontOffice\Model\Table\ThreatTable',
-        'interviewTable' => 'Monarc\FrontOffice\Model\Table\InterviewTable',
-        'deliveryTable' => 'Monarc\FrontOffice\Model\Table\DeliveryTable',
-        'referentialTable' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
-        'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
-        'measureMeasureTable' => 'Monarc\FrontOffice\Model\Table\MeasureMeasureTable',
-        'soaCategoryTable' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
-        'soaTable' => 'Monarc\FrontOffice\Model\Table\SoaTable',
-        'recordTable' => 'Monarc\FrontOffice\Model\Table\RecordTable',
-        'recordService' => 'Monarc\FrontOffice\Service\AnrRecordService',
-        'configService' => 'Monarc\Core\Service\ConfigService',
-        'operationalRiskScaleTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable',
-        'operationalRiskScaleCommentTable' => 'Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable',
-        'translationTable' => 'Monarc\FrontOffice\Model\Table\TranslationTable',
+        'table' => Table\AnrTable::class,
+        'entity' => Anr::class,
+        'scaleService' => AnrScaleService::class,
+        'recordService' => AnrRecordService::class,
+        'configService' => ConfigService::class,
+        'instanceService' => AnrInstanceService::class,
+        'anrObjectCategoryTable' => Table\AnrObjectCategoryTable::class,
+        'instanceTable' => Table\InstanceTable::class,
+        'instanceConsequenceTable' => Table\InstanceConsequenceTable::class,
+        'instanceRiskTable' => Table\InstanceRiskTable::class,
+        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
+        'MonarcObjectTable' => Table\MonarcObjectTable::class,
+        'scaleTable' => Table\ScaleTable::class,
+        'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
+        'scaleCommentTable' => Table\ScaleCommentTable::class,
+        'questionTable' => Table\QuestionTable::class,
+        'questionChoiceTable' => Table\QuestionChoiceTable::class,
+        'threatTable' => Table\ThreatTable::class,
+        'interviewTable' => Table\InterviewTable::class,
+        'deliveryTable' => Table\DeliveryTable::class,
+        'referentialTable' => Table\ReferentialTable::class,
+        'measureTable' => Table\MeasureTable::class,
+        'measureMeasureTable' => Table\MeasureMeasureTable::class,
+        'soaCategoryTable' => Table\SoaCategoryTable::class,
+        'soaTable' => Table\SoaTable::class,
+        'recordTable' => Table\RecordTable::class,
+        'operationalRiskScaleTable' => Table\OperationalRiskScaleTable::class,
+        'translationTable' => Table\TranslationTable::class,
     ];
 }
