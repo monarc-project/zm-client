@@ -1698,7 +1698,6 @@ class AnrService extends AbstractService
                     ->setOperationalRiskScale($newOperationalRiskScale)
                     ->setLabelTranslationKey($operationalRiskScaleType->getLabelTranslationKey())
                     ->setIsHidden($operationalRiskScaleType->isHidden())
-                    ->setIsSystem($operationalRiskScaleType->isSystem())
                     ->setCreator($connectedUser->getEmail());
 
                 $operationalRiskScaleTypeCliTable->save($newOperationalRiskScaleType, false);

@@ -54,7 +54,6 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
             ->setAnr($anr)
             ->setOperationalRiskScale($operationalRiskScale)
             ->setLabelTranslationKey((string)Uuid::uuid4())
-            ->setIsSystem(0)
             ->setCreator($this->connectedUser->getEmail());
     }
 
