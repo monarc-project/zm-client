@@ -190,7 +190,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                 'label' . $anrLanguage => $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
                 'description' . $anrLanguage => $operationalInstanceRisk->getRiskCacheDescription($anrLanguage),
                 'context' => $operationalInstanceRisk->getContext(),
-                'owner' => $operationalInstanceRisk->getOwner() ? $operationalInstanceRisk->getOwner()->getName() : '',
+                'owner' => $operationalInstanceRisk->getInstanceRiskOwner()
+                    ? $operationalInstanceRisk->getInstanceRiskOwner()->getName()
+                    : '',
                 'netProb' => $operationalInstanceRisk->getNetProb(),
                 'brutProb' => $operationalInstanceRisk->getBrutProb(),
                 'targetedProb' => $operationalInstanceRisk->getTargetedProb(),
