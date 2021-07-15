@@ -7,11 +7,13 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Service\AbstractServiceFactory;
+
 /**
  * Factory class attached to AnrScaleService
  * @package Monarc\FrontOffice\Service
  */
-class AnrScaleServiceFactory extends \Monarc\Core\Service\AbstractServiceFactory
+class AnrScaleServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
