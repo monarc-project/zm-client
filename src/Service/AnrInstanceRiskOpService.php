@@ -168,7 +168,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
             $recommendationUuids = [];
             foreach ($operationalInstanceRisk->getRecommendationRisks() as $recommendationRisk) {
-                $recommendationUuids[] = $recommendationRisk->getRecommandation()->getUuid();
+                if ($recommendationRisk->getRecommandation() !== null) {
+                    $recommendationUuids[] = $recommendationRisk->getRecommandation()->getUuid();
+                }
             }
 
             $scalesData = [];
