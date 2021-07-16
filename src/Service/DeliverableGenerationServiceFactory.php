@@ -44,6 +44,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'riskService' => Service\AnrRiskService::class,
         'recordService' => Service\AnrRecordService::class,
         'translateService' => TranslateService::class,
+        'instanceRiskOwnerTable' => Table\InstanceRiskOwnerTable::class,
         'recommendationRiskTable' => Table\RecommandationRiskTable::class,
         'recommendationHistoricTable' => Table\RecommendationHistoricTable::class,
     ];

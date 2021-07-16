@@ -86,6 +86,8 @@ class DeliverableGenerationService extends AbstractService
     protected $recordService;
     /** @var TranslateService */
     protected $translateService;
+    /** @var InstanceRiskOwnerTable */
+    protected $instanceRiskOwnerTable;
 
     /** @var RecommandationRiskTable */
     protected $recommendationRiskTable;
@@ -865,6 +867,8 @@ class DeliverableGenerationService extends AbstractService
         $values['xml']['RISKS_KIND_OF_TREATMENT'] = $this->generateRisksByKindOfTreatment($anr);
         $values['table']['RISKS_RECO_FULL'] = $this->generateRisksPlan($anr);
         $values['table']['OPRISKS_RECO_FULL'] = $this->generateOperationalRisksPlan($anr);
+
+        $values['table']['TABLE_RISK_OWNERS'] = $this->generateOwnersTable($anr);
 
         $values['xml']['TABLE_AUDIT_INSTANCES'] = $this->generateTableAudit($anr);
         $values['xml']['TABLE_AUDIT_RISKS_OP'] = $this->generateTableAuditOp($anr);
@@ -3805,6 +3809,95 @@ class DeliverableGenerationService extends AbstractService
                 $qual = $threat['qualification'] >= 0 ? $threat['qualification'] : '';
                 $table->addCell(Converter::cmToTwip(1.60), $styleContentCellCenter)->addText($qual, $styleContentFont, $styleContentParagraphCenter);
                 $table->addCell(Converter::cmToTwip(6.60), $styleContentCellCenter)->addText(_WT($threat['comment']), $styleContentFont, $styleContentParagraphLeft);
+            }
+        }
+
+        return $table;
+    }
+
+    /**
+     * Generate the owner table data
+     *
+     * @param Anr $anr The ANR object
+     *
+     * @return mixed|string The WordXml generated data
+     */
+    protected function generateOwnersTable($anr)
+    {
+        $allOwners = $this->instanceRiskOwnerTable->findByAnr($anr);
+
+        foreach ($allOwners as $owner) {
+            if (!empty($owner->getInstanceRisks())) {
+                foreach ($owner->getInstanceRisks() as $ir) {
+                    if ($ir->getInstance()->getObject()->isScopeGlobal()) {
+                        $asset = $ir->getInstance()->{'getName' . $anr->getLanguage()}() . ' (' . $this->anrTranslate('Global') . ')';
+                    }else {
+                        $asset = implode(' > ', array_column(
+                            $this->get('instanceService')->get('table')->getAscendance($ir->getInstance()),
+                            'name' . $anr->getLanguage()
+                        ));
+                    }
+                    $risksByOwner[$owner->getName()][] = [
+                        'asset' => $asset,
+                        'threat' => $ir->getThreat()->getLabel($anr->getLanguage()),
+                        'vulnerability' => $ir->getVulnerability()->getLabel($anr->getLanguage()),
+                    ];
+                }
+            }
+            if (!empty($owner->getOperationalInstanceRisks())) {
+                foreach ($owner->getOperationalInstanceRisks() as $oir) {
+                    $asset = implode(' > ', array_column(
+                        $this->get('instanceService')->get('table')->getAscendance($oir->getInstance()),
+                        'name' . $anr->getLanguage()
+                    ));
+                    $risksByOwner[$owner->getName()][] = [
+                        'asset' => $asset,
+                        'risk' => $oir->getRiskCacheLabel($anr->getLanguage()),
+                    ];
+                }
+            }
+        }
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $styleTable = ['borderSize' => 1, 'borderColor' => 'ABABAB', 'cellMarginRight' => '0'];
+        $table = $section->addTable($styleTable);
+
+        $styleHeaderCell2Span = ['valign' => 'center', 'bgcolor' => 'DFDFDF', 'gridSpan' => 2];
+        $styleHeaderCellSpan = ['valign' => 'center', 'bgcolor' => 'DFDFDF'];
+        $styleContentCell = ['align' => 'left', 'valign' => 'center'];
+        $styleContentFont = ['bold' => false, 'size' => 10];
+        $styleContentBoldFont = ['bold' => true, 'size' => 10];
+        $alignCenter = ['Alignment' => 'center', 'spaceAfter' => '0'];
+        $alignLeft = ['Alignment' => 'left', 'spaceAfter' => '0'];
+        $cellRowSpan = ['vMerge' => 'restart', 'valign' => 'center'];
+        $cellRowContinue = ['vMerge' => 'continue'];
+        $cellColSpan = ['gridSpan' => 2, 'valign' => 'center'];
+
+        if (!empty($risksByOwner)) {
+            $table->addRow(400, ['tblHeader' => true]);
+            $table->addCell(Converter::cmToTwip(2.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Owner'), $styleContentBoldFont, $alignCenter);
+            $table->addCell(Converter::cmToTwip(6.00), $styleHeaderCellSpan)->addText($this->anrTranslate('Asset'), $styleContentBoldFont, $alignCenter);
+            $table->addCell(Converter::cmToTwip(10.00), $styleHeaderCell2Span)->addText($this->anrTranslate('Risk'), $styleContentBoldFont, $alignCenter);
+            foreach ($risksByOwner as $owner => $risks) {
+                $isOwnerHeader = true;
+                foreach ($risks as $risk) {
+                    $table->addRow(400);
+                    if ($isOwnerHeader) {
+                        $table->addCell(Converter::cmToTwip(2.00), $cellRowSpan)->addText(_WT($owner), $styleContentBoldFont, $alignLeft);
+                    }else {
+                        $table->addCell(Converter::cmToTwip(2.00), $cellRowContinue);
+                    }
+                    $table->addCell(Converter::cmToTwip(6.00), $styleContentCell)->addText($risk['asset'], $styleContentFont, $alignLeft);
+                    if (isset($risk['threat'])) {
+                        $table->addCell(Converter::cmToTwip(3.00), $styleContentCell)->addText($risk['threat'] , $styleContentFont, $alignLeft);
+                        $table->addCell(Converter::cmToTwip(7.00), $styleContentCell)->addText($risk['vulnerability'], $styleContentFont, $alignLeft);
+                    }else {
+                        $table->addCell(Converter::cmToTwip(10.00), $cellColSpan)->addText($risk['risk'], $styleContentFont, $alignLeft);
+                    }
+                    $isOwnerHeader = false;
+                }
+
             }
         }
 
