@@ -2051,7 +2051,7 @@ class DeliverableGenerationService extends AbstractService
                 $tableRiskOp->addCell(Converter::cmToTwip(8.00), $cellRowContinue);
                 $tableRiskOp->addCell(Converter::cmToTwip(2.00), $cellRowContinue);
 
-                $kindOfRisks = ['cacheBrutRisk', 'cacheNetRisk', 'cacheTargetRisk'];
+                $kindOfRisks = ['cacheBrutRisk', 'cacheNetRisk', 'cacheTargetedRisk'];
 
                 foreach ($risksOpByTreatment as $r) {
                     $instanceRiskOp = $this->get('instanceRiskOpTable')->findById($r['id']);
@@ -2115,10 +2115,10 @@ class DeliverableGenerationService extends AbstractService
                     }
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $styleContentCellcacheNetRisk)->addText($r['cacheNetRisk'], $styleContentFontBold, $alignCenter);
                     $tableRiskOp->addCell(Converter::cmToTwip(8.00), $styleContentCell)->addText(_WT($r['comment']), $styleContentFont, $alignLeft);
-                    if ($r['cacheTargetRisk'] == '-') {
+                    if ($r['cacheTargetedRisk'] == '-') {
                         $tableRiskOp->addCell(Converter::cmToTwip(2.00), $styleContentCellcacheNetRisk)->addText($r['cacheNetRisk'], $styleContentFontBold, $alignCenter);
                     } else {
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $styleContentCellcacheTargetRisk)->addText($r['cacheTargetRisk'], $styleContentFontBold, $alignCenter);
+                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $styleContentCellcacheTargetedRisk)->addText($r['cacheTargetedRisk'], $styleContentFontBold, $alignCenter);
                     }
                 }
                 $section->addTextBreak();

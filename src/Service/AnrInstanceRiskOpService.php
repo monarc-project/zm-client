@@ -201,7 +201,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                 'scales' => $scalesData,
                 'cacheNetRisk' => $operationalInstanceRisk->getCacheNetRisk(),
                 'cacheBrutRisk' => $operationalInstanceRisk->getCacheBrutRisk(),
-                'cacheTargetRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
+                'cacheTargetedRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
                 'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
                 'comment' => $operationalInstanceRisk->getComment(),
                 'specific' => $operationalInstanceRisk->getSpecific(),
