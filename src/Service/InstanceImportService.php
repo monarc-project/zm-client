@@ -29,6 +29,7 @@ use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Entity\Interview;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
@@ -55,6 +56,7 @@ use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\InterviewTable;
@@ -170,6 +172,8 @@ class InstanceImportService
 
     private OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
 
+    private InstanceRiskOwnerTable $instanceRiskOwnerTable;
+
     private string $importType;
 
     public function __construct(
@@ -207,6 +211,7 @@ class InstanceImportService
         OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
+        InstanceRiskOwnerTable $instanceRiskOwnerTable,
         ConnectedUserService $connectedUserService,
         TranslationTable $translationTable,
         ConfigService $configService,
@@ -249,6 +254,7 @@ class InstanceImportService
         $this->translationTable = $translationTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
+        $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
         // TODO: remove after the usage refactoring.
         $this->anrScaleCommentService = $anrScaleCommentService;
     }
@@ -1825,139 +1831,166 @@ class InstanceImportService
         MonarcObject $monarcObject,
         bool $includeEval
     ): void {
-        if (!empty($data['risksop'])) {
-            $operationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
-            $newOperationalRiskScalesData = [];
-            $areScalesLevelsOfLikelihoodDifferent = false;
-            $areImpactScaleTypesValuesDifferent = false;
-            if ($includeEval && !$this->isImportTypeAnr()) {
-                $newOperationalRiskScalesData = $this->getPreparedNewOperationalRiskScalesData($data);
-                $areScalesLevelsOfLikelihoodDifferent = $this->areScalesLevelsOfTypeDifferent(
-                    OperationalRiskScale::TYPE_LIKELIHOOD,
-                    $operationalRiskScalesData,
-                    $newOperationalRiskScalesData
-                );
-                $areImpactScaleTypesValuesDifferent = $this->areScaleTypeValuesDifferent(
-                    OperationalRiskScale::TYPE_IMPACT,
-                    $operationalRiskScalesData,
-                    $newOperationalRiskScalesData
+        if (empty($data['risksop'])) {
+            return;
+        }
+
+        $operationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
+        $newOperationalRiskScalesData = [];
+        $areScalesLevelsOfLikelihoodDifferent = false;
+        $areImpactScaleTypesValuesDifferent = false;
+        if ($includeEval && !$this->isImportTypeAnr()) {
+            $newOperationalRiskScalesData = $this->getPreparedNewOperationalRiskScalesData($data);
+            $areScalesLevelsOfLikelihoodDifferent = $this->areScalesLevelsOfTypeDifferent(
+                OperationalRiskScale::TYPE_LIKELIHOOD,
+                $operationalRiskScalesData,
+                $newOperationalRiskScalesData
+            );
+            $areImpactScaleTypesValuesDifferent = $this->areScaleTypeValuesDifferent(
+                OperationalRiskScale::TYPE_IMPACT,
+                $operationalRiskScalesData,
+                $newOperationalRiskScalesData
+            );
+        }
+
+        $rolfRiskIndex = 0;
+        foreach ($data['risksop'] as $operationalRiskData) {
+            $instanceRiskOp = (new InstanceRiskOp())
+                ->setAnr($anr)
+                ->setInstance($instance)
+                ->setObject($monarcObject)
+                ->setRiskCacheLabels([
+                    'riskCacheLabel1' => $operationalRiskData['riskCacheLabel1'],
+                    'riskCacheLabel2' => $operationalRiskData['riskCacheLabel2'],
+                    'riskCacheLabel3' => $operationalRiskData['riskCacheLabel3'],
+                    'riskCacheLabel4' => $operationalRiskData['riskCacheLabel4'],
+                ])
+                ->setRiskCacheDescriptions([
+                    'riskCacheDescription1' => $operationalRiskData['riskCacheDescription1'],
+                    'riskCacheDescription2' => $operationalRiskData['riskCacheDescription2'],
+                    'riskCacheDescription3' => $operationalRiskData['riskCacheDescription3'],
+                    'riskCacheDescription4' => $operationalRiskData['riskCacheDescription4'],
+                ])
+                ->setBrutProb($operationalRiskData['brutProb'])
+                ->setNetProb($operationalRiskData['netProb'])
+                ->setTargetedProb($operationalRiskData['targetedProb'])
+                ->setCacheBrutRisk($operationalRiskData['cacheBrutRisk'])
+                ->setCacheNetRisk($operationalRiskData['cacheNetRisk'])
+                ->setCacheTargetedRisk($operationalRiskData['cacheTargetedRisk'])
+                ->setKindOfMeasure($operationalRiskData['kindOfMeasure'])
+                ->setComment($operationalRiskData['comment'])
+                ->setMitigation($operationalRiskData['mitigation'])
+                ->setSpecific($operationalRiskData['specific'])
+                ->setContext($operationalRiskData['context'] ?? '')
+                ->setCreator($this->connectedUser->getEmail());
+
+            if (!empty($operationalRiskData['riskOwner'])) {
+                $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner($anr, $operationalRiskData['riskOwner']);
+                $instanceRiskOp->setInstanceRiskOwner($instanceRiskOwner);
+            }
+
+            if ($areScalesLevelsOfLikelihoodDifferent) {
+                $this->adjustOperationalRisksProbabilityScales(
+                    $instanceRiskOp,
+                    $newOperationalRiskScalesData[OperationalRiskScale::TYPE_LIKELIHOOD],
+                    $operationalRiskScalesData[OperationalRiskScale::TYPE_LIKELIHOOD]
                 );
             }
 
-            $rolfRiskIndex = 0;
-            foreach ($data['risksop'] as $operationalRiskData) {
-                $instanceRiskOp = (new InstanceRiskOp())
-                    ->setAnr($anr)
-                    ->setInstance($instance)
-                    ->setObject($monarcObject)
-                    ->setRiskCacheLabels([
-                        'riskCacheLabel1' => $operationalRiskData['riskCacheLabel1'],
-                        'riskCacheLabel2' => $operationalRiskData['riskCacheLabel2'],
-                        'riskCacheLabel3' => $operationalRiskData['riskCacheLabel3'],
-                        'riskCacheLabel4' => $operationalRiskData['riskCacheLabel4'],
-                    ])
-                    ->setRiskCacheDescriptions([
-                        'riskCacheDescription1' => $operationalRiskData['riskCacheDescription1'],
-                        'riskCacheDescription2' => $operationalRiskData['riskCacheDescription2'],
-                        'riskCacheDescription3' => $operationalRiskData['riskCacheDescription3'],
-                        'riskCacheDescription4' => $operationalRiskData['riskCacheDescription4'],
-                    ])
-                    ->setBrutProb($operationalRiskData['brutProb'])
-                    ->setNetProb($operationalRiskData['netProb'])
-                    ->setTargetedProb($operationalRiskData['targetedProb'])
-                    ->setCacheBrutRisk($operationalRiskData['cacheBrutRisk'])
-                    ->setCacheNetRisk($operationalRiskData['cacheNetRisk'])
-                    ->setCacheTargetedRisk($operationalRiskData['cacheTargetedRisk'])
-                    ->setKindOfMeasure($operationalRiskData['kindOfMeasure'])
-                    ->setComment($operationalRiskData['comment'])
-                    ->setMitigation($operationalRiskData['mitigation'])
-                    ->setSpecific($operationalRiskData['specific'])
-                    ->setCreator($this->connectedUser->getEmail());
-
-                if ($areScalesLevelsOfLikelihoodDifferent) {
-                    $this->adjustOperationalRisksProbabilityScales(
-                        $instanceRiskOp,
-                        $newOperationalRiskScalesData[OperationalRiskScale::TYPE_LIKELIHOOD],
-                        $operationalRiskScalesData[OperationalRiskScale::TYPE_LIKELIHOOD]
-                    );
+            /* Magically corresponds to the imported order of rolfRisks in
+                ObjectImportService::processRolfTagAndRolfRisks */
+            if ($monarcObject->getRolfTag() !== null) {
+                $rolfRisk = $monarcObject->getRolfTag()->getRisks()[$rolfRiskIndex++] ?? null;
+                if ($rolfRisk !== null) {
+                    $instanceRiskOp->setRolfRisk($rolfRisk)->setRiskCacheCode($rolfRisk->getCode());
                 }
+            }
 
-                /* Magically corresponds to the imported order of rolfRisks in
-                    ObjectImportService::processRolfTagAndRolfRisks */
-                if ($monarcObject->getRolfTag() !== null) {
-                    $rolfRisk = $monarcObject->getRolfTag()->getRisks()[$rolfRiskIndex++] ?? null;
-                    if ($rolfRisk !== null) {
-                        $instanceRiskOp->setRolfRisk($rolfRisk)->setRiskCacheCode($rolfRisk->getCode());
-                    }
-                }
+            if (isset($operationalRiskData['scalesValues'])) {
+                /* The format is since v2.10.5 */
+                $impactScale = $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT];
+                foreach ($impactScale->getOperationalRiskScaleTypes() as $index => $scaleType) {
+                    $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
+                        ->setAnr($anr)
+                        ->setOperationalRiskScaleType($scaleType)
+                        ->setOperationalInstanceRisk($instanceRiskOp)
+                        ->setCreator($this->connectedUser->getEmail());
 
-                if (isset($operationalRiskData['scalesValues'])) {
-                    /* The format is since v2.10.5 */
-                    $impactScale = $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT];
-                    foreach ($impactScale->getOperationalRiskScaleTypes() as $index => $scaleType) {
-                        $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
-                            ->setAnr($anr)
-                            ->setOperationalRiskScaleType($scaleType)
-                            ->setOperationalInstanceRisk($instanceRiskOp)
-                            ->setCreator($this->connectedUser->getEmail());
-
-                        if ($includeEval) {
-                            if (isset($operationalRiskData['scalesValues'][$index])) {
-                                $scalesValueData = $operationalRiskData['scalesValues'][$index];
-                                if ($areImpactScaleTypesValuesDifferent) {
-                                    /* We convert from the importing new scales to the current anr scales. */
-                                    $this->adjustOperationalInstanceRisksScales(
-                                        $operationalInstanceRiskScale,
-                                        $newOperationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT],
-                                        $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT]
-                                    );
-                                } else {
-                                    $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
-                                    $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
-                                    $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetValue']);
-                                }
+                    if ($includeEval) {
+                        if (isset($operationalRiskData['scalesValues'][$index])) {
+                            $scalesValueData = $operationalRiskData['scalesValues'][$index];
+                            if ($areImpactScaleTypesValuesDifferent) {
+                                /* We convert from the importing new scales to the current anr scales. */
+                                $this->adjustOperationalInstanceRisksScales(
+                                    $operationalInstanceRiskScale,
+                                    $newOperationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT],
+                                    $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT]
+                                );
+                            } else {
+                                $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
+                                $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
+                                $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetValue']);
                             }
                         }
-
-                        $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
                     }
-                } else {
-                    /* The format is before v2.10.5 */
-                    // TODO: ...
+
+                    $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
                 }
-
-                if ($includeEval) {
-                    /* recalculate the cached risk values */
-                    $this->anrInstanceRiskOpService->updateRiskCacheValues($instanceRiskOp, false);
-                } else {
-                    $this->instanceRiskOpTable->saveEntity($instanceRiskOp, false);
-                }
-
-                /* Process recommendations related to the operational risk. */
-                if ($includeEval && !empty($data['recosop'][$operationalRiskData['id']])) {
-                    foreach ($data['recosop'][$operationalRiskData['id']] as $recommendationData) {
-                        $recommendation = $this->processRecommendationDataLinkedToRisk(
-                            $anr,
-                            $recommendationData,
-                            $operationalRiskData['kindOfMeasure'] !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
-                        );
-
-                        $recommendationRisk = (new RecommandationRisk())
-                            ->setInstance($instance)
-                            ->setInstanceRiskOp($instanceRiskOp)
-                            ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
-                            ->setCommentAfter($recommendationData['commentAfter'] ?? '')
-                            ->setRecommandation($recommendation);
-
-                        // TODO: remove the trick when #240 is done.
-                        $this->recommendationRiskTable->saveEntity($recommendationRisk);
-                        $this->recommendationRiskTable->saveEntity($recommendationRisk->setAnr($anr), false);
-                    }
-                }
-
-                $this->recommendationRiskTable->getDb()->flush();
+            } else {
+                /* The format is before v2.10.5 */
+                // TODO: ...
             }
+
+            if ($includeEval) {
+                /* recalculate the cached risk values */
+                $this->anrInstanceRiskOpService->updateRiskCacheValues($instanceRiskOp, false);
+            } else {
+                $this->instanceRiskOpTable->saveEntity($instanceRiskOp, false);
+            }
+
+            /* Process recommendations related to the operational risk. */
+            if ($includeEval && !empty($data['recosop'][$operationalRiskData['id']])) {
+                foreach ($data['recosop'][$operationalRiskData['id']] as $recommendationData) {
+                    $recommendation = $this->processRecommendationDataLinkedToRisk(
+                        $anr,
+                        $recommendationData,
+                        $operationalRiskData['kindOfMeasure'] !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
+                    );
+
+                    $recommendationRisk = (new RecommandationRisk())
+                        ->setInstance($instance)
+                        ->setInstanceRiskOp($instanceRiskOp)
+                        ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
+                        ->setCommentAfter($recommendationData['commentAfter'] ?? '')
+                        ->setRecommandation($recommendation);
+
+                    // TODO: remove the trick when #240 is done.
+                    $this->recommendationRiskTable->saveEntity($recommendationRisk);
+                    $this->recommendationRiskTable->saveEntity($recommendationRisk->setAnr($anr), false);
+                }
+            }
+
+            $this->recommendationRiskTable->getDb()->flush();
         }
+    }
+
+    private function getOrCreateInstanceRiskOwner(Anr $anr, string $ownerName): InstanceRiskOwner
+    {
+        if (!isset($this->cachedData['instanceRiskOwners'][$operationalRiskData['riskOwner']])) {
+            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
+            if ($instanceRiskOwner === null) {
+                $instanceRiskOwner = (new InstanceRiskOwner())
+                    ->setAnr($anr)
+                    ->setName($ownerName)
+                    ->setCreator($this->connectedUser->getEmail());
+
+                $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
+            }
+
+            $this->cachedData['instanceRiskOwners'][$ownerName] = $instanceRiskOwner;
+        }
+
+        return $this->cachedData['instanceRiskOwners'][$ownerName];
     }
 
     /**
@@ -2094,8 +2127,9 @@ class InstanceImportService
         AssetSuperClass $asset,
         Threat $threat,
         Vulnerability $vulnerability
-    ): InstanceRiskSuperClass {
-        return (new InstanceRisk())
+    ): InstanceRisk {
+        /** @var InstanceRisk $instanceRisk */
+        $instanceRisk = (new InstanceRisk())
             ->setAnr($anr)
             ->setInstance($instance)
             ->setAsset($asset)
@@ -2114,7 +2148,15 @@ class InstanceImportService
             ->setRiskConfidentiality((int)$instanceRiskData['riskC'])
             ->setRiskIntegrity((int)$instanceRiskData['riskI'])
             ->setRiskAvailability((int)$instanceRiskData['riskD'])
+            ->setContext($instanceRiskData['context'] ?? '')
             ->setCreator($this->connectedUser->getEmail());
+
+        if (!empty($instanceRiskData['riskOwner'])) {
+            $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner($anr, $instanceRiskData['riskOwner']);
+            $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+        }
+
+        return $instanceRisk;
     }
 
     /**
