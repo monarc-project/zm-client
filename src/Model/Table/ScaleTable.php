@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;

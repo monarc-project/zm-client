@@ -20,6 +20,7 @@ use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Model\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\Core\Model\Table\ModelTable;
 use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
@@ -67,6 +68,7 @@ use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
@@ -984,7 +986,12 @@ class AnrService extends AbstractService
                 }
             }
 
-            $this->createScalesFromSourceAnr($newAnr, $anr, $source, $connectedUser);
+            $scalesImpactTypesOldIdsToNewObjectsMap = $this->createScalesFromSourceAnr(
+                $newAnr,
+                $anr,
+                $source,
+                $connectedUser
+            );
 
             $this->createOperationalRiskScalesFromSourceAnr($newAnr, $anr, $source, $connectedUser);
 
@@ -1040,17 +1047,20 @@ class AnrService extends AbstractService
             }
 
             //duplicate instances consequences
+            /** @var InstanceConsequenceTable|CoreInstanceConsequenceTable $instanceConsequenceTable */
             $instanceConsequenceTable = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('instanceConsequenceTable')
                 : $this->get('instanceConsequenceCliTable');
-            $instancesConsequences = $instanceConsequenceTable->getEntityByFields(['anr' => $anr->getId()]);
+            $instancesConsequences = $instanceConsequenceTable->findByAnr($anr);
             foreach ($instancesConsequences as $instanceConsequence) {
                 $newInstanceConsequence = new InstanceConsequence($instanceConsequence);
                 $newInstanceConsequence->set('id', null);
                 $newInstanceConsequence->setAnr($newAnr);
                 $newInstanceConsequence->setInstance($instancesNewIds[$instanceConsequence->getInstance()->getId()]);
                 $newInstanceConsequence->setObject($objectsNewIds[$instanceConsequence->getObject()->getUuid()]);
-                $newInstanceConsequence->setScaleImpactType($scalesImpactTypesNewIds[$instanceConsequence->scaleImpactType->id]);
+                $newInstanceConsequence->setScaleImpactType(
+                    $scalesImpactTypesOldIdsToNewObjectsMap[$instanceConsequence->getScaleImpactType()->getId()]
+                );
                 $this->get('instanceConsequenceCliTable')->save($newInstanceConsequence, false);
             }
 
@@ -1570,7 +1580,8 @@ class AnrService extends AbstractService
         AnrSuperClass $sourceAnr,
         string $sourceName,
         UserSuperClass $connectedUser
-    ): void {
+    ): array {
+        $scalesImpactTypesOldIdsToNewObjectsMap = [];
         /** @var ScaleTable $scaleCliTable */
         $scaleCliTable = $this->get('scaleCliTable');
         /** @var ScaleTable|CoreScaleTable $scaleTable */
@@ -1584,6 +1595,7 @@ class AnrService extends AbstractService
         foreach ($scales as $scale) {
             $newScale = (new Scale())
                 ->setAnr($newAnr)
+                ->setType($scale->getType())
                 ->setMin($scale->getMin())
                 ->setMax($scale->getMax())
                 ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
@@ -1608,6 +1620,8 @@ class AnrService extends AbstractService
 
                 $scaleImpactTypeCliTable->saveEntity($newScaleImpactType, false);
 
+                $scalesImpactTypesOldIdsToNewObjectsMap[$scaleImpactType->getId()] = $newScaleImpactType;
+
                 foreach ($scaleImpactType->getScaleComments() as $scaleComment) {
                     $this->createScaleCommentsFromSource(
                         $newAnr,
@@ -1627,6 +1641,8 @@ class AnrService extends AbstractService
                 $this->createScaleCommentsFromSource($newAnr, $newScale, null, $scaleComment, $connectedUser);
             }
         }
+
+        return $scalesImpactTypesOldIdsToNewObjectsMap;
     }
 
     private function createScaleCommentsFromSource(
