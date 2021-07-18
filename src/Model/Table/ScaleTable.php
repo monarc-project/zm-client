@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
@@ -27,9 +28,9 @@ class ScaleTable extends CoreScaleTable
         $this->entityClass = Scale::class;
     }
 
-    public function findByAnrAndType(AnrSuperClass $anr, int $type): ?Scale
+    public function findByAnrAndType(AnrSuperClass $anr, int $type): Scale
     {
-        return $this->getRepository()
+        $scale = $this->getRepository()
             ->createQueryBuilder('s')
             ->where('s.anr = :anr')
             ->andWhere('s.type = :type')
@@ -38,5 +39,13 @@ class ScaleTable extends CoreScaleTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+
+        if ($scale === null) {
+            throw new EntityNotFoundException(
+                sprintf('Scale of type "%d" doesn\'t exist in anr ID: "%d"', $type, $anr->getId())
+            );
+        }
+
+        return $scale;
     }
 }
