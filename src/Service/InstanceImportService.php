@@ -1473,11 +1473,11 @@ class InstanceImportService
                     $this->isImportTypeAnr()
                         ? $instanceRiskData['threatRate']
                         : $this->approximate(
-                                $instanceRiskData['threatRate'],
-                                $scalesData['external'][Scale::TYPE_THREAT]['min'],
-                                $scalesData['external'][Scale::TYPE_THREAT]['max'],
-                                $scalesData['current'][Scale::TYPE_THREAT]['min'],
-                                $scalesData['current'][Scale::TYPE_THREAT]['max']
+                            $instanceRiskData['threatRate'],
+                            $scalesData['external'][Scale::TYPE_THREAT]['min'],
+                            $scalesData['external'][Scale::TYPE_THREAT]['max'],
+                            $scalesData['current'][Scale::TYPE_THREAT]['min'],
+                            $scalesData['current'][Scale::TYPE_THREAT]['max']
                         )
                 );
                 $instanceRisk->setVulnerabilityRate(
@@ -1844,10 +1844,10 @@ class InstanceImportService
             if (isset($operationalRiskData['scalesValues'])) {
                 /* The format is since v2.10.5 */
                 $impactScale = $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT];
-                foreach ($impactScale->getOperationalRiskScaleTypes() as $index => $scaleType) {
+                foreach ($impactScale['operationalRiskScaleTypes'] as $index => $scaleType) {
                     $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
                         ->setAnr($anr)
-                        ->setOperationalRiskScaleType($scaleType)
+                        ->setOperationalRiskScaleType($scaleType['object'])
                         ->setOperationalInstanceRisk($instanceRiskOp)
                         ->setCreator($this->connectedUser->getEmail());
 
@@ -2213,8 +2213,8 @@ class InstanceImportService
                 $toOperationalRiskScalesData['max']
             );
 
-            $approximatedValueToNewScales =
-                $toOperationalRiskScalesData['commentsIndexToValueMap'][$approximatedIndex] ?? $scaleImpactValue;
+            $approximatedValueToNewScales = $toOperationalRiskScalesData['commentsIndexToValueMap']
+                [$instanceRiskScale->getOperationalRiskScaleType()->getId()][$approximatedIndex] ?? $scaleImpactValue;
             $instanceRiskScale->{'set' . $impactScaleName}($approximatedValueToNewScales);
 
             $this->operationalInstanceRiskScaleTable->save($instanceRiskScale, false);
@@ -2230,11 +2230,10 @@ class InstanceImportService
                 $commentsIndexToValueMap = [];
                 /* Build the map of the comments index <=> values relation. */
                 foreach ($operationalRisksScale->getOperationalRiskScaleTypes() as $typeIndex => $scaleType) {
-                    $scaleTypesData[$typeIndex] = [
-                        'labelTranslationKey' => $scaleType->getLabelTranslationKey(),
-                    ];
+                    /* There is only a place in the result, where the operational risk scale types object is used. */
+                    $scaleTypesData[$typeIndex]['object'] = $scaleType;
                     foreach ($scaleType->getOperationalRiskScaleComments() as $scaleTypeComment) {
-                        $commentsIndexToValueMap[$typeIndex][$scaleTypeComment->getScaleIndex()] =
+                        $commentsIndexToValueMap[$scaleType->getId()][$scaleTypeComment->getScaleIndex()] =
                             $scaleTypeComment->getScaleValue();
                         $scaleTypesData[$typeIndex]['operationalRiskScaleComments'][] = [
                             'scaleIndex' => $scaleTypeComment->getScaleIndex(),
@@ -2288,8 +2287,8 @@ class InstanceImportService
                         $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$typeIndex] = $scaleTypeData;
 
                         foreach ($scaleTypeData['operationalRiskScaleTypeComments'] as $scaleTypeComment) {
-                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$typeIndex][
-                                $scaleTypeComment['scaleIndex']] = $scaleTypeComment['scaleValue'];
+                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleTypeData['id']]
+                                [$scaleTypeComment['scaleIndex']] = $scaleTypeComment['scaleValue'];
 
                             $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$typeIndex]
                                 ['operationalRiskScaleComments'] = $scaleTypeComment;
