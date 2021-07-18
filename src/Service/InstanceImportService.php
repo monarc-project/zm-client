@@ -2288,6 +2288,7 @@ class InstanceImportService
                 foreach ($data['operationalRiskScales'] as $scaleType => $operationalRiskScaleData) {
                     $scalesDataResult[$scaleType]['min'] = $operationalRiskScaleData['min'];
                     $scalesDataResult[$scaleType]['max'] = $operationalRiskScaleData['max'];
+                    $scalesDataResult[$scaleType]['operationalRiskScaleTypes'] = [];
 
                     /* Build the map of the comments index <=> values relation. */
                     foreach ($operationalRiskScaleData['operationalRiskScaleTypes'] as $typeIndex => $scaleTypeData) {
@@ -2302,7 +2303,8 @@ class InstanceImportService
                         }
                     }
 
-                    $scalesDataResult[$scaleType] = $operationalRiskScaleData['operationalRiskScaleComments'];
+                    $scalesDataResult[$scaleType]['operationalRiskScaleComments'] =
+                        $operationalRiskScaleData['operationalRiskScaleComments'];
                 }
             } else {
                 /* Convert comments and types from informational risks to operational.  */
