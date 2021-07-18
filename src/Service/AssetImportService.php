@@ -280,7 +280,7 @@ class AssetImportService
                                 ->setAnr($anr)
                                 ->setUuid($data['measures'][$measureUuid]['referential']['uuid'])
                                 ->{'setLabel' . $languageIndex}($data['measures'][$measureUuid]['referential'][$labelName]);
-                            $this->referentialTable->saveEntity($referential, false);
+                            $this->referentialTable->saveEntity($referential);
                         }
 
                         // For backward compatibility issue.

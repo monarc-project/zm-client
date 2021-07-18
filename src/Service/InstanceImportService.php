@@ -1928,23 +1928,16 @@ class InstanceImportService
         return $this->cachedData['instanceRiskOwners'][$ownerName];
     }
 
-    /**
-     * @param int $type
-     * @param OperationalRiskScale[] $operationalRiskScales
-     * @param array $externalOperationalRiskScalesData
-     *
-     * @return bool
-     */
     private function areScalesLevelsOfTypeDifferent(
         int $type,
         array $operationalRiskScales,
         array $externalOperationalRiskScalesData
     ): bool {
-        foreach ($operationalRiskScales as $operationalRiskScale) {
-            if ($operationalRiskScale->getType() === $type) {
-                $newScaleData = $externalOperationalRiskScalesData[$type];
-                if ($operationalRiskScale->getMin() !== $newScaleData['min']
-                    || $operationalRiskScale->getMax() !== $newScaleData['max']) {
+        foreach ($operationalRiskScales as $scaleType => $operationalRiskScale) {
+            if ($scaleType === $type) {
+                $externalScaleDataOfType = $externalOperationalRiskScalesData[$type];
+                if ($operationalRiskScale['min'] !== $externalScaleDataOfType['min']
+                    || $operationalRiskScale['max'] !== $externalScaleDataOfType['max']) {
                     return true;
                 }
             }
@@ -1956,25 +1949,18 @@ class InstanceImportService
     /**
      * Checks if any of the scale comments values related to the scale types have different scaleValue
      * then in the new operational scale data.
-     *
-     * @param int $type
-     * @param OperationalRiskScale[] $operationalRiskScales
-     * @param array $externalOperationalRiskScalesData
-     *
-     * @return bool
      */
     public function areScaleTypeValuesDifferent(
         int $type,
         array $operationalRiskScales,
-        array $externalOperationalRiskScalesData
+        array $extOperationalRiskScalesData
     ): bool {
-        foreach ($operationalRiskScales[$type]->getOperationalRiskScaleTypes() as $typeIndex => $scaleType) {
-            foreach ($scaleType->getOperationalRiskScaleComments() as $scaleTypeComment) {
-                if (isset($externalOperationalRiskScalesData[$type]['commentsIndexToValueMap'][$typeIndex])) {
-                    $commentIndexToValMap = $externalOperationalRiskScalesData[$type]['commentsIndexToValueMap'][$typeIndex];
-                    $commentIndex = $scaleTypeComment->getScaleIndex();
-                    if (!isset($commentIndexToValMap[$commentIndex])
-                        || $scaleTypeComment->getScaleValue() !== $commentIndexToValMap[$commentIndex]
+        foreach ($operationalRiskScales[$type]['commentsIndexToValueMap'] as $typeIndex => $commentsIndValMao) {
+            if (isset($extOperationalRiskScalesData[$type]['commentsIndexToValueMap'][$typeIndex])) {
+                $extCommentIndexToValMap = $extOperationalRiskScalesData[$type]['commentsIndexToValueMap'][$typeIndex];
+                foreach ($commentsIndValMao as $commentIndex => $commentValue) {
+                    if (!isset($extCommentIndexToValMap[$commentIndex])
+                        || $commentValue !== $extCommentIndexToValMap[$commentIndex]
                     ) {
                         return true;
                     }
@@ -2243,19 +2229,26 @@ class InstanceImportService
                 $scaleTypesData = [];
                 $commentsIndexToValueMap = [];
                 /* Build the map of the comments index <=> values relation. */
-                foreach ($operationalRisksScale->getOperationalRiskScaleTypes() as $scaleType) {
-                    $scaleTypesData[$scaleType->getId()] = $scaleType;
+                foreach ($operationalRisksScale->getOperationalRiskScaleTypes() as $typeIndex => $scaleType) {
+                    $scaleTypesData[$typeIndex] = [
+                        'labelTranslationKey' => $scaleType->getLabelTranslationKey(),
+                    ];
                     foreach ($scaleType->getOperationalRiskScaleComments() as $scaleTypeComment) {
-                        $commentsIndexToValueMap[$scaleTypeComment['scaleIndex']] = $scaleTypeComment['scaleValue'];
-                        $scaleTypesData[$scaleType->getId()]['operationalRiskScaleComments'] = $scaleTypeComment;
+                        $commentsIndexToValueMap[$typeIndex][$scaleTypeComment->getScaleIndex()] =
+                            $scaleTypeComment->getScaleValue();
+                        $scaleTypesData[$typeIndex]['operationalRiskScaleComments'][] = [
+                            'scaleIndex' => $scaleTypeComment->getScaleIndex(),
+                            'scaleValue' => $scaleTypeComment->getScaleValue(),
+                        ];
                     }
                 }
 
                 $this->cachedData['currentOperationalRiskScalesData'][$operationalRisksScale->getType()] = [
                     'min' => $operationalRisksScale->getMin(),
                     'max' => $operationalRisksScale->getMax(),
-                    'scaleTypes' => $scaleTypesData,
                     'commentsIndexToValueMap' => $commentsIndexToValueMap,
+                    'operationalRiskScaleTypes' => $scaleTypesData,
+                    'operationalRiskScaleComments' => $operationalRisksScale->getOperationalRiskScaleComments(),
                 ];
             }
         }

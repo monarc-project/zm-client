@@ -344,7 +344,7 @@ class ObjectImportService
                                     ->{'setLabel' . $anr->getLanguage()}(
                                         $newMeasure['category']['label' . $anr->getLanguage()]
                                     );
-                                $this->soaCategoryTable->saveEntity($category);
+                                $this->soaCategoryTable->saveEntity($category, false);
                             } else {
                                 $category = current($category);
                             }
