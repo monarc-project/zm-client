@@ -1775,7 +1775,7 @@ class InstanceImportService
         $areScalesLevelsOfLikelihoodDifferent = false;
         $areImpactScaleTypesValuesDifferent = false;
         if ($includeEval && !$this->isImportTypeAnr()) {
-            $externalOperationalRiskScalesData = $this->getExternalOperationalRiskScalesData($data);
+            $externalOperationalRiskScalesData = $this->getExternalOperationalRiskScalesData($anr, $data);
             $areScalesLevelsOfLikelihoodDifferent = $this->areScalesLevelsOfTypeDifferent(
                 OperationalRiskScale::TYPE_LIKELIHOOD,
                 $operationalRiskScalesData,
@@ -2150,7 +2150,7 @@ class InstanceImportService
         $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnr($anr);
         if (!empty($operationalInstanceRisks)) {
             $currentOperationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
-            $externalOperationalRiskScalesData = $this->getExternalOperationalRiskScalesData($data);
+            $externalOperationalRiskScalesData = $this->getExternalOperationalRiskScalesData($anr, $data);
 
             foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
                 $this->adjustOperationalRisksProbabilityScales(
@@ -2259,7 +2259,7 @@ class InstanceImportService
      * Prepare and cache the new scales for the future use.
      * The format can be different, depends on the version (before v2.10.5 and after).
      */
-    private function getExternalOperationalRiskScalesData(array $data): array
+    private function getExternalOperationalRiskScalesData(AnrSuperClass $anr, array $data): array
     {
         if (empty($this->cachedData['externalOperationalRiskScalesData'])) {
             /* Populate with informational risks scales in case if there is an import of file before v2.10.5. */
@@ -2268,11 +2268,15 @@ class InstanceImportService
                     'min' => 0,
                     'max' => $data['scales'][Scale::TYPE_IMPACT]['max'] - $data['scales'][Scale::TYPE_IMPACT]['min'],
                     'commentsIndexToValueMap' => [],
+                    'operationalRiskScaleTypes' => [],
+                    'operationalRiskScaleComments' => [],
                 ],
                 OperationalRiskScale::TYPE_LIKELIHOOD => [
                     'min' => $data['scales'][Scale::TYPE_THREAT]['min'],
                     'max' => $data['scales'][Scale::TYPE_THREAT]['max'],
                     'commentsIndexToValueMap' => [],
+                    'operationalRiskScaleTypes' => [],
+                    'operationalRiskScaleComments' => [],
                 ],
             ];
             if (!empty($data['operationalRiskScales'])) {
@@ -2280,7 +2284,6 @@ class InstanceImportService
                 foreach ($data['operationalRiskScales'] as $scaleType => $operationalRiskScaleData) {
                     $scalesDataResult[$scaleType]['min'] = $operationalRiskScaleData['min'];
                     $scalesDataResult[$scaleType]['max'] = $operationalRiskScaleData['max'];
-                    $scalesDataResult[$scaleType]['operationalRiskScaleTypes'] = [];
 
                     /* Build the map of the comments index <=> values relation. */
                     foreach ($operationalRiskScaleData['operationalRiskScaleTypes'] as $typeIndex => $scaleTypeData) {
@@ -2299,12 +2302,66 @@ class InstanceImportService
                         $operationalRiskScaleData['operationalRiskScaleComments'];
                 }
             } else {
-                /* Convert comments and types from informational risks to operational.  */
-                // TODO: ......
-                // TODO: don't forget to perform the index adjustment for the impact scale when min > 0.
-                $scalesDataResult['operationalRiskScaleTypes'] = [];
-                $scalesDataResult['operationalRiskScaleComments'] = [];
-                $scalesDataResult['commentsIndexToValueMap'] = [];
+                /* Convert comments and types from informational risks to operational (new format). */
+                $anrLanguageCode = $this->getAnrLanguageCode($anr);
+                $scaleMin = $data['scales'][Scale::TYPE_IMPACT]['min'];
+                foreach ($this->scaleImpactTypeTable->findByAnrOrderedByPosition($anr) as $scaleImpactType) {
+                    if ($scaleImpactType->isSys()
+                        && \in_array($scaleImpactType->getType(), ScaleImpactType::getScaleImpactTypesRolfp(), true)
+                    ) {
+                        $scalesDataResult[Scale::TYPE_IMPACT]['operationalRiskScaleTypes'][$scaleImpactType->getId()] =
+                            [
+                                'id' => $scaleImpactType->getId(),
+                                'isHidden' => $scaleImpactType->isHidden(),
+                                'labelTranslationKey' => '',
+                                'translation' => [
+                                    'key' => '',
+                                    'lang' => $anrLanguageCode,
+                                    'value' => $scaleImpactType->getLabel($anr->getLanguage()),
+                                ],
+                            ];
+                    }
+                }
+                foreach ($data['scalesComments'] as $scaleComment) {
+                    $scaleType = $scaleComment['scale']['type'];
+                    if (!\in_array($scaleType, [Scale::TYPE_IMPACT, Scale::TYPE_THREAT], true)) {
+                        continue;
+                    }
+
+                    if ($scaleType === Scale::TYPE_THREAT) {
+                        $scalesDataResult[$scaleType]['operationalRiskScaleComments'][] = [
+                            'id' => $scaleComment['id'],
+                            'scaleIndex' => $scaleComment['val'],
+                            'scaleValue' => $scaleComment['val'],
+                            'commentTranslationKey' => '',
+                            'translation' => [
+                                'key' => '',
+                                'lang' => $anrLanguageCode,
+                                'value' => $scaleComment['comment' . $anr->getLanguage()] ?? '',
+                            ],
+                        ];
+                    } elseif ($scaleType === Scale::TYPE_IMPACT && $scaleComment['val'] < $scaleMin) {
+                        $scaleIndex = $scaleComment['val'] - $scaleMin;
+                        $scaleTypeId = $scaleComment['val']['ScaleImpactType'];
+                        if (isset($scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypeId])) {
+                            $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypeId]
+                            ['operationalRiskScaleComments'][] = [
+                                'id' => $scaleComment['id'],
+                                'scaleIndex' => $scaleIndex,
+                                'scaleValue' => $scaleComment['val'],
+                                'commentTranslationKey' => '',
+                                'translation' => [
+                                    'key' => '',
+                                    'lang' => $anrLanguageCode,
+                                    'value' => $scaleComment['comment' . $anr->getLanguage()] ?? '',
+                                ],
+                            ];
+
+                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleTypeId][$scaleIndex]
+                                = $scaleComment['val'];
+                        }
+                    }
+                }
             }
 
             $this->cachedData['externalOperationalRiskScalesData'] = $scalesDataResult;
@@ -2340,7 +2397,7 @@ class InstanceImportService
             [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
             $anrLanguageCode
         );
-        $externalOperationalScalesData = $this->getExternalOperationalRiskScalesData($data);
+        $externalOperationalScalesData = $this->getExternalOperationalRiskScalesData($anr, $data);
 
         foreach ($operationalRiskScales as $operationalRiskScale) {
             $scaleData = $externalOperationalScalesData[$operationalRiskScale->getType()];
