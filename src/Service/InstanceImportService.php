@@ -45,6 +45,7 @@ use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\Scale;
+use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
@@ -169,8 +170,6 @@ class InstanceImportService
 
     private OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable;
 
-    private AnrScaleCommentService $anrScaleCommentService;
-
     private OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
 
     private InstanceRiskOwnerTable $instanceRiskOwnerTable;
@@ -215,8 +214,7 @@ class InstanceImportService
         InstanceRiskOwnerTable $instanceRiskOwnerTable,
         ConnectedUserService $connectedUserService,
         TranslationTable $translationTable,
-        ConfigService $configService,
-        AnrScaleCommentService $anrScaleCommentService
+        ConfigService $configService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
         $this->anrInstanceService = $anrInstanceService;
@@ -256,8 +254,6 @@ class InstanceImportService
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
-        // TODO: remove after the usage refactoring.
-        $this->anrScaleCommentService = $anrScaleCommentService;
     }
 
     /**
@@ -892,14 +888,13 @@ class InstanceImportService
             /* Adjust the values of operational risks scales. */
             $this->adjustOperationalRisksScaleValuesBasedOnNewScales($anr, $data);
 
-            $this->updateScales($anr, $data);
+            $this->updateScalesAndComments($anr, $data);
 
             $this->updateOperationalRisksScalesAndRelatedInstances($anr, $data);
         }
 
         $first = true;
         $instanceIds = [];
-        $nbScaleImpactTypes = \count($this->scaleImpactTypeTable->findByAnr($anr));
         usort($data['instances'], function ($a, $b) {
             return $a['instance']['position'] <=> $b['instance']['position'];
         });
@@ -914,53 +909,6 @@ class InstanceImportService
             $instanceId = $this->importInstanceFromArray($inst, $anr, $parentInstance, $modeImport);
             if ($instanceId !== false) {
                 $instanceIds[] = $instanceId;
-            }
-        }
-
-        // TODO: move this to updateScales method and refactor.
-        if (!empty($data['scalesComments'])) {
-            $pos = 1;
-            $siId = null;
-            $scIds = null;
-            $sId = null;
-
-            foreach ($data['scalesComments'] as $scale) {
-                $scIds[$pos] = $scale['id'];
-                $pos++;
-            }
-            // TODO: findBy...
-            $scaleComment = $this->scaleCommentTable->getEntityByFields(
-                ['anr' => $anr->getId()]
-            );
-            foreach ($scaleComment as $scale) {
-                if ($scale->scaleImpactType === null || $scale->scaleImpactType->isSys === 1) {
-                    $this->scaleCommentTable->delete($scale->id);
-                }
-            }
-            $nbComment = count($data['scalesComments']);
-
-            for ($pos = 1; $pos <= $nbComment; $pos++) {
-                $scale = $this->scaleTable->findByAnrAndType(
-                    $anr,
-                    $data['scalesComments'][$scIds[$pos]]['scale']['type']
-                );
-                $OrigPosition = $data['scalesComments'][$scIds[$pos]]['scaleImpactType']['position'] ?? 0;
-                $position = ($OrigPosition > 8) ? $OrigPosition + ($nbScaleImpactTypes - 8) : $OrigPosition;
-
-                // TODO: findBy...
-                $scaleImpactType = $this->scaleImpactTypeTable->getEntityByFields([
-                    'anr' => $anr->getId(),
-                    'position' => $position
-                ]);
-                foreach ($scaleImpactType as $si) {
-                    $siId = $si->getId();
-                }
-                $toExchange = $data['scalesComments'][$scIds[$pos]];
-                $toExchange['anr'] = $anr->getId();
-                $toExchange['scale'] = $scale->getId();
-                $toExchange['scaleImpactType'] = $siId;
-                // TODO: create it here.
-                $this->anrScaleCommentService->create($toExchange);
             }
         }
 
@@ -2396,8 +2344,9 @@ class InstanceImportService
         return $this->cachedData['externalOperationalRiskScalesData'];
     }
 
-    private function updateScales(AnrSuperClass $anr, array $data): void
+    private function updateScalesAndComments(AnrSuperClass $anr, array $data): void
     {
+        $scalesByType = [];
         $scales = $this->scaleTable->findByAnr($anr);
         foreach ([Scale::TYPE_IMPACT, Scale::TYPE_THREAT, Scale::TYPE_VULNERABILITY] as $type) {
             foreach ($scales as $scale) {
@@ -2405,9 +2354,50 @@ class InstanceImportService
                     $scale->setMin((int)$data['scales'][$type]['min']);
                     $scale->setMax((int)$data['scales'][$type]['max']);
 
+                    $scalesByType[$type] = $scale;
+
                     $this->scaleTable->saveEntity($scale, false);
                 }
             }
+        }
+
+        if (!empty($data['scalesComments'])) {
+            $scaleComments = $this->scaleCommentTable->findByAnr($anr);
+            foreach ($scaleComments as $scaleComment) {
+                if ($scaleComment->getScaleImpactType() === null
+                    || $scaleComment->getScaleImpactType()->isSys()
+                ) {
+                    $this->scaleCommentTable->deleteEntity($scaleComment, false);
+                }
+            }
+            $this->scaleCommentTable->getDb()->flush();
+
+            $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedByPosition($anr);
+            foreach ($data['scalesComments'] as $scalesCommentData) {
+                $scale = $scalesByType[$scalesCommentData['scale']['type']];
+                $scaleComment = (new ScaleComment())
+                    ->setAnr($anr)
+                    ->setScale($scale)
+                    ->setScaleIndex($scalesCommentData['scaleIndex'] ?? $scalesCommentData['val'])
+                    ->setScaleValue($scalesCommentData['scaleValue'] ?? $scalesCommentData['val'])
+                    ->setComments([
+                        'comment1' => $scalesCommentData['comment1'],
+                        'comment2' => $scalesCommentData['comment2'],
+                        'comment3' => $scalesCommentData['comment3'],
+                        'comment4' => $scalesCommentData['comment4'],
+                    ])
+                    ->setCreator($this->connectedUser->getEmail());
+
+                if (isset($scalesCommentData['scaleImpactType']['position'])) {
+                    $scaleImpactTypePosition = $scalesCommentData['scaleImpactType']['position'];
+                    if (isset($scaleImpactTypes[$scaleImpactTypePosition])) {
+                        $scaleComment->setScaleImpactType($scaleImpactTypes[$scaleImpactTypePosition]);
+                    }
+                }
+
+                $this->scaleCommentTable->saveEntity($scaleComment, false);
+            }
+            $this->scaleCommentTable->getDb()->flush();
         }
 
         /* Reset the cache */
