@@ -1821,7 +1821,7 @@ class InstanceImportService
                 ->setCacheNetRisk($operationalRiskData['cacheNetRisk'])
                 ->setCacheTargetedRisk($operationalRiskData['cacheTargetedRisk'])
                 ->setKindOfMeasure($operationalRiskData['kindOfMeasure'])
-                ->setComment($operationalRiskData['comment'])
+                ->setComment($operationalRiskData['comment'] ?? '')
                 ->setMitigation($operationalRiskData['mitigation'] ?? '')
                 ->setSpecific($operationalRiskData['specific'])
                 ->setContext($operationalRiskData['context'] ?? '')
