@@ -2310,7 +2310,7 @@ class InstanceImportService
                     foreach ($operationalRiskScaleData['operationalRiskScaleTypes'] as $typeIndex => $scaleTypeData) {
                         $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$typeIndex] = $scaleTypeData;
 
-                        foreach ($scaleTypeData['operationalRiskScaleTypeComments'] as $scaleTypeComment) {
+                        foreach ($scaleTypeData['operationalRiskScaleComments'] as $scaleTypeComment) {
                             $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleTypeData['id']]
                                 [$scaleTypeComment['scaleIndex']] = $scaleTypeComment['scaleValue'];
 
@@ -2326,21 +2326,20 @@ class InstanceImportService
                 /* Convert comments and types from informational risks to operational (new format). */
                 $anrLanguageCode = $this->getAnrLanguageCode($anr);
                 $scaleMin = $data['scales'][Scale::TYPE_IMPACT]['min'];
-                foreach ($this->scaleImpactTypeTable->findByAnrOrderedByPosition($anr) as $scaleImpactType) {
+                foreach ($this->scaleImpactTypeTable->findByAnrOrderedByPosition($anr) as $index => $scaleImpactType) {
                     if ($scaleImpactType->isSys()
                         && \in_array($scaleImpactType->getType(), ScaleImpactType::getScaleImpactTypesRolfp(), true)
                     ) {
-                        $scalesDataResult[Scale::TYPE_IMPACT]['operationalRiskScaleTypes'][$scaleImpactType->getId()] =
-                            [
-                                'id' => $scaleImpactType->getId(),
-                                'isHidden' => $scaleImpactType->isHidden(),
-                                'labelTranslationKey' => '',
-                                'translation' => [
-                                    'key' => '',
-                                    'lang' => $anrLanguageCode,
-                                    'value' => $scaleImpactType->getLabel($anr->getLanguage()),
-                                ],
-                            ];
+                        $scalesDataResult[Scale::TYPE_IMPACT]['operationalRiskScaleTypes'][$index] = [
+                            'id' => $scaleImpactType->getId(),
+                            'isHidden' => $scaleImpactType->isHidden(),
+                            'labelTranslationKey' => '',
+                            'translation' => [
+                                'key' => '',
+                                'lang' => $anrLanguageCode,
+                                'value' => $scaleImpactType->getLabel($anr->getLanguage()),
+                            ],
+                        ];
                     }
                 }
                 foreach ($data['scalesComments'] as $scaleComment) {
@@ -2361,11 +2360,11 @@ class InstanceImportService
                                 'value' => $scaleComment['comment' . $anr->getLanguage()] ?? '',
                             ],
                         ];
-                    } elseif ($scaleType === Scale::TYPE_IMPACT && $scaleComment['val'] < $scaleMin) {
+                    } elseif ($scaleType === Scale::TYPE_IMPACT && $scaleComment['val'] >= $scaleMin) {
                         $scaleIndex = $scaleComment['val'] - $scaleMin;
-                        $scaleTypeId = $scaleComment['val']['ScaleImpactType'];
-                        if (isset($scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypeId])) {
-                            $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypeId]
+                        $scaleTypePosition = $scaleComment['scaleImpactType']['position'];
+                        if (isset($scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypePosition])) {
+                            $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypePosition]
                             ['operationalRiskScaleComments'][] = [
                                 'id' => $scaleComment['id'],
                                 'scaleIndex' => $scaleIndex,
@@ -2378,7 +2377,7 @@ class InstanceImportService
                                 ],
                             ];
 
-                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleTypeId][$scaleIndex]
+                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleTypePosition][$scaleIndex]
                                 = $scaleComment['val'];
                         }
                     }
@@ -2457,7 +2456,7 @@ class InstanceImportService
                 $operationalRiskScaleType->setIsHidden($scaleTypeData['isHidden']);
                 $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
 
-                foreach ($scaleTypeData['operationalRiskScaleTypeComments'] as $scaleTypeCommentData) {
+                foreach ($scaleTypeData['operationalRiskScaleComments'] as $scaleTypeCommentData) {
                     $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
                         $scaleTypeCommentData,
                         $operationalRiskScaleType->getOperationalRiskScaleComments(),
