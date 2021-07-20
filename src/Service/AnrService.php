@@ -1736,7 +1736,7 @@ class AnrService extends AbstractService
                 }
             }
 
-            foreach ($newOperationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
+            foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $operationalRiskScaleComment) {
                 if ($operationalRiskScaleComment->getOperationalRiskScaleType() !== null) {
                     continue;
                 }
