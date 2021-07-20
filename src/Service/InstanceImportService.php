@@ -2263,9 +2263,6 @@ class InstanceImportService
                         foreach ($scaleTypeData['operationalRiskScaleComments'] as $scaleTypeComment) {
                             $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleTypeData['id']]
                                 [$scaleTypeComment['scaleIndex']] = $scaleTypeComment['scaleValue'];
-
-                            $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$typeIndex]
-                                ['operationalRiskScaleComments'][] = $scaleTypeComment;
                         }
                     }
 
