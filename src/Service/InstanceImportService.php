@@ -1789,11 +1789,11 @@ class InstanceImportService
             );
         }
         $oldInstanceRiskFieldsMapToScaleTypesFields = [
-            ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetR' => 'TargetedValue'],
-            ['brutO' => 'BrutValue', 'netO' => 'NetValue', 'targetO' => 'TargetedValue'],
-            ['brutL' => 'BrutValue', 'netL' => 'NetValue', 'targetL' => 'TargetedValue'],
-            ['brutF' => 'BrutValue', 'netF' => 'NetValue', 'targetF' => 'TargetedValue'],
-            ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetP' => 'TargetedValue'],
+            ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetedR' => 'TargetedValue'],
+            ['brutO' => 'BrutValue', 'netO' => 'NetValue', 'targetedO' => 'TargetedValue'],
+            ['brutL' => 'BrutValue', 'netL' => 'NetValue', 'targetedL' => 'TargetedValue'],
+            ['brutF' => 'BrutValue', 'netF' => 'NetValue', 'targetedF' => 'TargetedValue'],
+            ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetedP' => 'TargetedValue'],
         ];
 
         $rolfRiskIndex = 0;
