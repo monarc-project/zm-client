@@ -1876,7 +1876,7 @@ class InstanceImportService
 
     private function getOrCreateInstanceRiskOwner(Anr $anr, string $ownerName): InstanceRiskOwner
     {
-        if (!isset($this->cachedData['instanceRiskOwners'][$operationalRiskData['riskOwner']])) {
+        if (!isset($this->cachedData['instanceRiskOwners'][$ownerName])) {
             $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
             if ($instanceRiskOwner === null) {
                 $instanceRiskOwner = (new InstanceRiskOwner())
