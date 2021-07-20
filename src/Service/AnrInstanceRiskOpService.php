@@ -247,7 +247,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
                 $label = $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]
                     ->getValue();
-                $tableHeaders[$label . " (" . $translatedRiskValueDescription . ")"] = $label . " (" . $translatedRiskValueDescription . ")";
+                $tableHeaders[$label . " (" . $translatedRiskValueDescription . ")"] = $label . " ("
+                    . $translatedRiskValueDescription . ")";
             }
             $tableHeaders['cacheBrutRisk'] = $translatedRiskValueDescription;
         }
@@ -258,7 +259,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
             $label = $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]
                 ->getValue();
-            $tableHeaders[$label . " (" . $translatedNetRiskDescription . ")"] = $label . " (" . $translatedNetRiskDescription . ")";
+            $tableHeaders[$label . " (" . $translatedNetRiskDescription . ")"] = $label . " ("
+                . $translatedNetRiskDescription . ")";
         }
         $tableHeaders['cacheNetRisk'] = $translatedNetRiskDescription;
         $tableHeaders['comment'] = $this->translateService->translate('Existing controls', $anrLanguage);
