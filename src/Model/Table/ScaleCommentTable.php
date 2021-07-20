@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Table\ScaleCommentTable as CoreScaleCommentTableAlias;
+use Monarc\Core\Model\Table\ScaleCommentTable as CoreScaleCommentTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\ScaleComment;
@@ -16,7 +16,7 @@ use Monarc\FrontOffice\Model\Entity\ScaleComment;
  * Class ScaleCommentTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class ScaleCommentTable extends CoreScaleCommentTableAlias
+class ScaleCommentTable extends CoreScaleCommentTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
