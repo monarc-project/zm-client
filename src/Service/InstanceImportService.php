@@ -2373,7 +2373,7 @@ class InstanceImportService
             }
             $this->scaleCommentTable->getDb()->flush();
 
-            $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedByPosition($anr);
+            $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedAndIndexedByPosition($anr);
             foreach ($data['scalesComments'] as $scalesCommentData) {
                 $scale = $scalesByType[$scalesCommentData['scale']['type']];
                 $scaleComment = (new ScaleComment())
