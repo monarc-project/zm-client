@@ -1822,7 +1822,7 @@ class InstanceImportService
                 ->setCacheTargetedRisk($operationalRiskData['cacheTargetedRisk'])
                 ->setKindOfMeasure($operationalRiskData['kindOfMeasure'])
                 ->setComment($operationalRiskData['comment'])
-                ->setMitigation($operationalRiskData['mitigation'])
+                ->setMitigation($operationalRiskData['mitigation'] ?? '')
                 ->setSpecific($operationalRiskData['specific'])
                 ->setContext($operationalRiskData['context'] ?? '')
                 ->setCreator($this->connectedUser->getEmail());
