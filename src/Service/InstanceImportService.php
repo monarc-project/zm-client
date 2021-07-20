@@ -2427,12 +2427,14 @@ class InstanceImportService
             /* This is currently only applicable for impact scales type. */
             $createdScaleTypes = [];
             foreach ($scaleData['operationalRiskScaleTypes'] as $scaleTypeData) {
+                $isScaleTypeMatched = true;
                 $operationalRiskScaleType = $this->matchScaleTypeDataWithScaleTypesList(
                     $scaleTypeData,
                     $operationalRiskScale->getOperationalRiskScaleTypes(),
                     $scalesTranslations
                 );
                 if ($operationalRiskScaleType === null) {
+                    $isScaleTypeMatched = false;
                     $operationalRiskScaleType = (new OperationalRiskScaleType())
                         ->setAnr($anr)
                         ->setOperationalRiskScale($operationalRiskScale)
@@ -2454,11 +2456,15 @@ class InstanceImportService
                 $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
 
                 foreach ($scaleTypeData['operationalRiskScaleComments'] as $scaleTypeCommentData) {
-                    $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
-                        $scaleTypeCommentData,
-                        $operationalRiskScaleType->getOperationalRiskScaleComments(),
-                        $scalesTranslations
-                    );
+                    $operationalRiskScaleComment = null;
+                    if ($isScaleTypeMatched) {
+                        $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
+                            $operationalRiskScale,
+                            $scaleTypeCommentData,
+                            $operationalRiskScaleType->getOperationalRiskScaleComments(),
+                            $scalesTranslations
+                        );
+                    }
                     if ($operationalRiskScaleComment === null) {
                         $operationalRiskScaleComment = (new OperationalRiskScaleComment())
                             ->setAnr($anr)
@@ -2501,6 +2507,7 @@ class InstanceImportService
             /* This is currently applicable only for likelihood scales type */
             foreach ($scaleData['operationalRiskScaleComments'] as $scaleCommentData) {
                 $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
+                    $operationalRiskScale,
                     $scaleCommentData,
                     $operationalRiskScale->getOperationalRiskScaleComments(),
                     $scalesTranslations
@@ -2583,6 +2590,7 @@ class InstanceImportService
     }
 
     /**
+     * @param OperationalRiskScale $operationalRiskScale
      * @param array $scaleTypeCommentData
      * @param OperationalRiskScaleComment[] $operationalRiskScaleComments
      * @param Translation[] $scalesTranslations
@@ -2593,11 +2601,15 @@ class InstanceImportService
      * @throws OptimisticLockException
      */
     private function matchScaleCommentDataWithScaleCommentsList(
+        OperationalRiskScale $operationalRiskScale,
         array $scaleTypeCommentData,
         iterable $operationalRiskScaleComments,
         array $scalesTranslations
     ): ?OperationalRiskScaleComment {
         foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
+            if ($operationalRiskScale->getId() !== $operationalRiskScaleComment->getOperationalRiskScale()->getId()) {
+                continue;
+            }
             if ($operationalRiskScaleComment->getScaleIndex() === $scaleTypeCommentData['scaleIndex']) {
                 $translation = $scalesTranslations[$operationalRiskScaleComment->getCommentTranslationKey()];
                 if ($translation->getValue() !== $scaleTypeCommentData['translation']['value']) {
