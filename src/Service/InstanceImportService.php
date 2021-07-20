@@ -2548,16 +2548,16 @@ class InstanceImportService
                     || $operationalRiskScale->getMax() < $scaleComment->getScaleIndex();
                 $scaleComment->setIsHidden($isHidden);
 
-                if (isset($maxValuesPerScaleType[$scaleType->getId()])
-                    && $maxValuesPerScaleType[$scaleType->getId()] >= $scaleComment->getScaleValue()
+                if (isset($maxValuesPerScaleType[$scaleType->getLabelTranslationKey()])
+                    && $maxValuesPerScaleType[$scaleType->getLabelTranslationKey()] >= $scaleComment->getScaleValue()
                     && $isHidden
                 ) {
-                    $scaleComment->setScaleValue(++$maxValuesPerScaleType[$scaleType->getId()]);
+                    $scaleComment->setScaleValue(++$maxValuesPerScaleType[$scaleType->getLabelTranslationKey()]);
                 }
 
                 $this->operationalRiskScaleCommentTable->save($scaleComment, false);
 
-                $maxValuesPerScaleType[$scaleType->getId()] = $scaleComment->getScaleValue();
+                $maxValuesPerScaleType[$scaleType->getLabelTranslationKey()] = $scaleComment->getScaleValue();
             }
 
             $this->operationalRiskScaleTable->save($operationalRiskScale);
