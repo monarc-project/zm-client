@@ -877,7 +877,8 @@ class InstanceImportService
                     $scalesData['external'][Scale::TYPE_VULNERABILITY]['max'],
                 ));
                 $newVulRate = $instanceRisk->getVulnerabilityRate();
-                $instanceRisk->setReductionAmount($instanceRisk->getReductionAmount() !== 0
+                $instanceRisk->setReductionAmount(
+                    $instanceRisk->getReductionAmount() !== 0
                     ? $this->approximate($instanceRisk->getReductionAmount(), 0, $oldVulRate, 0, $newVulRate, 0)
                     : 0
                 );
@@ -1085,7 +1086,6 @@ class InstanceImportService
         if (isset($this->cachedData['recSets'][$recommendationData['recommandationSet']])) {
             $recommendationSet = $this->cachedData['recSets'][$recommendationData['recommandationSet']];
         } else {
-
             $recommendationSet = $this->recommendationSetTable
                 ->findByAnrAndUuid($anr, $recommendationData['recommandationSet']);
 
@@ -1457,7 +1457,8 @@ class InstanceImportService
                             $instanceRiskData['vulnerabilityRate'],
                             0,
                             $instanceRisk->getVulnerabilityRate(),
-                            0)
+                            0
+                        )
                         : 0
                 );
                 $this->instanceRiskTable->saveEntity($instanceRisk, false);
@@ -2529,18 +2530,27 @@ class InstanceImportService
             }
 
             /* Validate if any existed comments are now out of the new scales bound and if the values are valid. */
-            $maxValue = 0;
+            $maxValuesPerScaleType = [];
             foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $scaleComment) {
-                if ($maxValue !== 0 && $maxValue >= $scaleComment->getScaleValue()) {
-                    $scaleComment->setScaleValue(++$maxValue);
+                $scaleType = $scaleComment->getOperationalRiskScaleType();
+                if ($scaleType === null) {
+                    continue;
                 }
+
                 $isHidden = $operationalRiskScale->getMin() > $scaleComment->getScaleIndex()
                     || $operationalRiskScale->getMax() < $scaleComment->getScaleIndex();
                 $scaleComment->setIsHidden($isHidden);
 
+                if (isset($maxValuesPerScaleType[$scaleType->getId()])
+                    && $maxValuesPerScaleType[$scaleType->getId()] >= $scaleComment->getScaleValue()
+                    && $isHidden
+                ) {
+                    $scaleComment->setScaleValue(++$maxValuesPerScaleType[$scaleType->getId()]);
+                }
+
                 $this->operationalRiskScaleCommentTable->save($scaleComment, false);
 
-                $maxValue = $scaleComment->getScaleValue();
+                $maxValuesPerScaleType[$scaleType->getId()] = $scaleComment->getScaleValue();
             }
 
             $this->operationalRiskScaleTable->save($operationalRiskScale);
