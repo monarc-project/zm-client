@@ -299,27 +299,27 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
                 $scalesData[$operationalRiskScaleType->getId()] = [
                     'netValue' => $operationalInstanceRiskScale->getNetValue(),
-                    'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
+                    'targetedValue' => $operationalInstanceRiskScale->getTargetedValue(),
                 ];
             }
             if ($mode == 'raw' || $r['targetedRisk'] == -1) {
-                $imax = array_reduce($scalesData, function($a, $b){
+                $imax = array_reduce($scalesData, function ($a, $b) {
                     return $a ? ($a['netValue'] > $b['netValue'] ? $a : $b) : $b;
                 });
                 $imax = $imax['netValue'];
                 $max = $r['netRisk'];
                 $prob = $r['netProb'];
-            }else {
-                $imax = array_reduce($scalesData, function($a, $b){
-                    return $a ? ($a['targetValue'] > $b['targetValue'] ? $a : $b) : $b;
+            } else {
+                $imax = array_reduce($scalesData, function ($a, $b) {
+                    return $a ? ($a['targetedValue'] > $b['targetedValue'] ? $a : $b) : $b;
                 });
-                $imax = $imax['targetValue'];
+                $imax = $imax['targetedValue'];
                 $max = $r['targetedRisk'];
                 $prob = $r['targetedProb'];
             }
 
             $id = $r['id'];
-            $color = $this->getColor($max,'riskOp');
+            $color = $this->getColor($max, 'riskOp');
 
             if (!isset($countersRiskOP[$imax][$prob])) {
                 $countersRiskOP[$imax][$prob] = [];

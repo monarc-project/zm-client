@@ -181,7 +181,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                     'label' => $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]->getValue(),
                     'netValue' => $operationalInstanceRiskScale->getNetValue(),
                     'brutValue' => $operationalInstanceRiskScale->getBrutValue(),
-                    'targetValue' => $operationalInstanceRiskScale->getTargetedValue(),
+                    'targetedValue' => $operationalInstanceRiskScale->getTargetedValue(),
                     'isHidden' => $operationalRiskScaleType->isHidden(),
                 ];
             }
