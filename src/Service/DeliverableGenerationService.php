@@ -643,7 +643,7 @@ class DeliverableGenerationService extends AbstractService
         $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function($scale) { return $scale['type'] == 1; }));
         $opRisksImpactsScaleMin = $opRisksImpactsScaleType[0]['min'];
         $opRisksImpactsScaleMax = $opRisksImpactsScaleType[0]['max'];
-        $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function($scale) { return $scale['isHidden'] == false; });
+        $opRisksImpactsScales = array_values(array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function($scale) { return $scale['isHidden'] == false; }));
         $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function($scale) {return $scale['type'] == 2;}))[0];
         $sizeColumn = 17 / count($opRisksImpactsScales);
         $tableWord = new PhpWord();
