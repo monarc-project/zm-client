@@ -2264,7 +2264,7 @@ class InstanceImportService
                                 [$scaleTypeComment['scaleIndex']] = $scaleTypeComment['scaleValue'];
 
                             $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$typeIndex]
-                                ['operationalRiskScaleComments'] = $scaleTypeComment;
+                                ['operationalRiskScaleComments'][] = $scaleTypeComment;
                         }
                     }
 
