@@ -81,6 +81,7 @@ use Monarc\FrontOffice\Model\Table\ThemeTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
+use Ramsey\Uuid\Uuid;
 
 class InstanceImportService
 {
@@ -2330,12 +2331,13 @@ class InstanceImportService
                     if ($scaleImpactType->isSys()
                         && \in_array($scaleImpactType->getType(), ScaleImpactType::getScaleImpactTypesRolfp(), true)
                     ) {
+                        $labelTranslationKey = (string)Uuid::uuid4();
                         $scalesDataResult[Scale::TYPE_IMPACT]['operationalRiskScaleTypes'][$index] = [
                             'id' => $scaleImpactType->getId(),
                             'isHidden' => $scaleImpactType->isHidden(),
-                            'labelTranslationKey' => '',
+                            'labelTranslationKey' => $labelTranslationKey,
                             'translation' => [
-                                'key' => '',
+                                'key' => $labelTranslationKey,
                                 'lang' => $anrLanguageCode,
                                 'value' => $scaleImpactType->getLabel($anr->getLanguage()),
                             ],
@@ -2349,18 +2351,21 @@ class InstanceImportService
                     }
 
                     if ($scaleType === Scale::TYPE_THREAT) {
+                        $commentTranslationKey = (string)Uuid::uuid4();
                         $scalesDataResult[$scaleType]['operationalRiskScaleComments'][] = [
                             'id' => $scaleComment['id'],
                             'scaleIndex' => $scaleComment['val'],
                             'scaleValue' => $scaleComment['val'],
-                            'commentTranslationKey' => '',
+                            'isHidden' => false,
+                            'commentTranslationKey' => $commentTranslationKey,
                             'translation' => [
-                                'key' => '',
+                                'key' => $commentTranslationKey,
                                 'lang' => $anrLanguageCode,
                                 'value' => $scaleComment['comment' . $anr->getLanguage()] ?? '',
                             ],
                         ];
                     } elseif ($scaleType === Scale::TYPE_IMPACT && $scaleComment['val'] >= $scaleMin) {
+                        $commentTranslationKey = (string)Uuid::uuid4();
                         $scaleIndex = $scaleComment['val'] - $scaleMin;
                         $scaleTypePosition = $scaleComment['scaleImpactType']['position'];
                         if (isset($scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypePosition])) {
@@ -2369,9 +2374,10 @@ class InstanceImportService
                                 'id' => $scaleComment['id'],
                                 'scaleIndex' => $scaleIndex,
                                 'scaleValue' => $scaleComment['val'],
-                                'commentTranslationKey' => '',
+                                'isHidden' => false,
+                                'commentTranslationKey' => $commentTranslationKey,
                                 'translation' => [
-                                    'key' => '',
+                                    'key' => $commentTranslationKey,
                                     'lang' => $anrLanguageCode,
                                     'value' => $scaleComment['comment' . $anr->getLanguage()] ?? '',
                                 ],
