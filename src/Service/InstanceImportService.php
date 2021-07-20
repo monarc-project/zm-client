@@ -1789,11 +1789,11 @@ class InstanceImportService
             );
         }
         $oldInstanceRiskFieldsMapToScaleTypesFields = [
-            ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetR' => 'TargetValue'],
-            ['brutO' => 'BrutValue', 'netO' => 'NetValue', 'targetO' => 'TargetValue'],
-            ['brutL' => 'BrutValue', 'netL' => 'NetValue', 'targetL' => 'TargetValue'],
-            ['brutF' => 'BrutValue', 'netF' => 'NetValue', 'targetF' => 'TargetValue'],
-            ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetP' => 'TargetValue'],
+            ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetR' => 'TargetedValue'],
+            ['brutO' => 'BrutValue', 'netO' => 'NetValue', 'targetO' => 'TargetedValue'],
+            ['brutL' => 'BrutValue', 'netL' => 'NetValue', 'targetL' => 'TargetedValue'],
+            ['brutF' => 'BrutValue', 'netF' => 'NetValue', 'targetF' => 'TargetedValue'],
+            ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetP' => 'TargetedValue'],
         ];
 
         $rolfRiskIndex = 0;
@@ -1864,7 +1864,7 @@ class InstanceImportService
                             $scalesValueData = $operationalRiskData['scalesValues'][$index];
                             $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
                             $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
-                            $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetValue']);
+                            $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetedValue']);
                             if ($areImpactScaleTypesValuesDifferent) {
                                 /* We convert from the importing new scales to the current anr scales. */
                                 $this->adjustOperationalInstanceRisksScales(
