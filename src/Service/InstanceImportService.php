@@ -2432,17 +2432,18 @@ class InstanceImportService
                 );
                 if ($operationalRiskScaleType === null) {
                     $isScaleTypeMatched = false;
+                    $labelTranslationKey = (string)Uuid::uuid4();
                     $operationalRiskScaleType = (new OperationalRiskScaleType())
                         ->setAnr($anr)
                         ->setOperationalRiskScale($operationalRiskScale)
-                        ->setLabelTranslationKey($scaleTypeData['labelTranslationKey'])
+                        ->setLabelTranslationKey($labelTranslationKey)
                         ->setCreator($this->connectedUser->getEmail());
 
                     $translation = (new Translation())
                         ->setAnr($anr)
                         ->setType(OperationalRiskScaleType::TRANSLATION_TYPE_NAME)
                         ->setLang($anrLanguageCode)
-                        ->setKey($operationalRiskScaleType->getLabelTranslationKey())
+                        ->setKey($labelTranslationKey)
                         ->setValue($scaleTypeData['translation']['value'])
                         ->setCreator($this->connectedUser->getEmail());
                     $this->translationTable->save($translation, false);
@@ -2453,38 +2454,15 @@ class InstanceImportService
                 $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
 
                 foreach ($scaleTypeData['operationalRiskScaleComments'] as $scaleTypeCommentData) {
-                    $operationalRiskScaleComment = null;
-                    if ($isScaleTypeMatched) {
-                        $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
-                            $operationalRiskScale,
-                            $scaleTypeCommentData,
-                            $operationalRiskScaleType->getOperationalRiskScaleComments(),
-                            $scalesTranslations
-                        );
-                    }
-                    if ($operationalRiskScaleComment === null) {
-                        $operationalRiskScaleComment = (new OperationalRiskScaleComment())
-                            ->setAnr($anr)
-                            ->setOperationalRiskScale($operationalRiskScale)
-                            ->setCommentTranslationKey($scaleTypeCommentData['commentTranslationKey'])
-                            ->setCreator($this->connectedUser->getEmail());
-
-                        $translation = (new Translation())
-                            ->setAnr($anr)
-                            ->setType(OperationalRiskScaleComment::TRANSLATION_TYPE_NAME)
-                            ->setLang($anrLanguageCode)
-                            ->setKey($operationalRiskScaleComment->getCommentTranslationKey())
-                            ->setValue($scaleTypeCommentData['translation']['value'])
-                            ->setCreator($this->connectedUser->getEmail());
-                        $this->translationTable->save($translation, false);
-                    }
-
-                    $operationalRiskScaleComment
-                        ->setOperationalRiskScaleType($operationalRiskScaleType)
-                        ->setScaleIndex($scaleTypeCommentData['scaleIndex'])
-                        ->setScaleValue($scaleTypeCommentData['scaleValue'])
-                        ->setIsHidden($scaleTypeCommentData['isHidden']);
-                    $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment, false);
+                    $this->createOrUpdateOperationalRiskScaleComment(
+                        $anr,
+                        $isScaleTypeMatched,
+                        $operationalRiskScale,
+                        $scaleTypeCommentData,
+                        $operationalRiskScaleType->getOperationalRiskScaleComments(),
+                        $scalesTranslations,
+                        $operationalRiskScaleType
+                    );
                 }
             }
 
@@ -2503,34 +2481,14 @@ class InstanceImportService
 
             /* This is currently applicable only for likelihood scales type */
             foreach ($scaleData['operationalRiskScaleComments'] as $scaleCommentData) {
-                $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
+                $this->createOrUpdateOperationalRiskScaleComment(
+                    $anr,
+                    true,
                     $operationalRiskScale,
                     $scaleCommentData,
                     $operationalRiskScale->getOperationalRiskScaleComments(),
                     $scalesTranslations
                 );
-                if ($operationalRiskScaleComment === null) {
-                    $operationalRiskScaleComment = (new OperationalRiskScaleComment())
-                        ->setAnr($anr)
-                        ->setOperationalRiskScale($operationalRiskScale)
-                        ->setCommentTranslationKey($scaleCommentData['commentTranslationKey'])
-                        ->setCreator($this->connectedUser->getEmail());
-
-                    $translation = (new Translation())
-                        ->setAnr($anr)
-                        ->setType(OperationalRiskScaleComment::TRANSLATION_TYPE_NAME)
-                        ->setLang($anrLanguageCode)
-                        ->setKey($operationalRiskScaleComment->getCommentTranslationKey())
-                        ->setValue($scaleCommentData['translation']['value'])
-                        ->setCreator($this->connectedUser->getEmail());
-                    $this->translationTable->save($translation, false);
-                }
-
-                $operationalRiskScaleComment
-                    ->setScaleIndex($scaleCommentData['scaleIndex'])
-                    ->setScaleValue($scaleCommentData['scaleValue'])
-                    ->setIsHidden($scaleCommentData['isHidden']);
-                $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment, false);
             }
 
             /* Validate if any existed comments are now out of the new scales bound and if the values are valid. */
@@ -2562,6 +2520,54 @@ class InstanceImportService
 
         /* Reset the cache */
         $this->cachedData['currentOperationalRiskScalesData'] = [];
+    }
+
+    private function createOrUpdateOperationalRiskScaleComment(
+        AnrSuperClass $anr,
+        bool $isMatchRequired,
+        OperationalRiskScale $operationalRiskScale,
+        array $scaleCommentData,
+        iterable $scaleCommentsToMatchWith,
+        array $scalesTranslations,
+        ?OperationalRiskScaleType $operationalRiskScaleType = null
+    ): void {
+        $operationalRiskScaleComment = null;
+        if ($isMatchRequired) {
+            $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
+                $operationalRiskScale,
+                $scaleCommentData,
+                $scaleCommentsToMatchWith,
+                $scalesTranslations
+            );
+        }
+        if ($operationalRiskScaleComment === null) {
+            $anrLanguageCode = $this->getAnrLanguageCode($anr);
+            $commentTranslationKey = (string)Uuid::uuid4();
+            $operationalRiskScaleComment = (new OperationalRiskScaleComment())
+                ->setAnr($anr)
+                ->setOperationalRiskScale($operationalRiskScale)
+                ->setCommentTranslationKey($commentTranslationKey)
+                ->setCreator($this->connectedUser->getEmail());
+
+            $translation = (new Translation())
+                ->setAnr($anr)
+                ->setType(OperationalRiskScaleComment::TRANSLATION_TYPE_NAME)
+                ->setLang($anrLanguageCode)
+                ->setKey($commentTranslationKey)
+                ->setValue($scaleCommentData['translation']['value'])
+                ->setCreator($this->connectedUser->getEmail());
+            $this->translationTable->save($translation, false);
+        }
+
+        if ($operationalRiskScaleType !== null) {
+            $operationalRiskScaleComment->setOperationalRiskScaleType($operationalRiskScaleType);
+        }
+
+        $operationalRiskScaleComment
+            ->setScaleIndex($scaleCommentData['scaleIndex'])
+            ->setScaleValue($scaleCommentData['scaleValue'])
+            ->setIsHidden($scaleCommentData['isHidden']);
+        $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment, false);
     }
 
     /**
