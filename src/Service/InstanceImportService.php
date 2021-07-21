@@ -2489,15 +2489,17 @@ class InstanceImportService
                 }
             }
 
-            /* Add the created scales to all the existed risks. */
+            /* Create relations of all the created scales with existed risks. */
             if (!empty($createdScaleTypes)) {
                 $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnr($anr);
                 foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
                     foreach ($createdScaleTypes as $createdScaleType) {
-                        $this->instanceRiskOpTable->saveEntity(
-                            $operationalInstanceRisk->addOperationalInstanceRiskScale($createdScaleType),
-                            false
-                        );
+                        $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
+                            ->setAnr($anr)
+                            ->setOperationalRiskScaleType($createdScaleType)
+                            ->setOperationalInstanceRisk($operationalInstanceRisk)
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->operationalInstanceRiskScaleTable->saveEntity($operationalInstanceRiskScale, false);
                     }
                 }
             }
