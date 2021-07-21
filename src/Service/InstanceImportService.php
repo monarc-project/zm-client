@@ -1798,19 +1798,26 @@ class InstanceImportService
                 }
             }
 
-            /* The format is since v2.10.5 */
             $impactScale = $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT];
             foreach ($impactScale['operationalRiskScaleTypes'] as $index => $scaleType) {
+                /** @var OperationalRiskScaleType $operationalRiskScaleType */
+                $operationalRiskScaleType = $scaleType['object'];
                 $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
                     ->setAnr($anr)
-                    ->setOperationalRiskScaleType($scaleType['object'])
+                    ->setOperationalRiskScaleType($operationalRiskScaleType)
                     ->setOperationalInstanceRisk($instanceRiskOp)
                     ->setCreator($this->connectedUser->getEmail());
 
                 if ($includeEval) {
+                    /* The format is since v2.10.5 */
                     if (isset($operationalRiskData['scalesValues'])) {
-                        if (isset($operationalRiskData['scalesValues'][$index])) {
-                            $scalesValueData = $operationalRiskData['scalesValues'][$index];
+                        $externalScaleTypeId = $this->getExternalScaleTypeIdByCurrentScaleLabelTranslationKey(
+                            $operationalRiskScaleType->getLabelTranslationKey()
+                        );
+                        if ($externalScaleTypeId !== null
+                            && isset($operationalRiskData['scalesValues'][$externalScaleTypeId])
+                        ) {
+                            $scalesValueData = $operationalRiskData['scalesValues'][$externalScaleTypeId];
                             $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
                             $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
                             $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetedValue']);
@@ -1819,11 +1826,11 @@ class InstanceImportService
                                 $this->adjustOperationalInstanceRisksScales(
                                     $operationalInstanceRiskScale,
                                     $externalOperationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT],
-                                    $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT]
+                                    $impactScale
                                 );
                             }
                         }
-                    /* The format before v2.10.5. Update only first 5 scales (ROLFP if not updated). */
+                    /* The format before v2.10.5. Update only first 5 scales (ROLFP if not changed by user). */
                     } elseif ($index < 5) {
                         foreach ($oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
                             $operationalInstanceRiskScale->{'set' . $typeField}($operationalRiskData[$oldFiled]);
@@ -1833,7 +1840,7 @@ class InstanceImportService
                             $this->adjustOperationalInstanceRisksScales(
                                 $operationalInstanceRiskScale,
                                 $externalOperationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT],
-                                $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT]
+                                $impactScale
                             );
                         }
                     }
@@ -1873,6 +1880,12 @@ class InstanceImportService
 
             $this->recommendationRiskTable->getDb()->flush();
         }
+    }
+
+    private function getExternalScaleTypeIdByCurrentScaleLabelTranslationKey(string $labelTranslationKey): ?int
+    {
+        return $this->cachedData['operationalRiskScaleTypes']['currentScaleTypeLabelTranslationKeyToExternalIds']
+            [$labelTranslationKey] ?? null;
     }
 
     private function getOrCreateInstanceRiskOwner(Anr $anr, string $ownerName): InstanceRiskOwner
@@ -2201,7 +2214,7 @@ class InstanceImportService
                 $commentsIndexToValueMap = [];
                 /* Build the map of the comments index <=> values relation. */
                 foreach ($operationalRisksScale->getOperationalRiskScaleTypes() as $typeIndex => $scaleType) {
-                    /* There is only a place in the result, where the operational risk scale types object is used. */
+                    /* The operational risk scale types object is used to recreate operational instance risk scales. */
                     $scaleTypesData[$typeIndex]['object'] = $scaleType;
                     foreach ($scaleType->getOperationalRiskScaleComments() as $scaleTypeComment) {
                         $commentsIndexToValueMap[$scaleType->getId()][$scaleTypeComment->getScaleIndex()] =
@@ -2415,6 +2428,7 @@ class InstanceImportService
 
         foreach ($operationalRiskScales as $operationalRiskScale) {
             $scaleData = $externalOperationalScalesData[$operationalRiskScale->getType()];
+            $currentScaleLevelDifferenceFromExternal = $operationalRiskScale->getMax() - $scaleData['max'];
             $operationalRiskScale
                 ->setAnr($anr)
                 ->setMin($scaleData['min'])
@@ -2422,7 +2436,9 @@ class InstanceImportService
                 ->setUpdater($this->connectedUser->getEmail());
 
             /* This is currently only applicable for impact scales type. */
+            // TODO: make them with old ids map keys and created or matched objects inside as private prop
             $createdScaleTypes = [];
+            $matchedScaleTypes = [];
             foreach ($scaleData['operationalRiskScaleTypes'] as $scaleTypeData) {
                 $isScaleTypeMatched = true;
                 $operationalRiskScaleType = $this->matchScaleTypeDataWithScaleTypesList(
@@ -2448,8 +2464,15 @@ class InstanceImportService
                         ->setCreator($this->connectedUser->getEmail());
                     $this->translationTable->save($translation, false);
 
-                    $createdScaleTypes[] = $operationalRiskScaleType;
+                    $createdScaleTypes[$labelTranslationKey] = $operationalRiskScaleType;
+                } elseif ($currentScaleLevelDifferenceFromExternal !== 0) {
+                    $matchedScaleTypes[$operationalRiskScaleType->getId()] = $operationalRiskScaleType;
                 }
+
+                /* The map is used to match for the importing operational risks, scale values with scale types. */
+                $this->cachedData['operationalRiskScaleTypes']['currentScaleTypeLabelTranslationKeyToExternalIds']
+                [$operationalRiskScaleType->getLabelTranslationKey()] = $scaleTypeData['id'];
+
                 $operationalRiskScaleType->setIsHidden($scaleTypeData['isHidden']);
                 $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
 
@@ -2491,28 +2514,68 @@ class InstanceImportService
                 );
             }
 
-            /* Validate if any existed comments are now out of the new scales bound and if the values are valid. */
-            $maxValuesPerScaleType = [];
-            foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $scaleComment) {
-                $scaleType = $scaleComment->getOperationalRiskScaleType();
-                if ($scaleType === null) {
-                    continue;
+            /* Validate if any existed comments are now out of the new scales bound and if their values are valid.
+                Also, if their comments are complete per scale's level. */
+            if ($currentScaleLevelDifferenceFromExternal !== 0) {
+                foreach ($operationalRiskScale->getOperationalRiskScaleTypes() as $operationalRiskScaleType) {
+                    /* Ignore the currently created scale types. */
+                    if (\array_key_exists($operationalRiskScaleType->getLabelTranslationKey(), $createdScaleTypes)) {
+                        continue;
+                    }
+
+                    if ($currentScaleLevelDifferenceFromExternal < 0
+                        && !\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)
+                    ) {
+                        /* The scales type was not matched and the current scales level is lower then external,
+                            so we need to create missing empty scales comments. */
+                        $commentIndex = $operationalRiskScale->getMax() + $currentScaleLevelDifferenceFromExternal + 1;
+                        $commentIndexToValueMap = current(
+                            $externalOperationalScalesData[OperationalRiskScale::TYPE_IMPACT]['commentsIndexToValueMap']
+                        );
+                        while ($commentIndex <= $operationalRiskScale->getMax()) {
+                            $this->createOrUpdateOperationalRiskScaleComment(
+                                $anr,
+                                false,
+                                $operationalRiskScale,
+                                [
+                                    'scaleIndex' => $commentIndex,
+                                    'scaleValue' => $commentIndexToValueMap[$commentIndex],
+                                    'isHidden' => false,
+                                ],
+                                [],
+                                [],
+                                $operationalRiskScaleType
+                            );
+                            $commentIndex++;
+                        }
+
+                        continue;
+                    }
+
+                    if ($currentScaleLevelDifferenceFromExternal > 0
+                        && \array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)
+                    ) {
+                        /* The scales type was matched and the current scales level is higher then external,
+                            so we need to hide their comments and validate values. */
+                        $commentIndexToValueMap = current(
+                            $externalOperationalScalesData[OperationalRiskScale::TYPE_IMPACT]['commentsIndexToValueMap']
+                        );
+                        $maxValue = $commentIndexToValueMap[$operationalRiskScale->getMax()];
+                        foreach ($matchedScaleTypes as $matchedScaleType) {
+                            foreach ($matchedScaleType->getOperationalRiskScaleComments() as $comment) {
+                                $isHidden = $operationalRiskScale->getMin() > $comment->getScaleIndex()
+                                    || $operationalRiskScale->getMax() < $comment->getScaleIndex();
+                                $comment->setIsHidden($isHidden);
+
+                                if ($isHidden && $maxValue >= $comment->getScaleValue()) {
+                                    $comment->setScaleValue(++$maxValue);
+                                }
+
+                                $this->operationalRiskScaleCommentTable->save($comment, false);
+                            }
+                        }
+                    }
                 }
-
-                $isHidden = $operationalRiskScale->getMin() > $scaleComment->getScaleIndex()
-                    || $operationalRiskScale->getMax() < $scaleComment->getScaleIndex();
-                $scaleComment->setIsHidden($isHidden);
-
-                if (isset($maxValuesPerScaleType[$scaleType->getLabelTranslationKey()])
-                    && $maxValuesPerScaleType[$scaleType->getLabelTranslationKey()] >= $scaleComment->getScaleValue()
-                    && $isHidden
-                ) {
-                    $scaleComment->setScaleValue(++$maxValuesPerScaleType[$scaleType->getLabelTranslationKey()]);
-                }
-
-                $this->operationalRiskScaleCommentTable->save($scaleComment, false);
-
-                $maxValuesPerScaleType[$scaleType->getLabelTranslationKey()] = $scaleComment->getScaleValue();
             }
 
             $this->operationalRiskScaleTable->save($operationalRiskScale);
