@@ -2499,7 +2499,7 @@ class InstanceImportService
                             ->setOperationalRiskScaleType($createdScaleType)
                             ->setOperationalInstanceRisk($operationalInstanceRisk)
                             ->setCreator($this->connectedUser->getEmail());
-                        $this->operationalInstanceRiskScaleTable->saveEntity($operationalInstanceRiskScale, false);
+                        $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
                     }
                 }
             }
