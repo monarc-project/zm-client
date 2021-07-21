@@ -2543,6 +2543,9 @@ class InstanceImportService
                                     'scaleIndex' => $commentIndex,
                                     'scaleValue' => $commentIndexToValueMap[$commentIndex],
                                     'isHidden' => false,
+                                    'translation' => [
+                                        'value' => '',
+                                    ]
                                 ],
                                 [],
                                 [],
