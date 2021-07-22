@@ -2,8 +2,11 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
@@ -1287,6 +1290,13 @@ return [
             Service\OperationalRiskScaleService::class => AutowireFactory::class,
             Service\InstanceRiskOwnerService::class => AutowireFactory::class,
             Service\OperationalRiskScaleCommentService::class => AutowireFactory::class,
+            OperationalRiskScalesExportService::class => static function (ContainerInterface $container, $serviceName) {
+                return new OperationalRiskScalesExportService(
+                    $container->get(Table\OperationalRiskScaleTable::class),
+                    $container->get(Table\TranslationTable::class),
+                    $container->get(ConfigService::class),
+                );
+            },
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,

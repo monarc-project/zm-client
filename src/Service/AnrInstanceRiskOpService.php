@@ -403,7 +403,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
     private function extractInstancesAndTheirChildrenIds(array $instances): array
     {
         $instancesIds = [];
-        $childInstancesIds = [];
         foreach ($instances as $instanceId => $instance) {
             $instancesIds[] = $instanceId;
             $instancesIds = array_merge(

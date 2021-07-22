@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Table;
 
@@ -49,7 +50,6 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'soaCategoryTable' => Table\SoaCategoryTable::class,
         'soaTable' => Table\SoaTable::class,
         'recordTable' => Table\RecordTable::class,
-        'operationalRiskScaleTable' => Table\OperationalRiskScaleTable::class,
-        'translationTable' => Table\TranslationTable::class,
+        'operationalRiskScalesExportService' => OperationalRiskScalesExportService::class,
     ];
 }
