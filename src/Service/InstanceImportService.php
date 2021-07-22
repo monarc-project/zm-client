@@ -2545,7 +2545,7 @@ class InstanceImportService
                                     'isHidden' => false,
                                     'translation' => [
                                         'value' => '',
-                                    ]
+                                    ],
                                 ],
                                 [],
                                 [],
@@ -2651,9 +2651,11 @@ class InstanceImportService
         array $scalesTranslations
     ): ?OperationalRiskScaleType {
         foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
-            $translation = $scalesTranslations[$operationalRiskScaleType->getLabelTranslationKey()];
-            if ($translation->getValue() === $scaleTypeData['translation']['value']) {
-                return $operationalRiskScaleType;
+            if (isset($scalesTranslations[$operationalRiskScaleType->getLabelTranslationKey()])) {
+                $translation = $scalesTranslations[$operationalRiskScaleType->getLabelTranslationKey()];
+                if ($translation->getValue() === $scaleTypeData['translation']['value']) {
+                    return $operationalRiskScaleType;
+                }
             }
         }
 
