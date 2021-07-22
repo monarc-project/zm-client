@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Interop\Container\ContainerInterface;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -49,6 +50,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'objectObjectService' => ObjectObjectService::class,
         'translateService' => TranslateService::class,
         'configService' => ConfigService::class,
+        'operationalRiskScalesExportService' => OperationalRiskScalesExportService::class,
 
         // Export Services
         'objectExportService' => ObjectExportService::class,
