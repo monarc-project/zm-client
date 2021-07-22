@@ -406,10 +406,13 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $childInstancesIds = [];
         foreach ($instances as $instanceId => $instance) {
             $instancesIds[] = $instanceId;
-            $childInstancesIds = $this->extractInstancesAndTheirChildrenIds($instance->getParameterValues('children'));
+            $instancesIds = array_merge(
+                $instancesIds,
+                $this->extractInstancesAndTheirChildrenIds($instance->getParameterValues('children'))
+            );
         }
 
-        return array_merge($instancesIds, $childInstancesIds);
+        return $instancesIds;
     }
 
     private function determineInstancesIdsFromParam($instanceId): array
