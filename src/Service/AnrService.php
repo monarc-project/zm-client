@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\Model;
 use Monarc\Core\Model\Entity\OperationalRiskScaleCommentSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
@@ -40,6 +41,7 @@ use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
 use Monarc\FrontOffice\Model\Entity\ObjectCategory;
 use Monarc\FrontOffice\Model\Entity\ObjectObject;
+use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
 use Monarc\FrontOffice\Model\Entity\Question;
 use Monarc\FrontOffice\Model\Entity\QuestionChoice;
@@ -71,6 +73,7 @@ use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
@@ -172,6 +175,7 @@ class AnrService extends AbstractService
     protected $operationalRiskScaleCliTable;
     protected $operationalRiskScaleTypeCliTable;
     protected $operationalRiskScaleCommentCliTable;
+    protected $operationalInstanceRiskScaleCliTable;
     protected $translationCliTable;
 
     protected $instanceService;
@@ -993,7 +997,12 @@ class AnrService extends AbstractService
                 $connectedUser
             );
 
-            $this->createOperationalRiskScalesFromSourceAnr($newAnr, $anr, $source, $connectedUser);
+            $operationalScaleTypesOldIdsToNewObjectsMap = $this->createOperationalRiskScalesFromSourceAnr(
+                $newAnr,
+                $anr,
+                $source,
+                $connectedUser
+            );
 
             // duplicate instances risks
             $instanceRiskTable = $source === MonarcObject::SOURCE_COMMON
@@ -1043,6 +1052,15 @@ class AnrService extends AbstractService
                     $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->getRolfRisk()->getId()]);
                 }
                 $instanceRiskOpCliTable->save($newInstanceRiskOp, false);
+
+                $this->createOperationalInstanceRiskScalesFromSource(
+                    $instanceRiskOp,
+                    $operationalScaleTypesOldIdsToNewObjectsMap,
+                    $newAnr,
+                    $newInstanceRiskOp,
+                    $connectedUser
+                );
+
                 $instancesRisksOpNewIds[$instanceRiskOp->getId()] = $newInstanceRiskOp;
             }
 
@@ -1679,7 +1697,8 @@ class AnrService extends AbstractService
         AnrSuperClass $sourceAnr,
         string $sourceName,
         UserSuperClass $connectedUser
-    ): void {
+    ): array {
+        $operationalScaleTypesOldIdsToNewObjectsMap = [];
         /** @var OperationalRiskScaleTable $operationalRiskScaleCliTable */
         $operationalRiskScaleCliTable = $this->get('operationalRiskScaleCliTable');
         /** @var OperationalRiskScaleTable|CoreOperationalRiskScaleTable $sourceOperationalRiskScaleTable */
@@ -1718,6 +1737,9 @@ class AnrService extends AbstractService
 
                 $operationalRiskScaleTypeCliTable->save($newOperationalRiskScaleType, false);
 
+                $operationalScaleTypesOldIdsToNewObjectsMap[$operationalRiskScaleType->getId()]
+                    = $newOperationalRiskScaleType;
+
                 $this->createTranslationFromSource(
                     $newAnr,
                     $sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()],
@@ -1753,6 +1775,8 @@ class AnrService extends AbstractService
 
             $operationalRiskScaleCliTable->save($newOperationalRiskScale, false);
         }
+
+        return $operationalScaleTypesOldIdsToNewObjectsMap;
     }
 
     private function createOperationalRiskScaleCommentsFromSource(
@@ -1800,6 +1824,32 @@ class AnrService extends AbstractService
             ->setCreator($connectedUser->getEmail());
 
         $translationCliTable->save($newTranslation, false);
+    }
+
+    private function createOperationalInstanceRiskScalesFromSource(
+        InstanceRiskOpSuperClass $instanceRiskOp,
+        array $operationalScaleTypesOldIdsToNewObjectsMap,
+        Anr $newAnr,
+        InstanceRiskOp $newInstanceRiskOp,
+        UserSuperClass $connectedUser
+    ): void {
+        /** @var OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleCliTable */
+        $operationalInstanceRiskScaleCliTable = $this->get('operationalInstanceRiskScaleCliTable');
+        foreach ($instanceRiskOp->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+            $operationalRiskScaleType = $operationalScaleTypesOldIdsToNewObjectsMap[
+                $operationalInstanceRiskScale->getOperationalRiskScaleType()->getId()
+            ];
+
+            $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
+                ->setAnr($newAnr)
+                ->setOperationalInstanceRisk($newInstanceRiskOp)
+                ->setOperationalRiskScaleType($operationalRiskScaleType)
+                ->setBrutValue($operationalInstanceRiskScale->getBrutValue())
+                ->setNetValue($operationalInstanceRiskScale->getNetValue())
+                ->setTargetedValue($operationalInstanceRiskScale->getTargetedValue())
+                ->setCreator($connectedUser->getEmail());
+            $operationalInstanceRiskScaleCliTable->save($operationalInstanceRiskScale, false);
+        }
     }
 
     private function getAnrLanguageCode(AnrSuperClass $anr): string
