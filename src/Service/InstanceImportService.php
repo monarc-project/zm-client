@@ -1722,6 +1722,7 @@ class InstanceImportService
 
         $operationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
         $externalOperationalRiskScalesData = [];
+        $commonScale = [];
         $areScalesLevelsOfLikelihoodDifferent = false;
         $areImpactScaleTypesValuesDifferent = false;
         if ($includeEval && !$this->isImportTypeAnr()) {
@@ -1736,6 +1737,25 @@ class InstanceImportService
                 $operationalRiskScalesData,
                 $externalOperationalRiskScalesData
             );
+            //if there is eval we have to set a risk value for existing operationalRiskScaleType
+            $anrLanguageCode = $this->getAnrLanguageCode($anr);
+            $scalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+                $anr,
+                [OperationalRiskScaleType::TRANSLATION_TYPE_NAME],
+                $anrLanguageCode
+            );
+            //find operational impacts
+            $operationalRiskScale = $this->operationalRiskScaleTable->findByAnrAndType($anr,1);
+            // match external operationalRiskScakeType with internal one
+            foreach ($externalOperationalRiskScalesData[1]['operationalRiskScaleTypes'] as $externalScaleType => $externalOperationalRiskScale) {
+                $matchedScale = $this->matchScaleTypeDataWithScaleTypesList($externalOperationalRiskScale,
+                                        $operationalRiskScale[0]->getOperationalRiskScaleTypes(),
+                                        $scalesTranslations);
+                if($matchedScale!=null){
+                    $commonScale[] =  $matchedScale;
+                    //$commonScale[] =  ['currentOjbect' => $matchedScale,'externalId' => $externalOperationalRiskScale['id']];
+                }
+            }
         }
         $oldInstanceRiskFieldsMapToScaleTypesFields = [
             ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetedR' => 'TargetedValue'],
