@@ -1722,7 +1722,7 @@ class InstanceImportService
 
         $operationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
         $externalOperationalRiskScalesData = [];
-        $commonScale = [];
+        $linkTranslationKeyExternalId = [];
         $areScalesLevelsOfLikelihoodDifferent = false;
         $areImpactScaleTypesValuesDifferent = false;
         if ($includeEval && !$this->isImportTypeAnr()) {
@@ -1752,8 +1752,8 @@ class InstanceImportService
                                         $operationalRiskScale[0]->getOperationalRiskScaleTypes(),
                                         $scalesTranslations);
                 if($matchedScale!=null){
-                    $commonScale[] =  $matchedScale;
-                    //$commonScale[] =  ['currentOjbect' => $matchedScale,'externalId' => $externalOperationalRiskScale['id']];
+                    $linkTranslationKeyExternalId[$matchedScale->getLabelTranslationKey()] =  $externalOperationalRiskScale['id'];
+                    //$linkTranslationKeyExternalId[] =  ['currentOjbect' => $matchedScale,'externalId' => $externalOperationalRiskScale['id']];
                 }
             }
         }
@@ -1831,9 +1831,14 @@ class InstanceImportService
                 if ($includeEval) {
                     /* The format is since v2.10.5 */
                     if (isset($operationalRiskData['scalesValues'])) {
-                        $externalScaleTypeId = $this->getExternalScaleTypeIdByCurrentScaleLabelTranslationKey(
-                            $operationalRiskScaleType->getLabelTranslationKey()
-                        );
+                        if($this->isImportTypeAnr()){
+                            $externalScaleTypeId = $this->getExternalScaleTypeIdByCurrentScaleLabelTranslationKey(
+                                $operationalRiskScaleType->getLabelTranslationKey()
+                            );
+                        }
+                        else{
+                            $externalScaleTypeId = $linkTranslationKeyExternalId[$scaleType['object']->getLabelTranslationKey()];
+                        }
                         if ($externalScaleTypeId !== null
                             && isset($operationalRiskData['scalesValues'][$externalScaleTypeId])
                         ) {
@@ -1851,7 +1856,7 @@ class InstanceImportService
                             }
                         }
                     /* The format before v2.10.5. Update only first 5 scales (ROLFP if not changed by user). */
-                    } elseif ($index < 5) {
+                    }elseif ($index < 5) {
                         foreach ($oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
                             $operationalInstanceRiskScale->{'set' . $typeField}($operationalRiskData[$oldFiled]);
                         }
