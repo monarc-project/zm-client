@@ -1979,18 +1979,22 @@ class InstanceImportService
         $scaleTypesData = $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT]['operationalRiskScaleTypes'];
         $externalScaleTypesData =
             $externalOperationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT]['operationalRiskScaleTypes'];
-        foreach ($externalScaleTypesData as $externalScaleTypeId => $externalScaleTypeData) {
+        foreach ($externalScaleTypesData as $externalScaleTypeData) {
+            $isMatched = false;
             foreach ($scaleTypesData as $scaleTypeData) {
                 /** @var OperationalRiskScaleType $scaleType */
                 $scaleType = $scaleTypeData['object'];
                 $scaleTypeTranslation = $scaleTypesTranslations[$scaleType->getLabelTranslationKey()];
                 if ($externalScaleTypeData['translation']['value'] === $scaleTypeTranslation->getValue()) {
                     $scaleTypesMatchedMap['currentScaleTypeIdsToExternalIds'][$scaleType->getLabelTranslationKey()]
-                        = $externalScaleTypeId;
+                        = $externalScaleTypeData['id'];
+                    $isMatched = true;
                     break;
                 }
             }
-            $scaleTypesMatchedMap['notMatchedScaleTypes'][$externalScaleTypeId] = $externalScaleTypeData;
+            if (!$isMatched) {
+                $scaleTypesMatchedMap['notMatchedScaleTypes'][$externalScaleTypeData['id']] = $externalScaleTypeData;
+            }
         }
 
         return $scaleTypesMatchedMap;
