@@ -18,11 +18,9 @@ use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\Core\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
-use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Ramsey\Uuid\Uuid;
 
@@ -31,24 +29,22 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
     public function __construct(
         AnrTable $anrTable,
         ConnectedUserService $connectedUserService,
-        InstanceRiskOpTable $instanceRiskOpTable,
         OperationalRiskScaleTable $operationalRiskScaleTable,
         OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
-        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         TranslationTable $translationTable,
-        ConfigService $configService
+        ConfigService $configService,
+        AnrInstanceRiskOpService $instanceRiskOpService
     ) {
         parent::__construct(
             $anrTable,
             $connectedUserService,
-            $instanceRiskOpTable,
             $operationalRiskScaleTable,
             $operationalRiskScaleTypeTable,
             $operationalRiskScaleCommentTable,
-            $operationalInstanceRiskScaleTable,
             $translationTable,
-            $configService
+            $configService,
+            $instanceRiskOpService
         );
     }
 
