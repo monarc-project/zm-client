@@ -1029,6 +1029,10 @@ class AnrService extends AbstractService
                 if ($instanceRisk->getInstance()) {
                     $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->getInstance()->getId()]);
                 }
+                // TODO duplicate properly the owner when creating from a model
+                if ($source === MonarcObject::SOURCE_COMMON && $instanceRisk->getInstanceRiskOwner()) {
+                    $newInstanceRisk->setInstanceRiskOwner(null);
+                }
                 $this->get('instanceRiskCliTable')->save($newInstanceRisk, false);
                 $instancesRisksNewIds[$instanceRisk->getId()] = $newInstanceRisk;
             }
@@ -1051,6 +1055,13 @@ class AnrService extends AbstractService
                 if ($instanceRiskOp->getRolfRisk()) {
                     $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->getRolfRisk()->getId()]);
                 }
+                // TODO duplicate properly this part
+                if ($source === MonarcObject::SOURCE_COMMON) {
+                    $test = new ArrayCollection;
+                    $newInstanceRiskOp->setInstanceRiskOwner(null);
+                    $newInstanceRiskOp->setOperationalInstanceRiskScales($test);
+                }
+
                 $instanceRiskOpCliTable->save($newInstanceRiskOp, false);
 
                 $this->createOperationalInstanceRiskScalesFromSource(
