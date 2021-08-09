@@ -23,6 +23,7 @@ use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
+use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
 use Monarc\Core\Model\Table\ModelTable;
 use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
 use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
@@ -36,6 +37,7 @@ use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Entity\Interview;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
@@ -72,6 +74,8 @@ use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
@@ -184,6 +188,9 @@ class AnrService extends AbstractService
 
     protected $statsAnrService;
     protected $configService;
+
+    /** @var array */
+    private $cachedData;
 
     /**
      * @inheritdoc
@@ -1005,10 +1012,13 @@ class AnrService extends AbstractService
             );
 
             // duplicate instances risks
+            /** @var InstanceRiskTable $instanceRiskCliTable */
+            $instanceRiskCliTable = $this->get('instanceRiskCliTable');
+            /** @var InstanceRiskTable|CoreInstanceRiskTable $instanceRiskTable */
             $instanceRiskTable = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('instanceRiskTable')
-                : $this->get('instanceRiskCliTable');
-            $instancesRisks = $instanceRiskTable->getEntityByFields(['anr' => $anr->getId()]);
+                : $instanceRiskCliTable;
+            $instancesRisks = $instanceRiskTable->findByAnr($anr);
             $instancesRisksNewIds = [];
             foreach ($instancesRisks as $instanceRisk) {
                 $newInstanceRisk = new InstanceRisk($instanceRisk);
@@ -1029,11 +1039,17 @@ class AnrService extends AbstractService
                 if ($instanceRisk->getInstance()) {
                     $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->getInstance()->getId()]);
                 }
-                // TODO duplicate properly the owner when creating from a model
-                if ($source === MonarcObject::SOURCE_COMMON && $instanceRisk->getInstanceRiskOwner()) {
-                    $newInstanceRisk->setInstanceRiskOwner(null);
+                if ($instanceRisk->getInstanceRiskOwner()) {
+                    $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner(
+                        $anr,
+                        $instanceRisk->getInstanceRiskOwner()->getName(),
+                        $connectedUser
+                    );
+                    $newInstanceRisk->setInstanceRiskOwner($instanceRiskOwner);
                 }
-                $this->get('instanceRiskCliTable')->save($newInstanceRisk, false);
+                $newInstanceRisk->setContext($instanceRisk->getContext());
+
+                $instanceRiskCliTable->saveEntity($newInstanceRisk, false);
                 $instancesRisksNewIds[$instanceRisk->getId()] = $newInstanceRisk;
             }
 
@@ -1047,22 +1063,50 @@ class AnrService extends AbstractService
             $instancesRisksOp = $instanceRiskOpTable->findByAnr($anr);
             $instancesRisksOpNewIds = [];
             foreach ($instancesRisksOp as $instanceRiskOp) {
-                $newInstanceRiskOp = new InstanceRiskOp($instanceRiskOp);
-                $newInstanceRiskOp->set('id', null);
-                $newInstanceRiskOp->setAnr($newAnr);
-                $newInstanceRiskOp->setInstance($instancesNewIds[$instanceRiskOp->getInstance()->getId()]);
-                $newInstanceRiskOp->setObject($objectsNewIds[$instanceRiskOp->getObject()->getUuid()]);
+                $newInstanceRiskOp = (new InstanceRiskOp())
+                    ->setAnr($newAnr)
+                    ->setInstance($instancesNewIds[$instanceRiskOp->getInstance()->getId()])
+                    ->setObject($objectsNewIds[$instanceRiskOp->getObject()->getUuid()])
+                    ->setKindOfMeasure($instanceRiskOp->getKindOfMeasure())
+                    ->setBrutProb($instanceRiskOp->getBrutProb())
+                    ->setNetProb($instanceRiskOp->getNetProb())
+                    ->setTargetedProb($instanceRiskOp->getTargetedProb())
+                    ->setCacheBrutRisk($instanceRiskOp->getCacheBrutRisk())
+                    ->setCacheNetRisk($instanceRiskOp->getCacheNetRisk())
+                    ->setCacheTargetedRisk($instanceRiskOp->getCacheTargetedRisk())
+                    ->setMitigation($instanceRiskOp->getMitigation())
+                    ->setSpecific($instanceRiskOp->getSpecific())
+                    ->setRiskCacheCode($instanceRiskOp->getRiskCacheCode())
+                    ->setRiskCacheLabels([
+                        'riskCacheLabel1' => $instanceRiskOp->getRiskCacheLabel(1),
+                        'riskCacheLabel2' => $instanceRiskOp->getRiskCacheLabel(2),
+                        'riskCacheLabel3' => $instanceRiskOp->getRiskCacheLabel(3),
+                        'riskCacheLabel4' => $instanceRiskOp->getRiskCacheLabel(4),
+                    ])
+                    ->setRiskCacheDescriptions([
+                        'riskCacheDescription1' => $instanceRiskOp->getRiskCacheDescription(1),
+                        'riskCacheDescription2' => $instanceRiskOp->getRiskCacheDescription(2),
+                        'riskCacheDescription3' => $instanceRiskOp->getRiskCacheDescription(3),
+                        'riskCacheDescription4' => $instanceRiskOp->getRiskCacheDescription(4),
+                    ])
+                    ->setComment($instanceRiskOp->getComment())
+                    ->setContext($instanceRiskOp->getContext())
+                    ->setCreator($connectedUser->getEmail())
+                    ->resetUpdatedAtValue();
                 if ($instanceRiskOp->getRolfRisk()) {
                     $newInstanceRiskOp->setRolfRisk($rolfRisksNewIds[$instanceRiskOp->getRolfRisk()->getId()]);
                 }
-                // TODO duplicate properly this part
-                if ($source === MonarcObject::SOURCE_COMMON) {
-                    $test = new ArrayCollection;
-                    $newInstanceRiskOp->setInstanceRiskOwner(null);
-                    $newInstanceRiskOp->setOperationalInstanceRiskScales($test);
+
+                if ($instanceRiskOp->getInstanceRiskOwner()) {
+                    $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner(
+                        $anr,
+                        $instanceRiskOp->getInstanceRiskOwner()->getName(),
+                        $connectedUser
+                    );
+                    $newInstanceRiskOp->setInstanceRiskOwner($instanceRiskOwner);
                 }
 
-                $instanceRiskOpCliTable->save($newInstanceRiskOp, false);
+                $instanceRiskOpCliTable->saveEntity($newInstanceRiskOp, false);
 
                 $this->createOperationalInstanceRiskScalesFromSource(
                     $instanceRiskOp,
@@ -1861,6 +1905,30 @@ class AnrService extends AbstractService
                 ->setCreator($connectedUser->getEmail());
             $operationalInstanceRiskScaleCliTable->save($operationalInstanceRiskScale, false);
         }
+    }
+
+    private function getOrCreateInstanceRiskOwner(
+        AnrSuperClass $anr,
+        string $ownerName,
+        UserSuperClass $connectedUser
+    ): InstanceRiskOwner {
+        if (!isset($this->cachedData['instanceRiskOwners'][$ownerName])) {
+            /** @var InstanceRiskOwnerTable $instanceRiskOwnerTable */
+            $instanceRiskOwnerTable = $this->get('instanceRiskOwnerCliTable');
+            $instanceRiskOwner = $instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
+            if ($instanceRiskOwner === null) {
+                $instanceRiskOwner = (new InstanceRiskOwner())
+                    ->setAnr($anr)
+                    ->setName($ownerName)
+                    ->setCreator($connectedUser->getEmail());
+
+                $instanceRiskOwnerTable->save($instanceRiskOwner, false);
+            }
+
+            $this->cachedData['instanceRiskOwners'][$ownerName] = $instanceRiskOwner;
+        }
+
+        return $this->cachedData['instanceRiskOwners'][$ownerName];
     }
 
     private function getAnrLanguageCode(AnrSuperClass $anr): string

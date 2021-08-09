@@ -74,6 +74,7 @@ class ApiAnrRisksOpController extends AbstractRestfulController
 
             return $response;
         }
+
         $risks = $this->anrInstanceRiskOpService->getOperationalRisks($anrId, null, $params);
 
         return new JsonModel([

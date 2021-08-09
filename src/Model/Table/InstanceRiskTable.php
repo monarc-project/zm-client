@@ -149,19 +149,6 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     /**
      * @return InstanceRisk[]
      */
-    public function findByAnr(Anr $anr)
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('ir')
-            ->where('ir.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return InstanceRisk[]
-     */
     public function findByInstanceAndAmv(InstanceSuperClass $instance, AmvSuperClass $amv)
     {
         return $this->getRepository()

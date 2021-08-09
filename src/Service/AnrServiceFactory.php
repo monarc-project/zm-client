@@ -104,6 +104,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'operationalRiskScaleTypeCliTable' => Table\OperationalRiskScaleTypeTable::class,
         'operationalRiskScaleCommentCliTable' => Table\OperationalRiskScaleCommentTable::class,
         'operationalInstanceRiskScaleCliTable' => Table\OperationalInstanceRiskScaleTable::class,
+        'instanceRiskOwnerCliTable' => Table\InstanceRiskOwnerTable::class,
         'translationCliTable' => Table\TranslationTable::class,
 
         // export
