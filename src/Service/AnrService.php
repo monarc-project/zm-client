@@ -180,6 +180,7 @@ class AnrService extends AbstractService
     protected $operationalRiskScaleTypeCliTable;
     protected $operationalRiskScaleCommentCliTable;
     protected $operationalInstanceRiskScaleCliTable;
+    protected $instanceRiskOwnerCliTable;
     protected $translationCliTable;
 
     protected $instanceService;
