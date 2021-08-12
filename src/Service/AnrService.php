@@ -1042,7 +1042,7 @@ class AnrService extends AbstractService
                 }
                 if ($instanceRisk->getInstanceRiskOwner()) {
                     $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner(
-                        $anr,
+                        $newAnr,
                         $instanceRisk->getInstanceRiskOwner()->getName(),
                         $connectedUser
                     );
@@ -1100,7 +1100,7 @@ class AnrService extends AbstractService
 
                 if ($instanceRiskOp->getInstanceRiskOwner()) {
                     $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner(
-                        $anr,
+                        $newAnr,
                         $instanceRiskOp->getInstanceRiskOwner()->getName(),
                         $connectedUser
                     );

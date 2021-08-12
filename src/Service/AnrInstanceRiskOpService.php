@@ -375,8 +375,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
     /**
      * Called from InstanceRiskOpService::createInstanceRisksOp
+     * && OperationalRiskScaleService::createOperationalRiskScaleType
      */
-    protected function createOperationalInstanceRiskScaleObject(
+    public function createOperationalInstanceRiskScaleObject(
         InstanceRiskOpSuperClass $instanceRiskOp,
         OperationalRiskScaleTypeSuperClass $operationalRiskScaleType
     ): OperationalInstanceRiskScaleSuperClass {

@@ -1106,8 +1106,8 @@ class InstanceImportService
 
         $recommendation->setAnr($anr)
             ->setRecommandationSet($recommendationSet)
-            ->setComment(is_null($recommendationData['comment'])?'':$recommendationData['comment'])
-            ->setResponsable(is_null($recommendationData['responsable'])?'':$recommendationData['responsable'])
+            ->setComment($recommendationData['comment'] ?? '')
+            ->setResponsable($recommendationData['responsable'] ?? '')
             ->setStatus($recommendationData['status'])
             ->setImportance($recommendationData['importance'])
             ->setCode($recommendationData['code'])

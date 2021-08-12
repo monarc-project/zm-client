@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleTypeSuperClass;
@@ -17,14 +16,13 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\OperationalRiskScaleService as CoreOperationalRiskScaleService;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
-use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Ramsey\Uuid\Uuid;
 
@@ -37,10 +35,10 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
         OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
         TranslationTable $translationTable,
-        InstanceRiskOpTable $instanceRiskOpTable,
-        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         ConfigService $configService,
-        AnrInstanceRiskOpService $instanceRiskOpService
+        AnrInstanceRiskOpService $instanceRiskOpService,
+        InstanceRiskOpTable $instanceRiskOpTable,
+        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable
     ) {
         parent::__construct(
             $anrTable,
@@ -49,10 +47,10 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
             $operationalRiskScaleTypeTable,
             $operationalRiskScaleCommentTable,
             $translationTable,
-            $instanceRiskOpTable,
-            $operationalInstanceRiskScaleTable,
             $configService,
-            $instanceRiskOpService
+            $instanceRiskOpService,
+            $instanceRiskOpTable,
+            $operationalInstanceRiskScaleTable
         );
     }
 
@@ -60,28 +58,11 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
         AnrSuperClass $anr,
         OperationalRiskScaleSuperClass $operationalRiskScale
     ): OperationalRiskScaleTypeSuperClass {
-        $operationalRiskScaleType = (new OperationalRiskScaleType())
+        return (new OperationalRiskScaleType())
             ->setAnr($anr)
             ->setOperationalRiskScale($operationalRiskScale)
             ->setLabelTranslationKey((string)Uuid::uuid4())
             ->setCreator($this->connectedUser->getEmail());
-
-        $operationalInstanceRiskScales = new ArrayCollection;
-
-        $instancesRiskOps = $this->instanceRiskOpTable->findByAnr($anr);
-
-        foreach ($instancesRiskOps as $instancesRiskOp) {
-            $operationalInstanceRiskScale = (new OperationalInstanceRiskScale())
-                ->setAnr($anr)
-                ->setOperationalRiskScaleType($operationalRiskScaleType)
-                ->setOperationalInstanceRisk($instancesRiskOp)
-                ->setCreator($this->connectedUser->getEmail());
-
-            $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale,false);
-            $operationalInstanceRiskScales->add($operationalInstanceRiskScale);
-        }
-        $operationalRiskScaleType->setOperationalInstanceRiskScales($operationalInstanceRiskScales);
-        return $operationalRiskScaleType;
     }
 
     protected function createTranslationObject(
