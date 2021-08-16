@@ -429,6 +429,13 @@ class InstanceImportService
                 return $a['instance']['position'] <=> $b['instance']['position'];
             });
             foreach ($data['children'] as $child) {
+                if ($data['with_eval'] && isset($data['scales'])) {
+                    $child['with_eval'] = $data['with_eval'];
+                    $child['scales'] = $data['scales'];
+                    if (isset($data['operationalRiskScales'])) {
+                        $child['operationalRiskScales'] = $data['operationalRiskScales'];
+                    }
+                }
                 $this->importInstanceFromArray($child, $anr, $instance, $modeImport);
             }
             $this->anrInstanceService->updateChildrenImpacts($instance);
@@ -904,6 +911,9 @@ class InstanceImportService
                 if ($data['with_eval'] && isset($data['scales'])) {
                     $inst['with_eval'] = $data['with_eval'];
                     $inst['scales'] = $data['scales'];
+                    if (isset($data['operationalRiskScales'])) {
+                        $inst['operationalRiskScales'] = $data['operationalRiskScales'];
+                    }
                 }
                 $first = false;
             }
