@@ -34,6 +34,7 @@ use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
+use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfTagTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
@@ -48,6 +49,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
     protected RolfRiskTable $rolfRiskTable;
 
+    protected RecommandationTable $recommendationTable;
+
     public function __construct(
         AnrTable $anrTable,
         InstanceTable $instanceTable,
@@ -61,7 +64,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         TranslationTable $translationTable,
         ConfigService $configService,
         TranslateService $translateService,
-        InstanceRiskOwnerTable $instanceRiskOwnerTable
+        InstanceRiskOwnerTable $instanceRiskOwnerTable,
+        RecommandationTable $recommendationTable
     ) {
         parent::__construct(
             $anrTable,
@@ -78,6 +82,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $configService
         );
         $this->rolfRiskTable = $rolfRiskTable;
+        $this->recommendationTable = $recommendationTable;
     }
 
     public function createSpecificRiskOp(array $data): int
