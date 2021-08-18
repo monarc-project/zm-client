@@ -1708,11 +1708,9 @@ class AnrService extends AbstractService
             }
 
             foreach ($scale->getScaleComments() as $scaleComment) {
-                if ($scaleComment->getScaleImpactType() !== null) {
-                    continue;
+                if ($scaleComment->getScaleImpactType() === null) {
+                    $this->createScaleCommentsFromSource($newAnr, $newScale, null, $scaleComment, $connectedUser);
                 }
-
-                $this->createScaleCommentsFromSource($newAnr, $newScale, null, $scaleComment, $connectedUser);
             }
         }
 

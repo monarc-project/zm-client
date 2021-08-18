@@ -2546,7 +2546,24 @@ class InstanceImportService
             $this->scaleCommentTable->getDb()->flush();
 
             $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedAndIndexedByPosition($anr);
+            $scaleImpactTypeMaxPosition = $this->scalesImpactTypeTable->findMaxPositionByAnrAndScale(
+                $anr,
+                $scalesByType[Scale::TYPE_IMPACT]
+            );
             foreach ($data['scalesComments'] as $scalesCommentData) {
+                /*
+                 * Comments, which are not matched with a scale impact type, should not be created.
+                 * This is possible only for exported files before v2.10.5.
+                 */
+                if (isset($scalesCommentData['scaleImpactType'])
+                    && !isset(
+                        $scaleImpactTypes[$scalesCommentData['scaleImpactType']['position']],
+                        $scalesCommentData['scaleImpactType']['labels']
+                    )
+                ) {
+                    continue;
+                }
+
                 $scale = $scalesByType[$scalesCommentData['scale']['type']];
                 $scaleComment = (new ScaleComment())
                     ->setAnr($anr)
@@ -2563,9 +2580,29 @@ class InstanceImportService
 
                 if (isset($scalesCommentData['scaleImpactType']['position'])) {
                     $scaleImpactTypePosition = $scalesCommentData['scaleImpactType']['position'];
-                    if (isset($scaleImpactTypes[$scaleImpactTypePosition])) {
-                        $scaleComment->setScaleImpactType($scaleImpactTypes[$scaleImpactTypePosition]);
+                    $scaleImpactType = $scaleImpactTypes[$scaleImpactTypePosition] ?? null;
+                    if (isset($scalesCommentData['scaleImpactType']['labels'])) {
+                        /* Scale impact types are presented in the export separately since v2.10.5 */
+                        if ($scaleImpactType === null
+                            || !$scaleImpactType->getLabel($anr->getLanguage())
+                                !== $scalesCommentData['scaleImpactType']['labels']['label' . $anr->getLanguage()]
+                        ) {
+                            $scaleImpactType = (new ScaleImpactType())
+                                ->setType($scalesCommentData['scaleImpactType']['type'])
+                                ->setLabels($scalesCommentData['scaleImpactType']['labels'])
+                                ->setIsSys($scalesCommentData['scaleImpactType']['isSys'])
+                                ->setIsHidden($scalesCommentData['scaleImpactType']['isHidden'])
+                                ->setAnr($anr)
+                                ->setScale($scale)
+                                ->setPosition(++$scaleImpactTypeMaxPosition)
+                                ->setCreator($this->connectedUser->getEmail());
+
+                            $this->scalesImpactTypeTable->saveEntity($scaleImpactType, false);
+                        }
                     }
+
+                    /* We may overwrite the comments in case if position is matched but scale types are different */
+                    $scaleComment->setScaleImpactType($scaleImpactType);
                 }
 
                 $this->scaleCommentTable->saveEntity($scaleComment, false);
