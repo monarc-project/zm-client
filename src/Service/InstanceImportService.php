@@ -1795,9 +1795,11 @@ class InstanceImportService
                 unset($toExchange['id']);
                 if ($monarcObject->getRolfTag() !== null) {
                     $rolfRisks = $monarcObject->getRolfTag()->getRisks();
-                    $toExchange['rolfRisk'] = $rolfRisks[$k];
-                    $toExchange['riskCacheCode'] = $rolfRisks[$k]->getCode();
-                    $k++;
+                    if (!empty($rolfRisks[$k])) {
+                        $toExchange['rolfRisk'] = $rolfRisks[$k];
+                        $toExchange['riskCacheCode'] = $rolfRisks[$k]->getCode();
+                        $k++;
+                    }
                 }
 
                 // traitement de l'évaluation -> c'est complètement dépendant des échelles locales
