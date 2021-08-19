@@ -101,8 +101,8 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             $queryBuilder->andWhere(
                 'i.name' . $language . ' LIKE :keywords OR ' .
                 'i.label' . $language . ' LIKE :keywords OR ' .
-                'iro.risk_cache_label' . $language . ' LIKE :keywords OR ' .
-                'iro.risk_cache_description' . $language . ' LIKE :keywords OR ' .
+                'iro.riskCacheLabel' . $language . ' LIKE :keywords OR ' .
+                'iro.riskCacheDescription' . $language . ' LIKE :keywords OR ' .
                 'iro.comment LIKE :keywords'
             )->setParameter('keywords', '%' . $filterParams['keywords'] . '%');
         }
