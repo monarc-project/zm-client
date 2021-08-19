@@ -2556,10 +2556,8 @@ class InstanceImportService
                  * This is possible only for exported files before v2.10.5.
                  */
                 if (isset($scalesCommentData['scaleImpactType'])
-                    && !isset(
-                        $scaleImpactTypes[$scalesCommentData['scaleImpactType']['position']],
-                        $scalesCommentData['scaleImpactType']['labels']
-                    )
+                    && !isset($scaleImpactTypes[$scalesCommentData['scaleImpactType']['position']])
+                    && !isset($scalesCommentData['scaleImpactType']['labels'])
                 ) {
                     continue;
                 }
