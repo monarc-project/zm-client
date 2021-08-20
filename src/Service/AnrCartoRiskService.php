@@ -161,7 +161,6 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             $impactScaleTypes = $impactsScale->getOperationalRiskScaleTypes();
             $impactScaleComments = $impactScaleTypes[0]->getOperationalRiskScaleComments();
 
-
             foreach ($impactScaleComments as $comment) {
                 $impactScaleValues[] = $comment->getScaleValue();
             }
@@ -170,7 +169,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 return $a <=> $b;
             });
 
-            $this->listOpRiskScales[OperationalRiskScale::TYPE_IMPACT] = $impactScaleValues;
+            $this->listOpRiskScales[OperationalRiskScale::TYPE_IMPACT] = array_slice($impactScaleValues,$impactsScale->getMin(),$impactsScale->getMax() + 1);
             $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD] = range($likelihoodScale->getMin(),$likelihoodScale->getMax());
         }
     }
