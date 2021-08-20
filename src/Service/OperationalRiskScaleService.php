@@ -115,4 +115,9 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
             $this->translationTable->save($translation, false);
         }
     }
+
+    protected function getLanguageCodesForTranslations(AnrSuperClass $anr): array
+    {
+        return [$this->getAnrLanguageCode($anr)];
+    }
 }
