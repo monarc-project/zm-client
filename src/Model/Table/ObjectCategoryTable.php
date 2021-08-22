@@ -64,6 +64,8 @@ class ObjectCategoryTable extends CoreObjectCategoryTable
             $queryBuilder
                 ->andWhere('oc.parent = :parent')
                 ->setParameter('parent', $parentObjectCategory);
+        } else {
+            $queryBuilder->andWhere('oc.parent IS NULL');
         }
 
         return (int)$queryBuilder

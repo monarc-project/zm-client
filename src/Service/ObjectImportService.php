@@ -6,6 +6,8 @@ use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Measure;
@@ -61,6 +63,8 @@ class ObjectImportService
     /** @var array */
     private $cachedData = [];
 
+    private UserSuperClass $connectedUser;
+
     public function __construct(
         MonarcObjectTable $monarcObjectTable,
         ObjectObjectTable $objectObjectTable,
@@ -71,7 +75,8 @@ class ObjectImportService
         ReferentialTable $referentialTable,
         SoaCategoryTable $soaCategoryTable,
         ObjectCategoryTable $objectCategoryTable,
-        AnrObjectCategoryTable $anrObjectCategoryTable
+        AnrObjectCategoryTable $anrObjectCategoryTable,
+        ConnectedUserService $connectedUserService
     ) {
         $this->monarcObjectTable = $monarcObjectTable;
         $this->objectObjectTable = $objectObjectTable;
@@ -83,6 +88,7 @@ class ObjectImportService
         $this->soaCategoryTable = $soaCategoryTable;
         $this->objectCategoryTable = $objectCategoryTable;
         $this->anrObjectCategoryTable = $anrObjectCategoryTable;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
     /**
@@ -155,7 +161,8 @@ class ObjectImportService
                 ->setScope($objectData['scope'])
                 ->setLabel($labelKey, $objectData[$labelKey])
                 ->setDisponibility(isset($objectData['disponibility']) ? (float)$objectData['disponibility'] : 0)
-                ->setPosition((int)$objectData['position']);
+                ->setPosition((int)$objectData['position'])
+                ->setCreator($this->connectedUser->getEmail());
             try {
                 $this->monarcObjectTable->findByAnrAndUuid($anr, $objectData['uuid']);
             } catch (EntityNotFoundException $e) {
@@ -189,7 +196,8 @@ class ObjectImportService
                         ->setAnr($anr)
                         ->setFather($monarcObject)
                         ->setChild($childMonarcObject)
-                        ->setPosition($maxPosition + 1);
+                        ->setPosition($maxPosition + 1)
+                        ->setCreator($this->connectedUser->getEmail());
 
                     $this->objectObjectTable->saveEntity($objectsRelation);
                 }
@@ -223,12 +231,17 @@ class ObjectImportService
 
         if ($objectCategory === null) {
             $maxPosition = $this->objectCategoryTable->findMaxPositionByAnrAndParent($anr, $parentCategory);
+            $rootCategory = null;
+            if ($parentCategory !== null) {
+                $rootCategory = $parentCategory->getRoot() ?? $parentCategory;
+            }
             $objectCategory = (new ObjectCategory())
                 ->setAnr($anr)
+                ->setRoot($rootCategory)
                 ->setParent($parentCategory)
-                ->setRoot($parentCategory ? $parentCategory->getRoot() : null)
                 ->setLabels($categories[$categoryId])
-                ->setPosition($maxPosition + 1);
+                ->setPosition($maxPosition + 1)
+                ->setCreator($this->connectedUser->getEmail());
 
             $this->objectCategoryTable->saveEntity($objectCategory);
         }
@@ -253,7 +266,8 @@ class ObjectImportService
                 (new AnrObjectCategory())
                     ->setAnr($objectCategory->getAnr())
                     ->setCategory($objectCategory)
-                    ->setPosition($maxPosition)
+                    ->setPosition($maxPosition + 1)
+                    ->setCreator($this->connectedUser->getEmail())
             );
         }
     }
@@ -278,7 +292,8 @@ class ObjectImportService
             $rolfTag = (new RolfTag())
                 ->setAnr($anr)
                 ->setCode($rolfTagData['code'])
-                ->setLabels($rolfTagData);
+                ->setLabels($rolfTagData)
+                ->setCreator($this->connectedUser->getEmail());
         }
 
         if (!empty($rolfTagData['risks'])) {
@@ -301,7 +316,8 @@ class ObjectImportService
                             ->setAnr($anr)
                             ->setCode($rolfRiskCode)
                             ->setLabels($rolfRiskData)
-                            ->setDescriptions($rolfRiskData);
+                            ->setDescriptions($rolfRiskData)
+                            ->setCreator($this->connectedUser->getEmail());
                     }
 
                     foreach ($rolfRiskData['measures'] as $newMeasure) {
@@ -323,6 +339,7 @@ class ObjectImportService
                                 $referential = (new Referential())
                                     ->setAnr($anr)
                                     ->setUuid($newMeasure['referential']['uuid'])
+                                    ->setCreator($this->connectedUser->getEmail())
                                     ->{'setLabel' . $anr->getLanguage()}(
                                         $newMeasure['referential']['label' . $this->getLanguage()]
                                     );
@@ -355,7 +372,8 @@ class ObjectImportService
                                 ->setCategory($category)
                                 ->setReferential($referential)
                                 ->setCode($newMeasure['code'])
-                                ->setLabels($newMeasure);
+                                ->setLabels($newMeasure)
+                                ->setCreator($this->connectedUser->getEmail());
 
                             $this->measureTable->saveEntity($measure);
                         }
@@ -418,7 +436,8 @@ class ObjectImportService
     private function validateMonarcVersion(array $data): void
     {
         if (version_compare($this->getMonarcVersion($data), '2.8.2') < 0) {
-            throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
+            throw new Exception(
+                'Import of files exported from MONARC v2.8.1 or lower are not supported.'
                 . ' Please contact us for more details.'
             );
         }
