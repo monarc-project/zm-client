@@ -12,6 +12,8 @@ use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\Model;
+use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleCommentSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleTypeSuperClass;
@@ -21,10 +23,12 @@ use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Model\Table\AnrObjectCategoryTable as CoreAnrObjectCategoryTable;
 use Monarc\Core\Model\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
 use Monarc\Core\Model\Table\ModelTable;
+use Monarc\Core\Model\Table\ObjectCategoryTable as CoreObjectCategoryTable;
 use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
 use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
 use Monarc\Core\Model\Table\TranslationTable as CoreTranslationTable;
@@ -71,12 +75,14 @@ use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
+use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\ObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
@@ -859,13 +865,14 @@ class AnrService extends AbstractService
             }
 
             // duplicate objects categories
+            /** @var ObjectSuperClass[] $objects */
             $objects = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('MonarcObjectTable')->fetchAllObject()
-                : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->id]);
+                : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->getId()]);
             foreach ($objects as $key => $object) {
                 $existInAnr = false;
-                foreach ($object->anrs as $anrObject) {
-                    if ($anrObject->id == $anr->id) {
+                foreach ($object->getAnrs() as $anrObject) {
+                    if ($anrObject->getId() === $anr->getId()) {
                         $existInAnr = true;
                     }
                 }
@@ -875,67 +882,76 @@ class AnrService extends AbstractService
             }
             $categoriesIds = [];
             foreach ($objects as $object) {
-                if ($object->category) {
-                    $categoriesIds[] = $object->category->id;
-                    $this->getParentsCategoryIds($object->category, $categoriesIds);
+                if ($object->getCategory()) {
+                    $categoriesIds[] = $object->getCategory()->getId();
+                    $this->getParentsCategoryIds($object->getCategory(), $categoriesIds);
                 }
             }
 
             $objectsCategoriesNewIds = [];
+            /** @var ObjectCategorySuperClass[] $objectsCategories */
             $objectsCategories = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('objectCategoryTable')->fetchAllObject()
-                : $this->get('objectCategoryCliTable')->getEntityByFields(['anr' => $anr->id], ['parent' => 'ASC']);
+                : $this->get('objectCategoryCliTable')->getEntityByFields(
+                    ['anr' => $anr->getId()],
+                    ['parent' => 'ASC']
+                );
             foreach ($objectsCategories as $objectCategory) {
-                if (in_array($objectCategory->id, $categoriesIds)) {
+                if (\in_array($objectCategory->getId(), $categoriesIds, true)) {
                     $newObjectCategory = new ObjectCategory($objectCategory);
                     $newObjectCategory->set('id', null);
                     $newObjectCategory->setAnr($newAnr);
-                    if ($objectCategory->parent) {
-                        $newObjectCategory->setParent($objectsCategoriesNewIds[$objectCategory->parent->id]);
+                    if ($objectCategory->getParent()) {
+                        $newObjectCategory->setParent($objectsCategoriesNewIds[$objectCategory->getParent()->getId()]);
                     }
-                    if ($objectCategory->root) {
-                        $newObjectCategory->setRoot($objectsCategoriesNewIds[$objectCategory->root->id]);
+                    if ($objectCategory->getRoot()) {
+                        $newObjectCategory->setRoot($objectsCategoriesNewIds[$objectCategory->getRoot()->getId()]);
                     }
-                    $this->get('objectCategoryCliTable')->save($newObjectCategory,false);
-                    $objectsCategoriesNewIds[$objectCategory->id] = $newObjectCategory;
+                    $this->get('objectCategoryCliTable')->save($newObjectCategory, false);
+
+                    $objectsCategoriesNewIds[$objectCategory->getId()] = $newObjectCategory;
                 }
             }
 
             // duplicate objects
             $objectsNewIds = [];
             $objectsRootCategories = [];
+            /** @var CoreObjectCategoryTable|ObjectCategoryTable $objectCategoryTable */
+            $objectCategoryTable = $source === MonarcObject::SOURCE_COMMON
+                ? $this->get('objectCategoryTable')
+                : $this->get('objectCategoryCliTable');
             foreach ($objects as $object) {
                 $newObject = new MonarcObject($object);
                 $newObject->setAnr($newAnr);
                 $newObject->setAnrs(null);
                 $newObject->addAnr($newAnr);
-                if (!is_null($object->category)) {
-                    $newObject->setCategory($objectsCategoriesNewIds[$object->category->id]);
+                if ($object->getCategory() !== null) {
+                    $newObject->setCategory($objectsCategoriesNewIds[$object->getCategory()->getId()]);
+
+                    $objectCategory = $objectCategoryTable->findById($object->getCategory()->getId());
+                    $rootCategoryId = $objectCategory->getRoot() !== null
+                        ? $objectCategory->getRoot()->getId()
+                        : $objectCategory->getId();
+                    if (!\in_array($rootCategoryId, $objectsRootCategories, true)) {
+                        $objectsRootCategories[] = $rootCategoryId;
+                    }
                 }
-                $newObject->setAsset($assetsNewIds[$object->asset->getUuid()]);
-                if ($object->rolfTag) {
-                    $newObject->setRolfTag($rolfTagsNewIds[$object->rolfTag->id]);
+                $newObject->setAsset($assetsNewIds[$object->getAsset()->getUuid()]);
+                if ($object->getRolfTag()) {
+                    $newObject->setRolfTag($rolfTagsNewIds[$object->getRolfTag()->getId()]);
                 }
                 $this->get('objectCliTable')->save($newObject, false);
                 $objectsNewIds[$object->getUuid()] = $newObject;
-
-                //root category
-                if (!is_null($object->category)) {
-                    $objectCategoryTable = $source === MonarcObject::SOURCE_COMMON
-                        ? $this->get('objectCategoryTable')
-                        : $this->get('objectCategoryCliTable');
-                    $objectCategory = $objectCategoryTable->getEntity($object->category->id);
-                    $objectsRootCategories[] = ($objectCategory->root) ? $objectCategory->root->id : $objectCategory->id;
-                }
             }
 
-            $objectsRootCategories = array_unique($objectsRootCategories);
-
             // duplicate anrs objects categories
-            $anrObjectCategoryTable = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('anrObjectCategoryTable') : $this->get('anrObjectCategoryCliTable');
-            $anrObjectsCategories = $anrObjectCategoryTable->getEntityByFields(['anr' => $anr->id]);
+            /** @var AnrObjectCategoryTable|CoreAnrObjectCategoryTable $anrObjectCategoryTable */
+            $anrObjectCategoryTable = $source === MonarcObject::SOURCE_COMMON
+                ? $this->get('anrObjectCategoryTable')
+                : $this->get('anrObjectCategoryCliTable');
+            $anrObjectsCategories = $anrObjectCategoryTable->findByAnrOrderedByPosititon($anr);
             foreach ($anrObjectsCategories as $key => $anrObjectCategory) {
-                if (!in_array($anrObjectCategory->category->id, $objectsRootCategories)) {
+                if (!\in_array($anrObjectCategory->getCategory()->getId(), $objectsRootCategories, true)) {
                     unset($anrObjectsCategories[$key]);
                 }
             }
@@ -943,7 +959,7 @@ class AnrService extends AbstractService
                 $newAnrObjectCategory = new AnrObjectCategory($anrObjectCategory);
                 $newAnrObjectCategory->set('id', null);
                 $newAnrObjectCategory->setAnr($newAnr);
-                $newAnrObjectCategory->setCategory($objectsCategoriesNewIds[$anrObjectCategory->category->id]);
+                $newAnrObjectCategory->setCategory($objectsCategoriesNewIds[$anrObjectCategory->getCategory()->getId()]);
                 $this->get('anrObjectCategoryCliTable')->save($newAnrObjectCategory, false);
             }
 

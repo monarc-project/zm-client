@@ -8,8 +8,8 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
+use Monarc\Core\Model\Table\ObjectCategoryTable as CoreObjectCategoryTable;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\ObjectCategory;
@@ -18,16 +18,13 @@ use Monarc\FrontOffice\Model\Entity\ObjectCategory;
  * Class ObjectCategoryTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class ObjectCategoryTable extends AbstractEntityTable
+class ObjectCategoryTable extends CoreObjectCategoryTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, ObjectCategory::class, $connectedUserService);
-    }
+        parent::__construct($dbService, $connectedUserService);
 
-    public function getEntityClass(): string
-    {
-        return ObjectCategory::class;
+        $this->entityClass = ObjectCategory::class;
     }
 
     public function findByAnrParentAndLabel(
