@@ -341,7 +341,7 @@ class ObjectImportService
                                     ->setUuid($newMeasure['referential']['uuid'])
                                     ->setCreator($this->connectedUser->getEmail())
                                     ->{'setLabel' . $anr->getLanguage()}(
-                                        $newMeasure['referential']['label' . $this->getLanguage()]
+                                        $newMeasure['referential']['label' . $anr->getLanguage()]
                                     );
                                 $this->referentialTable->saveEntity($referential);
                             }
