@@ -7,8 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\ORM\EntityNotFoundException;
-use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Model\Table\RolfRiskTable as CoreRolfRiskTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
@@ -18,26 +17,13 @@ use Monarc\FrontOffice\Model\Entity\RolfRisk;
  * Class RolfRiskTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class RolfRiskTable extends AbstractEntityTable
+class RolfRiskTable extends CoreRolfRiskTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, RolfRisk::class, $connectedUserService);
-    }
+        parent::__construct($dbService, $connectedUserService);
 
-    public function findById(int $id): RolfRisk
-    {
-        $rolfRisk = $this->getRepository()
-            ->createQueryBuilder('rr')
-            ->where('rr.id = :id')
-            ->setParameter('id', $id)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-
-        if ($rolfRisk === null) {
-            throw EntityNotFoundException::fromClassNameAndIdentifier(\get_class($this), [$id]);
-        }
+        $this->entityClass = RolfRisk::class;
     }
 
     public function findByAnrAndCode(Anr $anr, string $code): ?RolfRisk
@@ -51,14 +37,5 @@ class RolfRiskTable extends AbstractEntityTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    public function saveEntity(RolfRisk $rolfRisk, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($rolfRisk);
-        if ($flushAll) {
-            $em->flush();
-        }
     }
 }
