@@ -361,21 +361,23 @@ class InstanceImportService
         $this->currentAnalyseMaxRecommendationPosition = $this->initialAnalyseMaxRecommendationPosition;
         $this->currentMaxInstancePosition = $this->instanceTable->getMaxPositionByAnrAndParent($anr, $parentInstance);
 
+        $result = false;
+
         if (isset($data['type']) && $data['type'] === 'instance') {
             $this->importType = 'instance';
 
-            return $this->importInstanceFromArray($data, $anr, $parentInstance, $modeImport);
+            $result = $this->importInstanceFromArray($data, $anr, $parentInstance, $modeImport);
         }
 
         if (isset($data['type']) && $data['type'] === 'anr') {
             $this->importType = 'anr';
 
-            return $this->importAnrFromArray($data, $anr, $parentInstance, $modeImport);
+            $result = $this->importAnrFromArray($data, $anr, $parentInstance, $modeImport);
         }
 
         $this->fixImportMismatches();
 
-        return false;
+        return $result;
     }
 
     private function isImportTypeAnr(): bool
