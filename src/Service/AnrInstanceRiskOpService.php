@@ -193,7 +193,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
             $result[] = [
                 'id' => $operationalInstanceRisk->getId(),
-                'rolfRisk' => $operationalInstanceRisk->getRolfRisk()->getId(),
+                'rolfRisk' => $operationalInstanceRisk->getRolfRisk()
+                    ? $operationalInstanceRisk->getRolfRisk()->getId()
+                    : null,
                 'label' . $anrLanguage => $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
                 'description' . $anrLanguage => $operationalInstanceRisk->getRiskCacheDescription($anrLanguage),
                 'context' => $operationalInstanceRisk->getContext(),
