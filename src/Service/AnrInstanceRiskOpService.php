@@ -351,9 +351,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
     }
 
     /**
-     * Called from InstanceRiskOpService::createInstanceRisksOp && RolfRiskService::create
+     * Called from parent::createInstanceRiskOpWithScales
      */
-    public function createInstanceRiskOpObjectFromInstanceObjectAndRolfRisk(
+    protected function createInstanceRiskOpObjectFromInstanceObjectAndRolfRisk(
         InstanceSuperClass $instance,
         ObjectSuperClass $object,
         RolfRiskSuperClass $rolfRisk
