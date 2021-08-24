@@ -44,6 +44,7 @@ use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 use Monarc\FrontOffice\Model\Entity\Referential;
+use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
@@ -2230,7 +2231,7 @@ class InstanceImportService
         Anr $anr,
         ?InstanceSuperClass $parentInstance,
         MonarcObject $monarcObject
-    ): Instance  {
+    ): Instance {
         $instanceData = $data['instance'];
         $instance = (new Instance())
             ->setAnr($anr)
@@ -2919,9 +2920,14 @@ class InstanceImportService
                 if (isset($cachedRolfRisks[$operationalRiskToFixRolfRisk['rolfRiskId']])) {
                     /** @var InstanceRiskOp $operationalInstanceRisk */
                     $operationalInstanceRisk = $operationalRiskToFixRolfRisk['operationalRisk'];
+                    /** @var RolfRisk $rolfRisk */
                     $rolfRisk = $cachedRolfRisks[$operationalRiskToFixRolfRisk['rolfRiskId']];
 
-                    $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk->setRolfRisk($rolfRisk), false);
+                    $operationalInstanceRisk
+                        ->setRolfRisk($rolfRisk)
+                        ->setRiskCacheCode($rolfRisk->getCode());
+
+                    $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
                 }
             }
 
