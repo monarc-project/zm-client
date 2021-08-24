@@ -1761,7 +1761,7 @@ class InstanceImportService
             ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetedP' => 'TargetedValue'],
         ];
 
-        $rolfRiskIndex = 0;
+        $cachedRolfRisks = $this->objectImportService->getCachedDataByKey('rolfRisks');
         foreach ($data['risksop'] as $operationalRiskData) {
             $operationalInstanceRisk = (new InstanceRiskOp())
                 ->setAnr($anr)
@@ -1805,10 +1805,8 @@ class InstanceImportService
                 );
             }
 
-            /* Magically corresponds to the imported order of rolfRisks in
-                ObjectImportService::processRolfTagAndRolfRisks */
-            if ($monarcObject->getRolfTag() !== null) {
-                $rolfRisk = $monarcObject->getRolfTag()->getRisks()[$rolfRiskIndex++] ?? null;
+            if (!empty($operationalRiskData['rolfRisk']) && $monarcObject->getRolfTag() !== null) {
+                $rolfRisk = $cachedRolfRisks[$operationalRiskData['rolfRisk']] ?? null;
                 if ($rolfRisk !== null) {
                     $operationalInstanceRisk->setRolfRisk($rolfRisk)->setRiskCacheCode($rolfRisk->getCode());
                 }

@@ -309,7 +309,7 @@ class ObjectImportService
                 $rolfRiskData = $data['rolfRisks'][$riskId];
                 $rolfRiskCode = (string)$rolfRiskData['code'];
 
-                if (!isset($this->cachedData['rolfRisks'][$rolfRiskCode])) {
+                if (!isset($this->cachedData['rolfRisks'][$riskId])) {
                     $rolfRisk = $this->rolfRiskTable->findByAnrAndCode($anr, $rolfRiskCode);
                     if ($rolfRisk === null) {
                         $rolfRisk = (new RolfRisk())
@@ -387,10 +387,10 @@ class ObjectImportService
 
                     $this->rolfRiskTable->saveEntity($rolfRisk);
 
-                    $this->cachedData['rolfRisks'][$rolfRiskCode] = $rolfRisk;
+                    $this->cachedData['rolfRisks'][$riskId] = $rolfRisk;
                 }
 
-                $rolfTag->addRisk($this->cachedData['rolfRisks'][$rolfRiskCode]);
+                $rolfTag->addRisk($this->cachedData['rolfRisks'][$riskId]);
             }
         }
 
