@@ -373,6 +373,8 @@ class InstanceImportService
             return $this->importAnrFromArray($data, $anr, $parentInstance, $modeImport);
         }
 
+        $this->fixImportMismatches();
+
         return false;
     }
 
@@ -1809,6 +1811,11 @@ class InstanceImportService
                 $rolfRisk = $cachedRolfRisks[$operationalRiskData['rolfRisk']] ?? null;
                 if ($rolfRisk !== null) {
                     $operationalInstanceRisk->setRolfRisk($rolfRisk)->setRiskCacheCode($rolfRisk->getCode());
+                } else {
+                    $this->cachedData['operationalRisksToFixRolfRisks'][] = [
+                        'operationalRisk' => $operationalInstanceRisk,
+                        'rolfRiskId' => $operationalRiskData['rolfRisk'],
+                    ];
                 }
             }
 
@@ -2900,5 +2907,23 @@ class InstanceImportService
     private function getAnrLanguageCode(AnrSuperClass $anr): string
     {
         return strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
+    }
+
+    private function fixImportMismatches(): void
+    {
+        if (!empty($this->cachedData['operationalRisksToFixRolfRisks'])) {
+            $cachedRolfRisks = $this->objectImportService->getCachedDataByKey('rolfRisks');
+            foreach ($this->cachedData['operationalRisksToFixRolfRisks'] as $operationalRiskToFixRolfRisk) {
+                if (isset($cachedRolfRisks[$operationalRiskToFixRolfRisk['rolfRiskId']])) {
+                    /** @var InstanceRiskOp $operationalInstanceRisk */
+                    $operationalInstanceRisk = $operationalRiskToFixRolfRisk['operationalRisk'];
+                    $rolfRisk = $cachedRolfRisks[$operationalRiskToFixRolfRisk['rolfRiskId']];
+
+                    $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk->setRolfRisk($rolfRisk), false);
+                }
+            }
+
+            $this->instanceRiskOpTable->getDb()->flush();
+        }
     }
 }
