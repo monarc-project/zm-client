@@ -119,7 +119,7 @@ class ObjectExportService
                         'measures' => [],
                     ];
                     foreach ($rolfRisk->getMeasures() as $measure) {
-                        $result['rolfRisks'][$rolfRiskId]['measures'] = [
+                        $result['rolfRisks'][$rolfRiskId]['measures'][] = [
                             'uuid' => $measure->getUuid(),
                             'category' => $measure->getCategory()
                                 ? [

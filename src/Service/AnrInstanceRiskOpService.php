@@ -193,7 +193,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
             $result[] = [
                 'id' => $operationalInstanceRisk->getId(),
-                'rolfRisk' => $operationalInstanceRisk->getRolfRisk()->getId(),
+                'rolfRisk' => $operationalInstanceRisk->getRolfRisk()
+                    ? $operationalInstanceRisk->getRolfRisk()->getId()
+                    : null,
                 'label' . $anrLanguage => $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
                 'description' . $anrLanguage => $operationalInstanceRisk->getRiskCacheDescription($anrLanguage),
                 'context' => $operationalInstanceRisk->getContext(),
@@ -351,9 +353,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
     }
 
     /**
-     * Called from InstanceRiskOpService::createInstanceRisksOp && RolfRiskService::create
+     * Called from parent::createInstanceRiskOpWithScales
      */
-    public function createInstanceRiskOpObjectFromInstanceObjectAndRolfRisk(
+    protected function createInstanceRiskOpObjectFromInstanceObjectAndRolfRisk(
         InstanceSuperClass $instance,
         ObjectSuperClass $object,
         RolfRiskSuperClass $rolfRisk

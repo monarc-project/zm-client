@@ -161,9 +161,10 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             $impactScaleTypes = $impactsScale->getOperationalRiskScaleTypes();
             $impactScaleComments = $impactScaleTypes[0]->getOperationalRiskScaleComments();
 
-
             foreach ($impactScaleComments as $comment) {
-                $impactScaleValues[] = $comment->getScaleValue();
+                if (!$comment->isHidden()) {
+                    $impactScaleValues[] = $comment->getScaleValue();
+                }
             }
 
             usort($impactScaleValues, static function ($a, $b) {

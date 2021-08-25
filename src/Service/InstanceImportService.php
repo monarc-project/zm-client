@@ -44,6 +44,7 @@ use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 use Monarc\FrontOffice\Model\Entity\Referential;
+use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
@@ -361,19 +362,23 @@ class InstanceImportService
         $this->currentAnalyseMaxRecommendationPosition = $this->initialAnalyseMaxRecommendationPosition;
         $this->currentMaxInstancePosition = $this->instanceTable->getMaxPositionByAnrAndParent($anr, $parentInstance);
 
+        $result = false;
+
         if (isset($data['type']) && $data['type'] === 'instance') {
             $this->importType = 'instance';
 
-            return $this->importInstanceFromArray($data, $anr, $parentInstance, $modeImport);
+            $result = $this->importInstanceFromArray($data, $anr, $parentInstance, $modeImport);
         }
 
         if (isset($data['type']) && $data['type'] === 'anr') {
             $this->importType = 'anr';
 
-            return $this->importAnrFromArray($data, $anr, $parentInstance, $modeImport);
+            $result = $this->importAnrFromArray($data, $anr, $parentInstance, $modeImport);
         }
 
-        return false;
+        $this->fixImportMismatches();
+
+        return $result;
     }
 
     private function isImportTypeAnr(): bool
@@ -1761,7 +1766,7 @@ class InstanceImportService
             ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetedP' => 'TargetedValue'],
         ];
 
-        $rolfRiskIndex = 0;
+        $cachedRolfRisks = $this->objectImportService->getCachedDataByKey('rolfRisks');
         foreach ($data['risksop'] as $operationalRiskData) {
             $operationalInstanceRisk = (new InstanceRiskOp())
                 ->setAnr($anr)
@@ -1805,12 +1810,15 @@ class InstanceImportService
                 );
             }
 
-            /* Magically corresponds to the imported order of rolfRisks in
-                ObjectImportService::processRolfTagAndRolfRisks */
-            if ($monarcObject->getRolfTag() !== null) {
-                $rolfRisk = $monarcObject->getRolfTag()->getRisks()[$rolfRiskIndex++] ?? null;
+            if (!empty($operationalRiskData['rolfRisk']) && $monarcObject->getRolfTag() !== null) {
+                $rolfRisk = $cachedRolfRisks[$operationalRiskData['rolfRisk']] ?? null;
                 if ($rolfRisk !== null) {
                     $operationalInstanceRisk->setRolfRisk($rolfRisk)->setRiskCacheCode($rolfRisk->getCode());
+                } else {
+                    $this->cachedData['operationalRisksToFixRolfRisks'][] = [
+                        'operationalRisk' => $operationalInstanceRisk,
+                        'rolfRiskId' => $operationalRiskData['rolfRisk'],
+                    ];
                 }
             }
 
@@ -2223,7 +2231,7 @@ class InstanceImportService
         Anr $anr,
         ?InstanceSuperClass $parentInstance,
         MonarcObject $monarcObject
-    ): Instance  {
+    ): Instance {
         $instanceData = $data['instance'];
         $instance = (new Instance())
             ->setAnr($anr)
@@ -2546,7 +2554,22 @@ class InstanceImportService
             $this->scaleCommentTable->getDb()->flush();
 
             $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedAndIndexedByPosition($anr);
+            $scaleImpactTypeMaxPosition = $this->scalesImpactTypeTable->findMaxPositionByAnrAndScale(
+                $anr,
+                $scalesByType[Scale::TYPE_IMPACT]
+            );
             foreach ($data['scalesComments'] as $scalesCommentData) {
+                /*
+                 * Comments, which are not matched with a scale impact type, should not be created.
+                 * This is possible only for exported files before v2.10.5.
+                 */
+                if (isset($scalesCommentData['scaleImpactType'])
+                    && !isset($scaleImpactTypes[$scalesCommentData['scaleImpactType']['position']])
+                    && !isset($scalesCommentData['scaleImpactType']['labels'])
+                ) {
+                    continue;
+                }
+
                 $scale = $scalesByType[$scalesCommentData['scale']['type']];
                 $scaleComment = (new ScaleComment())
                     ->setAnr($anr)
@@ -2563,9 +2586,36 @@ class InstanceImportService
 
                 if (isset($scalesCommentData['scaleImpactType']['position'])) {
                     $scaleImpactTypePosition = $scalesCommentData['scaleImpactType']['position'];
-                    if (isset($scaleImpactTypes[$scaleImpactTypePosition])) {
-                        $scaleComment->setScaleImpactType($scaleImpactTypes[$scaleImpactTypePosition]);
+                    $scaleImpactType = $scaleImpactTypes[$scaleImpactTypePosition] ?? null;
+                    $isSystem = $scaleImpactType !== null && $scaleImpactType->isSys();
+                    /* Scale impact types are presented in the export separately since v2.10.5 */
+                    if (isset($scalesCommentData['scaleImpactType']['labels'])
+                        && !$isSystem
+                        && ($scaleImpactType === null
+                            || $scaleImpactType->getLabel($anr->getLanguage())
+                            !== $scalesCommentData['scaleImpactType']['labels']['label' . $anr->getLanguage()]
+                        )
+                    ) {
+                        $scaleImpactType = (new ScaleImpactType())
+                            ->setType($scalesCommentData['scaleImpactType']['type'])
+                            ->setLabels($scalesCommentData['scaleImpactType']['labels'])
+                            ->setIsSys($scalesCommentData['scaleImpactType']['isSys'])
+                            ->setIsHidden($scalesCommentData['scaleImpactType']['isHidden'])
+                            ->setAnr($anr)
+                            ->setScale($scale)
+                            ->setPosition(++$scaleImpactTypeMaxPosition)
+                            ->setCreator($this->connectedUser->getEmail());
+
+                        $this->scalesImpactTypeTable->saveEntity($scaleImpactType, false);
+
+                        $scaleImpactTypes[$scaleImpactTypePosition] = $scaleImpactType;
                     }
+                    if ($scaleImpactType === null) {
+                        continue;
+                    }
+
+                    /* We may overwrite the comments if position is matched but scale type labels are different */
+                    $scaleComment->setScaleImpactType($scaleImpactType);
                 }
 
                 $this->scaleCommentTable->saveEntity($scaleComment, false);
@@ -2860,5 +2910,28 @@ class InstanceImportService
     private function getAnrLanguageCode(AnrSuperClass $anr): string
     {
         return strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
+    }
+
+    private function fixImportMismatches(): void
+    {
+        if (!empty($this->cachedData['operationalRisksToFixRolfRisks'])) {
+            $cachedRolfRisks = $this->objectImportService->getCachedDataByKey('rolfRisks');
+            foreach ($this->cachedData['operationalRisksToFixRolfRisks'] as $operationalRiskToFixRolfRisk) {
+                if (isset($cachedRolfRisks[$operationalRiskToFixRolfRisk['rolfRiskId']])) {
+                    /** @var InstanceRiskOp $operationalInstanceRisk */
+                    $operationalInstanceRisk = $operationalRiskToFixRolfRisk['operationalRisk'];
+                    /** @var RolfRisk $rolfRisk */
+                    $rolfRisk = $cachedRolfRisks[$operationalRiskToFixRolfRisk['rolfRiskId']];
+
+                    $operationalInstanceRisk
+                        ->setRolfRisk($rolfRisk)
+                        ->setRiskCacheCode($rolfRisk->getCode());
+
+                    $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
+                }
+            }
+
+            $this->instanceRiskOpTable->getDb()->flush();
+        }
     }
 }
