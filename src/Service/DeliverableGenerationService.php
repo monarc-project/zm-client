@@ -5135,6 +5135,7 @@ class DeliverableGenerationService extends AbstractService
                                     $this->boldFont,
                                     $this->leftParagraph
                                 );
+                            $headerImpact = true;
                         }
                         $table->addRow(400);
                         if (!$headerConsequence) {
@@ -5194,8 +5195,6 @@ class DeliverableGenerationService extends AbstractService
                         $headerConsequence = true;
                     }
                 }
-
-                $headerImpact = true;
             }
         }
 
