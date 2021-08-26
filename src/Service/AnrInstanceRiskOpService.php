@@ -183,7 +183,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                 $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
                 $scalesData[$operationalRiskScaleType->getId()] = [
                     'instanceRiskScaleId' => $operationalInstanceRiskScale->getId(),
-                    'label' => $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]->getValue(),
+                    'label' => isset($scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()])
+                        ? $scaleTypesTranslations[$operationalRiskScaleType->getLabelTranslationKey()]->getValue()
+                        : '',
                     'netValue' => $operationalInstanceRiskScale->getNetValue(),
                     'brutValue' => $operationalInstanceRiskScale->getBrutValue(),
                     'targetedValue' => $operationalInstanceRiskScale->getTargetedValue(),
