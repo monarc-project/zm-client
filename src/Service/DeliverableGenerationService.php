@@ -707,9 +707,10 @@ class DeliverableGenerationService extends AbstractService
 
         $table->addRow(400, $this->tblHeader);
         $table->addCell(Converter::cmToTwip(2.00), $this->restartAndGrayCell)
-            ->addText($this->anrTranslate('Level'),
-            $this->boldFont,
-            $this->centerParagraph
+            ->addText(
+                $this->anrTranslate('Level'),
+                $this->boldFont,
+                $this->centerParagraph
         );
         $table->addCell(Converter::cmToTwip(8.40), $this->setColSpanCell(3,'DFDFDF'))
             ->addText(
@@ -812,11 +813,10 @@ class DeliverableGenerationService extends AbstractService
 
                 $cellConsequences = $table->addCell(Converter::cmToTwip(2.80), $this->vAlignCenterCell);
                 $cellConsequencesRun = $cellConsequences->addTextRun($this->leftParagraph);
-                $cellConsequencesRun
-                    ->addText(_WT(
-                        $this->anrTranslate($impactType['label' . $this->currentLangAnrIndex])) . ' : ',
-                        $this->boldFont
-                    );
+                $cellConsequencesRun->addText(
+                    _WT($this->anrTranslate($impactType['label' . $this->currentLangAnrIndex])) . ' : ',
+                    $this->boldFont
+                );
                 $cellConsequencesRun->addText(
                     _WT($commentText),
                     $this->normalFont
@@ -1105,11 +1105,10 @@ class DeliverableGenerationService extends AbstractService
                 $table->addRow(400);
                 $table->addCell(Converter::cmToTwip(18.00), $this->vAlignCenterCell)
                     ->addText(
-                        _WT(
-                            $question['label' . $this->currentLangAnrIndex]),
-                            $this->boldFont,
-                            $this->leftParagraph
-                        );
+                        _WT($question['label' . $this->currentLangAnrIndex]),
+                        $this->boldFont,
+                        $this->leftParagraph
+                    );
                 $table->addRow(400);
                 $table->addCell(Converter::cmToTwip(18.00),$this->vAlignCenterCell)
                     ->addText(
@@ -1658,12 +1657,18 @@ class DeliverableGenerationService extends AbstractService
             }
 
             if (in_array('true',$global)) {
-                $section->addTitle($this->anrTranslate('Global assets'),3);
+                $section->addTitle(
+                    $this->anrTranslate('Global assets'),
+                    3
+                );
             }
 
             foreach ($mem_risks as $data) {
                 if (empty($data['tree'])) {
-                    $section->addTitle(_WT($data['ctx']),4);
+                    $section->addTitle(
+                        _WT($data['ctx']),
+                        4
+                    );
                     $table = $section->addTable($this->borderTable);
                     $table->addRow(400, $this->tblHeader);
                     $table->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3,'444444'))
@@ -1774,7 +1779,10 @@ class DeliverableGenerationService extends AbstractService
                 }else {
                     for ($i = 0; $i < count($data['tree']); $i++) {
                         if($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id']) {
-                            $section->addTitle(_WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),$i + 3);
+                            $section->addTitle(
+                                _WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),
+                                $i + 3
+                            );
                             $title[$i] = $data['tree'][$i]['id'];
                             if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
                                 $data['risks'] = true;
@@ -1921,15 +1929,17 @@ class DeliverableGenerationService extends AbstractService
                                 $this->centerParagraph
                             );
                         $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText($r['impactI'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
+                            ->addText(
+                                $r['impactI'],
+                                $this->normalFont,
+                                $this->centerParagraph
+                            );
                         $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText($r['impactA'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
+                            ->addText(
+                                $r['impactA'],
+                                $this->normalFont,
+                                $this->centerParagraph
+                            );
                         $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
                             ->addText(
                                 _WT($r['threat']),
@@ -1937,13 +1947,14 @@ class DeliverableGenerationService extends AbstractService
                                 $this->leftParagraph
                             );
                         $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText($r['threatRate'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
+                            ->addText(
+                                $r['threatRate'],
+                                $this->normalFont,
+                                $this->centerParagraph
+                            );
                         $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                            ->addText(_WT(
-                                $r['vulnerability']),
+                            ->addText(
+                                _WT($r['vulnerability']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
@@ -1976,7 +1987,7 @@ class DeliverableGenerationService extends AbstractService
                                 $r['riskA'],
                                 $this->boldFont,
                                 $this->centerParagraph
-                        );
+                            );
                         $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
                             ->addText(
                                 $this->getKindfofMeasureLabel($r['kindOfMeasure']),
@@ -2144,7 +2155,10 @@ class DeliverableGenerationService extends AbstractService
             foreach ($lst as $data) {
                 for ($i = 0; $i < count($data['tree']); $i++) {
                     if($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id'] ) {
-                        $section->addTitle(_WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),$i + 3);
+                        $section->addTitle(
+                            _WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),
+                            $i + 3
+                        );
                         $title[$i] = $data['tree'][$i]['id'];
                         if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
                             $data['risks'] = true;
@@ -2275,7 +2289,12 @@ class DeliverableGenerationService extends AbstractService
                     }
                     $table = $section->addTable($this->borderTable);
                     $table->addRow(400);
-                    $table->addCell(Converter::cmToTwip(19.00), $styleCell)->addText(_WT($data['path']), $this->boldFont, $this->leftParagraph);
+                    $table->addCell(Converter::cmToTwip(19.00), $styleCell)
+                        ->addText(
+                            _WT($data['path']),
+                            $this->boldFont,
+                            $this->leftParagraph
+                        );
                     foreach ($data['risks'] as $r) {
                         if (!empty($data['risks'])) {
                             foreach ($r as $key => $value) {
@@ -2292,10 +2311,11 @@ class DeliverableGenerationService extends AbstractService
                                 );
                             if ($this->anr->showRolfBrut == 1) {
                                 $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                                    ->addText($r['brutProb'],
-                                    $this->normalFont,
-                                    $this->centerParagraph
-                                );
+                                    ->addText(
+                                        $r['brutProb'],
+                                        $this->normalFont,
+                                        $this->centerParagraph
+                                    );
                                 foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                     $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                     ->addText(
@@ -2305,16 +2325,18 @@ class DeliverableGenerationService extends AbstractService
                                     );
                                 }
                                 $table->addCell(Converter::cmToTwip(1.00), $styleContentCellbrutRisk)
-                                    ->addText($r['brutRisk'],
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
+                                    ->addText(
+                                        $r['brutRisk'],
+                                        $this->boldFont,
+                                        $this->centerParagraph
+                                    );
                             }
                             $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                                ->addText($r['netProb'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
+                                ->addText(
+                                    $r['netProb'],
+                                    $this->normalFont,
+                                    $this->centerParagraph
+                                );
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                 ->addText(
@@ -2856,11 +2878,11 @@ class DeliverableGenerationService extends AbstractService
                             $this->centerParagraph
                         );
                     $tableRiskOp->addCell(Converter::cmToTwip(8.00), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($r['comment']),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                        ->addText(
+                            _WT($r['comment']),
+                            $this->normalFont,
+                            $this->leftParagraph
+                        );
                     $cacheTargetedRisk = $r['cacheTargetedRisk'] == '-' ? $r['cacheNetRisk'] : $r['cacheTargetedRisk'];
                     $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->setBgColorCell($cacheTargetedRisk,false))
                         ->addText(
@@ -3014,7 +3036,10 @@ class DeliverableGenerationService extends AbstractService
                     $table->addRow(400);
                     $cellReco = $table->addCell(Converter::cmToTwip(5.00), $this->setColSpanCell(9,'DBE5F1'));
                     $cellRecoRun = $cellReco->addTextRun($this->leftParagraph);
-                    $cellRecoRun->addText($importance . ' ', $this->redFont);
+                    $cellRecoRun->addText(
+                        $importance . ' ',
+                        $this->redFont
+                    );
                     $cellRecoRun->addText(
                         _WT($recommendationRisk->getRecommandation()->getCode()),
                         $this->boldFont
@@ -3049,60 +3074,55 @@ class DeliverableGenerationService extends AbstractService
                     $path = $this->getObjectInstancePath($recommendationRisk);
 
                     $table->addRow(400);
-                    $table
-                        ->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                        ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
-                    $table
-                        ->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    $table->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                        ->addText(
+                            _WT($path),
+                            $this->normalFont,
+                            $this->leftParagraph
+                        );
+                    $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                         ->addText(
                             _WT($recommendationRisk->getThreat()->{'label' . $this->currentLangAnrIndex}),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table
-                        ->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                         ->addText(
                             _WT($recommendationRisk->getVulnerability()->{'label' . $this->currentLangAnrIndex}),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table
-                        ->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                         ->addText(
                             _WT($recommendationRisk->getInstanceRisk()->getComment()),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table
-                        ->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskC))
+                    $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskC))
                         ->addText(
                             $riskC,
                             $this->boldFont,
                             $this->centerParagraph
                         );
-                    $table
-                        ->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskI))
+                    $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskI))
                         ->addText(
                             $riskI,
                             $this->boldFont,
                             $this->centerParagraph
                         );
-                    $table
-                        ->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskA))
+                    $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskA))
                         ->addText(
                             $riskA,
                             $this->boldFont,
                             $this->centerParagraph
                         );
-                    $table
-                        ->addCell(Converter::cmToTwip(2.10), $this->vAlignCenterCell)
+                    $table->addCell(Converter::cmToTwip(2.10), $this->vAlignCenterCell)
                         ->addText(
                             $this->anrTranslate($recommendationRisk->getInstanceRisk()->getTreatmentName()),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table
-                        ->addCell(Converter::cmToTwip(2.10), $this->setBgColorCell($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk()))
+                    $table->addCell(Converter::cmToTwip(2.10), $this->setBgColorCell($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk()))
                         ->addText(
                             $recommendationRisk->getInstanceRisk()->getCacheTargetedRisk(),
                             $this->boldFont,
@@ -3568,17 +3588,17 @@ class DeliverableGenerationService extends AbstractService
                     $this->leftParagraph
                 );
             $table->addCell(Converter::cmToTwip(1.75), $styleContentCellRiskBefore)
-            ->addText(
-                $recoRecord->riskMaxRiskBefore,
-                $this->boldFont,
-                $this->centerParagraph
-            );
+                ->addText(
+                    $recoRecord->riskMaxRiskBefore,
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
             $table->addCell(Converter::cmToTwip(1.75), $styleContentCellRiskAfter)
-            ->addText(
-                $recoRecord->riskMaxRiskAfter,
-                $this->boldFont,
-                $this->centerParagraph
-            );
+                ->addText(
+                    $recoRecord->riskMaxRiskAfter,
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
 
             $previousRecoRecordId = $recoRecord->id;
         }
@@ -3732,8 +3752,8 @@ class DeliverableGenerationService extends AbstractService
                     $this->centerParagraph
                 );
             $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(_WT(
-                    $controlSoa['measure']->get('label' . $this->currentLangAnrIndex)),
+                ->addText(
+                    _WT($controlSoa['measure']->get('label' . $this->currentLangAnrIndex)),
                     $this->normalFont,
                     $this->leftParagraph
                 );
@@ -3997,20 +4017,22 @@ class DeliverableGenerationService extends AbstractService
                                $this->centerParagraph
                            );
                         $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->restartAndGrayCell)
-                            ->addText($this->anrTranslate('Residual risk'),
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
+                            ->addText(
+                                $this->anrTranslate('Residual risk'),
+                                $this->boldFont,
+                                $this->centerParagraph
+                            );
 
                         $tableRiskOp->addRow(400, $this->tblHeader);
                         $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->continueAndGrayCell);
                         if ($this->anr->showRolfBrut == 1) {
                             $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                                ->addText($this->anrTranslate('Prob.'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                                ->addText(
+                                    $this->anrTranslate('Prob.'),
+                                    $this->boldFont,
+                                    $this->centerParagraph
+                                );
                             $tableRiskOp->addCell(Converter::cmToTwip($sizeCellImpact), $this->setColSpanCell(count($opRisksImpactsScales),'DFDFDF'))
                                 ->addText(
                                     $this->anrTranslate('Impact'),
@@ -4833,7 +4855,10 @@ class DeliverableGenerationService extends AbstractService
 
         foreach ($processors as $p) {
             //create section
-            $section->addText(_WT($p->get('label')), $this->boldFont);
+            $section->addText(
+                _WT($p->get('label')),
+                $this->boldFont
+            );
             $table = $section->addTable($this->borderTable);
 
             $table->addRow(400);
@@ -4890,7 +4915,10 @@ class DeliverableGenerationService extends AbstractService
                 );
 
             $section->addTextBreak(1);
-            $section->addText($this->anrTranslate('Actors'), $this->boldFont);
+            $section->addText(
+                $this->anrTranslate('Actors'),
+                $this->boldFont
+            );
             $tableActor = $section->addTable($this->borderTable);
 
             $tableActor->addRow(400);
@@ -4983,42 +5011,60 @@ class DeliverableGenerationService extends AbstractService
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(1, $this->titleFont);
-            $section->addTitle(_WT($recordEntity->get('label')), 1);
+            $section->addTitle(
+                _WT($recordEntity->get('label')),
+                1
+            );
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordGDPR($recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle($this->anrTranslate('Actors'), 2);
+            $section->addTitle(
+                $this->anrTranslate('Actors'),
+                2
+            );
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordActors($recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle($this->anrTranslate('Categories of personal data'), 2);
+            $section->addTitle(
+                $this->anrTranslate('Categories of personal data'),
+                2
+            );
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordPersonalData($recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle($this->anrTranslate('Recipients'), 2);
+            $section->addTitle(
+                $this->anrTranslate('Recipients'),
+                2
+            );
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordRecipients($recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle($this->anrTranslate('International transfers'), 2);
+            $section->addTitle(
+                $this->anrTranslate('International transfers'),
+                2
+            );
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordInternationalTransfers($recordEntity->id);
             //create section
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle($this->anrTranslate('Processors'), 2);
+            $section->addTitle(
+                $this->anrTranslate('Processors'),
+                2
+            );
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordProcessors($recordEntity->id);
         }
@@ -5185,35 +5231,35 @@ class DeliverableGenerationService extends AbstractService
         if ($nbThreats > 0) {
             $table->addRow(400, $this->tblHeader);
             $table->addCell(Converter::cmToTwip(7.60), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Threat'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+                ->addText(
+                    $this->anrTranslate('Threat'),
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
             $table->addCell(Converter::cmToTwip(1.50), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('CIA'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+                ->addText(
+                    $this->anrTranslate('CIA'),
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
             $table->addCell(Converter::cmToTwip(1.70), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Tend.'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+                ->addText(
+                    $this->anrTranslate('Tend.'),
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
             $table->addCell(Converter::cmToTwip(1.60), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Prob.'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+                ->addText(
+                    $this->anrTranslate('Prob.'),
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
             $table->addCell(Converter::cmToTwip(6.60), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Comment'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+                ->addText(
+                    $this->anrTranslate('Comment'),
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
         }
 
         foreach ($threats as $threat) {
