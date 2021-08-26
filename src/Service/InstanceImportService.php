@@ -415,7 +415,7 @@ class InstanceImportService
 
         $includeEval = !empty($data['with_eval']);
 
-        $this->anrInstanceRiskService->createInstanceRisks($instance, $anr, $monarcObject);
+        $this->anrInstanceRiskService->createInstanceRisks($instance, $anr, $monarcObject, $data);
 
         $this->prepareInstanceConsequences($data, $anr, $instance, $monarcObject, $includeEval);
 
@@ -1798,7 +1798,10 @@ class InstanceImportService
                 ->setCreator($this->connectedUser->getEmail());
 
             if (!empty($operationalRiskData['riskOwner'])) {
-                $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner($anr, $operationalRiskData['riskOwner']);
+                $instanceRiskOwner = $this->anrInstanceRiskService->getOrCreateInstanceRiskOwner(
+                    $anr,
+                    $operationalRiskData['riskOwner']
+                );
                 $operationalInstanceRisk->setInstanceRiskOwner($instanceRiskOwner);
             }
 
@@ -1913,8 +1916,6 @@ class InstanceImportService
                             $this->translationTable->save($translation, false);
 
                             foreach ($extScaleTypeData['operationalRiskScaleComments'] as $scaleCommentData) {
-                                // TODO: create the comments with scaleValues matched to the current comments.
-
                                 $this->createOrUpdateOperationalRiskScaleComment(
                                     $anr,
                                     false,
@@ -1978,9 +1979,9 @@ class InstanceImportService
             if ($includeEval) {
                 /* recalculate the cached risk values */
                 $this->anrInstanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk, false);
-            } else {
-                $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
             }
+
+            $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
 
             /* Process recommendations related to the operational risk. */
             if ($includeEval && !empty($data['recosop'][$operationalRiskData['id']])) {
@@ -2052,25 +2053,6 @@ class InstanceImportService
     {
         return $this->cachedData['operationalRiskScaleTypes']['currentScaleTypeLabelTranslationKeyToExternalIds']
             [$labelTranslationKey] ?? null;
-    }
-
-    private function getOrCreateInstanceRiskOwner(Anr $anr, string $ownerName): InstanceRiskOwner
-    {
-        if (!isset($this->cachedData['instanceRiskOwners'][$ownerName])) {
-            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
-            if ($instanceRiskOwner === null) {
-                $instanceRiskOwner = (new InstanceRiskOwner())
-                    ->setAnr($anr)
-                    ->setName($ownerName)
-                    ->setCreator($this->connectedUser->getEmail());
-
-                $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
-            }
-
-            $this->cachedData['instanceRiskOwners'][$ownerName] = $instanceRiskOwner;
-        }
-
-        return $this->cachedData['instanceRiskOwners'][$ownerName];
     }
 
     private function areScalesLevelsOfTypeDifferent(
@@ -2215,7 +2197,10 @@ class InstanceImportService
             ->setCreator($this->connectedUser->getEmail());
 
         if (!empty($instanceRiskData['riskOwner'])) {
-            $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner($anr, $instanceRiskData['riskOwner']);
+            $instanceRiskOwner = $this->anrInstanceRiskService->getOrCreateInstanceRiskOwner(
+                $anr,
+                $instanceRiskData['riskOwner']
+            );
             $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
         }
 
