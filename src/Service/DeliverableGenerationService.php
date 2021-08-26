@@ -269,17 +269,11 @@ class DeliverableGenerationService extends AbstractService
             throw new \Monarc\Core\Exception\Exception("Model not found " . $pathModel);
         }
 
-        $referential =  isset($data['referential']) ?
-            $data['referential'] :
-            null;
+        $referential = $data['referential'] ?? null;
 
-        $risksByControl = isset($data['risksByControl']) ?
-            $data['risksByControl'] :
-            false;
+        $risksByControl = $data['risksByControl'] ?? false;
 
-        $record = isset($data['record']) ?
-            $data['record'] :
-            null;
+        $record = $data['record'] ?? null;
 
         $values = array_merge_recursive($values, $this->buildValues($typeDoc, $referential, $record, $risksByControl));
 
@@ -5410,7 +5404,7 @@ class DeliverableGenerationService extends AbstractService
                                 $this->boldFont,
                                 $this->leftParagraph
                             );
-                    }else {
+                    } else {
                         $table->addCell(Converter::cmToTwip(2.00), $this->continueCell);
                     }
                     $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
@@ -5432,7 +5426,7 @@ class DeliverableGenerationService extends AbstractService
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                    }else {
+                    } else {
                         $table->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(2))
                             ->addText(
                                 _WT($risk['risk']),

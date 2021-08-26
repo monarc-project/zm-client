@@ -48,9 +48,7 @@ class ApiAnrDeliverableController extends AbstractRestfulController
                 'DATE' => date('d/m/Y'),
                 'CLIENT' => htmlspecialchars($data['managers']),
                 'SMILE' => htmlspecialchars($data['consultants']),
-                'SUMMARY_EVAL_RISK'=> isset($data['summaryEvalRisk']) ?
-                    $data['summaryEvalRisk'] :
-                    '',
+                'SUMMARY_EVAL_RISK' => $data['summaryEvalRisk'] ?? '',
             ],
         ];
 
