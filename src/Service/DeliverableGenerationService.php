@@ -5415,27 +5415,27 @@ class DeliverableGenerationService extends AbstractService
                     }
                     $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                         ->addText(
-                            $risk['asset'],
+                            _WT($risk['asset']),
                             $this->normalFont,
                             $this->leftParagraph
                         );
                     if (isset($risk['threat'])) {
                         $table->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(
-                                $risk['threat'],
+                                _WT($risk['threat']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
                         $table->addCell(Converter::cmToTwip(7.00), $this->vAlignCenterCell)
                             ->addText(
-                                $risk['vulnerability'],
+                                _WT($risk['vulnerability']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
                     }else {
                         $table->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(2))
                             ->addText(
-                                $risk['risk'],
+                                _WT($risk['risk']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
