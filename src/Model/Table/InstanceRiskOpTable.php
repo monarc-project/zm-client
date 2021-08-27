@@ -45,15 +45,13 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             ->getOneOrNullResult();
     }
 
+    /**
+     * @return InstanceRiskOp[]
+     */
     public function findRisksDataForStatsByAnr(Anr $anr): array
     {
-
         return $this->getRepository()
             ->createQueryBuilder('oprisk')
-            ->select('
-                oprisk.cacheNetRisk as cacheNetRisk,
-                oprisk.cacheTargetedRisk as cacheTargetedRisk
-            ')
             ->where('oprisk.anr = :anr')
             ->setParameter('anr', $anr)
             ->andWhere('oprisk.cacheNetRisk > -1')
