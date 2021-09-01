@@ -1836,7 +1836,7 @@ class InstanceImportService
                     ->setCreator($this->connectedUser->getEmail());
 
                 if ($includeEval) {
-                    /* The format is since v2.10.5 */
+                    /* The format is since v2.11.0 */
                     if (isset($operationalRiskData['scalesValues'])) {
                         $externalScaleTypeId = null;
                         if ($this->isImportTypeAnr()) {
@@ -1867,7 +1867,7 @@ class InstanceImportService
                                 );
                             }
                         }
-                    /* The format before v2.10.5. Update only first 5 scales (ROLFP if not changed by user). */
+                    /* The format before v2.11.0. Update only first 5 scales (ROLFP if not changed by user). */
                     } elseif ($index < 5) {
                         foreach ($oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
                             $operationalInstanceRiskScale->{'set' . $typeField}($operationalRiskData[$oldFiled]);
@@ -2392,12 +2392,12 @@ class InstanceImportService
 
     /**
      * Prepare and cache the new scales for the future use.
-     * The format can be different, depends on the version (before v2.10.5 and after).
+     * The format can be different, depends on the version (before v2.11.0 and after).
      */
     private function getExternalOperationalRiskScalesData(AnrSuperClass $anr, array $data): array
     {
         if (empty($this->cachedData['externalOperationalRiskScalesData'])) {
-            /* Populate with informational risks scales in case if there is an import of file before v2.10.5. */
+            /* Populate with informational risks scales in case if there is an import of file before v2.11.0. */
             $scalesDataResult = [
                 OperationalRiskScale::TYPE_IMPACT => [
                     'min' => 0,
@@ -2546,7 +2546,7 @@ class InstanceImportService
             foreach ($data['scalesComments'] as $scalesCommentData) {
                 /*
                  * Comments, which are not matched with a scale impact type, should not be created.
-                 * This is possible only for exported files before v2.10.5.
+                 * This is possible only for exported files before v2.11.0.
                  */
                 if (isset($scalesCommentData['scaleImpactType'])
                     && !isset($scaleImpactTypes[$scalesCommentData['scaleImpactType']['position']])
@@ -2573,7 +2573,7 @@ class InstanceImportService
                     $scaleImpactTypePosition = $scalesCommentData['scaleImpactType']['position'];
                     $scaleImpactType = $scaleImpactTypes[$scaleImpactTypePosition] ?? null;
                     $isSystem = $scaleImpactType !== null && $scaleImpactType->isSys();
-                    /* Scale impact types are presented in the export separately since v2.10.5 */
+                    /* Scale impact types are presented in the export separately since v2.11.0 */
                     if (isset($scalesCommentData['scaleImpactType']['labels'])
                         && !$isSystem
                         && ($scaleImpactType === null
