@@ -2753,19 +2753,32 @@ class InstanceImportService
                     }
 
                     if ($currentScaleLevelDifferenceFromExternal > 0
-                        && \array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)
                     ) {
                         /* The scales type was matched and the current scales level is higher then external,
                             so we need to hide their comments and validate values. */
                         $commentIndexToValueMap = $externalOperationalScalesData[OperationalRiskScale::TYPE_IMPACT]
                         ['commentsIndexToValueMap'];
                         $maxValue = $commentIndexToValueMap[$operationalRiskScale->getMax()];
-                        foreach ($matchedScaleTypes as $matchedScaleType) {
-                            foreach ($matchedScaleType->getOperationalRiskScaleComments() as $comment) {
+                        if(\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)){
+                            foreach ($matchedScaleTypes as $matchedScaleType) {
+                                foreach ($matchedScaleType->getOperationalRiskScaleComments() as $comment) {
+                                    $isHidden = $operationalRiskScale->getMin() > $comment->getScaleIndex()
+                                        || $operationalRiskScale->getMax() < $comment->getScaleIndex();
+                                    $comment->setIsHidden($isHidden);
+                                    if ($isHidden && $maxValue >= $comment->getScaleValue()) {
+                                        $comment->setScaleValue(++$maxValue);
+                                    }
+
+                                    $this->operationalRiskScaleCommentTable->save($comment, false);
+                                }
+                            }
+                        }
+                        // manage case when the scale is not matched and level higher than external
+                        if(!\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)){
+                            foreach ($operationalRiskScaleType->getOperationalRiskScaleComments() as $comment) {
                                 $isHidden = $operationalRiskScale->getMin() > $comment->getScaleIndex()
                                     || $operationalRiskScale->getMax() < $comment->getScaleIndex();
                                 $comment->setIsHidden($isHidden);
-
                                 if ($isHidden && $maxValue >= $comment->getScaleValue()) {
                                     $comment->setScaleValue(++$maxValue);
                                 }
