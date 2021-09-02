@@ -2700,6 +2700,7 @@ class InstanceImportService
                 }
             }
 
+            $maxIndexForLikelihood = 0;
             /* This is currently applicable only for likelihood scales type */
             foreach ($scaleData['operationalRiskScaleComments'] as $scaleCommentData) {
                 $this->createOrUpdateOperationalRiskScaleComment(
@@ -2710,6 +2711,18 @@ class InstanceImportService
                     $operationalRiskScale->getOperationalRiskScaleComments(),
                     $scalesTranslations
                 );
+                $maxIndexForLikelihood = (int)$scaleCommentData['scaleIndex']>$maxIndexForLikelihood?(int)$scaleCommentData['scaleIndex']:$maxIndexForLikelihood;
+            }
+            // manage case when the scale (probability) is not matched and level higher than external
+            if($operationalRiskScale->getType() === OperationalRiskScale::TYPE_LIKELIHOOD && $maxIndexForLikelihood!==0)
+            {
+                foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $comment) {
+                    if((int)$comment->getScaleIndex()>=$maxIndexForLikelihood)
+                    {
+                        $comment->setIsHidden(true);
+                        $this->operationalRiskScaleCommentTable->save($comment, false);
+                    }
+                }
             }
 
             /* Validate if any existed comments are now out of the new scales bound and if their values are valid.
