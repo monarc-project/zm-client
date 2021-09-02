@@ -1335,59 +1335,73 @@ class InstanceImportService
             $scalesData = $this->getCurrentAndExternalScalesData($anr, $data);
         }
 
+        $vulnerabilitiesUuids = $this->vulnerabilityTable->findUuidsByAnr($anr);
+        $threatssUuids = $this->threatTable->findUuidsByAnr($anr);
         foreach ($data['risks'] as $instanceRiskData) {
             $threatData = $data['threats'][$instanceRiskData['threat']];
             $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
+            $vulnerability = null;
+            $threat = null;
 
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
                 if (!isset($this->cachedData['threats'][$threatData['uuid']])) {
-                    $threat = (new Threat())
-                        ->setUuid($threatData['uuid'])
-                        ->setAnr($anr)
-                        ->setCode($threatData['code'])
-                        ->setLabels($threatData)
-                        ->setDescriptions($threatData)
-                        ->setMode($threatData['mode'])
-                        ->setStatus($threatData['status'])
-                        ->setTrend($threatData['trend'])
-                        ->setQualification($threatData['qualification'])
-                        ->setComment(is_null($threatData['comment'])?'':$threatData['comment'])
-                        ->setCreator($this->connectedUser->getEmail());
-                    if (isset($threatData['c'])) {
-                        $threat->setConfidentiality((int)$threatData['c']);
-                    }
-                    if (isset($threatData['i'])) {
-                        $threat->setIntegrity((int)$threatData['i']);
-                    }
-                    if (isset($threatData['a'])) {
-                        $threat->setAvailability((int)$threatData['a']);
-                    }
+                    if(!\in_array((string)$threatData['uuid'], $threatssUuids, true)){
+                        $threat = (new Threat())
+                            ->setUuid($threatData['uuid'])
+                            ->setAnr($anr)
+                            ->setCode($threatData['code'])
+                            ->setLabels($threatData)
+                            ->setDescriptions($threatData)
+                            ->setMode($threatData['mode'])
+                            ->setStatus($threatData['status'])
+                            ->setTrend($threatData['trend'])
+                            ->setQualification($threatData['qualification'])
+                            ->setComment(is_null($threatData['comment'])?'':$threatData['comment'])
+                            ->setCreator($this->connectedUser->getEmail());
+                        if (isset($threatData['c'])) {
+                            $threat->setConfidentiality((int)$threatData['c']);
+                        }
+                        if (isset($threatData['i'])) {
+                            $threat->setIntegrity((int)$threatData['i']);
+                        }
+                        if (isset($threatData['a'])) {
+                            $threat->setAvailability((int)$threatData['a']);
+                        }
 
-                    /*
-                     * Unfortunately we don't add "themes" on the same level as "risks" and "threats", but only under "asset".
-                     * TODO: we should add theme linked to the threat inside of the threat object data when export later on.
-                     * after we can set it $threat->setTheme($theme);
-                     */
+                        /*
+                         * Unfortunately we don't add "themes" on the same level as "risks" and "threats", but only under "asset".
+                         * TODO: we should add theme linked to the threat inside of the threat object data when export later on.
+                         * after we can set it $threat->setTheme($theme);
+                         */
 
-                    $this->threatTable->saveEntity($threat, false);
+                        $this->threatTable->saveEntity($threat, false);
 
-                    $this->cachedData['threats'][$threatData['uuid']] = $threat;
+                        $this->cachedData['threats'][$threatData['uuid']] = $threat;
+                    }else{
+                        $threat = $this->threatTable->findByAnrAndUuid($anr,(string)$threatData['uuid']);
+                    }
                 }
 
                 if (!isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])) {
-                    $vulnerability = (new Vulnerability())
-                        ->setUuid($vulnerabilityData['uuid'])
-                        ->setAnr($anr)
-                        ->setLabels($vulnerabilityData)
-                        ->setDescriptions($vulnerabilityData)
-                        ->setCode($vulnerabilityData['code'])
-                        ->setMode($vulnerabilityData['mode'])
-                        ->setStatus($vulnerabilityData['status'])
-                        ->setCreator($this->connectedUser->getEmail());
+                    if(!\in_array((string)$vulnerabilityData['uuid'], $vulnerabilitiesUuids, true))
+                    {
+                        $vulnerability = (new Vulnerability())
+                            ->setUuid($vulnerabilityData['uuid'])
+                            ->setAnr($anr)
+                            ->setLabels($vulnerabilityData)
+                            ->setDescriptions($vulnerabilityData)
+                            ->setCode($vulnerabilityData['code'])
+                            ->setMode($vulnerabilityData['mode'])
+                            ->setStatus($vulnerabilityData['status'])
+                            ->setCreator($this->connectedUser->getEmail());
 
-                    $this->vulnerabilityTable->saveEntity($vulnerability, false);
+                        $this->vulnerabilityTable->saveEntity($vulnerability, false);
+                        $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
+                    }
+                    else{
+                        $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid($anr,(string)$vulnerabilityData['uuid']);
+                    }
 
-                    $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
                 }
 
                 $instanceRisk = $this->createInstanceRiskFromData(
@@ -1395,8 +1409,8 @@ class InstanceImportService
                     $anr,
                     $instance,
                     $monarcObject->getAsset(),
-                    $this->cachedData['threats'][$threatData['uuid']],
-                    $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]
+                    $threat,
+                    $vulnerability
                 );
 
                 $this->instanceRiskTable->saveEntity($instanceRisk, false);
@@ -1708,9 +1722,9 @@ class InstanceImportService
                     ->setInstance($instance)
                     ->setInstanceRisk($instanceRiskSpecific)
                     ->setGlobalObject($recommendationRiskToCreate->getGlobalObject())
-                    ->setAsset($recommendationRiskToCreate->getAsset())
-                    ->setThreat($recommendationRiskToCreate->getThreat())
-                    ->setVulnerability($recommendationRiskToCreate->getVulnerability())
+                    ->setAsset($instanceRiskSpecific->getAsset())
+                    ->setThreat($instanceRiskSpecific->getThreat())
+                    ->setVulnerability($instanceRiskSpecific->getVulnerability())
                     ->setCommentAfter($recommendationRiskToCreate->getCommentAfter())
                     ->setRecommandation($recommendationRiskToCreate->getRecommandation())
                     ->setCreator($this->connectedUser->getEmail());
