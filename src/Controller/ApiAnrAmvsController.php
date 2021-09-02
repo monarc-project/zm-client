@@ -108,11 +108,11 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
             $entity['implicitPosition'] = 1;
         } else {
             // We're not at the beginning, get all AMV links of the same asset, and figure out position and previous
-            $amvsAsset = $this->getService()->getList(1, 0, 'position', null, ['a.anr' => $anrId, 'a.uuid' =>$entity['asset']['uuid']->toString()]);
+            $amvsAsset = $this->getService()->getList(1, 0, 'position', null, ['a.anr' => $anrId, 'a.uuid' =>(string)$entity['asset']['uuid']]);
 
             $i = 0;
             foreach ($amvsAsset as $amv) {
-                if ($amv['uuid']->toString() == $entity['uuid']->toString()) {
+                if ((string)$amv['uuid'] == (string)$entity['uuid']) {
                     if ($i == count($amvsAsset) - 1) {
                         $entity['implicitPosition'] = 2;
                     } else {

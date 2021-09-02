@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Model\Table\RolfTagTable as CoreRolfTagTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
@@ -17,11 +17,13 @@ use Monarc\FrontOffice\Model\Entity\RolfTag;
  * Class RolfTagTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class RolfTagTable extends AbstractEntityTable
+class RolfTagTable extends CoreRolfTagTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, RolfTag::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+
+        $this->entityClass = RolfTag::class;
     }
 
     public function findByAnrAndCode(Anr $anr, string $code): ?RolfTag

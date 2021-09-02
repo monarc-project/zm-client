@@ -7,11 +7,15 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\Query\Expr\Join;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
+use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Model\Entity\RolfRisk;
 
 /**
  * Class InstanceRiskOpTable
@@ -22,65 +26,32 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, $connectedUserService);
+
+        $this->entityClass = InstanceRiskOp::class;
     }
 
-    public function getEntityClass(): string
+    public function findByAnrInstanceAndRolfRisk(Anr $anr, Instance $instance, RolfRisk $rolfRisk): ?InstanceRiskOp
     {
-        return InstanceRiskOp::class;
+        return $this->getRepository()
+            ->createQueryBuilder('oir')
+            ->where('oir.anr = :anr')
+            ->andWhere('oir.instance = :instance')
+            ->andWhere('oir.rolfRisk = :rolfRisk')
+            ->setParameter('anr', $anr)
+            ->setParameter('instance', $instance)
+            ->setParameter('rolfRisk', $rolfRisk)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
-     * @param $anrId
-     * @return bool
+     * @return InstanceRiskOp[]
      */
-    public function started($anrId)
-    {
-        $qb = $this->getRepository()->createQueryBuilder('t');
-        $res = $qb->select('COUNT(t.id)')
-            ->where('t.anr = :anrid')
-            ->setParameter(':anrid', $anrId)
-            ->andWhere($qb->expr()->orX(
-                $qb->expr()->neq('t.brutProb', -1),
-                $qb->expr()->neq('t.brutR', -1),
-                $qb->expr()->neq('t.brutO', -1),
-                $qb->expr()->neq('t.brutL', -1),
-                $qb->expr()->neq('t.brutF', -1),
-                $qb->expr()->neq('t.netProb', -1),
-                $qb->expr()->neq('t.netR', -1),
-                $qb->expr()->neq('t.netO', -1),
-                $qb->expr()->neq('t.netL', -1),
-                $qb->expr()->neq('t.netF', -1),
-                $qb->expr()->neq('t.targetedProb', -1),
-                $qb->expr()->neq('t.targetedR', -1),
-                $qb->expr()->neq('t.targetedO', -1),
-                $qb->expr()->neq('t.targetedL', -1),
-                $qb->expr()->neq('t.targetedF', -1)
-            ))->getQuery()->getSingleScalarResult();
-
-        return $res > 0;
-    }
-
-
     public function findRisksDataForStatsByAnr(Anr $anr): array
     {
         return $this->getRepository()
             ->createQueryBuilder('oprisk')
-            ->select('
-                oprisk.netProb as netProb,
-                oprisk.netR as netR,
-                oprisk.netO as netO,
-                oprisk.netL as netL,
-                oprisk.netF as netF,
-                oprisk.netP as netP,
-                oprisk.targetedProb as targetedProb,
-                oprisk.targetedR as targetedR,
-                oprisk.targetedO as targetedO,
-                oprisk.targetedL as targetedL,
-                oprisk.targetedF as targetedF,
-                oprisk.targetedP as targetedP,
-                oprisk.cacheNetRisk as cacheNetRisk,
-                oprisk.cacheTargetedRisk as cacheTargetedRisk
-            ')
             ->where('oprisk.anr = :anr')
             ->setParameter('anr', $anr)
             ->andWhere('oprisk.cacheNetRisk > -1')
@@ -91,13 +62,88 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
     /**
      * @return InstanceRiskOp[]
      */
-    public function findByAnr(Anr $anr): array
+    public function findByAnrInstancesAndFilterParams(Anr $anr, array $instancesIds, array $filterParams = []): array
     {
-        return $this->getRepository()
-            ->createQueryBuilder('oprisk')
-            ->where('oprisk.anr = :anr')
-            ->setParameter(':anr', $anr)
-            ->getQuery()
-            ->getResult();
+        $language = $anr->getLanguage();
+        $queryBuilder = $this->getRepository()->createQueryBuilder('iro')
+            ->innerJoin('iro.instance', 'i')
+            ->innerJoin('i.asset', 'a', Join::WITH, 'a.type = ' . Asset::TYPE_PRIMARY)
+            ->where('iro.anr = :anr')
+            ->setParameter('anr', $anr);
+
+        if (!empty($instancesIds)) {
+            $queryBuilder->andWhere($queryBuilder->expr()->in('i.id', $instancesIds));
+        }
+
+        if (isset($filterParams['rolfRisks'])) {
+            if (!\is_array($filterParams['rolfRisks'])) {
+                $filterParams['rolfRisks'] = explode(',', substr($filterParams['rolfRisks'], 1, -1));
+            }
+            $queryBuilder->innerJoin('iro.rolfRisk', 'rr')
+                ->andWhere($queryBuilder->expr()->in('rr.id', ':rolfRisks'))
+                ->setParameter('rolfRisks', $filterParams['rolfRisks']);
+        }
+
+        if (isset($filterParams['kindOfMeasure'])) {
+            if ((int)$filterParams['kindOfMeasure'] === InstanceRiskOp::KIND_NOT_TREATED) {
+                $queryBuilder->andWhere(
+                    'iro.kindOfMeasure IS NULL OR iro.kindOfMeasure = ' . InstanceRiskOp::KIND_NOT_TREATED
+                );
+            } else {
+                $queryBuilder->andWhere('iro.kindOfMeasure = :kindOfMeasure')
+                    ->setParameter('kindOfMeasure', $filterParams['kindOfMeasure']);
+            }
+        }
+
+        if (!empty($filterParams['keywords'])) {
+            $queryBuilder->andWhere(
+                'i.name' . $language . ' LIKE :keywords OR ' .
+                'i.label' . $language . ' LIKE :keywords OR ' .
+                'iro.riskCacheLabel' . $language . ' LIKE :keywords OR ' .
+                'iro.riskCacheDescription' . $language . ' LIKE :keywords OR ' .
+                'iro.comment LIKE :keywords'
+            )->setParameter('keywords', '%' . $filterParams['keywords'] . '%');
+        }
+
+        if (isset($filterParams['thresholds']) && (int)$filterParams['thresholds'] !== -1) {
+            $queryBuilder->andWhere('iro.cacheNetRisk > :thresholds')
+                ->setParameter('thresholds', $filterParams['thresholds']);
+        }
+
+        $filterParams['order_direction'] = isset($filterParams['order_direction'])
+            && strtolower(trim($filterParams['order_direction'])) === 'asc' ? 'ASC' : 'DESC';
+
+        $queryBuilder->orderBy('', $filterParams['order_direction']);
+
+        switch ($filterParams['order']) {
+            case 'instance':
+                $queryBuilder->orderBy('i.name' . $language, $filterParams['order_direction']);
+                break;
+            case 'position':
+                $queryBuilder->orderBy('i.position', $filterParams['order_direction'])
+                    ->addOrderBy('i.name' . $language);
+                break;
+            case 'brutProb':
+                $queryBuilder->orderBy('iro.brutProb', $filterParams['order_direction']);
+                break;
+            case 'netProb':
+                $queryBuilder->orderBy('iro.netProb', $filterParams['order_direction']);
+                break;
+            case 'cacheBrutRisk':
+                $queryBuilder->orderBy('iro.cacheBrutRisk', $filterParams['order_direction'])
+                    ->addOrderBy('i.name' . $language);
+                break;
+            case 'cacheTargetedRisk':
+                $queryBuilder->orderBy('iro.cacheTargetedRisk', $filterParams['order_direction'])
+                    ->addOrderBy('i.name' . $language);
+                break;
+            default:
+            case 'cacheNetRisk':
+                $queryBuilder->orderBy('iro.cacheNetRisk', $filterParams['order_direction'])
+                    ->addOrderBy('i.name' . $language);
+                break;
+        }
+
+        return $queryBuilder->getQuery()->getResult();
     }
 }

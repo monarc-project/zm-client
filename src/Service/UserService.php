@@ -17,7 +17,6 @@ use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserTable;
 
 /**
@@ -36,9 +35,6 @@ class UserService extends CoreUserService
     /** @var AnrTable */
     private $anrTable;
 
-    /** @var SnapshotTable */
-    private $snapshotTable;
-
     /** @var PasswordService */
     private $passwordService;
 
@@ -49,14 +45,12 @@ class UserService extends CoreUserService
         UserTable $userTable,
         array $config,
         AnrTable $anrTable,
-        SnapshotTable $snapshotTable,
         ConnectedUserService $connectedUserService,
         PasswordService $passwordService
     ) {
         parent::__construct($userTable, $config);
 
         $this->anrTable = $anrTable;
-        $this->snapshotTable = $snapshotTable;
         $this->connectedUserService = $connectedUserService;
         $this->passwordService = $passwordService;
     }

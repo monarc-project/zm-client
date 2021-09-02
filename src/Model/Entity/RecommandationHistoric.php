@@ -192,41 +192,6 @@ class RecommandationHistoric extends AbstractEntity
     /**
      * @var smallint
      *
-     * @ORM\Column(name="net_r_before", type="smallint", options={"unsigned":false, "default":-1})
-     */
-    protected $netRBefore = -1;
-
-    /**
-     * @var smallint
-     *
-     * @ORM\Column(name="net_o_before", type="smallint", options={"unsigned":false, "default":-1})
-     */
-    protected $netOBefore = -1;
-
-    /**
-     * @var smallint
-     *
-     * @ORM\Column(name="net_l_before", type="smallint", options={"unsigned":false, "default":-1})
-     */
-    protected $netLBefore = -1;
-
-    /**
-     * @var smallint
-     *
-     * @ORM\Column(name="net_f_before", type="smallint", options={"unsigned":false, "default":-1})
-     */
-    protected $netFBefore = -1;
-
-    /**
-     * @var smallint
-     *
-     * @ORM\Column(name="net_p_before", type="smallint", options={"unsigned":false, "default":-1})
-     */
-    protected $netPBefore = -1;
-
-    /**
-     * @var smallint
-     *
      * @ORM\Column(name="risk_kind_of_measure", type="smallint", options={"unsigned":false, "default":-1})
      */
     protected $riskKindOfMeasure = -1;

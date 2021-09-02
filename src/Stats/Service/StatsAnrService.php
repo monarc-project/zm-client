@@ -10,6 +10,7 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Exception\AccessForbiddenException;
 use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
@@ -268,7 +269,6 @@ class StatsAnrService
             if (!$anr->isStatsCollected()) {
                 continue;
             }
-
             $anrStatsForRtvc = $this->collectAnrStatsForRiskThreatVulnerabilityAndCartography($anr);
             $statsData[] = new StatsDataObject([
                 'anr' => $anr->getUuid(),
@@ -320,6 +320,7 @@ class StatsAnrService
 
     private function collectAnrStatsForRiskThreatVulnerabilityAndCartography(Anr $anr): array
     {
+
         $scalesRanges = $this->prepareScalesRanges($anr);
         $likelihoodScales = $this->calculateScalesColumnValues($scalesRanges);
 
@@ -740,17 +741,12 @@ class StatsAnrService
                 'value' => 0,
             ],
         ];
-        $risksData = $this->operationalRiskTable->findRisksDataForStatsByAnr($anr);
-        foreach ($risksData as $riskData) {
-            $maxImpact = max(
-                $riskData['netR'],
-                $riskData['netO'],
-                $riskData['netL'],
-                $riskData['netF'],
-                $riskData['netP']
-            );
-            $riskValue = $riskData['cacheNetRisk'];
-            $prob = $riskData['netProb'];
+
+        $instanceRiskOps = $this->operationalRiskTable->findRisksDataForStatsByAnr($anr);
+        foreach ($instanceRiskOps as $instanceRiskOp) {
+            $maxImpact = $this->getOperationalRiskMaxImpact($instanceRiskOp);
+            $riskValue = $instanceRiskOp->getCacheNetRisk();
+            $prob = $instanceRiskOp->getNetProb();
             [$currentRisksCounters, $currentRisksDistributed] = $this->countOperationalRisks(
                 $anr,
                 $riskValue,
@@ -759,16 +755,10 @@ class StatsAnrService
                 $prob,
                 $currentRisksDistributed
             );
-            if ($riskData['cacheTargetedRisk'] > -1) {
-                $maxImpact = max(
-                    $riskData['targetedR'],
-                    $riskData['targetedO'],
-                    $riskData['targetedL'],
-                    $riskData['targetedF'],
-                    $riskData['targetedP']
-                );
-                $riskValue = $riskData['cacheTargetedRisk'];
-                $prob = $riskData['targetedProb'];
+            if ($instanceRiskOp->getCacheTargetedRisk() > -1) {
+                $maxImpact = $this->getOperationalRiskMaxImpact($instanceRiskOp, 'Targeted');
+                $riskValue = $instanceRiskOp->getCacheTargetedRisk();
+                $prob = $instanceRiskOp->getTargetedProb();
             }
             [$residualRisksCounters, $residualRisksDistributed] = $this->countOperationalRisks(
                 $anr,
@@ -790,6 +780,21 @@ class StatsAnrService
                 'residual' => $residualRisksCounters,
             ],
         ];
+    }
+
+    private function getOperationalRiskMaxImpact(InstanceRiskOp $instanceRiskOp, string $impactType = 'Net'): int
+    {
+        $maxImpact = 0;
+        foreach ($instanceRiskOp->getOperationalInstanceRiskScales() as $instanceRiskScale) {
+            if (!$instanceRiskScale->getOperationalRiskScaleType()->isHidden()) {
+                $impactValue = $instanceRiskScale->{'get' . $impactType . 'Value'}();
+                if ($maxImpact < $impactValue) {
+                    $maxImpact = $impactValue;
+                }
+            }
+        }
+
+        return $maxImpact;
     }
 
     private function countOperationalRisks(

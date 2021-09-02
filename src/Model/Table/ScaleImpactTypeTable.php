@@ -39,6 +39,34 @@ class ScaleImpactTypeTable extends AbstractEntityTable
             ->getResult();
     }
 
+    /**
+     * @return ScaleImpactType[]
+     */
+    public function findByAnrOrderedByPosition(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('sit')
+            ->where('sit.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->addOrderBy('sit.position')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return ScaleImpactType[]
+     */
+    public function findByAnrOrderedAndIndexedByPosition(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('sit', 'sit.position')
+            ->where('sit.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->addOrderBy('sit.position')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findMaxPositionByAnrAndScale(Anr $anr, Scale $scale): int
     {
         return (int)$this->getRepository()

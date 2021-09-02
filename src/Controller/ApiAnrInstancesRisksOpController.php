@@ -7,28 +7,31 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 
-/**
- * Api ANR Instances Risks Op Controller
- *
- * Class ApiAnrInstancesRisksOpController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrInstancesRisksOpController extends ApiAnrAbstractController
+class ApiAnrInstancesRisksOpController extends AbstractRestfulController
 {
-    protected $name = 'instances-oprisks';
+    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(AnrInstanceRiskOpService $anrInstanceRiskOpService)
+    {
+        $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
+    }
+
     public function update($id, $data)
     {
-        $risk = $this->getService()->update($id, $data);
-        unset($risk['anr']);
-        unset($risk['instance']);
-        unset($risk['object']);
-        unset($risk['rolfRisk']);
+        $risk = $this->anrInstanceRiskOpService->update((int)$id, $data);
+        unset($risk['anr'], $risk['instance'], $risk['object'], $risk['rolfRisk']);
+
+        return new JsonModel($risk);
+    }
+
+    public function patch($id, $data)
+    {
+        $risk = $this->anrInstanceRiskOpService->updateScaleValue((int)$id, $data);
+        unset($risk['anr'], $risk['instance'], $risk['object'], $risk['rolfRisk']);
 
         return new JsonModel($risk);
     }

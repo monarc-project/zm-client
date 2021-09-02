@@ -102,14 +102,6 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
             throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
         }
         $data['scale'] = $scaleId;
-		$rightCommLanguage ="comment".$data['langue'];
-			$data[$rightCommLanguage] = $data['comment'];
-
-			if(isset($data['langue']))
-			{
-				unset($data['comment']);
-				unset($data['langue']);
-			}
 
         $id = $this->getService()->create($data);
 

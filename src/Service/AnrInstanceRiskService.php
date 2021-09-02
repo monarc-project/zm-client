@@ -5,9 +5,12 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskOwnerSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Service\InstanceRiskService;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
@@ -80,5 +83,13 @@ class AnrInstanceRiskService extends InstanceRiskService
 
             $recommandationRiskTable->saveEntity($newRecommendationRisk, false);
         }
+    }
+
+    protected function createInstanceRiskOwnerObject(AnrSuperClass $anr, string $ownerName): InstanceRiskOwnerSuperClass
+    {
+        return (new InstanceRiskOwner())
+            ->setAnr($anr)
+            ->setName($ownerName)
+            ->setCreator($this->getConnectedUser()->getEmail());
     }
 }

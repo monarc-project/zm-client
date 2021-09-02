@@ -280,7 +280,7 @@ class AssetImportService
                                 ->setAnr($anr)
                                 ->setUuid($data['measures'][$measureUuid]['referential']['uuid'])
                                 ->{'setLabel' . $languageIndex}($data['measures'][$measureUuid]['referential'][$labelName]);
-                            $this->referentialTable->saveEntity($referential, false);
+                            $this->referentialTable->saveEntity($referential);
                         }
 
                         // For backward compatibility issue.
@@ -318,7 +318,7 @@ class AssetImportService
 
                     $measure->addAmv($currentAmvs[$keyAmv]);
 
-                    $this->measureTable->saveEntity($measure, false);
+                    $this->measureTable->saveEntity($measure);
 
                     $this->cachedData['measures'][$measureUuid] = $measure;
                 }

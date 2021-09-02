@@ -7,15 +7,11 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\NonUniqueResultException;
-use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder;
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Table\AnrTable as CoreAnrTable;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Snapshot;
@@ -25,40 +21,13 @@ use Monarc\FrontOffice\Model\Entity\UserAnr;
  * Class AnrTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class AnrTable extends AbstractEntityTable
+class AnrTable extends CoreAnrTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, Anr::class, $connectedUserService);
-    }
+        parent::__construct($dbService, $connectedUserService);
 
-    /**
-     * @throws EntityNotFoundException
-     */
-    public function findById(int $id): Anr
-    {
-        /** @var Anr|null $anr */
-        $anr = $this->getRepository()->find($id);
-        if ($anr === null) {
-            throw new EntityNotFoundException(sprintf('Anr with id "%d" was not found', $id));
-        }
-
-        return $anr;
-    }
-
-    /**
-     * @param int[] $anrIds
-     *
-     * @return Anr[]
-     */
-    public function findByIds(array $ids): array
-    {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('a');
-
-        return $queryBuilder
-            ->where($queryBuilder->expr()->in('a.id', $ids))
-            ->getQuery()
-            ->getResult();
+        $this->entityClass = Anr::class;
     }
 
     /**
@@ -140,28 +109,6 @@ class AnrTable extends AbstractEntityTable
             ->where('a.isVisibleOnDashboard = 1')
             ->getQuery()
             ->getResult();
-    }
-
-    /**
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function saveEntity(AnrSuperClass $anr, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($anr);
-        if ($flushAll) {
-            $em->flush();
-        }
-    }
-
-    public function deleteEntity(AnrSuperClass $anr, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->remove($anr);
-        if ($flushAll) {
-            $em->flush();
-        }
     }
 
     private function getSnapshotsIdsQueryBuilder(): QueryBuilder

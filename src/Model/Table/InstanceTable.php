@@ -25,11 +25,8 @@ class InstanceTable extends CoreInstanceTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, $connectedUserService);
-    }
 
-    public function getEntityClass(): string
-    {
-        return Instance::class;
+        $this->entityClass = Instance::class;
     }
 
     /**

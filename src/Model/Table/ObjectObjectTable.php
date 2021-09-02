@@ -32,7 +32,7 @@ class ObjectObjectTable extends CoreObjectObjectTable
     }
 
     /**
-     * Unfortunately, due to the 2 fields multi relation we can't make it in a single query.
+     * Unfortunately, due to the 2 fields multi relation, we can't make it in a single query.
      *
      * @param MonarcObject $monarcObject
      */

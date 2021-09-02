@@ -43,14 +43,12 @@ class ApiAnrDeliverableController extends AbstractRestfulController
                 'VERSION' => htmlspecialchars($data['version']),
                 'STATE' => $data['status'] == 0 ? 'Draft' : 'Final',
                 'CLASSIFICATION' => htmlspecialchars($data['classification']),
+                'COMPANY' => htmlspecialchars($this->deliverableGenerationService->getCompanyName()),
                 'DOCUMENT' => htmlspecialchars($data['docname']),
                 'DATE' => date('d/m/Y'),
                 'CLIENT' => htmlspecialchars($data['managers']),
                 'SMILE' => htmlspecialchars($data['consultants']),
-            ],
-            'img' => [],
-            'html' => [
-                'SUMMARY_EVAL_RISK' => isset($data['summaryEvalRisk']) ? $data['summaryEvalRisk'] : '',
+                'SUMMARY_EVAL_RISK' => $data['summaryEvalRisk'] ?? '',
             ],
         ];
 

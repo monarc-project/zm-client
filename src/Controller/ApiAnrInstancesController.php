@@ -7,7 +7,9 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Laminas\Http\Response;
 use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceService;
 use Laminas\View\Model\JsonModel;
 
@@ -59,7 +61,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
 
-        /** @var InstanceService $service */
+        /** @var AnrInstanceService $service */
         $service = $this->getService();
         $service->patchInstance($anrId, $id, $data, [], false);
 
@@ -76,14 +78,17 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $service = $this->getService();
         $entity = $service->getEntityByIdAndAnr($id, $anrId);
         $params = $this->parseParams();
+
         if ($this->params()->fromQuery('csv', false)) {
-            header('Content-Type: text/csv');
-            die($this->getService()->getCsvRisksOp($anrId, $entity, $params));
+            /** @var AnrInstanceRiskOpService $anrInstanceRiskOpService */
+            $anrInstanceRiskOpService = $this->getService()->get('instanceRiskOpService');
+
+            return $this->setCsvResponse($anrInstanceRiskOpService->getOperationalRisksInCsv($anrId, $id, $params));
         }
         if ($this->params()->fromQuery('csvInfoInst', false)) {
-            header('Content-Type: text/csv');
-            die($this->getService()->getCsvRisks($anrId, $id, $params));
+            return $this->setCsvResponse($service->getCsvRisks($anrId, $id, $params));
         }
+
         if (\count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
@@ -149,4 +154,13 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         ];
     }
 
+    protected function setCsvResponse(string $content): Response
+    {
+        /** @var Response $response */
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
+        $response->setContent($content);
+
+        return $response;
+    }
 }

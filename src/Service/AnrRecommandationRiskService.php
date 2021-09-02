@@ -471,7 +471,7 @@ class AnrRecommandationRiskService extends AbstractService
         $recommendationRisk = $recommendationRiskTable->findById($recommendationRiskId);
 
         // validate for operational risks
-        if ($recommendationRisk->getInstanceRisk() === null) {
+        if ($recommendationRisk->getInstanceRiskOp() !== null) {
             // Verify if recommendation risk is final (are there more recommendations linked to the risk)
             $isRiskRelatedRecommendationFinal = \count($recommendationRiskTable->findByAnrAndOperationalInstanceRisk(
                 $recommendationRisk->getAnr(),
@@ -507,28 +507,28 @@ class AnrRecommandationRiskService extends AbstractService
                         break;
                     }
                 }
+
+                /** @var InstanceRiskOp $instanceRiskOp */
                 $instanceRiskOp = $recommendationRisk->getInstanceRiskOp();
-                $instanceRiskOp->comment = implode("\n\n", array_reverse($cacheCommentAfter)); // array_reverse because "['id' => 'DESC']"
-                $instanceRiskOp->mitigation = '';
-                $instanceRiskOp->netProb = $instanceRiskOp->get('targetedProb');
-                $instanceRiskOp->netR = $instanceRiskOp->get('targetedR');
-                $instanceRiskOp->netO = $instanceRiskOp->get('targetedO');
-                $instanceRiskOp->netL = $instanceRiskOp->get('targetedL');
-                $instanceRiskOp->netF = $instanceRiskOp->get('targetedF');
-                $instanceRiskOp->netP = $instanceRiskOp->get('targetedP');
-                $instanceRiskOp->cacheNetRisk = $instanceRiskOp->get('cacheTargetedRisk');
-
-                $impacts = ['r', 'o', 'l', 'f', 'p'];
-                foreach ($impacts as $i) {
-                    $icol = 'targeted' . strtoupper($i);
-                    $instanceRiskOp->$icol = -1;
+                // array_reverse because "['id' => 'DESC']"
+                $instanceRiskOp->setComment(implode("\n\n", array_reverse($cacheCommentAfter)));
+                $instanceRiskOp->setMitigation('');
+                $instanceRiskOp->setNetProb($instanceRiskOp->getTargetedProb());
+                $instanceRiskOp->setCacheNetRisk($instanceRiskOp->getCacheTargetedRisk());
+                foreach ($instanceRiskOp->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+                    $operationalInstanceRiskScale->setNetValue($operationalInstanceRiskScale->getTargetedValue());
+                    $operationalInstanceRiskScale->setTargetedValue(-1);
                 }
-                $instanceRiskOp->targetedProb = -1;
-                $instanceRiskOp->cacheTargetedRisk = -1;
-                $instanceRiskOp->kindOfMeasure = InstanceRiskOp::KIND_NOT_TREATED;
 
+                $instanceRiskOp->setTargetedProb(-1);
+                $instanceRiskOp->setCacheTargetedRisk(-1);
+                $instanceRiskOp->setKindOfMeasure(InstanceRiskOp::KIND_NOT_TREATED);
+
+                /** @var InstanceRiskOpTable $instanceRiskOpTable */
+                $instanceRiskOpTable = $this->get('instanceRiskOpTable');
+                $instanceRiskOpTable->saveEntity($instanceRiskOp);
             }
-        } else { // validate for information risks
+        } elseif ($recommendationRisk->getInstanceRisk() !== null) { // validate for information risks
             // Verify if recommendation risk is final (are there more recommendations linked to the risk)
             $isRiskRelatedRecommendationFinal = \count($recommendationRiskTable->findByAnrAndInstanceRisk(
                 $recommendationRisk->getAnr(),
@@ -776,11 +776,6 @@ class AnrRecommandationRiskService extends AbstractService
             'riskAsset' => $instanceRiskOp->getObject()->getAsset()->get('label' . $lang),
             'riskOpDescription' => $instanceRiskOp->get('riskCacheLabel' . $lang),
             'netProbBefore' => $instanceRiskOp->get('netProb'),
-            'netRBefore' => $instanceRiskOp->get('netR'),
-            'netOBefore' => $instanceRiskOp->get('netO'),
-            'netLBefore' => $instanceRiskOp->get('netL'),
-            'netFBefore' => $instanceRiskOp->get('netF'),
-            'netPBefore' => $instanceRiskOp->get('netP'),
             'riskKindOfMeasure' => $instanceRiskOp->get('kindOfMeasure'),
             'riskCommentBefore' => $instanceRiskOp->getComment(),
             'riskCommentAfter' => ($final) ? $recoRisk->get('commentAfter') : $instanceRiskOp->get('comment'),

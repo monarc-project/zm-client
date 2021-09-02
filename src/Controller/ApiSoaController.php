@@ -7,10 +7,14 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\FrontOffice\Model\Entity\Soa;
-use Monarc\FrontOffice\Model\Table\SoaTable;
-use Monarc\FrontOffice\Service\SoaService;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Model\Entity\Measure;
+use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
+use Monarc\FrontOffice\Service\AnrMeasureService;
+use Monarc\FrontOffice\Service\AnrRiskService;
+use Monarc\FrontOffice\Service\SoaService;
 
 /**
  * Api Anr Soa Controller
@@ -18,138 +22,169 @@ use Laminas\View\Model\JsonModel;
  * Class ApiAnrSoaController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiSoaController extends  ApiAnrAbstractController
+class ApiSoaController extends AbstractRestfulController
 {
-    protected $name = 'soaMeasures';
-    protected $dependencies = ['anr','measure'];
+    private SoaService $soaService;
 
-  public function getList()
-  {
-      $page = $this->params()->fromQuery('page');
-      $limit = $this->params()->fromQuery('limit');
-      $order = $this->params()->fromQuery('order');
-      $filter = $this->params()->fromQuery('filter');
-      $category = $this->params()->fromQuery('category');
-      $referential = $this->params()->fromQuery('referential');
+    private AnrMeasureService $anrMeasureService;
 
+    private AnrRiskService $anrRiskService;
 
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if (empty($anrId)) {
-          throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-      }
+    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
 
-      $filterAnd = ['anr' => $anrId];
+    public function __construct(
+        SoaService $soaService,
+        AnrMeasureService $anrMeasureService,
+        AnrRiskService $anrRiskService,
+        AnrInstanceRiskOpService $anrInstanceRiskOpService
+    ) {
 
-      if ($referential) {
-        if ($category != 0) {
-          $filterMeasures['category'] = [
-              'op' => 'IN',
-              'value' => (array)$category,
-          ];
+        $this->soaService = $soaService;
+        $this->anrMeasureService = $anrMeasureService;
+        $this->anrRiskService = $anrRiskService;
+        $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
+    }
+
+    public function getList()
+    {
+        $page = $this->params()->fromQuery('page');
+        $limit = $this->params()->fromQuery('limit');
+        $order = $this->params()->fromQuery('order');
+        $filter = $this->params()->fromQuery('filter');
+        $category = $this->params()->fromQuery('category');
+        $referential = $this->params()->fromQuery('referential');
+
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new Exception('Anr id missing', 412);
         }
-        if ($category == -1) {
-          $filterMeasures['category'] = NULL;
+
+        $filterAnd = ['anr' => $anrId];
+
+        if ($referential) {
+            if ($category != 0) {
+                $filterMeasures['category'] = [
+                    'op' => 'IN',
+                    'value' => (array)$category,
+                ];
+            }
+            if ($category == -1) {
+                $filterMeasures['category'] = NULL;
+            }
+
+            $filterMeasures['r.anr'] = $anrId;
+            $filterMeasures['r.uuid'] = $referential;
+
+            $measuresFiltered = $this->anrMeasureService->getList(1, 0, null, null, $filterMeasures);
+            $measuresFilteredId = [];
+            foreach ($measuresFiltered as $key) {
+                $measuresFilteredId[] = $key['uuid'];
+            }
+            $filterAnd['m.uuid'] = [
+                'op' => 'IN',
+                'value' => $measuresFilteredId,
+            ];
+            $filterAnd['m.anr'] = $anrId;
         }
 
-        $filterMeasures['r.anr']=$anrId;
-        $filterMeasures['r.uuid']= $referential;
-
-        $measureService = $this->getService()->get('measureService');
-        $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
-        $measuresFilteredId = [];
-        foreach ($measuresFiltered as $key) {
-          array_push($measuresFilteredId,$key['uuid']);
+        if ($order == 'measure') {
+            $order = 'm.code';
+        } else {
+            if ($order == '-measure') {
+                $order = '-m.code';
+            }
         }
-        $filterAnd['m.uuid']= [
-            'op' => 'IN',
-            'value' => $measuresFilteredId,
-        ];
-        $filterAnd['m.anr']=$anrId;
-      }
-
-      $service = $this->getService();
-      $riskService = $this->getService()->get('riskService');
-      $riskOpService = $this->getService()->get('riskOpService');
-
-      if($order=='measure')
-        $order='m.code';
-      else if($order=='-measure')
-        $order='-m.code';
-      $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-      if (count($this->dependencies)) {
-          foreach ($entities as $key => $entity) {
+        $entities = $this->soaService->getList($page, $limit, $order, $filter, $filterAnd);
+        foreach ($entities as $key => $entity) {
             $amvs = [];
             $rolfRisks = [];
-            foreach ($entity['measure']->amvs as $amv) {
-              $amvs[] = $amv->getUuid();
+            /** @var Measure $measure */
+            $measure = $entity['measure'];
+            foreach ($measure->getAmvs() as $amv) {
+                $amvs[] = $amv->getUuid();
             }
-            foreach ($entity['measure']->rolfRisks as $rolfRisk) {
-              $rolfRisksp[] = $rolfRisk->getId();
+            foreach ($measure->getRolfRisks() as $rolfRisk) {
+                $rolfRisks[] = $rolfRisk->getId();
             }
-            $entity['measure']->rolfRisks = $riskOpService->getRisksOp($anrId, null, ['rolfRisks' => $rolfRisks, 'limit' => -1 ,'order'=>'cacheNetRisk', 'order_direction' => 'desc']);
-            $entity['measure']->amvs = $riskService->getRisks($anrId, null, ['amvs' => $amvs, 'limit' => -1, 'order'=>'maxRisk', 'order_direction' => 'desc']);
-            $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['category','referential']);
-          }
-      }
-      return new JsonModel([
-          'count' => $service->getFilteredCount($filter, $filterAnd),
-          $this->name => $entities
-      ]);
-  }
+            $entity['measure']->rolfRisks = $this->anrInstanceRiskOpService->getOperationalRisks($anrId, null, [
+                'rolfRisks' => $rolfRisks,
+                'limit' => -1,
+                'order' => 'cacheNetRisk',
+                'order_direction' => 'desc',
+            ]);
+            $entity['measure']->amvs = $this->anrRiskService->getRisks($anrId, null, [
+                'amvs' => $amvs,
+                'limit' => -1,
+                'order' => 'maxRisk',
+                'order_direction' => 'desc',
+            ]);
+            $entities[$key]['anr'] = $measure->getAnr()->getJsonArray();
+            $entities[$key]['measure'] = $measure->getJsonArray();
+            $entities[$key]['measure']['category'] = $measure->getCategory()->getJsonArray();
+            $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
+        }
 
+        return new JsonModel([
+            'count' => $this->soaService->getFilteredCount($filter, $filterAnd),
+            'soaMeasures' => $entities,
+        ]);
+    }
 
-   public function get($id)
-   {
-       $entity = $this->getService()->getEntity($id);
+    public function get($id)
+    {
+        $entity = $this->soaService->getEntity($id);
+        /** @var Measure $measure */
+        $measure = $entity['measure'];
 
-       $anrId = (int)$this->params()->fromRoute('anrid');
-       if (empty($anrId)) {
-           throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-       }
-       if (!$entity['anr'] ) {
-           throw new \Monarc\Core\Exception\Exception('Anr ids diffence', 412);
-       }
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new Exception('"anrid" param is missing', 412);
+        }
+        if ($measure->getAnr()->getId() !== $anrId) {
+            throw new Exception('Anr IDs are different', 412);
+        }
 
-       if (count($this->dependencies)) {
-           $this->formatDependencies($entity, $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['category','referential']);
-       }
+        $entity['anr'] = $measure->getAnr()->getJsonArray();
+        $entity['measure'] = $measure->getJsonArray();
+        $entity['measure']['category'] = $measure->getCategory()->getJsonArray();
+        $entity['measure']['referential'] = $measure->getReferential()->getJsonArray();
 
-       return new JsonModel($entity);
-   }
+        return new JsonModel($entity);
+    }
 
-   /**
-    * @inheritdoc
-    */
-   public function patch($id, $data)
-   {
-       $anrId = (int)$this->params()->fromRoute('anrid');
-       if (empty($anrId)) {
-           throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-       }
-       $data['anr'] = $anrId;
-       $data['measure'] = ['anr' => $anrId , 'uuid' => $data['measure']['uuid']];
-       return parent::patch($id, $data);
-   }
+    public function patch($id, $data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new Exception('Anr id missing', 412);
+        }
+        $data['anr'] = $anrId;
+        $data['measure'] = ['anr' => $anrId, 'uuid' => $data['measure']['uuid']];
 
-   public function patchList($data)
-   {
-       $anrId = (int)$this->params()->fromRoute('anrid');
-       if (empty($anrId)) {
-           throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-       }
+        $this->soaService->patch($id, $data);
 
-       $created_objects = array();
-       foreach ($data as $new_data) {
-           $new_data['anr'] = $anrId;
-           $new_data['measure'] = ['anr' => $anrId , 'uuid' => $new_data['measure']['uuid']];
-           $id = $new_data['id'];
-           parent::patch($id, $new_data);
-           array_push($created_objects, $id);
-       }
-       return new JsonModel([
-           'status' => 'ok',
-           'id' => $created_objects,
-       ]);
-   }
+        return new JsonModel(['status' => 'ok']);
+    }
 
+    public function patchList($data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new Exception('Anr id missing', 412);
+        }
+
+        $createdObjects = [];
+        foreach ($data as $newData) {
+            $newData['anr'] = $anrId;
+            $newData['measure'] = ['anr' => $anrId, 'uuid' => $newData['measure']['uuid']];
+            $id = $newData['id'];
+            $this->soaService->patch($id, $data);
+            $createdObjects[] = $id;
+        }
+
+        return new JsonModel([
+            'status' => 'ok',
+            'id' => $createdObjects,
+        ]);
+    }
 }

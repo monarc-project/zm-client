@@ -27,6 +27,7 @@ class AnrInstanceRiskServiceFactory extends AbstractServiceFactory
         'userAnrTable' => Table\UserAnrTable::class,
         'assetTable' => Table\AssetTable::class,
         'instanceTable' => Table\InstanceTable::class,
+        'instanceRiskOwnerTable' =>  Table\InstanceRiskOwnerTable::class,
         'MonarcObjectTable' => Table\MonarcObjectTable::class,
         'scaleTable' => Table\ScaleTable::class,
         'threatTable' => Table\ThreatTable::class,

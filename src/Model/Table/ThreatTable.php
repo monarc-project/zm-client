@@ -54,6 +54,16 @@ class ThreatTable extends AbstractEntityTable
             ->getResult();
     }
 
+    public function findUuidsByAnr(Anr $anr): array
+    {
+        $result = $this->getDb()->getEntityManager()
+            ->createQuery('SELECT t.uuid FROM ' . Threat::class . ' t WHERE t.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getScalarResult();
+
+        return array_column($result, 'uuid');
+    }
+
     /**
      * @throws EntityNotFoundException
      */

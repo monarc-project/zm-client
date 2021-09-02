@@ -2,11 +2,15 @@
 
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Model\Table\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Stats\Controller\StatsController;
@@ -409,6 +413,31 @@ return [
                             ],
                         ],
                     ],
+                    'operational_scales' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'operational-scales[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiOperationalRisksScalesController::class,
+                            ],
+                        ],
+                    ],
+                    'operational_scales_comment' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'operational-scales/:scaleid/comments[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                                'scaleid' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiOperationalRisksScalesCommentsController::class,
+                            ],
+                        ],
+                    ],
                     'scales_types' => [
                         'type' => 'segment',
                         'options' => [
@@ -648,6 +677,18 @@ return [
                             'defaults' => [
                                 'controller' => Controller\ApiDashboardAnrCartoRisksController::class,
                                 'type' => 'all',
+                            ],
+                        ],
+                    ],
+                    'risk_owners' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'risk-owners[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrRiskOwnersController::class,
                             ],
                         ],
                     ],
@@ -1034,20 +1075,21 @@ return [
             Controller\ApiAnrRecordsExportController::class => Controller\ApiAnrRecordsExportControllerFactory::class,
             Controller\ApiAnrRecordsImportController::class => Controller\ApiAnrRecordsImportControllerFactory::class,
             Controller\ApiAnrTreatmentPlanController::class => Controller\ApiAnrTreatmentPlanControllerFactory::class,
-            Controller\ApiSoaController::class => Controller\ApiSoaControllerFactory::class,
+            Controller\ApiSoaController::class => AutowireFactory::class,
             Controller\ApiSoaCategoryController::class => Controller\ApiSoaCategoryControllerFactory::class,
             Controller\ApiAnrScalesController::class => Controller\ApiAnrScalesControllerFactory::class,
             Controller\ApiAnrScalesTypesController::class => Controller\ApiAnrScalesTypesControllerFactory::class,
             Controller\ApiAnrScalesCommentsController::class => Controller\ApiAnrScalesCommentsControllerFactory::class,
             Controller\ApiDashboardAnrCartoRisksController::class => Controller\ApiDashboardAnrCartoRisksControllerFactory::class,
             Controller\ApiAnrRisksController::class => AutowireFactory::class,
+            Controller\ApiAnrRiskOwnersController::class => AutowireFactory::class,
             Controller\ApiDashboardAnrRisksController::class => Controller\ApiDashboardAnrRisksControllerFactory::class,
-            Controller\ApiAnrRisksOpController::class => Controller\ApiAnrRisksOpControllerFactory::class,
+            Controller\ApiAnrRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrLibraryController::class => Controller\ApiAnrLibraryControllerFactory::class,
             Controller\ApiAnrLibraryCategoryController::class => Controller\ApiAnrLibraryCategoryControllerFactory::class,
             Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
             Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
-            Controller\ApiAnrInstancesRisksOpController::class => Controller\ApiAnrInstancesRisksOpControllerFactory::class,
+            Controller\ApiAnrInstancesRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesExportController::class => Controller\ApiAnrInstancesExportControllerFactory::class,
             Controller\ApiAnrObjectsCategoriesController::class => Controller\ApiAnrObjectsCategoriesControllerFactory::class,
@@ -1061,6 +1103,8 @@ return [
             StatsController::class => AutowireFactory::class,
             StatsAnrsSettingsController::class => AutowireFactory::class,
             StatsGeneralSettingsController::class => AutowireFactory::class,
+            Controller\ApiOperationalRisksScalesController::class => AutowireFactory::class,
+            Controller\ApiOperationalRisksScalesCommentsController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1133,6 +1177,12 @@ return [
             Table\VulnerabilityTable::class => AutowireFactory::class,
             Table\QuestionTable::class => AutowireFactory::class,
             Table\QuestionChoiceTable::class => AutowireFactory::class,
+            Table\OperationalRiskScaleTable::class => ClientEntityManagerFactory::class,
+            Table\OperationalRiskScaleTypeTable::class => ClientEntityManagerFactory::class,
+            Table\OperationalRiskScaleCommentTable::class => ClientEntityManagerFactory::class,
+            Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
+            Table\TranslationTable::class => ClientEntityManagerFactory::class,
+            Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1220,15 +1270,14 @@ return [
             'Monarc\FrontOffice\Service\AnrScaleService' => 'Monarc\FrontOffice\Service\AnrScaleServiceFactory',
             'Monarc\FrontOffice\Service\AnrScaleTypeService' => 'Monarc\FrontOffice\Service\AnrScaleTypeServiceFactory',
             'Monarc\FrontOffice\Service\AnrScaleCommentService' => 'Monarc\FrontOffice\Service\AnrScaleCommentServiceFactory',
-            'Monarc\FrontOffice\Service\AnrCheckStartedService' => 'Monarc\FrontOffice\Service\AnrCheckStartedServiceFactory',
+            Service\AnrCheckStartedService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\AnrCartoRiskService' => 'Monarc\FrontOffice\Service\AnrCartoRiskServiceFactory',
             'Monarc\FrontOffice\Service\AnrRiskService' => 'Monarc\FrontOffice\Service\AnrRiskServiceFactory',
             'Monarc\FrontOffice\Service\AnrObjectService' => 'Monarc\FrontOffice\Service\AnrObjectServiceFactory',
             'Monarc\FrontOffice\Service\AnrInstanceConsequenceService' => 'Monarc\FrontOffice\Service\AnrInstanceConsequenceServiceFactory',
-            'Monarc\FrontOffice\Service\AnrInstanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpServiceFactory',
+            Service\AnrInstanceRiskOpService::class => AutowireFactory::class,
             'Monarc\FrontOffice\Service\AnrInstanceRiskService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskServiceFactory',
             'Monarc\FrontOffice\Service\AnrInstanceService' => 'Monarc\FrontOffice\Service\AnrInstanceServiceFactory',
-            'Monarc\FrontOffice\Service\AnrRiskOpService' => 'Monarc\FrontOffice\Service\AnrRiskOpServiceFactory',
             'Monarc\FrontOffice\Service\AnrObjectCategoryService' => 'Monarc\FrontOffice\Service\AnrObjectCategoryServiceFactory',
             'Monarc\FrontOffice\Service\AssetExportService' => 'Monarc\FrontOffice\Service\AssetExportServiceFactory',
             'Monarc\FrontOffice\Service\DeliverableGenerationService' => 'Monarc\FrontOffice\Service\DeliverableGenerationServiceFactory',
@@ -1238,6 +1287,16 @@ return [
             Service\InstanceImportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
+            Service\OperationalRiskScaleService::class => AutowireFactory::class,
+            Service\InstanceRiskOwnerService::class => AutowireFactory::class,
+            Service\OperationalRiskScaleCommentService::class => AutowireFactory::class,
+            OperationalRiskScalesExportService::class => static function (ContainerInterface $container, $serviceName) {
+                return new OperationalRiskScalesExportService(
+                    $container->get(Table\OperationalRiskScaleTable::class),
+                    $container->get(Table\TranslationTable::class),
+                    $container->get(ConfigService::class),
+                );
+            },
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
@@ -1276,7 +1335,7 @@ return [
         ],
     ],
     'roles' => [
-        // Super Admin : Gestion des droits des utilisateurs uniquement (Carnet d’adresses)
+        // Super Admin : Management of users (and guides, models, referentials, etc.)
         Entity\UserRole::SUPER_ADMIN_FO => [
             'monarc_api_doc_models',
             'monarc_api_admin_users',
@@ -1291,11 +1350,11 @@ return [
             'monarc_api_models',
             'monarc_api_referentials',
             'monarc_api_client',
-            'monarc_api_anr_carto_risks',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_stats',
+            'monarc_api_global_client_anr/risk_owners',
         ],
-        // Utilisateur : Accès RWD par analyse
+        // User : RWD access per analysis
         Entity\UserRole::USER_FO => [
             'monarc_api_doc_models',
             'monarc_api_models',
@@ -1354,7 +1413,6 @@ return [
             'monarc_api_scales_comments',
             'monarc_api_scales_types',
             'monarc_api_user_profile',
-            'monarc_api_anr_carto_risks',
             'monarc_api_client_anr_scales',
             'monarc_api_client_anr_scales_types',
             'monarc_api_client_anr_scales_comments',
@@ -1368,10 +1426,13 @@ return [
             'monarc_api_anr_client_objects_categories',
             'monarc_api_user_password',
             'monarc_api_model_verify_language',
+            'monarc_api_global_client_anr/risk_owners',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_global_client_anr/scales',
             'monarc_api_global_client_anr/scales_types',
             'monarc_api_global_client_anr/scales_comments',
+            'monarc_api_global_client_anr/operational_scales',
+            'monarc_api_global_client_anr/operational_scales_comment',
             'monarc_api_global_client_anr/recommandations',
             'monarc_api_global_client_anr/recommandations_historics',
             'monarc_api_global_client_anr/recommandations_risks',

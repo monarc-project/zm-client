@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Monarc\FrontOffice\Model\Factory;
+namespace Monarc\FrontOffice\Model\Table\Factory;
 
 use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
