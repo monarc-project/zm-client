@@ -1351,7 +1351,7 @@ class InstanceImportService
                         ->setStatus($threatData['status'])
                         ->setTrend($threatData['trend'])
                         ->setQualification($threatData['qualification'])
-                        ->setComment($threatData['comment'])
+                        ->setComment(is_null($threatData['comment'])?'':$threatData['comment'])
                         ->setCreator($this->connectedUser->getEmail());
                     if (isset($threatData['c'])) {
                         $threat->setConfidentiality((int)$threatData['c']);
@@ -2187,7 +2187,7 @@ class InstanceImportService
             ->setKindOfMeasure($instanceRiskData['kindOfMeasure'])
             ->setReductionAmount((int)$instanceRiskData['reductionAmount'])
             ->setComment($instanceRiskData['comment'])
-            ->setCommentafter($instanceRiskData['commentAfter'])
+            ->setCommentafter(is_null($instanceRiskData['commentAfter'])?'':$instanceRiskData['commentAfter'])
             ->setCacheMaxRisk((int)$instanceRiskData['cacheMaxRisk'])
             ->setCacheTargetedRisk((int)$instanceRiskData['cacheTargetedRisk'])
             ->setRiskConfidentiality((int)$instanceRiskData['riskC'])
