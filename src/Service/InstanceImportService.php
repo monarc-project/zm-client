@@ -1379,6 +1379,7 @@ class InstanceImportService
                         $this->cachedData['threats'][$threatData['uuid']] = $threat;
                     }else{
                         $threat = $this->threatTable->findByAnrAndUuid($anr,(string)$threatData['uuid']);
+                        $this->cachedData['threats'][$threatData['uuid']] = $threat;
                     }
                 }else{
                     $threat = $this->cachedData['threats'][$threatData['uuid']];
@@ -1402,6 +1403,7 @@ class InstanceImportService
                     }
                     else{
                         $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid($anr,(string)$vulnerabilityData['uuid']);
+                        $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
                     }
                 }else{
                     $vulnerability = $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']];
