@@ -1343,6 +1343,7 @@ class InstanceImportService
             $vulnerability = null;
             $threat = null;
 
+            $instanceRisk = null;
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
                 if (!isset($this->cachedData['threats'][$threatData['uuid']])) {
                     if(!\in_array((string)$threatData['uuid'], $threatssUuids, true)){
@@ -1436,7 +1437,6 @@ class InstanceImportService
 
                     $this->instanceRiskTable->saveEntity($instanceRiskBrother, false);
                 }
-                $this->instanceRiskTable->getDb()->flush();
             }
 
             $threatUuid = isset($this->cachedData['threats'][$threatData['uuid']])
@@ -1446,12 +1446,14 @@ class InstanceImportService
                 ? $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]->getUuid()
                 : $instanceRiskData['vulnerability'];
 
-            $instanceRisk = $this->instanceRiskTable->findByInstanceAssetThreatUuidAndVulnerabilityUuid(
+            if($instanceRisk === null){
+                $instanceRisk = $this->instanceRiskTable->findByInstanceAssetThreatUuidAndVulnerabilityUuid(
                 $instance,
                 $monarcObject->getAsset(),
                 $threatUuid,
                 $vulnerabilityUuid
-            );
+                );
+            }
             if ($instanceRisk !== null && $includeEval) {
                 $instanceRisk->setThreatRate(
                     $this->isImportTypeAnr()
