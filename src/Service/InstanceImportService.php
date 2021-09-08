@@ -2205,7 +2205,7 @@ class InstanceImportService
             ->setVulnerabilityRate((int)$instanceRiskData['vulnerabilityRate'])
             ->setKindOfMeasure($instanceRiskData['kindOfMeasure'])
             ->setReductionAmount((int)$instanceRiskData['reductionAmount'])
-            ->setComment($instanceRiskData['comment'])
+            ->setComment(is_null($instanceRiskData['comment'])?'':$instanceRiskData['comment'])
             ->setCommentafter(is_null($instanceRiskData['commentAfter'])?'':$instanceRiskData['commentAfter'])
             ->setCacheMaxRisk((int)$instanceRiskData['cacheMaxRisk'])
             ->setCacheTargetedRisk((int)$instanceRiskData['cacheTargetedRisk'])
