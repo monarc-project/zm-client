@@ -49,7 +49,8 @@ class AnrMeasureMeasureService extends AbstractService
         $anr = $anrTable->getEntity($data['anr']);
 
         /** @var MeasureMeasure $measureMeasure */
-        $measureMeasure = $this->get('entity');
+        $measureMeasureClass = $this->get('entity');
+        $measureMeasure = new $measureMeasureClass();
         $measureMeasure->setAnr($anr);
         $measureMeasure->setFather($data['father']['uuid']);
         $measureMeasure->setChild($data['child']['uuid']);
