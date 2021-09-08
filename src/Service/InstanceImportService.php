@@ -1436,6 +1436,7 @@ class InstanceImportService
 
                     $this->instanceRiskTable->saveEntity($instanceRiskBrother, false);
                 }
+                $this->instanceRiskTable->getDb()->flush();
             }
 
             $threatUuid = isset($this->cachedData['threats'][$threatData['uuid']])
