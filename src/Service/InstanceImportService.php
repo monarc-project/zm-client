@@ -1343,6 +1343,20 @@ class InstanceImportService
             $vulnerability = null;
             $threat = null;
 
+            $threatUuid = isset($this->cachedData['threats'][$threatData['uuid']])
+                ? $this->cachedData['threats'][$threatData['uuid']]->getUuid()
+                : $instanceRiskData['threat'];
+            $vulnerabilityUuid = isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])
+                ? $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]->getUuid()
+                : $instanceRiskData['vulnerability'];
+
+            $instanceRisk = $this->instanceRiskTable->findByInstanceAssetThreatUuidAndVulnerabilityUuid(
+                $instance,
+                $monarcObject->getAsset(),
+                $threatUuid,
+                $vulnerabilityUuid
+            );
+
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
                 if (!isset($this->cachedData['threats'][$threatData['uuid']])) {
                     if(!\in_array((string)$threatData['uuid'], $threatssUuids, true)){
@@ -1438,19 +1452,6 @@ class InstanceImportService
                 }
             }
 
-            $threatUuid = isset($this->cachedData['threats'][$threatData['uuid']])
-                ? $this->cachedData['threats'][$threatData['uuid']]->getUuid()
-                : $instanceRiskData['threat'];
-            $vulnerabilityUuid = isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])
-                ? $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]->getUuid()
-                : $instanceRiskData['vulnerability'];
-
-            $instanceRisk = $this->instanceRiskTable->findByInstanceAssetThreatUuidAndVulnerabilityUuid(
-                $instance,
-                $monarcObject->getAsset(),
-                $threatUuid,
-                $vulnerabilityUuid
-            );
             if ($instanceRisk !== null && $includeEval) {
                 $instanceRisk->setThreatRate(
                     $this->isImportTypeAnr()
