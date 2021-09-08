@@ -1346,6 +1346,7 @@ class InstanceImportService
             $threatUuid = isset($this->cachedData['threats'][$threatData['uuid']])
                 ? $this->cachedData['threats'][$threatData['uuid']]->getUuid()
                 : $instanceRiskData['threat'];
+
             $vulnerabilityUuid = isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])
                 ? $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]->getUuid()
                 : $instanceRiskData['vulnerability'];
