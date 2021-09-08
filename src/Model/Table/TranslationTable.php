@@ -11,6 +11,9 @@ use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Table\TranslationTable as CoreTranslationTable;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Translation;
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\TranslationSuperClass;
+
 
 class TranslationTable extends CoreTranslationTable
 {
@@ -20,9 +23,9 @@ class TranslationTable extends CoreTranslationTable
     }
 
     /**
-     * @return Translation[]
+     * @return TranslationSuperClass[]
      */
-    public function findByAnr(Anr $anr): array
+    public function findByAnr(AnrSuperClass $anr): array
     {
         return $this->getRepository()->createQueryBuilder('t')
             ->where('t.anr = :anr')
