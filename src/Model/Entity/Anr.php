@@ -200,7 +200,7 @@ class Anr extends AnrSuperClass
         return $this;
     }
 
-    public function getModel(): int
+    public function getModel(): ?int
     {
         return $this->model;
     }
