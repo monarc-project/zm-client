@@ -1310,8 +1310,7 @@ class InstanceImportService
             if (!empty($threatsUuids)) {
                 $this->cachedData['threats'] = $this->threatTable->findByAnrAndUuidsIndexedByField(
                     $anr,
-                    $threatsUuids,
-                    'uuid'
+                    $threatsUuids
                 );
             }
         }
@@ -1324,8 +1323,7 @@ class InstanceImportService
             if (!empty($vulnerabilitiesUuids)) {
                 $this->cachedData['vulnerabilities'] = $this->vulnerabilityTable->findByAnrAndUuidsIndexedByField(
                     $anr,
-                    $vulnerabilitiesUuids,
-                    'uuid'
+                    $vulnerabilitiesUuids
                 );
             }
         }
@@ -1336,7 +1334,7 @@ class InstanceImportService
         }
 
         $vulnerabilitiesUuids = $this->vulnerabilityTable->findUuidsByAnr($anr);
-        $threatssUuids = $this->threatTable->findUuidsByAnr($anr);
+        $threatsUuids = $this->threatTable->findUuidsByAnr($anr);
         foreach ($data['risks'] as $instanceRiskData) {
             $threatData = $data['threats'][$instanceRiskData['threat']];
             $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
@@ -1360,7 +1358,7 @@ class InstanceImportService
 
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
                 if (!isset($this->cachedData['threats'][$threatData['uuid']])) {
-                    if(!\in_array((string)$threatData['uuid'], $threatssUuids, true)){
+                    if (!\in_array((string)$threatData['uuid'], $threatsUuids, true)) {
                         $threat = (new Threat())
                             ->setUuid($threatData['uuid'])
                             ->setAnr($anr)
@@ -1371,7 +1369,7 @@ class InstanceImportService
                             ->setStatus($threatData['status'])
                             ->setTrend($threatData['trend'])
                             ->setQualification($threatData['qualification'])
-                            ->setComment(is_null($threatData['comment'])?'':$threatData['comment'])
+                            ->setComment($threatData['comment'] ?? '')
                             ->setCreator($this->connectedUser->getEmail());
                         if (isset($threatData['c'])) {
                             $threat->setConfidentiality((int)$threatData['c']);
@@ -1384,7 +1382,8 @@ class InstanceImportService
                         }
 
                         /*
-                         * Unfortunately we don't add "themes" on the same level as "risks" and "threats", but only under "asset".
+                         * Unfortunately we don't add "themes" on the same level as "risks" and "threats",
+                         * but only under "asset".
                          * TODO: we should add theme linked to the threat inside of the threat object data when export later on.
                          * after we can set it $threat->setTheme($theme);
                          */
@@ -1392,17 +1391,16 @@ class InstanceImportService
                         $this->threatTable->saveEntity($threat, false);
 
                         $this->cachedData['threats'][$threatData['uuid']] = $threat;
-                    }else{
-                        $threat = $this->threatTable->findByAnrAndUuid($anr,(string)$threatData['uuid']);
+                    } else {
+                        $threat = $this->threatTable->findByAnrAndUuid($anr, (string)$threatData['uuid']);
                         $this->cachedData['threats'][$threatData['uuid']] = $threat;
                     }
-                }else{
+                } else {
                     $threat = $this->cachedData['threats'][$threatData['uuid']];
                 }
 
                 if (!isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])) {
-                    if(!\in_array((string)$vulnerabilityData['uuid'], $vulnerabilitiesUuids, true))
-                    {
+                    if (!\in_array((string)$vulnerabilityData['uuid'], $vulnerabilitiesUuids, true)) {
                         $vulnerability = (new Vulnerability())
                             ->setUuid($vulnerabilityData['uuid'])
                             ->setAnr($anr)
@@ -1414,13 +1412,14 @@ class InstanceImportService
                             ->setCreator($this->connectedUser->getEmail());
 
                         $this->vulnerabilityTable->saveEntity($vulnerability, false);
-                        $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
+                    } else {
+                        $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid(
+                            $anr,
+                            (string)$vulnerabilityData['uuid']
+                        );
                     }
-                    else{
-                        $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid($anr,(string)$vulnerabilityData['uuid']);
-                        $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
-                    }
-                }else{
+                    $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
+                } else {
                     $vulnerability = $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']];
                 }
 
@@ -2208,7 +2207,7 @@ class InstanceImportService
             ->setKindOfMeasure($instanceRiskData['kindOfMeasure'])
             ->setReductionAmount((int)$instanceRiskData['reductionAmount'])
             ->setComment((string)$instanceRiskData['comment'])
-            ->setCommentafter((string)$instanceRiskData['commentAfter'])
+            ->setCommentAfter((string)$instanceRiskData['commentAfter'])
             ->setCacheMaxRisk((int)$instanceRiskData['cacheMaxRisk'])
             ->setCacheTargetedRisk((int)$instanceRiskData['cacheTargetedRisk'])
             ->setRiskConfidentiality((int)$instanceRiskData['riskC'])
@@ -2732,14 +2731,16 @@ class InstanceImportService
                     $operationalRiskScale->getOperationalRiskScaleComments(),
                     $scalesTranslations
                 );
-                $maxIndexForLikelihood = (int)$scaleCommentData['scaleIndex']>$maxIndexForLikelihood?(int)$scaleCommentData['scaleIndex']:$maxIndexForLikelihood;
+                $maxIndexForLikelihood = (int)$scaleCommentData['scaleIndex'] > $maxIndexForLikelihood
+                    ? (int)$scaleCommentData['scaleIndex']
+                    : $maxIndexForLikelihood;
             }
-            // manage case when the scale (probability) is not matched and level higher than external
-            if($operationalRiskScale->getType() === OperationalRiskScale::TYPE_LIKELIHOOD && $maxIndexForLikelihood!==0)
-            {
+            /* Manage a case when the scale (probability) is not matched and level higher than external. */
+            if ($maxIndexForLikelihood !== 0
+                && $operationalRiskScale->getType() === OperationalRiskScale::TYPE_LIKELIHOOD
+            ) {
                 foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $comment) {
-                    if((int)$comment->getScaleIndex()>=$maxIndexForLikelihood)
-                    {
+                    if ($comment->getScaleIndex() >= $maxIndexForLikelihood) {
                         $comment->setIsHidden(true);
                         $this->operationalRiskScaleCommentTable->save($comment, false);
                     }
@@ -2786,14 +2787,13 @@ class InstanceImportService
                         continue;
                     }
 
-                    if ($currentScaleLevelDifferenceFromExternal > 0
-                    ) {
-                        /* The scales type was matched and the current scales level is higher then external,
-                            so we need to hide their comments and validate values. */
+                    if ($currentScaleLevelDifferenceFromExternal > 0) {
                         $commentIndexToValueMap = $externalOperationalScalesData[OperationalRiskScale::TYPE_IMPACT]
                         ['commentsIndexToValueMap'];
                         $maxValue = $commentIndexToValueMap[$operationalRiskScale->getMax()];
-                        if(\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)){
+                        if (\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)) {
+                            /* The scales type was matched and the current scales level is higher then external,
+                                so we need to hide their comments and validate values. */
                             foreach ($matchedScaleTypes as $matchedScaleType) {
                                 foreach ($matchedScaleType->getOperationalRiskScaleComments() as $comment) {
                                     $isHidden = $operationalRiskScale->getMin() > $comment->getScaleIndex()
@@ -2806,9 +2806,8 @@ class InstanceImportService
                                     $this->operationalRiskScaleCommentTable->save($comment, false);
                                 }
                             }
-                        }
-                        // manage case when the scale is not matched and level higher than external
-                        if(!\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)){
+                        } else {
+                            /* Manage a case when the scale is not matched and level higher than external */
                             foreach ($operationalRiskScaleType->getOperationalRiskScaleComments() as $comment) {
                                 $isHidden = $operationalRiskScale->getMin() > $comment->getScaleIndex()
                                     || $operationalRiskScale->getMax() < $comment->getScaleIndex();
