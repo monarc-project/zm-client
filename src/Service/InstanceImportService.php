@@ -1338,8 +1338,6 @@ class InstanceImportService
         foreach ($data['risks'] as $instanceRiskData) {
             $threatData = $data['threats'][$instanceRiskData['threat']];
             $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
-            $vulnerability = null;
-            $threat = null;
 
             $threatUuid = isset($this->cachedData['threats'][$threatData['uuid']])
                 ? $this->cachedData['threats'][$threatData['uuid']]->getUuid()
@@ -1358,7 +1356,10 @@ class InstanceImportService
 
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
                 if (!isset($this->cachedData['threats'][$threatData['uuid']])) {
-                    if (!\in_array((string)$threatData['uuid'], $threatsUuids, true)) {
+                    if (\in_array((string)$threatData['uuid'], $threatsUuids, true)) {
+                        $this->cachedData['threats'][$threatData['uuid']] = $this->threatTable
+                            ->findByAnrAndUuid($anr, (string)$threatData['uuid']);
+                    } else {
                         $threat = (new Threat())
                             ->setUuid($threatData['uuid'])
                             ->setAnr($anr)
@@ -1391,16 +1392,14 @@ class InstanceImportService
                         $this->threatTable->saveEntity($threat, false);
 
                         $this->cachedData['threats'][$threatData['uuid']] = $threat;
-                    } else {
-                        $threat = $this->threatTable->findByAnrAndUuid($anr, (string)$threatData['uuid']);
-                        $this->cachedData['threats'][$threatData['uuid']] = $threat;
                     }
-                } else {
-                    $threat = $this->cachedData['threats'][$threatData['uuid']];
                 }
 
                 if (!isset($this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']])) {
-                    if (!\in_array((string)$vulnerabilityData['uuid'], $vulnerabilitiesUuids, true)) {
+                    if (\in_array((string)$vulnerabilityData['uuid'], $vulnerabilitiesUuids, true)) {
+                        $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $this->vulnerabilityTable
+                            ->findByAnrAndUuid($anr, (string)$vulnerabilityData['uuid']);
+                    } else {
                         $vulnerability = (new Vulnerability())
                             ->setUuid($vulnerabilityData['uuid'])
                             ->setAnr($anr)
@@ -1412,15 +1411,9 @@ class InstanceImportService
                             ->setCreator($this->connectedUser->getEmail());
 
                         $this->vulnerabilityTable->saveEntity($vulnerability, false);
-                    } else {
-                        $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid(
-                            $anr,
-                            (string)$vulnerabilityData['uuid']
-                        );
+
+                        $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
                     }
-                    $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $vulnerability;
-                } else {
-                    $vulnerability = $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']];
                 }
 
                 $instanceRisk = $this->createInstanceRiskFromData(
@@ -1428,8 +1421,8 @@ class InstanceImportService
                     $anr,
                     $instance,
                     $monarcObject->getAsset(),
-                    $threat,
-                    $vulnerability
+                    $this->cachedData['threats'][$threatData['uuid']],
+                    $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']]
                 );
 
                 $this->instanceRiskTable->saveEntity($instanceRisk, false);
