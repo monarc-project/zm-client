@@ -13,6 +13,7 @@ use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
@@ -70,7 +71,8 @@ class AnrRiskService extends AbstractService
     {
         /** @var AnrTable $anrTable */
         $anrTable = $this->get('anrTable');
-        $anrLanguage = $anrTable->findById($anrId)->getLanguage();
+        $anr = $anrTable->findById($anrId);
+        $anrLanguage = $anr->getLanguage();
 
         /** @var TranslateService $translateService */
         $translateService = $this->get('translateService');
@@ -92,6 +94,9 @@ class AnrRiskService extends AbstractService
                 . $translateService->translate('A', $anrLanguage),
             $translateService->translate('Treatment', $anrLanguage),
             $translateService->translate('Residual risk', $anrLanguage),
+            $translateService->translate('Risk owner', $anrLanguage),
+            $translateService->translate('Risk context', $anrLanguage),
+            $translateService->translate('Recommendations', $anrLanguage),
         ]) . "\n";
 
         $instanceRisks = $this->getRisks($anrId, $instanceId, $params);
@@ -117,8 +122,11 @@ class AnrRiskService extends AbstractService
                 $instanceRisk['d_risk_enabled'] === 0  || $instanceRisk['d_risk'] === -1
                     ? null
                     : $instanceRisk['d_risk'],
-                InstanceRisk::getAvailableMeasureTypes()[$instanceRisk['kindOfMeasure']],
+                $translateService->translate(InstanceRisk::getAvailableMeasureTypes()[$instanceRisk['kindOfMeasure']], $anrLanguage),
                 $instanceRisk['target_risk'] === -1 ? null : $instanceRisk['target_risk'],
+                $instanceRisk['owner'],
+                $instanceRisk['context'],
+                $this->getCsvRecommendations($anr,$instanceRisk['recommendations']),
             ];
 
             $output .= '"';
@@ -265,5 +273,23 @@ class AnrRiskService extends AbstractService
         $this->processRemovedInstanceRiskRecommendationsPositions($instanceRisk);
 
         return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getCsvRecommendations($anr,$recsUuidsString)
+    {
+        $recsUuidsArray = explode(",",$recsUuidsString);
+        foreach ($recsUuidsArray as $index => $recUuid) {
+            if (!empty($recUuid)) {
+                $recommendation = $this->recommandationTable->findByAnrAndUuid($anr,$recUuid);
+                $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
+                if ($index !== count($recsUuidsArray) - 1) {
+                    $csvString .= "\r";
+                }
+            }
+        }
+        return $csvString;
     }
 }
