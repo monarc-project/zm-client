@@ -63,7 +63,7 @@ class AnrRiskService extends AbstractService
 
         // TODO: drop the context!!!
         return $instanceRiskTable
-            ->getFilteredInstancesRisks($anr, $instance, $params, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
+            ->getFilteredInstancesRisks($anrId, $instance, $params, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
     }
 
     public function getCsvRisks($anrId, $instanceId = null, $params = [])
