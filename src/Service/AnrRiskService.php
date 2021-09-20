@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
@@ -40,42 +41,94 @@ class AnrRiskService extends AbstractService
     /** @var RecommandationTable */
     protected $recommandationTable;
 
-    /**
-     * Computes and returns the list of risks for either the entire ANR, or a specific instance if an ID is set.
-     * @param int $anrId The ANR ID
-     * @param int|null $instanceId An instance ID, or null to not filter by instance
-     * @param array $params An array of fields to filter
-     * @param bool $count If true, only the number of risks will be returned
-     * @return int|array If $count is true, the number of risks. Otherwise, an array of risks.
-     */
-    public function getRisks($anrId, $instanceId = null, $params = [], $count = false)
+    public function getRisks($anrId, $instanceId = null, $params = []): array
     {
-        $anr = $this->get('anrTable')->getEntity($anrId); // on check que l'ANR existe
-        return $this->getInstancesRisks($anr->get('id'), $instanceId, $params, $count);
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anr = $anrTable->findById($anrId);
+
+        $instance = null;
+        if ($instanceId !== null) {
+            /** @var InstanceTable $instanceTable */
+            $instanceTable = $this->get('instanceTable');
+            $instance = $instanceTable->findById($instanceId);
+
+            if ($instance->getAnr()->getId() !== $anrId) {
+                throw new Exception('Anr ID and instance anr ID are different', 412);
+            }
+        }
+
+        /** @var InstanceRiskTable $instanceRiskTable */
+        $instanceRiskTable = $this->get('table');
+
+        // TODO: drop the context!!!
+        return $instanceRiskTable
+            ->getFilteredInstancesRisks($anr, $instance, $params, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
     }
 
-    /**
-     * Returns the list of risks in CSV format for either the entire ANR, or a specific instance if an ID is set.
-     * @param int $anrId The ANR ID
-     * @param int|null $instanceId An instance ID, or null to not filter by instance
-     * @param array $params An array of fields to filter
-     * @return string CSV-compliant data of the risks list
-     */
     public function getCsvRisks($anrId, $instanceId = null, $params = [])
     {
-        return $this->get('table')->getCsvRisks($anrId, $instanceId, $params, $this->get('translateService'), \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
-    }
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anrLanguage = $anrTable->findById($anrId)->getLanguage();
 
-    /**
-     * Computes and returns the list of risks for either the entire ANR, or a specific instance if an ID is set.
-     * @param int $anrId The ANR ID
-     * @param int|null $instanceId An instance ID, or null to not filter by instance
-     * @param array $params An array of fields to filter
-     * @return array An array of risks.
-     */
-    protected function getInstancesRisks($anrId, $instanceId = null, $params = [])
-    {
-        return $this->get('table')->getFilteredInstancesRisks($anrId, $instanceId, $params, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
+        /** @var TranslateService $translateService */
+        $translateService = $this->get('translateService');
+
+        // Fill in the header
+        $output = implode(',', [
+            $translateService->translate('Asset', $anrLanguage),
+            $translateService->translate('C Impact', $anrLanguage),
+            $translateService->translate('I Impact', $anrLanguage),
+            $translateService->translate('A Impact', $anrLanguage),
+            $translateService->translate('Threat', $anrLanguage),
+            $translateService->translate('Prob.', $anrLanguage),
+            $translateService->translate('Vulnerability', $anrLanguage),
+            $translateService->translate('Existing controls', $anrLanguage),
+            $translateService->translate('Qualif.', $anrLanguage),
+            $translateService->translate('Current risk', $anrLanguage). " C",
+            $translateService->translate('Current risk', $anrLanguage) . " I",
+            $translateService->translate('Current risk', $anrLanguage) . " "
+                . $translateService->translate('A', $anrLanguage),
+            $translateService->translate('Treatment', $anrLanguage),
+            $translateService->translate('Residual risk', $anrLanguage),
+        ]) . "\n";
+
+        $instanceRisks = $this->getRisks($anrId, $instanceId, $params);
+
+        // Fill in the content
+        foreach ($instanceRisks as $instanceRisk) {
+            $values = [
+                $instanceRisk['instanceName' . $anrLanguage],
+                $instanceRisk['c_impact'] === -1 ? null : $instanceRisk['c_impact'],
+                $instanceRisk['i_impact'] === -1 ? null : $instanceRisk['i_impact'],
+                $instanceRisk['d_impact'] === -1 ? null : $instanceRisk['d_impact'],
+                $instanceRisk['threatLabel' . $anrLanguage],
+                $instanceRisk['threatRate'] === -1 ? null : $instanceRisk['threatRate'],
+                $instanceRisk['vulnLabel' . $anrLanguage],
+                $instanceRisk['comment'],
+                $instanceRisk['vulnerabilityRate'] === -1 ? null : $instanceRisk['vulnerabilityRate'],
+                $instanceRisk['c_risk_enabled'] === 0 || $instanceRisk['c_risk'] === -1
+                    ? null
+                    : $instanceRisk['c_risk'],
+                $instanceRisk['i_risk_enabled'] === 0  || $instanceRisk['i_risk'] === -1
+                    ? null
+                    : $instanceRisk['i_risk'],
+                $instanceRisk['d_risk_enabled'] === 0  || $instanceRisk['d_risk'] === -1
+                    ? null
+                    : $instanceRisk['d_risk'],
+                InstanceRisk::getAvailableMeasureTypes()[$instanceRisk['kindOfMeasure']],
+                $instanceRisk['target_risk'] === -1 ? null : $instanceRisk['target_risk'],
+            ];
+
+            $output .= '"';
+            $search = ['"', "\n"];
+            $replace = ["'", ' '];
+            $output .= implode('","', str_replace($search, $replace, $values));
+            $output .= "\"\r\n";
+        }
+
+        return $output;
     }
 
     /**
@@ -141,21 +194,6 @@ class AnrRiskService extends AbstractService
         }
 
         return $id;
-    }
-
-    /**
-     * TODO: check if we use the method or the InstanceRiskService::deleteInstanceRisks is only used.
-     */
-    public function deleteInstanceRisks($instanceId, $anrId)
-    {
-        $risks = $this->getInstanceRisks($instanceId, $anrId);
-        $table = $this->get('table');
-        $i = 1;
-        $nb = count($risks);
-        foreach ($risks as $r) {
-            $table->delete($r->id, ($i == $nb));
-            $i++;
-        }
     }
 
     /**
