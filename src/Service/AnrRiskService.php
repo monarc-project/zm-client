@@ -8,12 +8,12 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
@@ -62,9 +62,9 @@ class AnrRiskService extends AbstractService
         /** @var InstanceRiskTable $instanceRiskTable */
         $instanceRiskTable = $this->get('table');
 
-        // TODO: drop the context!!!
+        // TODO: drop the context and pass the objects instead of IDs!
         return $instanceRiskTable
-            ->getFilteredInstancesRisks($anrId, $instance, $params, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
+            ->getFilteredInstancesRisks($anrId, $instanceId, $params, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
     }
 
     public function getCsvRisks($anrId, $instanceId = null, $params = [])
@@ -99,6 +99,7 @@ class AnrRiskService extends AbstractService
             $translateService->translate('Recommendations', $anrLanguage),
         ]) . "\n";
 
+        // TODO: fetch objects list instead of array of values.
         $instanceRisks = $this->getRisks($anrId, $instanceId, $params);
 
         // Fill in the content
@@ -122,11 +123,14 @@ class AnrRiskService extends AbstractService
                 $instanceRisk['d_risk_enabled'] === 0  || $instanceRisk['d_risk'] === -1
                     ? null
                     : $instanceRisk['d_risk'],
-                $translateService->translate(InstanceRisk::getAvailableMeasureTypes()[$instanceRisk['kindOfMeasure']], $anrLanguage),
+                $translateService->translate(
+                    InstanceRisk::getAvailableMeasureTypes()[$instanceRisk['kindOfMeasure']],
+                    $anrLanguage
+                ),
                 $instanceRisk['target_risk'] === -1 ? null : $instanceRisk['target_risk'],
                 $instanceRisk['owner'],
                 $instanceRisk['context'],
-                $this->getCsvRecommendations($anr,$instanceRisk['recommendations']),
+                $this->getCsvRecommendations($anr, (string)$instanceRisk['recommendations']),
             ];
 
             $output .= '"';
@@ -275,21 +279,21 @@ class AnrRiskService extends AbstractService
         return true;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getCsvRecommendations($anr,$recsUuidsString)
+    protected function getCsvRecommendations(AnrSuperClass $anr, string $recsUuidsString): string
     {
-        $recsUuidsArray = explode(",",$recsUuidsString);
+        $recsUuidsArray = explode(",", $recsUuidsString);
+        $recommendationsUuidsNumber = \count($recsUuidsArray);
+        $csvString = '';
         foreach ($recsUuidsArray as $index => $recUuid) {
             if (!empty($recUuid)) {
-                $recommendation = $this->recommandationTable->findByAnrAndUuid($anr,$recUuid);
+                $recommendation = $this->recommandationTable->findByAnrAndUuid($anr, $recUuid);
                 $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
-                if ($index !== count($recsUuidsArray) - 1) {
+                if ($index !== $recommendationsUuidsNumber - 1) {
                     $csvString .= "\r";
                 }
             }
         }
+
         return $csvString;
     }
 }
