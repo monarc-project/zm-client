@@ -275,6 +275,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $tableHeaders['comment'] = $this->translateService->translate('Existing controls', $anrLanguage);
         $tableHeaders['kindOfMeasure'] = $this->translateService->translate('Treatment', $anrLanguage);
         $tableHeaders['cacheTargetedRisk'] = $this->translateService->translate('Residual risk', $anrLanguage);
+        $tableHeaders['owner'] = $this->translateService->translate('Risk owner', $anrLanguage);
+        $tableHeaders['context'] = $this->translateService->translate('Risk context', $anrLanguage);
+        $tableHeaders['recommendations'] = $this->translateService->translate('Recommendations', $anrLanguage);
 
         $output = implode(',', array_values($tableHeaders)) . "\n";
 
@@ -306,6 +309,10 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $values[] = $operationalInstanceRisk->getComment();
             $values[] = InstanceRiskOp::getAvailableMeasureTypes()[$operationalInstanceRisk->getKindOfMeasure()];
             $values[] = $operationalInstanceRisk->getCacheTargetedRisk();
+            $values[] = $operationalInstanceRisk->getInstanceRiskOwner() !== null ?
+                $operationalInstanceRisk->getInstanceRiskOwner()->getName() :
+                null;
+            $values[] = $operationalInstanceRisk->getContext();
 
             $output .= '"';
             $search = ['"', "\n"];
