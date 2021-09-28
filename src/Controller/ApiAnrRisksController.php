@@ -37,12 +37,12 @@ class ApiAnrRisksController extends AbstractRestfulController
             /** @var Response $response */
             $response = $this->getResponse();
             $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
-            $response->setContent($this->anrRiskService->getCsvRisks($anrId, ['id' => $id], $params));
+            $response->setContent($this->anrRiskService->getCsvRisks($anrId, $id, $params));
 
             return $response;
         }
 
-        $risks = $this->anrRiskService->getRisks($anrId, ['id' => $id], $params);
+        $risks = $this->anrRiskService->getRisks($anrId, $id, $params);
 
         return new JsonModel([
             'count' => \count($risks),

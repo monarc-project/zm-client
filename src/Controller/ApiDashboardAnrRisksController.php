@@ -32,7 +32,7 @@ class ApiDashboardAnrRisksController extends ApiAnrAbstractController
         }
         $params = $this->parseParams();
 
-        $lst = $this->getService()->getRisks($anrId, ['id' => $id], $params);
+        $lst = $this->getService()->getRisks($anrId, $id, $params);
         return new JsonModel([
             'count' => count($lst),
             $this->name => $params['limit'] > 0 ?
