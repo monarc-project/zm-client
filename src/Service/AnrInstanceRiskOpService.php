@@ -282,6 +282,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $tableHeaders['owner'] = $this->translateService->translate('Risk owner', $anrLanguage);
         $tableHeaders['context'] = $this->translateService->translate('Risk context', $anrLanguage);
         $tableHeaders['recommendations'] = $this->translateService->translate('Recommendations', $anrLanguage);
+        $tableHeaders['referentials'] = $this->translateService->translate('Security referentials', $anrLanguage);
 
         $output = implode(',', array_values($tableHeaders)) . "\n";
 
@@ -320,6 +321,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                 null;
             $values[] = $operationalInstanceRisk->getContext();
             $values[] = $this->getCsvRecommendations($anr, $operationalInstanceRisk);
+            $values[] = $this->getCsvMeasures($anrLanguage, $operationalInstanceRisk);
 
 
             $output .= '"';
@@ -464,6 +466,24 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $recommendation = $recommendationRisk->getRecommandation();
             $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
             if ($index !== $recommendationsRisksNumber - 1) {
+                $csvString .= "\r";
+            }
+        }
+
+        return $csvString;
+    }
+
+    protected function getCsvMeasures(int $anrLanguage, InstanceRiskOp $operationalInstanceRisk): string
+    {
+        $measures = $operationalInstanceRisk->getRolfRisk()->getMeasures();
+        $measuresNumber = \count($measures);
+        $csvString = '';
+
+        foreach ($measures as $index => $measure) {
+            $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
+               $measure->getCode() . " - " .
+               $measure->{'getLabel' . $anrLanguage}();
+            if ($index !== $measuresNumber - 1) {
                 $csvString .= "\r";
             }
         }
