@@ -97,6 +97,7 @@ class AnrRiskService extends AbstractService
             $translateService->translate('Risk owner', $anrLanguage),
             $translateService->translate('Risk context', $anrLanguage),
             $translateService->translate('Recommendations', $anrLanguage),
+            $translateService->translate('Security referentials', $anrLanguage),
         ]) . "\n";
 
         // TODO: fetch objects list instead of array of values.
@@ -131,6 +132,7 @@ class AnrRiskService extends AbstractService
                 $instanceRisk['owner'],
                 $instanceRisk['context'],
                 $this->getCsvRecommendations($anr, (string)$instanceRisk['recommendations']),
+                $this->getCsvMeasures($anrLanguage, $instanceRisk['id'])
             ];
 
             $output .= '"';
@@ -291,6 +293,27 @@ class AnrRiskService extends AbstractService
                 if ($index !== $recommendationsUuidsNumber - 1) {
                     $csvString .= "\r";
                 }
+            }
+        }
+
+        return $csvString;
+    }
+
+    protected function getCsvMeasures(int $anrLanguage, int $instanceRiksId): string
+    {
+        /** @var InstanceRiskTable $instanceRiskTable */
+        $instanceRiskTable = $this->get('table');
+        $instanceRisk = $instanceRiskTable->findById($instanceRiksId);
+        $measures = $instanceRisk->getAmv()->getMeasures();
+        $measuresNumber = \count($measures);
+        $csvString = '';
+
+        foreach ($measures as $index => $measure) {
+            $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
+               $measure->getCode() . " - " .
+               $measure->{'getLabel' . $anrLanguage}();
+            if ($index !== $measuresNumber - 1) {
+                $csvString .= "\r";
             }
         }
 
