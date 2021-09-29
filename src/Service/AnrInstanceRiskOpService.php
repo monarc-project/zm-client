@@ -35,6 +35,7 @@ use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfTagTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
@@ -65,7 +66,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         ConfigService $configService,
         TranslateService $translateService,
         InstanceRiskOwnerTable $instanceRiskOwnerTable,
-        RecommandationTable $recommendationTable
+        RecommandationTable $recommendationTable,
+        RecommandationRiskTable $recommendationRiskTable
     ) {
         parent::__construct(
             $anrTable,
@@ -79,8 +81,10 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $operationalRiskScaleTable,
             $operationalRiskScaleTypeTable,
             $instanceRiskOwnerTable,
-            $configService
+            $configService,
+            $recommendationRiskTable
         );
+        $this->recommendationRiskTable = $recommendationRiskTable;
         $this->rolfRiskTable = $rolfRiskTable;
         $this->recommendationTable = $recommendationTable;
     }
@@ -308,11 +312,15 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $values[] = $operationalInstanceRisk->getCacheNetRisk();
             $values[] = $operationalInstanceRisk->getComment();
             $values[] = InstanceRiskOp::getAvailableMeasureTypes()[$operationalInstanceRisk->getKindOfMeasure()];
-            $values[] = $operationalInstanceRisk->getCacheTargetedRisk();
+            $values[] = $operationalInstanceRisk->getCacheTargetedRisk() == -1 ?
+                $operationalInstanceRisk->getCacheNetRisk() :
+                $operationalInstanceRisk->getCacheTargetedRisk();
             $values[] = $operationalInstanceRisk->getInstanceRiskOwner() !== null ?
                 $operationalInstanceRisk->getInstanceRiskOwner()->getName() :
                 null;
             $values[] = $operationalInstanceRisk->getContext();
+            $values[] = $this->getCsvRecommendations($anr, $operationalInstanceRisk);
+
 
             $output .= '"';
             $search = ['"', "\n"];
@@ -441,5 +449,25 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         }
 
         return $instancesIds;
+    }
+
+    protected function getCsvRecommendations(AnrSuperClass $anr, InstanceRiskOp $operationalInstanceRisk): string
+    {
+        $recommendationsRisks = $this->recommendationRiskTable->findByAnrAndOperationalInstanceRisk(
+            $anr,
+            $operationalInstanceRisk
+        );
+        $recommendationsRisksNumber = \count($recommendationsRisks);
+        $csvString = '';
+
+        foreach ($recommendationsRisks as $index => $recommendationRisk) {
+            $recommendation = $recommendationRisk->getRecommandation();
+            $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
+            if ($index !== $recommendationsRisksNumber - 1) {
+                $csvString .= "\r";
+            }
+        }
+
+        return $csvString;
     }
 }
