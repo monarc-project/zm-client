@@ -5107,9 +5107,14 @@ class DeliverableGenerationService extends AbstractService
                 );
         }
 
+        $globalObjectUuids = [];
         foreach ($instances as $i) {
-            $instanceConsequences = $instanceService->getConsequences($this->anr->getId(), $i, true);
+            //[Global objects] Check if the object is already in the table
+            if (\in_array($i['object']->getUuid(),$globalObjectUuids)) {
+                continue;
+            }
 
+            $instanceConsequences = $instanceService->getConsequences($this->anr->getId(), $i, true);
             //delete scale type C,I and D
             // set the correct order in the deliverable. not perfect but work
             $impactsConsequences = [];
@@ -5136,6 +5141,9 @@ class DeliverableGenerationService extends AbstractService
                                     $this->leftParagraph
                                 );
                             $headerImpact = true;
+                            if ($i['object']->isScopeGlobal()) {
+                                $globalObjectUuids[] = $i['object']->getUuid();
+                            }
                         }
                         $table->addRow(400);
                         if (!$headerConsequence) {
