@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\FrontOffice\Service\AnrRiskService;
+use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
@@ -20,12 +20,12 @@ use Laminas\View\Model\JsonModel;
  */
 class ApiAnrRisksController extends AbstractRestfulController
 {
-    /** @var AnrRiskService */
-    private $anrRiskService;
+    /** @var AnrInstanceRiskService */
+    private $anrInstanceRiskService;
 
-    public function __construct(AnrRiskService $anrRiskService)
+    public function __construct(AnrInstanceRiskService $anrInstanceRiskService)
     {
-        $this->anrRiskService = $anrRiskService;
+        $this->anrInstanceRiskService = $anrInstanceRiskService;
     }
 
     public function get($id)
@@ -37,12 +37,12 @@ class ApiAnrRisksController extends AbstractRestfulController
             /** @var Response $response */
             $response = $this->getResponse();
             $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
-            $response->setContent($this->anrRiskService->getCsvRisks($anrId, $id, $params));
+            $response->setContent($this->anrInstanceRiskService->getInstanceRisksInCsv($anrId, $id, $params));
 
             return $response;
         }
 
-        $risks = $this->anrRiskService->getRisks($anrId, $id, $params);
+        $risks = $this->anrInstanceRiskService->getInstanceRisks($anrId, $id, $params);
 
         return new JsonModel([
             'count' => \count($risks),
@@ -54,26 +54,7 @@ class ApiAnrRisksController extends AbstractRestfulController
 
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $params = $this->prepareParams();
-
-        if ($this->params()->fromQuery('csv', false)) {
-            /** @var Response $response */
-            $response = $this->getResponse();
-            $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
-            $response->setContent($this->anrRiskService->getCsvRisks($anrId, null, $params));
-
-            return $response;
-        }
-
-        $risks = $this->anrRiskService->getRisks($anrId, null, $params);
-
-        return new JsonModel([
-            'count' => \count($risks),
-            'risks' => $params['limit'] > 0
-                ? \array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit'])
-                : $risks,
-        ]);
+        return $this->get(null);
     }
 
     public function create($data)
@@ -92,7 +73,7 @@ class ApiAnrRisksController extends AbstractRestfulController
             ],
         ];
 
-        $id = $this->anrRiskService->create($params);
+        $id = $this->anrInstanceRiskService->createInstanceRisk($params);
 
         return new JsonModel([
             'status' => 'ok',
@@ -102,7 +83,7 @@ class ApiAnrRisksController extends AbstractRestfulController
 
     public function delete($id)
     {
-        $this->anrRiskService->deleteFromAnr($id, (int)$this->params()->fromRoute('anrid'));
+        $this->anrInstanceRiskService->deleteInstanceRisk((int)$id, (int)$this->params()->fromRoute('anrid'));
 
         return new JsonModel(['status' => 'ok']);
     }
