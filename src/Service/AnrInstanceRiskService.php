@@ -314,6 +314,34 @@ class AnrInstanceRiskService extends InstanceRiskService
             ->setCreator($this->getConnectedUser()->getEmail());
     }
 
+    protected function getLanguageIndex(AnrSuperClass $anr): int
+    {
+        return $anr->getLanguage();
+    }
+
+    /**
+     * @param InstanceRisk $instanceRisk
+     * @param array $instanceRiskResult
+     *
+     * @return array
+     */
+    private function addCustomFieldsToInstanceRiskResult(
+        InstanceRiskSuperClass $instanceRisk,
+        array $instanceRiskResult
+    ): array {
+        $recommendationsUuids = [];
+        foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
+            if ($recommendationRisk->getRecommandation() !== null) {
+                $recommendationsUuids[] = $recommendationRisk->getRecommandation()->getUuid();
+            }
+        }
+
+        return array_merge(
+            $instanceRiskResult,
+            ['recommendations' => implode(',', $recommendationsUuids)]
+        );
+    }
+
     private function getCsvRecommendations(AnrSuperClass $anr, array $recsUuids): string
     {
         $recommendationsUuidsNumber = \count($recsUuids);
