@@ -290,9 +290,9 @@ class AnrInstanceRiskService extends InstanceRiskService
         InstanceRiskSuperClass $instanceRisk,
         InstanceRiskSuperClass $newInstanceRisk
     ): void {
-        /** @var RecommandationRiskTable $recommandationRiskTable */
-        $recommandationRiskTable = $this->get('recommandationRiskTable');
-        $recommendationRisks = $recommandationRiskTable->findByAnrAndInstanceRisk(
+        /** @var RecommandationRiskTable $recommendationRiskTable */
+        $recommendationRiskTable = $this->get('recommendationRiskTable');
+        $recommendationRisks = $recommendationRiskTable->findByAnrAndInstanceRisk(
             $newInstanceRisk->getAnr(),
             $instanceRisk
         );
@@ -302,7 +302,7 @@ class AnrInstanceRiskService extends InstanceRiskService
                 ->setInstance($newInstanceRisk->getInstance())
                 ->setInstanceRisk($newInstanceRisk);
 
-            $recommandationRiskTable->saveEntity($newRecommendationRisk, false);
+            $recommendationRiskTable->saveEntity($newRecommendationRisk, false);
         }
     }
 
