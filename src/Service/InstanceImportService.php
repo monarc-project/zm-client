@@ -1797,16 +1797,16 @@ class InstanceImportService
                     'riskCacheDescription3' => $operationalRiskData['riskCacheDescription3'],
                     'riskCacheDescription4' => $operationalRiskData['riskCacheDescription4'],
                 ])
-                ->setBrutProb($operationalRiskData['brutProb'])
-                ->setNetProb($operationalRiskData['netProb'])
-                ->setTargetedProb($operationalRiskData['targetedProb'])
-                ->setCacheBrutRisk($operationalRiskData['cacheBrutRisk'])
-                ->setCacheNetRisk($operationalRiskData['cacheNetRisk'])
-                ->setCacheTargetedRisk($operationalRiskData['cacheTargetedRisk'])
-                ->setKindOfMeasure($operationalRiskData['kindOfMeasure'])
+                ->setBrutProb((int)$operationalRiskData['brutProb'])
+                ->setNetProb((int)$operationalRiskData['netProb'])
+                ->setTargetedProb((int)$operationalRiskData['targetedProb'])
+                ->setCacheBrutRisk((int)$operationalRiskData['cacheBrutRisk'])
+                ->setCacheNetRisk((int)$operationalRiskData['cacheNetRisk'])
+                ->setCacheTargetedRisk((int)$operationalRiskData['cacheTargetedRisk'])
+                ->setKindOfMeasure((int)$operationalRiskData['kindOfMeasure'])
                 ->setComment($operationalRiskData['comment'] ?? '')
                 ->setMitigation($operationalRiskData['mitigation'] ?? '')
-                ->setSpecific($operationalRiskData['specific'])
+                ->setSpecific((int)$operationalRiskData['specific'])
                 ->setContext($operationalRiskData['context'] ?? '')
                 ->setCreator($this->connectedUser->getEmail());
 
