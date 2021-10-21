@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\DeliveriesModelsService;
@@ -15,12 +15,15 @@ use Monarc\Core\Service\QuestionChoiceService;
 use Monarc\Core\Service\QuestionService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\ClientTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
@@ -66,10 +69,13 @@ class DeliverableGenerationService extends AbstractService
     protected $interviewService;
     /** @var AnrThreatService */
     protected $threatService;
-    /** @var AnrInstanceService */
-    protected $instanceService;
     /** @var AnrCartoRiskService */
     protected $cartoRiskService;
+
+    protected AnrInstanceConsequenceService $anrInstanceConsequenceService;
+
+    protected InstanceTable $instanceTable;
+
     /** @var InstanceRiskTable */
     protected $instanceRiskTable;
     /** @var InstanceRiskOpTable */
@@ -96,8 +102,9 @@ class DeliverableGenerationService extends AbstractService
     protected $recommendationHistoricTable;
 
     protected $currentLangAnrIndex = 1;
-    protected $anr;
 
+    /** @var Anr */
+    protected $anr;
 
     protected $noBorderTable;
     protected $borderTable;
@@ -1399,7 +1406,7 @@ class DeliverableGenerationService extends AbstractService
         $highSize = ($total) ? ($maxSize * $nbHigh) / $total : 0;
 
         $section->addTextBreak(1);
-        $tableLegend = $section->addTable();
+        $section->addTable();
 
         $tableLegend = $section->addTable();
         $tableLegend->addRow(Converter::cmToTwip(0.1));
@@ -1480,7 +1487,7 @@ class DeliverableGenerationService extends AbstractService
     protected function generateRisksGraph($infoRisk = true)
     {
         $this->cartoRiskService->buildListScalesAndHeaders($this->anr->getId());
-        list($counters, $distrib) = $infoRisk ?
+        [$counters, $distrib] = $infoRisk ?
             $this->cartoRiskService->getCountersRisks('raw') :
             $this->cartoRiskService->getCountersOpRisks('raw') ;
 
@@ -1514,123 +1521,86 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateTableAudit()
     {
-        $query = $this->instanceRiskTable->getRepository()->createQueryBuilder('ir');
-        $result = $query->select([
-            'i.id', 'i.name' . $this->currentLangAnrIndex . ' as name', 'IDENTITY(i.root)',
-            'i.id', 'i.c as impactC',
-            'i.id', 'i.i as impactI',
-            'i.id', 'i.d as impactA',
-            'm.uuid as mid', 'm.label' . $this->currentLangAnrIndex . ' as mlabel',
-            'm.c as threatC',
-            'm.i as threatI',
-            'm.a as threatA',
-            'ir.threatRate',
-            'v.uuid as vid', 'v.label' . $this->currentLangAnrIndex . ' as vlabel',
-            'ir.comment',
-            'ir.vulnerabilityRate',
-            'ir.riskC',
-            'ir.riskI',
-            'ir.riskD',
-            'ir.kindOfMeasure',
-            'ir.cacheTargetedRisk',
-            'o.uuid as oid', 'o.scope'
-        ])->where('ir.anr = :anrid')
-            ->setParameter(':anrid', $this->anr->getId())
-            ->innerJoin('ir.instance', 'i')
-            ->innerJoin('ir.threat', 'm')
-            ->innerJoin('ir.vulnerability', 'v')
-            ->innerJoin('i.object', 'o')
-            ->orderBy('ir.cacheMaxRisk', 'DESC')
-            ->getQuery()->getResult();
+        $instanceRisks = $this->instanceRiskTable->findByAnrAndOrderByParams($this->anr, ['ir.cacheMaxRisk' => 'DESC']);
 
         $mem_risks = $globalObject = [];
-        $instanceTable = $this->get('instanceService')->get('table');
         $maxLevelDeep = 1;
 
-        foreach ($result as $r) {
-            $objectUuidString = (string)$r['oid'];
-            $threatUuidString = (string)$r['mid'];
-            $vulnerabilityUuidString = (string)$r['vid'];
-            if (!isset($globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString])) {
-                $key = null;
-                if ($r['scope'] == ObjectSuperClass::SCOPE_GLOBAL) {
-                    $key = "o-" . $objectUuidString;
+        foreach ($instanceRisks as $instanceRisk) {
+            $instance = $instanceRisk->getInstance();
+            $objectUuid = $instance->getObject()->getUuid();
+            $threatUuid = $instanceRisk->getThreat()->getUuid();
+            $vulnerabilityUuid = $instanceRisk->getVulnerability()->getUuid();
+            if (!isset($globalObject[$objectUuid][$threatUuid][$vulnerabilityUuid])) {
+                if ($instance->getObject()->isScopeGlobal()) {
+                    $key = "o-" . $objectUuid;
                     if (!isset($mem_risks[$key])) {
                         $mem_risks[$key] = [
-                            'ctx' => $r['name'] . ' (' . $this->anrTranslate('Global') . ')',
+                            'ctx' => $instance->{'getName' . $this->currentLangAnrIndex}()
+                                . ' (' . $this->anrTranslate('Global') . ')',
                             'global' => true,
                             'risks' => [],
                         ];
                     }
-                    $globalObject[$objectUuidString][$threatUuidString][$vulnerabilityUuidString] = $objectUuidString;
+                    $globalObject[$objectUuid][$threatUuid][$vulnerabilityUuid] = $objectUuid;
                 } else {
-                    $key = "i-" . $r['id'];
+                    $key = "i-" . $instanceRisk->getId();
                     if (!isset($mem_risks[$key])) {
-                        $instance = current($instanceTable->getEntityByFields(['anr' => $this->anr->getId(), 'id' => $r['id']]));
-                        $asc = $instanceTable->getAscendance($instance);
-                        $levelTree = count($asc);
-
+                        $asc = $instance->getHierarchyArray();
+                        $levelTree = \count($asc);
                         if ($levelTree > $maxLevelDeep) {
                             $maxLevelDeep = $levelTree;
                         }
 
-                        $path = null;
-                        foreach ($asc as $a) {
-                            $path .= $a['name' . $this->currentLangAnrIndex];
-                            if (end($asc) !== $a) {
-                                $path .= ' > ';
-                            }
-                        }
-
                         $mem_risks[$key] = [
                             'tree' => $asc,
-                            'ctx' => $path,
+                            'ctx' => $this->getInstancePathFromHierarchy($asc),
                             'global' => false,
                             'risks' => [],
                         ];
 
-                        for ($i=0; $i < $levelTree - 2 ; $i++) {
-                            if (!empty($instance->root->id) && !isset($mem_risks["i-" . $instance->parent->id]) && ($instance->parent->id != $instance->root->id)) {
-                                $parentId = $instance->parent->id;
-                                $instance = current($instanceTable->getEntityByFields(['anr' => $this->anr->getId(), 'id' => $parentId]));
-                                $asc = $instanceTable->getAscendance($instance);
+                        $parentInstance = $instance->getParent();
+                        if ($parentInstance !== null && $instance->getRoot() !== null) {
+                            for ($i = 0; $i < $levelTree - 2; $i++) {
+                                if (!isset($mem_risks['i-' . $parentInstance->getId()])
+                                    && $parentInstance->getId() !== $instance->getRoot()->getId()
+                                ) {
+                                    $asc = $parentInstance->getHierarchyArray();
 
-                                $path = null;
-                                foreach ($asc as $a) {
-                                    $path .= $a['name' . $this->currentLangAnrIndex];
-                                    if (end($asc) !== $a) {
-                                        $path .= ' > ';
-                                    }
+                                    $mem_risks["i-" . $parentInstance->getId()] = [
+                                        'tree' => $asc,
+                                        'ctx' => $this->getInstancePathFromHierarchy($asc),
+                                        'global' => false,
+                                        'risks' => [],
+                                    ];
+                                } else {
+                                    break;
                                 }
-
-                                $mem_risks["i-" . $parentId] = [
-                                    'tree' => $asc,
-                                    'ctx' => $path,
-                                    'global' => false,
-                                    'risks' => [],
-                                ];
-                            }else {
-                                break;
                             }
                         }
                     }
                 }
 
                 $mem_risks[$key]['risks'][] = [
-                    'impactC' => $r['impactC'],
-                    'impactI' => $r['impactI'],
-                    'impactA' => $r['impactA'],
-                    'threat' => $r['mlabel'],
-                    'threatRate' => $r['threatRate'],
-                    'vulnerability' => $r['vlabel'],
-                    'comment' => $r['comment'],
-                    'vulRate' => $r['vulnerabilityRate'],
-                    'riskC' => $r['threatC'] === 0 ? null : $r['riskC'],
-                    'riskI' => $r['threatI'] === 0 ? null : $r['riskI'],
-                    'riskA' => $r['threatA'] === 0 ? null : $r['riskD'],
-                    'kindOfMeasure' => $r['kindOfMeasure'],
-                    'targetRisk' => $r['cacheTargetedRisk']
-
+                    'impactC' => $instance->getConfidentiality(),
+                    'impactI' => $instance->getIntegrity(),
+                    'impactA' => $instance->getAvailability(),
+                    'threat' => $instanceRisk->getThreat()->getLabel($this->currentLangAnrIndex),
+                    'threatRate' => $instanceRisk->getThreatRate(),
+                    'vulnerability' => $instanceRisk->getVulnerability()->getLabel($this->currentLangAnrIndex),
+                    'comment' => $instanceRisk->getComment(),
+                    'vulRate' => $instanceRisk->getVulnerabilityRate(),
+                    'riskC' => $instanceRisk->getThreat()->getConfidentiality() === 0
+                        ? null
+                        : $instanceRisk->getThreat()->getConfidentiality(),
+                    'riskI' => $instanceRisk->getThreat()->getIntegrity() === 0
+                        ? null
+                        : $instanceRisk->getThreat()->getIntegrity(),
+                    'riskA' => $instanceRisk->getThreat()->getAvailability() === 0
+                        ? null
+                        : $instanceRisk->getThreat()->getAvailability(),
+                    'kindOfMeasure' => $instanceRisk->getKindOfMeasure(),
+                    'targetRisk' => $instanceRisk->getCacheTargetedRisk(),
                 ];
             }
         }
@@ -1640,17 +1610,17 @@ class DeliverableGenerationService extends AbstractService
         array_multisort($global, SORT_DESC, $ctx, SORT_ASC, $mem_risks);
 
         if (!empty($mem_risks)) {
-            $maxLevelDeep = ($maxLevelDeep <= 4 ? $maxLevelDeep : 4);
-            $maxLevelTitle = ($maxLevelDeep == 1 ? $maxLevelDeep : $maxLevelDeep - 1);
-            $title = array_fill(0,$maxLevelDeep,null);
+            $maxLevelDeep = $maxLevelDeep <= 4 ? $maxLevelDeep : 4;
+            $maxLevelTitle = $maxLevelDeep === 1 ? $maxLevelDeep : $maxLevelDeep - 1;
+            $title = array_fill(0, $maxLevelDeep, null);
 
             $tableWord = new PhpWord();
             $section = $tableWord->addSection();
-            for ($i=0; $i < $maxLevelDeep + 1 ; $i++) {
-                $tableWord->addTitleStyle($i + 3,$this->titleFont);
+            for ($i = 0; $i < $maxLevelDeep + 1; $i++) {
+                $tableWord->addTitleStyle($i + 3, $this->titleFont);
             }
 
-            if (in_array('true',$global)) {
+            if (in_array('true', $global)) {
                 $section->addTitle(
                     $this->anrTranslate('Global assets'),
                     3
@@ -2006,86 +1976,53 @@ class DeliverableGenerationService extends AbstractService
      * Generates the audit table data for operational risks
      * @return mixed|string The generated WordXml data
      */
-    public function generateTableAuditOp()
+    private function generateTableAuditOp()
     {
-        $query = $this->instanceRiskOpTable->getRepository()->createQueryBuilder('ir');
-        $result = $query->select([
-            'i.id', 'i.name' . $this->currentLangAnrIndex . ' as name', 'IDENTITY(i.root)',
-            'IDENTITY(i.parent) AS parent', 'i.level', 'i.position',
-            'ir AS instanceRiskOp',
-            'ir.riskCacheLabel' . $this->currentLangAnrIndex . ' AS label',
-            'ir.brutProb AS brutProb',
-            'ir.cacheBrutRisk AS cacheBrutRisk',
-            'ir.netProb AS netProb',
-            'ir.cacheNetRisk AS cacheNetRisk',
-            'ir.comment AS comment',
-            'ir.cacheTargetedRisk AS cacheTargetedRisk',
-            'ir.kindOfMeasure AS kindOfMeasure'
-        ])->where('ir.anr = :anrid')
-            ->setParameter(':anrid', $this->anr->getId())
-            ->innerJoin('ir.instance', 'i')
-            ->innerJoin('i.asset', 'a')
-            ->andWhere('a.type = :type')
-            ->setParameter(':type', \Monarc\Core\Model\Entity\AssetSuperClass::TYPE_PRIMARY)
-            ->orderBy('ir.cacheNetRisk', 'DESC')
-            ->getQuery()->getResult();
+        $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrAndOrderByParams(
+            $this->anr,
+            ['oprisk.cacheNetRisk' => 'DESC']
+        );
+
         $lst = [];
-        $instanceTable = $this->get('instanceService')->get('table');
         $maxLevelDeep = 1;
 
-        foreach ($result as $r) {
-            if (!isset($lst[$r['id']])) {
-                $instance = current($instanceTable->getEntityByFields(['anr' => $this->anr->getId(), 'id' => $r['id']]));
-                $asc = $instanceTable->getAscendance($instance);
-                $levelTree = count($asc);
-
+        foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
+            $instance = $operationalInstanceRisk->getInstance();
+            if (!isset($lst[$instance->getId()])) {
+                $asc = $instance->getHierarchyArray();
+                $levelTree = \count($asc);
                 if ($levelTree > $maxLevelDeep) {
                     $maxLevelDeep = $levelTree;
                 }
 
-                $path = null;
-                foreach ($asc as $a) {
-                    $path .= $a['name' . $this->currentLangAnrIndex];
-                    if (end($asc) !== $a) {
-                        $path .= ' > ';
-                    }
-                }
-
-                $lst[$r['id']] = [
+                $parentInstance = $instance->getParent();
+                $lst[$instance->getId()] = [
                     'tree' => $asc,
-                    'path' => $path,
-                    'parent' => $r['parent'],
-                    'position' => $r['position'],
+                    'path' => $this->getInstancePathFromHierarchy($asc),
+                    'parent' => $parentInstance ? $parentInstance->getId() : null,
+                    'position' => $instance->getPosition(),
                     'risks' => [],
                 ];
-                for ($i=0; $i < $levelTree - 2 ; $i++) {
-                    if (!empty($instance->root->id) && !isset($lst[$instance->parent->id]) && ($instance->parent->id != $instance->root->id)) {
-                        $parentId = $instance->parent->id;
-                        $instance = current($instanceTable->getEntityByFields(['anr' => $this->anr->getId(), 'id' => $parentId]));
-                        $asc = $instanceTable->getAscendance($instance);
 
-                        $path = null;
-                        foreach ($asc as $a) {
-                            $path .= $a['name' . $this->currentLangAnrIndex];
-                            if (end($asc) !== $a) {
-                                $path .= ' > ';
-                            }
-                        }
+                if ($parentInstance !== null && $instance->getRoot() !== null) {
+                    if (!isset($lst[$parentInstance->getId()])
+                        && $parentInstance->getId() !== $instance->getRoot()->getId()
+                    ) {
+                        $asc = $parentInstance->getHierarchyArray();
 
-                        $lst[$parentId] = [
+                        $lst[$parentInstance->getId()] = [
                             'tree' => $asc,
-                            'path' => $path,
-                            'parent' => $instance->parent->id,
-                            'position' => $instance->position,
+                            'path' => $this->getInstancePathFromHierarchy($asc),
+                            'parent' => $parentInstance->getParent() ? $parentInstance->getParent()->getId() : null,
+                            'position' => $parentInstance->getPosition(),
                             'risks' => [],
                         ];
-                    } else {
-                        break;
                     }
                 }
             }
 
-            foreach ($r['instanceRiskOp']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+            $scalesData = [];
+            foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
                 $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
                 $scalesData[$operationalRiskScaleType->getId()] = [
                     'netValue' => $operationalInstanceRiskScale->getNetValue() >= 0 ?
@@ -2097,25 +2034,25 @@ class DeliverableGenerationService extends AbstractService
                 ];
             }
 
-            $lst[$r['id']]['risks'][] = [
-                'label' => $r['label'],
-                'brutProb' => $r['brutProb'],
-                'brutRisk' => $r['cacheBrutRisk'],
-                'netProb' => $r['netProb'],
-                'netRisk' => $r['cacheNetRisk'],
+            $lst[$instance->getId()]['risks'][] = [
+                'label' => $operationalInstanceRisk->getRiskCacheLabel($this->currentLangAnrIndex),
+                'brutProb' => $operationalInstanceRisk->getBrutProb(),
+                'brutRisk' => $operationalInstanceRisk->getCacheBrutRisk(),
+                'netProb' => $operationalInstanceRisk->getNetProb(),
+                'netRisk' => $operationalInstanceRisk->getCacheNetRisk(),
                 'scales' => $scalesData,
-                'comment' => $r['comment'],
-                'targetedRisk' => $r['cacheTargetedRisk'],
-                'kindOfMeasure' => $r['kindOfMeasure']
+                'comment' => $operationalInstanceRisk->getComment(),
+                'targetedRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
+                'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
             ];
         }
         $tree = [];
-        $instancesRoot = $instanceTable->getEntityByFields(['anr' => $this->anr->getId(), 'parent' => null]);
-        foreach ($instancesRoot as $iRoot) {
-            $branchTree = $this->buildTree($lst, $iRoot->id);
+        $rootInstances = $this->instanceTable->findRootsByAnr($this->anr);
+        foreach ($rootInstances as $rootInstance) {
+            $branchTree = $this->buildTree($lst, $rootInstance->getId());
             if ($branchTree) {
-                $tree[$iRoot->id] = $branchTree;
-                $tree[$iRoot->id]['position'] = $iRoot->position;
+                $tree[$rootInstance->getId()] = $branchTree;
+                $tree[$rootInstance->getId()]['position'] = $rootInstance->getPosition();
             }
         }
 
@@ -2380,7 +2317,7 @@ class DeliverableGenerationService extends AbstractService
     protected function getRisksDistribution($infoRisk = true)
     {
         $this->cartoRiskService->buildListScalesAndHeaders($this->anr->getId());
-        list($counters, $distrib) = $infoRisk ?
+        [$counters, $distrib] = $infoRisk ?
             $this->cartoRiskService->getCountersRisks('raw') :
             $this->cartoRiskService->getCountersOpRisks('raw') ;
 
@@ -2409,7 +2346,6 @@ class DeliverableGenerationService extends AbstractService
     protected function generateRisksByKindOfTreatment()
     {
         $result = null;
-        $instanceTable = $this->get('instanceService')->get('table');
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());
         $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function($scale) { return $scale['type'] == 1; }));
         $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function($scale) { return $scale['isHidden'] == false; });
@@ -2565,18 +2501,12 @@ class DeliverableGenerationService extends AbstractService
                             $r[$key] = '-';
                         }
                     }
-                    $instance = $instanceTable->getEntity($r['instance']);
-                    if ($instance->object->scope === 1) {
-                        $path = null;
-                        $asc = $instanceTable->getAscendance($instance);
-                        foreach ($asc as $a) {
-                            $path .= $a['name' . $this->currentLangAnrIndex];
-                            if (end($asc) !== $a) {
-                                $path .= ' > ';
-                            }
-                        }
+                    $instance = $this->instanceTable->findById($r['instance']);
+                    if (!$instance->getObject()->isScopeGlobal()) {
+                        $path = $instance->getHierarchyString();
                     } else {
-                        $path = $instance->{'name' . $this->currentLangAnrIndex} . ' (' . $this->anrTranslate('Global') . ')';
+                        $path = $instance->{'getName' . $this->currentLangAnrIndex}()
+                            . ' (' . $this->anrTranslate('Global') . ')';
                     }
 
                     $tableRiskInfo->addRow(400);
@@ -2806,15 +2736,8 @@ class DeliverableGenerationService extends AbstractService
                     }
 
 
-                    $path = null;
-                    $instance = $instanceTable->getEntity($r['instanceInfos']['id']);
-                    $asc = $instanceTable->getAscendance($instance);
-                    foreach ($asc as $a) {
-                        $path .= $a['name' . $this->currentLangAnrIndex];
-                        if (end($asc) !== $a) {
-                            $path .= ' > ';
-                        }
-                    }
+                    $instance = $this->instanceTable->findById($r['instanceInfos']['id']);
+                    $path = $instance->getHierarchyString();
 
                     $tableRiskOp->addRow(400);
                     $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
@@ -3794,7 +3717,6 @@ class DeliverableGenerationService extends AbstractService
     {
         /** @var SoaService $soaService */
         $soaService = $this->soaService;
-        $instanceTable = $this->get('instanceService')->get('table');
         $filterMeasures['r.anr'] = $this->anr->getId();
         $filterMeasures['r.uuid'] = $referential;
         $measureService = $this->measureService;
@@ -4115,16 +4037,9 @@ class DeliverableGenerationService extends AbstractService
                             }
                         }
 
-                        $instance = $instanceTable->getEntity($r['instance']);
-                        if ($instance->object->scope === 1) {
-                            $path = null;
-                            $asc = $instanceTable->getAscendance($instance);
-                            foreach ($asc as $a) {
-                                $path .= $a['name' . $this->currentLangAnrIndex];
-                                if (end($asc) !== $a) {
-                                    $path .= ' > ';
-                                }
-                            }
+                        $instance = $this->instanceTable->findById($r['instance']);
+                        if (!$instance->getObject()->isScopeGlobal()) {
+                            $path = $instance->getHierarchyString();
                         } else {
                             $path = $instance->{'name' . $this->currentLangAnrIndex} . ' (' . $this->anrTranslate('Global') . ')';
                         }
@@ -4228,15 +4143,8 @@ class DeliverableGenerationService extends AbstractService
                             }
                         }
 
-                        $path = null;
-                        $instance = $instanceTable->getEntity($r['instanceInfos']['id']);
-                        $asc = $instanceTable->getAscendance($instance);
-                        foreach ($asc as $a) {
-                            $path .= $a['name' . $this->currentLangAnrIndex];
-                            if (end($asc) !== $a) {
-                                $path .= ' > ';
-                            }
-                        }
+                        $instance = $this->instanceTable->findById($r['instanceInfos']['id']);
+                        $path = $instance->getHierarchyString();
 
                         $tableRiskOp->addRow(400);
                         $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
@@ -5074,24 +4982,22 @@ class DeliverableGenerationService extends AbstractService
     protected function generateImpactsAppreciation()
     {
         // TODO: C'est moche, optimiser
-        /** @var AnrInstanceService $instanceService */
-        $instanceService = $this->instanceService;
-        $all_instances = $instanceService->getList(1, 0, 'position', null, ['anr' => $this->anr->getId()]);
-        $instances = array_filter($all_instances, function ($in) {
-            return (
-                ($in['c'] > -1 && $in['ch'] == 0) ||
-                ($in['i'] > -1 && $in['ih'] == 0) ||
-                ($in['d'] > -1 && $in['dh'] == 0)
-            );
+        $allInstances = $this->instanceTable->findByAnrAndOrderByParams($this->anr, ['i.position' => 'ASC']);
+        /** @var Instance[] $instances */
+        $instances = array_filter($allInstances, function ($ins) {
+            return ($ins->getConfidentiality() > -1 && $ins->getInheritedConfidentiality() === 0) ||
+                ($ins->getIntegrity() > -1 && $ins->getInheritedIntegrity() === 0) ||
+                ($ins->getAvailability() > -1 && $ins->getInheritedAvailability() === 0);
         });
         $impacts = ['c', 'i', 'd'];
+        $instanceCriteria = Instance::getAvailableScalesCriteria();
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         //header
-        if (count($instances)) {
+        if (\count($instances)) {
             $table->addRow(400, $this->tblHeader);
             $table->addCell(Converter::cmToTwip(9.00), $this->setColSpanCell(3,'DFDFDF'))
                 ->addText(
@@ -5107,8 +5013,8 @@ class DeliverableGenerationService extends AbstractService
                 );
         }
 
-        foreach ($instances as $i) {
-            $instanceConsequences = $instanceService->getConsequences($this->anr->getId(), $i, true);
+        foreach ($instances as $instance) {
+            $instanceConsequences = $this->anrInstanceConsequenceService->getConsequences($instance, true);
 
             //delete scale type C,I and D
             // set the correct order in the deliverable. not perfect but work
@@ -5129,9 +5035,9 @@ class DeliverableGenerationService extends AbstractService
                     if ($instanceConsequence[$impact . '_risk'] >= 0) {
                         if (!$headerImpact && !$headerConsequence) {
                             $table->addRow(400);
-                            $table->addCell(Converter::cmToTwip(16), $this->setColSpanCell(6,'DBE5F1'))
+                            $table->addCell(Converter::cmToTwip(16), $this->setColSpanCell(6, 'DBE5F1'))
                                 ->addText(
-                                    _WT($i['name' . $this->currentLangAnrIndex]),
+                                    _WT($instance->{'getName' . $this->currentLangAnrIndex}()),
                                     $this->boldFont,
                                     $this->leftParagraph
                                 );
@@ -5139,9 +5045,11 @@ class DeliverableGenerationService extends AbstractService
                         }
                         $table->addRow(400);
                         if (!$headerConsequence) {
-                            $comment = $impactsConsequences[$keyImpact]
-                            ['comments'][($i[$impact] != -1)
-                                ? $i[$impact] : 0];
+                            $comment = $impactsConsequences[$keyImpact]['comments'][
+                                $instance->{'get' . $instanceCriteria[$impact]}() !== -1
+                                    ? $instance->{'get' . $instanceCriteria[$impact]}()
+                                    : 0
+                            ];
                             $translatedImpact = ucfirst($impact);
                             if ($impact === 'd') {
                                 $translatedImpact = ucfirst($this->anrTranslate('A'));
@@ -5154,7 +5062,7 @@ class DeliverableGenerationService extends AbstractService
                                 );
                             $table->addCell(Converter::cmToTwip(1.00), $this->restartAndCenterCell)
                                 ->addText(
-                                    $i[$impact],
+                                    $instance->{'get' . $instanceCriteria[$impact]}(),
                                     $this->boldFont,
                                     $this->centerParagraph
                                 );
@@ -5169,9 +5077,8 @@ class DeliverableGenerationService extends AbstractService
                             $table->addCell(Converter::cmToTwip(1.00), $this->continueCell);
                             $table->addCell(Converter::cmToTwip(5.00), $this->continueCell);
                         }
-                        $comment = $instanceConsequences[$keyConsequence]['comments'][($instanceConsequence[$impact . '_risk'] != -1) ?
-                            $instanceConsequence[$impact . '_risk'] :
-                            0
+                        $comment = $instanceConsequence['comments'][
+                            $instanceConsequence[$impact . '_risk'] !== -1 ? $instanceConsequence[$impact . '_risk'] : 0
                         ];
                         $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
                             ->addText(
@@ -5342,10 +5249,7 @@ class DeliverableGenerationService extends AbstractService
                     if ($ir->getInstance()->getObject()->isScopeGlobal()) {
                         $asset = $ir->getInstance()->{'getName' . $this->currentLangAnrIndex}() . ' (' . $this->anrTranslate('Global') . ')';
                     }else {
-                        $asset = implode(' > ', array_column(
-                            $this->get('instanceService')->get('table')->getAscendance($ir->getInstance()),
-                            'name' . $this->currentLangAnrIndex
-                        ));
+                        $asset = $ir->getInstance()->getHierarchyString();
                     }
                     $risksByOwner[$owner->getName()][] = [
                         'asset' => $asset,
@@ -5356,12 +5260,8 @@ class DeliverableGenerationService extends AbstractService
             }
             if (!empty($owner->getOperationalInstanceRisks())) {
                 foreach ($owner->getOperationalInstanceRisks() as $oir) {
-                    $asset = implode(' > ', array_column(
-                        $this->get('instanceService')->get('table')->getAscendance($oir->getInstance()),
-                        'name' . $this->currentLangAnrIndex
-                    ));
                     $risksByOwner[$owner->getName()][] = [
-                        'asset' => $asset,
+                        'asset' => $oir->getInstance()->getHierarchyString(),
                         'risk' => $oir->getRiskCacheLabel($this->currentLangAnrIndex),
                     ];
                 }
@@ -5447,7 +5347,7 @@ class DeliverableGenerationService extends AbstractService
      * @param int $kindOfMeasure value
      * @return string  kindOfMeasure label
      */
-    public function getKindfofMeasureLabel($kindOfMeasure)
+    private function getKindfofMeasureLabel($kindOfMeasure)
     {
         switch ($kindOfMeasure) {
             case 1:
@@ -5534,8 +5434,8 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generates the instances tree
-     * @param elements $elements instances risks array
-     * @param parentId $parentId id of parent_Root
+     * @param array $elements instances risks array
+     * @param int $parentId id of parent_Root
      *
      * @return array
      */
@@ -5612,17 +5512,16 @@ class DeliverableGenerationService extends AbstractService
     private function getObjectInstancePath(RecommandationRisk $recommendationRisk): string
     {
         if ($recommendationRisk->hasGlobalObjectRelation()) {
-            return $recommendationRisk->getInstance()->{'name' . $recommendationRisk->getAnr()->getLanguage()}
+            return $recommendationRisk->getInstance()->{'getName' . $recommendationRisk->getAnr()->getLanguage()}()
                 . ' (' . $this->anrTranslate('Global') . ')';
         }
 
-        /** @var InstanceTable $instanceTable */
-        $instanceTable = $this->get('instanceService')->get('table');
+        return $recommendationRisk->getInstance()->getHierarchyString();
+    }
 
-        return implode(' > ', array_column(
-            $instanceTable->getAscendance($recommendationRisk->getInstance()),
-            'name' . $this->currentLangAnrIndex
-        ));
+    private function getInstancePathFromHierarchy(array $instanceHierarchyArray): string
+    {
+        return implode(' > ', array_column($instanceHierarchyArray, 'name' . $this->currentLangAnrIndex));
     }
 }
 

@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Service;
 
 use Interop\Container\ContainerInterface;
 use Monarc\Core\Service\AbstractServiceFactory;
-use Monarc\Core\Service\InstanceConsequenceService;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Table;
 
@@ -19,8 +18,6 @@ use Monarc\FrontOffice\Model\Table;
  */
 class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
 {
-    protected $class = InstanceConsequenceService::class;
-
     protected $ressources = [
         'table' => Table\InstanceConsequenceTable::class,
         'entity' => InstanceConsequence::class,
@@ -29,6 +26,7 @@ class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
         'MonarcObjectTable' => Table\MonarcObjectTable::class,
         'scaleTable' => Table\ScaleTable::class,
         'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
+        'scaleCommentTable' => Table\ScaleCommentTable::class,
     ];
 
     // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.

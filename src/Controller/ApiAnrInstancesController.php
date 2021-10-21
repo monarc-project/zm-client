@@ -76,7 +76,8 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
         /** @var AnrInstanceService $service */
         $service = $this->getService();
-        $entity = $service->getEntityByIdAndAnr($id, $anrId);
+        $entity = $service->getInstanceData($id, $anrId);
+
         $params = $this->parseParams();
 
         if ($this->params()->fromQuery('csv', false)) {

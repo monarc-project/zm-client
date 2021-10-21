@@ -32,7 +32,6 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'amvTable' => Table\AmvTable::class,
         'objectTable' => Table\MonarcObjectTable::class,
         'scaleTable' => Table\ScaleTable::class,
-        'scaleCommentTable' => Table\ScaleCommentTable::class,
         'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
         'instanceConsequenceTable' => Table\InstanceConsequenceTable::class,
         'instanceRiskTable' => Table\InstanceRiskTable::class,
