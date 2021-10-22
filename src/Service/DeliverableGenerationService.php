@@ -1591,13 +1591,13 @@ class DeliverableGenerationService extends AbstractService
                     'vulRate' => $instanceRisk->getVulnerabilityRate(),
                     'riskC' => $instanceRisk->getThreat()->getConfidentiality() === 0
                         ? null
-                        : $instanceRisk->getThreat()->getConfidentiality(),
+                        : $instanceRisk->getRiskConfidentiality(),
                     'riskI' => $instanceRisk->getThreat()->getIntegrity() === 0
                         ? null
-                        : $instanceRisk->getThreat()->getIntegrity(),
+                        : $instanceRisk->getRiskIntegrity(),
                     'riskA' => $instanceRisk->getThreat()->getAvailability() === 0
                         ? null
-                        : $instanceRisk->getThreat()->getAvailability(),
+                        : $instanceRisk->getRiskAvailability(),
                     'kindOfMeasure' => $instanceRisk->getKindOfMeasure(),
                     'targetRisk' => $instanceRisk->getCacheTargetedRisk(),
                 ];
