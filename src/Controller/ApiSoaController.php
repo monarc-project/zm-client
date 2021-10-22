@@ -12,8 +12,8 @@ use Laminas\View\Model\JsonModel;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
+use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrMeasureService;
-use Monarc\FrontOffice\Service\AnrRiskService;
 use Monarc\FrontOffice\Service\SoaService;
 
 /**
@@ -28,20 +28,20 @@ class ApiSoaController extends AbstractRestfulController
 
     private AnrMeasureService $anrMeasureService;
 
-    private AnrRiskService $anrRiskService;
+    private AnrInstanceRiskService $anrInstanceRiskService;
 
     private AnrInstanceRiskOpService $anrInstanceRiskOpService;
 
     public function __construct(
         SoaService $soaService,
         AnrMeasureService $anrMeasureService,
-        AnrRiskService $anrRiskService,
+        AnrInstanceRiskService $anrInstanceRiskService,
         AnrInstanceRiskOpService $anrInstanceRiskOpService
     ) {
 
         $this->soaService = $soaService;
         $this->anrMeasureService = $anrMeasureService;
-        $this->anrRiskService = $anrRiskService;
+        $this->anrInstanceRiskService = $anrInstanceRiskService;
         $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
     }
 
@@ -62,14 +62,14 @@ class ApiSoaController extends AbstractRestfulController
         $filterAnd = ['anr' => $anrId];
 
         if ($referential) {
-            if ($category != 0) {
+            if ($category !== 0) {
                 $filterMeasures['category'] = [
                     'op' => 'IN',
                     'value' => (array)$category,
                 ];
             }
-            if ($category == -1) {
-                $filterMeasures['category'] = NULL;
+            if ($category === -1) {
+                $filterMeasures['category'] = null;
             }
 
             $filterMeasures['r.anr'] = $anrId;
@@ -112,7 +112,7 @@ class ApiSoaController extends AbstractRestfulController
                 'order' => 'cacheNetRisk',
                 'order_direction' => 'desc',
             ]);
-            $entity['measure']->amvs = $this->anrRiskService->getRisks($anrId, null, [
+            $entity['measure']->amvs = $this->anrInstanceRiskService->getInstanceRisks($anrId, null, [
                 'amvs' => $amvs,
                 'limit' => -1,
                 'order' => 'maxRisk',
