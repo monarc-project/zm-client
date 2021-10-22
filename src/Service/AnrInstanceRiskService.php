@@ -153,6 +153,9 @@ class AnrInstanceRiskService extends InstanceRiskService
         return $output;
     }
 
+    /**
+     * TODO: review the logic. Moved from AnrRiskService.
+     */
     public function createInstanceRisk($data)
     {
         $data['specific'] = 1;
