@@ -125,7 +125,7 @@ class SnapshotService extends AbstractService
     /**
      * @inheritdoc
      */
-    public function deleteFromAnr($id, $anrId = null)
+    public function deleteInstanceRisk($id, $anrId = null)
     {
         // Ensure user is allowed to perform this action
         if ($anrId !== null) {

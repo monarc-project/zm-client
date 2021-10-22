@@ -255,6 +255,8 @@ class AnrRecommandationService extends AbstractService
 
     private function prepareUpdateData($id, $data): array
     {
+        unset($data['counterTreated'], $data['timerColor']);
+
         if (!empty($data['duedate'])) {
             try {
                 $data['duedate'] = new DateTime($data['duedate']);

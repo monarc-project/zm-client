@@ -41,7 +41,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'soaService' => Service\SoaService::class,
         'measureService' => Service\AnrMeasureService::class,
         'anrInstanceRiskOpService' => Service\AnrInstanceRiskOpService::class,
-        'riskService' => Service\AnrRiskService::class,
+        'anrInstanceRiskService' => Service\AnrInstanceRiskService::class,
         'recordService' => Service\AnrRecordService::class,
         'translateService' => TranslateService::class,
         'instanceRiskOwnerTable' => Table\InstanceRiskOwnerTable::class,
