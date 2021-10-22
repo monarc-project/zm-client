@@ -153,9 +153,6 @@ class AnrInstanceRiskService extends InstanceRiskService
         return $output;
     }
 
-    /**
-     * TODO: review the logic. Moved from AnrRiskService.
-     */
     public function createInstanceRisk($data)
     {
         $data['specific'] = 1;
@@ -177,7 +174,6 @@ class AnrInstanceRiskService extends InstanceRiskService
         $instanceRisk->setLanguage($this->getLanguage());
         $instanceRisk->setDbAdapter($this->get('table')->getDb());
 
-        //retrieve asset
         /** @var InstanceTable $instanceTable */
         $instanceTable = $this->get('instanceTable');
         $instance = $instanceTable->getEntity($data['instance']);
