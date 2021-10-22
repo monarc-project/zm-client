@@ -1406,7 +1406,6 @@ class DeliverableGenerationService extends AbstractService
         $highSize = ($total) ? ($maxSize * $nbHigh) / $total : 0;
 
         $section->addTextBreak(1);
-        $section->addTable();
 
         $tableLegend = $section->addTable();
         $tableLegend->addRow(Converter::cmToTwip(0.1));
