@@ -86,8 +86,8 @@ class DeliverableGenerationService extends AbstractService
     protected $measureService;
     /** @var AnrInstanceRiskOpService */
     protected $anrInstanceRiskOpService;
-    /** @var AnrRiskService */
-    protected $riskService;
+    /** @var AnrInstanceRiskService */
+    protected $anrInstanceRiskService;
     /** @var AnrRecordService */
     protected $recordService;
     /** @var TranslateService */
@@ -2351,8 +2351,8 @@ class DeliverableGenerationService extends AbstractService
         $sizeCellImpact = count($opRisksImpactsScales) * 0.70;
 
         for ($i = 1; $i <= 4; $i++) {
-            $risksByTreatment = $this->get('riskService')
-                ->getRisks(
+            $risksByTreatment = $this->get('anrInstanceRiskService')
+                ->getInstanceRisks(
                     $this->anr->getId(),
                     null,
                     ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]
@@ -3757,7 +3757,7 @@ class DeliverableGenerationService extends AbstractService
                 null,
                 ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc'])
             ;
-            $controlSoa['measure']->amvs = $this->get('riskService')->getRisks(
+            $controlSoa['measure']->amvs = $this->get('anrInstanceRiskService')->getInstanceRisks(
                 $this->anr->getId(),
                 null,
                 ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']
