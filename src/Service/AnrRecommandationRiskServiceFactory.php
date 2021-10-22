@@ -20,13 +20,11 @@ class AnrRecommandationRiskServiceFactory extends AbstractServiceFactory
         'table' => 'Monarc\FrontOffice\Model\Table\RecommandationRiskTable',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
         'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'recommandationTable' => 'Monarc\FrontOffice\Model\Table\RecommandationTable',
-        'recommandationHistoricTable' => 'Monarc\FrontOffice\Model\Table\RecommendationHistoricTable',
+        'recommendationTable' => 'Monarc\FrontOffice\Model\Table\RecommandationTable',
+        'recommendationHistoricTable' => 'Monarc\FrontOffice\Model\Table\RecommendationHistoricTable',
         'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
         'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
         'anrService' => 'Monarc\FrontOffice\Service\AnrService',
-        'anrInstanceService' => 'Monarc\FrontOffice\Service\AnrInstanceService',
         'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
     ];
 }

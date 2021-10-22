@@ -34,7 +34,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
 
         /** @var AnrInstanceService $service */
         $service = $this->getService();
-        $instances = $service->findByAnr($anrId);
+        $instances = $service->getInstancesData($anrId);
         return new JsonModel([
             $this->name => $instances
         ]);
@@ -76,7 +76,8 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
         /** @var AnrInstanceService $service */
         $service = $this->getService();
-        $entity = $service->getEntityByIdAndAnr($id, $anrId);
+        $entity = $service->getInstanceData($id, $anrId);
+
         $params = $this->parseParams();
 
         if ($this->params()->fromQuery('csv', false)) {

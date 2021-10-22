@@ -87,26 +87,26 @@ class AnrInstanceRiskService extends InstanceRiskService
 
         // Fill in the header
         $output = implode(',', [
-                $this->translateService->translate('Asset', $anrLanguage),
-                $this->translateService->translate('C Impact', $anrLanguage),
-                $this->translateService->translate('I Impact', $anrLanguage),
-                $this->translateService->translate('A Impact', $anrLanguage),
-                $this->translateService->translate('Threat', $anrLanguage),
-                $this->translateService->translate('Prob.', $anrLanguage),
-                $this->translateService->translate('Vulnerability', $anrLanguage),
-                $this->translateService->translate('Existing controls', $anrLanguage),
-                $this->translateService->translate('Qualif.', $anrLanguage),
-                $this->translateService->translate('Current risk', $anrLanguage). " C",
-                $this->translateService->translate('Current risk', $anrLanguage) . " I",
-                $this->translateService->translate('Current risk', $anrLanguage) . " "
-                    . $this->translateService->translate('A', $anrLanguage),
-                $this->translateService->translate('Treatment', $anrLanguage),
-                $this->translateService->translate('Residual risk', $anrLanguage),
-                $this->translateService->translate('Risk owner', $anrLanguage),
-                $this->translateService->translate('Risk context', $anrLanguage),
-                $this->translateService->translate('Recommendations', $anrLanguage),
-                $this->translateService->translate('Security referentials', $anrLanguage),
-            ]) . "\n";
+            $this->translateService->translate('Asset', $anrLanguage),
+            $this->translateService->translate('C Impact', $anrLanguage),
+            $this->translateService->translate('I Impact', $anrLanguage),
+            $this->translateService->translate('A Impact', $anrLanguage),
+            $this->translateService->translate('Threat', $anrLanguage),
+            $this->translateService->translate('Prob.', $anrLanguage),
+            $this->translateService->translate('Vulnerability', $anrLanguage),
+            $this->translateService->translate('Existing controls', $anrLanguage),
+            $this->translateService->translate('Qualif.', $anrLanguage),
+            $this->translateService->translate('Current risk', $anrLanguage). " C",
+            $this->translateService->translate('Current risk', $anrLanguage) . " I",
+            $this->translateService->translate('Current risk', $anrLanguage) . " "
+                . $this->translateService->translate('A', $anrLanguage),
+            $this->translateService->translate('Treatment', $anrLanguage),
+            $this->translateService->translate('Residual risk', $anrLanguage),
+            $this->translateService->translate('Risk owner', $anrLanguage),
+            $this->translateService->translate('Risk context', $anrLanguage),
+            $this->translateService->translate('Recommendations', $anrLanguage),
+            $this->translateService->translate('Security referentials', $anrLanguage),
+        ]) . "\n";
 
         // TODO: fetch objects list instead of array of values.
         $instanceRisks = $this->getInstanceRisks($anrId, $instanceId, $params);
