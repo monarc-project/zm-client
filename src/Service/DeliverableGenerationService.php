@@ -2255,7 +2255,7 @@ class DeliverableGenerationService extends AbstractService
                                         $this->centerParagraph
                                     );
                                 }
-                                $table->addCell(Converter::cmToTwip(1.00), $styleContentCellbrutRisk)
+                                $table->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['brutRisk'],false))
                                     ->addText(
                                         $r['brutRisk'],
                                         $this->boldFont,
@@ -2277,11 +2277,11 @@ class DeliverableGenerationService extends AbstractService
                                 );
                             }
                             $table->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['netRisk'],false))
-                            ->addText(
-                                $r['netRisk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                                ->addText(
+                                    $r['netRisk'],
+                                    $this->boldFont,
+                                    $this->centerParagraph
+                                );
                             $table->addCell(Converter::cmToTwip(8.00), $this->vAlignCenterCell)
                                 ->addText(
                                     _WT($r['comment']),
@@ -2598,7 +2598,7 @@ class DeliverableGenerationService extends AbstractService
                     $tableTitle->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(13))
                         ->addText(
                             $this->getKindfofMeasureLabel($i),
-                            $styleTitleFont,
+                            $this->titleFont,
                             $this->leftParagraph
                         );
                 }
