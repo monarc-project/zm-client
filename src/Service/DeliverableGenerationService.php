@@ -5012,7 +5012,13 @@ class DeliverableGenerationService extends AbstractService
                 );
         }
 
+        $globalObjectsUuids = [];
         foreach ($instances as $instance) {
+            /* Check if the global object is already added. */
+            if (\in_array($instance->getObject()->getUuid(), $globalObjectsUuids, true)) {
+                continue;
+            }
+
             $instanceConsequences = $this->anrInstanceConsequenceService->getConsequences($instance, true);
 
             //delete scale type C,I and D
@@ -5030,7 +5036,7 @@ class DeliverableGenerationService extends AbstractService
             $headerImpact = false;
             foreach ($impacts as $keyImpact => $impact) {
                 $headerConsequence = false;
-                foreach ($instanceConsequences as $keyConsequence => $instanceConsequence) {
+                foreach ($instanceConsequences as $instanceConsequence) {
                     if ($instanceConsequence[$impact . '_risk'] >= 0) {
                         if (!$headerImpact && !$headerConsequence) {
                             $table->addRow(400);
@@ -5041,6 +5047,9 @@ class DeliverableGenerationService extends AbstractService
                                     $this->leftParagraph
                                 );
                             $headerImpact = true;
+                            if ($instance->getObject()->isScopeGlobal()) {
+                                $globalObjectsUuids[] = $instance->getObject()->getUuid();
+                            }
                         }
                         $table->addRow(400);
                         if (!$headerConsequence) {
