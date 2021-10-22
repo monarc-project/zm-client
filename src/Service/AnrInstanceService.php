@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Service\InstanceService;
+use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;

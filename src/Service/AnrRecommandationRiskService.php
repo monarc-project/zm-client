@@ -17,13 +17,7 @@ use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Entity\RecommandationHistoric;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
-use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
-use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 /**
@@ -34,16 +28,22 @@ class AnrRecommandationRiskService extends AbstractService
 {
     use RecommendationsPositionsUpdateTrait;
 
-    protected $anrTable;
-    protected $userAnrTable;
-    protected $recommandationTable;
-    protected $recommandationHistoricTable;
-    protected $instanceRiskTable;
-    protected $instanceRiskOpTable;
-    protected $anrService;
-    protected $anrInstanceService;
-    protected $instanceTable;
-    protected $MonarcObjectTable;
+    protected Table\AnrTable $anrTable;
+
+    protected Table\UserAnrTable $userAnrTable;
+
+    protected Table\RecommandationTable $recommendationTable;
+
+    protected Table\RecommendationHistoricTable $recommendationHistoricTable;
+
+    protected Table\InstanceRiskTable $instanceRiskTable;
+
+    protected Table\InstanceRiskOpTable $instanceRiskOpTable;
+
+    protected AnrService $anrService;
+
+    protected Table\InstanceTable $instanceTable;
+
     protected $dependencies = [
         'recommandation',
         'anr',
@@ -60,8 +60,8 @@ class AnrRecommandationRiskService extends AbstractService
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();
-        /** @var RecommandationRiskTable $table */
+        [$filterJoin, $filterLeft, $filtersCol] = $this->get('entity')->getFiltersForService();
+        /** @var Table\RecommandationRiskTable $table */
         $table = $this->get('table');
         $recosRisks = $table->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
@@ -131,19 +131,17 @@ class AnrRecommandationRiskService extends AbstractService
      */
     public function delete($id)
     {
-        /** @var RecommandationRiskTable $recommendationRiskTable */
+        /** @var Table\RecommandationRiskTable $recommendationRiskTable */
         $recommendationRiskTable = $this->get('table');
         $recommendationRisk = $recommendationRiskTable->findById($id);
         $recommendation = $recommendationRisk->getRecommandation();
 
         if ($recommendationRisk->getInstanceRisk() !== null) {
-            /** @var InstanceRiskTable $instanceRiskTable */
-            $instanceRiskTable = $this->get('instanceRiskTable');
             $instanceRisk = $recommendationRisk->getInstanceRisk();
 
             if ($instanceRisk->getInstance()->getObject()->getScope() === MonarcObject::SCOPE_GLOBAL) {
                 if ($instanceRisk->getAmv() === null && $instanceRisk->isSpecific()) {//case specific amv_id = null
-                    $brothers = $instanceRiskTable->getEntityByFields([
+                    $brothers = $this->instanceRiskTable->getEntityByFields([
                         'asset' => [
                             'anr' => $instanceRisk->getAnr()->getId(),
                             'uuid' => $instanceRisk->getAsset()->getUuid(),
@@ -158,7 +156,7 @@ class AnrRecommandationRiskService extends AbstractService
                         ],
                     ]);
                 } else {
-                    $brothers = $instanceRiskTable->findByAmv($instanceRisk->getAmv());
+                    $brothers = $this->instanceRiskTable->findByAmv($instanceRisk->getAmv());
                 }
                 $brothersIds = [];
                 foreach ($brothers as $brother) {
@@ -178,12 +176,10 @@ class AnrRecommandationRiskService extends AbstractService
                 $recommendationRiskTable->deleteEntity($recommendationRisk);
             }
         } else {
-            /** @var InstanceRiskOpTable $instanceRiskOpTable */
-            $instanceRiskOpTable = $this->get('instanceRiskOpTable');
             $instanceRiskOp = $recommendationRisk->getInstanceRiskOp();
 
             if ($instanceRiskOp->getObject()->get('scope') === MonarcObject::SCOPE_GLOBAL) {
-                $brothers = $instanceRiskOpTable->getEntityByFields([
+                $brothers = $this->instanceRiskOpTable->getEntityByFields([
                     'anr' => $recommendationRisk->getInstanceRiskOp()->getAnr()->getId(),
                     'rolfRisk' => $recommendationRisk->getInstanceRiskOp()->getRolfRisk()->getId(),
                 ]);
@@ -221,7 +217,7 @@ class AnrRecommandationRiskService extends AbstractService
     public function create($data, $last = true)
     {
         //verify not already exist
-        /** @var RecommandationRiskTable $table */
+        /** @var Table\RecommandationRiskTable $table */
         $table = $this->get('table');
         if ($data['op']) {
             $exist = $table->getEntityByFields([
@@ -229,16 +225,14 @@ class AnrRecommandationRiskService extends AbstractService
                 'recommandation' => ['anr' => $data['anr'], 'uuid' => $data['recommandation']],
                 'instanceRiskOp' => $data['risk']
             ]);
-            /** @var InstanceRiskOpTable $instanceRiskOpTable */
-            $tableUsed = $this->get('instanceRiskOpTable');
+            $tableUsed = $this->instanceRiskOpTable;
         } else {
             $exist = $table->getEntityByFields([
                 'anr' => $data['anr'],
                 'recommandation' => ['anr' => $data['anr'], 'uuid' => $data['recommandation']],
                 'instanceRisk' => $data['risk']
             ]);
-            /** @var InstanceRiskTable $instanceRiskTable */
-            $tableUsed = $this->get('instanceRiskTable');
+            $tableUsed = $this->instanceRiskTable;
         }
         if (count($exist)) {
             throw new Exception('Risk already link to this recommendation', 412);
@@ -248,7 +242,7 @@ class AnrRecommandationRiskService extends AbstractService
         $id = $this->createRecommandationRisk($data, $gRisk);
         if ($gRisk->getInstance()->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL && !$data['op']) {
 
-            $instances = $this->get('instanceTable')->getEntityByFields([
+            $instances = $this->instanceTable->getEntityByFields([
                 'object' => [
                     'anr' => $gRisk->anr->id,
                     'uuid' => $gRisk->getInstance()->getObject()->getUuid()
@@ -281,26 +275,19 @@ class AnrRecommandationRiskService extends AbstractService
 
     public function getTreatmentPlan(int $anrId, string $uuid = null): array
     {
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        $anr = $anrTable->findById($anrId);
+        $anr = $this->anrTable->findById($anrId);
 
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
         if ($uuid !== null) {
-            $recommendation = $recommendationTable->findByAnrAndUuid($anr, $uuid);
+            $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $uuid);
             $linkedRecommendations = $recommendation === null ? [] : [$recommendation];
         } else {
-            $linkedRecommendations = $recommendationTable
+            $linkedRecommendations = $this->recommendationTable
                 ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
                     $anr,
                     [],
                     ['r.position' => 'ASC']
                 );
         }
-
-        /** @var InstanceTable $instanceTable */
-        $instanceTable = $this->get('instanceTable');
 
         $treatmentPlan = [];
         foreach ($linkedRecommendations as $linkedRecommendation) {
@@ -315,8 +302,7 @@ class AnrRecommandationRiskService extends AbstractService
                 }
 
                 if ($type === 'risks' && $recommendationRisk->hasGlobalObjectRelation()) {
-                    $methodName = 'getName' . $anr->getLanguage();
-                    $path = $recommendationRisk->getInstance()->$methodName();
+                    $path = $recommendationRisk->getInstance()->{'getName' . $anr->getLanguage()}();
 
                     $globalObjectUuid = $recommendationRisk->getGlobalObject()->getUuid();
                     $assetUuid = $recommendationRisk->getAsset()->getUuid();
@@ -344,10 +330,7 @@ class AnrRecommandationRiskService extends AbstractService
                         'maxRisk' => $instanceRisk->getCacheMaxRisk(),
                     ];
                 } else {
-                    $path = implode(' > ', array_column(
-                        $instanceTable->getAscendance($instanceRisk->getInstance()),
-                        'name' . $anr->getLanguage()
-                    ));
+                    $path = $instanceRisk->getInstance()->getHierarchyString();
                 }
 
                 $instanceRisks[$type][$index] = array_merge($instanceRisk->getJsonArray(), [
@@ -397,7 +380,7 @@ class AnrRecommandationRiskService extends AbstractService
      */
     public function createRecommandationRisk($data, $risk)
     {
-        /** @var RecommandationRiskTable $table */
+        /** @var Table\RecommandationRiskTable $table */
         $table = $this->get('table');
 
         $class = $this->get('entity');
@@ -438,27 +421,22 @@ class AnrRecommandationRiskService extends AbstractService
      */
     public function resetRecommendationsPositionsToDefault(int $anrId): void
     {
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        $anr = $anrTable->findById($anrId);
+        $anr = $this->anrTable->findById($anrId);
 
-        /** @var RecommandationRiskTable $recommendationRiskTable */
+        /** @var Table\RecommandationRiskTable $recommendationRiskTable */
         $recommendationRiskTable = $this->get('table');
         $recommendationRisks = $recommendationRiskTable->findByAnr($anr, ['r.importance' => 'DESC', 'r.code' => 'ASC']);
-
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
 
         $position = 1;
         $updatedRecommendationsUuid = [];
         foreach ($recommendationRisks as $recommendationRisk) {
             $recommendation = $recommendationRisk->getRecommandation();
             if (!isset($updatedRecommendationsUuid[$recommendation->getUuid()])) {
-                $recommendationTable->saveEntity($recommendation->setPosition($position++), false);
+                $this->recommendationTable->saveEntity($recommendation->setPosition($position++), false);
                 $updatedRecommendationsUuid[$recommendation->getUuid()] = true;
             }
         }
-        $recommendationTable->getDb()->flush();
+        $this->recommendationTable->getDb()->flush();
     }
 
     /**
@@ -466,7 +444,7 @@ class AnrRecommandationRiskService extends AbstractService
      */
     public function validateFor(int $recommendationRiskId, array $data): void
     {
-        /** @var RecommandationRiskTable $recommendationRiskTable */
+        /** @var Table\RecommandationRiskTable $recommendationRiskTable */
         $recommendationRiskTable = $this->get('table');
         $recommendationRisk = $recommendationRiskTable->findById($recommendationRiskId);
 
@@ -485,9 +463,7 @@ class AnrRecommandationRiskService extends AbstractService
                 // Overload observation for volatile comment (after measure)
                 $cacheCommentAfter = [];
 
-                /** @var RecommendationHistoricTable $recoHistoTable */
-                $recoHistoTable = $this->get('recommandationHistoricTable');
-                $riskRecoHistos = $recoHistoTable->getEntityByFields([
+                $riskRecoHistos = $this->recommendationHistoricTable->getEntityByFields([
                     'instanceRiskOp' => $recommendationRisk->getInstanceRiskOp()->getId()
                 ], ['id' => 'DESC']);
                 $c = 0;
@@ -524,9 +500,7 @@ class AnrRecommandationRiskService extends AbstractService
                 $instanceRiskOp->setCacheTargetedRisk(-1);
                 $instanceRiskOp->setKindOfMeasure(InstanceRiskOp::KIND_NOT_TREATED);
 
-                /** @var InstanceRiskOpTable $instanceRiskOpTable */
-                $instanceRiskOpTable = $this->get('instanceRiskOpTable');
-                $instanceRiskOpTable->saveEntity($instanceRiskOp);
+                $this->instanceRiskOpTable->saveEntity($instanceRiskOp);
             }
         } elseif ($recommendationRisk->getInstanceRisk() !== null) { // validate for information risks
             // Verify if recommendation risk is final (are there more recommendations linked to the risk)
@@ -542,9 +516,7 @@ class AnrRecommandationRiskService extends AbstractService
                 // Overload observation for volatile comment (after measure)
                 $cacheCommentAfter = [];
 
-                /** @var RecommendationHistoricTable $recoHistoTable */
-                $recoHistoTable = $this->get('recommandationHistoricTable');
-                $riskRecoHistos = $recoHistoTable->getEntityByFields([
+                $riskRecoHistos = $this->recommendationHistoricTable->getEntityByFields([
                     'instanceRisk' => $recommendationRisk->getInstanceRisk()->getId()
                 ], ['id' => 'DESC']);
                 $c = 0;
@@ -631,21 +603,16 @@ class AnrRecommandationRiskService extends AbstractService
                 // Change status to NOT_TREATED
                 $instanceRisk->setKindOfMeasure(InstanceRisk::KIND_NOT_TREATED);
 
-                /** @var InstanceRiskTable $instanceRiskTable */
-                $instanceRiskTable = $this->get('instanceRiskTable');
-                $instanceRiskTable->saveEntity($instanceRisk);
+                $this->instanceRiskTable->saveEntity($instanceRisk);
 
                 // Impact on brothers
                 if ($recommendationRisk->hasGlobalObjectRelation()) {
-
-                    /** @var InstanceTable $instanceTable */
-                    $instanceTable = $this->get('instanceTable');
-                    $brothersInstances = $instanceTable->findByAnrAndObject(
+                    $brothersInstances = $this->instanceTable->findByAnrAndObject(
                         $recommendationRisk->getAnr(),
                         $recommendationRisk->getGlobalObject()
                     );
                     foreach ($brothersInstances as $brotherInstance) {
-                        $brothersInstancesRisks = $instanceRiskTable->findByInstanceAndInstanceRiskRelations(
+                        $brothersInstancesRisks = $this->instanceRiskTable->findByInstanceAndInstanceRiskRelations(
                             $brotherInstance,
                             $instanceRisk,
                             false,
@@ -664,9 +631,9 @@ class AnrRecommandationRiskService extends AbstractService
                                 ->setReductionAmount($instanceRisk->getReductionAmount())
                                 ->setKindOfMeasure($instanceRisk->getKindOfMeasure());
 
-                            $instanceRiskTable->saveEntity($instanceRisk, false);
+                            $this->instanceRiskTable->saveEntity($instanceRisk, false);
                         }
-                        $instanceRiskTable->getDb()->flush();
+                        $this->instanceRiskTable->getDb()->flush();
                     }
                 }
             }
@@ -688,15 +655,6 @@ class AnrRecommandationRiskService extends AbstractService
         $reco = $recoRisk->getRecommandation();
         $instanceRisk = $recoRisk->getInstanceRisk();
         $anr = $recoRisk->getAnr();
-
-        /** @var AnrService $anrService */
-        $anrService = $this->get('anrService');
-
-        /** @var AnrInstanceService $anrInstanceService */
-        $anrInstanceService = $this->get('anrInstanceService');
-
-        /** @var RecommendationHistoricTable $recoHistoTable */
-        $recoHistoTable = $this->get('recommandationHistoricTable');
         $lang = $anr->getLanguage();
 
         $histo = [
@@ -708,35 +666,45 @@ class AnrRecommandationRiskService extends AbstractService
             'recoComment' => $reco->getComment(),
             'recoDuedate' => $reco->getDueDate(),
             'recoResponsable' => $reco->getResponsable(),
-            'riskInstance' => $instanceRisk->getInstance()->get('name' . $lang),
-            'riskInstanceContext' => $anrInstanceService->getDisplayedAscendance($instanceRisk->get('instance')),
-            'riskAsset' => $instanceRisk->getAsset()->get('label' . $lang),
-            'riskThreat' => $instanceRisk->getThreat()->get('label' . $lang),
-            'riskThreatVal' => $instanceRisk->get('threatRate'),
-            'riskVul' => $instanceRisk->getVulnerability()->get('label' . $lang),
-            'riskVulValBefore' => $instanceRisk->get('vulnerabilityRate'),
-            'riskVulValAfter' => ($final) ? max(0, $instanceRisk->get('vulnerabilityRate') - $instanceRisk->get('reductionAmount')) : $instanceRisk->get('vulnerabilityRate'),
-            'riskKindOfMeasure' => $instanceRisk->get('kindOfMeasure'),
+            'riskInstance' => $instanceRisk->getInstance()->{'getName' . $lang}(),
+            'riskInstanceContext' => $instanceRisk->getInstance()->getHierarchyString(),
+            'riskAsset' => $instanceRisk->getAsset()->getLabel($lang),
+            'riskThreat' => $instanceRisk->getThreat()->getLabel($lang),
+            'riskThreatVal' => $instanceRisk->getThreatRate(),
+            'riskVul' => $instanceRisk->getVulnerability()->getLabel($lang),
+            'riskVulValBefore' => $instanceRisk->getVulnerabilityRate(),
+            'riskVulValAfter' => $final
+                ? max(0, $instanceRisk->getVulnerabilityRate() - $instanceRisk->getReductionAmount())
+                : $instanceRisk->getVulnerabilityRate(),
+            'riskKindOfMeasure' => $instanceRisk->getKindOfMeasure(),
             'riskCommentBefore' => $instanceRisk->getComment(),
-            'riskCommentAfter' => ($final) ? $recoRisk->get('commentAfter') : $instanceRisk->get('comment'),
-            'riskMaxRiskBefore' => $instanceRisk->getCacheMaxRisk('cacheMaxRisk'),
-            'riskMaxRiskAfter' => ($final) ? $instanceRisk->get('cacheTargetedRisk') : $instanceRisk->get('cacheMaxRisk'),
-            'riskColorBefore' => ($instanceRisk->get('cacheMaxRisk') != -1) ? $anrService->getColor($anr, $instanceRisk->get('cacheMaxRisk')) : '',
-            'cacheCommentAfter' => $recoRisk->get('commentAfter'),
-            'riskColorAfter' => ($final)
-                ? ((($instanceRisk->getCacheTargetedRisk() != -1) ? $anrService->getColor($anr, $instanceRisk->getCacheTargetedRisk()) : ''))
-                : (($instanceRisk->getCacheMaxRisk() != -1) ? $anrService->getColor($anr, $instanceRisk->getCacheMaxRisk()) : ''),
+            'riskCommentAfter' => $final ? $recoRisk->getCommentAfter() : $instanceRisk->getComment(),
+            'riskMaxRiskBefore' => $instanceRisk->getCacheMaxRisk(),
+            'riskMaxRiskAfter' => $final ? $instanceRisk->getCacheTargetedRisk() : $instanceRisk->getCacheMaxRisk(),
+            'riskColorBefore' => $instanceRisk->getCacheMaxRisk() !== -1
+                ? $this->anrService->getColor($anr, $instanceRisk->getCacheMaxRisk())
+                : '',
+            'cacheCommentAfter' => $recoRisk->getCommentAfter(),
+            'riskColorAfter' => $final
+                ? ($instanceRisk->getCacheTargetedRisk() !== -1
+                    ? $this->anrService->getColor($anr, $instanceRisk->getCacheTargetedRisk())
+                    : ''
+                )
+                : ($instanceRisk->getCacheMaxRisk() !== -1
+                    ? $this->anrService->getColor($anr, $instanceRisk->getCacheMaxRisk())
+                    : ''
+                ),
         ];
 
         $recoHisto = new RecommandationHistoric();
         $recoHisto->setLanguage($this->getLanguage());
-        $recoHisto->setDbAdapter($recoHistoTable->getDb());
+        $recoHisto->setDbAdapter($this->recommendationHistoricTable->getDb());
         $recoHisto->exchangeArray($histo);
 
         $recoHisto->setAnr($anr);
         $recoHisto->instanceRisk = $instanceRisk;
 
-        $recoHistoTable->save($recoHisto);
+        $this->recommendationHistoricTable->save($recoHisto);
     }
 
     /**
@@ -751,15 +719,6 @@ class AnrRecommandationRiskService extends AbstractService
         $recommendation = $recoRisk->getRecommandation();
         $instanceRiskOp = $recoRisk->getInstanceRiskOp();
         $anr = $recoRisk->getAnr();
-
-        /** @var AnrService $anrService */
-        $anrService = $this->get('anrService');
-
-        /** @var AnrInstanceService $anrInstanceService */
-        $anrInstanceService = $this->get('anrInstanceService');
-
-        /** @var RecommendationHistoricTable $recoHistoTable */
-        $recoHistoTable = $this->get('recommandationHistoricTable');
         $lang = $anr->getLanguage();
 
         $histo = [
@@ -771,33 +730,41 @@ class AnrRecommandationRiskService extends AbstractService
             'recoComment' => $recommendation->getComment(),
             'recoDuedate' => $recommendation->getDueDate(),
             'recoResponsable' => $recommendation->getResponsable(),
-            'riskInstance' => $instanceRiskOp->getInstance()->get('name' . $lang),
-            'riskInstanceContext' => $anrInstanceService->getDisplayedAscendance($instanceRiskOp->get('instance')),
-            'riskAsset' => $instanceRiskOp->getObject()->getAsset()->get('label' . $lang),
-            'riskOpDescription' => $instanceRiskOp->get('riskCacheLabel' . $lang),
-            'netProbBefore' => $instanceRiskOp->get('netProb'),
-            'riskKindOfMeasure' => $instanceRiskOp->get('kindOfMeasure'),
+            'riskInstance' => $instanceRiskOp->getInstance()->{'getName' . $lang}(),
+            'riskInstanceContext' => $instanceRiskOp->getInstance()->getHierarchyString(),
+            'riskAsset' => $instanceRiskOp->getObject()->getAsset()->getLabel($lang),
+            'riskOpDescription' => $instanceRiskOp->getRiskCacheLabel($lang),
+            'netProbBefore' => $instanceRiskOp->getNetProb(),
+            'riskKindOfMeasure' => $instanceRiskOp->getKindOfMeasure(),
             'riskCommentBefore' => $instanceRiskOp->getComment(),
-            'riskCommentAfter' => ($final) ? $recoRisk->get('commentAfter') : $instanceRiskOp->get('comment'),
-            'riskMaxRiskBefore' => $instanceRiskOp->get('cacheNetRisk'),
-            'riskMaxRiskAfter' => ($final) ? $instanceRiskOp->get('cacheTargetedRisk') : $instanceRiskOp->get('cacheNetRisk'),
-            'riskColorBefore' => ($instanceRiskOp->getCacheNetRisk() != -1) ? $anrService->getColorRiskOp($anr, $instanceRiskOp->get('cacheNetRisk')) : '',
-            'cacheCommentAfter' => $recoRisk->get('commentAfter'),
-            'riskColorAfter' => ($final)
-                ? (($instanceRiskOp->get('cacheTargetedRisk') != -1) ? $anrService->getColorRiskOp($anr, $instanceRiskOp->get('cacheTargetedRisk')) : '')
-                : (($instanceRiskOp->get('cacheMaxRisk') != -1) ? $anrService->getColorRiskOp($anr, $instanceRiskOp->get('cacheMaxRisk')) : ''),
+            'riskCommentAfter' => $final ? $recoRisk->getCommentAfter() : $instanceRiskOp->getComment(),
+            'riskMaxRiskBefore' => $instanceRiskOp->getCacheNetRisk(),
+            'riskMaxRiskAfter' => $final ? $instanceRiskOp->getCacheTargetedRisk() : $instanceRiskOp->getCacheNetRisk(),
+            'riskColorBefore' => $instanceRiskOp->getCacheNetRisk() !== -1
+                ? $this->anrService->getColorRiskOp($anr, $instanceRiskOp->getCacheNetRisk())
+                : '',
+            'cacheCommentAfter' => $recoRisk->getCommentAfter(),
+            'riskColorAfter' => $final
+                ? ($instanceRiskOp->getCacheTargetedRisk() !== -1
+                    ? $this->anrService->getColorRiskOp($anr, $instanceRiskOp->getCacheTargetedRisk())
+                    : ''
+                )
+                : ($instanceRiskOp->getCacheNetRisk() !== -1
+                    ? $this->anrService->getColorRiskOp($anr, $instanceRiskOp->getCacheNetRisk())
+                    : ''
+                ),
 
         ];
 
         $recoHisto = new RecommandationHistoric();
         $recoHisto->setLanguage($this->getLanguage());
-        $recoHisto->setDbAdapter($recoHistoTable->getDb());
+        $recoHisto->setDbAdapter($this->recommendationHistoricTable->getDb());
         $recoHisto->exchangeArray($histo);
 
         $recoHisto->setAnr($anr);
         $recoHisto->instanceRiskOp = $instanceRiskOp;
 
-        $recoHistoTable->save($recoHisto);
+        $this->recommendationHistoricTable->save($recoHisto);
     }
 
     /**
@@ -805,7 +772,7 @@ class AnrRecommandationRiskService extends AbstractService
      */
     private function removeTheLink(RecommandationRisk $recommendationRisk): void
     {
-        /** @var RecommandationRiskTable $recommendationRiskTable */
+        /** @var Table\RecommandationRiskTable $recommendationRiskTable */
         $recommendationRiskTable = $this->get('table');
 
         if ($recommendationRisk->hasGlobalObjectRelation()) {
@@ -839,8 +806,6 @@ class AnrRecommandationRiskService extends AbstractService
             );
         }
 
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
-        $recommendationTable->saveEntity($recommendation);
+        $this->recommendationTable->saveEntity($recommendation);
     }
 }
