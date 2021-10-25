@@ -57,7 +57,6 @@ class AmvTable extends AbstractEntityTable
             ->andWhere('a.anr = :anrId')
             ->setParameter('uuid', $uuid)
             ->setParameter('anrId', $anrId)
-            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
 
