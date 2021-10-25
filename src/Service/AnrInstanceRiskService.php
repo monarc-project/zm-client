@@ -289,9 +289,7 @@ class AnrInstanceRiskService extends InstanceRiskService
         InstanceRiskSuperClass $instanceRisk,
         InstanceRiskSuperClass $newInstanceRisk
     ): void {
-        /** @var RecommandationRiskTable $recommendationRiskTable */
-        $recommendationRiskTable = $this->get('recommendationRiskTable');
-        $recommendationRisks = $recommendationRiskTable->findByAnrAndInstanceRisk(
+        $recommendationRisks = $this->recommendationRiskTable->findByAnrAndInstanceRisk(
             $newInstanceRisk->getAnr(),
             $instanceRisk
         );
@@ -301,7 +299,7 @@ class AnrInstanceRiskService extends InstanceRiskService
                 ->setInstance($newInstanceRisk->getInstance())
                 ->setInstanceRisk($newInstanceRisk);
 
-            $recommendationRiskTable->saveEntity($newRecommendationRisk, false);
+            $this->recommendationRiskTable->saveEntity($newRecommendationRisk, false);
         }
     }
 
@@ -347,7 +345,7 @@ class AnrInstanceRiskService extends InstanceRiskService
         $csvString = '';
         foreach ($recsUuids as $index => $recUuid) {
             if (!empty($recUuid)) {
-                $recommendation = $this->recommandationTable->findByAnrAndUuid($anr, $recUuid);
+                $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $recUuid);
                 $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
                 if ($index !== $recommendationsUuidsNumber - 1) {
                     $csvString .= "\r";
