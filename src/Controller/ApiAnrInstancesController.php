@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Laminas\Http\Response;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
+use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrInstanceService;
 use Laminas\View\Model\JsonModel;
 
@@ -81,13 +82,18 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $params = $this->parseParams();
 
         if ($this->params()->fromQuery('csv', false)) {
+            // TODO: inject directly here after refactoring.
             /** @var AnrInstanceRiskOpService $anrInstanceRiskOpService */
-            $anrInstanceRiskOpService = $this->getService()->get('instanceRiskOpService');
+            $anrInstanceRiskOpService = $service->get('instanceRiskOpService');
 
             return $this->setCsvResponse($anrInstanceRiskOpService->getOperationalRisksInCsv($anrId, $id, $params));
         }
         if ($this->params()->fromQuery('csvInfoInst', false)) {
-            return $this->setCsvResponse($service->getCsvRisks($anrId, $id, $params));
+            // TODO: inject directly here after refactoring.
+            /** @var AnrInstanceRiskService $anrInstanceRiskService */
+            $anrInstanceRiskService = $service->get('instanceRiskService');
+
+            return $this->setCsvResponse($anrInstanceRiskService->getInstanceRisksInCsv($anrId, $id, $params));
         }
 
         if (\count($this->dependencies)) {
@@ -120,7 +126,7 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
         $data['i'] = isset($data['i']) ? $data['i'] : '-1';
         $data['d'] = isset($data['d']) ? $data['d'] : '-1';
 
-        /** @var InstanceService $service */
+        /** @var AnrInstanceService $service */
         $service = $this->getService();
         $id = $service->instantiateObjectToAnr($anrId, $data, true, true, Instance::MODE_CREA_ROOT);
 
