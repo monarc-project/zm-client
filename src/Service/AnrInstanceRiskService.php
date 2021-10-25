@@ -361,7 +361,7 @@ class AnrInstanceRiskService extends InstanceRiskService
         /** @var InstanceRiskTable $instanceRiskTable */
         $instanceRiskTable = $this->get('table');
         $instanceRisk = $instanceRiskTable->findById($instanceRiskId);
-        $measures = $instanceRisk->getAmv()->getMeasures();
+        $measures = $instanceRisk->getAmv() ? $instanceRisk->getAmv()->getMeasures() : [];
         $measuresNumber = \count($measures);
         $csvString = '';
 
