@@ -322,7 +322,7 @@ class AnrInstanceRiskService extends InstanceRiskService
      *
      * @return array
      */
-    private function addCustomFieldsToInstanceRiskResult(
+    protected function addCustomFieldsToInstanceRiskResult(
         InstanceRiskSuperClass $instanceRisk,
         array $instanceRiskResult
     ): array {
