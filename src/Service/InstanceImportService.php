@@ -1921,7 +1921,7 @@ class InstanceImportService
 
                             $translation = (new Translation())
                                 ->setAnr($anr)
-                                ->setType(OperationalRiskScaleType::TRANSLATION_TYPE_NAME)
+                                ->setType(Translation::OPERATIONAL_RISK_SCALE_TYPE)
                                 ->setKey($labelTranslationKey)
                                 ->setValue($extScaleTypeData['translation']['value'])
                                 ->setLang($anrLanguageCode)
@@ -2034,7 +2034,7 @@ class InstanceImportService
         $anrLanguageCode = $this->getAnrLanguageCode($anr);
         $scaleTypesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME],
+            [Translation::OPERATIONAL_RISK_SCALE_TYPE],
             $anrLanguageCode
         );
         $scaleTypesData = $operationalRiskScalesData[OperationalRiskScale::TYPE_IMPACT]
@@ -2631,7 +2631,7 @@ class InstanceImportService
         $anrLanguageCode = $this->getAnrLanguageCode($anr);
         $scalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
+            [Translation::OPERATIONAL_RISK_SCALE_TYPE, Translation::OPERATIONAL_RISK_SCALE_COMMENT],
             $anrLanguageCode
         );
         $externalOperationalScalesData = $this->getExternalOperationalRiskScalesData($anr, $data);
@@ -2666,7 +2666,7 @@ class InstanceImportService
 
                     $translation = (new Translation())
                         ->setAnr($anr)
-                        ->setType(OperationalRiskScaleType::TRANSLATION_TYPE_NAME)
+                        ->setType(Translation::OPERATIONAL_RISK_SCALE_TYPE)
                         ->setLang($anrLanguageCode)
                         ->setKey($labelTranslationKey)
                         ->setValue($scaleTypeData['translation']['value'])
@@ -2852,7 +2852,7 @@ class InstanceImportService
 
             $translation = (new Translation())
                 ->setAnr($anr)
-                ->setType(OperationalRiskScaleComment::TRANSLATION_TYPE_NAME)
+                ->setType(Translation::OPERATIONAL_RISK_SCALE_COMMENT)
                 ->setLang($anrLanguageCode)
                 ->setKey($commentTranslationKey)
                 ->setValue($scaleCommentData['translation']['value'])

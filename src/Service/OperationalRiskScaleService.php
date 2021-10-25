@@ -106,7 +106,7 @@ class OperationalRiskScaleService extends CoreOperationalRiskScaleService
             // Create a translation for the scaleComment (init with blank value).
             $translation = $this->createTranslationObject(
                 $anr,
-                OperationalRiskScaleComment::TRANSLATION_TYPE_NAME,
+                Translation::OPERATIONAL_RISK_SCALE_COMMENT,
                 $scaleComment->getCommentTranslationKey(),
                 $languageCode,
                 ''

@@ -1782,10 +1782,12 @@ class AnrService extends AbstractService
             ? $this->get('translationTable')
             : $this->get('translationCliTable');
 
+        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
+
         $sourceTranslations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
             $sourceAnr,
-            [OperationalRiskScaleType::TRANSLATION_TYPE_NAME, OperationalRiskScaleComment::TRANSLATION_TYPE_NAME],
-            $this->getAnrLanguageCode($newAnr)
+            [Translation::OPERATIONAL_RISK_SCALE_TYPE, Translation::OPERATIONAL_RISK_SCALE_COMMENT],
+            $anrLanguageCode
         );
 
         $operationalRiskScales = $sourceOperationalRiskScaleTable->findByAnr($sourceAnr);
@@ -1812,7 +1814,12 @@ class AnrService extends AbstractService
 
                 $this->createTranslationFromSource(
                     $newAnr,
-                    $sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()],
+                    $sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()]
+                        ?? (new Translation())
+                            ->setType(Translation::OPERATIONAL_RISK_SCALE_TYPE)
+                            ->setKey($operationalRiskScaleType->getLabelTranslationKey())
+                            ->setLang($anrLanguageCode)
+                            ->setValue(''),
                     $connectedUser
                 );
 
@@ -1822,7 +1829,12 @@ class AnrService extends AbstractService
                         $newOperationalRiskScale,
                         $newOperationalRiskScaleType,
                         $operationalRiskScaleComment,
-                        $sourceTranslations[$operationalRiskScaleComment->getCommentTranslationKey()],
+                        $sourceTranslations[$operationalRiskScaleComment->getCommentTranslationKey()]
+                            ?? (new Translation())
+                            ->setType(Translation::OPERATIONAL_RISK_SCALE_COMMENT)
+                            ->setKey($operationalRiskScaleComment->getCommentTranslationKey())
+                            ->setLang($anrLanguageCode)
+                            ->setValue(''),
                         $connectedUser
                     );
                 }
@@ -1838,7 +1850,12 @@ class AnrService extends AbstractService
                     $newOperationalRiskScale,
                     null,
                     $operationalRiskScaleComment,
-                    $sourceTranslations[$operationalRiskScaleComment->getCommentTranslationKey()],
+                    $sourceTranslations[$operationalRiskScaleComment->getCommentTranslationKey()]
+                        ?? (new Translation())
+                            ->setType(Translation::OPERATIONAL_RISK_SCALE_COMMENT)
+                            ->setKey($operationalRiskScaleComment->getCommentTranslationKey())
+                            ->setLang($anrLanguageCode)
+                            ->setValue(''),
                     $connectedUser
                 );
             }
