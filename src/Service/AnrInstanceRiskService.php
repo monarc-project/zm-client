@@ -14,6 +14,7 @@ use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
+use Monarc\FrontOffice\Model\Table\AmvTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
@@ -108,7 +109,6 @@ class AnrInstanceRiskService extends InstanceRiskService
             $this->translateService->translate('Security referentials', $anrLanguage),
         ]) . "\n";
 
-        // TODO: fetch objects list instead of array of values.
         $instanceRisks = $this->getInstanceRisks($anrId, $instanceId, $params);
 
         // Fill in the content
@@ -139,10 +139,8 @@ class AnrInstanceRiskService extends InstanceRiskService
                 $instanceRisk['target_risk'] === -1 ? null : $instanceRisk['target_risk'],
                 $instanceRisk['owner'],
                 $instanceRisk['context'],
-                $this->getCsvRecommendations($anr, explode(",", (string)$instanceRisk['recommendations'])),
-                $instanceRisk['amv']
-                    ? $this->getCsvMeasures($anr, $instanceRisk['amv'])
-                    : null,
+                $this->getRecommendationsInCsv($anr, explode(",", (string)$instanceRisk['recommendations'])),
+                $instanceRisk['amv'] === null ? null : $this->getMeasuresInCsv($anr, $instanceRisk['amv']),
             ];
 
             $output .= '"';
@@ -341,43 +339,31 @@ class AnrInstanceRiskService extends InstanceRiskService
         );
     }
 
-    private function getCsvRecommendations(AnrSuperClass $anr, array $recsUuids): string
+    private function getRecommendationsInCsv(AnrSuperClass $anr, array $recsUuids): string
     {
         $csvString = '';
-        foreach ($recsUuids as $index => $recUuid) {
+        foreach ($recsUuids as $recUuid) {
             if (!empty($recUuid)) {
                 $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $recUuid);
-                $csvString .= $recommendation->getCode()
-                    . " - "
-                    . $recommendation->getDescription();
-                if ($index !== \count($recsUuids) - 1) {
-                    $csvString .= "\r";
-                }
+                $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
             }
         }
 
-        return $csvString;
+        return empty($csvString) ? '' : $csvString . '"\r"';
     }
 
-    private function getCsvMeasures(AnrSuperClass $anr, string $amvUuid): string
+    private function getMeasuresInCsv(AnrSuperClass $anr, string $amvUuid): string
     {
-        /** @var AmvTable $anrTable */
+        /** @var AmvTable $amvTable */
         $amvTable = $this->get('amvTable');
         $amv = $amvTable->findByUuidAndAnrId($amvUuid, $anr->getId());
-        $csvString = '';
 
-        foreach ($amv->getMeasures() as $index => $measure) {
-            $csvString .= "["
-                . $measure->getReferential()->{'getLabel' . $anr->getLanguage()}()
-                . "] "
-                . $measure->getCode()
-                . " - "
-                . $measure->{'getLabel' . $anr->getLanguage()}();
-            if ($index !== \count($amv->getMeasures()) - 1) {
-                $csvString .= "\r";
-            }
+        $csvString = '';
+        foreach ($amv->getMeasures() as $measure) {
+            $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anr->getLanguage()}() . "] "
+                . $measure->getCode() . " - " . $measure->{'getLabel' . $anr->getLanguage()}();
         }
 
-        return $csvString;
+        return empty($csvString) ? '' : $csvString . '"\r"';
     }
 }
