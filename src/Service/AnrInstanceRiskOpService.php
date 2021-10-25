@@ -460,13 +460,12 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $anr,
             $operationalInstanceRisk
         );
-        $recommendationsRisksNumber = \count($recommendationsRisks);
         $csvString = '';
 
         foreach ($recommendationsRisks as $index => $recommendationRisk) {
             $recommendation = $recommendationRisk->getRecommandation();
             $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
-            if ($index !== $recommendationsRisksNumber - 1) {
+            if ($index !== \count($recommendationsRisks) - 1) {
                 $csvString .= "\r";
             }
         }
@@ -477,14 +476,13 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
     protected function getCsvMeasures(int $anrLanguage, InstanceRiskOp $operationalInstanceRisk): string
     {
         $measures = $operationalInstanceRisk->getRolfRisk()->getMeasures();
-        $measuresNumber = \count($measures);
         $csvString = '';
 
         foreach ($measures as $index => $measure) {
             $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
                $measure->getCode() . " - " .
                $measure->{'getLabel' . $anrLanguage}();
-            if ($index !== $measuresNumber - 1) {
+            if ($index !== \count($measures) - 1) {
                 $csvString .= "\r";
             }
         }

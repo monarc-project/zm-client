@@ -141,7 +141,7 @@ class AnrInstanceRiskService extends InstanceRiskService
                 $instanceRisk['context'],
                 $this->getCsvRecommendations($anr, explode(",", (string)$instanceRisk['recommendations'])),
                 $instanceRisk['amv']
-                    ? $this->getCsvMeasures($anr->getId(), $anrLanguage, $instanceRisk['amv'])
+                    ? $this->getCsvMeasures($anr, $instanceRisk['amv'])
                     : null,
             ];
 
@@ -343,13 +343,14 @@ class AnrInstanceRiskService extends InstanceRiskService
 
     private function getCsvRecommendations(AnrSuperClass $anr, array $recsUuids): string
     {
-        $recommendationsUuidsNumber = \count($recsUuids);
         $csvString = '';
         foreach ($recsUuids as $index => $recUuid) {
             if (!empty($recUuid)) {
                 $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $recUuid);
-                $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
-                if ($index !== $recommendationsUuidsNumber - 1) {
+                $csvString .= $recommendation->getCode()
+                    . " - "
+                    . $recommendation->getDescription();
+                if ($index !== \count($recsUuids) - 1) {
                     $csvString .= "\r";
                 }
             }
@@ -358,20 +359,21 @@ class AnrInstanceRiskService extends InstanceRiskService
         return $csvString;
     }
 
-    private function getCsvMeasures(int $anrId, int $anrLanguage, string $amvUuid): string
+    private function getCsvMeasures(AnrSuperClass $anr, string $amvUuid): string
     {
         /** @var AmvTable $anrTable */
         $amvTable = $this->get('amvTable');
-        $amv = $amvTable->findByUuidAndAnrId($amvUuid, $anrId);
-        $measures = $amv->getMeasures();
-        $measuresNumber = \count($measures);
+        $amv = $amvTable->findByUuidAndAnrId($amvUuid, $anr->getId());
         $csvString = '';
 
-        foreach ($measures as $index => $measure) {
-            $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
-                $measure->getCode() . " - " .
-                $measure->{'getLabel' . $anrLanguage}();
-            if ($index !== $measuresNumber - 1) {
+        foreach ($amv->getMeasures() as $index => $measure) {
+            $csvString .= "["
+                . $measure->getReferential()->{'getLabel' . $anr->getLanguage()}()
+                . "] "
+                . $measure->getCode()
+                . " - "
+                . $measure->{'getLabel' . $anr->getLanguage()}();
+            if ($index !== \count($amv->getMeasures()) - 1) {
                 $csvString .= "\r";
             }
         }
