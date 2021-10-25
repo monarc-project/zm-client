@@ -140,7 +140,9 @@ class AnrInstanceRiskService extends InstanceRiskService
                 $instanceRisk['owner'],
                 $instanceRisk['context'],
                 $this->getCsvRecommendations($anr, explode(",", (string)$instanceRisk['recommendations'])),
-                $this->getCsvMeasures($anrLanguage, $instanceRisk['id'])
+                $instanceRisk['amv']
+                    ? $this->getCsvMeasures($anr->getId(), $anrLanguage, $instanceRisk['amv'])
+                    : null,
             ];
 
             $output .= '"';
@@ -356,12 +358,12 @@ class AnrInstanceRiskService extends InstanceRiskService
         return $csvString;
     }
 
-    private function getCsvMeasures(int $anrLanguage, int $instanceRiskId): string
+    private function getCsvMeasures(int $anrId, int $anrLanguage, string $amvUuid): string
     {
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('table');
-        $instanceRisk = $instanceRiskTable->findById($instanceRiskId);
-        $measures = $instanceRisk->getAmv() ? $instanceRisk->getAmv()->getMeasures() : [];
+        /** @var AmvTable $anrTable */
+        $amvTable = $this->get('amvTable');
+        $amv = $amvTable->findByUuidAndAnrId($amvUuid, $anrId);
+        $measures = $amv->getMeasures();
         $measuresNumber = \count($measures);
         $csvString = '';
 
