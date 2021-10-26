@@ -345,11 +345,11 @@ class AnrInstanceRiskService extends InstanceRiskService
         foreach ($recsUuids as $recUuid) {
             if (!empty($recUuid)) {
                 $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $recUuid);
-                $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
+                $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription() . "\r";
             }
         }
 
-        return empty($csvString) ? '' : $csvString . '"\r"';
+        return $csvString;
     }
 
     private function getMeasuresInCsv(AnrSuperClass $anr, string $amvUuid): string
@@ -361,9 +361,9 @@ class AnrInstanceRiskService extends InstanceRiskService
         $csvString = '';
         foreach ($amv->getMeasures() as $measure) {
             $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anr->getLanguage()}() . "] "
-                . $measure->getCode() . " - " . $measure->{'getLabel' . $anr->getLanguage()}();
+                . $measure->getCode() . " - " . $measure->{'getLabel' . $anr->getLanguage()}() . "\r";
         }
 
-        return empty($csvString) ? '' : $csvString . '"\r"';
+        return $csvString;
     }
 }
