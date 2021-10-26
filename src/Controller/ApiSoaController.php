@@ -47,11 +47,11 @@ class ApiSoaController extends AbstractRestfulController
 
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
+        $page = (int)$this->params()->fromQuery('page', 1);
+        $limit = (int)$this->params()->fromQuery('limit', 0);
         $order = $this->params()->fromQuery('order');
         $filter = $this->params()->fromQuery('filter');
-        $category = $this->params()->fromQuery('category');
+        $category = (int)$this->params()->fromQuery('category', 0);
         $referential = $this->params()->fromQuery('referential');
 
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -67,8 +67,7 @@ class ApiSoaController extends AbstractRestfulController
                     'op' => 'IN',
                     'value' => (array)$category,
                 ];
-            }
-            if ($category === -1) {
+            } elseif ($category === -1) {
                 $filterMeasures['category'] = null;
             }
 
@@ -87,12 +86,10 @@ class ApiSoaController extends AbstractRestfulController
             $filterAnd['m.anr'] = $anrId;
         }
 
-        if ($order == 'measure') {
+        if ($order === 'measure') {
             $order = 'm.code';
-        } else {
-            if ($order == '-measure') {
-                $order = '-m.code';
-            }
+        } elseif ($order === '-measure') {
+            $order = '-m.code';
         }
         $entities = $this->soaService->getList($page, $limit, $order, $filter, $filterAnd);
         foreach ($entities as $key => $entity) {
