@@ -460,33 +460,24 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $anr,
             $operationalInstanceRisk
         );
-        $csvString = '';
-
-        foreach ($recommendationsRisks as $index => $recommendationRisk) {
+        $csvData = [];
+        foreach ($recommendationsRisks as $recommendationRisk) {
             $recommendation = $recommendationRisk->getRecommandation();
-            $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
-            if ($index !== \count($recommendationsRisks) - 1) {
-                $csvString .= "\r";
-            }
+            $csvData[] = $recommendation->getCode() . " - " . $recommendation->getDescription();
         }
 
-        return $csvString;
+        return implode("\r", $csvData);
     }
 
     protected function getCsvMeasures(int $anrLanguage, InstanceRiskOp $operationalInstanceRisk): string
     {
         $measures = $operationalInstanceRisk->getRolfRisk()->getMeasures();
-        $csvString = '';
-
-        foreach ($measures as $index => $measure) {
-            $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
-               $measure->getCode() . " - " .
-               $measure->{'getLabel' . $anrLanguage}();
-            if ($index !== $measures->count() - 1) {
-                $csvString .= "\r";
-            }
+        $csvData = [];
+        foreach ($measures as $measure) {
+            $csvData[] = "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
+               $measure->getCode() . " - " . $measure->{'getLabel' . $anrLanguage}();
         }
 
-        return $csvString;
+        return implode("\r", $csvData);
     }
 }
