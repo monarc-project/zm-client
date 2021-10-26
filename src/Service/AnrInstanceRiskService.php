@@ -87,7 +87,7 @@ class AnrInstanceRiskService extends InstanceRiskService
         $anrLanguage = $anr->getLanguage();
 
         // Fill in the header
-        $output = implode(',', [
+        $output = implode(';', [
             $this->translateService->translate('Asset', $anrLanguage),
             $this->translateService->translate('C Impact', $anrLanguage),
             $this->translateService->translate('I Impact', $anrLanguage),
@@ -146,7 +146,7 @@ class AnrInstanceRiskService extends InstanceRiskService
             $output .= '"';
             $search = ['"', "\n"];
             $replace = ["'", ' '];
-            $output .= implode('","', str_replace($search, $replace, $values));
+            $output .= implode('";"', str_replace($search, $replace, $values));
             $output .= "\"\r\n";
         }
 
@@ -342,10 +342,13 @@ class AnrInstanceRiskService extends InstanceRiskService
     private function getRecommendationsInCsv(AnrSuperClass $anr, array $recsUuids): string
     {
         $csvString = '';
-        foreach ($recsUuids as $recUuid) {
+        foreach ($recsUuids as $index => $recUuid) {
             if (!empty($recUuid)) {
                 $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $recUuid);
-                $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription() . "\r";
+                $csvString .= $recommendation->getCode() . " - " . $recommendation->getDescription();
+                if ($index !== \count($recsUuids) - 1) {
+                    $csvString .= "\r";
+                }
             }
         }
 
@@ -359,9 +362,13 @@ class AnrInstanceRiskService extends InstanceRiskService
         $amv = $amvTable->findByUuidAndAnrId($amvUuid, $anr->getId());
 
         $csvString = '';
-        foreach ($amv->getMeasures() as $measure) {
+        foreach ($amv->getMeasures() as $index => $measure) {
             $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anr->getLanguage()}() . "] "
-                . $measure->getCode() . " - " . $measure->{'getLabel' . $anr->getLanguage()}() . "\r";
+                . $measure->getCode() . " - " . $measure->{'getLabel' . $anr->getLanguage()}();
+
+            if ($index !== $amv->getMeasures()->count() - 1) {
+                $csvString .= "\r";
+            }
         }
 
         return $csvString;

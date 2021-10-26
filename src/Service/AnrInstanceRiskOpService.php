@@ -285,7 +285,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $tableHeaders['recommendations'] = $this->translateService->translate('Recommendations', $anrLanguage);
         $tableHeaders['referentials'] = $this->translateService->translate('Security referentials', $anrLanguage);
 
-        $output = implode(',', array_values($tableHeaders)) . "\n";
+        $output = implode(';', array_values($tableHeaders)) . "\n";
 
         /* CSV export is done for all the risks. */
         unset($params['limit']);
@@ -328,7 +328,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $output .= '"';
             $search = ['"', "\n"];
             $replace = ["'", ' '];
-            $output .= implode('","', str_replace($search, $replace, $values));
+            $output .= implode('";"', str_replace($search, $replace, $values));
             $output .= "\"\r\n";
         }
 
@@ -482,7 +482,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $csvString .= "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
                $measure->getCode() . " - " .
                $measure->{'getLabel' . $anrLanguage}();
-            if ($index !== \count($measures) - 1) {
+            if ($index !== $measures->count() - 1) {
                 $csvString .= "\r";
             }
         }
