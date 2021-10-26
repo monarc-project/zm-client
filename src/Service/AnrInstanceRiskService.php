@@ -144,8 +144,8 @@ class AnrInstanceRiskService extends InstanceRiskService
             ];
 
             $output .= '"';
-            $search = ['"', "\n"];
-            $replace = ["'", ' '];
+            $search = ['"'];
+            $replace = ["'"];
             $output .= implode('";"', str_replace($search, $replace, $values));
             $output .= "\"\r\n";
         }
@@ -349,7 +349,7 @@ class AnrInstanceRiskService extends InstanceRiskService
             }
         }
 
-        return implode("\r", $csvData);
+        return implode("\n", $csvData);
     }
 
     private function getMeasuresInCsv(AnrSuperClass $anr, string $amvUuid): string
@@ -363,6 +363,6 @@ class AnrInstanceRiskService extends InstanceRiskService
                 . $measure->getCode() . " - " . $measure->{'getLabel' . $anr->getLanguage()}();
         }
 
-        return implode("\r", $csvData);
+        return implode("\n", $csvData);
     }
 }

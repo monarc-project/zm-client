@@ -326,8 +326,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
 
             $output .= '"';
-            $search = ['"', "\n"];
-            $replace = ["'", ' '];
+            $search = ['"'];
+            $replace = ["'"];
             $output .= implode('";"', str_replace($search, $replace, $values));
             $output .= "\"\r\n";
         }
@@ -466,7 +466,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $csvData[] = $recommendation->getCode() . " - " . $recommendation->getDescription();
         }
 
-        return implode("\r", $csvData);
+        return implode("\n", $csvData);
     }
 
     protected function getCsvMeasures(int $anrLanguage, InstanceRiskOp $operationalInstanceRisk): string
@@ -478,6 +478,6 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                $measure->getCode() . " - " . $measure->{'getLabel' . $anrLanguage}();
         }
 
-        return implode("\r", $csvData);
+        return implode("\n", $csvData);
     }
 }
