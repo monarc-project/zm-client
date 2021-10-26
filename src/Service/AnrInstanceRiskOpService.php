@@ -471,7 +471,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
     protected function getCsvMeasures(int $anrLanguage, InstanceRiskOp $operationalInstanceRisk): string
     {
-        $measures = $operationalInstanceRisk->getRolfRisk()->getMeasures();
+        $measures = $operationalInstanceRisk->getRolfRisk()
+            ? $operationalInstanceRisk->getRolfRisk()->getMeasures()
+            : [];
         $csvData = [];
         foreach ($measures as $measure) {
             $csvData[] = "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
