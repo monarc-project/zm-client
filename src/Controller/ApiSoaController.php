@@ -103,18 +103,24 @@ class ApiSoaController extends AbstractRestfulController
             foreach ($measure->getRolfRisks() as $rolfRisk) {
                 $rolfRisks[] = $rolfRisk->getId();
             }
-            $entity['measure']->rolfRisks = $this->anrInstanceRiskOpService->getOperationalRisks($anrId, null, [
-                'rolfRisks' => $rolfRisks,
-                'limit' => -1,
-                'order' => 'cacheNetRisk',
-                'order_direction' => 'desc',
-            ]);
-            $entity['measure']->amvs = $this->anrInstanceRiskService->getInstanceRisks($anrId, null, [
-                'amvs' => $amvs,
-                'limit' => -1,
-                'order' => 'maxRisk',
-                'order_direction' => 'desc',
-            ]);
+            $entity['measure']->rolfRisks = [];
+            if (!empty($rolfRisks)) {
+                $entity['measure']->rolfRisks = $this->anrInstanceRiskOpService->getOperationalRisks($anrId, null, [
+                    'rolfRisks' => $rolfRisks,
+                    'limit' => -1,
+                    'order' => 'cacheNetRisk',
+                    'order_direction' => 'desc',
+                ]);
+            }
+            $entity['measure']->amvs = [];
+            if (!empty($amvs)) {
+                $entity['measure']->amvs = $this->anrInstanceRiskService->getInstanceRisks($anrId, null, [
+                    'amvs' => $amvs,
+                    'limit' => -1,
+                    'order' => 'maxRisk',
+                    'order_direction' => 'desc',
+                ]);
+            }
             $entities[$key]['anr'] = $measure->getAnr()->getJsonArray();
             $entities[$key]['measure'] = $measure->getJsonArray();
             $entities[$key]['measure']['category'] = $measure->getCategory()->getJsonArray();
