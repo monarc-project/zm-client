@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\OperationalRiskScaleCommentService as CoreOperationalRiskScaleCommentService;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
-use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\FrontOffice\Table\OperationalRiskScaleCommentTable;
+use Monarc\FrontOffice\Table\TranslationTable;
 
 class OperationalRiskScaleCommentService extends CoreOperationalRiskScaleCommentService
 {

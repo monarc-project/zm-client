@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use \Monarc\Core\Model\Entity\Scale;
 use \Monarc\Core\Model\Entity\OperationalRiskScale;
 use \Monarc\Core\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
+use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 
 /**

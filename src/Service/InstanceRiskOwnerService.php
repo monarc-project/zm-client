@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
+use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 
 class InstanceRiskOwnerService
 {

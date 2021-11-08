@@ -5,15 +5,15 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Table;
+namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
+use Monarc\Core\Table\TranslationTable as CoreTranslationTable;
+use Monarc\FrontOffice\Model\Entity\Translation;
 
-class OperationalRiskScaleTable extends CoreOperationalRiskScaleTable
+class TranslationTable extends CoreTranslationTable
 {
-    public function __construct(EntityManager $entityManager, string $entityName = OperationalRiskScale::class)
+    public function __construct(EntityManager $entityManager, $entityName = Translation::class)
     {
         parent::__construct($entityManager, $entityName);
     }

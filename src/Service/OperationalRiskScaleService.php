@@ -19,11 +19,11 @@ use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
-use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\FrontOffice\Table\OperationalInstanceRiskScaleTable;
+use Monarc\FrontOffice\Table\OperationalRiskScaleCommentTable;
+use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
+use Monarc\FrontOffice\Table\OperationalRiskScaleTypeTable;
+use Monarc\FrontOffice\Table\TranslationTable;
 use Ramsey\Uuid\Uuid;
 
 class OperationalRiskScaleService extends CoreOperationalRiskScaleService

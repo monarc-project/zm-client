@@ -5,15 +5,15 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Table;
+namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\OperationalRiskScaleTypeTable as CoreOperationalRiskScaleTypeTableAlias;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
+use Monarc\Core\Table\InstanceRiskOwnerTable as CoreInstanceRiskOwnerTable;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 
-class OperationalRiskScaleTypeTable extends CoreOperationalRiskScaleTypeTableAlias
+class InstanceRiskOwnerTable extends CoreInstanceRiskOwnerTable
 {
-    public function __construct(EntityManager $entityManager, string $entityName = OperationalRiskScaleType::class)
+    public function __construct(EntityManager $entityManager, string $entityName = InstanceRiskOwner::class)
     {
         parent::__construct($entityManager, $entityName);
     }

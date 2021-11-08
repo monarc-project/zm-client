@@ -5,10 +5,10 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Table;
+namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\OperationalRiskScaleCommentTable as CoreOperationalRiskScaleCommentTable;
+use Monarc\Core\Table\OperationalRiskScaleCommentTable as CoreOperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
 
 class OperationalRiskScaleCommentTable extends CoreOperationalRiskScaleCommentTable

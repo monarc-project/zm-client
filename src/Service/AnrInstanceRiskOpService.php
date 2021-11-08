@@ -30,16 +30,16 @@ use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
+use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
-use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
+use Monarc\FrontOffice\Table\OperationalInstanceRiskScaleTable;
+use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
+use Monarc\FrontOffice\Table\OperationalRiskScaleTypeTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfTagTable;
-use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\FrontOffice\Table\TranslationTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 class AnrInstanceRiskOpService extends InstanceRiskOpService

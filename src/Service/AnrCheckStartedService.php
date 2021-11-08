@@ -11,7 +11,7 @@ use Monarc\Core\Model\Table\ModelTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
+use Monarc\FrontOffice\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
 
 /**
