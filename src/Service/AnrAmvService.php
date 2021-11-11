@@ -213,10 +213,10 @@ class AnrAmvService extends AmvService
                 $instanceRisk->setDbAdapter($this->get('table')->getDb());
                 $instanceRisk->set('anr', $this->get('anrTable')->getEntity($data['anr']));
                 $instanceRisk->set('amv', $amv);
-                $instanceRisk->set('asset', $amv->asset);
+                $instanceRisk->set('asset', $amv->getAsset());
                 $instanceRisk->set('instance', $instance);
-                $instanceRisk->set('threat', $amv->threat);
-                $instanceRisk->set('vulnerability', $amv->vulnerability);
+                $instanceRisk->set('threat', $amv->getThreat());
+                $instanceRisk->set('vulnerability', $amv->getVulnerability());
 
                 $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
                 $i++;

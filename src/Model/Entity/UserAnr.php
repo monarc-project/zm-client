@@ -11,7 +11,6 @@ use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Traits;
-use Monarc\Core\Model\Entity\UserSuperClass;
 
 /**
  * User Anr
@@ -64,14 +63,15 @@ class UserAnr extends AbstractEntity
         return $this->id;
     }
 
-    public function getUser(): UserSuperClass
+    public function getUser(): User
     {
         return $this->user;
     }
 
-    public function setUser(UserSuperClass $user): self
+    public function setUser(User $user): self
     {
         $this->user = $user;
+        $user->addUserAnr($this);
 
         return $this;
     }

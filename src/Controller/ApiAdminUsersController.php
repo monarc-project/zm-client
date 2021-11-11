@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2021 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -14,14 +14,10 @@ use Monarc\FrontOffice\Service\UserService;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 
-/**
- * Api Admin Users Controller
- *
- * Class ApiAdminUsersController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAdminUsersController extends AbstractRestfulController
 {
+    private const DEFAULT_LIMIT = 25;
+
     /** @var CreateUserInputValidator */
     private $createUserInputValidator;
 
@@ -31,36 +27,35 @@ class ApiAdminUsersController extends AbstractRestfulController
     /** @var PasswordService */
     private $passwordService;
 
-    public function __construct(CreateUserInputValidator $createUserInputValidator, UserService $userService, PasswordService $passwordService)
-    {
+    public function __construct(
+        CreateUserInputValidator $createUserInputValidator,
+        UserService $userService,
+        PasswordService $passwordService
+    ) {
         $this->createUserInputValidator = $createUserInputValidator;
         $this->userService = $userService;
         $this->passwordService = $passwordService;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
+        $searchString = $this->params()->fromQuery('filter', '');
         $status = $this->params()->fromQuery('status', 1);
-        $filterAnd = $status === 'all'
+        $filter = $status === 'all'
             ? null
             : ['status' => (int)$status];
+        $page = $this->params()->fromQuery('page', 1);
+        $limit = $this->params()->fromQuery('limit', static::DEFAULT_LIMIT);
+        $order = $this->params()->fromQuery('order', '');
+
+        $users = $this->userService->getUsersList($searchString, $filter, $order);
 
         return new JsonModel(array(
-            'count' => $this->userService->getFilteredCount($filter, $filterAnd),
-            'users' => $this->userService->getList($page, $limit, $order, $filter, $filterAnd)
+            'count' => \count($users),
+            'users' => \array_slice($users, $page - 1, $limit),
         ));
     }
 
-    /**
-     * @inheritdoc
-     */
     public function create($data)
     {
         if (!$this->createUserInputValidator->isValid($data)) {
@@ -80,69 +75,27 @@ class ApiAdminUsersController extends AbstractRestfulController
         return new JsonModel(['status' => 'ok']);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
-        // TODO: The request data filtration is responsibility of the sanitization layer + validation should be applied.
-        // Security: Don't allow changing role, password, status and history fields. To clean later.
-        if (isset($data['status'])) {
-            unset($data['status']);
-        }
-        if (isset($data['id'])) {
-            unset($data['id']);
-        }
-        if (isset($data['salt'])) {
-            unset($data['salt']);
-        }
-        if (isset($data['updatedAt'])) {
-            unset($data['updatedAt']);
-        }
-        if (isset($data['updater'])) {
-            unset($data['updater']);
-        }
-        if (isset($data['createdAt'])) {
-            unset($data['createdAt']);
-        }
-        if (isset($data['creator'])) {
-            unset($data['creator']);
-        }
-        if (isset($data['dateStart'])) {
-            unset($data['dateStart']);
-        }
-        if (isset($data['dateEnd'])) {
-            unset($data['dateEnd']);
-        }
-
         $this->userService->update($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function get($id)
     {
         return new JsonModel($this->userService->getCompleteUser($id));
     }
 
-    /**
-     * @inheritdoc
-     */
     public function resetPasswordAction()
     {
-        $id = $this->params()->fromRoute('id');
+        $id = (int)$this->params()->fromRoute('id');
 
         $this->passwordService->resetPassword($id);
 
         return new JsonModel($this->userService->getCompleteUser($id));
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         $this->userService->delete($id);
@@ -152,13 +105,10 @@ class ApiAdminUsersController extends AbstractRestfulController
         return new JsonModel();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         $this->userService->patch($id, $data);
 
-        return new JsonModel(array('status' => 'ok'));
+        return new JsonModel(['status' => 'ok']);
     }
 }

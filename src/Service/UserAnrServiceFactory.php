@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserTable;
 
 /**
  * Factory class attached to UserAnrService
@@ -19,6 +20,6 @@ class UserAnrServiceFactory extends AbstractServiceFactory
         'table' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\UserAnr',
         'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userTable' => 'Monarc\FrontOffice\Model\Table\UserTable',
+        'userTable' => UserTable::class,
     ];
 }

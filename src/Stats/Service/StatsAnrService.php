@@ -23,7 +23,7 @@ use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\SoaTable;
-use Monarc\FrontOffice\Model\Table\UserTable;
+use Monarc\FrontOffice\Table\UserTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;

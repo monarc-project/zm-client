@@ -1149,7 +1149,6 @@ return [
             Table\MonarcObjectTable::class => AutowireFactory::class,
             Table\ObjectCategoryTable::class => AutowireFactory::class,
             Table\ObjectObjectTable::class => AutowireFactory::class,
-            Table\PasswordTokenTable::class => AutowireFactory::class,
             Table\RolfRiskTable::class => AutowireFactory::class,
             Table\RolfTagTable::class => AutowireFactory::class,
             Table\RecordActorTable::class => AutowireFactory::class,

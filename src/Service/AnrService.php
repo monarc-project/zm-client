@@ -98,7 +98,7 @@ use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
-use Monarc\FrontOffice\Model\Table\UserTable;
+use Monarc\FrontOffice\Table\UserTable;
 use Monarc\FrontOffice\Model\Entity\Record;
 use Monarc\FrontOffice\Model\Entity\RecordRecipient;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
@@ -168,7 +168,6 @@ class AnrService extends AbstractService
     protected $themeCliTable;
     protected $userCliTable;
     protected $userAnrCliTable;
-    protected $userRoleTable;
     protected $vulnerabilityCliTable;
     protected $questionCliTable;
     protected $questionChoiceCliTable;
@@ -715,8 +714,7 @@ class AnrService extends AbstractService
                         $measuresNewIds[$measure->getUuid()] = $newMeasure;
                     }
                     //$newReferential->setMeasures(null);
-                    $this->get('referentialCliTable')->save($newReferential, false);
-                    $this->get('referentialCliTable')->getDb()->flush();
+                    $this->get('referentialCliTable')->save($newReferential);
                 }
             } else { // copy from an existing anr (or a snapshot)
                 $referentialTable = $this->get('referentialCliTable');
@@ -756,8 +754,7 @@ class AnrService extends AbstractService
                     }
                     $newReferential->setMeasures($newMeasures);
 
-                    $referentialTable->save($newReferential, false);
-                    $referentialTable->getDb()->flush();
+                    $referentialTable->save($newReferential);
                 }
 
                 // duplicate measures-measures
@@ -1196,7 +1193,6 @@ class AnrService extends AbstractService
                     $newActor->set('id', null);
                     $newActor->setAnr($newAnr);
                     $this->get('recordActorCliTable')->save($newActor, false);
-                    $this->get('recordActorCliTable')->getDb()->flush();
                     $actorNewIds[$a->id] = $newActor;
                 }
 
@@ -1230,7 +1226,6 @@ class AnrService extends AbstractService
                         $newProcessor->setDpo($actorNewIds[$p->dpo->id]);
                     }
                     $this->get('recordProcessorCliTable')->save($newProcessor, false);
-                    $this->get('recordProcessorCliTable')->getDb()->flush();
                     $processorNewIds[$p->id] = $newProcessor;
                 }
 
@@ -1242,7 +1237,6 @@ class AnrService extends AbstractService
                     $newRecipient->set('id', null);
                     $newRecipient->setAnr($newAnr);
                     $this->get('recordRecipientCliTable')->save($newRecipient, false);
-                    $this->get('recordRecipientCliTable')->getDb()->flush();
                     $recipientNewIds[$r->id] = $newRecipient;
                 }
                 //duplicate record
@@ -1284,7 +1278,6 @@ class AnrService extends AbstractService
                     $newRecord->setRecipients($recipientIds);
 
                     $this->get('recordCliTable')->save($newRecord, false);
-                    $this->get('recordCliTable')->getDb()->flush();
                     $recordNewIds[$record->id] = $newRecord;
                 }
 
@@ -1316,7 +1309,6 @@ class AnrService extends AbstractService
                     }
                     $newPersonalData->setDataCategories($newDataCategoryIds);
                     $this->get('recordPersonalDataCliTable')->save($newPersonalData, false);
-                    $this->get('recordPersonalDataCliTable')->getDb()->flush();
                     $personalDataNewIds[$pd->id] = $newPersonalData;
                 }
 
@@ -1329,7 +1321,6 @@ class AnrService extends AbstractService
                     $newInternationalTransfer->setAnr($newAnr);
                     $newInternationalTransfer->setRecord($recordNewIds[$it->record->id]);
                     $this->get('recordInternationalTransferCliTable')->save($newInternationalTransfer, false);
-                    $this->get('recordInternationalTransferCliTable')->getDb()->flush();
                     $internationalTransferNewIds[$it->id] = $newInternationalTransfer;
                 }
 
@@ -1434,7 +1425,8 @@ class AnrService extends AbstractService
             if (!empty($newAnr)) {
                 $anrCliTable->deleteEntity($newAnr);
             }
-            throw new Exception('Error during analysis creation', 412);
+
+            throw $e;
         }
 
         return $newAnr;
@@ -1461,7 +1453,7 @@ class AnrService extends AbstractService
         /** @var AnrTable $anrCliTable */
         $anrCliTable = $this->get('anrCliTable');
         $user->setCurrentAnr($anrCliTable->getEntity($anrId));
-        $userCliTable->saveEntity($user);
+        $userCliTable->save($user);
     }
 
     /**

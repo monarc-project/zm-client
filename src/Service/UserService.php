@@ -1,14 +1,17 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2021 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use DateTime;
+use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Exception\UserNotLoggedInException;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\PasswordService;
@@ -17,29 +20,15 @@ use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\UserTable;
+use Monarc\FrontOffice\Table\UserTable;
 
-/**
- * This class is the service that handles the users. This is a simple CRUD service that inherits from its
- * Monarc\Core parent.
- * @package Monarc\Core\Service
- */
 class UserService extends CoreUserService
 {
-    /**
-     * The list of fields deleted during a GET
-     * @var array
-     */
-    protected $forbiddenFields = ['password'];
-
     /** @var AnrTable */
     private $anrTable;
 
     /** @var PasswordService */
     private $passwordService;
-
-    /** @var ConnectedUserService */
-    private $connectedUserService;
 
     public function __construct(
         UserTable $userTable,
@@ -48,51 +37,14 @@ class UserService extends CoreUserService
         ConnectedUserService $connectedUserService,
         PasswordService $passwordService
     ) {
-        parent::__construct($userTable, $config);
+        parent::__construct($userTable, $connectedUserService, $config);
 
         $this->anrTable = $anrTable;
-        $this->connectedUserService = $connectedUserService;
         $this->passwordService = $passwordService;
-    }
-
-    // TODO: remove me.
-    protected function filterGetFields(&$entity, $forbiddenFields = [])
-    {
-        if (empty($forbiddenFields)) {
-            $forbiddenFields = $this->forbiddenFields;
-        }
-
-        foreach ($entity as $id => $user) {
-            foreach ($entity[$id] as $key => $value) {
-                if (in_array($key, $forbiddenFields)) {
-                    unset($entity[$id][$key]);
-                }
-            }
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
-    {
-        $users = $this->userTable->fetchAllFiltered(
-            ['id', 'status', 'firstname', 'lastname', 'email', 'language', 'roles'],
-            $page,
-            $limit,
-            $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, $this->filterColumns),
-            $filterAnd
-        );
-
-        $this->filterGetFields($users);
-
-        return $users;
     }
 
     public function getCompleteUser(int $userId): array
     {
-        /** @var User $user */
         $user = $this->userTable->findById($userId);
 
         // TODO: replace with normalization layer.
@@ -103,14 +55,16 @@ class UserService extends CoreUserService
             'lastname' => $user->getLastname(),
             'email' => $user->getEmail(),
             'language' => $user->getLanguage(),
-            'role' => $user->getRoles(),
+            'role' => $user->getRolesArray(),
             'anrs' => $this->anrTable->fetchAnrsExcludeSnapshotsWithUserRights($userId),
         ];
     }
 
-
     /**
-     * @inheritdoc
+     * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws UserNotLoggedInException
      */
     public function create(array $data): UserSuperClass
     {
@@ -118,8 +72,8 @@ class UserService extends CoreUserService
             $data['language'] = $this->defaultLanguageIndex;
         }
         if (empty($data['creator'])) {
-            $data['creator'] = $this->userTable->getConnectedUser()->getFirstname() . ' '
-                . $this->userTable->getConnectedUser()->getLastname();
+            $data['creator'] = $this->connectedUserService->getConnectedUser()->getFirstname() . ' '
+                . $this->connectedUserService->getConnectedUser()->getLastname();
         }
 
         if (isset($data['anrs'])) {
@@ -134,7 +88,7 @@ class UserService extends CoreUserService
         }
 
         $user = new User($data);
-        $this->userTable->saveEntity($user);
+        $this->userTable->save($user);
 
         return $user;
     }
@@ -148,15 +102,7 @@ class UserService extends CoreUserService
 
         $this->updateUserAnr($user, $data);
 
-        if (isset($data['dateEnd'])) {
-            $data['dateEnd'] = new DateTime($data['dateEnd']);
-        }
-
-        if (isset($data['dateStart'])) {
-            $data['dateStart'] = new DateTime($data['dateStart']);
-        }
-
-        $this->userTable->saveEntity($user);
+        $this->userTable->save($user);
 
         return $user;
     }
@@ -181,21 +127,15 @@ class UserService extends CoreUserService
 
         $this->updateUserAnr($user, $data);
 
-        if (isset($data['dateEnd'])) {
-            $data['dateEnd'] = new DateTime($data['dateEnd']);
-        }
-
-        if (isset($data['dateStart'])) {
-            $data['dateStart'] = new DateTime($data['dateStart']);
-        }
-
-        $this->userTable->saveEntity($user);
+        $this->userTable->save($user);
 
         return $user;
     }
 
     /**
-     * Checks whether or not a specific action is authorized or not for the specified user id
+     * Checks whether a specific action is authorized or not for the specified user id.
+     *
+     * @throws Exception
      */
     private function verifySystemUserUpdate(User $user, array $data = [])
     {
@@ -203,7 +143,7 @@ class UserService extends CoreUserService
          * We just need to validate if the System created user instead.
         */
         if ($user->isSystemUser()) {
-            if (!empty($data['role']) && !in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
+            if (!empty($data['role']) && !\in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
                 throw new Exception('You can not remove admin role from the "System" user', 412);
             }
 
@@ -213,6 +153,12 @@ class UserService extends CoreUserService
         }
     }
 
+    /**
+     * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws UserNotLoggedInException
+     */
     public function updateUserAnr(User $user, array $data): void
     {
         $connectedUserName = $this->connectedUserService->getConnectedUser()->getFirstname()
@@ -239,7 +185,7 @@ class UserService extends CoreUserService
                 );
             }
 
-            $this->userTable->saveEntity($user);
+            $this->userTable->save($user);
         }
     }
 }

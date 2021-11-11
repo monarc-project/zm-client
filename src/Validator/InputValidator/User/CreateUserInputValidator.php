@@ -14,7 +14,7 @@ use Monarc\Core\Validator\LanguageValidator;
 use Monarc\Core\Validator\UniqueEmail;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\UserTable;
+use Monarc\FrontOffice\Table\UserTable;
 use Monarc\FrontOffice\Validator\FieldValidator\AnrExistenceValidator;
 use Monarc\FrontOffice\Validator\InputValidator\AbstractMonarcInputValidator;
 
@@ -121,18 +121,6 @@ class CreateUserInputValidator extends AbstractMonarcInputValidator
                             'userTable' => $this->userTable,
                             'currentUserId' => $this->connectedUserService->getConnectedUser()->getId(),
                         ],
-                        // TODO: The following code requires the Db classes refactoring, also an issue with Laminas.
-                        /*
-                        'name' => NoRecordExists::class,
-                        'options' => [
-                            'adapter' => $this->userTable->getDb(),
-                            'table' => $this->userTable->getDb()->getEntityManager()->getClassMetadata(User::class)->getTableName(),
-                            'field' => 'email',
-                        ],
-                        'messages' => [
-                            NoRecordExists::ERROR_RECORD_FOUND => 'This email is already used',
-                        ],
-                        */
                     ],
                 ],
             ],
