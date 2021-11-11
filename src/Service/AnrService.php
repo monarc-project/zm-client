@@ -994,6 +994,11 @@ class AnrService extends AbstractService
                 $newInstance->setObject($objectsNewIds[$instance->getObject()->getUuid()]);
                 $newInstance->setRoot(null);
                 $newInstance->setParent(null);
+                /*
+                 * TODO: remove the reset method when all the entities creation from another entities wil be forbidden.
+                 * Currently we link the core related classes, that's why have to clean up the relations.
+                 */
+                $newInstance->resetInstanceRisks();
                 $newInstance->resetInstanceConsequences();
                 $this->get('instanceCliTable')->save($newInstance, false);
                 $instancesNewIds[$instance->id] = $newInstance;
