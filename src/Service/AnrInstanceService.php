@@ -32,9 +32,15 @@ class AnrInstanceService extends InstanceService
     protected $themeTable;
     protected $instanceRiskTable;
     protected $instanceRiskOpTable;
-    protected $recommandationRiskTable;
-    protected $recommandationTable;
-    protected $recommandationSetTable;
+
+    /** @var RecommandationRiskTable */
+    protected $recommendationRiskTable;
+
+    /** @var RecommandationTable */
+    protected $recommendationTable;
+
+    /** @var RecommandationSetTable */
+    protected $recommendationSetTable;
 
     public function delete($id)
     {
@@ -45,9 +51,7 @@ class AnrInstanceService extends InstanceService
         parent::delete($id);
 
         // Reset related recommendations positions to 0.
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('recommandationTable');
-        $unlinkedRecommendations = $recommendationTable->findUnlinkedWithNotEmptyPositionByAnr($anr);
+        $unlinkedRecommendations = $this->recommendationTable->findUnlinkedWithNotEmptyPositionByAnr($anr);
         $recommendationsToResetPositions = [];
         foreach ($unlinkedRecommendations as $unlinkedRecommendation) {
             $recommendationsToResetPositions[$unlinkedRecommendation->getUuid()] = $unlinkedRecommendation;
@@ -72,12 +76,9 @@ class AnrInstanceService extends InstanceService
         $result = [];
 
         if ($withEval && $withRecommendations) {
-            /** @var RecommandationSetTable $recommendationSetTable */
-            $recommendationSetTable = $this->get('recommandationSetTable');
-
             $result['recSets'] = [];
 
-            $recommendationsSets = $recommendationSetTable->findByAnr($instance->getAnr());
+            $recommendationsSets = $this->recommendationSetTable->findByAnr($instance->getAnr());
             foreach ($recommendationsSets as $recommendationSet) {
                 $result['recSets'][$recommendationSet->getUuid()] = [
                     'uuid' => $recommendationSet->getUuid(),
@@ -89,8 +90,6 @@ class AnrInstanceService extends InstanceService
             }
         }
 
-        /** @var RecommandationRiskTable $recommendationRiskTable */
-        $recommendationRiskTable = $this->get('recommandationRiskTable');
         $recoIds = [];
         if ($withEval && $withRecommendations && !empty($riskIds)) {
             $recosObj = [
@@ -110,7 +109,7 @@ class AnrInstanceService extends InstanceService
                 $result['recs'] = [];
             }
             /** @var RecommandationRisk[] $recoRisk */
-            $recoRisk = $recommendationRiskTable->getEntityByFields(
+            $recoRisk = $this->recommendationRiskTable->getEntityByFields(
                 ['anr' => $instance->getAnr()->getId(), 'instanceRisk' => $riskIds],
                 ['id' => 'ASC']
             );
@@ -148,7 +147,7 @@ class AnrInstanceService extends InstanceService
             if (!$withUnlinkedRecommendations) {
                 $result['recs'] = [];
             }
-            $recoRisk = $recommendationRiskTable->getEntityByFields(
+            $recoRisk = $this->recommendationRiskTable->getEntityByFields(
                 ['anr' => $instance->getAnr()->getId(), 'instanceRiskOp' => $riskOpIds],
                 ['id' => 'ASC']
             );
@@ -171,8 +170,6 @@ class AnrInstanceService extends InstanceService
 
         // Recommendation unlinked to recommandations-risks
         if ($withUnlinkedRecommendations && $withEval && $withRecommendations) {
-            /** @var RecommandationTable $recommendationTable */
-            $recommendationTable = $this->get('recommandationTable');
             $recosObj = [
                 'uuid' => 'uuid',
                 'recommandationSet' => 'recommandationSet',
@@ -186,7 +183,7 @@ class AnrInstanceService extends InstanceService
                 'counterTreated' => 'counterTreated',
             ];
             $result['recs'] = [];
-            $recommendations = $recommendationTable->findByAnr($instance->getAnr());
+            $recommendations = $this->recommendationTable->findByAnr($instance->getAnr());
             foreach ($recommendations as $recommendation) {
                 if (!isset($recoIds[$recommendation->getUuid()])) {
                     $result['recs'][$recommendation->getUuid()] = $recommendation->getJsonArray($recosObj);

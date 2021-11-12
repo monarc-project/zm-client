@@ -72,7 +72,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'objectCliTable' => Table\MonarcObjectTable::class,
         'objectCategoryCliTable' => Table\ObjectCategoryTable::class,
         'objectObjectCliTable' => Table\ObjectObjectTable::class,
-        'recommandationCliTable' => Table\RecommandationTable::class,
+        'recommendationTable' => Table\RecommandationTable::class,
         'recommandationHistoricCliTable' => Table\RecommendationHistoricTable::class,
         'recommandationRiskCliTable' => Table\RecommandationRiskTable::class,
         'recommandationSetCliTable' => Table\RecommandationSetTable::class,

@@ -34,7 +34,7 @@ class AnrRecommandationSetService extends AbstractService
     protected $anrTable;
 
     /** @var RecommandationTable */
-    protected $recommandationTable;
+    protected $recommendationTable;
 
     /**
      * @inheritdoc
