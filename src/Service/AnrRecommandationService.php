@@ -33,7 +33,7 @@ class AnrRecommandationService extends AbstractService
     protected $userAnrTable;
 
     /** @var RecommandationTable */
-    protected $recommandationTable;
+    protected $recommendationTable;
 
     /**
      * @inheritdoc
@@ -120,7 +120,8 @@ class AnrRecommandationService extends AbstractService
         $recommendation = $recommendationTable->findByAnrAndUuid($anr, $id['uuid']);
 
         if (!$recommendation->isPositionEmpty()) {
-            $this->set('recommandationTable', $recommendationTable);
+            // TODO: drop this when a regular injection is done.
+            $this->set('recommendationTable', $recommendationTable);
             $this->resetRecommendationsPositions($anr, [$recommendation->getUuid() => $recommendation]);
         }
 

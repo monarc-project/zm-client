@@ -88,6 +88,7 @@ use Monarc\FrontOffice\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Table\OperationalRiskScaleTypeTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
+use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
@@ -154,7 +155,8 @@ class AnrService extends AbstractService
     protected $objectCliTable;
     protected $objectCategoryCliTable;
     protected $objectObjectCliTable;
-    protected $recommandationCliTable;
+    /** @var RecommandationTable */
+    protected $recommendationTable;
     protected $recommandationHistoricCliTable;
     protected $recommandationRiskCliTable;
     protected $recommandationSetCliTable;
@@ -1345,7 +1347,7 @@ class AnrService extends AbstractService
                         $newRecommandation = new Recommandation($recommandation);
                         $newRecommandation->setAnr($newAnr);
                         $newRecommandation->setRecommandationSet($newRecommendationSet);
-                        $this->get('recommandationCliTable')->saveEntity($newRecommandation, false);
+                        $this->recommendationTable->saveEntity($newRecommandation, false);
                         $recommendationSetRecommendations[] = $newRecommandation;
                         $recommendationsNewIds[$recommandation->getUuid()] = $newRecommandation;
                     }

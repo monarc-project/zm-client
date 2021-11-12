@@ -24,6 +24,6 @@ class AnrRecommandationSetServiceFactory extends AbstractServiceFactory
         'entity' => RecommandationSet::class,
         'anrTable' => Table\AnrTable::class,
         'userAnrTable' => Table\UserAnrTable::class,
-        'recommandationTable' => Table\RecommandationTable::class,
+        'recommendationTable' => Table\RecommandationTable::class,
     ];
 }

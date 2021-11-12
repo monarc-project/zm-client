@@ -37,9 +37,9 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceRiskTable' => Table\InstanceRiskTable::class,
         'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
         'instanceConsequenceEntity' => InstanceConsequence::class,
-        'recommandationRiskTable' => Table\RecommandationRiskTable::class,
-        'recommandationTable' => Table\RecommandationTable::class,
-        'recommandationSetTable' => Table\RecommandationSetTable::class,
+        'recommendationRiskTable' => Table\RecommandationRiskTable::class,
+        'recommendationTable' => Table\RecommandationTable::class,
+        'recommendationSetTable' => Table\RecommandationSetTable::class,
         'themeTable' => Table\ThemeTable::class,
 
         // Services

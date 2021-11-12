@@ -232,9 +232,6 @@ trait RecommendationsPositionsUpdateTrait
      */
     private function getRecommendationTable(): RecommandationTable
     {
-        if (method_exists($this, 'get')) {
-            return $this->get('recommandationTable');
-        }
         if (property_exists(\get_class($this), 'recommendationTable')) {
             return $this->recommendationTable;
         }
