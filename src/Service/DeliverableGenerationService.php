@@ -7,8 +7,6 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity\AssetSuperClass;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\Core\Service\QuestionChoiceService;
@@ -16,7 +14,6 @@ use Monarc\Core\Service\QuestionService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\AnrTable;
