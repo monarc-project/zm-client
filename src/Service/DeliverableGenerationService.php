@@ -5535,5 +5535,6 @@ class DeliverableGenerationService extends AbstractService
 
 function _WT($input)
 {
-    return htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8');
+    $input = htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8');
+    return str_replace("\n", '</w:t><w:br/><w:t>', $input);
 }
