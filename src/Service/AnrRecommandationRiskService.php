@@ -361,7 +361,7 @@ class AnrRecommandationRiskService extends AbstractService
                 'status' => $linkedRecommendation->getStatus(),
                 'responsable' => $linkedRecommendation->getResponsable(),
                 'duedate' => $linkedRecommendation->getDueDate() !== null
-                    ? $linkedRecommendation->getDueDate()->format('d-m-Y')
+                    ? $linkedRecommendation->getDueDate()->format('Y-m-d')
                     : '',
                 'counterTreated' => $linkedRecommendation->getCounterTreated(),
             ], $instanceRisks);
