@@ -270,6 +270,8 @@ class AnrRecommandationRiskService extends AbstractService
             }
         }
 
+        $this->updateInstanceRiskRecommendationsPositions($gRisk);
+
         return $id;
     }
 
