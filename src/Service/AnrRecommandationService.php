@@ -143,14 +143,15 @@ class AnrRecommandationService extends AbstractService
      */
     private function updatePosition(array $recommendationId, array $data): array
     {
-        if (!empty($data['implicitPosition'])) {
-            /** @var AnrTable $anrTable */
-            $anrTable = $this->get('anrTable');
-            $anr = $anrTable->findById($recommendationId['anr']);
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        $anr = $anrTable->findById($recommendationId['anr']);
 
-            /** @var RecommandationTable $recommendationTable */
-            $recommendationTable = $this->get('table');
-            $recommendation = $recommendationTable->findByAnrAndUuid($anr, $recommendationId['uuid']);
+        /** @var RecommandationTable $recommendationTable */
+        $recommendationTable = $this->get('table');
+        $recommendation = $recommendationTable->findByAnrAndUuid($anr, $recommendationId['uuid']);
+
+        if (!empty($data['implicitPosition'])) {
             $newPosition = $recommendation->getPosition();
 
             $linkedRecommendations = $recommendationTable
@@ -214,6 +215,17 @@ class AnrRecommandationService extends AbstractService
             }
 
             $recommendationTable->saveEntity($recommendation->setPosition($newPosition));
+
+        } elseif (!empty($data['importance'])
+            && $recommendation->isImportanceEmpty()
+            && !$recommendation->getRecommendationRisks()->isEmpty()
+        ) {
+            foreach ($recommendation->getRecommendationRisks() as $recommendationRisk) {
+                $linkedRisk = $recommendationRisk->getInstanceRisk() || $recommendationRisk->getInstanceRiskOp();
+                $this->updateInstanceRiskRecommendationsPositions($linkedRisk);
+
+                break;
+            }
         }
 
         unset($data['implicitPosition'], $data['previous']);

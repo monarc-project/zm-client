@@ -154,6 +154,13 @@ class Recommandation extends AbstractEntity
      */
     protected $tokenImport;
 
+    public function __construct($obj = null)
+    {
+        $this->recommendationRisks = new ArrayCollection();
+
+        parent::__construct($obj);
+    }
+
     public function getUuid(): ?string
     {
         return $this->uuid;
