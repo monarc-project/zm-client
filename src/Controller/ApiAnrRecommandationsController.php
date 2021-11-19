@@ -69,8 +69,6 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr' => $anrId, 'uuid' => $id];
-
         if (empty($anrId)) {
             throw new Exception('Anr id missing', 412);
         }
@@ -79,7 +77,7 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
             $data['anr'] = $anrId;
         }
 
-        $this->getService()->update($newId, $data);
+        $this->getService()->update($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
@@ -87,8 +85,6 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
     public function patch($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr' => $anrId, 'uuid' => $id];
-
         if (empty($anrId)) {
             throw new Exception('Anr id missing', 412);
         }
@@ -97,7 +93,7 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
             $data['anr'] = $anrId;
         }
 
-        $this->getService()->patch($newId, $data);
+        $this->getService()->patch($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
