@@ -15,32 +15,35 @@ use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Recommandation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Throwable;
 
 /**
- * This class is the service that handles recommendations within an ANR.
- * @package Monarc\FrontOffice\Service
+ * TODO: remove the Abstract class inheritance, inject all the dependencies.
  */
 class AnrRecommandationService extends AbstractService
 {
     use RecommendationsPositionsUpdateTrait;
 
-    protected $filterColumns = ['code', 'description'];
-    protected $dependencies = ['anr', 'recommandationSet'];
-    protected $anrTable;
-    protected $userAnrTable;
+    protected array $filterColumns = ['code', 'description'];
 
-    /** @var RecommandationTable */
-    protected $recommendationTable;
+    protected AnrTable $anrTable;
+
+    protected UserAnrTable $userAnrTable;
+
+    protected RecommandationTable $recommendationTable;
+
+    protected RecommandationSetTable $recommendationSetTable;
 
     /**
-     * @inheritdoc
+     * TODO: refactor and remove the Abstract inheritance after.
      */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        list($filterJoin,$filterLeft,$filtersCol) = $this->get('entity')->getFiltersForService();
+        [$filterJoin,$filterLeft,$filtersCol] = $this->get('entity')->getFiltersForService();
         $recos = $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
             $page,
@@ -62,44 +65,84 @@ class AnrRecommandationService extends AbstractService
         return $recos;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function create($data, $last = true)
     {
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('table');
+        $anr = $this->anrTable->findById($data['anr']);
 
-        $class = $this->get('entity');
-        /** @var Recommandation $entity */
-        $entity = new $class();
-        $entity->setLanguage($this->getLanguage());
-        $entity->setDbAdapter($recommendationTable->getDb());
+        $recommendationSet = $this->recommendationSetTable->findByAnrAndUuid($anr, $data['recommandationSet']);
 
-        $entity->setAnr($data['anr']);
+        $entity = (new Recommandation())
+            ->setAnr($anr)
+            ->setRecommandationSet($recommendationSet)
+            ->setImportance($data['importance'])
+            ->setCode($data['code'])
+            ->setDescription($data['description'])
+            ->setCreator($this->getConnectedUser()->getEmail());
 
-        $entity->exchangeArray($data);
+        $this->recommendationTable->saveEntity($entity, $last);
 
-        $dependencies = property_exists($this, 'dependencies') ? $this->dependencies : [];
-        $this->setDependencies($entity, $dependencies);
-
-        return $recommendationTable->save($entity, $last);
+        return $entity->getUuid();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
-        parent::patch($id, $this->prepareUpdateData($id, $data));
+        $anr = $this->anrTable->findById($data['anr']);
+
+        $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $id);
+
+        if (!empty($data['duedate'])) {
+            try {
+                $recommendation->setDueDate(new DateTime($data['duedate']));
+            } catch (Throwable $e) {
+                throw new Exception('Invalid date format', 412);
+            }
+        } elseif (isset($data['duedate']) && $data['duedate'] === '') {
+            $recommendation->setDueDate(null);
+        }
+
+        if (!empty($data['recommandationSet'])
+            && $data['recommandationSet'] !== $recommendation->getRecommandationSet()->getUuid()
+        ) {
+            $recommendationSet = $this->recommendationSetTable->findByAnrAndUuid($anr, $data['recommandationSet']);
+            $recommendation->setRecommandationSet($recommendationSet);
+        }
+
+        if (!empty($data['code']) && $data['code'] !== $recommendation->getCode()) {
+            $recommendation->setCode($data['code']);
+        }
+        if (!empty($data['description']) && $data['description'] !== $recommendation->getDescription()) {
+            $recommendation->setDescription($data['description']);
+        }
+        $isImportanceChanged = false;
+        if (!empty($data['importance']) && $recommendation->getImportance() !== $data['importance']) {
+            $isImportanceChanged = true;
+            $recommendation->setImportance($data['importance']);
+        }
+        if (isset($data['status']) && $recommendation->getStatus() !== (int)$data['status']) {
+            $recommendation->setStatus((int)$data['status']);
+        }
+        if (!empty($data['comment']) && $recommendation->getComment() !== $data['comment']) {
+            $recommendation->setComment($data['comment']);
+        }
+        if (!empty($data['responsable']) && $recommendation->getResponsable() !== $data['responsable']) {
+            $recommendation->setResponsable($data['responsable']);
+        }
+        if (!empty($data['position']) && $recommendation->getPosition() !== $data['position']) {
+            $recommendation->setPosition($data['position']);
+        }
+
+        $this->recommendationTable->saveEntity($recommendation->setUpdater($this->getConnectedUser()->getEmail()));
+
+        $this->updatePositions($recommendation, $data, $isImportanceChanged);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
-        parent::update($id, $this->prepareUpdateData($id, $data));
+        foreach ($this->filterColumns as $filterColumn) {
+            unset($data[$filterColumn]);
+        }
+
+        $this->patch($id, $data);
     }
 
     /**
@@ -112,52 +155,32 @@ class AnrRecommandationService extends AbstractService
      */
     public function delete($id)
     {
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('table');
         /** @var AnrTable $anrTable */
         $anrTable = $this->get('anrTable');
         $anr = $anrTable->findById($id['anr']);
-        $recommendation = $recommendationTable->findByAnrAndUuid($anr, $id['uuid']);
+        $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $id['uuid']);
 
         if (!$recommendation->isPositionEmpty()) {
-            // TODO: drop this when a regular injection is done.
-            $this->set('recommendationTable', $recommendationTable);
             $this->resetRecommendationsPositions($anr, [$recommendation->getUuid() => $recommendation]);
         }
 
-        $recommendationTable->deleteEntity($recommendation);
+        $this->recommendationTable->deleteEntity($recommendation);
 
         return true;
     }
 
     /**
-     * Updates the position of the recommendation, based on the implicitPosition field passed in $data.
-     *
-     * @param array $recommendationId The recommendation composite ID [anr, uuid]
-     * @param array $data The positioning data (implicitPosition field, and previous)
-     *
-     * @return array
-     *
-     * @throws Exception
-     * @throws EntityNotFoundException
+     * Updates the position of the recommendation, based on the implicitPosition and/or previous field passed in $data.
      */
-    private function updatePosition(array $recommendationId, array $data): array
+    private function updatePositions(Recommandation $recommendation, array $data, bool $isImportanceChanged): void
     {
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        $anr = $anrTable->findById($recommendationId['anr']);
-
-        /** @var RecommandationTable $recommendationTable */
-        $recommendationTable = $this->get('table');
-        $recommendation = $recommendationTable->findByAnrAndUuid($anr, $recommendationId['uuid']);
-
         if (!empty($data['implicitPosition'])) {
             $newPosition = $recommendation->getPosition();
 
-            $linkedRecommendations = $recommendationTable
+            $linkedRecommendations = $this->recommendationTable
                 ->findLinkedWithRisksByAnrWithSpecifiedImportanceAndPositionAndExcludeRecommendations(
-                    $anr,
-                    [$recommendationId['uuid']],
+                    $recommendation->getAnr(),
+                    [$recommendation->getUuid()],
                     ['r.position' => 'ASC']
                 );
 
@@ -167,7 +190,7 @@ class AnrRecommandationService extends AbstractService
                         if ($linkedRecommendation->isPositionHigherThan($recommendation->getPosition())
                             && !$linkedRecommendation->isPositionLowerThan($recommendation->getPosition())
                         ) {
-                            $recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
+                            $this->recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
                         }
                     }
 
@@ -179,7 +202,7 @@ class AnrRecommandationService extends AbstractService
                     foreach ($linkedRecommendations as $linkedRecommendation) {
                         if ($linkedRecommendation->isPositionLowerThan($recommendation->getPosition())) {
                             $maxPosition = $linkedRecommendation->getPosition();
-                            $recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
+                            $this->recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
                         }
                     }
 
@@ -188,7 +211,10 @@ class AnrRecommandationService extends AbstractService
                     break;
                 case AbstractEntity::IMP_POS_AFTER:
                     if (!empty($data['previous'])) {
-                        $previousRecommendation = $recommendationTable->findByAnrAndUuid($anr, $data['previous']);
+                        $previousRecommendation = $this->recommendationTable->findByAnrAndUuid(
+                            $recommendation->getAnr(),
+                            $data['previous']
+                        );
                         $isRecommendationMovedUp = $previousRecommendation->isPositionHigherThan(
                             $recommendation->getPosition()
                         );
@@ -200,37 +226,33 @@ class AnrRecommandationService extends AbstractService
                                 && $linkedRecommendation->isPositionLowerThan($previousRecommendation->getPosition())
                                 && $linkedRecommendation->isPositionHigherThan($recommendation->getPosition())
                             ) {
-                                $recommendationTable->saveEntity($linkedRecommendation->shiftPositionDown(), false);
+                                $this->recommendationTable->saveEntity(
+                                    $linkedRecommendation->shiftPositionDown(),
+                                    false
+                                );
                             } elseif (!$isRecommendationMovedUp
                                 && $linkedRecommendation->isPositionLowerThan($recommendation->getPosition())
                                 && $linkedRecommendation->isPositionHigherOrEqualThan(
                                     $previousRecommendation->getPosition()
                                 )
                             ) {
-                                $recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
+                                $this->recommendationTable->saveEntity($linkedRecommendation->shiftPositionUp(), false);
                             }
                         }
                     }
                     break;
             }
 
-            $recommendationTable->saveEntity($recommendation->setPosition($newPosition));
+            $this->recommendationTable->saveEntity($recommendation->setPosition($newPosition));
 
-        } elseif (!empty($data['importance'])
-            && $recommendation->isImportanceEmpty()
-            && !$recommendation->getRecommendationRisks()->isEmpty()
-        ) {
+        } elseif ($isImportanceChanged && !$recommendation->getRecommendationRisks()->isEmpty()) {
             foreach ($recommendation->getRecommendationRisks() as $recommendationRisk) {
-                $linkedRisk = $recommendationRisk->getInstanceRisk() || $recommendationRisk->getInstanceRiskOp();
+                $linkedRisk = $recommendationRisk->getInstanceRisk() ?? $recommendationRisk->getInstanceRiskOp();
                 $this->updateInstanceRiskRecommendationsPositions($linkedRisk);
 
                 break;
             }
         }
-
-        unset($data['implicitPosition'], $data['previous']);
-
-        return $data;
     }
 
     /**
@@ -264,26 +286,5 @@ class AnrRecommandationService extends AbstractService
                 }
             }
         }
-    }
-
-    private function prepareUpdateData($id, $data): array
-    {
-        unset($data['counterTreated'], $data['timerColor']);
-
-        if (!empty($data['duedate'])) {
-            try {
-                $data['duedate'] = new DateTime($data['duedate']);
-            } catch (Throwable $e) {
-                throw new Exception('Invalid date format', 412);
-            }
-        } elseif (isset($data['duedate']) && $data['duedate'] === '') {
-            $data['duedate'] = null;
-        }
-
-        if (empty($data['recommandationSet'])) {
-            $data['recommandationSet'] = $this->get('table')->getEntity($id)->get('recommandationSet');
-        }
-
-        return $this->updatePosition($id, $data);
     }
 }
