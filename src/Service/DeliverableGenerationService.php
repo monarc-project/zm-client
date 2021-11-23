@@ -1540,7 +1540,7 @@ class DeliverableGenerationService extends AbstractService
                     }
                     $globalObject[$objectUuid][$threatUuid][$vulnerabilityUuid] = $objectUuid;
                 } else {
-                    $key = "i-" . $instanceRisk->getId();
+                    $key = "i-" . $instance->getId();
                     if (!isset($mem_risks[$key])) {
                         $asc = $instance->getHierarchyArray();
                         $levelTree = \count($asc);
@@ -1985,32 +1985,27 @@ class DeliverableGenerationService extends AbstractService
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
             $instance = $operationalInstanceRisk->getInstance();
             if (!isset($lst[$instance->getId()])) {
-                $asc = $instance->getHierarchyArray();
-                $levelTree = \count($asc);
+                $ascendants = $instance->getHierarchyArray();
+                $levelTree = \count($ascendants);
                 if ($levelTree > $maxLevelDeep) {
                     $maxLevelDeep = $levelTree;
                 }
 
                 $parentInstance = $instance->getParent();
                 $lst[$instance->getId()] = [
-                    'tree' => $asc,
-                    'path' => $this->getInstancePathFromHierarchy($asc),
+                    'tree' => $ascendants,
+                    'path' => $this->getInstancePathFromHierarchy($ascendants),
                     'parent' => $parentInstance ? $parentInstance->getId() : null,
                     'position' => $instance->getPosition(),
                     'risks' => [],
                 ];
 
-                if ($parentInstance !== null && $instance->getRoot() !== null) {
-                    if (!isset($lst[$parentInstance->getId()])
-                        && $parentInstance->getId() !== $instance->getRoot()->getId()
-                    ) {
-                        $asc = $parentInstance->getHierarchyArray();
-
-                        $lst[$parentInstance->getId()] = [
-                            'tree' => $asc,
-                            'path' => $this->getInstancePathFromHierarchy($asc),
-                            'parent' => $parentInstance->getParent() ? $parentInstance->getParent()->getId() : null,
-                            'position' => $parentInstance->getPosition(),
+                foreach ($ascendants as $ascendant) {
+                    if ($ascendant['parent'] !== null && $ascendant['root'] !== null && !isset($lst[$ascendant['id']])) {
+                        $lst[$ascendant['id']] = [
+                            'tree' => $ascendant['parent']->getHierarchyArray(),
+                            'parent' => $ascendant['parent']->getId(),
+                            'position' => $ascendant['position'],
                             'risks' => [],
                         ];
                     }
