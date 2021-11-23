@@ -2002,8 +2002,10 @@ class DeliverableGenerationService extends AbstractService
 
                 foreach ($ascendants as $ascendant) {
                     if ($ascendant['parent'] !== null && $ascendant['root'] !== null && !isset($lst[$ascendant['id']])) {
+                        $newAscendants = $ascendant['parent']->getHierarchyArray();
                         $lst[$ascendant['id']] = [
-                            'tree' => $ascendant['parent']->getHierarchyArray(),
+                            'tree' => $newAscendants,
+                            'path' => $this->getInstancePathFromHierarchy($newAscendants),
                             'parent' => $ascendant['parent']->getId(),
                             'position' => $ascendant['position'],
                             'risks' => [],
