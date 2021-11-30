@@ -72,6 +72,13 @@ class AnrInstanceRiskService extends InstanceRiskService
         return true;
     }
 
+    public function updateRisks(InstanceRiskSuperClass $instanceRisk, bool $last = true): void
+    {
+        parent::updateRisks($instanceRisk, $last);
+
+        $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
+    }
+
     public function getInstanceRisksInCsv($anrId, $instanceId = null, $params = []): string
     {
         /** @var AnrTable $anrTable */
