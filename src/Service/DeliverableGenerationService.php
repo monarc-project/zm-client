@@ -5244,12 +5244,24 @@ class DeliverableGenerationService extends AbstractService
     protected function generateOwnersTable()
     {
         $allOwners = $this->instanceRiskOwnerTable->findByAnr($this->anr);
+        $globalObjectsUuids = [];
 
         foreach ($allOwners as $owner) {
+
             if (!empty($owner->getInstanceRisks())) {
                 foreach ($owner->getInstanceRisks() as $ir) {
+                    /* Check if the global object is already added. */
+                    $uniqueKey = $ir->getInstance()->getObject()->getUuid()
+                        . $ir->getThreat()->getUuid()
+                        . $ir->getVulnerability()->getUuid();
+                        
+                    if (\in_array($uniqueKey, $globalObjectsUuids, true)) {
+                        continue;
+                    }
+
                     if ($ir->getInstance()->getObject()->isScopeGlobal()) {
                         $asset = $ir->getInstance()->{'getName' . $this->currentLangAnrIndex}() . ' (' . $this->anrTranslate('Global') . ')';
+                        $globalObjectsUuids[] = $uniqueKey;
                     }else {
                         $asset = $ir->getInstance()->getHierarchyString();
                     }
