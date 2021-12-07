@@ -38,6 +38,18 @@ class ApiAnrRiskOwnersController extends AbstractRestfulController
         ]);
     }
 
+    public function update($id, $data)
+    {
+        file_put_contents('php://stderr', print_r($data , TRUE).PHP_EOL);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $data['anr'] = $anrId ;
+        $instanceRiskOwnersId = $this->instanceRiskOwnerService->updateOwner($id, $data);
+        return new JsonModel([
+            'id' => $instanceRiskOwnersId,
+            'status' => 'ok',
+        ]);
+    }
+
     protected function prepareParams(): array
     {
         return [

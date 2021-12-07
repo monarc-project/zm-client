@@ -35,4 +35,16 @@ class InstanceRiskOwnerService
 
         return $result;
     }
+
+    public function updateOwner(int $id, array $data): int
+    {
+        $anr = $this->anrTable->findById($data['anr']);
+        if (!empty($data['name'])) {
+            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndId($anr, $id);
+            $instanceRiskOwner->setName($data['name']);
+            $this->instanceRiskOwnerTable->save($instanceRiskOwner);
+        }
+
+        return $instanceRiskOwner->getId();
+    }
 }
