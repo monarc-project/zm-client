@@ -50,6 +50,13 @@ class ApiAnrRiskOwnersController extends AbstractRestfulController
         ]);
     }
 
+    public function delete($id)
+    {
+       // $anrId = (int)$this->params()->fromRoute('anrid');
+        $this->instanceRiskOwnerService->deleteOwner((int)$id);
+        return new JsonModel(['status' => 'ok']);
+    }
+
     protected function prepareParams(): array
     {
         return [

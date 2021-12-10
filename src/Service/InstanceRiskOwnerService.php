@@ -47,4 +47,13 @@ class InstanceRiskOwnerService
 
         return $instanceRiskOwner->getId();
     }
+
+    public function deleteOwner($id):void
+    {
+        $ownerToDelete = $this->instanceRiskOwnerTable->findById($id);
+        if ($ownerToDelete === null) {
+            throw new EntityNotFoundException(sprintf('Owner with ID %d is not found', $id));
+        }
+        $this->instanceRiskOwnerTable->remove($ownerToDelete);
+    }
 }
