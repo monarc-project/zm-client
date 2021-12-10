@@ -30,6 +30,8 @@ class InstanceRiskOwnerService
             $result[] = [
                 'id' => $instanceRiskOwner->getId(),
                 'name' => $instanceRiskOwner->getName(),
+                'numberOfInstancesRisks' => count($instanceRiskOwner->getInstanceRisks()),
+                'numberOfOperationalInstanceRisks' => count($instanceRiskOwner->getOperationalInstanceRisks()),
             ];
         }
 
