@@ -31,7 +31,7 @@ class InstanceRiskOwnerService
                 'id' => $instanceRiskOwner->getId(),
                 'name' => $instanceRiskOwner->getName(),
                 'numberOfInstancesRisks' => count($instanceRiskOwner->getInstanceRisks()),
-                'numberOfOperationalInstanceRisks' => count($instanceRiskOwner->getOperationalInstanceRisks()),
+                'numberOfOperationalInstancesRisks' => count($instanceRiskOwner->getOperationalInstanceRisks()),
             ];
         }
 
