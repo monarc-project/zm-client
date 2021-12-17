@@ -57,4 +57,13 @@ class ApiSnapshotController extends ApiAnrAbstractController
             $this->name => $entities
         ]);
     }
+
+    public function delete($id)
+    {
+        if ($this->getService()->delete($id)) {
+            return new JsonModel(['status' => 'ok']);
+        }
+
+        return new JsonModel(['status' => 'ok']); // Todo : may be add error message
+    }
 }
