@@ -53,9 +53,10 @@ jobs:
         path: src
 
     - name: List changed files
+      if: steps.changed-files-specific.outputs.any_changed == "true"
       run: |
-        echo ${{ steps.changed-files-comma.outputs.added_files }}
-        echo ${{ steps.changed-files-comma.outputs.modified_files }}
+        echo ${{ steps.changed-files-comma.outputs.all_changed_files }}
 
-    # - name: Run phpcs
-    #   run: phpcs -q --report=checkstyle --file-list=${{ steps.changed-files-comma }} | cs2pr
+    - name: Run phpcs
+      if: steps.changed-files-specific.outputs.any_changed == "true"
+      run: phpcs -q --report=checkstyle --file-list=${{ steps.changed-files-comma.outputs.all_changed_files }} | cs2pr
