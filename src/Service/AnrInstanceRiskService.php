@@ -123,7 +123,9 @@ class AnrInstanceRiskService extends InstanceRiskService
                 $instanceRisk['vulnLabel' . $anrLanguage],
                 $instanceRisk['comment'],
                 $instanceRisk['vulnerabilityRate'] === -1 ? null : $instanceRisk['vulnerabilityRate'],
-                $instanceRisk['c_risk_enabled'] === 0 || $instanceRisk['c_risk'] === -1 ? null : $instanceRisk['c_risk'],
+                $instanceRisk['c_risk_enabled'] === 0 || $instanceRisk['c_risk'] === -1
+                    ? null
+                    : $instanceRisk['c_risk'],
                 $instanceRisk['i_risk_enabled'] === 0  || $instanceRisk['i_risk'] === -1
                     ? null
                     : $instanceRisk['i_risk'],
