@@ -1350,8 +1350,11 @@ return [
             'monarc_api_referentials',
             'monarc_api_client',
             'monarc_api_global_client_anr/carto_risks',
-            'monarc_api_stats',
             'monarc_api_global_client_anr/risk_owners',
+            'monarc_api_stats',
+            'monarc_api_stats_global/processed',
+            'monarc_api_stats_global/general_settings',
+            'monarc_api_stats_global/validate-stats-availability',
         ],
         // User : RWD access per analysis
         Entity\UserRole::USER_FO => [
