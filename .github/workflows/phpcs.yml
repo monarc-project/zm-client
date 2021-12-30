@@ -36,15 +36,5 @@ jobs:
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
-    # - name: Run phpcs
-    #   run: composer phpcs
-      
-    - name: Install PHP_CodeSniffer
-      run: |
-        curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
-        php phpcs.phar --version
-
-    - uses: tinovyatkin/action-php-codesniffer@v1
-      with:
-        files: "**.php" # you may customize glob as needed
-        phpcs_path: php phpcs.phar
+    - name: Run phpcs
+      run: phpcs --standard=PSR2 .
