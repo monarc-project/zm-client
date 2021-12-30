@@ -16,7 +16,7 @@ jobs:
         php-version: '7.4'
         extensions: imagick, intl, mysql, bcmath, openssl
         ini-values: post_max_size=256M, short_open_tag=On
-        tools: pecl, phpcs
+        tools: pecl, cs2pr, phpcs
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
@@ -37,4 +37,4 @@ jobs:
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
     - name: Run phpcs
-      run: phpcs --standard=PSR2 .
+      run: phpcs -q --report=checkstyle src | cs2pr
