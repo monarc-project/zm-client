@@ -23,8 +23,7 @@ use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
-class AnrInstanceRiskService
-    extends InstanceRiskService
+class AnrInstanceRiskService extends InstanceRiskService
 {
     use RecommendationsPositionsUpdateTrait;
 
@@ -124,9 +123,7 @@ class AnrInstanceRiskService
                 $instanceRisk['vulnLabel' . $anrLanguage],
                 $instanceRisk['comment'],
                 $instanceRisk['vulnerabilityRate'] === -1 ? null : $instanceRisk['vulnerabilityRate'],
-                $instanceRisk['c_risk_enabled'] === 0 || $instanceRisk['c_risk'] === -1
-                    ? null
-                    : $instanceRisk['c_risk'],
+                $instanceRisk['c_risk_enabled'] === 0 || $instanceRisk['c_risk'] === -1 ? null : $instanceRisk['c_risk'],
                 $instanceRisk['i_risk_enabled'] === 0  || $instanceRisk['i_risk'] === -1
                     ? null
                     : $instanceRisk['i_risk'],

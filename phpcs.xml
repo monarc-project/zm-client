@@ -11,8 +11,5 @@
     <!-- Paths to check -->
     <file>src</file>
 
-    <!-- Include all rules from the Laminas Coding Standard -->
-    <rule ref="LaminasCodingStandard"/>
-
     <rule ref="PSR2" />
 </ruleset>
