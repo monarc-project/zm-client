@@ -37,9 +37,21 @@ jobs:
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
     # We need to run to validate only files' changes.
-    - name: Get changed files
+    - name: Get changed files using defaults
       id: changed-files
       uses: tj-actions/changed-files@v12.2
 
-    - name: Run phpcs
-      run: phpcs -q --report=checkstyle --file-list=${{ steps.get_file_changes.outputs.files }} | cs2pr
+    - name: Get changed files using a comma separator
+      id: changed-files-comma
+      uses: tj-actions/changed-files@v12.2
+      with:
+        separator: ","
+        files: |
+          .(php)$
+        path: src
+
+    - name: List changed files
+      run: echo ${{ steps.changed-files-comma }}
+
+    # - name: Run phpcs
+    #   run: phpcs -q --report=checkstyle --file-list=${{ steps.changed-files-comma }} | cs2pr
