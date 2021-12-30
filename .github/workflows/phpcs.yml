@@ -10,6 +10,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '7.4'
+        extensions: imagick, intl, mysql, bcmath, openssl
+        ini-values: post_max_size=256M, short_open_tag=On
+        tools: pecl
+
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
 
