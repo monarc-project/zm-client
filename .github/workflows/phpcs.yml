@@ -36,5 +36,10 @@ jobs:
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
+    # We need to run to validate only files' changes.
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v12.2
+
     - name: Run phpcs
-      run: phpcs -q --report=checkstyle src | cs2pr
+      run: phpcs -q --report=checkstyle --file-list=${{ steps.get_file_changes.outputs.files }} | cs2pr
