@@ -226,8 +226,7 @@ class UserService extends CoreUserService
                 } else {
                     $userAnr
                         ->setRwd($data['anrs'][$assignedAnrKey]['rwd'])
-                        ->setUpdater($connectedUserName
-                        );
+                        ->setUpdater($connectedUserName);
                     unset($data['anrs'][$assignedAnrKey]);
                 }
             }

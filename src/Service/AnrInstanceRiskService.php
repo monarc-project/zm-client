@@ -23,7 +23,8 @@ use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
-class AnrInstanceRiskService extends InstanceRiskService
+class AnrInstanceRiskService
+    extends InstanceRiskService
 {
     use RecommendationsPositionsUpdateTrait;
 
