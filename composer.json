@@ -70,7 +70,7 @@
         }
     },
     "scripts": {
-        "phpcs": "phpcs --standard=psr2 src/"
+        "phpcs": "phpcs --standard=PSR2 src/"
     },
     "bin": ["bin/console"],
     "minimum-stability": "dev",
