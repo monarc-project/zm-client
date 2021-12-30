@@ -16,7 +16,7 @@ jobs:
         php-version: '7.4'
         extensions: imagick, intl, mysql, bcmath, openssl
         ini-values: post_max_size=256M, short_open_tag=On
-        tools: pecl
+        tools: pecl, phpcs
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
