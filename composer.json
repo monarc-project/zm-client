@@ -69,6 +69,9 @@
             "Monarc\\FrontOffice\\": "src/"
         }
     },
+    "scripts": {
+        "phpcs": "phpcs --standard=psr2 src/"
+    },
     "bin": ["bin/console"],
     "minimum-stability": "dev",
     "prefer-stable": true
