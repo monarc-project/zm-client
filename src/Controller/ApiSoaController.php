@@ -181,7 +181,7 @@ class ApiSoaController extends AbstractRestfulController
             $newData['anr'] = $anrId;
             $newData['measure'] = ['anr' => $anrId, 'uuid' => $newData['measure']['uuid']];
             $id = $newData['id'];
-            $this->soaService->patch($id, $data);
+            $this->soaService->patch($id, $newData);
             $createdObjects[] = $id;
         }
 
