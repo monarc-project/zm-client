@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Service\ObjectService;
@@ -62,14 +63,20 @@ class AnrObjectService extends ObjectService
                 if (empty($data['password'])) {
                     $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
                     if ($file === false) { // support legacy export which were base64 encoded
-                        $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), '')), true);
+                        $file = json_decode(
+                            trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), '')),
+                            true
+                        );
                     }
                 } else {
                     // Decrypt the file and store the JSON data as an array in memory
                     $key = $data['password'];
                     $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
                     if ($file === false) { // support legacy export which were base64 encoded
-                        $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                        $file = json_decode(
+                            trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)),
+                            true
+                        );
                     }
                 }
 
@@ -110,7 +117,16 @@ class AnrObjectService extends ObjectService
         $anr = $this->get('anrTable')->getEntity($anrId); // throws an Monarc\Core\Exception\Exception if unknown
 
         // Fetch the objects from the common database
-        $objects = $this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), $filter, null, $anr->get('model'), null, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE);
+        $objects = $this->get('selfCoreService')->getAnrObjects(
+            1,
+            -1,
+            'name' . $anr->get('language'),
+            $filter,
+            null,
+            $anr->get('model'),
+            null,
+            AbstractEntity::FRONT_OFFICE
+        );
 
         // List of fields we want to keep
         $fields = [
@@ -173,7 +189,16 @@ class AnrObjectService extends ObjectService
         }
 
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
-        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['uuid' => $id], $anr->get('model'), null, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE));
+        $object = current($this->get('selfCoreService')->getAnrObjects(
+            1,
+            -1,
+            'name' . $anr->get('language'),
+            [],
+            ['uuid' => $id],
+            $anr->get('model'),
+            null,
+            AbstractEntity::FRONT_OFFICE
+        ));
         if (empty($object)) {
             throw new Exception('Object not found', 412);
         }
@@ -195,7 +220,16 @@ class AnrObjectService extends ObjectService
             throw new Exception('Anr id missing', 412);
         }
         $anr = $this->get('anrTable')->getEntity($data['anr']); // on a une erreur si inconnue
-        $object = current($this->get('selfCoreService')->getAnrObjects(1, -1, 'name' . $anr->get('language'), [], ['uuid' => $id], $anr->get('model'), null, \Monarc\Core\Model\Entity\AbstractEntity::FRONT_OFFICE));
+        $object = current($this->get('selfCoreService')->getAnrObjects(
+            1,
+            -1,
+            'name' . $anr->get('language'),
+            [],
+            ['uuid' => $id],
+            $anr->get('model'),
+            null,
+            AbstractEntity::FRONT_OFFICE
+        ));
         if (empty($object)) {
             throw new Exception('Object not found', 412);
         }

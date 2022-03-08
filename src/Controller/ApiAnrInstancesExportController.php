@@ -37,11 +37,11 @@ class ApiAnrInstancesExportController extends ApiAnrAbstractController
         $output = $this->getService()->export($data);
 
         if (empty($data['password'])) {
-          $contentType = 'application/json; charset=utf-8';
-          $extension = '.json';
+            $contentType = 'application/json; charset=utf-8';
+            $extension = '.json';
         } else {
-          $contentType = 'text/plain; charset=utf-8';
-          $extension = '.bin';
+            $contentType = 'text/plain; charset=utf-8';
+            $extension = '.bin';
         }
 
         $this->getResponse()
