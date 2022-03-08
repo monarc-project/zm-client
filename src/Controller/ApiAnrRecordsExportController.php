@@ -53,7 +53,7 @@ class ApiAnrRecordsExportController extends ApiAnrAbstractController
                  ->setContent($output);
 
             return $this->getResponse();
-        } else if ($data['export'] == "All") {
+        } elseif ($data['export'] == "All") {
             if (empty($data['password'])) {
                 $contentType = 'application/json; charset=utf-8';
                 $extension = '.json';

@@ -263,8 +263,7 @@ class AnrObjectService extends ObjectService
 
         $prepareObjectData = json_encode($isForMosp
             ? $objectExportService->generateExportMospArray($data['id'], $anr)
-            : $objectExportService->generateExportArray($data['id'], $anr, false)
-        );
+            : $objectExportService->generateExportArray($data['id'], $anr));
 
         $data['filename'] = $objectExportService->generateExportFileName($data['id'], $anr, $isForMosp);
 
