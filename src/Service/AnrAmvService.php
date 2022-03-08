@@ -211,12 +211,12 @@ class AnrAmvService extends AmvService
 
                 $instanceRisk->setLanguage($this->getLanguage());
                 $instanceRisk->setDbAdapter($this->get('table')->getDb());
-                $instanceRisk->set('anr', $this->get('anrTable')->getEntity($data['anr']));
-                $instanceRisk->set('amv', $amv);
-                $instanceRisk->set('asset', $amv->asset);
-                $instanceRisk->set('instance', $instance);
-                $instanceRisk->set('threat', $amv->threat);
-                $instanceRisk->set('vulnerability', $amv->vulnerability);
+                $instanceRisk->setAnr($this->get('anrTable')->getEntity($data['anr']));
+                $instanceRisk->setAmv($amv);
+                $instanceRisk->setAsset($amv->getAsset());
+                $instanceRisk->setInstance($instance);
+                $instanceRisk->setThreat($amv->getThreat());
+                $instanceRisk->setVulnerability($amv->getVulnerability());
 
                 $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
                 $i++;

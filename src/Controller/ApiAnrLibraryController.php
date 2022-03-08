@@ -63,7 +63,7 @@ class ApiAnrLibraryController extends AbstractController
             throw new \Monarc\Core\Exception\Exception('objectId is missing');
         }
 
-        /** @var ObjectService $service */
+        /** @var AnrObjectService $service */
         $service = $this->getService();
         $id = $service->attachObjectToAnr($data['objectId'], $anrId, null, null, AbstractEntity::FRONT_OFFICE);
 
@@ -83,7 +83,7 @@ class ApiAnrLibraryController extends AbstractController
             throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
         }
 
-        /** @var ObjectService $service */
+        /** @var AnrObjectService $service */
         $service = $this->getService();
         $service->detachObjectToAnr($id, $anrId);
 

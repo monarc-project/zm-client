@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Service\AnrRecordService;
 use Laminas\View\Model\JsonModel;
 

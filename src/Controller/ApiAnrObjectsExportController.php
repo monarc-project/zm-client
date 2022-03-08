@@ -7,8 +7,6 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
-
 /**
  * Api ANR Objects Export Controller
  *

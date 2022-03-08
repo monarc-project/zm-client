@@ -25,6 +25,7 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
+use PhpOffice\PhpWord\Element\Table;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -695,7 +696,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Informational Risk Impacts table
-     * @return table
+     * @return Table
      */
     protected function generateInformationalRiskImpactsTable($impactsScale,$impactsTypes,$impactsComments)
     {
@@ -826,7 +827,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Informational Risk Acceptance thresholds table
-     * @return table
+     * @return Table
      */
     protected function generateInformationalRiskAcceptanceThresholdsTable($impactsScale,$threatsScale,$vulnsScale)
     {
@@ -899,7 +900,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Operational Risk Acceptance thresholds Table
-     * @return table
+     * @return Table
      */
     protected function generateOperationalRiskImpactsTable($opRisksImpactsScales,$opRisksImpactsScaleMin,$opRisksImpactsScaleMax)
     {
@@ -948,7 +949,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Operational Risk Likelihood Table
-     * @return table
+     * @return Table
      */
     protected function generateOperationalRiskLikelihoodTable($opRisksLikelihoodScale)
     {
@@ -991,7 +992,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Operational Risk Acceptance thresholds Table
-     * @return table
+     * @return Table
      */
     protected function generateOperationalRiskAcceptanceThresholdsTable($opRisksImpactsScales,$opRisksLikelihoodScale,$opRisksImpactsScaleMin,$opRisksImpactsScaleMax)
     {
@@ -1058,7 +1059,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Trends Assessment Table
-     * @return table
+     * @return Table
      */
     protected function generateTrendAssessmentTable()
     {
@@ -1122,7 +1123,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Interviews Table
-     * @return table
+     * @return Table
      */
     protected function generateInterviewsTable()
     {
@@ -1185,7 +1186,7 @@ class DeliverableGenerationService extends AbstractService
      * Generate Threat or Vulnerability scale table
      * @param array $scale
      * @param array $comments
-     * @return table
+     * @return Table
      */
     protected function generateThreatOrVulnerabilityScaleTable($scale,$comments)
     {
@@ -1420,12 +1421,12 @@ class DeliverableGenerationService extends AbstractService
             );
             unset($style['BorderSize']);
             $tableLegend->addCell(Converter::cmToTwip($lowSize), $style);
-        };
+        }
 
         if (($maxSize - $lowSize) != 0) {
             $style['BgColor'] = 'F0F7B2';
             $tableLegend->addCell(Converter::cmToTwip($maxSize - $lowSize), $style);
-        };
+        }
 
         $tableLegend = $section->addTable();
         $tableLegend->addRow(Converter::cmToTwip(0.1));
@@ -1443,12 +1444,12 @@ class DeliverableGenerationService extends AbstractService
             );
             unset($style['BorderSize']);
             $tableLegend->addCell(Converter::cmToTwip($mediumSize), $style);
-        };
+        }
 
         if (($maxSize - $mediumSize) != 0) {
             $style['BgColor'] = 'FCDD94';
             $tableLegend->addCell(Converter::cmToTwip($maxSize - $mediumSize), $style);
-        };
+        }
 
         $tableLegend = $section->addTable();
         $tableLegend->addRow(Converter::cmToTwip(0.1));
@@ -1466,14 +1467,14 @@ class DeliverableGenerationService extends AbstractService
             );
             unset($style['BorderSize']);
             $tableLegend->addCell(Converter::cmToTwip($highSize), $style);
-        };
+        }
 
         if (($maxSize - $highSize) != 0) {
             $style['BgColor'] = 'FCB28F';
             $tableLegend->addCell(Converter::cmToTwip($maxSize - $highSize), $style);
-        };
-        return $section;
+        }
 
+        return $section;
     }
 
     /**
@@ -5254,7 +5255,7 @@ class DeliverableGenerationService extends AbstractService
                     $uniqueKey = $ir->getInstance()->getObject()->getUuid()
                         . $ir->getThreat()->getUuid()
                         . $ir->getVulnerability()->getUuid();
-                        
+
                     if (\in_array($uniqueKey, $globalObjectsUuids, true)) {
                         continue;
                     }
@@ -5480,7 +5481,7 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generates a single-level array from multilevel array
-     * @param multi_level_array $multiLevelArray
+     * @param array $multiLevelArray
      * @return array
      */
     protected function singleLevelArray($multiLevelArray)

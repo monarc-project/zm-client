@@ -1,6 +1,6 @@
 <?php
 
-use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
