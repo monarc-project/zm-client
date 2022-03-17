@@ -428,7 +428,10 @@ class DeliverableGenerationService extends AbstractService
         $this->vAlignCenterCell = ['valign' => 'center'];
         $this->continueCell = ['vMerge' => 'continue'];
         $this->colSpanCell = $this->vAlignCenterCell;
-        $this->rotate90TextCell = array_merge($this->vAlignCenterCell, ['vMerge' => 'restart','textDirection' => 'btLr']);
+        $this->rotate90TextCell = array_merge(
+            $this->vAlignCenterCell,
+            ['vMerge' => 'restart','textDirection' => 'btLr']
+        );
         $this->restartAndGrayCell = array_merge($this->grayCell, ['vMerge' => 'restart']);
         $this->continueAndGrayCell = array_merge($this->continueCell, $this->grayCell);
         $this->restartAndBlackCell = array_merge($this->blackCell, ['vMerge' => 'restart']);
@@ -505,13 +508,45 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function buildContextValidationValues()
     {
-        $impactsScale = current(current($this->scaleService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'type' => 1])));
+        $impactsScale = current(current(
+            $this->scaleService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'type' => 1])
+        ));
         $impactsTypes = $this->scaleTypeService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
-        $impactsComments = $this->scaleCommentService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'scale' => $impactsScale['id']]);
-        $threatsScale = current(current($this->scaleService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'type' => 2])));
-        $threatsComments = $this->scaleCommentService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'scale' => $threatsScale['id']]);
-        $vulnsScale = current(current($this->scaleService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'type' => 3])));
-        $vulnsComments = $this->scaleCommentService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'scale' => $vulnsScale['id']]);
+        $impactsComments = $this->scaleCommentService->getList(
+            1,
+            0,
+            null,
+            null,
+            ['anr' => $this->anr->getId(), 'scale' => $impactsScale['id']]
+        );
+        $threatsScale = current(current($this->scaleService->getList(
+            1,
+            0,
+            null,
+            null,
+            ['anr' => $this->anr->getId(), 'type' => 2]
+        )));
+        $threatsComments = $this->scaleCommentService->getList(
+            1,
+            0,
+            null,
+            null,
+            ['anr' => $this->anr->getId(), 'scale' => $threatsScale['id']]
+        );
+        $vulnsScale = current(current($this->scaleService->getList(
+            1,
+            0,
+            null,
+            null,
+            ['anr' => $this->anr->getId(), 'type' => 3]
+        )));
+        $vulnsComments = $this->scaleCommentService->getList(
+            1,
+            0,
+            null,
+            null,
+            ['anr' => $this->anr->getId(), 'scale' => $vulnsScale['id']]
+        );
 
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());
         $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function ($scale) {
@@ -655,7 +690,9 @@ class DeliverableGenerationService extends AbstractService
     protected function buildStatementOfAppplicabilityValues($referential, $risksByControl)
     {
         $values = [];
-        $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability($referential);
+        $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability(
+            $referential
+        );
         if ($risksByControl) {
             $values['xml']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($referential);
         } else {
@@ -907,8 +944,11 @@ class DeliverableGenerationService extends AbstractService
      * Generate Operational Risk Acceptance thresholds Table
      * @return Table
      */
-    protected function generateOperationalRiskImpactsTable($opRisksImpactsScales, $opRisksImpactsScaleMin, $opRisksImpactsScaleMax)
-    {
+    protected function generateOperationalRiskImpactsTable(
+        $opRisksImpactsScales,
+        $opRisksImpactsScaleMin,
+        $opRisksImpactsScaleMax
+    ) {
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
@@ -999,8 +1039,12 @@ class DeliverableGenerationService extends AbstractService
      * Generate Operational Risk Acceptance thresholds Table
      * @return Table
      */
-    protected function generateOperationalRiskAcceptanceThresholdsTable($opRisksImpactsScales, $opRisksLikelihoodScale, $opRisksImpactsScaleMin, $opRisksImpactsScaleMax)
-    {
+    protected function generateOperationalRiskAcceptanceThresholdsTable(
+        $opRisksImpactsScales,
+        $opRisksLikelihoodScale,
+        $opRisksImpactsScaleMin,
+        $opRisksImpactsScaleMax
+    ) {
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->noBorderTable);
@@ -2006,7 +2050,10 @@ class DeliverableGenerationService extends AbstractService
                 ];
 
                 foreach ($ascendants as $ascendant) {
-                    if ($ascendant['parent'] !== null && $ascendant['root'] !== null && !isset($lst[$ascendant['id']])) {
+                    if ($ascendant['parent'] !== null &&
+                        $ascendant['root'] !== null &&
+                        !isset($lst[$ascendant['id']])
+                    ) {
                         $newAscendants = $ascendant['parent']->getHierarchyArray();
                         $lst[$ascendant['id']] = [
                             'tree' => $newAscendants,
@@ -2107,14 +2154,20 @@ class DeliverableGenerationService extends AbstractService
                                     $this->centerParagraph
                                 );
                             if ($this->anr->showRolfBrut == 1) {
-                                $table->addCell(Converter::cmToTwip(5.50), $this->setColSpanCell(2 + count($opRisksImpactsScales), '444444'))
+                                $table->addCell(
+                                    Converter::cmToTwip(5.50),
+                                    $this->setColSpanCell(2 + count($opRisksImpactsScales), '444444')
+                                )
                                     ->addText(
                                         $this->anrTranslate('Inherent risk'),
                                         $this->whiteFont,
                                         $this->centerParagraph
                                     );
                             }
-                            $table->addCell(Converter::cmToTwip(15.00), $this->setColSpanCell(3 + count($opRisksImpactsScales), '444444'))
+                            $table->addCell(
+                                Converter::cmToTwip(15.00),
+                                $this->setColSpanCell(3 + count($opRisksImpactsScales), '444444')
+                            )
                                 ->addText(
                                     $this->anrTranslate('Net risk'),
                                     $this->whiteFont,
@@ -2142,7 +2195,10 @@ class DeliverableGenerationService extends AbstractService
                                         $this->whiteFont,
                                         $this->centerParagraph
                                     );
-                                $table->addCell(Converter::cmToTwip($sizeCellImpact), $this->setColSpanCell(count($opRisksImpactsScales), '444444'))
+                                $table->addCell(
+                                    Converter::cmToTwip($sizeCellImpact),
+                                    $this->setColSpanCell(count($opRisksImpactsScales), '444444')
+                                )
                                     ->addText(
                                         $this->anrTranslate('Impact'),
                                         $this->whiteFont,
@@ -2161,7 +2217,10 @@ class DeliverableGenerationService extends AbstractService
                                     $this->whiteFont,
                                     $this->centerParagraph
                                 );
-                            $table->addCell(Converter::cmToTwip($sizeCellImpact), $this->setColSpanCell(count($opRisksImpactsScales), '444444'))
+                            $table->addCell(
+                                Converter::cmToTwip($sizeCellImpact),
+                                $this->setColSpanCell(count($opRisksImpactsScales), '444444')
+                            )
                                 ->addText(
                                     $this->anrTranslate('Impact'),
                                     $this->whiteFont,
@@ -2188,7 +2247,10 @@ class DeliverableGenerationService extends AbstractService
                                 $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                                 foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                     $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                                    $table->addCell(Converter::cmToTwip(0.70), array_merge($this->rotate90TextCell, ['bgcolor' => '444444']))
+                                    $table->addCell(
+                                        Converter::cmToTwip(0.70),
+                                        array_merge($this->rotate90TextCell, ['bgcolor' => '444444'])
+                                    )
                                         ->addText(
                                             $label,
                                             $this->whiteFont,
@@ -2200,7 +2262,10 @@ class DeliverableGenerationService extends AbstractService
                             $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                                $table->addCell(Converter::cmToTwip(0.70), array_merge($this->rotate90TextCell, ['bgcolor' => '444444']))
+                                $table->addCell(
+                                    Converter::cmToTwip(0.70),
+                                    array_merge($this->rotate90TextCell, ['bgcolor' => '444444'])
+                                )
                                 ->addText(
                                     $label,
                                     $this->whiteFont,
@@ -2332,12 +2397,28 @@ class DeliverableGenerationService extends AbstractService
             $sum += count($distrib[$c]);
         }
 
-        $intro = sprintf($this->anrTranslate("The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"), $sum);
+        $intro = sprintf(
+            $this->anrTranslate(
+                "The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"
+            ),
+            $sum
+        );
 
         return $intro .
-            "<!--block-->&nbsp;&nbsp;- " . count($distrib[2]) . ' ' . $this->anrTranslate('critical risk(s) to be treated as priority') . "<!--block-->" .
-            "<!--block-->&nbsp;&nbsp;- " . count($distrib[1]) . ' ' . $this->anrTranslate('medium risk(s) to be partially treated') . "<!--block-->" .
-            "<!--block-->&nbsp;&nbsp;- " . count($distrib[0]) . ' ' . $this->anrTranslate('low risk(s) negligible') . "<!--block-->";
+            "<!--block-->&nbsp;&nbsp;- " .
+            count($distrib[2]) .
+            ' ' .
+            $this->anrTranslate('critical risk(s) to be treated as priority') .
+            "<!--block-->" .
+            "<!--block-->&nbsp;&nbsp;- " .
+            count($distrib[1]) .
+            ' ' .
+            $this->anrTranslate('medium risk(s) to be partially treated') .
+            "<!--block-->" .
+            "<!--block-->&nbsp;&nbsp;- " .
+            count($distrib[0]) .
+            ' ' .
+            $this->anrTranslate('low risk(s) negligible') . "<!--block-->";
     }
 
     /**
@@ -2623,14 +2704,22 @@ class DeliverableGenerationService extends AbstractService
                         $this->centerParagraph
                     );
                 if ($this->anr->showRolfBrut == 1) {
-                    $tableRiskOp->addCell(Converter::cmToTwip(5.50), $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF'))
-                    ->addText(
-                        $this->anrTranslate('Inherent risk'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
+                    $tableRiskOp
+                        ->addCell(
+                            Converter::cmToTwip(5.50),
+                            $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF')
+                        )
+                        ->addText(
+                            $this->anrTranslate('Inherent risk'),
+                            $this->boldFont,
+                            $this->centerParagraph
+                        );
                 }
-                $tableRiskOp->addCell(Converter::cmToTwip(15.00), $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF'))
+                $tableRiskOp
+                    ->addCell(
+                        Converter::cmToTwip(15.00),
+                        $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF')
+                    )
                     ->addText(
                         $this->anrTranslate('Net risk'),
                         $this->boldFont,
@@ -2653,7 +2742,11 @@ class DeliverableGenerationService extends AbstractService
                             $this->boldFont,
                             $this->centerParagraph
                         );
-                    $tableRiskOp->addCell(Converter::cmToTwip($sizeCellImpact), $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF'))
+                    $tableRiskOp
+                        ->addCell(
+                            Converter::cmToTwip($sizeCellImpact),
+                            $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
+                        )
                         ->addText(
                             $this->anrTranslate('Impact'),
                             $this->boldFont,
@@ -2672,7 +2765,11 @@ class DeliverableGenerationService extends AbstractService
                         $this->boldFont,
                         $this->centerParagraph
                     );
-                $tableRiskOp->addCell(Converter::cmToTwip($sizeCellImpact), $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF'))
+                $tableRiskOp
+                    ->addCell(
+                        Converter::cmToTwip($sizeCellImpact),
+                        $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
+                    )
                     ->addText(
                         $this->anrTranslate('Impact'),
                         $this->boldFont,
@@ -2699,7 +2796,11 @@ class DeliverableGenerationService extends AbstractService
                     $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                     foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                         $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF']))
+                        $tableRiskOp
+                            ->addCell(
+                                Converter::cmToTwip(0.70),
+                                array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                            )
                             ->addText(
                                 $label,
                                 $this->boldFont,
@@ -2711,7 +2812,11 @@ class DeliverableGenerationService extends AbstractService
                 $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                 foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                     $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                    $tableRiskOp->addCell(Converter::cmToTwip(0.70), array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF']))
+                    $tableRiskOp
+                        ->addCell(
+                            Converter::cmToTwip(0.70),
+                            array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                        )
                         ->addText(
                             $label,
                             $this->boldFont,
@@ -2727,8 +2832,10 @@ class DeliverableGenerationService extends AbstractService
                     foreach ($instanceRiskOp->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
                         $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
                         $scalesData[$operationalRiskScaleType->getId()] = [
-                            'netValue' => $operationalInstanceRiskScale->getNetValue() >= 0 ? $operationalInstanceRiskScale->getNetValue() : '-',
-                            'brutValue' => $operationalInstanceRiskScale->getBrutValue() >= 0 ? $operationalInstanceRiskScale->getBrutValue() : '-',
+                            'netValue' => $operationalInstanceRiskScale
+                                ->getNetValue() >= 0 ? $operationalInstanceRiskScale->getNetValue() : '-',
+                            'brutValue' => $operationalInstanceRiskScale
+                                ->getBrutValue() >= 0 ? $operationalInstanceRiskScale->getBrutValue() : '-',
                         ];
                     }
 
@@ -2772,7 +2879,11 @@ class DeliverableGenerationService extends AbstractService
                                     $this->centerParagraph
                                 );
                         }
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['cacheBrutRisk'], false))
+                        $tableRiskOp
+                            ->addCell(
+                                Converter::cmToTwip(1.00),
+                                $this->setBgColorCell($r['cacheBrutRisk'], false)
+                            )
                             ->addText(
                                 $r['cacheBrutRisk'],
                                 $this->boldFont,
@@ -3044,7 +3155,11 @@ class DeliverableGenerationService extends AbstractService
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table->addCell(Converter::cmToTwip(2.10), $this->setBgColorCell($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk()))
+                    $table
+                        ->addCell(
+                            Converter::cmToTwip(2.10),
+                            $this->setBgColorCell($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk())
+                        )
                         ->addText(
                             $recommendationRisk->getInstanceRisk()->getCacheTargetedRisk(),
                             $this->boldFont,
@@ -3777,7 +3892,14 @@ class DeliverableGenerationService extends AbstractService
             if (!empty($controlSoa['measure']->amvs) || !empty($controlSoa['measure']->rolfRisks)) {
                 if ($controlSoa['measure']->getUuid() != $previousControlId) {
                     $section->addText(
-                        _WT($controlSoa['measure']->code) . ' - ' . _WT($controlSoa['measure']->get('label' . $this->currentLangAnrIndex)),
+                        _WT(
+                            $controlSoa['measure']->code
+                        ) .
+                            ' - ' .
+                            _WT(
+                                $controlSoa['measure']->get('label' .
+                                $this->currentLangAnrIndex)
+                            ),
                         array_merge($this->boldFont, ['size' => 11])
                     );
 
@@ -3923,14 +4045,22 @@ class DeliverableGenerationService extends AbstractService
                                 $this->centerParagraph
                             );
                         if ($this->anr->showRolfBrut == 1) {
-                            $tableRiskOp->addCell(Converter::cmToTwip(5.50), $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF'))
+                            $tableRiskOp
+                                ->addCell(
+                                    Converter::cmToTwip(5.50),
+                                    $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF')
+                                )
                                 ->addText(
                                     $this->anrTranslate('Inherent risk'),
                                     $this->boldFont,
                                     $this->centerParagraph
                                 );
                         }
-                        $tableRiskOp->addCell(Converter::cmToTwip(15.00), $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF'))
+                        $tableRiskOp
+                            ->addCell(
+                                Converter::cmToTwip(15.00),
+                                $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF')
+                            )
                             ->addText(
                                 $this->anrTranslate('Net risk'),
                                 $this->boldFont,
@@ -3959,7 +4089,11 @@ class DeliverableGenerationService extends AbstractService
                                     $this->boldFont,
                                     $this->centerParagraph
                                 );
-                            $tableRiskOp->addCell(Converter::cmToTwip($sizeCellImpact), $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF'))
+                            $tableRiskOp
+                                ->addCell(
+                                    Converter::cmToTwip($sizeCellImpact),
+                                    $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
+                                )
                                 ->addText(
                                     $this->anrTranslate('Impact'),
                                     $this->boldFont,
@@ -3978,7 +4112,11 @@ class DeliverableGenerationService extends AbstractService
                                 $this->boldFont,
                                 $this->centerParagraph
                             );
-                        $tableRiskOp->addCell(Converter::cmToTwip($sizeCellImpact), $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF'))
+                        $tableRiskOp
+                            ->addCell(
+                                Converter::cmToTwip($sizeCellImpact),
+                                $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
+                            )
                             ->addText(
                                 $this->anrTranslate('Impact'),
                                 $this->boldFont,
@@ -4006,7 +4144,11 @@ class DeliverableGenerationService extends AbstractService
                             $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                                $tableRiskOp->addCell(Converter::cmToTwip(0.70), array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF']))
+                                $tableRiskOp
+                                    ->addCell(
+                                        Converter::cmToTwip(0.70),
+                                        array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                                    )
                                     ->addText(
                                         $label,
                                         $this->boldFont,
@@ -4018,7 +4160,11 @@ class DeliverableGenerationService extends AbstractService
                         $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                             $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                            $tableRiskOp->addCell(Converter::cmToTwip(0.70), array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF']))
+                            $tableRiskOp
+                                ->addCell(
+                                    Converter::cmToTwip(0.70),
+                                    array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                                )
                                 ->addText(
                                     $label,
                                     $this->boldFont,
@@ -4052,7 +4198,12 @@ class DeliverableGenerationService extends AbstractService
                         if (!$instance->getObject()->isScopeGlobal()) {
                             $path = $instance->getHierarchyString();
                         } else {
-                            $path = $instance->{'name' . $this->currentLangAnrIndex} . ' (' . $this->anrTranslate('Global') . ')';
+                            $path = $instance->{
+                                'name' .
+                                $this->currentLangAnrIndex} .
+                                ' (' .
+                                $this->anrTranslate('Global') .
+                                ')';
                         }
 
                         $tableRiskInfo->addRow(400);
@@ -4186,7 +4337,11 @@ class DeliverableGenerationService extends AbstractService
                                         $this->centerParagraph
                                     );
                             }
-                            $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['cacheBrutRisk'], false))
+                            $tableRiskOp
+                                ->addCell(
+                                    Converter::cmToTwip(1.00),
+                                    $this->setBgColorCell($r['cacheBrutRisk'], false)
+                                )
                                 ->addText(
                                     $r['cacheBrutRisk'],
                                     $this->boldFont,
@@ -4209,7 +4364,11 @@ class DeliverableGenerationService extends AbstractService
                                     $this->centerParagraph
                                 );
                         }
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['cacheNetRisk'], false))
+                        $tableRiskOp
+                            ->addCell(
+                                Converter::cmToTwip(1.00),
+                                $this->setBgColorCell($r['cacheNetRisk'], false)
+                            )
                             ->addText(
                                 $r['cacheNetRisk'],
                                 $this->boldFont,
@@ -4227,8 +4386,14 @@ class DeliverableGenerationService extends AbstractService
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                        $cacheTargetedRisk = $r['cacheTargetedRisk'] == '-' ? $r['cacheNetRisk'] : $r['cacheTargetedRisk'];
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->setBgColorCell($cacheTargetedRisk, false))
+                        $cacheTargetedRisk = $r['cacheTargetedRisk'] == '-' ?
+                            $r['cacheNetRisk'] :
+                            $r['cacheTargetedRisk'];
+                        $tableRiskOp
+                            ->addCell(
+                                Converter::cmToTwip(2.00),
+                                $this->setBgColorCell($cacheTargetedRisk, false)
+                            )
                             ->addText(
                                 $cacheTargetedRisk,
                                 $this->boldFont,
@@ -5269,7 +5434,12 @@ class DeliverableGenerationService extends AbstractService
                     }
 
                     if ($ir->getInstance()->getObject()->isScopeGlobal()) {
-                        $asset = $ir->getInstance()->{'getName' . $this->currentLangAnrIndex}() . ' (' . $this->anrTranslate('Global') . ')';
+                        $asset = $ir->getInstance()->{
+                            'getName' .
+                            $this->currentLangAnrIndex}() .
+                            ' (' .
+                            $this->anrTranslate('Global') .
+                            ')';
                         $globalObjectsUuids[] = $uniqueKey;
                     } else {
                         $asset = $ir->getInstance()->getHierarchyString();
