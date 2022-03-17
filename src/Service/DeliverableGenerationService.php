@@ -3746,17 +3746,21 @@ class DeliverableGenerationService extends AbstractService
             foreach ($controlSoa['measure']->rolfRisks as $rolfRisk) {
                 $rolfRisks[] = $rolfRisk->getId();
             }
-
-            $controlSoa['measure']->rolfRisks = $this->get('anrInstanceRiskOpService')->getOperationalRisks(
-                $this->anr->getId(),
-                null,
-                ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc'])
-            ;
-            $controlSoa['measure']->amvs = $this->get('anrInstanceRiskService')->getInstanceRisks(
-                $this->anr->getId(),
-                null,
-                ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']
-            );
+            $controlSoa['measure']->rolfRisks = [];
+            if (!empty($rolfRisks)) {
+                $controlSoa['measure']->rolfRisks = $this->get('anrInstanceRiskOpService')->getOperationalRisks(
+                    $this->anr->getId(),
+                    null,
+                    ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']
+                );
+            }
+            if (!empty($amvs)) {
+                $controlSoa['measure']->amvs = $this->get('anrInstanceRiskService')->getInstanceRisks(
+                    $this->anr->getId(),
+                    null,
+                    ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']
+                );
+            }
 
             if (!empty($controlSoa['measure']->amvs) || !empty($controlSoa['measure']->rolfRisks)) {
                 if ($controlSoa['measure']->getUuid() != $previousControlId) {
