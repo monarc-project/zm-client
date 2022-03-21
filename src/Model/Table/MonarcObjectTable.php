@@ -11,6 +11,8 @@ use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Model\Entity\RolfTagSuperClass;
 use Monarc\Core\Model\Table\MonarcObjectTable as CoreMonarcObjectTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
@@ -112,5 +114,20 @@ class MonarcObjectTable extends CoreMonarcObjectTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * @return ObjectSuperClass[]
+     */
+    public function findByAnrAndRolfTag(AnrSuperClass $anr, RolfTagSuperClass $rolfTag): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('o')
+            ->where('o.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->andWhere('o.rolfTag = :rolfTag')
+            ->setParameter('rolfTag', $rolfTag)
+            ->getQuery()
+            ->getResult();
     }
 }

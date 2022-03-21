@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\MeasureSuperClass;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
@@ -38,7 +39,7 @@ class MeasureTable extends AbstractEntityTable
             ->getResult();
     }
 
-    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Measure
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): ?MeasureSuperClass
     {
         return $this->getRepository()
             ->createQueryBuilder('m')
@@ -49,14 +50,5 @@ class MeasureTable extends AbstractEntityTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    public function saveEntity(MeasureSuperClass $measure, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($measure);
-        if ($flushAll) {
-            $em->flush();
-        }
     }
 }
