@@ -7,8 +7,6 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
-
 /**
  * Api ANR Records Export Controller
  *
@@ -37,11 +35,11 @@ class ApiAnrRecordsExportController extends ApiAnrAbstractController
             $output = $this->getService()->export($data);
 
             if (empty($data['password'])) {
-              $contentType = 'application/json; charset=utf-8';
-              $extension = '.json';
+                $contentType = 'application/json; charset=utf-8';
+                $extension = '.json';
             } else {
-              $contentType = 'text/plain; charset=utf-8';
-              $extension = '.bin';
+                $contentType = 'text/plain; charset=utf-8';
+                $extension = '.bin';
             }
 
             $this->getResponse()
@@ -55,14 +53,13 @@ class ApiAnrRecordsExportController extends ApiAnrAbstractController
                  ->setContent($output);
 
             return $this->getResponse();
-        }
-        else if ($data['export'] == "All") {
+        } elseif ($data['export'] == "All") {
             if (empty($data['password'])) {
-              $contentType = 'application/json; charset=utf-8';
-              $extension = '.json';
+                $contentType = 'application/json; charset=utf-8';
+                $extension = '.json';
             } else {
-              $contentType = 'text/plain; charset=utf-8';
-              $extension = '.bin';
+                $contentType = 'text/plain; charset=utf-8';
+                $extension = '.bin';
             }
             $anrId = (int)$this->params()->fromRoute('anrid');
             if (empty($anrId)) {

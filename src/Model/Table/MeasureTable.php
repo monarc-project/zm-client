@@ -7,9 +7,10 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\MeasureSuperClass;
+use Monarc\Core\Model\Table\MeasureTable as CoreMeasureTable;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Measure;
@@ -18,11 +19,13 @@ use Monarc\FrontOffice\Model\Entity\Measure;
  * Class MeasureTable
  * @package Monarc\FrontOffice\Model\Table
  */
-class MeasureTable extends AbstractEntityTable
+class MeasureTable extends CoreMeasureTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, Measure::class, $connectedUserService);
+        parent::__construct($dbService, $connectedUserService);
+
+        $this->entityClass = Measure::class;
     }
 
     /**
@@ -38,7 +41,7 @@ class MeasureTable extends AbstractEntityTable
             ->getResult();
     }
 
-    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Measure
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): ?MeasureSuperClass
     {
         return $this->getRepository()
             ->createQueryBuilder('m')
@@ -49,14 +52,5 @@ class MeasureTable extends AbstractEntityTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    public function saveEntity(MeasureSuperClass $measure, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($measure);
-        if ($flushAll) {
-            $em->flush();
-        }
     }
 }

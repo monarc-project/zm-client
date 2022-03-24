@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
@@ -105,12 +106,13 @@ class AnrRecommandationRiskService extends AbstractService
                     return true;
                 }
 
+                /** @var Instance $instance */
                 $instance = $this->instanceTable->getEntity($recoRisk['instance']);
                 $objId = $instance->getObject()->getUuid();
 
                 if (!isset($knownGlobObjId[$objId][$threat->getUuid()][$vulnerability->getUuid()])) {
-                    $objectCache[$objId] = $instance->object;
-                    if ($instance->object->scope == 2) { // SCOPE_GLOBAL
+                    $objectCache[$objId] = $instance->getObject();
+                    if ($objectCache[$objId]->isScopeGlobal()) {
                         $knownGlobObjId[$objId][$threat->getUuid()][$vulnerability->getUuid()] = $objId;
                     }
 
@@ -269,6 +271,8 @@ class AnrRecommandationRiskService extends AbstractService
                 }
             }
         }
+
+        $this->updateInstanceRiskRecommendationsPositions($gRisk);
 
         return $id;
     }

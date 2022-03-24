@@ -7,8 +7,6 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
-
 /**
  * Api ANR Objects Export Controller
  *
@@ -43,9 +41,10 @@ class ApiAnrObjectsExportController extends ApiAnrAbstractController
         $response->setContent($output);
 
         $headers = $response->getHeaders();
+        $filename = empty($data['filename']) ? $data['id'] : $data['filename'];
         $headers->clearHeaders()
             ->addHeaderLine('Content-Type', 'application/json; charset=utf-8')
-            ->addHeaderLine('Content-Disposition', 'attachment; filename="' . (empty($data['filename']) ? $data['id'] : $data['filename']) . '.json"');
+            ->addHeaderLine('Content-Disposition', 'attachment; filename="' . $filename . '.json"');
 
         return $this->response;
     }

@@ -64,7 +64,7 @@ class RecommandationHistoric extends AbstractEntity
     protected $instanceRiskOp;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="final", type="smallint", options={"unsigned":false, "default":1})
      */
@@ -92,7 +92,7 @@ class RecommandationHistoric extends AbstractEntity
     protected $recoDescription;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="reco_importance", type="smallint", options={"unsigned":true, "default":1})
      */
@@ -148,7 +148,7 @@ class RecommandationHistoric extends AbstractEntity
     protected $riskThreat;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="risk_threat_val", type="smallint", options={"unsigned":false, "default":-1})
      */
@@ -162,14 +162,14 @@ class RecommandationHistoric extends AbstractEntity
     protected $riskVul;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="risk_vul_val_before", type="smallint", options={"unsigned":false, "default":-1})
      */
     protected $riskVulValBefore = -1;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="risk_vul_val_after", type="smallint", options={"unsigned":false, "default":-1})
      */
@@ -183,14 +183,14 @@ class RecommandationHistoric extends AbstractEntity
     protected $riskOpDescription;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="net_prob_before", type="smallint", options={"unsigned":false, "default":-1})
      */
     protected $netProbBefore = -1;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="risk_kind_of_measure", type="smallint", options={"unsigned":false, "default":-1})
      */
@@ -211,7 +211,7 @@ class RecommandationHistoric extends AbstractEntity
     protected $riskCommentAfter;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="risk_max_risk_before", type="smallint", options={"unsigned":false, "default":-1})
      */
@@ -225,7 +225,7 @@ class RecommandationHistoric extends AbstractEntity
     protected $riskColorBefore;
 
     /**
-     * @var smallint
+     * @var int
      *
      * @ORM\Column(name="risk_max_risk_after", type="smallint", options={"unsigned":false, "default":-1})
      */

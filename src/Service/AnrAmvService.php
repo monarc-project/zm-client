@@ -40,8 +40,14 @@ class AnrAmvService extends AmvService
     /**
      * @inheritdoc
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
-    {
+    public function getList(
+        $page = 1,
+        $limit = 25,
+        $order = null,
+        $filter = null,
+        $filterAnd = null,
+        $filterJoin = null
+    ) {
         list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();
 
         return $this->get('table')->fetchAllFiltered(
@@ -203,7 +209,10 @@ class AnrAmvService extends AmvService
         foreach ($objects as $object) {
             /** @var InstanceTable $instanceTable */
             $instanceTable = $this->get('instanceTable');
-            $instances = $instanceTable->getEntityByFields(['anr' => $data['anr'], 'object' => ['anr' => $data['anr'], 'uuid' => $object->getUuid()]]);
+            $instances = $instanceTable->getEntityByFields([
+                'anr' => $data['anr'],
+                'object' => ['anr' => $data['anr'], 'uuid' => $object->getUuid()]
+            ]);
             $i = 1;
             $nbInstances = count($instances);
             foreach ($instances as $instance) {
@@ -211,12 +220,12 @@ class AnrAmvService extends AmvService
 
                 $instanceRisk->setLanguage($this->getLanguage());
                 $instanceRisk->setDbAdapter($this->get('table')->getDb());
-                $instanceRisk->set('anr', $this->get('anrTable')->getEntity($data['anr']));
-                $instanceRisk->set('amv', $amv);
-                $instanceRisk->set('asset', $amv->getAsset());
-                $instanceRisk->set('instance', $instance);
-                $instanceRisk->set('threat', $amv->getThreat());
-                $instanceRisk->set('vulnerability', $amv->getVulnerability());
+                $instanceRisk->setAnr($this->get('anrTable')->getEntity($data['anr']));
+                $instanceRisk->setAmv($amv);
+                $instanceRisk->setAsset($amv->getAsset());
+                $instanceRisk->setInstance($instance);
+                $instanceRisk->setThreat($amv->getThreat());
+                $instanceRisk->setVulnerability($amv->getVulnerability());
 
                 $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
                 $i++;

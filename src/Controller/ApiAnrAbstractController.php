@@ -218,9 +218,9 @@ abstract class ApiAnrAbstractController extends AbstractController
     /**
      * Function who put in all records of an array the anr_id
      *
-     * @param Array  list of uuid for which one we want a composite id [uuid,anrid]
+     * @param array $input list of uuid for which one we want a composite id [uuid,anrid]
      *
-     * @return Array The correct list of composite id
+     * @return array The correct list of composite id
      */
     public function addAnrId($input)
     {
