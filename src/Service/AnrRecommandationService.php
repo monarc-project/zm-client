@@ -242,16 +242,11 @@ class AnrRecommandationService extends AbstractService
                     }
                     break;
             }
-
             $this->recommendationTable->saveEntity($recommendation->setPosition($newPosition));
-
         } elseif ($isImportanceChanged && !$recommendation->getRecommendationRisks()->isEmpty()) {
-            foreach ($recommendation->getRecommendationRisks() as $recommendationRisk) {
-                $linkedRisk = $recommendationRisk->getInstanceRisk() ?? $recommendationRisk->getInstanceRiskOp();
-                $this->updateInstanceRiskRecommendationsPositions($linkedRisk);
-
-                break;
-            }
+            $recommendationRisk = $recommendation->getRecommendationRisks()->first();
+            $linkedRisk = $recommendationRisk->getInstanceRisk() ?? $recommendationRisk->getInstanceRiskOp();
+            $this->updateInstanceRiskRecommendationsPositions($linkedRisk);
         }
     }
 

@@ -11,6 +11,7 @@ use Monarc\Core\Controller\AbstractController;
 use Monarc\Core\Exception\Exception;
 use Ramsey\Uuid\Uuid;
 use Laminas\View\Model\JsonModel;
+use function in_array;
 
 /**
  * Abstract controller for all ANR-based routes. Allows easy permissions filtering for routes below this one.
@@ -137,8 +138,14 @@ abstract class ApiAnrAbstractController extends AbstractController
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
-        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(
+            \get_class($this->getService()->get('entity'))
+        )->getIdentifierFieldNames();
+        if (\count($identifier) > 1
+            && in_array('anr', $identifier)
+            && in_array('uuid', $identifier)
+            && !is_array($id)
+        ) {
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
         if (empty($anrId)) {
@@ -157,8 +164,14 @@ abstract class ApiAnrAbstractController extends AbstractController
     public function patch($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
-        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(
+            \get_class($this->getService()->get('entity'))
+        )->getIdentifierFieldNames();
+        if (\count($identifier) > 1
+            && in_array('anr', $identifier)
+            && in_array('uuid', $identifier)
+            && !is_array($id)
+        ) {
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
 
@@ -177,9 +190,15 @@ abstract class ApiAnrAbstractController extends AbstractController
      */
     public function delete($id)
     {
-        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(
+            \get_class($this->getService()->get('entity'))
+        )->getIdentifierFieldNames();
         $anrId = (int)$this->params()->fromRoute('anrid');
-        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+        if (\count($identifier) > 1
+            && in_array('anr', $identifier)
+            && in_array('uuid', $identifier)
+            && !is_array($id)
+        ) {
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
 

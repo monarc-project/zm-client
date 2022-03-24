@@ -77,8 +77,9 @@ class AnrRecommandationRiskService extends AbstractService
 
         foreach ($recosRisks as $key => $recoRisk) {
             if (!empty($recoRisk['recommandation'])) {
-                if (empty($recoRisk['recommandation']->duedate) || $recoRisk['recommandation']->duedate == '1970-01-01 00:00:00') {
-                } else {
+                if (!empty($recoRisk['recommandation']->duedate)
+                    && $recoRisk['recommandation']->duedate !== '1970-01-01 00:00:00'
+                ) {
                     if ($recoRisk['recommandation']->duedate instanceof \DateTime) {
                         $recoRisk['recommandation']->duedate = $recoRisk['recommandation']->duedate->getTimestamp();
                     } else {
@@ -240,10 +241,10 @@ class AnrRecommandationRiskService extends AbstractService
             throw new Exception('Risk already link to this recommendation', 412);
         }
 
+        /** @var InstanceRisk $gRisk */
         $gRisk = $tableUsed->getEntity($data['risk']);
         $id = $this->createRecommandationRisk($data, $gRisk);
-        if ($gRisk->getInstance()->getObject()->get('scope') == MonarcObject::SCOPE_GLOBAL && !$data['op']) {
-
+        if ($gRisk->getInstance()->getObject()->isScopeGlobal() && !$data['op']) {
             $instances = $this->instanceTable->getEntityByFields([
                 'object' => [
                     'anr' => $gRisk->anr->id,
@@ -261,7 +262,10 @@ class AnrRecommandationRiskService extends AbstractService
                 $brothers = $tableUsed->getEntityByFields([
                     'asset' => ['anr' => $gRisk->getAnr()->getId(), 'uuid' => $gRisk->getAsset()->getUuid()],
                     'threat' => ['anr' => $gRisk->getAnr()->getId(), 'uuid' => $gRisk->getThreat()->getUuid()],
-                    'vulnerability' => ['anr' => $gRisk->getAnr()->getId(), 'uuid' => $gRisk->getVulnerability()->getUuid()],
+                    'vulnerability' => [
+                        'anr' => $gRisk->getAnr()->getId(),
+                        'uuid' => $gRisk->getVulnerability()->getUuid()
+                    ],
                     'instance' => ['op' => 'IN', 'value' => $instanceIds],
                     'anr' => $gRisk->getAnr()->getId()
                 ]);
