@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\FrontOffice\Model\Entity\Amv;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service;
 
 /**

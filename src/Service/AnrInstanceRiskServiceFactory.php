@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Table;
 
 /**
  * Proxy factory class to instantiate Monarc\Core's InstanceRiskService using Monarc\FrontOffice's services
@@ -32,7 +32,6 @@ class AnrInstanceRiskServiceFactory extends AbstractServiceFactory
         'monarcObjectTable' => Table\MonarcObjectTable::class,
         'scaleTable' => Table\ScaleTable::class,
         'threatTable' => Table\ThreatTable::class,
-        'vulnerabilityTable' => Table\VulnerabilityTable::class,
         'recommendationTable' => Table\RecommandationTable::class,
         'recommendationRiskTable' => Table\RecommandationRiskTable::class,
         'translateService' => TranslateService::class,

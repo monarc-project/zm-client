@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
  * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
@@ -16,10 +16,6 @@ use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Table;
 
-/**
- * Factory class attached to AnrInstanceService
- * @package Monarc\FrontOffice\Service
- */
 class AnrInstanceServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
@@ -53,7 +49,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
 
         // Export Services
         'objectExportService' => ObjectExportService::class,
-        'amvService' => AmvService::class,
+        'amvService' => AnrAmvService::class,
     ];
 
     // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.

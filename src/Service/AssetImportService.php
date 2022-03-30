@@ -24,7 +24,7 @@ use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
 use Monarc\FrontOffice\Model\Table\ThemeTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
-use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
+use Monarc\FrontOffice\Table\VulnerabilityTable;
 
 class AssetImportService
 {

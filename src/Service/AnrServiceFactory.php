@@ -7,15 +7,12 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Table as CoreTable;
+use Monarc\Core\Table as CoreTable;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Service\AnrInstanceService;
-use Monarc\FrontOffice\Service\AnrRecordService;
-use Monarc\FrontOffice\Service\AnrRecordProcessorService;
 
 /**
  * Factory class attached to AnrService

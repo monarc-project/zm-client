@@ -17,15 +17,9 @@ use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
 use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
-use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
+use Monarc\FrontOffice\Table\VulnerabilityTable;
 use Ramsey\Uuid\Uuid;
 
-/**
- * This class is the service that handles AMV links in use within an ANR.
- * @see \Monarc\FrontOffice\Model\Entity\Amv
- * @see \Monarc\FrontOffice\Model\Table\AmvTable
- * @package Monarc\FrontOffice\Service
- */
 class AnrAmvService extends AmvService
 {
     protected $userAnrTable;

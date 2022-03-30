@@ -58,7 +58,6 @@ use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\InterviewTable;
@@ -82,7 +81,7 @@ use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Model\Table\ThemeTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
 use Monarc\FrontOffice\Table\TranslationTable;
-use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
+use Monarc\FrontOffice\Table\VulnerabilityTable;
 use Ramsey\Uuid\Uuid;
 
 class InstanceImportService
@@ -94,8 +93,6 @@ class InstanceImportService
     private array $cachedData = [];
 
     private int $currentAnalyseMaxRecommendationPosition;
-
-    private int $initialAnalyseMaxRecommendationPosition;
 
     private int $currentMaxInstancePosition;
 
@@ -173,8 +170,6 @@ class InstanceImportService
 
     private OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
 
-    private InstanceRiskOwnerTable $instanceRiskOwnerTable;
-
     private string $importType;
 
     public function __construct(
@@ -212,7 +207,6 @@ class InstanceImportService
         OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
-        InstanceRiskOwnerTable $instanceRiskOwnerTable,
         ConnectedUserService $connectedUserService,
         TranslationTable $translationTable,
         ConfigService $configService
@@ -254,12 +248,11 @@ class InstanceImportService
         $this->translationTable = $translationTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
-        $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
     }
 
     /**
-     *  Available import modes: 'merge', which will update the existing instances using the file's data, or 'duplicate' which
-     * will create a new instance using the data.
+     * Available import modes: 'merge', which will update the existing instances using the file's data,
+     * or 'duplicate', which will create a new instance using the data.
      *
      * @param int $anrId The ANR ID
      * @param array $data The data that has been posted to the API
@@ -310,7 +303,9 @@ class InstanceImportService
                     $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
                     if ($file === false) {
                         // Support legacy export which were base64 encoded.
-                        $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                        $file = json_decode(
+                            trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true
+                        );
                     }
                 }
 
@@ -339,7 +334,7 @@ class InstanceImportService
      *
      * @param array $data The instance data
      * @param Anr $anr The target ANR
-     * @param null|InstanceSuperClass $parentInstance The parent instance, which should be imported or null if it is root.
+     * @param null|InstanceSuperClass $parentInstance The parent instance, which should be imported, null if it's root.
      * @param string $modeImport Import mode, either 'merge' or 'duplicate'
      *
      * @return array|bool An array of created instances IDs, or false in case of error
@@ -358,8 +353,7 @@ class InstanceImportService
 
         $this->setAndValidateMonarcVersion($data);
 
-        $this->initialAnalyseMaxRecommendationPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
-        $this->currentAnalyseMaxRecommendationPosition = $this->initialAnalyseMaxRecommendationPosition;
+        $this->currentAnalyseMaxRecommendationPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
         $this->currentMaxInstancePosition = $this->instanceTable->getMaxPositionByAnrAndParent($anr, $parentInstance);
 
         $result = false;
@@ -574,7 +568,8 @@ class InstanceImportService
                                 }
                                 $questionChoicesIds = [];
                                 foreach ($originQuestionChoices as $originQuestionChoice) {
-                                    $chosenQuestionLabel = $data['method']['questionChoice'][$originQuestionChoice][$labelKey];
+                                    $chosenQuestionLabel = $data['method']['questionChoice'][$originQuestionChoice]
+                                    [$labelKey];
                                     foreach ($questionChoices as $questionChoice) {
                                         if ($questionChoice->get($labelKey) === $chosenQuestionLabel) {
                                             $questionChoicesIds[] = $questionChoice->getId();
@@ -596,7 +591,8 @@ class InstanceImportService
 
             /*
              * Process the evaluation of threats.
-             * TODO: we process all the threats in themes in AssetImportService, might be we can reuse the data from there.
+             * TODO: we process all the threats in themes in AssetImportService,
+             * might be we can reuse the data from there.
              */
             if (!empty($data['method']['threats'])) {
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
@@ -1385,8 +1381,8 @@ class InstanceImportService
                         /*
                          * Unfortunately we don't add "themes" on the same level as "risks" and "threats",
                          * but only under "asset".
-                         * TODO: we should add theme linked to the threat inside of the threat object data when export later on.
-                         * after we can set it $threat->setTheme($theme);
+                         * TODO: we should add theme linked to the threat inside of the threat object data
+                         * when export later on. After we can set it $threat->setTheme($theme);
                          */
 
                         $this->threatTable->saveEntity($threat, false);
@@ -1520,7 +1516,8 @@ class InstanceImportService
                         if (strcmp($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) !== 0
                             && strpos($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) === false
                         ) {
-                            $dataUpdate['comment'] = $instanceRiskBrothers->getComment() . "\n\n" . $instanceRisk->getComment(); // Merge comments
+                            $dataUpdate['comment'] = $instanceRiskBrothers->getComment() . "\n\n"
+                                . $instanceRisk->getComment(); // Merge comments
                         } else {
                             $dataUpdate['comment'] = $instanceRiskBrothers->getComment();
                         }
@@ -1589,7 +1586,10 @@ class InstanceImportService
                                                 ->setRecommandation($recommendation)
                                                 ->setCreator($this->connectedUser->getEmail());
 
-                                            $this->recommendationRiskTable->saveEntity($recommendationRiskBrother, false);
+                                            $this->recommendationRiskTable->saveEntity(
+                                                $recommendationRiskBrother,
+                                                false
+                                            );
                                         }
                                     }
                                 }

@@ -8,14 +8,9 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractControllerFactory;
+use Monarc\FrontOffice\Service\AnrVulnerabilityService;
 
-/**
- * Api Anr Vulnerabilities Controller Factory
- *
- * Class ApiAnrVulnerabilitiesControllerFactory
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrVulnerabilitiesControllerFactory extends AbstractControllerFactory
 {
-    protected $serviceName = 'Monarc\FrontOffice\Service\AnrVulnerabilityService';
+    protected $serviceName = AnrVulnerabilityService::class;
 }
