@@ -7,7 +7,10 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Doctrine\ORM\EntityNotFoundException;
+use Doctrine\ORM\ORMException;
 use Monarc\Core\Model\Entity\AmvSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Service\AmvService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
@@ -48,7 +51,7 @@ class AnrAmvService extends AmvService
         $filterAnd = null,
         $filterJoin = null
     ) {
-        list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();
+        [$filterJoin, $filterLeft, $filtersCol] = $this->get('entity')->getFiltersForService();
 
         return $this->get('table')->fetchAllFiltered(
             array_keys($this->get('entity')->getJsonArray()),
@@ -67,7 +70,7 @@ class AnrAmvService extends AmvService
      */
     public function getFilteredCount($filter = null, $filterAnd = null)
     {
-        list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();
+        [$filterJoin, $filterLeft, $filtersCol] = $this->get('entity')->getFiltersForService();
 
         return $this->get('table')->countFiltered(
             $this->parseFrontendFilter($filter, $filtersCol),
@@ -233,6 +236,34 @@ class AnrAmvService extends AmvService
         }
 
         return $id;
+    }
+
+    /**
+     * @param array $id
+     *
+     * @throws EntityNotFoundException|ORMException
+     */
+    public function delete($id)
+    {
+        /** @var InstanceRiskTable $instanceRiskTable */
+        $instanceRiskTable = $this->get('instanceRiskTable');
+        /** @var AmvTable $amvTable */
+        $amvTable = $this->get('amvTable');
+
+        $amv = $amvTable->findByUuidAndAnrId($id['uuid'], $id['anr']);
+        foreach ($amv->getInstanceRisks() as $instanceRisk) {
+            $instanceRisk->setAmv(null)
+                ->setSpecific(InstanceRiskSuperClass::TYPE_SPECIFIC)
+                ->setUpdater($amvTable->getConnectedUser()->getEmail());
+
+            $instanceRiskTable->saveEntity($instanceRisk);
+
+            // TODO: remove it when double fields relation is removed.
+            $instanceRiskTable->getDb()->getEntityManager()->refresh($instanceRisk);
+            $instanceRiskTable->saveEntity($instanceRisk->setAnr($amv->getAnr()));
+        }
+
+        parent::delete($id);
     }
 
     protected function isThreatChanged(array $data, AmvSuperClass $amv): bool
