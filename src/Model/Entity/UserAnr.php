@@ -100,6 +100,11 @@ class UserAnr extends AbstractEntity
         return $this;
     }
 
+    public function hasWriteAccess(): bool
+    {
+        return $this->rwd === 1;
+    }
+
     public function getInputFilter($partial = false)
     {
         if (!$this->inputFilter) {

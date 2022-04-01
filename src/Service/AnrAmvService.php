@@ -15,6 +15,7 @@ use Monarc\Core\Service\AmvService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Table\AmvTable;
+use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
@@ -251,6 +252,52 @@ class AnrAmvService extends AmvService
         $amvTable = $this->get('amvTable');
 
         $amv = $amvTable->findByUuidAndAnrId($id['uuid'], $id['anr']);
+        $this->resetInstanceRisksRelation($amv, $amvTable, $instanceRiskTable);
+
+        parent::delete($id);
+    }
+
+    public function deleteListFromAnr($data, $anrId = null)
+    {
+        /** @var AnrTable $anrTable */
+        $anrTable = $this->get('anrTable');
+        if ($anrId !== null) {
+            $anr = $anrTable->findById($anrId);
+
+            $this->validateAnrPermissions($anr, $data);
+        }
+
+        /** @var InstanceRiskTable $instanceRiskTable */
+        $instanceRiskTable = $this->get('instanceRiskTable');
+        /** @var AmvTable $amvTable */
+        $amvTable = $this->get('amvTable');
+
+        foreach ($data as $amvId) {
+            $amv = $amvTable->findByUuidAndAnrId($amvId['uuid'], $amvId['anr']);
+            $this->resetInstanceRisksRelation($amv, $amvTable, $instanceRiskTable);
+        }
+
+        return $this->get('table')->deleteList($data);
+    }
+
+    protected function isThreatChanged(array $data, AmvSuperClass $amv): bool
+    {
+        return $amv->getThreat()->getUuid() !== $data['threat'];
+    }
+
+    protected function isVulnerabilityChanged(array $data, AmvSuperClass $amv): bool
+    {
+        return $amv->getVulnerability()->getUuid() !== $data['vulnerability'];
+    }
+
+    /**
+     * @throws ORMException
+     */
+    private function resetInstanceRisksRelation(
+        Amv $amv,
+        AmvTable $amvTable,
+        InstanceRiskTable $instanceRiskTable
+    ): void {
         foreach ($amv->getInstanceRisks() as $instanceRisk) {
             $instanceRisk->setAmv(null)
                 ->setSpecific(InstanceRiskSuperClass::TYPE_SPECIFIC)
@@ -262,17 +309,5 @@ class AnrAmvService extends AmvService
             $instanceRiskTable->getDb()->getEntityManager()->refresh($instanceRisk);
             $instanceRiskTable->saveEntity($instanceRisk->setAnr($amv->getAnr()));
         }
-
-        parent::delete($id);
-    }
-
-    protected function isThreatChanged(array $data, AmvSuperClass $amv): bool
-    {
-        return $amv->getThreat()->getUuid() !== $data['threat'];
-    }
-
-    protected function isVulnerabilityChanged(array $data, AmvSuperClass $amv): bool
-    {
-        return $amv->getVulnerability()->getUuid() !== $data['vulnerability'];
     }
 }
