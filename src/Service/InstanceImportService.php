@@ -963,7 +963,7 @@ class InstanceImportService
      * @param int $maxdest The target max bound
      * @param int $defaultvalue
      *
-     * @return int|mixed The approximated value
+     * @return int The approximated value
      */
     private function approximate(
         int $value,
@@ -1362,10 +1362,10 @@ class InstanceImportService
                             ->setCode($threatData['code'])
                             ->setLabels($threatData)
                             ->setDescriptions($threatData)
-                            ->setMode($threatData['mode'])
-                            ->setStatus($threatData['status'])
-                            ->setTrend($threatData['trend'])
-                            ->setQualification($threatData['qualification'])
+                            ->setMode((int)$threatData['mode'])
+                            ->setStatus((int)$threatData['status'])
+                            ->setTrend((int)$threatData['trend'])
+                            ->setQualification((int)$threatData['qualification'])
                             ->setComment($threatData['comment'] ?? '')
                             ->setCreator($this->connectedUser->getEmail());
                         if (isset($threatData['c'])) {

@@ -85,6 +85,26 @@ class Amv extends AmvSuperClass
      */
     protected $measures;
 
+    /**
+     * @var InstanceRisk[]|ArrayCollection
+     *
+     * @ORM\OneToMany(targetEntity="InstanceRisk", mappedBy="amv")
+     */
+    protected $instanceRisks;
+
+    public function __construct($obj = null)
+    {
+        $this->instanceRisks = new ArrayCollection();
+        $this->measures = new ArrayCollection();
+
+        parent::__construct($obj);
+    }
+
+    public function getInstanceRisks()
+    {
+        return $this->instanceRisks;
+    }
+
     public function getInputFilter($partial = false)
     {
         if (!$this->inputFilter) {

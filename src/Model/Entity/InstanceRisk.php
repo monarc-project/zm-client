@@ -29,9 +29,9 @@ class InstanceRisk extends InstanceRiskSuperClass
     /**
      * @var Amv
      *
-     * @ORM\ManyToOne(targetEntity="Amv", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Amv", inversedBy="instanceRisks", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid", nullable=true),
+     *   @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid", nullable=true, onDelete="SET NULL"),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
