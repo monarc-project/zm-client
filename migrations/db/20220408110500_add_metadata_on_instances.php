@@ -24,7 +24,7 @@ class AddMetadataOnInstances extends AbstractMigration
         $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))->update();
 
         //create the link between instances and metadata
-        $table = $this->table('instances_metadata');
+        $table = $this->table('instances_metadatas');
         $table
             ->addColumn('instance_id', 'integer', array('null' => true, 'signed' => false))
             ->addColumn('metadata_id', 'integer', array('null' => true, 'signed' => false))
