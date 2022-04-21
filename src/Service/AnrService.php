@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrMetadatasOnInstancesSuperClass;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\Model;
@@ -23,6 +24,7 @@ use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Model\Table\AnrMetadatasOnInstancesTable as CoreAnrMetadatasOnInstancesTable;
 use Monarc\Core\Model\Table\AnrObjectCategoryTable as CoreAnrObjectCategoryTable;
 use Monarc\Core\Model\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
@@ -36,6 +38,7 @@ use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -75,6 +78,7 @@ use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
+use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
 use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
@@ -140,6 +144,7 @@ class AnrService extends AbstractService
     protected $operationalRiskScaleTable;
     protected $operationalRiskScaleCommentTable;
     protected $translationTable;
+    protected $anrMetadatasOnInstancesTable;
 
 
     protected $amvCliTable;
@@ -190,6 +195,7 @@ class AnrService extends AbstractService
     protected $operationalInstanceRiskScaleCliTable;
     protected $instanceRiskOwnerCliTable;
     protected $translationCliTable;
+    protected $anrMetadatasOnInstancesCliTable;
 
     protected $instanceService;
     protected $recordService;
@@ -829,7 +835,7 @@ class AnrService extends AbstractService
                 $newRolfTag->set('id', null);
                 $newRolfTag->setAnr($newAnr);
                 $newRolfTag->set('risks', []);
-                $this->get('rolfTagCliTable')->save($newRolfTag,false);
+                $this->get('rolfTagCliTable')->save($newRolfTag, false);
                 $rolfTagsNewIds[$rolfTag->id] = $newRolfTag;
             }
 
@@ -854,15 +860,16 @@ class AnrService extends AbstractService
                 //link the measures
 
                 foreach ($rolfRisk->measures as $m) {
-                    try{
+                    try {
                         $measure = $this->get('measureCliTable')->getEntity([
                             'anr' => $newAnr->getId(),
                             'uuid' => $m->getUuid()
                         ]);
                         $measure->addOpRisk($newRolfRisk);
-                    } catch (Exception $e) { } //needed if the measures don't exist in the client ANR
+                    } catch (Exception $e) {
+                    } //needed if the measures don't exist in the client ANR
                 }
-                $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
+                $this->get('rolfRiskCliTable')->save($newRolfRisk, false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             }
 
@@ -983,6 +990,14 @@ class AnrService extends AbstractService
                 $newObjectObject->setChild($objectsNewIds[$objectObject->getChild()->getUuid()]);
                 $this->get('objectObjectCliTable')->save($newObjectObject, false);
             }
+
+            //duplicate AnrMetadatasOnInstances
+            $anrMetadatasOnInstancesOldIdsToNewObjectsMap = $this->createAnrMetadatasOnInstancesFromSource(
+                $newAnr,
+                $anr,
+                $source,
+                $connectedUser
+            );
 
             // duplicate instances
             $instancesNewIds = [];
@@ -1436,7 +1451,6 @@ class AnrService extends AbstractService
             $this->get('table')->getDb()->flush();
 
             $this->setUserCurrentAnr($newAnr->getId());
-
         } catch (\Exception $e) {
             if (!empty($newAnr)) {
                 $anrCliTable->deleteEntity($newAnr);
@@ -1540,7 +1554,8 @@ class AnrService extends AbstractService
             /** @var StatsAnrService $statsAnrService */
             $statsAnrService = $this->get('statsAnrService');
             $statsAnrService->deleteStatsForAnr($anr->getUuid());
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return $anrTable->delete($id);
     }
@@ -1976,5 +1991,52 @@ class AnrService extends AbstractService
         $configService = $this->get('configService');
 
         return strtolower($configService->getLanguageCodes()[$anr->getLanguage()]);
+    }
+
+    private function createAnrMetadatasOnInstancesFromSource(
+        Anr $newAnr,
+        AnrSuperClass $sourceAnr,
+        string $sourceName,
+        UserSuperClass $connectedUser
+    ): array {
+
+        $anrMetadatasOnInstancesOldIdsToNewObjectsMap = [];
+
+        /** @var AnrMetadatasOnInstancesCliTable $anrMetadatasOnInstancesCliTable */
+        $anrMetadatasOnInstancesCliTable = $this->get('anrMetadatasOnInstancesCliTable');
+
+        /** @var AnrMetadatasOnInstancesCliTable|CoreAnrMetadatasOnInstancesCliTable $scaleTable */
+        $anrMetadatasOnInstancesTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('anrMetadatasOnInstancesTable')
+            : $anrMetadatasOnInstancesCliTable;
+
+        /** @var TranslationTable|CoreTranslationTable $sourceTranslationTable */
+        $sourceTranslationTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('translationTable')
+            : $this->get('translationCliTable');
+
+        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
+
+        $oldAnrMetadatasOnInstances = $anrMetadatasOnInstancesTable->findByAnr($sourceAnr);
+        foreach ($oldAnrMetadatasOnInstances as $oldAnrMetadata) {
+            $newAnrMetadataOnInstance = (new AnrMetadatasOnInstances())
+                ->setAnr($newAnr)
+                ->setLabelTranslationKey($oldAnrMetadata->getLabelTranslationKey())
+                ->setCreator($connectedUser->getEmail());
+            $anrMetadatasOnInstancesCliTable->save($newAnrMetadataOnInstance, false);
+            $anrMetadatasOnInstancesOldIdsToNewObjectsMap[$oldAnrMetadata->getId()] = $newAnrMetadataOnInstance;
+        }
+
+        $sourceTranslations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $sourceAnr,
+            [Translation::ANR_METADATAS_ON_INSTANCES],
+            $anrLanguageCode
+        );
+
+        foreach ($sourceTranslations as $sourceTranslation) {
+            $this->createTranslationFromSource($newAnr, $sourceTranslation, $connectedUser);
+        }
+
+        return $anrMetadatasOnInstancesOldIdsToNewObjectsMap;
     }
 }

@@ -1205,6 +1205,7 @@ return [
             Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\TranslationTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
+            Table\AnrMetadatasOnInstancesTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1320,6 +1321,7 @@ return [
                     $container->get(ConfigService::class),
                 );
             },
+            Service\AnrMetadatasOnInstancesService::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,

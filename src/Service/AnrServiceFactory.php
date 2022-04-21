@@ -56,6 +56,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'operationalRiskScaleTable' => CoreTable\OperationalRiskScaleTable::class,
         'operationalRiskScaleCommentTable' => CoreTable\OperationalRiskScaleCommentTable::class,
         'translationTable' => CoreTable\TranslationTable::class,
+        'anrMetadatasOnInstancesTable' => CoreTable\AnrMetadatasOnInstancesTable::class,
 
 
         //fo
@@ -106,6 +107,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'operationalInstanceRiskScaleCliTable' => Table\OperationalInstanceRiskScaleTable::class,
         'instanceRiskOwnerCliTable' => Table\InstanceRiskOwnerTable::class,
         'translationCliTable' => Table\TranslationTable::class,
+        'anrMetadatasOnInstancesCliTable' => Table\AnrMetadatasOnInstancesTable::class,
 
         // export
         'instanceService' => AnrInstanceService::class,
