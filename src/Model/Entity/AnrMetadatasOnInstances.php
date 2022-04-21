@@ -18,4 +18,22 @@ use Monarc\Core\Model\Entity\AnrMetadatasOnInstancesSuperClass;
  */
 class AnrMetadatasOnInstances extends AnrMetadatasOnInstancesSuperClass
 {
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="is_deletable", type="smallint", options={"unsigned":true, "default":1})
+     */
+    protected $isDeletable = 0;
+
+    public function isDeletable(): bool
+    {
+        return (bool)$this->isDeletable;
+    }
+
+    public function setIsDeletable(bool $isDeletable): self
+    {
+        $this->isDeletable = (int)$isDeletable;
+
+        return $this;
+    }
 }

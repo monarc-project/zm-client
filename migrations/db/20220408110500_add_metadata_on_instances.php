@@ -1,6 +1,7 @@
 <?php
 
 use Phinx\Migration\AbstractMigration;
+use Phinx\Db\Adapter\MysqlAdapter;
 
 class AddMetadataOnInstances extends AbstractMigration
 {
@@ -14,6 +15,7 @@ class AddMetadataOnInstances extends AbstractMigration
         $table
             ->addColumn('anr_id', 'integer', array('null' => true, 'signed' => false))
             ->addColumn('label_translation_key', 'string', array('null' => true, 'limit' => 255))
+            ->addColumn('is_deletable', 'integer', array('null' => true, 'default' => '1', 'limit' => MysqlAdapter::INT_TINY))
             ->addColumn('creator', 'string', array('null' => true, 'limit' => 255))
             ->addColumn('created_at', 'datetime', array('null' => true))
             ->addColumn('updater', 'string', array('null' => true, 'limit' => 255))

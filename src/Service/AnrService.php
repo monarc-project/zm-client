@@ -2022,6 +2022,7 @@ class AnrService extends AbstractService
             $newAnrMetadataOnInstance = (new AnrMetadatasOnInstances())
                 ->setAnr($newAnr)
                 ->setLabelTranslationKey($oldAnrMetadata->getLabelTranslationKey())
+                ->setIsDeletable($sourceName === MonarcObject::SOURCE_COMMON ? false : $oldAnrMetadata->isDeletable())
                 ->setCreator($connectedUser->getEmail());
             $anrMetadatasOnInstancesCliTable->save($newAnrMetadataOnInstance, false);
             $anrMetadatasOnInstancesOldIdsToNewObjectsMap[$oldAnrMetadata->getId()] = $newAnrMetadataOnInstance;
