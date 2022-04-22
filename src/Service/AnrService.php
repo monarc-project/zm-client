@@ -39,6 +39,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
+use Monarc\FrontOffice\Model\Entity\InstancesMetadatas;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -79,6 +80,7 @@ use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
+use Monarc\FrontOffice\Model\Table\InstancesMetadatasTable;
 use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
@@ -196,6 +198,7 @@ class AnrService extends AbstractService
     protected $instanceRiskOwnerCliTable;
     protected $translationCliTable;
     protected $anrMetadatasOnInstancesCliTable;
+    protected $InstancesMetadatasCliTable;
 
     protected $instanceService;
     protected $recordService;
@@ -1006,7 +1009,7 @@ class AnrService extends AbstractService
                 ? $this->get('instanceTable')
                 : $this->get('instanceCliTable');
             $instances = $instanceTable->getEntityByFields(['anr' => $anr->getId()], ['parent' => 'ASC']);
-            foreach ($instances as $instance) {
+            foreach ($instances as $instance) { //ici
                 $newInstance = new Instance($instance);
                 $newInstance->set('id', null);
                 $newInstance->setAnr($newAnr);

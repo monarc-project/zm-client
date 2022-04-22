@@ -1206,6 +1206,7 @@ return [
             Table\TranslationTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
             Table\AnrMetadatasOnInstancesTable::class => ClientEntityManagerFactory::class,
+            Table\InstancesMetadatasTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1322,6 +1323,7 @@ return [
                 );
             },
             Service\AnrMetadatasOnInstancesService::class => AutowireFactory::class,
+            Service\InstancesMetadatasService::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,

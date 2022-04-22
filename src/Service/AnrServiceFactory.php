@@ -108,6 +108,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'instanceRiskOwnerCliTable' => Table\InstanceRiskOwnerTable::class,
         'translationCliTable' => Table\TranslationTable::class,
         'anrMetadatasOnInstancesCliTable' => Table\AnrMetadatasOnInstancesTable::class,
+        'InstancesMetadatasCliTable' => Table\InstancesMetadatasTable::class,
 
         // export
         'instanceService' => AnrInstanceService::class,
