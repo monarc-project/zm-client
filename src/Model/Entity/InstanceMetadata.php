@@ -20,7 +20,7 @@ use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
  * })
  * @ORM\Entity
  */
-class InstancesMetadatas
+class InstanceMetadata
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
@@ -69,14 +69,14 @@ class InstancesMetadatas
         return $this->id;
     }
 
-    public function getAnr(): AnrSuperClass
+    public function getInstance(): Instance
     {
-        return $this->anr;
+        return $this->instance;
     }
 
-    public function setAnr(AnrSuperClass $anr): self
+    public function setInstance(Instance $instance): self
     {
-        $this->anr = $anr;
+        $this->instance = $instance;
 
         return $this;
     }

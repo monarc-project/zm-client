@@ -8,12 +8,12 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\FrontOffice\Model\Entity\InstancesMetadatas;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\Core\Model\Table\AbstractTable;
 
-class InstancesMetadatasTable extends AbstractTable
+class InstanceMetadataTable extends AbstractTable
 {
-    public function __construct(EntityManager $entityManager, string $entityName = InstancesMetadatas::class)
+    public function __construct(EntityManager $entityManager, string $entityName = InstanceMetadata::class)
     {
         parent::__construct($entityManager, $entityName);
     }

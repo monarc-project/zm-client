@@ -39,7 +39,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
-use Monarc\FrontOffice\Model\Entity\InstancesMetadatas;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -80,7 +80,7 @@ use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
-use Monarc\FrontOffice\Model\Table\InstancesMetadatasTable;
+use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
 use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
@@ -110,6 +110,8 @@ use Monarc\FrontOffice\Model\Entity\Record;
 use Monarc\FrontOffice\Model\Entity\RecordRecipient;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Throwable;
+
+use Ramsey\Uuid\Uuid;
 
 /**
  * This class is the service that handles ANR CRUD operations, and various actions on them.
@@ -198,7 +200,7 @@ class AnrService extends AbstractService
     protected $instanceRiskOwnerCliTable;
     protected $translationCliTable;
     protected $anrMetadatasOnInstancesCliTable;
-    protected $InstancesMetadatasCliTable;
+    protected $instanceMetadataCliTable;
 
     protected $instanceService;
     protected $recordService;
@@ -1023,6 +1025,14 @@ class AnrService extends AbstractService
                  */
                 $newInstance->resetInstanceRisks();
                 $newInstance->resetInstanceConsequences();
+                $this->createInstanceMetadatasFromSource(
+                    $source,
+                    $connectedUser,
+                    $newInstance,
+                    $newAnr,
+                    $anrMetadatasOnInstancesOldIdsToNewObjectsMap
+                );
+
                 $this->get('instanceCliTable')->save($newInstance, false);
                 $instancesNewIds[$instance->id] = $newInstance;
             }
@@ -2042,5 +2052,39 @@ class AnrService extends AbstractService
         }
 
         return $anrMetadatasOnInstancesOldIdsToNewObjectsMap;
+    }
+
+    private function createInstanceMetadatasFromSource(
+        string $sourceName,
+        UserSuperClass $connectedUser,
+        Instance $instance,
+        Anr $newAnr,
+        array $anrMetadatasOnInstancesOldIdsToNewObjectsMap
+    ) :void {
+        $translations = [];
+        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
+        if ($sourceName === MonarcObject::SOURCE_COMMON) {
+            foreach ($anrMetadatasOnInstancesOldIdsToNewObjectsMap as $metadata) {
+                $translationKey = (string)Uuid::uuid4();
+                $instanceMetada = (new InstanceMetadata())
+                    ->setInstance($instance)
+                    ->setMetadata($metadata)
+                    ->setCommentTranslationKey($translationKey)
+                    ->setCreator($connectedUser->getEmail());
+
+                $this->get('instanceMetadataCliTable')->save($instanceMetada, false);
+                $instance->addInstanceMetadata($instanceMetada);
+
+                $translations[$translationKey] = (new Translation())
+                    ->setType(Translation::INSTANCE_METADATA)
+                    ->setKey($translationKey)
+                    ->setLang($anrLanguageCode)
+                    ->setValue('');
+            }
+        }
+
+        foreach ($translations as $translation) {
+            $this->createTranslationFromSource($newAnr, $translation, $connectedUser);
+        }
     }
 }
