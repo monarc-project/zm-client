@@ -1041,15 +1041,16 @@ class AnrService extends AbstractService
                  */
                 $newInstance->resetInstanceRisks();
                 $newInstance->resetInstanceConsequences();
-                $this->createInstanceMetadatasFromSource(
-                    $source,
-                    $connectedUser,
-                    $instance,
-                    $newInstance,
-                    $anr,
-                    $newAnr,
-                    $anrMetadatasOnInstancesOldIdsToNewObjectsMap
-                );
+                if ($source !== MonarcObject::SOURCE_COMMON) {
+                    $this->createInstanceMetadatasFromSource(
+                        $connectedUser,
+                        $instance,
+                        $newInstance,
+                        $anr,
+                        $newAnr,
+                        $anrMetadatasOnInstancesOldIdsToNewObjectsMap
+                    );
+                }
 
                 $this->get('instanceCliTable')->save($newInstance, false);
                 $instancesNewIds[$instance->id] = $newInstance;
@@ -2077,55 +2078,35 @@ class AnrService extends AbstractService
     }
 
     private function createInstanceMetadatasFromSource(
-        string $sourceName,
         UserSuperClass $connectedUser,
-        InstanceSuperClass $oldInstance,
+        Instance $oldInstance,
         Instance $instance,
-        AnrSuperClass $sourceAnr,
+        Anr $sourceAnr,
         Anr $newAnr,
         array $anrMetadatasOnInstancesOldIdsToNewObjectsMap
     ) :void {
         $translations = [];
         $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
-        if ($sourceName === MonarcObject::SOURCE_COMMON) {
-            foreach ($anrMetadatasOnInstancesOldIdsToNewObjectsMap as $metadata) {
-                $translationKey = (string)Uuid::uuid4();
-                $instanceMetada = (new InstanceMetadata())
-                    ->setInstance($instance)
-                    ->setMetadata($metadata)
-                    ->setCommentTranslationKey($translationKey)
-                    ->setCreator($connectedUser->getEmail());
 
-                $this->get('instanceMetadataCliTable')->save($instanceMetada, false);
-                $instance->addInstanceMetadata($instanceMetada);
+        $sourceTranslationTable = $this->get('translationCliTable');
+        $oldInstanceMetadatas = $oldInstance->getInstanceMetadatas();
+        foreach ($oldInstanceMetadatas as $oldInstanceMetadata) {
+            $translationKey = $oldInstanceMetadata->getCommentTranslationKey();
+            $instanceMetada = (new InstanceMetadata())
+                ->setInstance($instance)
+                ->setMetadata($anrMetadatasOnInstancesOldIdsToNewObjectsMap[
+                    $oldInstanceMetadata->getMetadata()->getId()])
+                ->setCommentTranslationKey($translationKey)
+                ->setCreator($connectedUser->getEmail());
 
-                $translations[$translationKey] = (new Translation())
-                    ->setType(Translation::INSTANCE_METADATA)
-                    ->setKey($translationKey)
-                    ->setLang($anrLanguageCode)
-                    ->setValue('');
-            }
-        } else {
-            $sourceTranslationTable = $this->get('translationCliTable');
-            $oldInstanceMetadatas = $oldInstance->getInstanceMetadatas();
-            foreach ($oldInstanceMetadatas as $oldInstanceMetadata) {
-                $translationKey = $oldInstanceMetadata->getCommentTranslationKey();
-                $instanceMetada = (new InstanceMetadata())
-                    ->setInstance($instance)
-                    ->setMetadata($anrMetadatasOnInstancesOldIdsToNewObjectsMap[
-                        $oldInstanceMetadata->getMetadata()->getId()])
-                    ->setCommentTranslationKey($translationKey)
-                    ->setCreator($connectedUser->getEmail());
+            $this->get('instanceMetadataCliTable')->save($instanceMetada, false);
+            $instance->addInstanceMetadata($instanceMetada);
 
-                $this->get('instanceMetadataCliTable')->save($instanceMetada, false);
-                $instance->addInstanceMetadata($instanceMetada);
-
-                $translations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
-                    $sourceAnr,
-                    [Translation::INSTANCE_METADATA],
-                    $anrLanguageCode
-                );
-            }
+            $translations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
+                $sourceAnr,
+                [Translation::INSTANCE_METADATA],
+                $anrLanguageCode
+            );
         }
 
         foreach ($translations as $translation) {
