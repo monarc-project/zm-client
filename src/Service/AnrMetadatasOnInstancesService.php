@@ -29,7 +29,7 @@ class AnrMetadatasOnInstancesService extends CoreAnrMetadatasOnInstancesService
     ) {
         parent::__construct(
             $anrTable,
-            $connectedUserService,
+            $anrMetadatasOnInstancesTable,
             $translationTable,
             $configService,
             $connectedUserService,
