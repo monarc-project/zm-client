@@ -88,6 +88,55 @@ class InstanceMetadataService
         return $result;
     }
 
+    /**
+     * @param int $id
+     *
+     * @throws EntityNotFoundException
+     */
+    public function deleteInstanceMetadata(int $id)
+    {
+        $instanceMetadataToDelete = $this->instanceMetadataTable->findById($id);
+        if ($instanceMetadataToDelete === null) {
+            throw new EntityNotFoundException(sprintf('Instance Metadata with ID %d is not found', $id));
+        }
+
+        $this->instanceMetadataTable->remove($instanceMetadataToDelete);
+
+        $translationsKeys[] = $instanceMetadataToDelete->getCommentTranslationKey();
+
+        if (!empty($translationsKeys)) {
+            $this->translationTable->deleteListByKeys($translationsKeys);
+        }
+    }
+
+    /**
+     * @param int $anrId
+     * @param int $id
+     * @param string¦null $language
+     *
+     * @throws EntityNotFoundException
+     */
+    public function getInstanceMetadata(int $anrId, int $id, string $language = null): array
+    {
+        $anr = $this->anrTable->findById($anrId);
+        $instanceMetadata = $this->instanceMetadataTable->findById($id);
+        if ($language === null) {
+            $language = $this->getAnrLanguageCode($anr);
+        }
+
+        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::INSTANCE_METADATA],
+            $language
+        );
+
+        $translationLabel = $translations[$instanceMetadata->getCommentTranslationKey()] ?? null;
+        return [
+            'id' => $instanceMetadata->getId(),
+            $language => $translationLabel !== null ? $translationLabel->getValue() : '',
+        ];
+    }
+
     protected function getAnrLanguageCode(Anr $anr): string
     {
         return $this->configService->getActiveLanguageCodes()[$anr->getLanguage()];
