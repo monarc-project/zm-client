@@ -19,6 +19,7 @@ use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
 use Ramsey\Uuid\Uuid;
 
 class InstanceMetadataService
@@ -28,6 +29,8 @@ class InstanceMetadataService
     protected InstanceMetadataTable $instanceMetadataTable;
 
     protected InstanceTable $instanceTable;
+
+    protected AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
 
     protected TranslationTable $translationTable;
 
@@ -39,6 +42,7 @@ class InstanceMetadataService
         AnrTable $anrTable,
         InstanceMetadataTable $instanceMetadataTable,
         InstanceTable $instanceTable,
+        AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
         TranslationTable $translationTable,
         ConfigService $configService,
         ConnectedUserService $connectedUserService
@@ -46,9 +50,55 @@ class InstanceMetadataService
         $this->anrTable = $anrTable;
         $this->instanceMetadataTable = $instanceMetadataTable;
         $this->instanceTable = $instanceTable;
+        $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
         $this->translationTable = $translationTable;
         $this->configService = $configService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
+    }
+
+
+    /**
+     * @param int $anrId
+     * @param int $instanceId
+     * @param array $data
+     *
+     * @return array
+     * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function createInstanceMetadata($anrId, $instanceId, $data): array
+    {
+        $anr = $this->anrTable->findById($anrId);
+        $instance = $this->instanceTable->findById($instanceId);
+
+        $returnValue = [];
+        $data = (isset($data['instancesMetadatas']) ? $data['instancesMetadatas'] : $data);
+        foreach ($data as $inputInstanceMetada) {
+            $metadata = $this->anrMetadatasOnInstancesTable
+                ->findById($inputInstanceMetada['metadataId']);
+            $instanceMetadata = (new InstanceMetadata())
+                ->setInstance($instance)
+                ->setMetadata($metadata)
+                ->setCommentTranslationKey((string)Uuid::uuid4())
+                ->setCreator($this->connectedUser->getEmail());
+
+            $this->instanceMetadataTable->save($instanceMetadata);
+            $returnValue[] = $instanceMetadata->getId();
+
+            foreach ($inputInstanceMetada['comment'] as $lang => $commentText) {
+                $translation = $this->createTranslationObject(
+                    $anr,
+                    Translation::INSTANCE_METADATA,
+                    $instanceMetadata->getCommentTranslationKey(),
+                    $lang,
+                    (string)$commentText
+                );
+                $this->translationTable->save($translation);
+            }
+        }
+
+        return $returnValue;
     }
 
     /**

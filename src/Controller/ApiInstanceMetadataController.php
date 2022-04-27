@@ -31,9 +31,10 @@ class ApiInstanceMetadataController extends AbstractRestfulController
     public function create($data)
     {
         $anrId = (int) $this->params()->fromRoute('anrid');
+        $instanceId = (int)$this->params()->fromRoute("instanceid");
         return new JsonModel([
             'status' => 'ok',
-            'id' => $this->instanceMetadataService->createInstanceMetadata($anrId, $data),
+            'id' => $this->instanceMetadataService->createInstanceMetadata($anrId, $instanceId, $data),
         ]);
     }
 
