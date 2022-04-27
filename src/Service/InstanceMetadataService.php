@@ -12,7 +12,7 @@ use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
-use Monarc\Core\Model\Entity\Translation;
+use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\AnrTable;
@@ -69,14 +69,14 @@ class InstanceMetadataService
      */
     public function createInstanceMetadata($anrId, $instanceId, $data): array
     {
-        $anr = $this->anrTable->findById($anrId);
         $instance = $this->instanceTable->findById($instanceId);
-
+        /** @var Anr $anr */
+        $anr = $this->anrTable->findById($anrId);
         $returnValue = [];
-        $data = (isset($data['instancesMetadatas']) ? $data['instancesMetadatas'] : $data);
-        foreach ($data as $inputInstanceMetada) {
+
+        foreach ($data as $inputData) {
             $metadata = $this->anrMetadatasOnInstancesTable
-                ->findById($inputInstanceMetada['metadataId']);
+                ->findById((int)$inputData['metadataId']);
             $instanceMetadata = (new InstanceMetadata())
                 ->setInstance($instance)
                 ->setMetadata($metadata)
@@ -86,7 +86,7 @@ class InstanceMetadataService
             $this->instanceMetadataTable->save($instanceMetadata);
             $returnValue[] = $instanceMetadata->getId();
 
-            foreach ($inputInstanceMetada['comment'] as $lang => $commentText) {
+            foreach ($inputData['comment'] as $lang => $commentText) {
                 $translation = $this->createTranslationObject(
                     $anr,
                     Translation::INSTANCE_METADATA,
@@ -97,7 +97,6 @@ class InstanceMetadataService
                 $this->translationTable->save($translation);
             }
         }
-
         return $returnValue;
     }
 
@@ -213,5 +212,21 @@ class InstanceMetadataService
     protected function getAnrLanguageCode(Anr $anr): string
     {
         return $this->configService->getActiveLanguageCodes()[$anr->getLanguage()];
+    }
+
+    protected function createTranslationObject(
+        Anr $anr,
+        string $type,
+        string $key,
+        string $lang,
+        string $value
+    ): Translation {
+        return (new Translation())
+            ->setAnr($anr)
+            ->setType($type)
+            ->setKey($key)
+            ->setLang($lang)
+            ->setValue($value)
+            ->setCreator($this->connectedUser->getEmail());
     }
 }
