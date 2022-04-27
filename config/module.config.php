@@ -868,6 +868,19 @@ return [
                             ],
                         ],
                     ],
+                    'instance_metadata' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'instances/:instanceid/instances_metadatas[/:id]',
+                            'constraints' => [
+                                'instanceid' => '[0-9]+',
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiInstanceMetadataController::class,
+                            ],
+                        ],
+                    ],
                     'objects_categories' => [
                         'type' => 'segment',
                         'options' => [
@@ -1140,6 +1153,7 @@ return [
             Controller\ApiOperationalRisksScalesController::class => AutowireFactory::class,
             Controller\ApiOperationalRisksScalesCommentsController::class => AutowireFactory::class,
             Controller\ApiAnrMetadatasOnInstancesController::class => AutowireFactory::class,
+            Controller\ApiInstanceMetadataController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1404,6 +1418,7 @@ return [
             'monarc_api_referentials',
             'monarc_api_admin_users_roles',
             'monarc_api_global_client_anr/anr_metadatas_on_instances',
+            'monarc_api_global_client_anr/instance_metadata',
             'monarc_api_global_client_anr/instance',
             'monarc_api_global_client_anr/instance_risk',
             'monarc_api_global_client_anr/instance_risk_op',
