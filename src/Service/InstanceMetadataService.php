@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Entity\Translation;
@@ -135,6 +136,28 @@ class InstanceMetadataService
             'id' => $instanceMetadata->getId(),
             $language => $translationLabel !== null ? $translationLabel->getValue() : '',
         ];
+    }
+
+    public function update(int $id, array $data): int
+    {
+        /** @var InstanceMetadata $instanceMetadata */
+        $instanceMetadata = $this->instanceMetadataTable->findById($id);
+
+        $anr = $instanceMetadata->getInstance()->getAnr();
+
+        if (!empty($data['comment'])) {
+            $languageCode = $data['language'] ?? $this->getAnrLanguageCode($anr);
+            $translationKey = $instanceMetadata->getCommentTranslationKey();
+            if (!empty($translationKey)) {
+                $translation = $this->translationTable
+                    ->findByAnrKeyAndLanguage($anr, $translationKey, $languageCode);
+                $translation->setValue($data['comment']);
+                $this->translationTable->save($translation, false);
+            }
+        }
+        $this->instanceMetadataTable->save($instanceMetadata);
+
+        return $instanceMetadata->getId();
     }
 
     protected function getAnrLanguageCode(Anr $anr): string
