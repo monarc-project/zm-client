@@ -132,6 +132,7 @@ class InstanceMetadataService
             $result[$metadata->getId()]= [
                 'id' => $metadata->getId(),
                 $language => $translationLabel !== null ? $translationLabel->getValue() : '',
+                'isDeletable' => $metadata->isDeletable(),
                 'instanceMetadata' => null,
             ];
         }
