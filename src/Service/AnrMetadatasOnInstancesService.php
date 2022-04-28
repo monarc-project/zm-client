@@ -35,4 +35,66 @@ class AnrMetadatasOnInstancesService extends CoreAnrMetadatasOnInstancesService
             $connectedUserService,
         );
     }
+
+    /**
+     * @param int $id
+     *
+     * @throws EntityNotFoundException
+     */
+    public function deleteMetadataOnInstances(int $id): void
+    {
+        $metadataToDelete = $this->anrMetadatasOnInstancesTable->findById($id);
+        if ($metadataToDelete === null) {
+            throw new EntityNotFoundException(sprintf('Metadata with ID %d is not found', $id));
+        }
+
+        if ($metadataToDelete->isDeletable()) {
+            $this->anrMetadatasOnInstancesTable->remove($metadataToDelete);
+
+            $translationsKeys[] = $metadataToDelete->getLabelTranslationKey();
+
+            if (!empty($translationsKeys)) {
+                $this->translationTable->deleteListByKeys($translationsKeys);
+            }
+        }
+    }
+
+    /**
+     * @param int $anrId
+     * @param array $data
+     *
+     * @return array
+     * @throws EntityNotFoundException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function createAnrMetadatasOnInstances(int $anrId, array $data): array
+    {
+        $anr = $this->anrTable->findById($anrId);
+        $returnValue = [];
+        $data = (isset($data['metadatas']) ? $data['metadatas'] : $data);
+        foreach ($data as $inputMetadata) {
+            $metadata = (new AnrMetadatasOnInstances())
+                ->setAnr($anr)
+                ->setLabelTranslationKey((string)Uuid::uuid4())
+                ->setCreator($this->connectedUser->getEmail())
+                ->setIsDeletable(true);
+
+            $this->anrMetadatasOnInstancesTable->save($metadata);
+            $returnValue[] = $metadata->getId();
+
+            foreach ($inputMetadata as $lang => $labelText) {
+                $translation = $this->createTranslationObject(
+                    $anr,
+                    Translation::ANR_METADATAS_ON_INSTANCES,
+                    $metadata->getLabelTranslationKey(),
+                    $lang,
+                    (string)$labelText
+                );
+                $this->translationTable->save($translation);
+            }
+        }
+
+        return $returnValue;
+    }
 }
