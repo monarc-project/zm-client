@@ -73,10 +73,9 @@ class InstanceMetadataService
         /** @var Anr $anr */
         $anr = $this->anrTable->findById($anrId);
         $returnValue = [];
-
-        foreach ($data as $inputData) {
+        foreach ($data['metadata'] as $inputData) {
             $metadata = $this->anrMetadatasOnInstancesTable
-                ->findById((int)$inputData['metadataId']);
+                ->findById((int)$inputData['id']);
             $instanceMetadata = (new InstanceMetadata())
                 ->setInstance($instance)
                 ->setMetadata($metadata)
@@ -86,7 +85,7 @@ class InstanceMetadataService
             $this->instanceMetadataTable->save($instanceMetadata);
             $returnValue[] = $instanceMetadata->getId();
 
-            foreach ($inputData['comment'] as $lang => $commentText) {
+            foreach ($inputData['instanceMetadata'] as $lang => $commentText) {
                 $translation = $this->createTranslationObject(
                     $anr,
                     Translation::INSTANCE_METADATA,
@@ -132,7 +131,7 @@ class InstanceMetadataService
             $result[$metadata->getId()]= [
                 'id' => $metadata->getId(),
                 $language => $translationLabel !== null ? $translationLabel->getValue() : '',
-                'instanceMetadata' => null,
+                'instanceMetadata' => [],
             ];
         }
         foreach ($instancesMetadatas as $index => $instanceMetadata) {
@@ -203,13 +202,13 @@ class InstanceMetadataService
 
         $anr = $instanceMetadata->getInstance()->getAnr();
 
-        if (!empty($data['comment'])) {
+        if (!empty($data)) {
             $languageCode = $data['language'] ?? $this->getAnrLanguageCode($anr);
             $translationKey = $instanceMetadata->getCommentTranslationKey();
             if (!empty($translationKey)) {
                 $translation = $this->translationTable
                     ->findByAnrKeyAndLanguage($anr, $translationKey, $languageCode);
-                $translation->setValue($data['comment']);
+                $translation->setValue($data[$languageCode]);
                 $this->translationTable->save($translation, false);
             }
         }
