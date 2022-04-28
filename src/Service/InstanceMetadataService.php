@@ -114,6 +114,7 @@ class InstanceMetadataService
     {
         $result = [];
         $anr = $this->anrTable->findById($anrId);
+        $metadatasList = $this->anrMetadatasOnInstancesTable->findByAnr($anr);
         $instance = $this->instanceTable->findById($instanceId);
         $instancesMetadatas = $this->instanceMetadataTable->findByInstance($instance);
         if ($language === null) {
@@ -122,13 +123,21 @@ class InstanceMetadataService
 
         $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [Translation::INSTANCE_METADATA],
+            [Translation::INSTANCE_METADATA, Translation::ANR_METADATAS_ON_INSTANCES],
             $language
         );
 
+        foreach ($metadatasList as $metadata) {
+            $translationLabel = $translations[$metadata->getLabelTranslationKey()] ?? null;
+            $result[$metadata->getId()]= [
+                'id' => $metadata->getId(),
+                $language => $translationLabel !== null ? $translationLabel->getValue() : '',
+                'instanceMetadata' => null,
+            ];
+        }
         foreach ($instancesMetadatas as $index => $instanceMetadata) {
             $translationComment = $translations[$instanceMetadata->getCommentTranslationKey()] ?? null;
-            $result[]= [
+            $result[$instanceMetadata->getMetadata()->getId()]['instanceMetadata']= [
                 'id' => $instanceMetadata->getId(),
                 'metadataId' => $instanceMetadata->getMetadata()->getId(),
                 $language => $translationComment !== null ? $translationComment->getValue() : '',
