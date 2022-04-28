@@ -74,13 +74,25 @@ class InstanceMetadataService
         $anr = $this->anrTable->findById($anrId);
         $returnValue = [];
         foreach ($data['metadata'] as $inputData) {
+            $labelTranslationKey = (string)Uuid::uuid4();
             $metadata = $this->anrMetadatasOnInstancesTable
                 ->findById((int)$inputData['id']);
             $instanceMetadata = (new InstanceMetadata())
                 ->setInstance($instance)
                 ->setMetadata($metadata)
-                ->setCommentTranslationKey((string)Uuid::uuid4())
+                ->setCommentTranslationKey($labelTranslationKey)
                 ->setCreator($this->connectedUser->getEmail());
+
+            $instancesBrothers = $this->instanceTable->findGlobalBrothersByAnrAndInstance($anr, $instance);
+            foreach ($instancesBrothers as $instanceBrother) {
+                $newInstanceMetadata = (new InstanceMetadata())
+                    ->setInstance($instanceBrother)
+                    ->setMetadata($metadata)
+                    ->setCommentTranslationKey($labelTranslationKey)
+                    ->setCreator($this->connectedUser->getEmail());
+                $this->instanceMetadataTable->save($newInstanceMetadata);
+                $returnValue[] = $newInstanceMetadata->getId();
+            }
 
             $this->instanceMetadataTable->save($instanceMetadata);
             $returnValue[] = $instanceMetadata->getId();
@@ -89,7 +101,7 @@ class InstanceMetadataService
                 $translation = $this->createTranslationObject(
                     $anr,
                     Translation::INSTANCE_METADATA,
-                    $instanceMetadata->getCommentTranslationKey(),
+                    $labelTranslationKey,
                     $lang,
                     (string)$commentText
                 );
