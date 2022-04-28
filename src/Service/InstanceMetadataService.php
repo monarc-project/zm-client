@@ -167,16 +167,21 @@ class InstanceMetadataService
     public function deleteInstanceMetadata(int $id)
     {
         $instanceMetadataToDelete = $this->instanceMetadataTable->findById($id);
+        $anr = $instanceMetadataToDelete->getAnr();
+        $instance = $instanceMetadataToDelete->getInstance();
         if ($instanceMetadataToDelete === null) {
             throw new EntityNotFoundException(sprintf('Instance Metadata with ID %d is not found', $id));
         }
 
         $this->instanceMetadataTable->remove($instanceMetadataToDelete);
+        $instancesBrothers = $this->instanceTable->findGlobalBrothersByAnrAndInstance($anr, $instance);
+        //the translation is not used anymore
+        if (count($instancesBrothers)==0) {
+            $translationsKeys[] = $instanceMetadataToDelete->getCommentTranslationKey();
 
-        $translationsKeys[] = $instanceMetadataToDelete->getCommentTranslationKey();
-
-        if (!empty($translationsKeys)) {
-            $this->translationTable->deleteListByKeys($translationsKeys);
+            if (!empty($translationsKeys)) {
+                $this->translationTable->deleteListByKeys($translationsKeys);
+            }
         }
     }
 
