@@ -13,6 +13,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\AnrMetadatasOnInstancesService as CoreAnrMetadatasOnInstancesService;
 use Monarc\FrontOffice\Model\Entity\Translation;
+use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
@@ -96,5 +97,21 @@ class AnrMetadatasOnInstancesService extends CoreAnrMetadatasOnInstancesService
         }
 
         return $returnValue;
+    }
+
+    protected function createTranslationObject(
+        AnrSuperClass $anr,
+        string $type,
+        string $key,
+        string $lang,
+        string $value
+    ): TranslationSuperClass {
+        return (new Translation())
+            ->setAnr($anr)
+            ->setType($type)
+            ->setKey($key)
+            ->setLang($lang)
+            ->setValue($value)
+            ->setCreator($this->connectedUser->getEmail());
     }
 }
