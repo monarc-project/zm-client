@@ -41,6 +41,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'recommendationTable' => Table\RecommandationTable::class,
         'recommendationSetTable' => Table\RecommandationSetTable::class,
         'themeTable' => Table\ThemeTable::class,
+        'translationTable' => Table\TranslationTable::class,
 
         // Services
         'instanceConsequenceService' => AnrInstanceConsequenceService::class,
