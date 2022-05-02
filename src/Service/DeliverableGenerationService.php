@@ -11,6 +11,7 @@ use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\Core\Service\QuestionChoiceService;
 use Monarc\Core\Service\QuestionService;
+use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
@@ -25,6 +26,9 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
+use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
+use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\FrontOffice\Model\Entity\Translation;
 use PhpOffice\PhpWord\Element\Table;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Converter;
@@ -69,6 +73,8 @@ class DeliverableGenerationService extends AbstractService
     protected $threatService;
     /** @var AnrCartoRiskService */
     protected $cartoRiskService;
+    /** @var ConfigService */
+    protected $configService;
 
     protected AnrInstanceConsequenceService $anrInstanceConsequenceService;
 
@@ -92,12 +98,14 @@ class DeliverableGenerationService extends AbstractService
     protected $translateService;
     /** @var InstanceRiskOwnerTable */
     protected $instanceRiskOwnerTable;
-
     /** @var RecommandationRiskTable */
     protected $recommendationRiskTable;
-
     /** @var RecommendationHistoricTable */
     protected $recommendationHistoricTable;
+    /** @var AnrMetadatasOnInstancesTable */
+    protected $metadatasOnInstancesTable;
+    /** @var TranslationTable */
+    protected $translationTable;
 
     protected $currentLangAnrIndex = 1;
 
@@ -658,6 +666,7 @@ class DeliverableGenerationService extends AbstractService
                 'DISTRIB_EVAL_OP_RISK' => $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution(false))),
                 'CURRENT_RISK_MAP' => $this->generateCurrentRiskMap('real'),
                 'TARGET_RISK_MAP' => $this->generateCurrentRiskMap('targeted'),
+                'TABLE_ASSET_CONTEXT' => $this->generateAssetContextTable(),
                 'RISKS_KIND_OF_TREATMENT' => $this->generateRisksByKindOfTreatment(),
                 'TABLE_AUDIT_INSTANCES' => $this->generateTableAudit(),
                 'TABLE_AUDIT_RISKS_OP' => $this->generateTableAuditOp(),
@@ -718,9 +727,6 @@ class DeliverableGenerationService extends AbstractService
                 'TABLE_RECORD_PROCESSORS' => $this->generateTableRecordProcessors($record),
             ],
         ];
-
-        // $values['xml']['TABLE_RECORD_PROCESSORS'] = $this->generateTableRecordProcessors($record);
-
 
         return $values;
     }
@@ -5532,6 +5538,107 @@ class DeliverableGenerationService extends AbstractService
         }
 
         return $table;
+    }
+
+    /**
+     * Generate the asset context table data
+     * @return mixed|string The WordXml generated data
+     */
+    protected function generateAssetContextTable()
+    {
+        $allInstances = $this->instanceTable->findByAnrId($this->anr->getId());
+        $allMetadatas = $this->metadatasOnInstancesTable->findByAnr($this->anr);
+        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $this->anr,
+            [Translation::INSTANCE_METADATA, Translation::ANR_METADATAS_ON_INSTANCES],
+            $this->configService->getActiveLanguageCodes()[$this->anr->getLanguage()]
+        );
+        $assetUuids = [];
+        foreach ($allMetadatas as $metadata) {
+            $translationLabel = $translations[$metadata->getLabelTranslationKey()] ?? null;
+            $headersMetadata[] = $translationLabel !== null ? $translationLabel->getValue() : '';
+        }
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+
+        foreach ($allInstances as $instance) {
+            $assetUuid = $instance->getAsset()->getUuid();
+            if (\in_array($assetUuid, $assetUuids, true)) {
+                continue;
+            }
+            $assetUuids[] = $assetUuid;
+            $typeAsset = ($instance->getAsset()->getType() == 1) ? 'PrimaryAssets' : 'SupportAssets';
+            $asset = $instance->{'getName' . $this->currentLangAnrIndex}();
+            if ($instance->getObject()->isScopeGlobal()) {
+                $asset = $instance->{
+                    'getName' .
+                    $this->currentLangAnrIndex}() .
+                    ' (' .
+                    $this->anrTranslate('Global') .
+                    ')';
+            }
+            $instanceMetadatas = $instance->getInstanceMetadatas();
+
+            if (!${'table' . $typeAsset}) {
+                $section->addTitle(
+                    $this->anrTranslate(
+                        ($instance->getAsset()->getType() == 1) ?
+                            'Primary assets' :
+                            'Support assets'
+                    ),
+                    3
+                );
+                ${'table' . $typeAsset} = $section->addTable($this->borderTable);
+                ${'table' . $typeAsset}->addRow(400, $this->tblHeader);
+                ${'table' . $typeAsset}->addCell(Converter::cmToTwip(2.00), $this->grayCell)
+                    ->addText(
+                        $this->anrTranslate('Asset'),
+                        $this->boldFont,
+                        $this->centerParagraph
+                    );
+                foreach ($headersMetadata as $headerMetadata) {
+                    ${'table' . $typeAsset}->addCell(Converter::cmToTwip(6.00), $this->grayCell)
+                        ->addText(
+                            $headerMetadata,
+                            $this->boldFont,
+                            $this->centerParagraph
+                        );
+                }
+            }
+
+            ${'table' . $typeAsset}->addRow(400);
+            ${'table' . $typeAsset}->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                ->addText(
+                    $asset,
+                    $this->normalFont,
+                    $this->centerParagraph
+                );
+
+            foreach ($allMetadatas as $metadata) {
+                if ($instanceMetadatas) {
+                    $metadataFiltered = array_filter(
+                        $instanceMetadatas->toArray(),
+                        function($im) use ($metadata) {
+                            return  $metadata->getId() == $im->getMetadata()->getId();
+                        });
+                }
+                $translationComment = null;
+
+                if (count($metadataFiltered) > 0) {
+                    $translationComment = $translations[reset($metadataFiltered)->getCommentTranslationKey()] ?? null;
+                }
+
+                ${'table' . $typeAsset}->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                    ->addText(
+                        $translationComment !== null ? $translationComment->getValue() : '',
+                        $this->normalFont,
+                        $this->centerParagraph
+                    );
+            }
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
     }
 
     /**

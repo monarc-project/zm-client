@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\TranslateService;
 use Monarc\Core\Service\DeliveriesModelsService;
+use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Service;
@@ -48,5 +49,9 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'instanceRiskOwnerTable' => Table\InstanceRiskOwnerTable::class,
         'recommendationRiskTable' => Table\RecommandationRiskTable::class,
         'recommendationHistoricTable' => Table\RecommendationHistoricTable::class,
+        'metadatasOnInstancesTable' => Table\AnrMetadatasOnInstancesTable::class,
+        'translationTable' => Table\TranslationTable::class,
+        'configService' => ConfigService::class,
+
     ];
 }
