@@ -11,6 +11,7 @@ use Interop\Container\ContainerInterface;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
+use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -41,6 +42,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'recommendationTable' => Table\RecommandationTable::class,
         'recommendationSetTable' => Table\RecommandationSetTable::class,
         'themeTable' => Table\ThemeTable::class,
+        'translationTable' => Table\TranslationTable::class,
 
         // Services
         'instanceConsequenceService' => AnrInstanceConsequenceService::class,
@@ -50,6 +52,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'translateService' => TranslateService::class,
         'configService' => ConfigService::class,
         'operationalRiskScalesExportService' => OperationalRiskScalesExportService::class,
+        'anrMetadatasOnInstancesExportService' => AnrMetadatasOnInstancesExportService::class,
 
         // Export Services
         'objectExportService' => ObjectExportService::class,

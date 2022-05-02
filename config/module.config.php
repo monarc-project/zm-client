@@ -8,6 +8,7 @@ use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
+use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
@@ -1345,6 +1346,16 @@ return [
             OperationalRiskScalesExportService::class => static function (ContainerInterface $container, $serviceName) {
                 return new OperationalRiskScalesExportService(
                     $container->get(Table\OperationalRiskScaleTable::class),
+                    $container->get(Table\TranslationTable::class),
+                    $container->get(ConfigService::class),
+                );
+            },
+            AnrMetadatasOnInstancesExportService::class => static function (
+                ContainerInterface $container,
+                $serviceName
+            ) {
+                return new AnrMetadatasOnInstancesExportService(
+                    $container->get(Table\AnrMetadatasOnInstancesTable::class),
                     $container->get(Table\TranslationTable::class),
                     $container->get(ConfigService::class),
                 );
