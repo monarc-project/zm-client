@@ -5619,9 +5619,10 @@ class DeliverableGenerationService extends AbstractService
                 if ($instanceMetadatas) {
                     $metadataFiltered = array_filter(
                         $instanceMetadatas->toArray(),
-                        function($im) use ($metadata) {
+                        function ($im) use ($metadata) {
                             return  $metadata->getId() == $im->getMetadata()->getId();
-                        });
+                        }
+                    );
                 }
                 $translationComment = null;
 
