@@ -24,6 +24,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -54,6 +55,7 @@ use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
+use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
@@ -175,6 +177,8 @@ class InstanceImportService
 
     private InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
+    private AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
+
     private string $importType;
 
     public function __construct(
@@ -215,6 +219,7 @@ class InstanceImportService
         InstanceRiskOwnerTable $instanceRiskOwnerTable,
         ConnectedUserService $connectedUserService,
         TranslationTable $translationTable,
+        AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
         ConfigService $configService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
@@ -252,13 +257,15 @@ class InstanceImportService
         $this->connectedUser = $connectedUserService->getConnectedUser();
         $this->operationalRiskScaleTypeTable = $operationalRiskScaleTypeTable;
         $this->translationTable = $translationTable;
+        $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
     }
 
     /**
-     *  Available import modes: 'merge', which will update the existing instances using the file's data, or 'duplicate' which
+     *  Available import modes: 'merge', which will update the existing
+     * instances using the file's data, or 'duplicate' which
      * will create a new instance using the data.
      *
      * @param int $anrId The ANR ID
@@ -310,7 +317,12 @@ class InstanceImportService
                     $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
                     if ($file === false) {
                         // Support legacy export which were base64 encoded.
-                        $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                        $file = json_decode(
+                            trim(
+                                $this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)
+                            ),
+                            true
+                        );
                     }
                 }
 
@@ -339,7 +351,7 @@ class InstanceImportService
      *
      * @param array $data The instance data
      * @param Anr $anr The target ANR
-     * @param null|InstanceSuperClass $parentInstance The parent instance, which should be imported or null if it is root.
+     * @param null|InstanceSuperClass $parentInstance which should be imported or null if it is root.
      * @param string $modeImport Import mode, either 'merge' or 'duplicate'
      *
      * @return array|bool An array of created instances IDs, or false in case of error
@@ -464,6 +476,7 @@ class InstanceImportService
         string $modeImport
     ): array {
         $labelKey = 'label' . $anr->getLanguage();
+        $anrLanguageCode = $this->getAnrLanguageCode($anr);
         // Method information
         if (!empty($data['method'])) { //Steps checkboxes
             if (!empty($data['method']['steps'])) {
@@ -574,7 +587,8 @@ class InstanceImportService
                                 }
                                 $questionChoicesIds = [];
                                 foreach ($originQuestionChoices as $originQuestionChoice) {
-                                    $chosenQuestionLabel = $data['method']['questionChoice'][$originQuestionChoice][$labelKey];
+                                    $chosenQuestionLabel =
+                                        $data['method']['questionChoice'][$originQuestionChoice][$labelKey];
                                     foreach ($questionChoices as $questionChoice) {
                                         if ($questionChoice->get($labelKey) === $chosenQuestionLabel) {
                                             $questionChoicesIds[] = $questionChoice->getId();
@@ -596,7 +610,8 @@ class InstanceImportService
 
             /*
              * Process the evaluation of threats.
-             * TODO: we process all the threats in themes in AssetImportService, might be we can reuse the data from there.
+             * TODO: we process all the threats in themes in AssetImportService,
+             * might be we can reuse the data from there.
              */
             if (!empty($data['method']['threats'])) {
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
@@ -810,6 +825,31 @@ class InstanceImportService
             foreach ($data['records'] as $v) {
                 $this->anrRecordService->importFromArray($v, $anr->getId());
             }
+        }
+
+        /*
+         * Import AnrMetadatasOnInstances
+         */
+        if (!empty($data['anrMetadatasOnInstances'])) {
+            foreach ($data['anrMetadatasOnInstances'] as $v) {
+                $labelTranslationKey = (string)Uuid::uuid4();
+                $metadata = (new AnrMetadatasOnInstances())
+                     ->setAnr($anr)
+                     ->setLabelTranslationKey($labelTranslationKey)
+                     ->setCreator($this->connectedUser->getEmail())
+                     ->setIsDeletable(true);
+                $this->anrMetadatasOnInstancesTable->save($metadata, false);
+
+                $translation = (new Translation())
+                     ->setAnr($anr)
+                     ->setType(Translation::ANR_METADATAS_ON_INSTANCES)
+                     ->setKey($labelTranslationKey)
+                     ->setValue($v['label'])
+                     ->setLang($anrLanguageCode)
+                     ->setCreator($this->connectedUser->getEmail());
+                $this->translationTable->save($translation, false);
+            }
+            $this->anrMetadatasOnInstancesTable->flush();
         }
 
         /*
@@ -1385,7 +1425,8 @@ class InstanceImportService
                         /*
                          * Unfortunately we don't add "themes" on the same level as "risks" and "threats",
                          * but only under "asset".
-                         * TODO: we should add theme linked to the threat inside of the threat object data when export later on.
+                         * TODO: we should add theme linked to the threat inside of the threat object
+                         * data when export later on.
                          * after we can set it $threat->setTheme($theme);
                          */
 
@@ -1520,7 +1561,8 @@ class InstanceImportService
                         if (strcmp($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) !== 0
                             && strpos($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) === false
                         ) {
-                            $dataUpdate['comment'] = $instanceRiskBrothers->getComment() . "\n\n" . $instanceRisk->getComment(); // Merge comments
+                            $dataUpdate['comment'] = // Merge comments
+                                $instanceRiskBrothers->getComment() . "\n\n" . $instanceRisk->getComment();
                         } else {
                             $dataUpdate['comment'] = $instanceRiskBrothers->getComment();
                         }
@@ -1589,7 +1631,8 @@ class InstanceImportService
                                                 ->setRecommandation($recommendation)
                                                 ->setCreator($this->connectedUser->getEmail());
 
-                                            $this->recommendationRiskTable->saveEntity($recommendationRiskBrother, false);
+                                            $this->recommendationRiskTable
+                                                ->saveEntity($recommendationRiskBrother, false);
                                         }
                                     }
                                 }
@@ -2280,8 +2323,7 @@ class InstanceImportService
 
         if ($this->isMonarcVersionLoverThen('2.8.2')) {
             throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
-                . ' Please contact us for more details.'
-            );
+                . ' Please contact us for more details.');
         }
     }
 
