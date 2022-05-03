@@ -218,15 +218,17 @@ class AnrInstanceService extends InstanceService
         $language = $this->getAnrLanguageCode($anr);
         $translations = $translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [Translation::INSTANCE_METADATA],
+            [Translation::INSTANCE_METADATA, Translation::ANR_METADATAS_ON_INSTANCES],
             $language
         );
         $instancesMetadatas = $instance->getInstanceMetadatas();
         foreach ($instancesMetadatas as $instanceMetadata) {
-            $translationLabel = $translations[$instanceMetadata->getCommentTranslationKey()] ?? null;
+            $translationComment = $translations[$instanceMetadata->getCommentTranslationKey()] ?? null;
+            $translationLabel = $translations[$instanceMetadata->getMetadata()->getLabelTranslationKey()] ?? null;
             $result[$instanceMetadata->getMetadata()->getId()] = [
+                    'label' => $translationLabel !== null ? $translationLabel->getValue() : '',
                     'id' => $instanceMetadata->getId(),
-                    'comment' => $translationLabel !== null ? $translationLabel->getValue() : '',
+                    'comment' => $translationComment !== null ? $translationComment->getValue() : '',
                 ];
         }
         return $result;
