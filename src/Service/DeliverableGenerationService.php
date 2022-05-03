@@ -5352,7 +5352,7 @@ class DeliverableGenerationService extends AbstractService
                     ->addText(
                         _WT($threat['label' . $this->currentLangAnrIndex]),
                         $this->normalFont,
-                        $this->centerParagraph
+                        $this->leftParagraph
                     );
 
                 // CID
@@ -5558,9 +5558,14 @@ class DeliverableGenerationService extends AbstractService
             $translationLabel = $translations[$metadata->getLabelTranslationKey()] ?? null;
             $headersMetadata[] = $translationLabel !== null ? $translationLabel->getValue() : '';
         }
+        if (!$headersMetadata) {
+            return;
+        }
+        $sizeColumn = 13 / count($headersMetadata);
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
+        $tableWord->addTitleStyle(3, $this->titleFont);
 
         foreach ($allInstances as $instance) {
             $assetUuid = $instance->getAsset()->getUuid();
@@ -5568,39 +5573,35 @@ class DeliverableGenerationService extends AbstractService
                 continue;
             }
             $assetUuids[] = $assetUuid;
-            $typeAsset = ($instance->getAsset()->getType() == 1) ? 'PrimaryAssets' : 'SupportAssets';
-            $asset = $instance->{'getName' . $this->currentLangAnrIndex}();
+            $typeAsset = ($instance->getAsset()->getType() == 1) ? 'PrimaryAssets' : 'SecondaryAssets';
+            $assetLabel = $instance->{'getName' . $this->currentLangAnrIndex}();
             if ($instance->getObject()->isScopeGlobal()) {
-                $asset = $instance->{
-                    'getName' .
-                    $this->currentLangAnrIndex}() .
-                    ' (' .
-                    $this->anrTranslate('Global') .
-                    ')';
+                $assetLabel = $assetLabel . ' (' . $this->anrTranslate('Global') . ')';
             }
             $instanceMetadatas = $instance->getInstanceMetadatas();
 
-            if (!${'table' . $typeAsset}) {
+            if (!isset(${'table' . $typeAsset})) {
+
                 $section->addTitle(
                     $this->anrTranslate(
                         ($instance->getAsset()->getType() == 1) ?
                             'Primary assets' :
-                            'Support assets'
+                            'Secondary assets'
                     ),
                     3
                 );
                 ${'table' . $typeAsset} = $section->addTable($this->borderTable);
                 ${'table' . $typeAsset}->addRow(400, $this->tblHeader);
-                ${'table' . $typeAsset}->addCell(Converter::cmToTwip(2.00), $this->grayCell)
+                ${'table' . $typeAsset}->addCell(Converter::cmToTwip(4.00), $this->grayCell)
                     ->addText(
                         $this->anrTranslate('Asset'),
                         $this->boldFont,
                         $this->centerParagraph
                     );
                 foreach ($headersMetadata as $headerMetadata) {
-                    ${'table' . $typeAsset}->addCell(Converter::cmToTwip(6.00), $this->grayCell)
+                    ${'table' . $typeAsset}->addCell(Converter::cmToTwip($sizeColumn), $this->grayCell)
                         ->addText(
-                            $headerMetadata,
+                            _WT($headerMetadata),
                             $this->boldFont,
                             $this->centerParagraph
                         );
@@ -5608,11 +5609,11 @@ class DeliverableGenerationService extends AbstractService
             }
 
             ${'table' . $typeAsset}->addRow(400);
-            ${'table' . $typeAsset}->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+            ${'table' . $typeAsset}->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                 ->addText(
-                    $asset,
+                    _WT($assetLabel),
                     $this->normalFont,
-                    $this->centerParagraph
+                    $this->leftParagraph
                 );
 
             foreach ($allMetadatas as $metadata) {
@@ -5630,11 +5631,11 @@ class DeliverableGenerationService extends AbstractService
                     $translationComment = $translations[reset($metadataFiltered)->getCommentTranslationKey()] ?? null;
                 }
 
-                ${'table' . $typeAsset}->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                ${'table' . $typeAsset}->addCell(Converter::cmToTwip($sizeColumn), $this->vAlignCenterCell)
                     ->addText(
-                        $translationComment !== null ? $translationComment->getValue() : '',
+                        $translationComment !== null ? _WT($translationComment->getValue()) : '',
                         $this->normalFont,
-                        $this->centerParagraph
+                        $this->leftParagraph
                     );
             }
         }
