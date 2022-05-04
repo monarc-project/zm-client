@@ -28,6 +28,7 @@ use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
@@ -59,6 +60,7 @@ use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
+use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
@@ -179,6 +181,8 @@ class InstanceImportService
 
     private AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
 
+    private InstanceMetadataTable $instanceMetadataTable;
+
     private string $importType;
 
     public function __construct(
@@ -220,6 +224,7 @@ class InstanceImportService
         ConnectedUserService $connectedUserService,
         TranslationTable $translationTable,
         AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
+        InstanceMetadataTable $instanceMetadataTable,
         ConfigService $configService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
@@ -258,6 +263,7 @@ class InstanceImportService
         $this->operationalRiskScaleTypeTable = $operationalRiskScaleTypeTable;
         $this->translationTable = $translationTable;
         $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
+        $this->instanceMetadataTable = $instanceMetadataTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
@@ -428,6 +434,8 @@ class InstanceImportService
         $includeEval = !empty($data['with_eval']);
 
         $this->anrInstanceRiskService->createInstanceRisks($instance, $anr, $monarcObject, $data);
+
+        $this->createInstanceMetadata($instance, $data);
 
         $this->prepareInstanceConsequences($data, $anr, $instance, $monarcObject, $includeEval);
 
@@ -831,25 +839,9 @@ class InstanceImportService
          * Import AnrMetadatasOnInstances
          */
         if (!empty($data['anrMetadatasOnInstances'])) {
-            foreach ($data['anrMetadatasOnInstances'] as $v) {
-                $labelTranslationKey = (string)Uuid::uuid4();
-                $metadata = (new AnrMetadatasOnInstances())
-                     ->setAnr($anr)
-                     ->setLabelTranslationKey($labelTranslationKey)
-                     ->setCreator($this->connectedUser->getEmail())
-                     ->setIsDeletable(true);
-                $this->anrMetadatasOnInstancesTable->save($metadata, false);
-
-                $translation = (new Translation())
-                     ->setAnr($anr)
-                     ->setType(Translation::ANR_METADATAS_ON_INSTANCES)
-                     ->setKey($labelTranslationKey)
-                     ->setValue($v['label'])
-                     ->setLang($anrLanguageCode)
-                     ->setCreator($this->connectedUser->getEmail());
-                $this->translationTable->save($translation, false);
-            }
-            $this->anrMetadatasOnInstancesTable->flush();
+            $this->cachedData['anrMetadatasOnInstances'] =
+                $this->getCurrentAnrMetadatasOnInstances($anr);
+            $this->createAnrMetadatasOnInstances($anr, $data['anrMetadatasOnInstances']);
         }
 
         /*
@@ -2999,5 +2991,145 @@ class InstanceImportService
 
             $this->instanceRiskOpTable->getDb()->flush();
         }
+    }
+
+    /**
+     * @param InstanceSuperClass $instance
+     * @param array $data
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function createInstanceMetadata(InstanceSuperClass $instance, $data): void
+    {
+        $anr = $instance->getAnr();
+        $anrLanguageCode = $this->getAnrLanguageCode($anr);
+        //fetch translations
+        $instanceMetadataTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::INSTANCE_METADATA],
+            $anrLanguageCode
+        );
+        if (isset($data['instancesMetadatas'])) {
+            if (!isset($this->cachedData['anrMetadatasOnInstances'])) {
+                $this->cachedData['anrMetadatasOnInstances'] =
+                    $this->getCurrentAnrMetadatasOnInstances($anr);
+            }
+            // initialize the metadatas labels
+            $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+            foreach ($data['instancesMetadatas'] as $instanceMetadata) {
+                if (!in_array($instanceMetadata['label'], $labels)) {
+                    $this->createAnrMetadatasOnInstances($anr, [$instanceMetadata]);
+                    //update after insertion
+                    $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+                }
+                // if the metadata exist we can create/update the instanceMetadata
+                if (in_array($instanceMetadata['label'], $labels)) {
+                    $indexMetadata = array_search($instanceMetadata['label'], $labels);
+                    $metadata = $this->cachedData['anrMetadatasOnInstances'][$indexMetadata]['object'];
+                    $instanceMetadataObject = $this->instanceMetadataTable->findByInstanceAndMetadata(
+                        $instance,
+                        $metadata
+                    );
+                    if ($instanceMetadataObject === null) {
+                        $commentTranslationKey = (string)Uuid::uuid4();
+                        $instanceMetadataObject = (new InstanceMetadata())
+                            ->setInstance($instance)
+                            ->setMetadata($metadata)
+                            ->setCommentTranslationKey($commentTranslationKey)
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->instanceMetadataTable->save($instanceMetadataObject, false);
+
+                        $translation = (new Translation())
+                            ->setAnr($anr)
+                            ->setType(Translation::INSTANCE_METADATA)
+                            ->setKey($commentTranslationKey)
+                            ->setValue($instanceMetadata['comment'])
+                            ->setLang($anrLanguageCode)
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->translationTable->save($translation, false);
+                    } else {
+                        $commentTranslationKey = $instanceMetadataObject->getCommentTranslationKey();
+                        $commentTranslation = $instanceMetadataTranslationsè[$commentTranslationKey];
+                        $commentTranslation->setValue(
+                            $commentTranslation->getValue().' '.$instanceMetadata['comment']
+                        );
+                        $this->translationTable->save($commentTranslation, false);
+                    }
+                }
+            }
+        }
+        $this->instanceMetadataTable->flush();
+    }
+
+    /**
+     * @param AnrSuperClass $anr
+     * @param array $data
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function createAnrMetadatasOnInstances(AnrSuperClass $anr, $data): void
+    {
+        $anrLanguageCode = $this->getAnrLanguageCode($anr);
+        $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+        foreach ($data as $v) {
+            if (!in_array($v['label'], $labels)) {
+                $labelTranslationKey = (string)Uuid::uuid4();
+                $metadata = (new AnrMetadatasOnInstances())
+                     ->setAnr($anr)
+                     ->setLabelTranslationKey($labelTranslationKey)
+                     ->setCreator($this->connectedUser->getEmail())
+                     ->setIsDeletable(true);
+                $this->anrMetadatasOnInstancesTable->save($metadata, false);
+
+                $translation = (new Translation())
+                     ->setAnr($anr)
+                     ->setType(Translation::ANR_METADATAS_ON_INSTANCES)
+                     ->setKey($labelTranslationKey)
+                     ->setValue($v['label'])
+                     ->setLang($anrLanguageCode)
+                     ->setCreator($this->connectedUser->getEmail());
+                $this->translationTable->save($translation, false);
+                $this->cachedData['anrMetadatasOnInstances'][] =
+                    [
+                        'id' => $metadata->getId(),
+                        'label' => $v['label'],
+                        'object' => $metadata,
+                        'translation' => $translation,
+                    ];
+            }
+        }
+        $this->anrMetadatasOnInstancesTable->flush();
+    }
+
+    /**
+     * @param AnrSuperClass $anr
+     *
+     * @return array
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function getCurrentAnrMetadatasOnInstances(AnrSuperClass $anr): array
+    {
+        $this->cachedData['currentAnrMetadatasOnInstances'] = [];
+        $anrMetadatasOnInstancesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::ANR_METADATAS_ON_INSTANCES],
+            $this->getAnrLanguageCode($anr)
+        );
+
+        $AnrMetadatasOnInstances = $this->anrMetadatasOnInstancesTable->findByAnr($anr);
+        foreach ($AnrMetadatasOnInstances as $metadata) {
+            $translationLabel = $anrMetadatasOnInstancesTranslations[$metadata->getLabelTranslationKey()] ?? null;
+            $this->cachedData['currentAnrMetadatasOnInstances'][] = [
+                'id' => $metadata->getId(),
+                'label' => $translationLabel !== null ? $translationLabel->getValue() : '',
+                'object' => $metadata,
+                'translation' => $translationLabel,
+            ];
+        }
+        return $this->cachedData['currentAnrMetadatasOnInstances'];
     }
 }

@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
+use Monarc\Core\Model\Entity\AnrMetadatasOnInstancesSuperClass;
 use Monarc\Core\Model\Table\AbstractTable;
 use Monarc\FrontOffice\Model\Entity\Instance;
 
@@ -29,5 +30,21 @@ class InstanceMetadataTable extends AbstractTable
             ->setParameter('instance', $instance)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return InstanceMetadata¦null
+     */
+    public function findByInstanceAndMetadata(
+        Instance $instance,
+        AnrMetadatasOnInstancesSuperClass $metadata
+    ):?InstanceMetadata {
+        return $this->getRepository()->createQueryBuilder('im')
+            ->where('im.instance = :instance')
+            ->andWhere('im.metadata = :metadata')
+            ->setParameter('instance', $instance)
+            ->setParameter('metadata', $metadata)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }
