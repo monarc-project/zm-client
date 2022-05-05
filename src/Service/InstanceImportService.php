@@ -3048,9 +3048,11 @@ class InstanceImportService
                             ->setLang($anrLanguageCode)
                             ->setCreator($this->connectedUser->getEmail());
                         $this->translationTable->save($translation, false);
+                        $instanceMetadataTranslations[$commentTranslationKey] = $translation;
+                        $this->updateInstanceMetadataToBrothers($instance, $instanceMetadataObject);
                     } else {
                         $commentTranslationKey = $instanceMetadataObject->getCommentTranslationKey();
-                        $commentTranslation = $instanceMetadataTranslationsè[$commentTranslationKey];
+                        $commentTranslation = $instanceMetadataTranslations[$commentTranslationKey];
                         $commentTranslation->setValue(
                             $commentTranslation->getValue().' '.$instanceMetadata['comment']
                         );
@@ -3059,6 +3061,8 @@ class InstanceImportService
                 }
             }
         }
+        $this->instanceMetadataTable->flush();
+        $this->updateInstanceMetadataFromBrothers($instance);
         $this->instanceMetadataTable->flush();
     }
 
@@ -3131,5 +3135,65 @@ class InstanceImportService
             ];
         }
         return $this->cachedData['currentAnrMetadatasOnInstances'];
+    }
+
+    /**
+     * Update the instance impacts from brothers for global assets.
+     *
+     * @param InstanceSuperClass $instance
+     */
+    private function updateInstanceMetadataFromBrothers(InstanceSuperClass $instance): void
+    {
+        if ($instance->getObject()->isScopeGlobal()) {
+            $instanceBrothers = $this->getInstanceBrothers($instance);
+            if (!empty($instanceBrothers)) {
+                // Update instanceMetadata of $instance. We use only one brother as the instanceMetadatas are the same.
+                $instanceBrother = current($instanceBrothers);
+                $instancesMetadatasFromBrother = $instanceBrother->getInstanceMetadatas();
+                foreach ($instancesMetadatasFromBrother as $instanceMetadataFromBrother) {
+                    $metadata = $instanceMetadataFromBrother->getMetadata();
+                    $instanceMetadata = $this->instanceMetadataTable
+                        ->findByInstanceAndMetadata($instance, $metadata);
+                    if ($instanceMetadata === null) {
+                        $instanceMetadata = (new InstanceMetadata())
+                            ->setInstance($instance)
+                            ->setMetadata($metadata)
+                            ->setCommentTranslationKey($instanceMetadataFromBrother->getCommentTranslationKey())
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->instanceMetadataTable->save($instanceMetadata, false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Update the instance impacts from instance to Brothers for global assets.
+     *
+     * @param InstanceSuperClass $instance
+     * @param InstanceMetadata $instanceMetadata
+     */
+    private function updateInstanceMetadataToBrothers(
+        InstanceSuperClass $instance,
+        InstanceMetadata $instanceMetadata
+    ): void {
+        if ($instance->getObject()->isScopeGlobal()) {
+            $instanceBrothers = $this->getInstanceBrothers($instance);
+            if (!empty($instanceBrothers)) {
+                foreach ($instanceBrothers as $instanceBrother) {
+                    $metadata = $instanceMetadata->getMetadata();
+                    $instanceMetadataBrother = $this->instanceMetadataTable
+                        ->findByInstanceAndMetadata($instanceBrother, $metadata);
+                    if ($instanceMetadataBrother === null) {
+                        $instanceMetadataBrother = (new InstanceMetadata())
+                            ->setInstance($instanceBrother)
+                            ->setMetadata($metadata)
+                            ->setCommentTranslationKey($instanceMetadata->getCommentTranslationKey())
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->instanceMetadataTable->save($instanceMetadataBrother, false);
+                    }
+                }
+            }
+        }
     }
 }
