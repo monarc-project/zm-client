@@ -5581,7 +5581,6 @@ class DeliverableGenerationService extends AbstractService
             $instanceMetadatas = $instance->getInstanceMetadatas();
 
             if (!isset(${'table' . $typeAsset})) {
-
                 $section->addTitle(
                     $this->anrTranslate(
                         ($instance->getAsset()->getType() == 1) ?
