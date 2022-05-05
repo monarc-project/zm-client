@@ -48,6 +48,7 @@ class ApiUserProfileController extends AbstractRestfulController
             'email' => $connectedUser->getEmail(),
             'status' => $connectedUser->getStatus(),
             'role' => $connectedUser->getRoles(),
+            'isTwoFactorAuthEnabled' => $connectedUser->isTwoFactorAuthEnabled(),
             'mospApiKey' => $connectedUser->getMospApiKey(),
         ]);
     }

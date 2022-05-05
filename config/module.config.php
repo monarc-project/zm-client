@@ -974,6 +974,18 @@ return [
                     ],
                 ],
             ],
+            'monarc_api_user_activate_2fa' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/user/activate2FA/:id',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiUserTwoFAController::class,
+                    ],
+                ],
+            ],
             'monarc_api_model_verify_language' => [
                 'type' => 'segment',
                 'options' => [
@@ -1068,6 +1080,7 @@ return [
             Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
             Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
             Controller\ApiUserPasswordController::class => AutowireFactory::class,
+            Controller\ApiUserTwoFAController::class => AutowireFactory::class,
             Controller\ApiUserProfileController::class => AutowireFactory::class,
             Controller\ApiAnrAssetsController::class => Controller\ApiAnrAssetsControllerFactory::class,
             Controller\ApiAnrAmvsController::class => Controller\ApiAnrAmvsControllerFactory::class,
@@ -1408,6 +1421,7 @@ return [
             'monarc_api_admin_users_rights',
             'monarc_api_admin_user_reset_password',
             'monarc_api_user_password',
+            'monarc_api_user_activate_2fa',
             'monarc_api_user_profile',
             'monarc_api_client_anr',
             'monarc_api_guides',
@@ -1495,6 +1509,7 @@ return [
             'monarc_api_anr_treatment_plan',
             'monarc_api_anr_client_objects_categories',
             'monarc_api_user_password',
+            'monarc_api_user_activate_2fa',
             'monarc_api_model_verify_language',
             'monarc_api_global_client_anr/risk_owners',
             'monarc_api_global_client_anr/carto_risks',
@@ -1531,6 +1546,7 @@ return [
             'monarc_api_admin_users_roles',
             'monarc_api_admin_user_reset_password',
             'monarc_api_user_password',
+            'monarc_api_user_activate_2fa',
             'monarc_api_user_profile',
             'monarc_api_client_anr',
             'monarc_api_stats',
