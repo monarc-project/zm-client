@@ -33,7 +33,7 @@ class AddTwoFaRelatedKeys extends AbstractMigration
     {
         $table = $this->table('users');
         $table->addColumn('is_two_factor_enabled', 'boolean', array('default' => false, 'after' => 'password'));
-        $table->addColumn('secret_key', 'string', array('null' => true, 'default' => '', 'after' => 'two_factor_enabled'));
+        $table->addColumn('secret_key', 'string', array('null' => true, 'default' => '', 'after' => 'is_two_factor_enabled'));
         $table->addColumn('recovery_codes', 'string', array('null' => true, 'default' => '', 'after' => 'secret_key'));
         $table->update();
 
