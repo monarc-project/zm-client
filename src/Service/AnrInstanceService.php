@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
@@ -48,6 +49,7 @@ class AnrInstanceService extends InstanceService
 
     /** @var TranslationTable */
     protected $translationTable;
+    protected $instanceMetadataTable;
 
     public function delete($id)
     {
@@ -232,6 +234,33 @@ class AnrInstanceService extends InstanceService
                 ];
         }
         return $result;
+    }
+
+    protected function updateInstanceMetadataFromBrothers(InstanceSuperClass $instance): void
+    {
+        /** @var InstanceTable $table */
+        $instanceMetadataTable = $this->get('instanceMetadataTable');
+        $table = $this->get('table');
+        $anr = $instance->getAnr();
+        $brothers = $table->findGlobalBrothersByAnrAndInstance($anr, $instance);
+        if (!empty($brothers)) {
+            $instanceBrother = current($brothers);
+            $instancesMetadatasFromBrother = $instanceBrother->getInstanceMetadatas();
+            foreach ($instancesMetadatasFromBrother as $instanceMetadataFromBrother) {
+                $metadata = $instanceMetadataFromBrother->getMetadata();
+                $instanceMetadata = $instanceMetadataTable
+                    ->findByInstanceAndMetadata($instance, $metadata);
+                if ($instanceMetadata === null) {
+                    $instanceMetadata = (new InstanceMetadata())
+                        ->setInstance($instance)
+                        ->setMetadata($metadata)
+                        ->setCommentTranslationKey($instanceMetadataFromBrother->getCommentTranslationKey())
+                        ->setCreator($this->getConnectedUser()->getEmail());
+                    $instanceMetadataTable->save($instanceMetadata, false);
+                }
+            }
+            $instanceMetadataTable->flush();
+        }
     }
 
     protected function getAnrLanguageCode(Anr $anr): string
