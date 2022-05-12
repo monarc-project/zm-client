@@ -47,7 +47,6 @@ class ApiUserTwoFAController extends AbstractRestfulController
 
         try {
             $this->$tfa->ensureCorrectTime();
-            file_put_contents('php://stderr', print_r('[2FA] Correct time', TRUE).PHP_EOL);
         } catch (RobThree\Auth\TwoFactorAuthException $ex) {
             file_put_contents('php://stderr', print_r('[2FA] Incorrect time', TRUE).PHP_EOL);
         }
