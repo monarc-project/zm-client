@@ -16,9 +16,9 @@ use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 
 /**
- * Api User Password Controller
+ * Api User TwoFA Controller
  *
- * Class ApiUserPasswordController
+ * Class ApiUserTwoFAController
  * @package Monarc\FrontOffice\Controller
  */
 class ApiUserTwoFAController extends AbstractRestfulController
@@ -106,8 +106,9 @@ class ApiUserTwoFAController extends AbstractRestfulController
             throw new Exception('You are not authorized to do this action', 412);
         }
 
-        $connectedUser->setSecretKey('');
         $connectedUser->setTwoFactorAuthEnabled(false);
+        $connectedUser->setSecretKey(null);
+        $connectedUser->setRecoveryCodes(null);
         $this->userTable->saveEntity($connectedUser);
 
         $this->getResponse()->setStatusCode(204);
