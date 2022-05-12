@@ -34,6 +34,7 @@ use Monarc\Core\Model\Table\ModelTable;
 use Monarc\Core\Model\Table\ObjectCategoryTable as CoreObjectCategoryTable;
 use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
 use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
+use Monarc\Core\Model\Table\SoaScaleCommentTable as CoreSoaScaleCommentTable;
 use Monarc\Core\Model\Table\TranslationTable as CoreTranslationTable;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\ConfigService;
@@ -76,6 +77,7 @@ use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
@@ -100,6 +102,7 @@ use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
+use Monarc\FrontOffice\Model\Table\SoaScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Model\Entity\Asset;
@@ -150,6 +153,7 @@ class AnrService extends AbstractService
     protected $operationalRiskScaleCommentTable;
     protected $translationTable;
     protected $anrMetadatasOnInstancesTable;
+    protected $soaScaleCommentTable;
 
 
     protected $amvCliTable;
@@ -202,6 +206,7 @@ class AnrService extends AbstractService
     protected $translationCliTable;
     protected $anrMetadatasOnInstancesCliTable;
     protected $instanceMetadataCliTable;
+    protected $soaScaleCommentCliTable;
 
     protected $instanceService;
     protected $recordService;
@@ -1014,6 +1019,14 @@ class AnrService extends AbstractService
 
             //duplicate AnrMetadatasOnInstances
             $anrMetadatasOnInstancesOldIdsToNewObjectsMap = $this->createAnrMetadatasOnInstancesFromSource(
+                $newAnr,
+                $anr,
+                $source,
+                $connectedUser
+            );
+
+            //duplicate SoaScaleComment
+            $anrSoaScaleCommentOldIdsToNewObjectsMap = $this->createSoaScaleCommentFromSource(
                 $newAnr,
                 $anr,
                 $source,
@@ -2112,5 +2125,55 @@ class AnrService extends AbstractService
         foreach ($translations as $translation) {
             $this->createTranslationFromSource($newAnr, $translation, $connectedUser);
         }
+    }
+
+    private function createSoaScaleCommentFromSource(
+        Anr $newAnr,
+        AnrSuperClass $sourceAnr,
+        string $sourceName,
+        UserSuperClass $connectedUser
+    ): array {
+
+        $anrSoaScaleCommentOldIdsToNewObjectsMap = [];
+
+        /** @var SoaScaleCommentCliTable $soaScaleCommentCliTable */
+        $soaScaleCommentCliTable = $this->get('soaScaleCommentCliTable');
+
+        /** @var SoaScaleCommentCliTable|CoreSoaScaleCommentCliTable $scaleTable */
+        $soaScaleCommentTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('soaScaleCommentTable')
+            : $soaScaleCommentCliTable;
+
+        /** @var TranslationTable|CoreTranslationTable $sourceTranslationTable */
+        $sourceTranslationTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('translationTable')
+            : $this->get('translationCliTable');
+
+        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
+
+        $oldSoaScaleComments = $soaScaleCommentTable->findByAnr($sourceAnr);
+        foreach ($oldSoaScaleComments as $oldSoaScaleComment) {
+            $newSoaScaleComment = (new SoaScaleComment())
+                ->setAnr($newAnr)
+                ->setCommentTranslationKey($oldSoaScaleComment->getCommentTranslationKey())
+                ->setScaleIndex($oldSoaScaleComment->getScaleIndex())
+                ->setColour($oldSoaScaleComment->getColour())
+                ->setIsHidden($oldSoaScaleComment->isHidden())
+                ->setCreator($connectedUser->getEmail());
+            $soaScaleCommentCliTable->save($newSoaScaleComment, false);
+            $anrSoaScaleCommentOldIdsToNewObjectsMap[$oldSoaScaleComment->getId()] = $newSoaScaleComment;
+        }
+
+        $sourceTranslations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $sourceAnr,
+            [Translation::SOA_SCALE_COMMENT],
+            $anrLanguageCode
+        );
+
+        foreach ($sourceTranslations as $sourceTranslation) {
+            $this->createTranslationFromSource($newAnr, $sourceTranslation, $connectedUser);
+        }
+
+        return $anrSoaScaleCommentOldIdsToNewObjectsMap;
     }
 }

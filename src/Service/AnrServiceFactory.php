@@ -57,7 +57,7 @@ class AnrServiceFactory extends AbstractServiceFactory
         'operationalRiskScaleCommentTable' => CoreTable\OperationalRiskScaleCommentTable::class,
         'translationTable' => CoreTable\TranslationTable::class,
         'anrMetadatasOnInstancesTable' => CoreTable\AnrMetadatasOnInstancesTable::class,
-
+        'soaScaleCommentTable' => CoreTable\SoaScaleCommentTable::class,
 
         //fo
         'anrCliTable' => Table\AnrTable::class,
@@ -109,6 +109,8 @@ class AnrServiceFactory extends AbstractServiceFactory
         'translationCliTable' => Table\TranslationTable::class,
         'anrMetadatasOnInstancesCliTable' => Table\AnrMetadatasOnInstancesTable::class,
         'instanceMetadataCliTable' => Table\InstanceMetadataTable::class,
+        'soaScaleCommentCliTable' => Table\SoaScaleCommentTable::class,
+
 
         // export
         'instanceService' => AnrInstanceService::class,
