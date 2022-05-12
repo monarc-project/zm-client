@@ -857,6 +857,18 @@ return [
                             ],
                         ],
                     ],
+                    'soa_scale_comment' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'soa-scale-comment[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiSoaScaleCommentController::class,
+                            ],
+                        ],
+                    ],
                     'anr_metadatas_on_instances' => [
                         'type' => 'segment',
                         'options' => [
@@ -1168,6 +1180,7 @@ return [
             Controller\ApiOperationalRisksScalesCommentsController::class => AutowireFactory::class,
             Controller\ApiAnrMetadatasOnInstancesController::class => AutowireFactory::class,
             Controller\ApiInstanceMetadataController::class => AutowireFactory::class,
+            Controller\ApiSoaScaleCommentController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1248,6 +1261,7 @@ return [
             Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
             Table\AnrMetadatasOnInstancesTable::class => ClientEntityManagerFactory::class,
             Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
+            Table\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1375,6 +1389,7 @@ return [
             },
             Service\AnrMetadatasOnInstancesService::class => AutowireFactory::class,
             Service\InstanceMetadataService::class => AutowireFactory::class,
+            Service\SoaScaleCommentService::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
@@ -1464,6 +1479,7 @@ return [
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/soa',
+            'monarc_api_global_client_anr/soa_scale_comment',
             'monarc_api_global_client_anr/soacategory',
             'monarc_api_global_client_anr/risks',
             'monarc_api_global_client_anr/risks_op',
