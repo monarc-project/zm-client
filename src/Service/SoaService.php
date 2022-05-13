@@ -21,6 +21,7 @@ class SoaService extends AbstractService
     protected $entity;
     protected $anrTable;
     protected $userAnrTable;
+    protected $soaScaleCommentTable;
     protected $dependencies = ['anr', 'measure'];
 
     /**
@@ -72,5 +73,44 @@ class SoaService extends AbstractService
             $filterJoin,
             $filterLeft
         );
+    }
+
+    public function patchSoa(int $id, array $data)
+    {
+        $table = $this->get('table');
+        $soa = $table->findById($id);
+        if (isset($data['remarks'])) {
+            $soa->setRemarks($data['remarks']);
+        }
+        if (isset($data['evidences'])) {
+            $soa->setEvidences($data['evidences']);
+        }
+        if (isset($data['actions'])) {
+            $soa->setActions($data['actions']);
+        }
+        if (isset($data['EX'])) {
+            $soa->setEx($data['EX']);
+        }
+        if (isset($data['LR'])) {
+            $soa->setLr($data['LR']);
+        }
+        if (isset($data['CO'])) {
+            $soa->setCo($data['CO']);
+        }
+        if (isset($data['BR'])) {
+            $soa->setBr($data['BR']);
+        }
+        if (isset($data['BP'])) {
+            $soa->setBp($data['BP']);
+        }
+        if (isset($data['RRA'])) {
+            $soa->setRra($data['RRA']);
+        }
+        if (isset($data['soaScaleComment'])) {
+            $soaScaleCommentTable = $this->get('soaScaleCommentTable');
+            $soaScaleComment = $soaScaleCommentTable->findById($data['soaScaleComment']);
+            $soa->setSoaScaleComment($soaScaleComment);
+        }
+        $table->saveEntity($soa);
     }
 }

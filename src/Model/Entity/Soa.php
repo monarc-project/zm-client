@@ -120,6 +120,16 @@ class Soa extends AbstractEntity
      */
     protected $RRA = 0;
 
+    /**
+     * @var SoaScaleComment
+     *
+     * @ORM\ManyToOne(targetEntity="SoaScaleComment", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="soa_scale_comment_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $soaScaleComment;
+
     public function getFiltersForService()
     {
         $filterJoin = [
@@ -375,6 +385,24 @@ class Soa extends AbstractEntity
     public function setRra($RRA): self
     {
         $this->RRA = $RRA;
+
+        return $this;
+    }
+
+    /**
+     * @return SoaScaleComment
+     */
+    public function getSoaScaleComment(): SoaScaleComment
+    {
+        return $this->soaScaleComment;
+    }
+
+    /**
+     * @param SoaScaleComment $RRA
+     */
+    public function setSoaScaleComment($soaScaleComment): self
+    {
+        $this->soaScaleComment = $soaScaleComment;
 
         return $this;
     }

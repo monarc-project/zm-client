@@ -86,4 +86,14 @@ class SoaTable extends AbstractEntityTable
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findById(int $id): ?Soa
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('s')
+            ->where('s.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

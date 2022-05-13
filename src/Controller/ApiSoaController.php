@@ -125,6 +125,7 @@ class ApiSoaController extends AbstractRestfulController
             $entities[$key]['measure'] = $measure->getJsonArray();
             $entities[$key]['measure']['category'] = $measure->getCategory()->getJsonArray();
             $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
+            $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
         }
 
         return new JsonModel([
@@ -157,14 +158,7 @@ class ApiSoaController extends AbstractRestfulController
 
     public function patch($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $data['measure'] = ['anr' => $anrId, 'uuid' => $data['measure']['uuid']];
-
-        $this->soaService->patch($id, $data);
+        $this->soaService->patchSoa($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }
@@ -181,7 +175,7 @@ class ApiSoaController extends AbstractRestfulController
             $newData['anr'] = $anrId;
             $newData['measure'] = ['anr' => $anrId, 'uuid' => $newData['measure']['uuid']];
             $id = $newData['id'];
-            $this->soaService->patch($id, $newData);
+            $this->soaService->patchSoa($id, $newData);
             $createdObjects[] = $id;
         }
 
