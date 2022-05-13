@@ -798,6 +798,14 @@ class AnrService extends AbstractService
                 }
             }
 
+            //duplicate SoaScaleComment
+            $anrSoaScaleCommentOldIdsToNewObjectsMap = $this->createSoaScaleCommentFromSource(
+                $newAnr,
+                $anr,
+                $source,
+                $connectedUser
+            );
+
             // duplicate soas
             if ($source == MonarcObject::SOURCE_COMMON) {
                 foreach ($measuresNewIds as $key => $value) {
@@ -805,6 +813,7 @@ class AnrService extends AbstractService
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($value);
+                    $newSoa->setSoaScaleComment(null);
                     $this->get('soaTable')->save($newSoa, false);
                 }
             } else {
@@ -814,6 +823,13 @@ class AnrService extends AbstractService
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($measuresNewIds[$soa->measure->getUuid()]);
+                    if ($soa->getSoaScaleComment()!== null) {
+                        $newSoa->setSoaScaleComment(
+                            $anrSoaScaleCommentOldIdsToNewObjectsMap[$soa->getSoaScaleComment()->getId()]
+                        );
+                    } else {
+                        $newSoa->setSoaScaleComment(null);
+                    }
                     $this->get('soaTable')->save($newSoa, false);
                 }
             }
@@ -1019,14 +1035,6 @@ class AnrService extends AbstractService
 
             //duplicate AnrMetadatasOnInstances
             $anrMetadatasOnInstancesOldIdsToNewObjectsMap = $this->createAnrMetadatasOnInstancesFromSource(
-                $newAnr,
-                $anr,
-                $source,
-                $connectedUser
-            );
-
-            //duplicate SoaScaleComment
-            $anrSoaScaleCommentOldIdsToNewObjectsMap = $this->createSoaScaleCommentFromSource(
                 $newAnr,
                 $anr,
                 $source,

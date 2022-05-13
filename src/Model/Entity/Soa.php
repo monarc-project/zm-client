@@ -392,7 +392,7 @@ class Soa extends AbstractEntity
     /**
      * @return SoaScaleComment
      */
-    public function getSoaScaleComment(): SoaScaleComment
+    public function getSoaScaleComment(): ?SoaScaleComment
     {
         return $this->soaScaleComment;
     }

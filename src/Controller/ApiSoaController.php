@@ -129,7 +129,11 @@ class ApiSoaController extends AbstractRestfulController
             $entities[$key]['measure'] = $measure->getJsonArray();
             $entities[$key]['measure']['category'] = $measure->getCategory()->getJsonArray();
             $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
-            $entities[$key]['soaScaleComment'] = $soaScaleComment->getId();
+            if ($soaScaleComment !== null) {
+                $entities[$key]['soaScaleComment'] = $soaScaleComment->getId();
+            } else {
+                $entities[$key]['soaScaleComment'] = null;
+            }
         }
 
         return new JsonModel([
