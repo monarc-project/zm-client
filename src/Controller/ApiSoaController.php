@@ -95,6 +95,10 @@ class ApiSoaController extends AbstractRestfulController
         foreach ($entities as $key => $entity) {
             $amvs = [];
             $rolfRisks = [];
+
+            /** @var SoaScaleComment $measure */
+            $soaScaleComment = $entity['soaScaleComment'];
+
             /** @var Measure $measure */
             $measure = $entity['measure'];
             foreach ($measure->getAmvs() as $amv) {
@@ -125,7 +129,7 @@ class ApiSoaController extends AbstractRestfulController
             $entities[$key]['measure'] = $measure->getJsonArray();
             $entities[$key]['measure']['category'] = $measure->getCategory()->getJsonArray();
             $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
-            $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
+            $entities[$key]['soaScaleComment'] = $soaScaleComment->getId();
         }
 
         return new JsonModel([
