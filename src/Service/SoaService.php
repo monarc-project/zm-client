@@ -88,6 +88,9 @@ class SoaService extends AbstractService
         if (isset($data['actions'])) {
             $soa->setActions($data['actions']);
         }
+        if (isset($data['compliance'])) {
+            $soa->setCompliance($data['compliance']);
+        }
         if (isset($data['EX'])) {
             $soa->setEx($data['EX']);
         }
