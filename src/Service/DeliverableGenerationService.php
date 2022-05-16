@@ -3686,7 +3686,7 @@ class DeliverableGenerationService extends AbstractService
 
         if (!empty($soaScaleComments)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(2.00),$noBorderCell);
+            $table->addCell(Converter::cmToTwip(2.00), $noBorderCell);
             $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
                 ->addText(
                     $this->anrTranslate('Level of compliance'),
