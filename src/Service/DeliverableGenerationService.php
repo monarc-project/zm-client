@@ -3687,7 +3687,7 @@ class DeliverableGenerationService extends AbstractService
         if (!empty($soaScaleComments)) {
             $table->addRow(400, $this->tblHeader);
             $table->addCell(Converter::cmToTwip(2.00), $noBorderCell);
-            $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
+            $table->addCell(Converter::cmToTwip(8.00), $this->grayCell)
                 ->addText(
                     $this->anrTranslate('Level of compliance'),
                     $this->boldFont,
@@ -3707,7 +3707,7 @@ class DeliverableGenerationService extends AbstractService
 
                 $this->customizableCell['BgColor'] = $comment->getColour();
 
-                $table->addCell(Converter::cmToTwip(5.00), $this->customizableCell)
+                $table->addCell(Converter::cmToTwip(8.00), $this->customizableCell)
                     ->addText(
                         _WT($translationComment !== null ? $translationComment->getValue() : ''),
                         $this->normalFont,
@@ -3952,7 +3952,7 @@ class DeliverableGenerationService extends AbstractService
                 );
             }
 
-            if (!empty($controlSoa['measure']->amvs) || !empty($controlSoa['measure']->rolfRisks)) {
+            if (count($controlSoa['measure']->amvs) || count($controlSoa['measure']->rolfRisks)) {
                 if ($controlSoa['measure']->getUuid() != $previousControlId) {
                     $section->addText(
                         _WT(
@@ -3966,7 +3966,7 @@ class DeliverableGenerationService extends AbstractService
                         array_merge($this->boldFont, ['size' => 11])
                     );
 
-                    if (!empty($controlSoa['measure']->amvs)) {
+                    if (count($controlSoa['measure']->amvs)) {
                         $section->addText(
                             $this->anrTranslate('Information risks'),
                             $this->boldFont
@@ -4087,7 +4087,7 @@ class DeliverableGenerationService extends AbstractService
                         $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(Converter::cmToTwip(1.50), $this->continueAndGrayCell);
                     }
-                    if (!empty($controlSoa['measure']->rolfRisks)) {
+                    if (count($controlSoa['measure']->rolfRisks)) {
                         $section->addText(
                             $this->anrTranslate('Operational risks'),
                             $this->boldFont
@@ -4357,7 +4357,7 @@ class DeliverableGenerationService extends AbstractService
                     }
                 }
 
-                if (!empty($controlSoa['measure']->rolfRisks)) {
+                if (count($controlSoa['measure']->rolfRisks)) {
                     $kindOfRisks = ['cacheBrutRisk', 'cacheNetRisk', 'cacheTargetedRisk'];
 
                     foreach ($controlSoa['measure']->rolfRisks as $r) {
