@@ -86,6 +86,8 @@ class DeliverableGenerationService extends AbstractService
     protected $instanceRiskOpTable;
     /** @var SoaService */
     protected $soaService;
+    /** @var SoaScaleCommentTable */
+    protected $soaScaleCommentTable;
     /** @var AnrMeasureService */
     protected $measureService;
     /** @var AnrInstanceRiskOpService */
@@ -414,7 +416,7 @@ class DeliverableGenerationService extends AbstractService
         //Table Style
         $this->noBorderTable = ['align' => 'center', 'cellMarginRight' => '0'];
         $this->borderTable = array_merge($this->noBorderTable, ['borderSize' => 1, 'borderColor' => 'ABABAB']);
-        $this->whiteBigBorderTable = ['valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF'];
+        $this->whiteBigBorderTable = ['valign' => 'center', 'borderSize' => 20, 'borderColor' => 'FFFFFF'];
         $this->tblHeader = ['tblHeader' => true];
 
         //Font Style
@@ -699,8 +701,26 @@ class DeliverableGenerationService extends AbstractService
     protected function buildStatementOfAppplicabilityValues($referential, $risksByControl)
     {
         $values = [];
+        $soaScaleComments = array_filter(
+            $this->soaScaleCommentTable->findByAnr($this->anr),
+            function ($soaScaleComment) {
+                return !$soaScaleComment->isHidden();
+            }
+        );
+        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $this->anr,
+            [Translation::SOA_SCALE_COMMENT],
+            $this->configService->getActiveLanguageCodes()[$this->anr->getLanguage()]
+        );
+
+        $values['table']['TABLE_STATEMENT_OF_APPLICABILITY_SCALE'] = $this->generateTableStatementOfApplicabilityScale(
+            $soaScaleComments,
+            $translations
+        );
         $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability(
-            $referential
+            $referential,
+            $soaScaleComments,
+            $translations
         );
         if ($risksByControl) {
             $values['xml']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($referential);
@@ -3649,10 +3669,60 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
+     * Generates the Statement Of Applicability Scale
+     * @return mixed|string The WordXml data generated
+     */
+    protected function generateTableStatementOfApplicabilityScale($soaScaleComments, $translations)
+    {
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable($this->borderTable);
+        $noBorderCell = [
+            'borderTopColor' => 'FFFFFF',
+            'borderTopSize' => 0,
+            'borderLeftColor' =>  'FFFFFF',
+            'borderLeftSize' => 0,
+        ];
+
+        if (!empty($soaScaleComments)) {
+            $table->addRow(400, $this->tblHeader);
+            $table->addCell(Converter::cmToTwip(2.00),$noBorderCell);
+            $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
+                ->addText(
+                    $this->anrTranslate('Level of compliance'),
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
+
+            foreach ($soaScaleComments as $comment) {
+                $table->addRow(400);
+                $translationComment = $translations[$comment->getCommentTranslationKey()] ?? null;
+
+                $table->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                    ->addText(
+                        $comment->getScaleIndex(),
+                        $this->normalFont,
+                        $this->centerParagraph
+                    );
+
+                $this->customizableCell['BgColor'] = $comment->getColour();
+
+                $table->addCell(Converter::cmToTwip(5.00), $this->customizableCell)
+                    ->addText(
+                        _WT($translationComment !== null ? $translationComment->getValue() : ''),
+                        $this->normalFont,
+                        $this->leftParagraph
+                    );
+            }
+        }
+        return $table;
+    }
+
+    /**
      * Generates the Statement Of Applicability data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableStatementOfApplicability($referential)
+    protected function generateTableStatementOfApplicability($referential, $soaScaleComments, $translations)
     {
         /** @var SoaService $soaService */
         $soaService = $this->soaService;
@@ -3743,35 +3813,22 @@ class DeliverableGenerationService extends AbstractService
             }
             $inclusion = join("\n\n", $getInclusions);
 
-            switch ($controlSoa['compliance']) {
-                case 1:
-                    $complianceLevel = "Initial";
-                    $bgcolor = 'FD661F';
-                    break;
-                case 2:
-                    $complianceLevel = "Managed";
-                    $bgcolor = 'FD661F';
-                    break;
-                case 3:
-                    $complianceLevel = "Defined";
-                    $bgcolor = 'FFBC1C';
-                    break;
-                case 4:
-                    $complianceLevel = "Quantitatively Managed";
-                    $bgcolor = 'FFBC1C';
-                    break;
-                case 5:
-                    $complianceLevel = "Optimized";
-                    $bgcolor = 'D6F107';
-                    break;
-                default:
-                    $complianceLevel = "Non-existent";
-                    $bgcolor = '';
+            $complianceLevel = "";
+            $bgcolor = 'FFFFFF';
+
+            if (isset($soaScaleComments[$controlSoa['compliance']])) {
+                $translationComment = $translations[
+                    $soaScaleComments[$controlSoa['compliance']]->getCommentTranslationKey()
+                    ] ?? null;
+                $complianceLevel = $translationComment !== null ? $translationComment->getValue() : '';
+                $bgcolor = $soaScaleComments[$controlSoa['compliance']]->getColour();
             }
+
             if ($controlSoa['EX']) {
                 $complianceLevel = "";
                 $bgcolor = 'E7E6E6';
             }
+
             $styleContentCellCompliance = ['valign' => 'center', 'bgcolor' => $bgcolor];
 
             if ($controlSoa['measure']->category->id != $previousCatId) {
@@ -3824,7 +3881,7 @@ class DeliverableGenerationService extends AbstractService
                 );
             $table->addCell(Converter::cmToTwip(2.00), $styleContentCellCompliance)
                 ->addText(
-                    _WT($this->anrTranslate($complianceLevel)),
+                    _WT($complianceLevel),
                     $this->normalFont,
                     $this->leftParagraph
                 );

@@ -40,6 +40,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'instanceRiskTable' => Table\InstanceRiskTable::class,
         'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
         'soaService' => Service\SoaService::class,
+        'soaScaleCommentTable' => Table\SoaScaleCommentTable::class,
         'measureService' => Service\AnrMeasureService::class,
         'anrInstanceRiskOpService' => Service\AnrInstanceRiskOpService::class,
         'anrInstanceRiskService' => Service\AnrInstanceRiskService::class,
