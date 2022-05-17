@@ -88,9 +88,6 @@ class SoaService extends AbstractService
         if (isset($data['actions'])) {
             $soa->setActions($data['actions']);
         }
-        if (isset($data['compliance'])) {
-            $soa->setCompliance($data['compliance']);
-        }
         if (isset($data['EX'])) {
             $soa->setEx($data['EX']);
         }
@@ -111,7 +108,7 @@ class SoaService extends AbstractService
         }
         if (isset($data['soaScaleComment'])) {
             $soaScaleCommentTable = $this->get('soaScaleCommentTable');
-            $soaScaleComment = $soaScaleCommentTable->findById($data['soaScaleComment']['id']);
+            $soaScaleComment = $soaScaleCommentTable->findById($data['soaScaleComment']);
             $soa->setSoaScaleComment($soaScaleComment);
         }
         $table->saveEntity($soa);
