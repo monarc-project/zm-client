@@ -157,6 +157,8 @@ class ApiSoaController extends AbstractRestfulController
         $entity = $this->soaService->getEntity($id);
         /** @var Measure $measure */
         $measure = $entity['measure'];
+        /** @var SoaScaleComment $measure */
+        $soaScaleComment = $entity['soaScaleComment'];
 
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
@@ -166,10 +168,17 @@ class ApiSoaController extends AbstractRestfulController
             throw new Exception('Anr IDs are different', 412);
         }
 
+        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsDataById($anrId);
+
         $entity['anr'] = $measure->getAnr()->getJsonArray();
         $entity['measure'] = $measure->getJsonArray();
         $entity['measure']['category'] = $measure->getCategory()->getJsonArray();
         $entity['measure']['referential'] = $measure->getReferential()->getJsonArray();
+        if ($soaScaleComment !== null) {
+            $entities['soaScaleComment'] = $soaScaleCommentsData[$soaScaleComment->getId()];
+        } else {
+            $entities['soaScaleComment'] = null;
+        }
 
         return new JsonModel($entity);
     }

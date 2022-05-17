@@ -111,7 +111,7 @@ class SoaService extends AbstractService
         }
         if (isset($data['soaScaleComment'])) {
             $soaScaleCommentTable = $this->get('soaScaleCommentTable');
-            $soaScaleComment = $soaScaleCommentTable->findById($data['soaScaleComment']);
+            $soaScaleComment = $soaScaleCommentTable->findById($data['soaScaleComment']['id']);
             $soa->setSoaScaleComment($soaScaleComment);
         }
         $table->saveEntity($soa);
