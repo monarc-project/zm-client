@@ -14,6 +14,7 @@ use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrMeasureService;
+use Monarc\FrontOffice\Service\SoaScaleCommentService;
 use Monarc\FrontOffice\Service\SoaService;
 
 /**
@@ -32,17 +33,21 @@ class ApiSoaController extends AbstractRestfulController
 
     private AnrInstanceRiskOpService $anrInstanceRiskOpService;
 
+    private SoaScaleCommentService $soaScaleCommentService;
+
     public function __construct(
         SoaService $soaService,
         AnrMeasureService $anrMeasureService,
         AnrInstanceRiskService $anrInstanceRiskService,
-        AnrInstanceRiskOpService $anrInstanceRiskOpService
+        AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        SoaScaleCommentService $soaScaleCommentService
     ) {
 
         $this->soaService = $soaService;
         $this->anrMeasureService = $anrMeasureService;
         $this->anrInstanceRiskService = $anrInstanceRiskService;
         $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
+        $this->soaScaleCommentService = $soaScaleCommentService;
     }
 
     public function getList()
@@ -91,6 +96,7 @@ class ApiSoaController extends AbstractRestfulController
         } elseif ($order === '-measure') {
             $order = '-m.code';
         }
+        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsDataById($anrId);
         $entities = $this->soaService->getList($page, $limit, $order, $filter, $filterAnd);
         foreach ($entities as $key => $entity) {
             $amvs = [];
@@ -130,11 +136,11 @@ class ApiSoaController extends AbstractRestfulController
             $entities[$key]['measure']['category'] = $measure->getCategory()->getJsonArray();
             $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
             $entities[$key]['measure']['measuresLinked'] = [];
-            foreach ($measure->getMeasuresLinked() as $measureLinked){
+            foreach ($measure->getMeasuresLinked() as $measureLinked) {
                 $entities[$key]['measure']['measuresLinked'][] = $measureLinked->getUuid();
             }
             if ($soaScaleComment !== null) {
-                $entities[$key]['soaScaleComment'] = $soaScaleComment->getId();
+                $entities[$key]['soaScaleComment'] = $soaScaleCommentsData[$soaScaleComment->getId()];
             } else {
                 $entities[$key]['soaScaleComment'] = null;
             }
