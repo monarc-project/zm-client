@@ -719,7 +719,6 @@ class DeliverableGenerationService extends AbstractService
         );
         $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability(
             $referential,
-            $soaScaleComments,
             $translations
         );
         if ($risksByControl) {
@@ -3722,7 +3721,7 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Statement Of Applicability data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableStatementOfApplicability($referential, $soaScaleComments, $translations)
+    protected function generateTableStatementOfApplicability($referential, $translations)
     {
         /** @var SoaService $soaService */
         $soaService = $this->soaService;
@@ -3816,12 +3815,12 @@ class DeliverableGenerationService extends AbstractService
             $complianceLevel = "";
             $bgcolor = 'FFFFFF';
 
-            if (isset($soaScaleComments[$controlSoa['compliance']])) {
+            if (!is_null($controlSoa['soaScaleComment']) && !$controlSoa['soaScaleComment']->isHidden()) {
                 $translationComment = $translations[
-                    $soaScaleComments[$controlSoa['compliance']]->getCommentTranslationKey()
+                    $controlSoa['soaScaleComment']->getCommentTranslationKey()
                     ] ?? null;
                 $complianceLevel = $translationComment !== null ? $translationComment->getValue() : '';
-                $bgcolor = $soaScaleComments[$controlSoa['compliance']]->getColour();
+                $bgcolor = $controlSoa['soaScaleComment']->getColour();
             }
 
             if ($controlSoa['EX']) {
@@ -3883,7 +3882,7 @@ class DeliverableGenerationService extends AbstractService
                 ->addText(
                     _WT($complianceLevel),
                     $this->normalFont,
-                    $this->leftParagraph
+                    $this->centerParagraph
                 );
         }
 
