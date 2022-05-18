@@ -11,6 +11,7 @@ use RobThree\Auth\TwoFactorAuth;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserService;
+use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Model\Table\UserTable;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
@@ -29,6 +30,9 @@ class ApiUserTwoFAController extends AbstractRestfulController
     /** @var UserService */
     private $userService;
 
+    /** @var ConfigService */
+    private $configService;
+
     /** @var UserTable */
     private $userTable;
 
@@ -36,17 +40,19 @@ class ApiUserTwoFAController extends AbstractRestfulController
     private $tfa;
 
     public function __construct(
+        ConfigService $configService,
         UserService $userService,
         ConnectedUserService $connectedUserService,
         UserTable $userTable
     ) {
+        $this->configService = $configService;
         $this->userService = $userService;
         $this->connectedUserService = $connectedUserService;
         $this->userTable = $userTable;
-        $this->$tfa = new TwoFactorAuth();
+        $this->tfa = new TwoFactorAuth();
 
         try {
-            $this->$tfa->ensureCorrectTime();
+            $this->tfa->ensureCorrectTime();
         } catch (RobThree\Auth\TwoFactorAuthException $ex) {
             file_put_contents('php://stderr', print_r('[2FA] Incorrect time', TRUE).PHP_EOL);
         }
@@ -64,8 +70,12 @@ class ApiUserTwoFAController extends AbstractRestfulController
         }
 
         // Create a new secret and generate a QRCode
-        $secret = $this->$tfa->createSecret();
-        $qrcode = $this->$tfa->getQRCodeImageAsDataUri('MONARC', $secret);
+        $label = 'MONARC';
+        if ($this->configService->getInstanceName()) {
+            $label .= ' ('. $this->configService->getInstanceName() .')';
+        }
+        $secret = $this->tfa->createSecret();
+        $qrcode = $this->tfa->getQRCodeImageAsDataUri($label, $secret);
 
         return new JsonModel([
             'id' => $connectedUser->getId(),
@@ -81,7 +91,7 @@ class ApiUserTwoFAController extends AbstractRestfulController
     public function create($data)
     {
         $connectedUser = $this->connectedUserService->getConnectedUser();
-        $res = $this->$tfa->verifyCode($data['secretKey'], $data['verificationCode']);
+        $res = $this->tfa->verifyCode($data['secretKey'], $data['verificationCode']);
 
         if ($res) {
             $connectedUser->setSecretKey($data['secretKey']);
@@ -98,7 +108,7 @@ class ApiUserTwoFAController extends AbstractRestfulController
      * Disable the Two Factor Authentication for the connected user.
      * Also delete the secret key.
      */
-    public function delete()
+    public function delete($id)
     {
         $connectedUser = $this->connectedUserService->getConnectedUser();
         if ($connectedUser === null) {
