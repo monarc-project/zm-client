@@ -9,6 +9,7 @@ use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
+use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
@@ -1390,6 +1391,16 @@ return [
             Service\AnrMetadatasOnInstancesService::class => AutowireFactory::class,
             Service\InstanceMetadataService::class => AutowireFactory::class,
             Service\SoaScaleCommentService::class => AutowireFactory::class,
+            SoaScaleCommentExportService::class => static function (
+                ContainerInterface $container,
+                $serviceName
+            ) {
+                return new SoaScaleCommentExportService(
+                    $container->get(Table\SoaScaleCommentTable::class),
+                    $container->get(Table\TranslationTable::class),
+                    $container->get(ConfigService::class),
+                );
+            },
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,

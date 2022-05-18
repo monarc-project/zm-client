@@ -12,6 +12,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
+use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -54,6 +55,7 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'configService' => ConfigService::class,
         'operationalRiskScalesExportService' => OperationalRiskScalesExportService::class,
         'anrMetadatasOnInstancesExportService' => AnrMetadatasOnInstancesExportService::class,
+        'soaScaleCommentExportService' => SoaScaleCommentExportService::class,
 
         // Export Services
         'objectExportService' => ObjectExportService::class,
