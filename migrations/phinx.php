@@ -3,20 +3,20 @@
 // Chargement conf global;
 $pathGlobal = getcwd()."/config/autoload/global.php";
 $globalConf = array();
-if(file_exists($pathGlobal)){
+if (file_exists($pathGlobal)) {
     $globalConf = require $pathGlobal;
 }
 // Chargement conf local;
 $pathLocal = getcwd()."/config/autoload/local.php";
 $localConf = array();
-if(file_exists($pathLocal)){
+if (file_exists($pathLocal)) {
     $localConf = require $pathLocal;
 }
 $paramToUse = 'orm_cli';
-$globalConf = array_replace_recursive($globalConf,$localConf);
-if(empty($localConf['doctrine']['connection'][$paramToUse]['params'])){
+$globalConf = array_replace_recursive($globalConf, $localConf);
+if (empty($localConf['doctrine']['connection'][$paramToUse]['params'])) {
     $paramToUse = 'orm_default';
-    if(empty($localConf['doctrine']['connection'][$paramToUse]['params'])){
+    if (empty($localConf['doctrine']['connection'][$paramToUse]['params'])) {
         die("Connection parameters not configured");
     }
 }

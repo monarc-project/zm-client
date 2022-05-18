@@ -44,13 +44,13 @@ class AdminUserInit extends AbstractSeed
 
         //create user roles
         $pathFo = __DIR__."/../../config/module.config.php";
-        if(file_exists($pathFo)){
+        if (file_exists($pathFo)) {
             $confFo = include $pathFo;
-            if(!empty($confFo['roles'])){
+            if (!empty($confFo['roles'])) {
                 $rows = $this->fetchRow('SELECT id FROM users where email LIKE \''.$email.'\' LIMIT 1');
-                if(!empty($rows)){
+                if (!empty($rows)) {
                     $posts = $this->table('users_roles');
-                    foreach($confFo['roles'] as $k => $v){
+                    foreach ($confFo['roles'] as $k => $v) {
                         $data = array(
                             'user_id' => $rows['id'],
                             'role' => $k,
