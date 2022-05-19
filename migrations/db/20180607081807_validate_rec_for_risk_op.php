@@ -40,6 +40,5 @@ class ValidateRecForRiskOp extends AbstractMigration
             ->addColumn('net_f_before', 'integer', array('null' => true, 'default' => '-1', 'limit' => MysqlAdapter::INT_TINY))
             ->addColumn('net_p_before', 'integer', array('null' => true, 'default' => '-1', 'limit' => MysqlAdapter::INT_TINY))
             ->update();
-
     }
 }
