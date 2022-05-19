@@ -11,6 +11,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
+use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Table;
 
@@ -53,5 +54,6 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
         'recordTable' => Table\RecordTable::class,
         'operationalRiskScalesExportService' => OperationalRiskScalesExportService::class,
         'anrMetadatasOnInstancesExportService' => AnrMetadatasOnInstancesExportService::class,
+        'soaScaleCommentExportService' => SoaScaleCommentExportService::class,
     ];
 }
