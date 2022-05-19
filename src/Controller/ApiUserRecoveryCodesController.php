@@ -58,7 +58,7 @@ class ApiUserRecoveryCodesController extends AbstractRestfulController
                 array_push($recoveryCodes, bin2hex(openssl_random_pseudo_bytes(10)));
             }
 
-            $connectedUser->setRecoveryCodes($recoveryCodes);
+            $connectedUser->createRecoveryCodes($recoveryCodes);
             $this->userTable->saveEntity($connectedUser);
         }
 
