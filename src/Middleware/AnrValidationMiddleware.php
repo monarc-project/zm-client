@@ -8,11 +8,11 @@
 namespace Monarc\FrontOffice\Middleware;
 
 use Fig\Http\Message\StatusCodeInterface;
+use Laminas\Mvc\Service\ResponseFactory;
 use Laminas\Router\RouteMatch;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -23,13 +23,13 @@ class AnrValidationMiddleware implements MiddlewareInterface
     private AnrTable $anrTable;
     private UserAnrTable $userAnrTable;
     private ConnectedUserService $connectedUserService;
-    private ResponseFactoryInterface $responseFactory;
+    private ResponseFactory $responseFactory;
 
     public function __construct(
         AnrTable $anrTable,
         UserAnrTable $userAnrTable,
         ConnectedUserService $connectedUserService,
-        ResponseFactoryInterface $responseFactory
+        ResponseFactory $responseFactory
     ) {
         $this->anrTable = $anrTable;
         $this->userAnrTable = $userAnrTable;
