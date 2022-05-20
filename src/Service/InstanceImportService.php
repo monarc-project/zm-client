@@ -802,6 +802,64 @@ class InstanceImportService
             $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
         } elseif (!isset($data['soaScaleComment']) && isset($data['soas'])) {
             //old import case
+            $defaultSoaScaleCommentdatas = [
+                'fr' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Inexistant'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initialisé'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Reproductible'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Défini'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Géré quantitativement'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimisé']
+                ],
+                'en' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Non-existent'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initial'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Managed'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Defined'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Quantitatively managed'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimized']
+                ],
+                'de' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Nicht vorhanden'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initial'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Reproduzierbar'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Definiert'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Quantitativ verwaltet'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimiert']
+                ],
+                'nl' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Onbestaand'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initieel'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Beheerst'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Gedefinieerd'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Kwantitatief beheerst'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimaliserend']
+                ],
+            ];
+            $data['soaScaleComment'] =
+                $defaultSoaScaleCommentdatas[$this->getAnrLanguageCode($anr)] ?? $defaultSoaScaleCommentdatas['en'];
+            $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
+            $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
         }
 
         // import the SOAs
