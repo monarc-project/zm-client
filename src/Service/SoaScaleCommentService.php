@@ -13,6 +13,8 @@ use Doctrine\ORM\ORMException;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\SoaScaleCommentService as CoreSoaScaleCommentService;
+use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Table\AnrTable;
@@ -34,5 +36,55 @@ class SoaScaleCommentService extends CoreSoaScaleCommentService
         $this->soaScaleCommentTable = $soaScaleCommentTable;
         $this->translationTable = $translationTable;
         $this->configService = $configService;
+    }
+
+    protected function createSoaScaleComment(
+        AnrSuperClass $anr,
+        int $scaleIndex,
+        array $languageCodes,
+        bool $isFlushable = false
+    ): void {
+        $scaleComment = (new soaScaleComment())
+            ->setAnr($anr)
+            ->setScaleIndex($scaleIndex)
+            ->setColour('')
+            ->setIsHidden(false)
+            ->setCommentTranslationKey((string)Uuid::uuid4())
+            ->setCreator($this->connectedUser->getEmail());
+
+        $this->soaScaleCommentTable->save($scaleComment, false);
+
+        foreach ($languageCodes as $languageCode) {
+            // Create a translation for the scaleComment (init with blank value).
+            $translation = $this->createTranslationObject(
+                $anr,
+                Translation::SOA_SCALE_COMMENT,
+                $scaleComment->getCommentTranslationKey(),
+                $languageCode,
+                ''
+            );
+
+            $this->translationTable->save($translation, false);
+        }
+
+        if ($isFlushable) {
+            $this->soaScaleCommentTable->flush();
+        }
+    }
+
+    protected function createTranslationObject(
+        AnrSuperClass $anr,
+        string $type,
+        string $key,
+        string $lang,
+        string $value
+    ): TranslationSuperClass {
+        return (new Translation())
+            ->setAnr($anr)
+            ->setType($type)
+            ->setKey($key)
+            ->setLang($lang)
+            ->setValue($value)
+            ->setCreator($this->connectedUser->getEmail());
     }
 }

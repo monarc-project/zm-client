@@ -52,6 +52,7 @@ use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Translation;
@@ -82,6 +83,7 @@ use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
+use Monarc\FrontOffice\Model\Table\SoaScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Model\Table\ThemeTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
@@ -183,6 +185,8 @@ class InstanceImportService
 
     private InstanceMetadataTable $instanceMetadataTable;
 
+    private SoaScaleCommentTable $soaScaleCommentTable;
+
     private string $importType;
 
     public function __construct(
@@ -225,6 +229,7 @@ class InstanceImportService
         TranslationTable $translationTable,
         AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
         InstanceMetadataTable $instanceMetadataTable,
+        SoaScaleCommentTable $soaScaleCommentTable,
         ConfigService $configService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
@@ -264,6 +269,7 @@ class InstanceImportService
         $this->translationTable = $translationTable;
         $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
         $this->instanceMetadataTable = $instanceMetadataTable;
+        $this->soaScaleCommentTable = $soaScaleCommentTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
@@ -790,6 +796,14 @@ class InstanceImportService
             $this->measureMeasureTable->getDb()->flush();
         }
 
+        //import soaScaleComment
+        if (isset($data['soaScaleComment'])) {
+            $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
+            $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
+        } elseif (!isset($data['soaScaleComment']) && isset($data['soas'])) {
+            //old import case
+        }
+
         // import the SOAs
         if (isset($data['soas'])) {
             $existedMeasures = $this->measureTable->findByAnrIndexedByUuid($anr);
@@ -813,7 +827,6 @@ class InstanceImportService
                         $existedSoa->setRemarks($soa['remarks'])
                             ->setEvidences($soa['evidences'])
                             ->setActions($soa['actions'])
-                            ->setCompliance($soa['compliance'])
                             ->setEX($soa['EX'])
                             ->setLR($soa['LR'])
                             ->setCO($soa['CO'])
@@ -3195,5 +3208,75 @@ class InstanceImportService
                 }
             }
         }
+    }
+
+    private function getCurrentSoaScaleCommentData(AnrSuperClass $anr): array
+    {
+        if (empty($this->cachedData['currentSoaScaleCommentData'])) {
+            /** @var SoaScaleCommentTable $soaScaleCommentTable */
+            $scales = $this->soaScaleCommentTable->findByAnr($anr);
+            foreach ($scales as $scale) {
+                $this->cachedData['currentSoaScaleCommentData'][$scale->getScaleIndex()] = [
+                    'scaleIndex' => $scale->getScaleIndex(),
+                    'isHidden' => $scale->isHIdden(),
+                    'colour' => $scale->getColour(),
+                    'object' => $scale,
+                ];
+            }
+        }
+        return $this->cachedData['currentSoaScaleCommentData'];
+    }
+
+    private function mergeSoaScaleComment(array $newScales, AnrSuperClass $anr)
+    {
+        $soaScaleCommentTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::SOA_SCALE_COMMENT],
+            $this->getAnrLanguageCode($anr)
+        );
+        $scales = $this->soaScaleCommentTable->findByAnrIndexedByScaleIndex($anr);
+        // we have scales to create
+        if (count($newScales) > count($scales)) {
+            $anrLanguageCode = $this->getAnrLanguageCode($anr);
+            for ($i = count($scales); $i < count($newScales); $i++) {
+                $translationKey = (string)Uuid::uuid4();
+                $translation = (new Translation())
+                    ->setAnr($anr)
+                    ->setType(Translation::SOA_SCALE_COMMENT)
+                    ->setKey($translationKey)
+                    ->setValue('')
+                    ->setLang($anrLanguageCode)
+                    ->setCreator($this->connectedUser->getEmail());
+                $this->translationTable->save($translation, false);
+                $soaScaleCommentTranslations[$translationKey]  = $translation;
+
+                $scales[$i] = (new SoaScaleComment())
+                    ->setScaleIndex($i)
+                    ->setAnr($anr)
+                    ->setCommentTranslationKey($translationKey)
+                    ->setCreator($this->connectedUser->getEmail());
+                $this->soaScaleCommentTable->save($scales[$i], false);
+            }
+        }
+        //we have scales to hide
+        if ((count($newScales) < count($scales))) {
+            for ($i = count($newScales); $i < count($scales); $i++) {
+                $scales[$i]->setIsHidden(true);
+                $this->soaScaleCommentTable->save($scales[$i], false);
+            }
+        }
+        //we process the scales
+        foreach ($newScales as $newScale) {
+            $scales[$newScale['scaleIndex']]
+                ->setColour($newScale['colour'])
+                ->setIsHidden($newScale['isHidden']);
+            $this->soaScaleCommentTable->save($scales[$newScale['scaleIndex']], false);
+
+            $translationKey = $scales[$newScale['scaleIndex']]->getCommentTranslationKey();
+            $translation = $soaScaleCommentTranslations[$translationKey];
+            $translation->setValue($newScale['comment']);
+            $this->translationTable->save($translation, false);
+        }
+        $this->soaScaleCommentTable->flush();
     }
 }
