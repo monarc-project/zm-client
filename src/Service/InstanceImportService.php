@@ -797,8 +797,12 @@ class InstanceImportService
         }
 
         //import soaScaleComment
+        $maxOrig = null; //used below for soas
+        $maxDest = null; //used below for soas
         if (isset($data['soaScaleComment'])) {
             $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
+            $maxDest = (int) count($oldSoaScaleCommentData)-1;
+            $maxOrig = (int) count($data['soaScaleComment'])-1;
             $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
         } elseif (!isset($data['soaScaleComment']) && isset($data['soas'])) {
             //old import case
@@ -860,6 +864,30 @@ class InstanceImportService
                 $defaultSoaScaleCommentdatas[$this->getAnrLanguageCode($anr)] ?? $defaultSoaScaleCommentdatas['en'];
             $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
             $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
+            $maxOrig = 5; // default value for old import
+            $maxDest = (int) count($oldSoaScaleCommentData)-1;
+        }
+        // manage the current SOA
+        if ($maxDest !== null && $maxOrig !== null) {
+            $existedSoas = $this->soaTable->findByAnr($anr);
+            foreach ($existedSoas as $existedSoa) {
+                $soaComment =  $valueToApprox = $existedSoa->getSoaScaleComment();
+                if ($soaComment !== null) {
+                    $valueToApprox = $soaComment->getScaleIndex();
+                    $newScaleIndex = $this->approximate(
+                        $valueToApprox,
+                        0,
+                        $maxDest,
+                        0,
+                        $maxOrig,
+                        0
+                    );
+                    $existedSoa->setSoaScaleComment(
+                        $this->cachedData['newSoaScaleCommentIndexedByScale'][$newScaleIndex]
+                    );
+                    $this->soaTable->saveEntity($existedSoa, false);
+                }
+            }
         }
 
         // import the SOAs
@@ -870,7 +898,11 @@ class InstanceImportService
                 if (isset($measuresNewIds[$soa['measure_id']])) {
                     $newSoa = (new Soa($soa))
                         ->setAnr($anr)
-                        ->setMeasure($measuresNewIds[$soa['measure_id']]);
+                        ->setMeasure($measuresNewIds[$soa['measure_id']])
+                        ->setSoaScaleComment(
+                            $this->cachedData['soaScaleCommentExternalIdMapToNewObject']
+                                [$soa['soaScaleComment']]
+                        );
                     $this->soaTable->saveEntity($newSoa, false);
                 } elseif (isset($existedMeasures[$soa['measure_id']])) { //measure exist so soa exist (normally)
                     // TODO: why not $existedMeasure->getSoa() ...
@@ -879,7 +911,8 @@ class InstanceImportService
                     if ($existedSoa === null) {
                         $newSoa = (new Soa($soa))
                             ->setAnr($anr)
-                            ->setMeasure($existedMeasure);
+                            ->setMeasure($existedMeasure)
+                            ->setSoaScaleComment(null);
                         $this->soaTable->saveEntity($newSoa, false);
                     } else {
                         $existedSoa->setRemarks($soa['remarks'])
@@ -890,7 +923,11 @@ class InstanceImportService
                             ->setCO($soa['CO'])
                             ->setBR($soa['BR'])
                             ->setBP($soa['BP'])
-                            ->setRRA($soa['RRA']);
+                            ->setRRA($soa['RRA'])
+                            ->setSoaScaleComment(
+                                $this->cachedData['soaScaleCommentExternalIdMapToNewObject']
+                                    [$soa['soaScaleComment']]
+                            );
                         $this->soaTable->saveEntity($existedSoa, false);
                     }
                 }
@@ -3274,12 +3311,14 @@ class InstanceImportService
             /** @var SoaScaleCommentTable $soaScaleCommentTable */
             $scales = $this->soaScaleCommentTable->findByAnr($anr);
             foreach ($scales as $scale) {
-                $this->cachedData['currentSoaScaleCommentData'][$scale->getScaleIndex()] = [
-                    'scaleIndex' => $scale->getScaleIndex(),
-                    'isHidden' => $scale->isHIdden(),
-                    'colour' => $scale->getColour(),
-                    'object' => $scale,
-                ];
+                if (!$scale->isHidden()) {
+                    $this->cachedData['currentSoaScaleCommentData'][$scale->getScaleIndex()] = [
+                        'scaleIndex' => $scale->getScaleIndex(),
+                        'isHidden' => $scale->isHidden(),
+                        'colour' => $scale->getColour(),
+                        'object' => $scale,
+                    ];
+                }
             }
         }
         return $this->cachedData['currentSoaScaleCommentData'];
@@ -3324,7 +3363,7 @@ class InstanceImportService
             }
         }
         //we process the scales
-        foreach ($newScales as $newScale) {
+        foreach ($newScales as $id => $newScale) {
             $scales[$newScale['scaleIndex']]
                 ->setColour($newScale['colour'])
                 ->setIsHidden($newScale['isHidden']);
@@ -3334,6 +3373,9 @@ class InstanceImportService
             $translation = $soaScaleCommentTranslations[$translationKey];
             $translation->setValue($newScale['comment']);
             $this->translationTable->save($translation, false);
+            $this->cachedData['newSoaScaleCommentIndexedByScale'][$newScale['scaleIndex']] =
+                $scales[$newScale['scaleIndex']];
+            $this->cachedData['soaScaleCommentExternalIdMapToNewObject'][$id] = $scales[$newScale['scaleIndex']];
         }
         $this->soaScaleCommentTable->flush();
     }
