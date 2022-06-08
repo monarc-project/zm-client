@@ -15,7 +15,7 @@ use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
 
 class StatsApiProvider
 {
-    private const BASE_URI = '/api/v1';
+    private const BASE_URI = '/api/v1/';
 
     private const DEFAULT_TIMEOUT = 30;
 
