@@ -15,7 +15,7 @@ use Monarc\FrontOffice\Stats\Exception\WrongResponseFormatException;
 
 class StatsApiProvider
 {
-    private const BASE_URI = '/api/v1';
+    private const BASE_URI = '/api/v1/';
 
     private const DEFAULT_TIMEOUT = 30;
 
@@ -37,7 +37,7 @@ class StatsApiProvider
             $this->validateConfig($config);
 
             $this->guzzleClient = new Client([
-                'base_uri' => $config['statsApi']['baseUrl'],
+                'base_uri' => $config['statsApi']['baseUrl'] . self::BASE_URI,
                 'timeout' => $config['statsApi']['timeout'] ?? self::DEFAULT_TIMEOUT,
             ]);
         } else {
@@ -59,7 +59,7 @@ class StatsApiProvider
      */
     public function getStatsData(array $params): array
     {
-        $response = $this->guzzleClient->get(self::BASE_URI . '/stats/', [
+        $response = $this->guzzleClient->get('stats/', [
             'headers' => $this->getHeaders(),
             'json' => $params,
         ]);
@@ -81,7 +81,7 @@ class StatsApiProvider
      */
     public function getProcessedStatsData(array $params): array
     {
-        $response = $this->guzzleClient->get(self::BASE_URI . '/stats/processed/', [
+        $response = $this->guzzleClient->get('stats/processed/', [
             'headers' => $this->getHeaders(),
             'json' => $params,
         ]);
@@ -100,7 +100,7 @@ class StatsApiProvider
      */
     public function sendStatsDataInBatch(array $data): void
     {
-        $response = $this->guzzleClient->post(self::BASE_URI . '/stats/', [
+        $response = $this->guzzleClient->post('stats/', [
             'headers' => $this->getHeaders(),
             'json' => $data,
         ]);
@@ -118,7 +118,7 @@ class StatsApiProvider
      */
     public function deleteStatsForAnr(string $anrUuid): void
     {
-        $response = $this->guzzleClient->delete(self::BASE_URI . '/stats/' . $anrUuid, [
+        $response = $this->guzzleClient->delete('stats/' . $anrUuid, [
             'headers' => $this->getHeaders(),
         ]);
 
@@ -130,7 +130,7 @@ class StatsApiProvider
 
     public function getClient(): array
     {
-        $response = $this->guzzleClient->get(self::BASE_URI . '/client/me', [
+        $response = $this->guzzleClient->get('client/me', [
             'headers' => $this->getHeaders(),
         ]);
 
@@ -143,7 +143,7 @@ class StatsApiProvider
 
     public function updateClient(array $data): array
     {
-        $response = $this->guzzleClient->patch(self::BASE_URI . '/client/me', [
+        $response = $this->guzzleClient->patch('client/me', [
             'headers' => $this->getHeaders(),
             'json' => $data,
         ]);
