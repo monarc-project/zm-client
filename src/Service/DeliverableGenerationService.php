@@ -11,6 +11,7 @@ use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\Core\Service\QuestionChoiceService;
 use Monarc\Core\Service\QuestionService;
+use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
@@ -25,6 +26,9 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
+use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
+use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\FrontOffice\Model\Entity\Translation;
 use PhpOffice\PhpWord\Element\Table;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Converter;
@@ -69,6 +73,8 @@ class DeliverableGenerationService extends AbstractService
     protected $threatService;
     /** @var AnrCartoRiskService */
     protected $cartoRiskService;
+    /** @var ConfigService */
+    protected $configService;
 
     protected AnrInstanceConsequenceService $anrInstanceConsequenceService;
 
@@ -80,6 +86,8 @@ class DeliverableGenerationService extends AbstractService
     protected $instanceRiskOpTable;
     /** @var SoaService */
     protected $soaService;
+    /** @var SoaScaleCommentTable */
+    protected $soaScaleCommentTable;
     /** @var AnrMeasureService */
     protected $measureService;
     /** @var AnrInstanceRiskOpService */
@@ -92,12 +100,14 @@ class DeliverableGenerationService extends AbstractService
     protected $translateService;
     /** @var InstanceRiskOwnerTable */
     protected $instanceRiskOwnerTable;
-
     /** @var RecommandationRiskTable */
     protected $recommendationRiskTable;
-
     /** @var RecommendationHistoricTable */
     protected $recommendationHistoricTable;
+    /** @var AnrMetadatasOnInstancesTable */
+    protected $metadatasOnInstancesTable;
+    /** @var TranslationTable */
+    protected $translationTable;
 
     protected $currentLangAnrIndex = 1;
 
@@ -406,7 +416,7 @@ class DeliverableGenerationService extends AbstractService
         //Table Style
         $this->noBorderTable = ['align' => 'center', 'cellMarginRight' => '0'];
         $this->borderTable = array_merge($this->noBorderTable, ['borderSize' => 1, 'borderColor' => 'ABABAB']);
-        $this->whiteBigBorderTable = ['valign' => 'center', 'BorderSize' => 20, 'BorderColor' => 'FFFFFF'];
+        $this->whiteBigBorderTable = ['valign' => 'center', 'borderSize' => 20, 'borderColor' => 'FFFFFF'];
         $this->tblHeader = ['tblHeader' => true];
 
         //Font Style
@@ -658,6 +668,7 @@ class DeliverableGenerationService extends AbstractService
                 'DISTRIB_EVAL_OP_RISK' => $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution(false))),
                 'CURRENT_RISK_MAP' => $this->generateCurrentRiskMap('real'),
                 'TARGET_RISK_MAP' => $this->generateCurrentRiskMap('targeted'),
+                'TABLE_ASSET_CONTEXT' => $this->generateAssetContextTable(),
                 'RISKS_KIND_OF_TREATMENT' => $this->generateRisksByKindOfTreatment(),
                 'TABLE_AUDIT_INSTANCES' => $this->generateTableAudit(),
                 'TABLE_AUDIT_RISKS_OP' => $this->generateTableAuditOp(),
@@ -690,8 +701,25 @@ class DeliverableGenerationService extends AbstractService
     protected function buildStatementOfAppplicabilityValues($referential, $risksByControl)
     {
         $values = [];
+        $soaScaleComments = array_filter(
+            $this->soaScaleCommentTable->findByAnr($this->anr),
+            function ($soaScaleComment) {
+                return !$soaScaleComment->isHidden();
+            }
+        );
+        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $this->anr,
+            [Translation::SOA_SCALE_COMMENT],
+            $this->configService->getActiveLanguageCodes()[$this->anr->getLanguage()]
+        );
+
+        $values['table']['TABLE_STATEMENT_OF_APPLICABILITY_SCALE'] = $this->generateTableStatementOfApplicabilityScale(
+            $soaScaleComments,
+            $translations
+        );
         $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability(
-            $referential
+            $referential,
+            $translations
         );
         if ($risksByControl) {
             $values['xml']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($referential);
@@ -718,9 +746,6 @@ class DeliverableGenerationService extends AbstractService
                 'TABLE_RECORD_PROCESSORS' => $this->generateTableRecordProcessors($record),
             ],
         ];
-
-        // $values['xml']['TABLE_RECORD_PROCESSORS'] = $this->generateTableRecordProcessors($record);
-
 
         return $values;
     }
@@ -3643,10 +3668,60 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
+     * Generates the Statement Of Applicability Scale
+     * @return mixed|string The WordXml data generated
+     */
+    protected function generateTableStatementOfApplicabilityScale($soaScaleComments, $translations)
+    {
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable($this->borderTable);
+        $noBorderCell = [
+            'borderTopColor' => 'FFFFFF',
+            'borderTopSize' => 0,
+            'borderLeftColor' =>  'FFFFFF',
+            'borderLeftSize' => 0,
+        ];
+
+        if (!empty($soaScaleComments)) {
+            $table->addRow(400, $this->tblHeader);
+            $table->addCell(Converter::cmToTwip(2.00), $noBorderCell);
+            $table->addCell(Converter::cmToTwip(8.00), $this->grayCell)
+                ->addText(
+                    $this->anrTranslate('Level of compliance'),
+                    $this->boldFont,
+                    $this->centerParagraph
+                );
+
+            foreach ($soaScaleComments as $comment) {
+                $table->addRow(400);
+                $translationComment = $translations[$comment->getCommentTranslationKey()] ?? null;
+
+                $table->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                    ->addText(
+                        $comment->getScaleIndex(),
+                        $this->normalFont,
+                        $this->centerParagraph
+                    );
+
+                $this->customizableCell['BgColor'] = $comment->getColour();
+
+                $table->addCell(Converter::cmToTwip(8.00), $this->customizableCell)
+                    ->addText(
+                        _WT($translationComment !== null ? $translationComment->getValue() : ''),
+                        $this->normalFont,
+                        $this->leftParagraph
+                    );
+            }
+        }
+        return $table;
+    }
+
+    /**
      * Generates the Statement Of Applicability data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableStatementOfApplicability($referential)
+    protected function generateTableStatementOfApplicability($referential, $translations)
     {
         /** @var SoaService $soaService */
         $soaService = $this->soaService;
@@ -3737,35 +3812,22 @@ class DeliverableGenerationService extends AbstractService
             }
             $inclusion = join("\n\n", $getInclusions);
 
-            switch ($controlSoa['compliance']) {
-                case 1:
-                    $complianceLevel = "Initial";
-                    $bgcolor = 'FD661F';
-                    break;
-                case 2:
-                    $complianceLevel = "Managed";
-                    $bgcolor = 'FD661F';
-                    break;
-                case 3:
-                    $complianceLevel = "Defined";
-                    $bgcolor = 'FFBC1C';
-                    break;
-                case 4:
-                    $complianceLevel = "Quantitatively Managed";
-                    $bgcolor = 'FFBC1C';
-                    break;
-                case 5:
-                    $complianceLevel = "Optimized";
-                    $bgcolor = 'D6F107';
-                    break;
-                default:
-                    $complianceLevel = "Non-existent";
-                    $bgcolor = '';
+            $complianceLevel = "";
+            $bgcolor = 'FFFFFF';
+
+            if (!is_null($controlSoa['soaScaleComment']) && !$controlSoa['soaScaleComment']->isHidden()) {
+                $translationComment = $translations[
+                    $controlSoa['soaScaleComment']->getCommentTranslationKey()
+                    ] ?? null;
+                $complianceLevel = $translationComment !== null ? $translationComment->getValue() : '';
+                $bgcolor = $controlSoa['soaScaleComment']->getColour();
             }
+
             if ($controlSoa['EX']) {
                 $complianceLevel = "";
                 $bgcolor = 'E7E6E6';
             }
+
             $styleContentCellCompliance = ['valign' => 'center', 'bgcolor' => $bgcolor];
 
             if ($controlSoa['measure']->category->id != $previousCatId) {
@@ -3818,9 +3880,9 @@ class DeliverableGenerationService extends AbstractService
                 );
             $table->addCell(Converter::cmToTwip(2.00), $styleContentCellCompliance)
                 ->addText(
-                    _WT($this->anrTranslate($complianceLevel)),
+                    _WT($complianceLevel),
                     $this->normalFont,
-                    $this->leftParagraph
+                    $this->centerParagraph
                 );
         }
 
@@ -3889,7 +3951,7 @@ class DeliverableGenerationService extends AbstractService
                 );
             }
 
-            if (!empty($controlSoa['measure']->amvs) || !empty($controlSoa['measure']->rolfRisks)) {
+            if (count($controlSoa['measure']->amvs) || count($controlSoa['measure']->rolfRisks)) {
                 if ($controlSoa['measure']->getUuid() != $previousControlId) {
                     $section->addText(
                         _WT(
@@ -3903,7 +3965,7 @@ class DeliverableGenerationService extends AbstractService
                         array_merge($this->boldFont, ['size' => 11])
                     );
 
-                    if (!empty($controlSoa['measure']->amvs)) {
+                    if (count($controlSoa['measure']->amvs)) {
                         $section->addText(
                             $this->anrTranslate('Information risks'),
                             $this->boldFont
@@ -4024,7 +4086,7 @@ class DeliverableGenerationService extends AbstractService
                         $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(Converter::cmToTwip(1.50), $this->continueAndGrayCell);
                     }
-                    if (!empty($controlSoa['measure']->rolfRisks)) {
+                    if (count($controlSoa['measure']->rolfRisks)) {
                         $section->addText(
                             $this->anrTranslate('Operational risks'),
                             $this->boldFont
@@ -4294,7 +4356,7 @@ class DeliverableGenerationService extends AbstractService
                     }
                 }
 
-                if (!empty($controlSoa['measure']->rolfRisks)) {
+                if (count($controlSoa['measure']->rolfRisks)) {
                     $kindOfRisks = ['cacheBrutRisk', 'cacheNetRisk', 'cacheTargetedRisk'];
 
                     foreach ($controlSoa['measure']->rolfRisks as $r) {
@@ -5346,7 +5408,7 @@ class DeliverableGenerationService extends AbstractService
                     ->addText(
                         _WT($threat['label' . $this->currentLangAnrIndex]),
                         $this->normalFont,
-                        $this->centerParagraph
+                        $this->leftParagraph
                     );
 
                 // CID
@@ -5532,6 +5594,108 @@ class DeliverableGenerationService extends AbstractService
         }
 
         return $table;
+    }
+
+    /**
+     * Generate the asset context table data
+     * @return mixed|string The WordXml generated data
+     */
+    protected function generateAssetContextTable()
+    {
+        $allInstances = $this->instanceTable->findByAnrId($this->anr->getId());
+        $allMetadatas = $this->metadatasOnInstancesTable->findByAnr($this->anr);
+        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $this->anr,
+            [Translation::INSTANCE_METADATA, Translation::ANR_METADATAS_ON_INSTANCES],
+            $this->configService->getActiveLanguageCodes()[$this->anr->getLanguage()]
+        );
+        $assetUuids = [];
+        foreach ($allMetadatas as $metadata) {
+            $translationLabel = $translations[$metadata->getLabelTranslationKey()] ?? null;
+            $headersMetadata[] = $translationLabel !== null ? $translationLabel->getValue() : '';
+        }
+        if (!$headersMetadata) {
+            return;
+        }
+        $sizeColumn = 13 / count($headersMetadata);
+
+        $tableWord = new PhpWord();
+        $section = $tableWord->addSection();
+        $tableWord->addTitleStyle(3, $this->titleFont);
+
+        foreach ($allInstances as $instance) {
+            $assetUuid = $instance->getAsset()->getUuid();
+            if (\in_array($assetUuid, $assetUuids, true)) {
+                continue;
+            }
+            $assetUuids[] = $assetUuid;
+            $typeAsset = ($instance->getAsset()->getType() == 1) ? 'PrimaryAssets' : 'SecondaryAssets';
+            $assetLabel = $instance->{'getName' . $this->currentLangAnrIndex}();
+            if ($instance->getObject()->isScopeGlobal()) {
+                $assetLabel = $assetLabel . ' (' . $this->anrTranslate('Global') . ')';
+            }
+            $instanceMetadatas = $instance->getInstanceMetadatas();
+
+            if (!isset(${'table' . $typeAsset})) {
+                $section->addTitle(
+                    $this->anrTranslate(
+                        ($instance->getAsset()->getType() == 1) ?
+                            'Primary assets' :
+                            'Secondary assets'
+                    ),
+                    3
+                );
+                ${'table' . $typeAsset} = $section->addTable($this->borderTable);
+                ${'table' . $typeAsset}->addRow(400, $this->tblHeader);
+                ${'table' . $typeAsset}->addCell(Converter::cmToTwip(4.00), $this->grayCell)
+                    ->addText(
+                        $this->anrTranslate('Asset'),
+                        $this->boldFont,
+                        $this->centerParagraph
+                    );
+                foreach ($headersMetadata as $headerMetadata) {
+                    ${'table' . $typeAsset}->addCell(Converter::cmToTwip($sizeColumn), $this->grayCell)
+                        ->addText(
+                            _WT($headerMetadata),
+                            $this->boldFont,
+                            $this->centerParagraph
+                        );
+                }
+            }
+
+            ${'table' . $typeAsset}->addRow(400);
+            ${'table' . $typeAsset}->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                ->addText(
+                    _WT($assetLabel),
+                    $this->normalFont,
+                    $this->leftParagraph
+                );
+
+            foreach ($allMetadatas as $metadata) {
+                if ($instanceMetadatas) {
+                    $metadataFiltered = array_filter(
+                        $instanceMetadatas->toArray(),
+                        function ($im) use ($metadata) {
+                            return  $metadata->getId() == $im->getMetadata()->getId();
+                        }
+                    );
+                }
+                $translationComment = null;
+
+                if (count($metadataFiltered) > 0) {
+                    $translationComment = $translations[reset($metadataFiltered)->getCommentTranslationKey()] ?? null;
+                }
+
+                ${'table' . $typeAsset}->addCell(Converter::cmToTwip($sizeColumn), $this->vAlignCenterCell)
+                    ->addText(
+                        $translationComment !== null ? _WT($translationComment->getValue()) : '',
+                        $this->normalFont,
+                        $this->leftParagraph
+                    );
+            }
+        }
+
+        return $this->getWordXmlFromWordObject($tableWord);
     }
 
     /**

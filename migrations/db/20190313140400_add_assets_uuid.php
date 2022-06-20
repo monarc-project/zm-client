@@ -32,7 +32,7 @@ class AddAssetsUuid extends AbstractMigration
     {
       //uuid for asssets
 
-      $data = array('BAT_LOC' => 'd2023c5d-44d1-11e9-a78c-0800277f0571',
+        $data = array('BAT_LOC' => 'd2023c5d-44d1-11e9-a78c-0800277f0571',
               'CONT' => 'd2023c8f-44d1-11e9-a78c-0800277f0571',
               'INFO' => 'd2023ca5-44d1-11e9-a78c-0800277f0571',
               'LOG_APP' => 'd2023cb8-44d1-11e9-a78c-0800277f0571',
@@ -75,97 +75,97 @@ class AddAssetsUuid extends AbstractMigration
               'SYS_MES' => 'd2023f34-44d1-11e9-a78c-0800277f0571',
               'SYS_WEB' => 'd2023f3f-44d1-11e9-a78c-0800277f0571');
       // Migration for table assets -- Modify the data
-      $table = $this->table('assets');
-      $table
-          ->addColumn('uuid', 'uuid',array('after' => 'id'))
+        $table = $this->table('assets');
+        $table
+          ->addColumn('uuid', 'uuid', array('after' => 'id'))
           ->addIndex(array('uuid'))
           ->removeIndex(['anr_id','code'])
           ->update();
-      foreach ($data as $key => $value) { //fill the uuid only for assets created by cases
-        $this->execute('UPDATE assets SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
-      }
-      $unUUIDpdo = $this->query('select uuid,id from assets' .' WHERE uuid ='.'"'.'"');
-      $unUUIDrows = $unUUIDpdo->fetchAll();
+        foreach ($data as $key => $value) { //fill the uuid only for assets created by cases
+            $this->execute('UPDATE assets SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
+        }
+        $unUUIDpdo = $this->query('select uuid,id from assets' .' WHERE uuid ='.'"'.'"');
+        $unUUIDrows = $unUUIDpdo->fetchAll();
 
-      foreach ($unUUIDrows as $key => $value) {
-       $this->execute('UPDATE assets SET uuid =' .'"'.Uuid::uuid4().'"'.' WHERE id ='.$value['id']); //manage assets which are not in common
-      }
+        foreach ($unUUIDrows as $key => $value) {
+            $this->execute('UPDATE assets SET uuid =' .'"'.Uuid::uuid4().'"'.' WHERE id ='.$value['id']); //manage assets which are not in common
+        }
 
-      $table = $this->table('amvs'); //set the stufff for amvs
-      $table->dropForeignKey('asset_id')
-            ->addColumn('asset_uuid', 'uuid',array('after' => 'id'))
+        $table = $this->table('amvs'); //set the stufff for amvs
+        $table->dropForeignKey('asset_id')
+            ->addColumn('asset_uuid', 'uuid', array('after' => 'id'))
             ->update();
-      $this->execute('UPDATE amvs A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
-      $table->removeColumn('asset_id')
+        $this->execute('UPDATE amvs A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
+        $table->removeColumn('asset_id')
             ->update();
-      $table->renameColumn('asset_uuid','asset_id')
-            ->update();
-
-      $table = $this->table('instances'); //set the stufff for instances
-      $table->dropForeignKey('asset_id')
-            ->addColumn('asset_uuid', 'uuid',array('after' => 'id'))
-            ->update();
-      $this->execute('UPDATE instances A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
-      $table->removeColumn('asset_id')
-            ->update();
-      $table->renameColumn('asset_uuid','asset_id')
+        $table->renameColumn('asset_uuid', 'asset_id')
             ->update();
 
-      $table = $this->table('instances_risks'); //set the stufff for instances_risks
-      $table->dropForeignKey('asset_id')
-            ->addColumn('asset_uuid', 'uuid',array('after' => 'id'))
+        $table = $this->table('instances'); //set the stufff for instances
+        $table->dropForeignKey('asset_id')
+            ->addColumn('asset_uuid', 'uuid', array('after' => 'id'))
             ->update();
-      $this->execute('UPDATE instances_risks A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
-      $table->removeColumn('asset_id')
+        $this->execute('UPDATE instances A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
+        $table->removeColumn('asset_id')
             ->update();
-      $table->renameColumn('asset_uuid','asset_id')
-            ->update();
-
-      $table = $this->table('objects'); //set the stufff for objects
-      $table->dropForeignKey('asset_id')
-            ->addColumn('asset_uuid', 'uuid',array('after' => 'id'))
-            ->update();
-      $this->execute('UPDATE objects A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
-      $table->removeColumn('asset_id')
-            ->update();
-      $table->renameColumn('asset_uuid','asset_id')
+        $table->renameColumn('asset_uuid', 'asset_id')
             ->update();
 
-      $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
-      $table->dropForeignKey('asset_id')
-            ->addColumn('asset_uuid', 'uuid',array('after' => 'id', 'null' => true))
+        $table = $this->table('instances_risks'); //set the stufff for instances_risks
+        $table->dropForeignKey('asset_id')
+            ->addColumn('asset_uuid', 'uuid', array('after' => 'id'))
             ->update();
-      $this->execute('UPDATE recommandations_risks A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id and A.asset_id is not null');
-      $this->execute('UPDATE recommandations_risks A SET A.asset_uuid = NULL where A.asset_id is null');
-      $table->removeColumn('asset_id')
+        $this->execute('UPDATE instances_risks A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
+        $table->removeColumn('asset_id')
             ->update();
-      $table->renameColumn('asset_uuid','asset_id')
+        $table->renameColumn('asset_uuid', 'asset_id')
             ->update();
 
-      $table = $this->table('assets');
-      $table->removeColumn('id')
+        $table = $this->table('objects'); //set the stufff for objects
+        $table->dropForeignKey('asset_id')
+            ->addColumn('asset_uuid', 'uuid', array('after' => 'id'))
+            ->update();
+        $this->execute('UPDATE objects A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id');
+        $table->removeColumn('asset_id')
+            ->update();
+        $table->renameColumn('asset_uuid', 'asset_id')
+            ->update();
+
+        $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
+        $table->dropForeignKey('asset_id')
+            ->addColumn('asset_uuid', 'uuid', array('after' => 'id', 'null' => true))
+            ->update();
+        $this->execute('UPDATE recommandations_risks A,assets B SET A.asset_uuid = B.uuid where B.id=A.asset_id and A.asset_id is not null');
+        $this->execute('UPDATE recommandations_risks A SET A.asset_uuid = NULL where A.asset_id is null');
+        $table->removeColumn('asset_id')
+            ->update();
+        $table->renameColumn('asset_uuid', 'asset_id')
+            ->update();
+
+        $table = $this->table('assets');
+        $table->removeColumn('id')
             ->dropForeignKey('anr_id')
             ->save();
-      $this->execute("ALTER TABLE assets ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
+        $this->execute("ALTER TABLE assets ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
       //manage Foreign key
         $table = $this->table('assets');
         $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
-       $table = $this->table('amvs');
-       $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('amvs');
+        $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
-       $table = $this->table('instances');
-       $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('instances');
+        $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
-       $table = $this->table('instances_risks');
-       $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('instances_risks');
+        $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
-       $table = $this->table('objects');
-       $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('objects');
+        $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
-       $table = $this->table('recommandations_risks');
-       $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('recommandations_risks');
+        $table->addForeignKey(['asset_id','anr_id'], 'assets', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
     }
 }

@@ -24,9 +24,11 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
@@ -50,13 +52,16 @@ use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
+use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
+use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
@@ -78,6 +83,7 @@ use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
+use Monarc\FrontOffice\Model\Table\SoaScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Model\Table\ThemeTable;
 use Monarc\FrontOffice\Model\Table\ThreatTable;
@@ -175,6 +181,12 @@ class InstanceImportService
 
     private InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
+    private AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
+
+    private InstanceMetadataTable $instanceMetadataTable;
+
+    private SoaScaleCommentTable $soaScaleCommentTable;
+
     private string $importType;
 
     public function __construct(
@@ -215,6 +227,9 @@ class InstanceImportService
         InstanceRiskOwnerTable $instanceRiskOwnerTable,
         ConnectedUserService $connectedUserService,
         TranslationTable $translationTable,
+        AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
+        InstanceMetadataTable $instanceMetadataTable,
+        SoaScaleCommentTable $soaScaleCommentTable,
         ConfigService $configService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
@@ -252,13 +267,17 @@ class InstanceImportService
         $this->connectedUser = $connectedUserService->getConnectedUser();
         $this->operationalRiskScaleTypeTable = $operationalRiskScaleTypeTable;
         $this->translationTable = $translationTable;
+        $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
+        $this->instanceMetadataTable = $instanceMetadataTable;
+        $this->soaScaleCommentTable = $soaScaleCommentTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
     }
 
     /**
-     *  Available import modes: 'merge', which will update the existing instances using the file's data, or 'duplicate' which
+     *  Available import modes: 'merge', which will update the existing
+     * instances using the file's data, or 'duplicate' which
      * will create a new instance using the data.
      *
      * @param int $anrId The ANR ID
@@ -310,7 +329,12 @@ class InstanceImportService
                     $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
                     if ($file === false) {
                         // Support legacy export which were base64 encoded.
-                        $file = json_decode(trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)), true);
+                        $file = json_decode(
+                            trim(
+                                $this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)
+                            ),
+                            true
+                        );
                     }
                 }
 
@@ -339,7 +363,7 @@ class InstanceImportService
      *
      * @param array $data The instance data
      * @param Anr $anr The target ANR
-     * @param null|InstanceSuperClass $parentInstance The parent instance, which should be imported or null if it is root.
+     * @param null|InstanceSuperClass $parentInstance which should be imported or null if it is root.
      * @param string $modeImport Import mode, either 'merge' or 'duplicate'
      *
      * @return array|bool An array of created instances IDs, or false in case of error
@@ -417,6 +441,8 @@ class InstanceImportService
 
         $this->anrInstanceRiskService->createInstanceRisks($instance, $anr, $monarcObject, $data);
 
+        $this->createInstanceMetadata($instance, $data);
+
         $this->prepareInstanceConsequences($data, $anr, $instance, $monarcObject, $includeEval);
 
         $this->updateInstanceImpactsFromBrothers($instance, $modeImport);
@@ -464,6 +490,7 @@ class InstanceImportService
         string $modeImport
     ): array {
         $labelKey = 'label' . $anr->getLanguage();
+        $anrLanguageCode = $this->getAnrLanguageCode($anr);
         // Method information
         if (!empty($data['method'])) { //Steps checkboxes
             if (!empty($data['method']['steps'])) {
@@ -574,7 +601,8 @@ class InstanceImportService
                                 }
                                 $questionChoicesIds = [];
                                 foreach ($originQuestionChoices as $originQuestionChoice) {
-                                    $chosenQuestionLabel = $data['method']['questionChoice'][$originQuestionChoice][$labelKey];
+                                    $chosenQuestionLabel =
+                                        $data['method']['questionChoice'][$originQuestionChoice][$labelKey];
                                     foreach ($questionChoices as $questionChoice) {
                                         if ($questionChoice->get($labelKey) === $chosenQuestionLabel) {
                                             $questionChoicesIds[] = $questionChoice->getId();
@@ -596,7 +624,8 @@ class InstanceImportService
 
             /*
              * Process the evaluation of threats.
-             * TODO: we process all the threats in themes in AssetImportService, might be we can reuse the data from there.
+             * TODO: we process all the threats in themes in AssetImportService,
+             * might be we can reuse the data from there.
              */
             if (!empty($data['method']['threats'])) {
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
@@ -767,6 +796,100 @@ class InstanceImportService
             $this->measureMeasureTable->getDb()->flush();
         }
 
+        //import soaScaleComment
+        $maxOrig = null; //used below for soas
+        $maxDest = null; //used below for soas
+        if (isset($data['soaScaleComment'])) {
+            $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
+            $maxDest = (int) count($oldSoaScaleCommentData)-1;
+            $maxOrig = (int) count($data['soaScaleComment'])-1;
+            $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
+        } elseif (!isset($data['soaScaleComment']) && isset($data['soas'])) {
+            //old import case
+            $defaultSoaScaleCommentdatas = [
+                'fr' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Inexistant'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initialisé'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Reproductible'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Défini'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Géré quantitativement'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimisé']
+                ],
+                'en' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Non-existent'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initial'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Managed'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Defined'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Quantitatively managed'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimized']
+                ],
+                'de' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Nicht vorhanden'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initial'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Reproduzierbar'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Definiert'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Quantitativ verwaltet'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimiert']
+                ],
+                'nl' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
+                        'isHidden' => false, 'comment' => 'Onbestaand'],
+                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Initieel'],
+                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
+                        'isHidden' => false, 'comment' => 'Beheerst'],
+                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Gedefinieerd'],
+                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
+                        'isHidden' => false, 'comment' => 'Kwantitatief beheerst'],
+                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
+                        'isHidden' => false, 'comment' => 'Optimaliserend']
+                ],
+            ];
+            $data['soaScaleComment'] =
+                $defaultSoaScaleCommentdatas[$this->getAnrLanguageCode($anr)] ?? $defaultSoaScaleCommentdatas['en'];
+            $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
+            $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
+            $maxOrig = 5; // default value for old import
+            $maxDest = (int) count($oldSoaScaleCommentData)-1;
+        }
+        // manage the current SOA
+        if ($maxDest !== null && $maxOrig !== null) {
+            $existedSoas = $this->soaTable->findByAnr($anr);
+            foreach ($existedSoas as $existedSoa) {
+                $soaComment =  $valueToApprox = $existedSoa->getSoaScaleComment();
+                if ($soaComment !== null) {
+                    $valueToApprox = $soaComment->getScaleIndex();
+                    $newScaleIndex = $this->approximate(
+                        $valueToApprox,
+                        0,
+                        $maxDest,
+                        0,
+                        $maxOrig,
+                        0
+                    );
+                    $existedSoa->setSoaScaleComment(
+                        $this->cachedData['newSoaScaleCommentIndexedByScale'][$newScaleIndex]
+                    );
+                    $this->soaTable->saveEntity($existedSoa, false);
+                }
+            }
+        }
+
         // import the SOAs
         if (isset($data['soas'])) {
             $existedMeasures = $this->measureTable->findByAnrIndexedByUuid($anr);
@@ -775,7 +898,11 @@ class InstanceImportService
                 if (isset($measuresNewIds[$soa['measure_id']])) {
                     $newSoa = (new Soa($soa))
                         ->setAnr($anr)
-                        ->setMeasure($measuresNewIds[$soa['measure_id']]);
+                        ->setMeasure($measuresNewIds[$soa['measure_id']])
+                        ->setSoaScaleComment(
+                            $this->cachedData['soaScaleCommentExternalIdMapToNewObject']
+                                [$soa['soaScaleComment']]
+                        );
                     $this->soaTable->saveEntity($newSoa, false);
                 } elseif (isset($existedMeasures[$soa['measure_id']])) { //measure exist so soa exist (normally)
                     // TODO: why not $existedMeasure->getSoa() ...
@@ -784,19 +911,23 @@ class InstanceImportService
                     if ($existedSoa === null) {
                         $newSoa = (new Soa($soa))
                             ->setAnr($anr)
-                            ->setMeasure($existedMeasure);
+                            ->setMeasure($existedMeasure)
+                            ->setSoaScaleComment(null);
                         $this->soaTable->saveEntity($newSoa, false);
                     } else {
                         $existedSoa->setRemarks($soa['remarks'])
                             ->setEvidences($soa['evidences'])
                             ->setActions($soa['actions'])
-                            ->setCompliance($soa['compliance'])
                             ->setEX($soa['EX'])
                             ->setLR($soa['LR'])
                             ->setCO($soa['CO'])
                             ->setBR($soa['BR'])
                             ->setBP($soa['BP'])
-                            ->setRRA($soa['RRA']);
+                            ->setRRA($soa['RRA'])
+                            ->setSoaScaleComment(
+                                $this->cachedData['soaScaleCommentExternalIdMapToNewObject']
+                                    [$soa['soaScaleComment']]
+                            );
                         $this->soaTable->saveEntity($existedSoa, false);
                     }
                 }
@@ -810,6 +941,15 @@ class InstanceImportService
             foreach ($data['records'] as $v) {
                 $this->anrRecordService->importFromArray($v, $anr->getId());
             }
+        }
+
+        /*
+         * Import AnrMetadatasOnInstances
+         */
+        if (!empty($data['anrMetadatasOnInstances'])) {
+            $this->cachedData['anrMetadatasOnInstances'] =
+                $this->getCurrentAnrMetadatasOnInstances($anr);
+            $this->createAnrMetadatasOnInstances($anr, $data['anrMetadatasOnInstances']);
         }
 
         /*
@@ -1385,7 +1525,8 @@ class InstanceImportService
                         /*
                          * Unfortunately we don't add "themes" on the same level as "risks" and "threats",
                          * but only under "asset".
-                         * TODO: we should add theme linked to the threat inside of the threat object data when export later on.
+                         * TODO: we should add theme linked to the threat inside of the threat object
+                         * data when export later on.
                          * after we can set it $threat->setTheme($theme);
                          */
 
@@ -1520,7 +1661,8 @@ class InstanceImportService
                         if (strcmp($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) !== 0
                             && strpos($instanceRiskBrothers->getComment(), $instanceRisk->getComment()) === false
                         ) {
-                            $dataUpdate['comment'] = $instanceRiskBrothers->getComment() . "\n\n" . $instanceRisk->getComment(); // Merge comments
+                            $dataUpdate['comment'] = // Merge comments
+                                $instanceRiskBrothers->getComment() . "\n\n" . $instanceRisk->getComment();
                         } else {
                             $dataUpdate['comment'] = $instanceRiskBrothers->getComment();
                         }
@@ -1589,7 +1731,8 @@ class InstanceImportService
                                                 ->setRecommandation($recommendation)
                                                 ->setCreator($this->connectedUser->getEmail());
 
-                                            $this->recommendationRiskTable->saveEntity($recommendationRiskBrother, false);
+                                            $this->recommendationRiskTable
+                                                ->saveEntity($recommendationRiskBrother, false);
                                         }
                                     }
                                 }
@@ -2280,8 +2423,7 @@ class InstanceImportService
 
         if ($this->isMonarcVersionLoverThen('2.8.2')) {
             throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
-                . ' Please contact us for more details.'
-            );
+                . ' Please contact us for more details.');
         }
     }
 
@@ -2957,5 +3099,284 @@ class InstanceImportService
 
             $this->instanceRiskOpTable->getDb()->flush();
         }
+    }
+
+    /**
+     * @param InstanceSuperClass $instance
+     * @param array $data
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function createInstanceMetadata(InstanceSuperClass $instance, $data): void
+    {
+        $anr = $instance->getAnr();
+        $anrLanguageCode = $this->getAnrLanguageCode($anr);
+        //fetch translations
+        $instanceMetadataTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::INSTANCE_METADATA],
+            $anrLanguageCode
+        );
+        if (isset($data['instancesMetadatas'])) {
+            if (!isset($this->cachedData['anrMetadatasOnInstances'])) {
+                $this->cachedData['anrMetadatasOnInstances'] =
+                    $this->getCurrentAnrMetadatasOnInstances($anr);
+            }
+            // initialize the metadatas labels
+            $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+            foreach ($data['instancesMetadatas'] as $instanceMetadata) {
+                if (!in_array($instanceMetadata['label'], $labels)) {
+                    $this->createAnrMetadatasOnInstances($anr, [$instanceMetadata]);
+                    //update after insertion
+                    $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+                }
+                // if the metadata exist we can create/update the instanceMetadata
+                if (in_array($instanceMetadata['label'], $labels)) {
+                    $indexMetadata = array_search($instanceMetadata['label'], $labels);
+                    $metadata = $this->cachedData['anrMetadatasOnInstances'][$indexMetadata]['object'];
+                    $instanceMetadataObject = $this->instanceMetadataTable->findByInstanceAndMetadata(
+                        $instance,
+                        $metadata
+                    );
+                    if ($instanceMetadataObject === null) {
+                        $commentTranslationKey = (string)Uuid::uuid4();
+                        $instanceMetadataObject = (new InstanceMetadata())
+                            ->setInstance($instance)
+                            ->setMetadata($metadata)
+                            ->setCommentTranslationKey($commentTranslationKey)
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->instanceMetadataTable->save($instanceMetadataObject, false);
+
+                        $translation = (new Translation())
+                            ->setAnr($anr)
+                            ->setType(Translation::INSTANCE_METADATA)
+                            ->setKey($commentTranslationKey)
+                            ->setValue($instanceMetadata['comment'])
+                            ->setLang($anrLanguageCode)
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->translationTable->save($translation, false);
+                        $instanceMetadataTranslations[$commentTranslationKey] = $translation;
+                        $this->updateInstanceMetadataToBrothers($instance, $instanceMetadataObject);
+                    } else {
+                        $commentTranslationKey = $instanceMetadataObject->getCommentTranslationKey();
+                        $commentTranslation = $instanceMetadataTranslations[$commentTranslationKey];
+                        $commentTranslation->setValue(
+                            $commentTranslation->getValue().' '.$instanceMetadata['comment']
+                        );
+                        $this->translationTable->save($commentTranslation, false);
+                    }
+                }
+            }
+        }
+        $this->instanceMetadataTable->flush();
+        $this->updateInstanceMetadataFromBrothers($instance);
+        $this->instanceMetadataTable->flush();
+    }
+
+    /**
+     * @param AnrSuperClass $anr
+     * @param array $data
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function createAnrMetadatasOnInstances(AnrSuperClass $anr, $data): void
+    {
+        $anrLanguageCode = $this->getAnrLanguageCode($anr);
+        $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+        foreach ($data as $v) {
+            if (!in_array($v['label'], $labels)) {
+                $labelTranslationKey = (string)Uuid::uuid4();
+                $metadata = (new AnrMetadatasOnInstances())
+                     ->setAnr($anr)
+                     ->setLabelTranslationKey($labelTranslationKey)
+                     ->setCreator($this->connectedUser->getEmail())
+                     ->setIsDeletable(true);
+                $this->anrMetadatasOnInstancesTable->save($metadata, false);
+
+                $translation = (new Translation())
+                     ->setAnr($anr)
+                     ->setType(Translation::ANR_METADATAS_ON_INSTANCES)
+                     ->setKey($labelTranslationKey)
+                     ->setValue($v['label'])
+                     ->setLang($anrLanguageCode)
+                     ->setCreator($this->connectedUser->getEmail());
+                $this->translationTable->save($translation, false);
+                $this->cachedData['anrMetadatasOnInstances'][] =
+                    [
+                        'id' => $metadata->getId(),
+                        'label' => $v['label'],
+                        'object' => $metadata,
+                        'translation' => $translation,
+                    ];
+            }
+        }
+        $this->anrMetadatasOnInstancesTable->flush();
+    }
+
+    /**
+     * @param AnrSuperClass $anr
+     *
+     * @return array
+     *
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function getCurrentAnrMetadatasOnInstances(AnrSuperClass $anr): array
+    {
+        $this->cachedData['currentAnrMetadatasOnInstances'] = [];
+        $anrMetadatasOnInstancesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::ANR_METADATAS_ON_INSTANCES],
+            $this->getAnrLanguageCode($anr)
+        );
+
+        $AnrMetadatasOnInstances = $this->anrMetadatasOnInstancesTable->findByAnr($anr);
+        foreach ($AnrMetadatasOnInstances as $metadata) {
+            $translationLabel = $anrMetadatasOnInstancesTranslations[$metadata->getLabelTranslationKey()] ?? null;
+            $this->cachedData['currentAnrMetadatasOnInstances'][] = [
+                'id' => $metadata->getId(),
+                'label' => $translationLabel !== null ? $translationLabel->getValue() : '',
+                'object' => $metadata,
+                'translation' => $translationLabel,
+            ];
+        }
+        return $this->cachedData['currentAnrMetadatasOnInstances'];
+    }
+
+    /**
+     * Update the instance impacts from brothers for global assets.
+     *
+     * @param InstanceSuperClass $instance
+     */
+    private function updateInstanceMetadataFromBrothers(InstanceSuperClass $instance): void
+    {
+        if ($instance->getObject()->isScopeGlobal()) {
+            $instanceBrothers = $this->getInstanceBrothers($instance);
+            if (!empty($instanceBrothers)) {
+                // Update instanceMetadata of $instance. We use only one brother as the instanceMetadatas are the same.
+                $instanceBrother = current($instanceBrothers);
+                $instancesMetadatasFromBrother = $instanceBrother->getInstanceMetadatas();
+                foreach ($instancesMetadatasFromBrother as $instanceMetadataFromBrother) {
+                    $metadata = $instanceMetadataFromBrother->getMetadata();
+                    $instanceMetadata = $this->instanceMetadataTable
+                        ->findByInstanceAndMetadata($instance, $metadata);
+                    if ($instanceMetadata === null) {
+                        $instanceMetadata = (new InstanceMetadata())
+                            ->setInstance($instance)
+                            ->setMetadata($metadata)
+                            ->setCommentTranslationKey($instanceMetadataFromBrother->getCommentTranslationKey())
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->instanceMetadataTable->save($instanceMetadata, false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Update the instance impacts from instance to Brothers for global assets.
+     *
+     * @param InstanceSuperClass $instance
+     * @param InstanceMetadata $instanceMetadata
+     */
+    private function updateInstanceMetadataToBrothers(
+        InstanceSuperClass $instance,
+        InstanceMetadata $instanceMetadata
+    ): void {
+        if ($instance->getObject()->isScopeGlobal()) {
+            $instanceBrothers = $this->getInstanceBrothers($instance);
+            if (!empty($instanceBrothers)) {
+                foreach ($instanceBrothers as $instanceBrother) {
+                    $metadata = $instanceMetadata->getMetadata();
+                    $instanceMetadataBrother = $this->instanceMetadataTable
+                        ->findByInstanceAndMetadata($instanceBrother, $metadata);
+                    if ($instanceMetadataBrother === null) {
+                        $instanceMetadataBrother = (new InstanceMetadata())
+                            ->setInstance($instanceBrother)
+                            ->setMetadata($metadata)
+                            ->setCommentTranslationKey($instanceMetadata->getCommentTranslationKey())
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->instanceMetadataTable->save($instanceMetadataBrother, false);
+                    }
+                }
+            }
+        }
+    }
+
+    private function getCurrentSoaScaleCommentData(AnrSuperClass $anr): array
+    {
+        if (empty($this->cachedData['currentSoaScaleCommentData'])) {
+            /** @var SoaScaleCommentTable $soaScaleCommentTable */
+            $scales = $this->soaScaleCommentTable->findByAnr($anr);
+            foreach ($scales as $scale) {
+                if (!$scale->isHidden()) {
+                    $this->cachedData['currentSoaScaleCommentData'][$scale->getScaleIndex()] = [
+                        'scaleIndex' => $scale->getScaleIndex(),
+                        'isHidden' => $scale->isHidden(),
+                        'colour' => $scale->getColour(),
+                        'object' => $scale,
+                    ];
+                }
+            }
+        }
+        return $this->cachedData['currentSoaScaleCommentData'];
+    }
+
+    private function mergeSoaScaleComment(array $newScales, AnrSuperClass $anr)
+    {
+        $soaScaleCommentTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::SOA_SCALE_COMMENT],
+            $this->getAnrLanguageCode($anr)
+        );
+        $scales = $this->soaScaleCommentTable->findByAnrIndexedByScaleIndex($anr);
+        // we have scales to create
+        if (count($newScales) > count($scales)) {
+            $anrLanguageCode = $this->getAnrLanguageCode($anr);
+            for ($i = count($scales); $i < count($newScales); $i++) {
+                $translationKey = (string)Uuid::uuid4();
+                $translation = (new Translation())
+                    ->setAnr($anr)
+                    ->setType(Translation::SOA_SCALE_COMMENT)
+                    ->setKey($translationKey)
+                    ->setValue('')
+                    ->setLang($anrLanguageCode)
+                    ->setCreator($this->connectedUser->getEmail());
+                $this->translationTable->save($translation, false);
+                $soaScaleCommentTranslations[$translationKey]  = $translation;
+
+                $scales[$i] = (new SoaScaleComment())
+                    ->setScaleIndex($i)
+                    ->setAnr($anr)
+                    ->setCommentTranslationKey($translationKey)
+                    ->setCreator($this->connectedUser->getEmail());
+                $this->soaScaleCommentTable->save($scales[$i], false);
+            }
+        }
+        //we have scales to hide
+        if ((count($newScales) < count($scales))) {
+            for ($i = count($newScales); $i < count($scales); $i++) {
+                $scales[$i]->setIsHidden(true);
+                $this->soaScaleCommentTable->save($scales[$i], false);
+            }
+        }
+        //we process the scales
+        foreach ($newScales as $id => $newScale) {
+            $scales[$newScale['scaleIndex']]
+                ->setColour($newScale['colour'])
+                ->setIsHidden($newScale['isHidden']);
+            $this->soaScaleCommentTable->save($scales[$newScale['scaleIndex']], false);
+
+            $translationKey = $scales[$newScale['scaleIndex']]->getCommentTranslationKey();
+            $translation = $soaScaleCommentTranslations[$translationKey];
+            $translation->setValue($newScale['comment']);
+            $this->translationTable->save($translation, false);
+            $this->cachedData['newSoaScaleCommentIndexedByScale'][$newScale['scaleIndex']] =
+                $scales[$newScale['scaleIndex']];
+            $this->cachedData['soaScaleCommentExternalIdMapToNewObject'][$id] = $scales[$newScale['scaleIndex']];
+        }
+        $this->soaScaleCommentTable->flush();
     }
 }

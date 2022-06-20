@@ -30,7 +30,7 @@ class UserService extends CoreUserService
      * The list of fields deleted during a GET
      * @var array
      */
-    protected $forbiddenFields = ['password'];
+    protected $forbiddenFields = ['password', 'recoveryCodes'];
 
     /** @var AnrTable */
     private $anrTable;

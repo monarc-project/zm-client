@@ -7,6 +7,7 @@
 
 
 namespace Monarc\FrontOffice\Service;
+
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\Entity\Soa;
@@ -24,5 +25,6 @@ class SoaServiceFactory extends AbstractServiceFactory
         'table' => Table\SoaTable::class,
         'anrTable' => Table\AnrTable::class,
         'userAnrTable' => Table\UserAnrTable::class,
+        'soaScaleCommentTable' => Table\SoaScaleCommentTable::class,
     ];
 }
