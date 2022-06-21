@@ -637,7 +637,7 @@ class AnrService extends AbstractService
                     // $assets2 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
                     // We fetch all the assets related to the specific model and linked to its configured anr.
                     $assets2 = array_merge(
-                        $model->get('assets'),
+                        $model->get('assets')->toArray(),
                         $this->get('assetTable')->findByAnr($model->getAnr())
                     );
                 }
@@ -663,7 +663,7 @@ class AnrService extends AbstractService
                     // $threats2 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_SPECIFIC]);
                     // We fetch all the threats related to the specific model and linked to its configured anr.
                     $threats2 = array_merge(
-                        $model->get('threats'),
+                        $model->get('threats')->toArray(),
                         $this->get('threatTable')->findByAnr($model->getAnr())
                     );
                     foreach ($threats2 as $t) {
@@ -698,7 +698,7 @@ class AnrService extends AbstractService
                     //    ->getEntityByFields(['mode' => Vulnerability::MODE_SPECIFIC]);
                     // We fetch all the vulns related to the specific model and linked to its configured anr.
                     $vulnerabilities2 = array_merge(
-                        $model->get('vulnerabilities'),
+                        $model->get('vulnerabilities')->toArray(),
                         $this->get('vulnerabilityTable')->findByAnr($model->getAnr())
                     );
                 }
