@@ -634,7 +634,12 @@ class AnrService extends AbstractService
                 }
                 $assets2 = [];
                 if (!$model->isGeneric) {
-                    $assets2 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
+                    // $assets2 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
+                    // We fetch all the assets related to the specific model and linked to its configured anr.
+                    $assets2 = array_merge(
+                        $model->get('assets'),
+                        $this->get('assetTable')->findByAnr($model->getAnr())
+                    );
                 }
                 $assets = $assets1 + $assets2;
             } else {
@@ -656,7 +661,12 @@ class AnrService extends AbstractService
                 }
                 $threats2 = [];
                 if (!$model->isGeneric) {
-                    $threats2 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_SPECIFIC]);
+                    // $threats2 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_SPECIFIC]);
+                    // We fetch all the threats related to the specific model and linked to its configured anr.
+                    $threats2 = array_merge(
+                        $model->get('threats'),
+                        $this->get('threatTable')->findByAnr($model->getAnr())
+                    );
                     foreach ($threats2 as $t) {
                         $threats[] = $t;
                     }
@@ -685,8 +695,13 @@ class AnrService extends AbstractService
                 }
                 $vulnerabilities2 = [];
                 if (!$model->isGeneric) {
-                    $vulnerabilities2 = $this->get('vulnerabilityTable')
-                        ->getEntityByFields(['mode' => Vulnerability::MODE_SPECIFIC]);
+                    //$vulnerabilities2 = $this->get('vulnerabilityTable')
+                    //    ->getEntityByFields(['mode' => Vulnerability::MODE_SPECIFIC]);
+                    // We fetch all the vulns related to the specific model and linked to its configured anr.
+                    $vulnerabilities2 = array_merge(
+                        $model->get('vulnerabilities'),
+                        $this->get('vulnerabilityTable')->findByAnr($model->getAnr())
+                    );
                 }
                 $vulnerabilities = $vulnerabilities1 + $vulnerabilities2;
             } else {
