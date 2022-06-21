@@ -641,7 +641,7 @@ class AnrService extends AbstractService
                         $this->get('assetTable')->findByAnr($model->getAnr())
                     );
                 }
-                $assets = $assets1 + $assets2;
+                $assets = array_merge($assets1, $assets2);
             } else {
                 $assets = $this->get('assetCliTable')->getEntityByFields(['anr' => $anr->id]);
             }
@@ -659,7 +659,6 @@ class AnrService extends AbstractService
                 if (!$model->isRegulator) {
                     $threats = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_GENERIC]);
                 }
-                $threats2 = [];
                 if (!$model->isGeneric) {
                     // $threats2 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_SPECIFIC]);
                     // We fetch all the threats related to the specific model and linked to its configured anr.
@@ -703,7 +702,7 @@ class AnrService extends AbstractService
                         $this->get('vulnerabilityTable')->findByAnr($model->getAnr())
                     );
                 }
-                $vulnerabilities = $vulnerabilities1 + $vulnerabilities2;
+                $vulnerabilities = array_merge($vulnerabilities1, $vulnerabilities2);
             } else {
                 $vulnerabilities = $this->get('vulnerabilityCliTable')->getEntityByFields(['anr' => $anr->id]);
             }
