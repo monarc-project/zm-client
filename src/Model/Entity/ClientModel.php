@@ -68,6 +68,4 @@ class ClientModel extends AbstractEntity
         $this->client = $client;
         return $this;
     }
-
-
 }
