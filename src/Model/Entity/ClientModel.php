@@ -47,7 +47,7 @@ class ClientModel extends AbstractEntity
      */
     protected $client;
 
-    public function getModelId(): int
+    public function getModelId(): ?int
     {
         return $this->modelId;
     }
