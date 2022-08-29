@@ -576,7 +576,7 @@ class AnrService extends AbstractService
             $newAnr = new Anr($anr);
             $newAnr->setId(null);
             $newAnr->generateAndSetUuid();
-            $newAnr->setObjects(null);
+            $newAnr->setObjects(new ArrayCollection());
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
             $newAnr->setReferentials(null);
