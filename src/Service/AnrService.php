@@ -648,6 +648,7 @@ class AnrService extends AbstractService
             foreach ($assets as $asset) {
                 $newAsset = new Asset($asset);
                 $newAsset->setAnr($newAnr);
+                $newAsset->setMode(0); // force to generic
                 $this->get('assetCliTable')->save($newAsset, false);
                 $assetsNewIds[$asset->getUuid()] = $newAsset;
             }
@@ -680,6 +681,7 @@ class AnrService extends AbstractService
                 if ($threat->theme) {
                     $newThreat->setTheme($themesNewIds[$threat->theme->id]);
                 }
+                $newThreat->setMode(0); // force to generic
                 $this->get('threatCliTable')->save($newThreat, false);
                 $threatsNewIds[$threat->getUuid()] = $newThreat;
             }
@@ -709,6 +711,7 @@ class AnrService extends AbstractService
             foreach ($vulnerabilities as $vulnerability) {
                 $newVulnerability = new Vulnerability($vulnerability);
                 $newVulnerability->setAnr($newAnr);
+                $newVulnerability->setMode(0); // force to generic
                 $this->get('vulnerabilityCliTable')->save($newVulnerability, false);
                 $vulnerabilitiesNewIds[$vulnerability->getUuid()] = $newVulnerability;
             }
@@ -1004,6 +1007,8 @@ class AnrService extends AbstractService
                 if ($object->getRolfTag()) {
                     $newObject->setRolfTag($rolfTagsNewIds[$object->getRolfTag()->getId()]);
                 }
+                //in FO all the objects are generic
+                $newObject->setMode(0); //force to be generic
                 $this->get('objectCliTable')->save($newObject, false);
                 $objectsNewIds[$object->getUuid()] = $newObject;
             }
