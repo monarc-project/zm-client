@@ -1276,6 +1276,7 @@ return [
             Table\AnrMetadatasOnInstancesTable::class => ClientEntityManagerFactory::class,
             Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
             Table\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
+            Table\ClientModelTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.

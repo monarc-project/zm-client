@@ -34,11 +34,11 @@ class Client extends AbstractEntity
     protected $id;
 
     /**
-     * @var integer
+     * @var ArrayCollection|ClientModel[]
      *
-     * @ORM\Column(name="model_id", type="integer", nullable=true)
+     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\ClientModel", mappedBy="client")
      */
-    protected $model_id;
+    protected $models;
 
     /**
      * @var integer
@@ -111,6 +111,11 @@ class Client extends AbstractEntity
         }
 
         return $this->inputFilter;
+    }
+
+    public function getModels()
+    {
+        return $this->models;
     }
 
     public function getId(): int
