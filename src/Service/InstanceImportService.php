@@ -898,11 +898,13 @@ class InstanceImportService
                 if (isset($measuresNewIds[$soa['measure_id']])) {
                     $newSoa = (new Soa($soa))
                         ->setAnr($anr)
-                        ->setMeasure($measuresNewIds[$soa['measure_id']])
-                        ->setSoaScaleComment(
+                        ->setMeasure($measuresNewIds[$soa['measure_id']]);
+                    if (isset($soa['soaScaleComment'])) {
+                        $newSoa->setSoaScaleComment(
                             $this->cachedData['soaScaleCommentExternalIdMapToNewObject']
-                                [$soa['soaScaleComment']]
+                            [$soa['soaScaleComment']]
                         );
+                    }
                     $this->soaTable->saveEntity($newSoa, false);
                 } elseif (isset($existedMeasures[$soa['measure_id']])) { //measure exist so soa exist (normally)
                     // TODO: why not $existedMeasure->getSoa() ...
