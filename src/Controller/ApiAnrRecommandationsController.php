@@ -103,28 +103,24 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
      */
     public function create($data)
     {
-        if (isset($data['mass'])) {
-            unset($data['mass'], $data['anr']);
-            $obj = [];
-            foreach ($data as $value) {
-                if (empty($value['anr'])) {
-                    throw new Exception('Anr id missing', 412);
-                }
-                $obj[] = $this->getService()->create($value);
-            }
-            return new JsonModel([
-                'status' => 'ok',
-                'id' => $obj
-            ]);
-        }
-
-        if (empty($data['anr'])) {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
             throw new Exception('Anr id missing', 412);
         }
-        $obj = $this->getService()->create($data);
+        if (array_keys($data) !== range(0, count($data) - 1)) {
+            # if $data is an associative array
+            $data = array($data);
+        }
+        $created_recommendations = [];
+
+        foreach ($data as $key => $new_data) {
+
+            $new_data['anr'] = $anrId;
+            $created_recommendations[] = $this->getService()->create($new_data);
+        }
         return new JsonModel([
             'status' => 'ok',
-            'id' => $obj
+            'id' => count($created_recommendations)==1 ? $created_recommendations[0]: $created_recommendations,
         ]);
     }
 }
