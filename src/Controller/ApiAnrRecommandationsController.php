@@ -114,7 +114,6 @@ class ApiAnrRecommandationsController extends ApiAnrAbstractController
         $created_recommendations = [];
 
         foreach ($data as $key => $new_data) {
-
             $new_data['anr'] = $anrId;
             $created_recommendations[] = $this->getService()->create($new_data);
         }
