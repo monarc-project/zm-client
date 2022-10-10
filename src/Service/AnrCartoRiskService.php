@@ -44,7 +44,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib, $riskMaxSum) = $this->getCountersRisks('raw');
+        list($counters, $distrib, $riskMaxSum, $risksNotTreated, $risksTreated) = $this->getCountersRisks('raw');
         list($countersRiskOP, $distribRiskOp, $riskOpMaxSum) = $this->getCountersOpRisks('raw');
 
         return [
@@ -57,6 +57,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
               'counters' => $counters,
               'distrib' => $distrib,
               'riskMaxSum' => $riskMaxSum,
+              'risksNotTreated' => $risksNotTreated,
+              'risksTreated' => $risksTreated,
             ],
             'riskOp' => [
               'counters' => $countersRiskOP,
@@ -76,7 +78,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib, $riskMaxSum) = $this->getCountersRisks('target');
+        list($counters, $distrib, $riskMaxSum, $risksNotTreated, $risksTreated) = $this->getCountersRisks('target');
         list($countersRiskOP, $distribRiskOp, $riskOpMaxSum) = $this->getCountersOpRisks('target');
 
         return [
@@ -89,6 +91,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
               'counters' => $counters,
               'distrib' => $distrib,
               'riskMaxSum' => $riskMaxSum,
+              'risksNotTreated' => $risksNotTreated,
+              'risksTreated' => $risksTreated,
             ],
             'riskOp' => [
               'counters' => $countersRiskOP,
@@ -191,7 +195,10 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $changeField = $mode == 'raw' ? 'ir.cacheMaxRisk' : 'ir.cacheTargetedRisk';
         $query = $this->get('instanceRiskTable')->getRepository()->createQueryBuilder('ir');
         $result = $query->select([
-            'ir.id as myid', 'IDENTITY(ir.amv) as amv', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability', $changeField . ' as maximus',
+            'ir.id as myid',
+            'ir.kindOfMeasure as treatment',
+            'IDENTITY(ir.amv) as amv', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability',
+            $changeField . ' as maximus',
             'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
             'm.c as mc', 'm.i as mi', 'm.a as ma',
             'o.scope',
@@ -202,7 +209,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->innerJoin('ir.threat', 'm')
             ->innerJoin('i.object', 'o')->getQuery()->getResult();
 
-        $counters = $distrib = $riskMaxSum = $temp = [];
+        $counters = $distrib = $riskMaxSum = $risksNotTreated = $risksTreated = $temp = [];
         foreach ($result as $r) {
             if (!isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
@@ -231,7 +238,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 'amv' => $r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability'],
                 'max' => $max,
                 'color' => $this->getColor($max,'riskInfo'),
-                'uuid' => $r['amv']
+                'uuid' => $r['amv'],
+                'treatment' => $r['treatment']
             ];
 
             // on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
@@ -272,18 +280,43 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                         $distrib[$context['color']] = [];
                     }
 
-                    if (!isset($riskMaxAverage[$context['color']])) {
-                        $riskMaxAverage[$context['color']] = 0;
+                    if (!isset($riskMaxSum[$context['color']])) {
+                        $riskMaxSum[$context['color']] = 0;
                     }
 
                     array_push($counters[$context['impact']][$context['right']],$context['uuid']);
                     array_push($distrib[$context['color']],$context['uuid']);
                     $riskMaxSum[$context['color']] += $context['max'];
+
+                    if ($context['treatment'] == 5) {
+
+                        if (!isset($risksNotTreated[$context['color']]['count'])) {
+                            $risksNotTreated[$context['color']]['count'] = [];
+                        }
+
+                        if (!isset($risksNotTreated[$context['color']]['sum'])) {
+                            $risksNotTreated[$context['color']]['sum'] = 0;
+                        }
+
+                        array_push($risksNotTreated[$context['color']]['count'],$context['uuid']);
+                        $risksNotTreated[$context['color']]['sum'] += $context['max'];
+                    } else {
+                        if (!isset($risksTreated[$context['color']]['count'])) {
+                            $risksTreated[$context['color']]['count'] = [];
+                        }
+
+                        if (!isset($risksTreated[$context['color']]['sum'])) {
+                            $risksTreated[$context['color']]['sum'] = 0;
+                        }
+
+                        array_push($risksTreated[$context['color']]['count'],$context['uuid']);
+                        $risksTreated[$context['color']]['sum'] += $context['max'];
+                    }
                 }
             }
         }
 
-        return [$counters, $distrib, $riskMaxSum];
+        return [$counters, $distrib, $riskMaxSum, $risksNotTreated, $risksTreated];
     }
 
     /**
