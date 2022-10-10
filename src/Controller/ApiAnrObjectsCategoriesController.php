@@ -64,7 +64,7 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
 
         $objectCategories = $service->getListSpecific($page, $limit, $order, $filter, $filterAnd);
 
-        $fields = ['id', 'label1', 'label2', 'label3', 'label4', 'position', 'objects'];
+        $fields = ['id', 'label1', 'label2', 'label3', 'label4', 'position'];
 
         if ($parentId > 0 && $lock) {
             $recursiveArray = $this->getCleanFields($objectCategories, $fields);
