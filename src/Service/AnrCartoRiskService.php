@@ -44,8 +44,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib) = $this->getCountersRisks('raw');
-        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('raw');
+        list($counters, $distrib, $riskMaxSum) = $this->getCountersRisks('raw');
+        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum) = $this->getCountersOpRisks('raw');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
@@ -56,10 +56,12 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             'riskInfo' => [
               'counters' => $counters,
               'distrib' => $distrib,
+              'riskMaxSum' => $riskMaxSum,
             ],
             'riskOp' => [
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
+              'riskOpMaxSum' => $riskOpMaxSum,
             ],
         ];
     }
@@ -74,8 +76,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib) = $this->getCountersRisks('target');
-        list($countersRiskOP, $distribRiskOp) = $this->getCountersOpRisks('target');
+        list($counters, $distrib, $riskMaxSum) = $this->getCountersRisks('target');
+        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum) = $this->getCountersOpRisks('target');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
@@ -86,10 +88,12 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             'riskInfo' => [
               'counters' => $counters,
               'distrib' => $distrib,
+              'riskMaxSum' => $riskMaxSum,
             ],
             'riskOp' => [
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
+              'riskOpMaxSum' => $riskOpMaxSum,
             ],
         ];
       }
@@ -198,7 +202,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->innerJoin('ir.threat', 'm')
             ->innerJoin('i.object', 'o')->getQuery()->getResult();
 
-        $counters = $distrib = $temp = [];
+        $counters = $distrib = $riskMaxSum = $temp = [];
         foreach ($result as $r) {
             if (!isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
@@ -267,13 +271,19 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                     if (!isset($distrib[$context['color']])) {
                         $distrib[$context['color']] = [];
                     }
+
+                    if (!isset($riskMaxAverage[$context['color']])) {
+                        $riskMaxAverage[$context['color']] = 0;
+                    }
+
                     array_push($counters[$context['impact']][$context['right']],$context['uuid']);
                     array_push($distrib[$context['color']],$context['uuid']);
+                    $riskMaxSum[$context['color']] += $context['max'];
                 }
             }
         }
 
-        return [$counters, $distrib];
+        return [$counters, $distrib, $riskMaxSum];
     }
 
     /**
@@ -294,7 +304,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->getQuery()->getResult();
 
 
-        $countersRiskOP = $distribRiskOp = $temp = [];
+        $countersRiskOP = $distribRiskOp = $riskOpMaxSum = $temp = [];
         foreach ($result as $r) {
             foreach ($r['instanceRiskOp']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
                 $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
@@ -329,11 +339,17 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             if (!isset($distribRiskOp[$color])) {
                 $distribRiskOp[$color] = [];
             }
+
+            if (!isset($riskOpMaxSum[$color])) {
+                $riskOpMaxSum[$color] = 0;
+            }
+
             array_push($countersRiskOP[$imax][$prob],$r['id']);
             array_push($distribRiskOp[$color],$r['id']);
+            $riskOpMaxSum[$color] += $max;
         }
 
-        return [$countersRiskOP, $distribRiskOp];
+        return [$countersRiskOP, $distribRiskOp, $riskOpMaxSum];
 
     }
 
