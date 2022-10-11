@@ -44,8 +44,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib, $riskMaxSum, $risksNotTreated, $risksTreated) = $this->getCountersRisks('raw');
-        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum) = $this->getCountersOpRisks('raw');
+        list($counters, $distrib, $riskMaxSum, $byTreatment) = $this->getCountersRisks('raw');
+        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatmentRiskOp) = $this->getCountersOpRisks('raw');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
@@ -57,13 +57,13 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
               'counters' => $counters,
               'distrib' => $distrib,
               'riskMaxSum' => $riskMaxSum,
-              'risksNotTreated' => $risksNotTreated,
-              'risksTreated' => $risksTreated,
+              'byTreatment' => $byTreatment,
             ],
             'riskOp' => [
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
               'riskOpMaxSum' => $riskOpMaxSum,
+              'byTreatment' => $byTreatmentRiskOp,
             ],
         ];
     }
@@ -78,8 +78,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib, $riskMaxSum, $risksNotTreated, $risksTreated) = $this->getCountersRisks('target');
-        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum) = $this->getCountersOpRisks('target');
+        list($counters, $distrib, $riskMaxSum, $byTreatment) = $this->getCountersRisks('target');
+        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatmentRiskOp) = $this->getCountersOpRisks('target');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
@@ -91,13 +91,13 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
               'counters' => $counters,
               'distrib' => $distrib,
               'riskMaxSum' => $riskMaxSum,
-              'risksNotTreated' => $risksNotTreated,
-              'risksTreated' => $risksTreated,
+              'byTreatment' => $byTreatment,
             ],
             'riskOp' => [
               'counters' => $countersRiskOP,
               'distrib' => $distribRiskOp,
               'riskOpMaxSum' => $riskOpMaxSum,
+              'byTreatment' => $byTreatmentRiskOp,
             ],
         ];
       }
@@ -209,7 +209,23 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             ->innerJoin('ir.threat', 'm')
             ->innerJoin('i.object', 'o')->getQuery()->getResult();
 
-        $counters = $distrib = $riskMaxSum = $risksNotTreated = $risksTreated = $temp = [];
+        $counters = $distrib = $riskMaxSum = $temp = [];
+        $byTreatment = [
+            'treated' => [],
+            'not_treated' => [],
+            'reduction' => [],
+            'denied' => [],
+            'accepted' => [],
+            'shared' => [],
+            'all' => [
+                'reduction' => [],
+                'denied' => [],
+                'accepted' => [],
+                'shared' => [],
+                'not_treated' => [],
+            ]
+        ];
+
         foreach ($result as $r) {
             if (!isset($r['threat']) || !isset($r['vulnerability'])) {
                 continue;
@@ -288,35 +304,64 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                     array_push($distrib[$context['color']],$context['uuid']);
                     $riskMaxSum[$context['color']] += $context['max'];
 
-                    if ($context['treatment'] == 5) {
-
-                        if (!isset($risksNotTreated[$context['color']]['count'])) {
-                            $risksNotTreated[$context['color']]['count'] = [];
+                    if ($context['treatment'] !== 5) {
+                        if (!isset($byTreatment['treated'][$context['color']]['count'])) {
+                            $byTreatment['treated'][$context['color']]['count'] = [];
                         }
 
-                        if (!isset($risksNotTreated[$context['color']]['sum'])) {
-                            $risksNotTreated[$context['color']]['sum'] = 0;
+                        if (!isset($byTreatment['treated'][$context['color']]['sum'])) {
+                            $byTreatment['treated'][$context['color']]['sum'] = 0;
                         }
 
-                        array_push($risksNotTreated[$context['color']]['count'],$context['uuid']);
-                        $risksNotTreated[$context['color']]['sum'] += $context['max'];
-                    } else {
-                        if (!isset($risksTreated[$context['color']]['count'])) {
-                            $risksTreated[$context['color']]['count'] = [];
-                        }
-
-                        if (!isset($risksTreated[$context['color']]['sum'])) {
-                            $risksTreated[$context['color']]['sum'] = 0;
-                        }
-
-                        array_push($risksTreated[$context['color']]['count'],$context['uuid']);
-                        $risksTreated[$context['color']]['sum'] += $context['max'];
+                        array_push($byTreatment['treated'][$context['color']]['count'],$context['uuid']);
+                        $byTreatment['treated'][$context['color']]['sum'] += $context['max'];
                     }
+
+                    switch($context['treatment']) {
+                        case 1:
+                            $kindOfTreatment = 'reduction';
+                            break;
+                        case 2:
+                            $kindOfTreatment = 'denied';
+                            break;
+                        case 3:
+                            $kindOfTreatment = 'accepted';
+                            break;
+                        case 4:
+                            $kindOfTreatment = 'shared';
+                            break;
+                        case 5:
+                            $kindOfTreatment = 'not_treated';
+                            break;
+                    }
+
+
+                    if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
+                        $byTreatment['all'][$kindOfTreatment]['count'] = [];
+                    }
+
+                    if (!isset($byTreatment['all'][$kindOfTreatment]['sum'])) {
+                        $byTreatment['all'][$kindOfTreatment]['sum'] = 0;
+                    }
+
+                    if (!isset($byTreatment[$kindOfTreatment][$context['color']]['count'])) {
+                        $byTreatment[$kindOfTreatment][$context['color']]['count'] = [];
+                    }
+
+                    if (!isset($byTreatment[$kindOfTreatment][$context['color']]['sum'])) {
+                        $byTreatment[$kindOfTreatment][$context['color']]['sum'] = 0;
+                    }
+
+                    array_push($byTreatment[$kindOfTreatment][$context['color']]['count'],$context['uuid']);
+                    $byTreatment[$kindOfTreatment][$context['color']]['sum'] += $context['max'];
+
+                    array_push($byTreatment['all'][$kindOfTreatment]['count'],$context['uuid']);
+                    $byTreatment['all'][$kindOfTreatment]['sum'] += $context['max'];
                 }
             }
         }
 
-        return [$counters, $distrib, $riskMaxSum, $risksNotTreated, $risksTreated];
+        return [$counters, $distrib, $riskMaxSum, $byTreatment];
     }
 
     /**
@@ -330,6 +375,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $query = $this->get('instanceRiskOpTable')->getRepository()->createQueryBuilder('iro');
         $result = $query->select([
             'iro as instanceRiskOp', 'iro.cacheNetRisk as netRisk', 'iro.cacheTargetedRisk as targetedRisk',
+            'iro.kindOfMeasure as treatment',
             implode(',', $valuesField)
         ])->where('iro.anr = :anrid')
             ->setParameter(':anrid', $this->anr->get('id'))
@@ -338,6 +384,22 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
 
         $countersRiskOP = $distribRiskOp = $riskOpMaxSum = $temp = [];
+        $byTreatment = [
+            'treated' => [],
+            'not_treated' => [],
+            'reduction' => [],
+            'denied' => [],
+            'accepted' => [],
+            'shared' => [],
+            'all' => [
+                'reduction' => [],
+                'denied' => [],
+                'accepted' => [],
+                'shared' => [],
+                'not_treated' => [],
+            ]
+        ];
+
         foreach ($result as $r) {
             foreach ($r['instanceRiskOp']->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
                 $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
@@ -361,6 +423,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 $max = $r['targetedRisk'];
                 $prob = $r['targetedProb'];
             }
+            $treatment = $r['treatment'];
 
             $id = $r['id'];
             $color = $this->getColor($max, 'riskOp');
@@ -380,9 +443,62 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             array_push($countersRiskOP[$imax][$prob],$r['id']);
             array_push($distribRiskOp[$color],$r['id']);
             $riskOpMaxSum[$color] += $max;
+
+            if ($treatment !== 5) {
+                if (!isset($byTreatment['treated'][$color]['count'])) {
+                    $byTreatment['treated'][$color]['count'] = [];
+                }
+
+                if (!isset($byTreatment['treated'][$color]['sum'])) {
+                    $byTreatment['treated'][$color]['sum'] = 0;
+                }
+
+                array_push($byTreatment['treated'][$color]['count'],$r['id']);
+                $byTreatment['treated'][$color]['sum'] += $max;
+            }
+
+            switch($treatment) {
+                case 1:
+                    $kindOfTreatment = 'reduction';
+                    break;
+                case 2:
+                    $kindOfTreatment = 'denied';
+                    break;
+                case 3:
+                    $kindOfTreatment = 'accepted';
+                    break;
+                case 4:
+                    $kindOfTreatment = 'shared';
+                    break;
+                case 5:
+                    $kindOfTreatment = 'not_treated';
+                    break;
+            }
+
+            if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
+                $byTreatment['all'][$kindOfTreatment]['count'] = [];
+            }
+
+            if (!isset($byTreatment['all'][$kindOfTreatment]['sum'])) {
+                $byTreatment['all'][$kindOfTreatment]['sum'] = 0;
+            }
+
+            if (!isset($byTreatment[$kindOfTreatment][$color]['count'])) {
+                $byTreatment[$kindOfTreatment][$color]['count'] = [];
+            }
+
+            if (!isset($byTreatment[$kindOfTreatment][$color]['sum'])) {
+                $byTreatment[$kindOfTreatment][$color]['sum'] = 0;
+            }
+
+            array_push($byTreatment[$kindOfTreatment][$color]['count'],$r['id']);
+            $byTreatment[$kindOfTreatment][$color]['sum'] += $max;
+
+            array_push($byTreatment['all'][$kindOfTreatment]['count'],$r['id']);
+            $byTreatment['all'][$kindOfTreatment]['sum'] += $max;
         }
 
-        return [$countersRiskOP, $distribRiskOp, $riskOpMaxSum];
+        return [$countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatment];
 
     }
 
