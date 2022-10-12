@@ -254,7 +254,6 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 'amv' => $r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability'],
                 'max' => $max,
                 'color' => $this->getColor($max,'riskInfo'),
-                'uuid' => $r['amv'],
                 'treatment' => $r['treatment']
             ];
 
@@ -289,31 +288,31 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                     }
 
                     if (!isset($counters[$context['impact']][$context['right']])) {
-                        $counters[$context['impact']][$context['right']] = [];
+                        $counters[$context['impact']][$context['right']] = 0;
                     }
 
                     if (!isset($distrib[$context['color']])) {
-                        $distrib[$context['color']] = [];
+                        $distrib[$context['color']] = 0;
                     }
 
                     if (!isset($riskMaxSum[$context['color']])) {
                         $riskMaxSum[$context['color']] = 0;
                     }
 
-                    array_push($counters[$context['impact']][$context['right']],$context['uuid']);
-                    array_push($distrib[$context['color']],$context['uuid']);
+                    $counters[$context['impact']][$context['right']] += 1;
+                    $distrib[$context['color']] += 1;
                     $riskMaxSum[$context['color']] += $context['max'];
 
                     if ($context['treatment'] !== 5) {
                         if (!isset($byTreatment['treated'][$context['color']]['count'])) {
-                            $byTreatment['treated'][$context['color']]['count'] = [];
+                            $byTreatment['treated'][$context['color']]['count'] = 0;
                         }
 
                         if (!isset($byTreatment['treated'][$context['color']]['sum'])) {
                             $byTreatment['treated'][$context['color']]['sum'] = 0;
                         }
 
-                        array_push($byTreatment['treated'][$context['color']]['count'],$context['uuid']);
+                        $byTreatment['treated'][$context['color']]['count'] += 1;
                         $byTreatment['treated'][$context['color']]['sum'] += $context['max'];
                     }
 
@@ -337,7 +336,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
 
                     if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
-                        $byTreatment['all'][$kindOfTreatment]['count'] = [];
+                        $byTreatment['all'][$kindOfTreatment]['count'] = 0;
                     }
 
                     if (!isset($byTreatment['all'][$kindOfTreatment]['sum'])) {
@@ -345,17 +344,17 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                     }
 
                     if (!isset($byTreatment[$kindOfTreatment][$context['color']]['count'])) {
-                        $byTreatment[$kindOfTreatment][$context['color']]['count'] = [];
+                        $byTreatment[$kindOfTreatment][$context['color']]['count'] = 0;
                     }
 
                     if (!isset($byTreatment[$kindOfTreatment][$context['color']]['sum'])) {
                         $byTreatment[$kindOfTreatment][$context['color']]['sum'] = 0;
                     }
 
-                    array_push($byTreatment[$kindOfTreatment][$context['color']]['count'],$context['uuid']);
+                    $byTreatment[$kindOfTreatment][$context['color']]['count'] += 1;
                     $byTreatment[$kindOfTreatment][$context['color']]['sum'] += $context['max'];
 
-                    array_push($byTreatment['all'][$kindOfTreatment]['count'],$context['uuid']);
+                    $byTreatment['all'][$kindOfTreatment]['count'] += 1;
                     $byTreatment['all'][$kindOfTreatment]['sum'] += $context['max'];
                 }
             }
@@ -424,36 +423,34 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 $prob = $r['targetedProb'];
             }
             $treatment = $r['treatment'];
-
-            $id = $r['id'];
             $color = $this->getColor($max, 'riskOp');
 
             if (!isset($countersRiskOP[$imax][$prob])) {
-                $countersRiskOP[$imax][$prob] = [];
+                $countersRiskOP[$imax][$prob] = 0;
             }
 
             if (!isset($distribRiskOp[$color])) {
-                $distribRiskOp[$color] = [];
+                $distribRiskOp[$color] = 0;
             }
 
             if (!isset($riskOpMaxSum[$color])) {
                 $riskOpMaxSum[$color] = 0;
             }
 
-            array_push($countersRiskOP[$imax][$prob],$r['id']);
-            array_push($distribRiskOp[$color],$r['id']);
+            $countersRiskOP[$imax][$prob] += 1;
+            $distribRiskOp[$color] += 1;
             $riskOpMaxSum[$color] += $max;
 
             if ($treatment !== 5) {
                 if (!isset($byTreatment['treated'][$color]['count'])) {
-                    $byTreatment['treated'][$color]['count'] = [];
+                    $byTreatment['treated'][$color]['count'] = 0;
                 }
 
                 if (!isset($byTreatment['treated'][$color]['sum'])) {
                     $byTreatment['treated'][$color]['sum'] = 0;
                 }
 
-                array_push($byTreatment['treated'][$color]['count'],$r['id']);
+                $byTreatment['treated'][$color]['count'] += 1;
                 $byTreatment['treated'][$color]['sum'] += $max;
             }
 
@@ -476,7 +473,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             }
 
             if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
-                $byTreatment['all'][$kindOfTreatment]['count'] = [];
+                $byTreatment['all'][$kindOfTreatment]['count'] = 0;
             }
 
             if (!isset($byTreatment['all'][$kindOfTreatment]['sum'])) {
@@ -484,17 +481,17 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
             }
 
             if (!isset($byTreatment[$kindOfTreatment][$color]['count'])) {
-                $byTreatment[$kindOfTreatment][$color]['count'] = [];
+                $byTreatment[$kindOfTreatment][$color]['count'] = 0;
             }
 
             if (!isset($byTreatment[$kindOfTreatment][$color]['sum'])) {
                 $byTreatment[$kindOfTreatment][$color]['sum'] = 0;
             }
 
-            array_push($byTreatment[$kindOfTreatment][$color]['count'],$r['id']);
+            $byTreatment[$kindOfTreatment][$color]['count'] += 1;
             $byTreatment[$kindOfTreatment][$color]['sum'] += $max;
 
-            array_push($byTreatment['all'][$kindOfTreatment]['count'],$r['id']);
+            $byTreatment['all'][$kindOfTreatment]['count'] += 1;
             $byTreatment['all'][$kindOfTreatment]['sum'] += $max;
         }
 
