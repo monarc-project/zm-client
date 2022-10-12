@@ -974,6 +974,9 @@ class AnrService extends AbstractService
                     if ($objectCategory->getRoot()) {
                         $newObjectCategory->setRoot($objectsCategoriesNewIds[$objectCategory->getRoot()->getId()]);
                     }
+                    if (!$objectCategory->getObjects()->isEmpty()) {
+                        $newObjectCategory->resetObjects();
+                    }
                     $this->get('objectCategoryCliTable')->save($newObjectCategory, false);
 
                     $objectsCategoriesNewIds[$objectCategory->getId()] = $newObjectCategory;
@@ -990,7 +993,7 @@ class AnrService extends AbstractService
             foreach ($objects as $object) {
                 $newObject = new MonarcObject($object);
                 $newObject->setAnr($newAnr);
-                $newObject->setAnrs(null);
+                $newObject->resetAnrs();
                 $newObject->addAnr($newAnr);
                 if ($object->getCategory() !== null) {
                     $newObject->setCategory($objectsCategoriesNewIds[$object->getCategory()->getId()]);
