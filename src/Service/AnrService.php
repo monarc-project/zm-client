@@ -1659,13 +1659,12 @@ class AnrService extends AbstractService
             }
         }
 
-        //themes, measures, rolf tags, rolf risks, object categories, questions and questions choices
+        //themes, measures, rolf tags, rolf risks, questions and questions choices
         $array = [
             'theme' => 'label',
             'measure' => 'label',
             'rolfRisk' => 'label',
             'rolfTag' => 'label',
-           // 'objectCategory' => 'label',
             'question' => 'label',
             'questionChoice' => 'label',
         ];
@@ -1749,16 +1748,13 @@ class AnrService extends AbstractService
             }
             foreach ($objects as $object) {
                 foreach ($languages as $lang) {
-                    if (empty($object->get('label' . $lang))) {
+                    if (empty($object->getLabel($lang))
+                        || empty($object->getName($lang))
+                        || ($object->getCategory() !== null
+                            && empty($object->getCategory()->getLabel($lang))
+                        )
+                    ) {
                         $success[$lang] = false;
-                    }
-                    if (empty($object->get('name' . $lang))) {
-                        $success[$lang] = false;
-                    }
-                    if (!empty($object->get('label' . $lang)) && !empty($object->get('name' . $lang))) {
-                        if (empty($object->getCategory()->get('label' . $lang))) {
-                            $success[$lang] = false;
-                        }
                     }
                 }
             }
