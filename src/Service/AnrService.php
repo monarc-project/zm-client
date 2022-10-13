@@ -1665,7 +1665,7 @@ class AnrService extends AbstractService
             'measure' => 'label',
             'rolfRisk' => 'label',
             'rolfTag' => 'label',
-            'objectCategory' => 'label',
+           // 'objectCategory' => 'label',
             'question' => 'label',
             'questionChoice' => 'label',
         ];
@@ -1754,6 +1754,11 @@ class AnrService extends AbstractService
                     }
                     if (empty($object->get('name' . $lang))) {
                         $success[$lang] = false;
+                    }
+                    if (!empty($object->get('label' . $lang)) && !empty($object->get('name' . $lang))) {
+                        if (empty($object->getCategory()->get('label' . $lang))) {
+                            $success[$lang] = false;
+                        }
                     }
                 }
             }
