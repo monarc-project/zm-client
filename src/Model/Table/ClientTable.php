@@ -58,7 +58,8 @@ class ClientTable extends AbstractEntityTable
     public function findTheClient(): Client
     {
         return $this->getRepository()->createQueryBuilder('client')
+            ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult();
+            ->getSingleResult();
     }
 }
