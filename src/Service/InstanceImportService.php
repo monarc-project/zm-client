@@ -3307,7 +3307,7 @@ class InstanceImportService
         }
     }
 
-    private function getCurrentSoaScaleCommentData(AnrSuperClass $anr): array
+    private function getCurrentSoaScaleCommentData(AnrSuperClass $anr): ?array
     {
         if (empty($this->cachedData['currentSoaScaleCommentData'])) {
             /** @var SoaScaleCommentTable $soaScaleCommentTable */
