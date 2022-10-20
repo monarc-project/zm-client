@@ -19,6 +19,7 @@ use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
+use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
@@ -31,7 +32,6 @@ use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Entity\Interview;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
@@ -63,7 +63,6 @@ use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\InterviewTable;
@@ -179,8 +178,6 @@ class InstanceImportService
 
     private OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
 
-    private InstanceRiskOwnerTable $instanceRiskOwnerTable;
-
     private AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
 
     private InstanceMetadataTable $instanceMetadataTable;
@@ -224,7 +221,6 @@ class InstanceImportService
         OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
-        InstanceRiskOwnerTable $instanceRiskOwnerTable,
         ConnectedUserService $connectedUserService,
         TranslationTable $translationTable,
         AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
@@ -272,7 +268,6 @@ class InstanceImportService
         $this->soaScaleCommentTable = $soaScaleCommentTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
-        $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
     }
 
     /**
@@ -622,12 +617,11 @@ class InstanceImportService
                 $this->questionTable->getDb()->flush();
             }
 
-            /*
-             * Process the evaluation of threats.
-             * TODO: we process all the threats in themes in AssetImportService,
-             * might be we can reuse the data from there.
-             */
+            /* Process the evaluation of threats. */
             if (!empty($data['method']['threats'])) {
+                if (empty($this->cachedData['threats'])) {
+                    $this->cachedData['threats'] = $this->assetImportService->getCachedDataByKey('threats');
+                }
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
                     $threat = $this->cachedData['threats'][$threatUuid] ?? null;
                     if ($threat === null) {
@@ -663,7 +657,9 @@ class InstanceImportService
                                         $themeData = $data['method']['threats'][$threatUuid]['theme'];
                                         $theme = (new Theme())
                                             ->setAnr($anr)
-                                            ->setLabels($themeData);
+                                            ->setLabels($themeData)
+                                            ->setCreator($this->connectedUser->getEmail());
+
                                         $this->themeTable->saveEntity($theme, false);
                                     }
                                     $this->cachedData['themes'][$labelValue] = $theme;
@@ -796,68 +792,52 @@ class InstanceImportService
             $this->measureMeasureTable->getDb()->flush();
         }
 
-        //import soaScaleComment
+        // import soaScaleComment
         $maxOrig = null; //used below for soas
         $maxDest = null; //used below for soas
         if (isset($data['soaScaleComment'])) {
             $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
-            $maxDest = (int) count($oldSoaScaleCommentData)-1;
-            $maxOrig = (int) count($data['soaScaleComment'])-1;
+            $maxDest = \count($oldSoaScaleCommentData) - 1;
+            $maxOrig = \count($data['soaScaleComment']) - 1;
             $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
         } elseif (!isset($data['soaScaleComment']) && isset($data['soas'])) {
             //old import case
             $defaultSoaScaleCommentdatas = [
-                'fr' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
-                        'isHidden' => false, 'comment' => 'Inexistant'],
-                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Initialisé'],
-                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Reproductible'],
-                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Défini'],
-                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Géré quantitativement'],
-                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
-                        'isHidden' => false, 'comment' => 'Optimisé']
+                'fr' => [
+                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Inexistant'],
+                    ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initialisé'],
+                    ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Reproductible'],
+                    ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Défini'],
+                    ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
+                     'comment' => 'Géré quantitativement'],
+                    ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimisé'],
                 ],
-                'en' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
-                        'isHidden' => false, 'comment' => 'Non-existent'],
-                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Initial'],
-                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Managed'],
-                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Defined'],
-                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Quantitatively managed'],
-                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
-                        'isHidden' => false, 'comment' => 'Optimized']
+                'en' => [
+                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Non-existent'],
+                    ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initial'],
+                    ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Managed'],
+                    ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Defined'],
+                    ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
+                     'comment' => 'Quantitatively managed'],
+                    ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimized'],
                 ],
-                'de' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
-                        'isHidden' => false, 'comment' => 'Nicht vorhanden'],
-                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Initial'],
-                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Reproduzierbar'],
-                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Definiert'],
-                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Quantitativ verwaltet'],
-                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
-                        'isHidden' => false, 'comment' => 'Optimiert']
+                'de' => [
+                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Nicht vorhanden'],
+                    ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initial'],
+                    ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Reproduzierbar'],
+                    ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Definiert'],
+                    ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
+                     'comment' => 'Quantitativ verwaltet'],
+                     ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimiert'],
                 ],
-                'nl' => [0 => ['scaleIndex' => 0, 'colour' => '#FFFFFF',
-                        'isHidden' => false, 'comment' => 'Onbestaand'],
-                    1 => ['scaleIndex' => 1, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Initieel'],
-                    2 => ['scaleIndex' => 2, 'colour' => '#FD661F',
-                        'isHidden' => false, 'comment' => 'Beheerst'],
-                    3 => ['scaleIndex' => 3, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Gedefinieerd'],
-                    4 => ['scaleIndex' => 4, 'colour' => '#FFBC1C',
-                        'isHidden' => false, 'comment' => 'Kwantitatief beheerst'],
-                    5 => ['scaleIndex' => 5, 'colour' => '#D6F107',
-                        'isHidden' => false, 'comment' => 'Optimaliserend']
+                'nl' => [
+                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Onbestaand'],
+                     ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initieel'],
+                     ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Beheerst'],
+                     ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Gedefinieerd'],
+                     ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
+                      'comment' => 'Kwantitatief beheerst'],
+                     ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimaliserend'],
                 ],
             ];
             $data['soaScaleComment'] =
@@ -865,13 +845,13 @@ class InstanceImportService
             $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
             $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
             $maxOrig = 5; // default value for old import
-            $maxDest = (int) count($oldSoaScaleCommentData)-1;
+            $maxDest = \count($oldSoaScaleCommentData) - 1;
         }
         // manage the current SOA
         if ($maxDest !== null && $maxOrig !== null) {
             $existedSoas = $this->soaTable->findByAnr($anr);
             foreach ($existedSoas as $existedSoa) {
-                $soaComment =  $valueToApprox = $existedSoa->getSoaScaleComment();
+                $soaComment = $existedSoa->getSoaScaleComment();
                 if ($soaComment !== null) {
                     $valueToApprox = $soaComment->getScaleIndex();
                     $newScaleIndex = $this->approximate(
@@ -927,8 +907,7 @@ class InstanceImportService
                             ->setBP($soa['BP'])
                             ->setRRA($soa['RRA'])
                             ->setSoaScaleComment(
-                                $this->cachedData['soaScaleCommentExternalIdMapToNewObject']
-                                    [$soa['soaScaleComment']]
+                                $this->cachedData['soaScaleCommentExternalIdMapToNewObject'][$soa['soaScaleComment']]
                             );
                         $this->soaTable->saveEntity($existedSoa, false);
                     }
@@ -948,10 +927,9 @@ class InstanceImportService
         /*
          * Import AnrMetadatasOnInstances
          */
-        if (!empty($data['anrMetadatasOnInstances'])) {
-            $this->cachedData['anrMetadatasOnInstances'] =
-                $this->getCurrentAnrMetadatasOnInstances($anr);
-            $this->createAnrMetadatasOnInstances($anr, $data['anrMetadatasOnInstances']);
+        if (!empty($data['anrMetadataOnInstances'])) {
+            $this->cachedData['anrMetadataOnInstances'] = $this->getCurrentAnrMetadataOnInstances($anr);
+            $this->createAnrMetadataOnInstances($anr, $data['anrMetadataOnInstances']);
         }
 
         /*
@@ -1033,8 +1011,8 @@ class InstanceImportService
                 $newVulRate = $instanceRisk->getVulnerabilityRate();
                 $instanceRisk->setReductionAmount(
                     $instanceRisk->getReductionAmount() !== 0
-                    ? $this->approximate($instanceRisk->getReductionAmount(), 0, $oldVulRate, 0, $newVulRate, 0)
-                    : 0
+                        ? $this->approximate($instanceRisk->getReductionAmount(), 0, $oldVulRate, 0, $newVulRate, 0)
+                        : 0
                 );
 
                 $this->anrInstanceRiskService->updateRisks($instanceRisk);
@@ -1445,29 +1423,29 @@ class InstanceImportService
          */
         if (empty($this->cachedData['threats'])) {
             $this->cachedData['threats'] = $this->assetImportService->getCachedDataByKey('threats');
-            $threatsUuids = array_diff_key(
-                array_column($data['threats'], 'uuid'),
-                $this->cachedData['threats']
-            );
-            if (!empty($threatsUuids)) {
-                $this->cachedData['threats'] = $this->threatTable->findByAnrAndUuidsIndexedByField(
-                    $anr,
-                    $threatsUuids
-                );
-            }
+//            $threatsUuids = array_diff_key(
+//                array_column($data['threats'], 'uuid'),
+//                $this->cachedData['threats']
+//            );
+//            if (!empty($threatsUuids)) {
+//                $this->cachedData['threats'] = $this->threatTable->findByAnrAndUuidsIndexedByField(
+//                    $anr,
+//                    $threatsUuids
+//                );
+//            }
         }
         if (empty($this->cachedData['vulnerabilities'])) {
             $this->cachedData['vulnerabilities'] = $this->assetImportService->getCachedDataByKey('vulnerabilities');
-            $vulnerabilitiesUuids = array_diff_key(
-                array_column($data['vuls'], 'uuid'),
-                $this->cachedData['vulnerabilities']
-            );
-            if (!empty($vulnerabilitiesUuids)) {
-                $this->cachedData['vulnerabilities'] = $this->vulnerabilityTable->findByAnrAndUuidsIndexedByField(
-                    $anr,
-                    $vulnerabilitiesUuids
-                );
-            }
+//            $vulnerabilitiesUuids = array_diff_key(
+//                array_column($data['vuls'], 'uuid'),
+//                $this->cachedData['vulnerabilities']
+//            );
+//            if (!empty($vulnerabilitiesUuids)) {
+//                $this->cachedData['vulnerabilities'] = $this->vulnerabilityTable->findByAnrAndUuidsIndexedByField(
+//                    $anr,
+//                    $vulnerabilitiesUuids
+//                );
+//            }
         }
 
         $scalesData = [];
@@ -1475,8 +1453,12 @@ class InstanceImportService
             $scalesData = $this->getCurrentAndExternalScalesData($anr, $data);
         }
 
-        $vulnerabilitiesUuids = $this->vulnerabilityTable->findUuidsByAnr($anr);
-        $threatsUuids = $this->threatTable->findUuidsByAnr($anr);
+        $vulnerabilitiesUuidsAndCodes = $this->vulnerabilityTable->findUuidsAndCodesByAnr($anr);
+        $vulnerabilitiesUuids = array_column($vulnerabilitiesUuidsAndCodes, 'uuid');
+        $vulnerabilitiesCodes = array_column($vulnerabilitiesUuidsAndCodes, 'code');
+        $threatsUuidsAndCodes = $this->threatTable->findUuidsAndCodesByAnr($anr);
+        $threatsUuids = array_column($threatsUuidsAndCodes, 'uuid');
+        $threatsCodes = array_column($threatsUuidsAndCodes, 'code');
         foreach ($data['risks'] as $instanceRiskData) {
             $threatData = $data['threats'][$instanceRiskData['threat']];
             $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
@@ -1502,6 +1484,10 @@ class InstanceImportService
                         $this->cachedData['threats'][$threatData['uuid']] = $this->threatTable
                             ->findByAnrAndUuid($anr, (string)$threatData['uuid']);
                     } else {
+                        if (\in_array($threatData['code'], $threatsCodes, true)) {
+                            $threatData['code'] .= '-' . time();
+                        }
+
                         $threat = (new Threat())
                             ->setUuid($threatData['uuid'])
                             ->setAnr($anr)
@@ -1543,6 +1529,10 @@ class InstanceImportService
                         $this->cachedData['vulnerabilities'][$vulnerabilityData['uuid']] = $this->vulnerabilityTable
                             ->findByAnrAndUuid($anr, (string)$vulnerabilityData['uuid']);
                     } else {
+                        if (\in_array($vulnerabilityData['code'], $vulnerabilitiesCodes, true)) {
+                            $vulnerabilityData['code'] .= '-' . time();
+                        }
+
                         $vulnerability = (new Vulnerability())
                             ->setUuid($vulnerabilityData['uuid'])
                             ->setAnr($anr)
@@ -1652,7 +1642,7 @@ class InstanceImportService
                         ]
                     ]));
 
-                    if (!empty($instanceRiskBrothers)) {
+                    if ($instanceRiskBrothers !== null) {
                         $dataUpdate = [];
                         $dataUpdate['anr'] = $anr->getId();
                         $dataUpdate['threatRate'] = $instanceRiskBrothers->getThreatRate();
@@ -2025,7 +2015,7 @@ class InstanceImportService
                                 );
                             }
                         }
-                    /* The format before v2.11.0. Update only first 5 scales (ROLFP if not changed by user). */
+                        /* The format before v2.11.0. Update only first 5 scales (ROLFP if not changed by user). */
                     } elseif ($index < 5) {
                         foreach ($oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
                             $operationalInstanceRiskScale->{'set' . $typeField}($operationalRiskData[$oldFiled]);
@@ -3121,22 +3111,22 @@ class InstanceImportService
             $anrLanguageCode
         );
         if (isset($data['instancesMetadatas'])) {
-            if (!isset($this->cachedData['anrMetadatasOnInstances'])) {
-                $this->cachedData['anrMetadatasOnInstances'] =
-                    $this->getCurrentAnrMetadatasOnInstances($anr);
+            if (!isset($this->cachedData['anrMetadataOnInstances'])) {
+                $this->cachedData['anrMetadataOnInstances'] =
+                    $this->getCurrentAnrMetadataOnInstances($anr);
             }
             // initialize the metadatas labels
-            $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+            $labels = array_column($this->cachedData['anrMetadataOnInstances'], 'label');
             foreach ($data['instancesMetadatas'] as $instanceMetadata) {
                 if (!in_array($instanceMetadata['label'], $labels)) {
-                    $this->createAnrMetadatasOnInstances($anr, [$instanceMetadata]);
+                    $this->createAnrMetadataOnInstances($anr, [$instanceMetadata]);
                     //update after insertion
-                    $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+                    $labels = array_column($this->cachedData['anrMetadataOnInstances'], 'label');
                 }
                 // if the metadata exist we can create/update the instanceMetadata
                 if (in_array($instanceMetadata['label'], $labels)) {
                     $indexMetadata = array_search($instanceMetadata['label'], $labels);
-                    $metadata = $this->cachedData['anrMetadatasOnInstances'][$indexMetadata]['object'];
+                    $metadata = $this->cachedData['anrMetadataOnInstances'][$indexMetadata]['object'];
                     $instanceMetadataObject = $this->instanceMetadataTable->findByInstanceAndMetadata(
                         $instance,
                         $metadata
@@ -3183,29 +3173,29 @@ class InstanceImportService
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    private function createAnrMetadatasOnInstances(AnrSuperClass $anr, $data): void
+    private function createAnrMetadataOnInstances(AnrSuperClass $anr, $data): void
     {
         $anrLanguageCode = $this->getAnrLanguageCode($anr);
-        $labels = array_column($this->cachedData['anrMetadatasOnInstances'], 'label');
+        $labels = array_column($this->cachedData['anrMetadataOnInstances'], 'label');
         foreach ($data as $v) {
             if (!in_array($v['label'], $labels)) {
                 $labelTranslationKey = (string)Uuid::uuid4();
                 $metadata = (new AnrMetadatasOnInstances())
-                     ->setAnr($anr)
-                     ->setLabelTranslationKey($labelTranslationKey)
-                     ->setCreator($this->connectedUser->getEmail())
-                     ->setIsDeletable(true);
+                    ->setAnr($anr)
+                    ->setLabelTranslationKey($labelTranslationKey)
+                    ->setCreator($this->connectedUser->getEmail())
+                    ->setIsDeletable(true);
                 $this->anrMetadatasOnInstancesTable->save($metadata, false);
 
                 $translation = (new Translation())
-                     ->setAnr($anr)
-                     ->setType(Translation::ANR_METADATAS_ON_INSTANCES)
-                     ->setKey($labelTranslationKey)
-                     ->setValue($v['label'])
-                     ->setLang($anrLanguageCode)
-                     ->setCreator($this->connectedUser->getEmail());
+                    ->setAnr($anr)
+                    ->setType(Translation::ANR_METADATAS_ON_INSTANCES)
+                    ->setKey($labelTranslationKey)
+                    ->setValue($v['label'])
+                    ->setLang($anrLanguageCode)
+                    ->setCreator($this->connectedUser->getEmail());
                 $this->translationTable->save($translation, false);
-                $this->cachedData['anrMetadatasOnInstances'][] =
+                $this->cachedData['anrMetadataOnInstances'][] =
                     [
                         'id' => $metadata->getId(),
                         'label' => $v['label'],
@@ -3225,26 +3215,26 @@ class InstanceImportService
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    private function getCurrentAnrMetadatasOnInstances(AnrSuperClass $anr): array
+    private function getCurrentAnrMetadataOnInstances(AnrSuperClass $anr): array
     {
-        $this->cachedData['currentAnrMetadatasOnInstances'] = [];
+        $this->cachedData['currentAnrMetadataOnInstances'] = [];
         $anrMetadatasOnInstancesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [Translation::ANR_METADATAS_ON_INSTANCES],
+            [TranslationSuperClass::ANR_METADATAS_ON_INSTANCES],
             $this->getAnrLanguageCode($anr)
         );
 
         $AnrMetadatasOnInstances = $this->anrMetadatasOnInstancesTable->findByAnr($anr);
         foreach ($AnrMetadatasOnInstances as $metadata) {
             $translationLabel = $anrMetadatasOnInstancesTranslations[$metadata->getLabelTranslationKey()] ?? null;
-            $this->cachedData['currentAnrMetadatasOnInstances'][] = [
+            $this->cachedData['currentAnrMetadataOnInstances'][] = [
                 'id' => $metadata->getId(),
                 'label' => $translationLabel !== null ? $translationLabel->getValue() : '',
                 'object' => $metadata,
                 'translation' => $translationLabel,
             ];
         }
-        return $this->cachedData['currentAnrMetadatasOnInstances'];
+        return $this->cachedData['currentAnrMetadataOnInstances'] ?? [];
     }
 
     /**
@@ -3307,7 +3297,7 @@ class InstanceImportService
         }
     }
 
-    private function getCurrentSoaScaleCommentData(AnrSuperClass $anr): ?array
+    private function getCurrentSoaScaleCommentData(AnrSuperClass $anr): array
     {
         if (empty($this->cachedData['currentSoaScaleCommentData'])) {
             /** @var SoaScaleCommentTable $soaScaleCommentTable */
@@ -3323,25 +3313,26 @@ class InstanceImportService
                 }
             }
         }
-        return $this->cachedData['currentSoaScaleCommentData'];
+
+        return $this->cachedData['currentSoaScaleCommentData'] ?? [];
     }
 
     private function mergeSoaScaleComment(array $newScales, AnrSuperClass $anr)
     {
         $soaScaleCommentTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [Translation::SOA_SCALE_COMMENT],
+            [TranslationSuperClass::SOA_SCALE_COMMENT],
             $this->getAnrLanguageCode($anr)
         );
         $scales = $this->soaScaleCommentTable->findByAnrIndexedByScaleIndex($anr);
         // we have scales to create
-        if (count($newScales) > count($scales)) {
+        if (\count($newScales) > \count($scales)) {
             $anrLanguageCode = $this->getAnrLanguageCode($anr);
-            for ($i = count($scales); $i < count($newScales); $i++) {
+            for ($i = \count($scales); $i < \count($newScales); $i++) {
                 $translationKey = (string)Uuid::uuid4();
                 $translation = (new Translation())
                     ->setAnr($anr)
-                    ->setType(Translation::SOA_SCALE_COMMENT)
+                    ->setType(TranslationSuperClass::SOA_SCALE_COMMENT)
                     ->setKey($translationKey)
                     ->setValue('')
                     ->setLang($anrLanguageCode)
@@ -3358,8 +3349,8 @@ class InstanceImportService
             }
         }
         //we have scales to hide
-        if ((count($newScales) < count($scales))) {
-            for ($i = count($newScales); $i < count($scales); $i++) {
+        if (\count($newScales) < \count($scales)) {
+            for ($i = \count($newScales); $i < \count($scales); $i++) {
                 $scales[$i]->setIsHidden(true);
                 $this->soaScaleCommentTable->save($scales[$i], false);
             }
@@ -3374,7 +3365,9 @@ class InstanceImportService
             $translationKey = $scales[$newScale['scaleIndex']]->getCommentTranslationKey();
             $translation = $soaScaleCommentTranslations[$translationKey];
             $translation->setValue($newScale['comment']);
+
             $this->translationTable->save($translation, false);
+
             $this->cachedData['newSoaScaleCommentIndexedByScale'][$newScale['scaleIndex']] =
                 $scales[$newScale['scaleIndex']];
             $this->cachedData['soaScaleCommentExternalIdMapToNewObject'][$id] = $scales[$newScale['scaleIndex']];
