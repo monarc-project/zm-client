@@ -1429,7 +1429,7 @@ class DeliverableGenerationService extends AbstractService
             foreach ($axisX as $x) {
                 $value = $x * $y;
                 if (isset($data[$y]) && isset($data[$y][$x])) {
-                    $result = count($data[$y][$x]);
+                    $result = $data[$y][$x];
                 } else {
                     $result = null;
                 }
@@ -1568,9 +1568,9 @@ class DeliverableGenerationService extends AbstractService
         ];
 
         $series = [
-            count($distrib[0] ?? []),
-            count($distrib[1] ?? []),
-            count($distrib[2] ?? []),
+            $distrib[0] ?? 0,
+            $distrib[1] ?? 0,
+            $distrib[2] ?? 0,
         ];
 
         $PhpWord = new PhpWord();
@@ -2417,9 +2417,9 @@ class DeliverableGenerationService extends AbstractService
 
         foreach ($colors as $c) {
             if (!isset($distrib[$c])) {
-                $distrib[$c] = [];
+                $distrib[$c] = 0;
             }
-            $sum += count($distrib[$c]);
+            $sum += $distrib[$c];
         }
 
         $intro = sprintf(
@@ -2431,17 +2431,17 @@ class DeliverableGenerationService extends AbstractService
 
         return $intro .
             "<!--block-->&nbsp;&nbsp;- " .
-            count($distrib[2]) .
+            $distrib[2] .
             ' ' .
             $this->anrTranslate('critical risk(s) to be treated as priority') .
             "<!--block-->" .
             "<!--block-->&nbsp;&nbsp;- " .
-            count($distrib[1]) .
+            $distrib[1] .
             ' ' .
             $this->anrTranslate('medium risk(s) to be partially treated') .
             "<!--block-->" .
             "<!--block-->&nbsp;&nbsp;- " .
-            count($distrib[0]) .
+            $distrib[0] .
             ' ' .
             $this->anrTranslate('low risk(s) negligible') . "<!--block-->";
     }
@@ -5614,7 +5614,7 @@ class DeliverableGenerationService extends AbstractService
             $translationLabel = $translations[$metadata->getLabelTranslationKey()] ?? null;
             $headersMetadata[] = $translationLabel !== null ? $translationLabel->getValue() : '';
         }
-        if (!$headersMetadata) {
+        if (!isset($headersMetadata)) {
             return;
         }
         $sizeColumn = 13 / count($headersMetadata);
