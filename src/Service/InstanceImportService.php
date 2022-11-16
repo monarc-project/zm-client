@@ -622,13 +622,19 @@ class InstanceImportService
                 if (empty($this->cachedData['threats'])) {
                     $this->cachedData['threats'] = $this->assetImportService->getCachedDataByKey('threats');
                 }
+                $threatsUuidsAndCodes = $this->threatTable->findUuidsAndCodesByAnr($anr);
+                $threatsUuids = array_column($threatsUuidsAndCodes, 'uuid');
+                $threatsCodes = array_column($threatsUuidsAndCodes, 'code');
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
                     $threat = $this->cachedData['threats'][$threatUuid] ?? null;
                     if ($threat === null) {
-                        try {
+                        if (\in_array((string)$threatData['uuid'], $threatsUuids, true)) {
                             $threat = $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
-                        } catch (EntityNotFoundException $e) {
+                        } else {
                             $threatData = $data['method']['threats'][$threatUuid];
+                            if (\in_array($threatData['code'], $threatsCodes, true)) {
+                                $threatData['code'] .= '-' . time();
+                            }
                             $threat = (new Threat())
                                 ->setUuid($threatData['uuid'])
                                 ->setAnr($anr)
@@ -678,6 +684,7 @@ class InstanceImportService
 
                     $this->threatTable->saveEntity($threat);
                 }
+                unset($threatsUuidsAndCodes, $threatsUuids, $threatsCodes);
             }
         }
 
