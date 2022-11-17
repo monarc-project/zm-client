@@ -212,6 +212,7 @@ class AssetImportService
                 $this->cachedData['threats'][$threat->getUuid()] = $threat;
             }
         }
+        unset($threatsUuidsAndCodes, $threatsUuids, $threatsCodes);
 
         /*
          * Vulnerabilities
@@ -243,6 +244,7 @@ class AssetImportService
             }
         }
         $this->vulnerabilityTable->getDb()->flush();
+        unset($vulnerabilitiesUuidsAndCodes, $vulnerabilitiesUuids, $vulnerabilitiesCodes);
 
         /*
          * AMVs
