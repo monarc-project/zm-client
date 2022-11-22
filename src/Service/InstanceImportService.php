@@ -884,6 +884,11 @@ class InstanceImportService
                             $this->cachedData['soaScaleCommentExternalIdMapToNewObject']
                             [$soa['soaScaleComment']]
                         );
+                    }elseif (isset($soa['compliance'])) {
+                        $newSoa->setSoaScaleComment(
+                            $this->cachedData['newSoaScaleCommentIndexedByScale']
+                            [$soa['compliance']]
+                        );
                     }
                     $this->soaTable->saveEntity($newSoa, false);
                 } elseif (isset($existedMeasures[$soa['measure_id']])) { //measure exist so soa exist (normally)
