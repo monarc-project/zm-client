@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
@@ -17,6 +18,10 @@ use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
+use Monarc\Core\Model\Entity\TranslationSuperClass;
+use Monarc\FrontOffice\Model\Entity\Translation;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Table\TranslationTable;
 
 /**
  * This class is the service that handles instances in use within an ANR. Inherits most of the behavior from its
@@ -41,6 +46,10 @@ class AnrInstanceService extends InstanceService
 
     /** @var RecommandationSetTable */
     protected $recommendationSetTable;
+
+    /** @var TranslationTable */
+    protected $translationTable;
+    protected $instanceMetadataTable;
 
     public function delete($id)
     {
@@ -119,11 +128,13 @@ class AnrInstanceService extends InstanceService
                     $recommendationUuid = $recommendation->getUuid();
                     $instanceRiskId = $rr->getInstanceRisk()->getId();
                     $result['recos'][$instanceRiskId][$recommendationUuid] = $recommendation->getJsonArray($recosObj);
-                    $result['recos'][$instanceRiskId][$recommendationUuid]['recommandationSet'] = $recommendation->getRecommandationSet()->getUuid();
+                    $result['recos'][$instanceRiskId][$recommendationUuid]['recommandationSet'] =
+                        $recommendation->getRecommandationSet()->getUuid();
                     $result['recos'][$instanceRiskId][$recommendationUuid]['commentAfter'] = $rr->getCommentAfter();
                     if (!$withUnlinkedRecommendations && !isset($recoIds[$recommendationUuid])) {
                         $result['recs'][$recommendationUuid] = $recommendation->getJsonArray($recosObj);
-                        $result['recs'][$recommendationUuid]['recommandationSet'] = $recommendation->getRecommandationSet()->getUuid();
+                        $result['recs'][$recommendationUuid]['recommandationSet'] =
+                            $recommendation->getRecommandationSet()->getUuid();
                     }
                     $recoIds[$recommendationUuid] = $recommendationUuid;
                 }
@@ -156,12 +167,16 @@ class AnrInstanceService extends InstanceService
                 if ($recommendation !== null) {
                     $instanceRiskOpId = $rr->getInstanceRiskOp()->getId();
                     $recommendationUuid = $recommendation->getUuid();
-                    $result['recosop'][$instanceRiskOpId][$recommendationUuid] = $recommendation->getJsonArray($recosObj);
-                    $result['recosop'][$instanceRiskOpId][$recommendationUuid]['recommandationSet'] = $recommendation->getRecommandationSet()->getUuid();
-                    $result['recosop'][$instanceRiskOpId][$recommendationUuid]['commentAfter'] = $rr->getCommentAfter();
+                    $result['recosop'][$instanceRiskOpId][$recommendationUuid] =
+                        $recommendation->getJsonArray($recosObj);
+                    $result['recosop'][$instanceRiskOpId][$recommendationUuid]['recommandationSet'] =
+                        $recommendation->getRecommandationSet()->getUuid();
+                    $result['recosop'][$instanceRiskOpId][$recommendationUuid]['commentAfter'] =
+                        $rr->getCommentAfter();
                     if (!$withUnlinkedRecommendations && !isset($recoIds[$recommendationUuid])) {
                         $result['recs'][$recommendationUuid] = $recommendation->getJsonArray($recosObj);
-                        $result['recs'][$recommendationUuid]['recommandationSet'] = $recommendation->getRecommandationSet()->getUuid();
+                        $result['recs'][$recommendationUuid]['recommandationSet'] =
+                            $recommendation->getRecommandationSet()->getUuid();
                     }
                     $recoIds[$recommendationUuid] = $recommendationUuid;
                 }
@@ -187,12 +202,69 @@ class AnrInstanceService extends InstanceService
             foreach ($recommendations as $recommendation) {
                 if (!isset($recoIds[$recommendation->getUuid()])) {
                     $result['recs'][$recommendation->getUuid()] = $recommendation->getJsonArray($recosObj);
-                    $result['recs'][$recommendation->getUuid()]['recommandationSet'] = $recommendation->getRecommandationSet()->getUuid();
+                    $result['recs'][$recommendation->getUuid()]['recommandationSet'] =
+                        $recommendation->getRecommandationSet()->getUuid();
                     $recoIds[$recommendation->getUuid()] = $recommendation->getUuid();
                 }
             }
         }
 
         return $result;
+    }
+
+    protected function generateExportArrayOfInstancesMetadatas(InstanceSuperClass $instance): array
+    {
+        $result = [];
+        $anr = $instance->getAnr();
+        $translationTable = $this->get('translationTable');
+        $language = $this->getAnrLanguageCode($anr);
+        $translations = $translationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $anr,
+            [Translation::INSTANCE_METADATA, Translation::ANR_METADATAS_ON_INSTANCES],
+            $language
+        );
+        $instancesMetadatas = $instance->getInstanceMetadatas();
+        foreach ($instancesMetadatas as $instanceMetadata) {
+            $translationComment = $translations[$instanceMetadata->getCommentTranslationKey()] ?? null;
+            $translationLabel = $translations[$instanceMetadata->getMetadata()->getLabelTranslationKey()] ?? null;
+            $result[$instanceMetadata->getMetadata()->getId()] = [
+                    'label' => $translationLabel !== null ? $translationLabel->getValue() : '',
+                    'id' => $instanceMetadata->getId(),
+                    'comment' => $translationComment !== null ? $translationComment->getValue() : '',
+                ];
+        }
+        return $result;
+    }
+
+    protected function updateInstanceMetadataFromBrothers(InstanceSuperClass $instance): void
+    {
+        /** @var InstanceTable $table */
+        $instanceMetadataTable = $this->get('instanceMetadataTable');
+        $table = $this->get('table');
+        $anr = $instance->getAnr();
+        $brothers = $table->findGlobalBrothersByAnrAndInstance($anr, $instance);
+        if (!empty($brothers)) {
+            $instanceBrother = current($brothers);
+            $instancesMetadatasFromBrother = $instanceBrother->getInstanceMetadatas();
+            foreach ($instancesMetadatasFromBrother as $instanceMetadataFromBrother) {
+                $metadata = $instanceMetadataFromBrother->getMetadata();
+                $instanceMetadata = $instanceMetadataTable
+                    ->findByInstanceAndMetadata($instance, $metadata);
+                if ($instanceMetadata === null) {
+                    $instanceMetadata = (new InstanceMetadata())
+                        ->setInstance($instance)
+                        ->setMetadata($metadata)
+                        ->setCommentTranslationKey($instanceMetadataFromBrother->getCommentTranslationKey())
+                        ->setCreator($this->getConnectedUser()->getEmail());
+                    $instanceMetadataTable->save($instanceMetadata, false);
+                }
+            }
+            $instanceMetadataTable->flush();
+        }
+    }
+
+    protected function getAnrLanguageCode(Anr $anr): string
+    {
+        return $this->get('configService')->getActiveLanguageCodes()[$anr->getLanguage()];
     }
 }

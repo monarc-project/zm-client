@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Instance
@@ -55,4 +56,36 @@ class Instance extends InstanceSuperClass
      * })
      */
     protected $object;
+
+    /**
+     * @var InstanceMetadata[]|ArrayCollection
+     *
+     * @ORM\OneToMany(targetEntity="InstanceMetadata", mappedBy="instance")
+     */
+    protected $instanceMetadatas;
+
+    public function __construct($obj = null)
+    {
+        $this->instanceMetadatas = new ArrayCollection();
+
+        parent::__construct($obj);
+    }
+
+    /**
+     * @return InstanceMetadata[]
+     */
+    public function getInstanceMetadatas()
+    {
+        return $this->instanceMetadatas;
+    }
+
+    public function addInstanceMetadata(InstanceMetadata $instanceMetada): self
+    {
+        if (!$this->instanceMetadatas->contains($instanceMetada)) {
+            $this->instanceMetadatas->add($instanceMetada);
+            $instanceMetada->setInstance($this);
+        }
+
+        return $this;
+    }
 }

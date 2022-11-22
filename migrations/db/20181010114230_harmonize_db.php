@@ -33,16 +33,16 @@ class HarmonizeDb extends AbstractMigration
         $this->query('delete from soa where measure_id not in (select id from measures)');
         $table = $this->table('measures');
         $table
-            ->renameColumn('description1','label1')
-            ->renameColumn('description2','label2')
-            ->renameColumn('description3','label3')
-            ->renameColumn('description4','label4')
+            ->renameColumn('description1', 'label1')
+            ->renameColumn('description2', 'label2')
+            ->renameColumn('description3', 'label3')
+            ->renameColumn('description4', 'label4')
             ->changeColumn('soacategory_id', 'integer', array('null' => true, 'signed' => false,'after' => 'anr_id'))
             ->update();
 
         $table = $this->table('threats');
         $table
-            ->renameColumn('d','a')
+            ->renameColumn('d', 'a')
             ->update();
 
         $table = $this->table('soacategory');
@@ -51,10 +51,10 @@ class HarmonizeDb extends AbstractMigration
             ->changeColumn('reference', 'string', array('null' => true, 'limit' => 255, 'after' => 'anr_id'))
             ->update();
         $table
-            ->renameColumn('reference','code')
+            ->renameColumn('reference', 'code')
             ->update();
         $table
-            ->addIndex(array('anr_id','code'),array('unique'=>true))
+            ->addIndex(array('anr_id','code'), array('unique'=>true))
             ->update();
         $table
             ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
@@ -66,7 +66,7 @@ class HarmonizeDb extends AbstractMigration
             ->changeColumn('measure_id', 'integer', array('null' => true, 'signed' => false,'after' => 'anr_id'))
             ->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->addForeignKey('measure_id', 'measures', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
-            ->addIndex(array('anr_id','measure_id'),array('unique'=>true))
+            ->addIndex(array('anr_id','measure_id'), array('unique'=>true))
             ->update();
     }
 }

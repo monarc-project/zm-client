@@ -37,6 +37,18 @@ class AssetTable extends AbstractEntityTable
             ->getOneOrNullResult();
     }
 
+    public function findByAnrAndCode(Anr $anr, string $code): ?Asset
+    {
+        return $this->getRepository()->createQueryBuilder('a')
+            ->where('a.anr = :anr')
+            ->andWhere('a.code = :code')
+            ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function saveEntity(Asset $asset, bool $flushAll = true): void
     {
         $em = $this->getDb()->getEntityManager();

@@ -36,6 +36,8 @@ use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
+use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -71,6 +73,7 @@ use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
@@ -140,6 +143,8 @@ class AnrService extends AbstractService
     protected $operationalRiskScaleTable;
     protected $operationalRiskScaleCommentTable;
     protected $translationTable;
+    protected $anrMetadatasOnInstancesTable;
+    protected $soaScaleCommentTable;
 
 
     protected $amvCliTable;
@@ -189,6 +194,9 @@ class AnrService extends AbstractService
     protected $operationalInstanceRiskScaleCliTable;
     protected $instanceRiskOwnerCliTable;
     protected $translationCliTable;
+    protected $anrMetadatasOnInstancesCliTable;
+    protected $instanceMetadataCliTable;
+    protected $soaScaleCommentCliTable;
 
     protected $instanceService;
     protected $recordService;
@@ -203,8 +211,14 @@ class AnrService extends AbstractService
     /**
      * @inheritdoc
      */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
-    {
+    public function getList(
+        $page = 1,
+        $limit = 25,
+        $order = null,
+        $filter = null,
+        $filterAnd = null,
+        $filterJoin = null
+    ) {
         /** @var UserTable $userCliTable */
         $userCliTable = $this->get('userCliTable');
 
@@ -552,7 +566,7 @@ class AnrService extends AbstractService
             $newAnr = new Anr($anr);
             $newAnr->setId(null);
             $newAnr->generateAndSetUuid();
-            $newAnr->setObjects(null);
+            $newAnr->setObjects(new ArrayCollection());
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
             $newAnr->setReferentials(null);
@@ -574,7 +588,8 @@ class AnrService extends AbstractService
             $anrCliTable = $this->get('anrCliTable');
             $anrCliTable->saveEntity($newAnr);
 
-            if (!$isSnapshot && !$isSnapshotCloning) { // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
+            // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
+            if (!$isSnapshot && !$isSnapshotCloning) {
                 //add user to anr
                 $user = $userCliTable->findById($connectedUser->getId());
                 $userAnr = (new UserAnr())
@@ -609,15 +624,21 @@ class AnrService extends AbstractService
                 }
                 $assets2 = [];
                 if (!$model->isGeneric) {
-                    $assets2 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
+                    // $assets2 = $this->get('assetTable')->getEntityByFields(['mode' => Asset::MODE_SPECIFIC]);
+                    // We fetch all the assets related to the specific model and linked to its configured anr.
+                    $assets2 = array_merge(
+                        $model->get('assets')->toArray(),
+                        $this->get('assetTable')->findByAnr($model->getAnr())
+                    );
                 }
-                $assets = $assets1 + $assets2;
+                $assets = array_merge($assets1, $assets2);
             } else {
                 $assets = $this->get('assetCliTable')->getEntityByFields(['anr' => $anr->id]);
             }
             foreach ($assets as $asset) {
                 $newAsset = new Asset($asset);
                 $newAsset->setAnr($newAnr);
+                $newAsset->setMode(0); // force to generic
                 $this->get('assetCliTable')->save($newAsset, false);
                 $assetsNewIds[$asset->getUuid()] = $newAsset;
             }
@@ -629,9 +650,13 @@ class AnrService extends AbstractService
                 if (!$model->isRegulator) {
                     $threats = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_GENERIC]);
                 }
-                $threats2 = [];
                 if (!$model->isGeneric) {
-                    $threats2 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_SPECIFIC]);
+                    // $threats2 = $this->get('threatTable')->getEntityByFields(['mode' => Threat::MODE_SPECIFIC]);
+                    // We fetch all the threats related to the specific model and linked to its configured anr.
+                    $threats2 = array_merge(
+                        $model->get('threats')->toArray(),
+                        $this->get('threatTable')->findByAnr($model->getAnr())
+                    );
                     foreach ($threats2 as $t) {
                         $threats[] = $t;
                     }
@@ -646,6 +671,7 @@ class AnrService extends AbstractService
                 if ($threat->theme) {
                     $newThreat->setTheme($themesNewIds[$threat->theme->id]);
                 }
+                $newThreat->setMode(0); // force to generic
                 $this->get('threatCliTable')->save($newThreat, false);
                 $threatsNewIds[$threat->getUuid()] = $newThreat;
             }
@@ -655,19 +681,27 @@ class AnrService extends AbstractService
             if ($source === MonarcObject::SOURCE_COMMON) {
                 $vulnerabilities1 = [];
                 if (!$model->isRegulator) {
-                    $vulnerabilities1 = $this->get('vulnerabilityTable')->getEntityByFields(['mode' => Vulnerability::MODE_GENERIC]);
+                    $vulnerabilities1 = $this->get('vulnerabilityTable')
+                        ->getEntityByFields(['mode' => Vulnerability::MODE_GENERIC]);
                 }
                 $vulnerabilities2 = [];
                 if (!$model->isGeneric) {
-                    $vulnerabilities2 = $this->get('vulnerabilityTable')->getEntityByFields(['mode' => Vulnerability::MODE_SPECIFIC]);
+                    //$vulnerabilities2 = $this->get('vulnerabilityTable')
+                    //    ->getEntityByFields(['mode' => Vulnerability::MODE_SPECIFIC]);
+                    // We fetch all the vulns related to the specific model and linked to its configured anr.
+                    $vulnerabilities2 = array_merge(
+                        $model->get('vulnerabilities')->toArray(),
+                        $this->get('vulnerabilityTable')->findByAnr($model->getAnr())
+                    );
                 }
-                $vulnerabilities = $vulnerabilities1 + $vulnerabilities2;
+                $vulnerabilities = array_merge($vulnerabilities1, $vulnerabilities2);
             } else {
                 $vulnerabilities = $this->get('vulnerabilityCliTable')->getEntityByFields(['anr' => $anr->id]);
             }
             foreach ($vulnerabilities as $vulnerability) {
                 $newVulnerability = new Vulnerability($vulnerability);
                 $newVulnerability->setAnr($newAnr);
+                $newVulnerability->setMode(0); // force to generic
                 $this->get('vulnerabilityCliTable')->save($newVulnerability, false);
                 $vulnerabilitiesNewIds[$vulnerability->getUuid()] = $newVulnerability;
             }
@@ -686,7 +720,8 @@ class AnrService extends AbstractService
 
                     // duplicate categories
                     $categoryNewIds = [];
-                    $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()]);
+                    $category = $this->get('soaCategoryTable')
+                        ->getEntityByFields(['referential' => $referential->getUuid()]);
                     foreach ($category as $cat) {
                         $newCategory = new SoaCategory($cat);
                         $newCategory->set('id', null);
@@ -768,6 +803,14 @@ class AnrService extends AbstractService
                 }
             }
 
+            //duplicate SoaScaleComment
+            $anrSoaScaleCommentOldIdsToNewObjectsMap = $this->createSoaScaleCommentFromSource(
+                $newAnr,
+                $anr,
+                $source,
+                $connectedUser
+            );
+
             // duplicate soas
             if ($source == MonarcObject::SOURCE_COMMON) {
                 foreach ($measuresNewIds as $key => $value) {
@@ -775,6 +818,7 @@ class AnrService extends AbstractService
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($value);
+                    $newSoa->setSoaScaleComment(null);
                     $this->get('soaTable')->save($newSoa, false);
                 }
             } else {
@@ -784,6 +828,13 @@ class AnrService extends AbstractService
                     $newSoa->set('id', null);
                     $newSoa->setAnr($newAnr);
                     $newSoa->setMeasure($measuresNewIds[$soa->measure->getUuid()]);
+                    if ($soa->getSoaScaleComment()!== null) {
+                        $newSoa->setSoaScaleComment(
+                            $anrSoaScaleCommentOldIdsToNewObjectsMap[$soa->getSoaScaleComment()->getId()]
+                        );
+                    } else {
+                        $newSoa->setSoaScaleComment(null);
+                    }
                     $this->get('soaTable')->save($newSoa, false);
                 }
             }
@@ -820,19 +871,23 @@ class AnrService extends AbstractService
 
             // duplicate rolf tags
             $rolfTagsNewIds = [];
-            $rolfTags = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('rolfTagTable')->fetchAllObject() : $this->get('rolfTagCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $rolfTags = ($source == MonarcObject::SOURCE_COMMON)
+                ? $this->get('rolfTagTable')->fetchAllObject()
+                : $this->get('rolfTagCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($rolfTags as $rolfTag) {
                 $newRolfTag = new RolfTag($rolfTag);
                 $newRolfTag->set('id', null);
                 $newRolfTag->setAnr($newAnr);
                 $newRolfTag->set('risks', []);
-                $this->get('rolfTagCliTable')->save($newRolfTag,false);
+                $this->get('rolfTagCliTable')->save($newRolfTag, false);
                 $rolfTagsNewIds[$rolfTag->id] = $newRolfTag;
             }
 
             // duplicate rolf risk
             $rolfRisksNewIds = [];
-            $rolfRisks = ($source == MonarcObject::SOURCE_COMMON) ? $this->get('rolfRiskTable')->fetchAllObject() : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
+            $rolfRisks = ($source == MonarcObject::SOURCE_COMMON)
+                ? $this->get('rolfRiskTable')->fetchAllObject()
+                : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
             foreach ($rolfRisks as $rolfRisk) {
                 $newRolfRisk = new RolfRisk($rolfRisk);
                 $newRolfRisk->set('id', null);
@@ -851,15 +906,16 @@ class AnrService extends AbstractService
                 //link the measures
 
                 foreach ($rolfRisk->measures as $m) {
-                    try{
+                    try {
                         $measure = $this->get('measureCliTable')->getEntity([
                             'anr' => $newAnr->getId(),
                             'uuid' => $m->getUuid()
                         ]);
                         $measure->addOpRisk($newRolfRisk);
-                    } catch (Exception $e) { } //needed if the measures don't exist in the client ANR
+                    } catch (Exception $e) {
+                    } //needed if the measures don't exist in the client ANR
                 }
-                $this->get('rolfRiskCliTable')->save($newRolfRisk,false);
+                $this->get('rolfRiskCliTable')->save($newRolfRisk, false);
                 $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
             }
 
@@ -906,6 +962,9 @@ class AnrService extends AbstractService
                     if ($objectCategory->getRoot()) {
                         $newObjectCategory->setRoot($objectsCategoriesNewIds[$objectCategory->getRoot()->getId()]);
                     }
+                    if (!$objectCategory->getObjects()->isEmpty()) {
+                        $newObjectCategory->resetObjects();
+                    }
                     $this->get('objectCategoryCliTable')->save($newObjectCategory, false);
 
                     $objectsCategoriesNewIds[$objectCategory->getId()] = $newObjectCategory;
@@ -922,7 +981,7 @@ class AnrService extends AbstractService
             foreach ($objects as $object) {
                 $newObject = new MonarcObject($object);
                 $newObject->setAnr($newAnr);
-                $newObject->setAnrs(null);
+                $newObject->resetAnrs();
                 $newObject->addAnr($newAnr);
                 if ($object->getCategory() !== null) {
                     $newObject->setCategory($objectsCategoriesNewIds[$object->getCategory()->getId()]);
@@ -939,6 +998,8 @@ class AnrService extends AbstractService
                 if ($object->getRolfTag()) {
                     $newObject->setRolfTag($rolfTagsNewIds[$object->getRolfTag()->getId()]);
                 }
+                //in FO all the objects are generic
+                $newObject->setMode(0); //force to be generic
                 $this->get('objectCliTable')->save($newObject, false);
                 $objectsNewIds[$object->getUuid()] = $newObject;
             }
@@ -958,7 +1019,8 @@ class AnrService extends AbstractService
                 $newAnrObjectCategory = new AnrObjectCategory($anrObjectCategory);
                 $newAnrObjectCategory->set('id', null);
                 $newAnrObjectCategory->setAnr($newAnr);
-                $newAnrObjectCategory->setCategory($objectsCategoriesNewIds[$anrObjectCategory->getCategory()->getId()]);
+                $newAnrObjectCategory
+                    ->setCategory($objectsCategoriesNewIds[$anrObjectCategory->getCategory()->getId()]);
                 $this->get('anrObjectCategoryCliTable')->save($newAnrObjectCategory, false);
             }
 
@@ -981,6 +1043,14 @@ class AnrService extends AbstractService
                 $this->get('objectObjectCliTable')->save($newObjectObject, false);
             }
 
+            //duplicate AnrMetadatasOnInstances
+            $anrMetadatasOnInstancesOldIdsToNewObjectsMap = $this->createAnrMetadatasOnInstancesFromSource(
+                $newAnr,
+                $anr,
+                $source,
+                $connectedUser
+            );
+
             // duplicate instances
             $instancesNewIds = [];
             /** @var InstanceTable $instanceTable */
@@ -1002,6 +1072,17 @@ class AnrService extends AbstractService
                  */
                 $newInstance->resetInstanceRisks();
                 $newInstance->resetInstanceConsequences();
+                if ($source !== MonarcObject::SOURCE_COMMON) {
+                    $this->createInstanceMetadatasFromSource(
+                        $connectedUser,
+                        $instance,
+                        $newInstance,
+                        $anr,
+                        $newAnr,
+                        $anrMetadatasOnInstancesOldIdsToNewObjectsMap
+                    );
+                }
+
                 $this->get('instanceCliTable')->save($newInstance, false);
                 $instancesNewIds[$instance->id] = $newInstance;
             }
@@ -1055,7 +1136,9 @@ class AnrService extends AbstractService
                     $newInstanceRisk->setThreat($threatsNewIds[$instanceRisk->getThreat()->getUuid()]);
                 }
                 if ($instanceRisk->getVulnerability()) {
-                    $newInstanceRisk->setVulnerability($vulnerabilitiesNewIds[$instanceRisk->getVulnerability()->getUuid()]);
+                    $newInstanceRisk->setVulnerability(
+                        $vulnerabilitiesNewIds[$instanceRisk->getVulnerability()->getUuid()]
+                    );
                 }
                 if ($instanceRisk->getInstance()) {
                     $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->getInstance()->getId()]);
@@ -1320,7 +1403,8 @@ class AnrService extends AbstractService
                 }
 
                 //duplicate record international transfers
-                $recordInternationalTransfers = $this->get('recordInternationalTransferCliTable')->getEntityByFields(['anr' => $anr->id]);
+                $recordInternationalTransfers = $this->get('recordInternationalTransferCliTable')
+                    ->getEntityByFields(['anr' => $anr->id]);
                 $internationalTransferNewIds = [];
                 foreach ($recordInternationalTransfers as $it) {
                     $newInternationalTransfer = new RecordInternationalTransfer($it);
@@ -1357,7 +1441,8 @@ class AnrService extends AbstractService
                 }
 
                 // duplicate recommendations historics
-                $recommandationsHistorics = $this->get('recommandationHistoricCliTable')->getEntityByFields(['anr' => $anr->id]);
+                $recommandationsHistorics = $this->get('recommandationHistoricCliTable')
+                    ->getEntityByFields(['anr' => $anr->id]);
                 foreach ($recommandationsHistorics as $recommandationHistoric) {
                     $newRecommandationHistoric = new RecommandationHistoric($recommandationHistoric);
                     $newRecommandationHistoric->set('id', null);
@@ -1427,7 +1512,6 @@ class AnrService extends AbstractService
             $this->get('table')->getDb()->flush();
 
             $this->setUserCurrentAnr($newAnr->getId());
-
         } catch (\Exception $e) {
             if (!empty($newAnr)) {
                 $anrCliTable->deleteEntity($newAnr);
@@ -1532,7 +1616,8 @@ class AnrService extends AbstractService
             /** @var StatsAnrService $statsAnrService */
             $statsAnrService = $this->get('statsAnrService');
             $statsAnrService->deleteStatsForAnr($anr->getUuid());
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return $anrTable->delete($id);
     }
@@ -1558,13 +1643,12 @@ class AnrService extends AbstractService
             }
         }
 
-        //themes, measures, rolf tags, rolf risks, object categories, questions and questions choices
+        //themes, measures, rolf tags, rolf risks, questions and questions choices
         $array = [
             'theme' => 'label',
             'measure' => 'label',
             'rolfRisk' => 'label',
             'rolfTag' => 'label',
-            'objectCategory' => 'label',
             'question' => 'label',
             'questionChoice' => 'label',
         ];
@@ -1594,7 +1678,8 @@ class AnrService extends AbstractService
             }
 
             //scales impact types
-            $scalesImpactsTypes = $this->get('scaleImpactTypeTable')->getEntityByFields(['anr' => $model->get('anr')->get('id')]);
+            $scalesImpactsTypes = $this->get('scaleImpactTypeTable')
+                ->getEntityByFields(['anr' => $model->get('anr')->get('id')]);
             foreach ($scalesImpactsTypes as $scaleImpactType) {
                 foreach ($languages as $lang) {
                     if (empty($scaleImpactType->get('label' . $lang))) {
@@ -1647,10 +1732,12 @@ class AnrService extends AbstractService
             }
             foreach ($objects as $object) {
                 foreach ($languages as $lang) {
-                    if (empty($object->get('label' . $lang))) {
-                        $success[$lang] = false;
-                    }
-                    if (empty($object->get('name' . $lang))) {
+                    if (empty($object->getLabel($lang))
+                        || empty($object->getName($lang))
+                        || ($object->getCategory() !== null
+                            && empty($object->getCategory()->getLabel($lang))
+                        )
+                    ) {
                         $success[$lang] = false;
                     }
                 }
@@ -1968,5 +2055,140 @@ class AnrService extends AbstractService
         $configService = $this->get('configService');
 
         return strtolower($configService->getLanguageCodes()[$anr->getLanguage()]);
+    }
+
+    private function createAnrMetadatasOnInstancesFromSource(
+        Anr $newAnr,
+        AnrSuperClass $sourceAnr,
+        string $sourceName,
+        UserSuperClass $connectedUser
+    ): array {
+
+        $anrMetadatasOnInstancesOldIdsToNewObjectsMap = [];
+
+        /** @var AnrMetadatasOnInstancesCliTable $anrMetadatasOnInstancesCliTable */
+        $anrMetadatasOnInstancesCliTable = $this->get('anrMetadatasOnInstancesCliTable');
+
+        /** @var AnrMetadatasOnInstancesCliTable|CoreAnrMetadatasOnInstancesCliTable $scaleTable */
+        $anrMetadatasOnInstancesTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('anrMetadatasOnInstancesTable')
+            : $anrMetadatasOnInstancesCliTable;
+
+        /** @var TranslationTable|CoreTranslationTable $sourceTranslationTable */
+        $sourceTranslationTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('translationTable')
+            : $this->get('translationCliTable');
+
+        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
+
+        $oldAnrMetadatasOnInstances = $anrMetadatasOnInstancesTable->findByAnr($sourceAnr);
+        foreach ($oldAnrMetadatasOnInstances as $oldAnrMetadata) {
+            $newAnrMetadataOnInstance = (new AnrMetadatasOnInstances())
+                ->setAnr($newAnr)
+                ->setLabelTranslationKey($oldAnrMetadata->getLabelTranslationKey())
+                ->setIsDeletable($sourceName === MonarcObject::SOURCE_COMMON ? false : $oldAnrMetadata->isDeletable())
+                ->setCreator($connectedUser->getEmail());
+            $anrMetadatasOnInstancesCliTable->save($newAnrMetadataOnInstance, false);
+            $anrMetadatasOnInstancesOldIdsToNewObjectsMap[$oldAnrMetadata->getId()] = $newAnrMetadataOnInstance;
+        }
+
+        $sourceTranslations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $sourceAnr,
+            [Translation::ANR_METADATAS_ON_INSTANCES],
+            $anrLanguageCode
+        );
+
+        foreach ($sourceTranslations as $sourceTranslation) {
+            $this->createTranslationFromSource($newAnr, $sourceTranslation, $connectedUser);
+        }
+
+        return $anrMetadatasOnInstancesOldIdsToNewObjectsMap;
+    }
+
+    private function createInstanceMetadatasFromSource(
+        UserSuperClass $connectedUser,
+        Instance $oldInstance,
+        Instance $instance,
+        Anr $sourceAnr,
+        Anr $newAnr,
+        array $anrMetadatasOnInstancesOldIdsToNewObjectsMap
+    ) :void {
+        $translations = [];
+        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
+
+        $sourceTranslationTable = $this->get('translationCliTable');
+        $oldInstanceMetadatas = $oldInstance->getInstanceMetadatas();
+        foreach ($oldInstanceMetadatas as $oldInstanceMetadata) {
+            $translationKey = $oldInstanceMetadata->getCommentTranslationKey();
+            $instanceMetada = (new InstanceMetadata())
+                ->setInstance($instance)
+                ->setMetadata($anrMetadatasOnInstancesOldIdsToNewObjectsMap[
+                    $oldInstanceMetadata->getMetadata()->getId()])
+                ->setCommentTranslationKey($translationKey)
+                ->setCreator($connectedUser->getEmail());
+
+            $this->get('instanceMetadataCliTable')->save($instanceMetada, false);
+            $instance->addInstanceMetadata($instanceMetada);
+
+            $translations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
+                $sourceAnr,
+                [Translation::INSTANCE_METADATA],
+                $anrLanguageCode
+            );
+        }
+
+        foreach ($translations as $translation) {
+            $this->createTranslationFromSource($newAnr, $translation, $connectedUser);
+        }
+    }
+
+    private function createSoaScaleCommentFromSource(
+        Anr $newAnr,
+        AnrSuperClass $sourceAnr,
+        string $sourceName,
+        UserSuperClass $connectedUser
+    ): array {
+
+        $anrSoaScaleCommentOldIdsToNewObjectsMap = [];
+
+        /** @var SoaScaleCommentCliTable $soaScaleCommentCliTable */
+        $soaScaleCommentCliTable = $this->get('soaScaleCommentCliTable');
+
+        /** @var SoaScaleCommentCliTable|CoreSoaScaleCommentCliTable $scaleTable */
+        $soaScaleCommentTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('soaScaleCommentTable')
+            : $soaScaleCommentCliTable;
+
+        /** @var TranslationTable|CoreTranslationTable $sourceTranslationTable */
+        $sourceTranslationTable = $sourceName === MonarcObject::SOURCE_COMMON
+            ? $this->get('translationTable')
+            : $this->get('translationCliTable');
+
+        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
+
+        $oldSoaScaleComments = $soaScaleCommentTable->findByAnr($sourceAnr);
+        foreach ($oldSoaScaleComments as $oldSoaScaleComment) {
+            $newSoaScaleComment = (new SoaScaleComment())
+                ->setAnr($newAnr)
+                ->setCommentTranslationKey($oldSoaScaleComment->getCommentTranslationKey())
+                ->setScaleIndex($oldSoaScaleComment->getScaleIndex())
+                ->setColour($oldSoaScaleComment->getColour())
+                ->setIsHidden($oldSoaScaleComment->isHidden())
+                ->setCreator($connectedUser->getEmail());
+            $soaScaleCommentCliTable->save($newSoaScaleComment, false);
+            $anrSoaScaleCommentOldIdsToNewObjectsMap[$oldSoaScaleComment->getId()] = $newSoaScaleComment;
+        }
+
+        $sourceTranslations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
+            $sourceAnr,
+            [Translation::SOA_SCALE_COMMENT],
+            $anrLanguageCode
+        );
+
+        foreach ($sourceTranslations as $sourceTranslation) {
+            $this->createTranslationFromSource($newAnr, $sourceTranslation, $connectedUser);
+        }
+
+        return $anrSoaScaleCommentOldIdsToNewObjectsMap;
     }
 }

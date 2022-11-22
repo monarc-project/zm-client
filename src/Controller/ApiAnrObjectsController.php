@@ -86,17 +86,24 @@ class ApiAnrObjectsController extends ApiAnrAbstractController
         if (empty($anrId)) {
             throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
         }
-        $data['anr'] = $anrId;
-        if (\is_string($data['asset'])) {
-            $data['asset'] = ['uuid' => $data['asset'], 'anr' => $anrId];
+        
+        if (array_keys($data) !== range(0, count($data) - 1)) {
+            # if $data is an associative array
+            $data = array($data);
         }
-        /** @var ObjectService $service */
-        $service = $this->getService();
-        $id = $service->create($data, true, AbstractEntity::FRONT_OFFICE);
 
+        $created_objects = array();
+        foreach ($data as $key => $new_data) {
+            $new_data['anr'] = $anrId;
+            if (\is_string($new_data['asset'])) {
+                $new_data['asset'] = ['uuid' => $new_data['asset'], 'anr' => $anrId];
+            }
+            $id = $this->getService()->create($new_data, true, AbstractEntity::FRONT_OFFICE);
+            array_push($created_objects, $id);
+        }
         return new JsonModel([
             'status' => 'ok',
-            'id' => $id,
+            'id' => count($created_objects)==1 ? $created_objects[0]: $created_objects,
         ]);
     }
 

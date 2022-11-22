@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>MONARC by Cases.lu</title>
+    <title>MONARC</title>
 
     <?php echo $this->headMeta()
         ->appendName('viewport', 'width=device-width, initial-scale=1.0')
@@ -47,6 +47,7 @@
         ->appendFile('js/anr/AnrObjectResource.js')
         ->appendFile('js/anr/MassDeleteService.js')
         ->appendFile('js/anr/MeasureService.js')
+        ->appendFile('js/anr/MetadataInstanceService.js')
         ->appendFile('js/anr/MeasureMeasureService.js')
         ->appendFile('js/anr/ThreatService.js')
         ->appendFile('js/anr/VulnService.js')
@@ -63,6 +64,9 @@
         ->appendFile('js/anr/QuestionService.js')
         ->appendFile('js/anr/GuideService.js')
         ->appendFile('js/anr/SOACategoryService.js')
+        ->appendFile(('js/anr/SoaScaleCommentService.js'))
+        ->appendFile(('js/anr/ImportFileDialogCtrl.js'))
+
         // Client app files
         ->appendFile('js/ClientApp.js')
         ->appendFile('js/UserService.js')
@@ -88,6 +92,7 @@
         ->appendFile('js/ClientSoaService.js')
         ->appendFile('js/StatsService.js')
         ->appendFile('js/ClientSettingsCtrl.js')
+
         // ANR, but client-only
         ->appendFile('js/anr/AnrKbMgmtCtrl.js')
         ->appendFile('js/ClientAnrService.js')
@@ -97,6 +102,7 @@
         ->appendFile('js/anr/VerticalBarChartService.js')
         ->appendFile('js/anr/MultiHorizontalBarChartService.js')
         ->appendFile('js/anr/HorizontalBarChartService.js')
+        ->appendFile('js/anr/MiniHorizontalBarChartsService.js')
         ->appendFile('js/anr/LineChartService.js')
         ->appendFile('js/anr/MultiLineChartService.js')
         ->appendFile('js/anr/RadarChartService.js')

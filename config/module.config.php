@@ -8,6 +8,8 @@ use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
+use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
+use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
@@ -856,6 +858,43 @@ return [
                             ],
                         ],
                     ],
+                    'soa_scale_comment' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'soa-scale-comment[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiSoaScaleCommentController::class,
+                            ],
+                        ],
+                    ],
+                    'anr_metadatas_on_instances' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'metadatas-on-instances[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiAnrMetadatasOnInstancesController::class,
+                            ],
+                        ],
+                    ],
+                    'instance_metadata' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'instances/:instanceid/instances_metadatas[/:id]',
+                            'constraints' => [
+                                'instanceid' => '[0-9]+',
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\ApiInstanceMetadataController::class,
+                            ],
+                        ],
+                    ],
                     'objects_categories' => [
                         'type' => 'segment',
                         'options' => [
@@ -945,6 +984,30 @@ return [
                     ],
                     'defaults' => [
                         'controller' => Controller\ApiUserPasswordController::class,
+                    ],
+                ],
+            ],
+            'monarc_api_user_activate_2fa' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/user/activate2FA/:id',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiUserTwoFAController::class,
+                    ],
+                ],
+            ],
+            'monarc_api_user_recovery_codes' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/user/recoveryCodes/:id',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiUserRecoveryCodesController::class,
                     ],
                 ],
             ],
@@ -1042,6 +1105,8 @@ return [
             Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
             Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
             Controller\ApiUserPasswordController::class => AutowireFactory::class,
+            Controller\ApiUserTwoFAController::class => AutowireFactory::class,
+            Controller\ApiUserRecoveryCodesController::class => AutowireFactory::class,
             Controller\ApiUserProfileController::class => AutowireFactory::class,
             Controller\ApiAnrAssetsController::class => Controller\ApiAnrAssetsControllerFactory::class,
             Controller\ApiAnrAmvsController::class => Controller\ApiAnrAmvsControllerFactory::class,
@@ -1127,6 +1192,9 @@ return [
             StatsGeneralSettingsController::class => AutowireFactory::class,
             Controller\ApiOperationalRisksScalesController::class => AutowireFactory::class,
             Controller\ApiOperationalRisksScalesCommentsController::class => AutowireFactory::class,
+            Controller\ApiAnrMetadatasOnInstancesController::class => AutowireFactory::class,
+            Controller\ApiInstanceMetadataController::class => AutowireFactory::class,
+            Controller\ApiSoaScaleCommentController::class => AutowireFactory::class,
         ],
     ],
 
@@ -1204,6 +1272,10 @@ return [
             Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\TranslationTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
+            Table\AnrMetadatasOnInstancesTable::class => ClientEntityManagerFactory::class,
+            Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
+            Table\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
+            Table\ClientModelTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1318,6 +1390,29 @@ return [
                     $container->get(ConfigService::class),
                 );
             },
+            AnrMetadatasOnInstancesExportService::class => static function (
+                ContainerInterface $container,
+                $serviceName
+            ) {
+                return new AnrMetadatasOnInstancesExportService(
+                    $container->get(Table\AnrMetadatasOnInstancesTable::class),
+                    $container->get(Table\TranslationTable::class),
+                    $container->get(ConfigService::class),
+                );
+            },
+            Service\AnrMetadatasOnInstancesService::class => AutowireFactory::class,
+            Service\InstanceMetadataService::class => AutowireFactory::class,
+            Service\SoaScaleCommentService::class => AutowireFactory::class,
+            SoaScaleCommentExportService::class => static function (
+                ContainerInterface $container,
+                $serviceName
+            ) {
+                return new SoaScaleCommentExportService(
+                    $container->get(Table\SoaScaleCommentTable::class),
+                    $container->get(Table\TranslationTable::class),
+                    $container->get(ConfigService::class),
+                );
+            },
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
@@ -1364,6 +1459,8 @@ return [
             'monarc_api_admin_users_rights',
             'monarc_api_admin_user_reset_password',
             'monarc_api_user_password',
+            'monarc_api_user_activate_2fa',
+            'monarc_api_user_recovery_codes',
             'monarc_api_user_profile',
             'monarc_api_client_anr',
             'monarc_api_guides',
@@ -1384,6 +1481,8 @@ return [
             'monarc_api_models',
             'monarc_api_referentials',
             'monarc_api_admin_users_roles',
+            'monarc_api_global_client_anr/anr_metadatas_on_instances',
+            'monarc_api_global_client_anr/instance_metadata',
             'monarc_api_global_client_anr/instance',
             'monarc_api_global_client_anr/instance_risk',
             'monarc_api_global_client_anr/instance_risk_op',
@@ -1404,6 +1503,7 @@ return [
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/soa',
+            'monarc_api_global_client_anr/soa_scale_comment',
             'monarc_api_global_client_anr/soacategory',
             'monarc_api_global_client_anr/risks',
             'monarc_api_global_client_anr/risks_op',
@@ -1449,6 +1549,8 @@ return [
             'monarc_api_anr_treatment_plan',
             'monarc_api_anr_client_objects_categories',
             'monarc_api_user_password',
+            'monarc_api_user_activate_2fa',
+            'monarc_api_user_recovery_codes',
             'monarc_api_model_verify_language',
             'monarc_api_global_client_anr/risk_owners',
             'monarc_api_global_client_anr/carto_risks',
@@ -1485,6 +1587,8 @@ return [
             'monarc_api_admin_users_roles',
             'monarc_api_admin_user_reset_password',
             'monarc_api_user_password',
+            'monarc_api_user_activate_2fa',
+            'monarc_api_user_recovery_codes',
             'monarc_api_user_profile',
             'monarc_api_client_anr',
             'monarc_api_stats',

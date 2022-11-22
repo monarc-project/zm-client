@@ -74,10 +74,13 @@ class StatsSettingsService
      */
     public function getGeneralSettings(): array
     {
-        $client = $this->statsApiProvider->getClient();
+        try {
+            $client = $this->statsApiProvider->getClient();
+        } catch (\Throwable $e) {
+        }
 
         return [
-            'is_sharing_enabled' => $client['is_sharing_enabled']
+            'is_sharing_enabled' => $client['is_sharing_enabled'] ?? false,
         ];
     }
 

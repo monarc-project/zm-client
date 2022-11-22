@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2021 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,23 +12,23 @@ use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Exception\UserNotLoggedInException;
+use Monarc\Core\Model\Entity\UserRoleSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\PasswordService;
 use Monarc\Core\Service\UserService as CoreUserService;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
-use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Table\UserTable;
 
 class UserService extends CoreUserService
 {
-    /** @var AnrTable */
-    private $anrTable;
+    private AnrTable $anrTable;
 
-    /** @var PasswordService */
-    private $passwordService;
+    private PasswordService $passwordService;
+
+    private User $connectedUser;
 
     public function __construct(
         UserTable $userTable,
@@ -41,6 +41,7 @@ class UserService extends CoreUserService
 
         $this->anrTable = $anrTable;
         $this->passwordService = $passwordService;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
     public function getCompleteUser(int $userId): array
@@ -72,8 +73,7 @@ class UserService extends CoreUserService
             $data['language'] = $this->defaultLanguageIndex;
         }
         if (empty($data['creator'])) {
-            $data['creator'] = $this->connectedUserService->getConnectedUser()->getFirstname() . ' '
-                . $this->connectedUserService->getConnectedUser()->getLastname();
+            $data['creator'] = $this->connectedUser->getEmail();
         }
 
         if (isset($data['anrs'])) {
@@ -143,7 +143,7 @@ class UserService extends CoreUserService
          * We just need to validate if the System created user instead.
         */
         if ($user->isSystemUser()) {
-            if (!empty($data['role']) && !\in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
+            if (!empty($data['role']) && !\in_array(UserRoleSuperClass::SUPER_ADMIN_FO, $data['role'], true)) {
                 throw new Exception('You can not remove admin role from the "System" user', 412);
             }
 

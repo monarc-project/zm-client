@@ -32,7 +32,7 @@ class AddThreatsUuid extends AbstractMigration
     {
       //uuid for threats
 
-      $data = array('MA11' => 'b402d4e0-4576-11e9-9173-0800277f0571',
+        $data = array('MA11' => 'b402d4e0-4576-11e9-9173-0800277f0571',
                     'MA15' => 'b402d513-4576-11e9-9173-0800277f0571',
                     'MA16' => 'b402d523-4576-11e9-9173-0800277f0571',
                     'MD14' => 'b402d530-4576-11e9-9173-0800277f0571',
@@ -63,72 +63,72 @@ class AddThreatsUuid extends AbstractMigration
                     'ME17' => 'b402d67d-4576-11e9-9173-0800277f0571',
                     'ME18' => 'b402d688-4576-11e9-9173-0800277f0571');
       // Migration for table threats -- Modify the data
-      $table = $this->table('threats');
-      $table
-          ->addColumn('uuid', 'uuid',array('after' => 'id'))
+        $table = $this->table('threats');
+        $table
+          ->addColumn('uuid', 'uuid', array('after' => 'id'))
           ->addIndex(array('uuid'))
           ->removeIndex(['anr_id','code'])
           ->update();
-      foreach ($data as $key => $value) { //fill the uuid only for threats created by cases
-        $this->execute('UPDATE threats SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
-      }
-      $unUUIDpdo = $this->query('select uuid,id from threats' .' WHERE uuid ='.'"'.'"');
-      $unUUIDrows = $unUUIDpdo->fetchAll();
+        foreach ($data as $key => $value) { //fill the uuid only for threats created by cases
+            $this->execute('UPDATE threats SET uuid =' .'"'.$value.'"'.' WHERE code ='.'"'.$key .'"');
+        }
+        $unUUIDpdo = $this->query('select uuid,id from threats' .' WHERE uuid ='.'"'.'"');
+        $unUUIDrows = $unUUIDpdo->fetchAll();
 
-      foreach ($unUUIDrows as $key => $value) {
-       $this->execute('UPDATE threats SET uuid =' .'"'.Uuid::uuid4().'"'.' WHERE id ='.$value['id']); //manage threats which are not in common
-      }
+        foreach ($unUUIDrows as $key => $value) {
+            $this->execute('UPDATE threats SET uuid =' .'"'.Uuid::uuid4().'"'.' WHERE id ='.$value['id']); //manage threats which are not in common
+        }
 
-      $table = $this->table('amvs'); //set the stufff for amvs
-      $table->dropForeignKey('threat_id')
-            ->addColumn('threat_uuid', 'uuid',array('after' => 'id'))
+        $table = $this->table('amvs'); //set the stufff for amvs
+        $table->dropForeignKey('threat_id')
+            ->addColumn('threat_uuid', 'uuid', array('after' => 'id'))
             ->update();
-      $this->execute('UPDATE amvs A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
-      $table->removeColumn('threat_id')
+        $this->execute('UPDATE amvs A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
+        $table->removeColumn('threat_id')
             ->update();
-      $table->renameColumn('threat_uuid','threat_id')
-            ->update();
-
-      $table = $this->table('instances_risks'); //set the stufff for instances_risks
-      $table->dropForeignKey('threat_id')
-            ->addColumn('threat_uuid', 'uuid',array('after' => 'id'))
-            ->update();
-      $this->execute('UPDATE instances_risks A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
-      $table->removeColumn('threat_id')
-            ->update();
-      $table->renameColumn('threat_uuid','threat_id')
+        $table->renameColumn('threat_uuid', 'threat_id')
             ->update();
 
-      $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
-      $table->dropForeignKey('threat_id')
-            ->addColumn('threat_uuid', 'uuid',array('after' => 'id', 'null' =>true))
+        $table = $this->table('instances_risks'); //set the stufff for instances_risks
+        $table->dropForeignKey('threat_id')
+            ->addColumn('threat_uuid', 'uuid', array('after' => 'id'))
             ->update();
-      $this->execute('UPDATE recommandations_risks A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
-      $this->execute('UPDATE recommandations_risks A SET A.threat_uuid = NULL where A.threat_id is null ');
-      $table->removeColumn('threat_id')
+        $this->execute('UPDATE instances_risks A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
+        $table->removeColumn('threat_id')
             ->update();
-      $table->renameColumn('threat_uuid','threat_id')
+        $table->renameColumn('threat_uuid', 'threat_id')
             ->update();
 
-      $table = $this->table('threats');
-      $table->removeColumn('id')
+        $table = $this->table('recommandations_risks'); //set the stufff for recommandations_risks
+        $table->dropForeignKey('threat_id')
+            ->addColumn('threat_uuid', 'uuid', array('after' => 'id', 'null' =>true))
             ->update();
-      $table->dropForeignKey('anr_id')
+        $this->execute('UPDATE recommandations_risks A,threats B SET A.threat_uuid = B.uuid where B.id=A.threat_id');
+        $this->execute('UPDATE recommandations_risks A SET A.threat_uuid = NULL where A.threat_id is null ');
+        $table->removeColumn('threat_id')
+            ->update();
+        $table->renameColumn('threat_uuid', 'threat_id')
+            ->update();
+
+        $table = $this->table('threats');
+        $table->removeColumn('id')
+            ->update();
+        $table->dropForeignKey('anr_id')
             ->save();
-      $this->execute("ALTER TABLE threats ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
+        $this->execute("ALTER TABLE threats ADD PRIMARY KEY uuid_anr_id (uuid,anr_id)");
 
         //manage Foreign key
         $table = $this->table('threats');
         $table->addForeignKey('anr_id', 'anrs', 'id', array('delete' => 'CASCADE','update' => 'RESTRICT'))
             ->update();
-       $table = $this->table('amvs');
-       $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('amvs');
+        $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
-       $table = $this->table('recommandations_risks');
-       $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('recommandations_risks');
+        $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
-       $table = $this->table('instances_risks');
-       $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
+        $table = $this->table('instances_risks');
+        $table->addForeignKey(['threat_id','anr_id'], 'threats', ['uuid','anr_id'], ['delete'=> 'CASCADE', 'update'=> 'RESTRICT'])
              ->update();
     }
 }
