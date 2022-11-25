@@ -1,34 +1,26 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Table;
+namespace Monarc\FrontOffice\Table;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\AmvSuperClass;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\AssetSuperClass;
-use Monarc\FrontOffice\Model\DbCli;
-use Monarc\Core\Model\Table\AbstractEntityTable;
-use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Table\AbstractTable;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 
-/**
- * Class AmvTable
- * @package Monarc\FrontOffice\Model\Table
- */
-class AmvTable extends AbstractEntityTable
+class AmvTable extends AbstractTable
 {
-    /**
-     * AmvTable constructor.
-     * @param DbCli $dbService
-     */
-    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
+    public function __construct(EntityManager $entityManager, string $entityName = Amv::class)
     {
-        parent::__construct($dbService, Amv::class, $connectedUserService);
+        parent::__construct($entityManager, $entityName);
     }
 
     /**
@@ -45,6 +37,7 @@ class AmvTable extends AbstractEntityTable
     }
 
     /**
+     * TODO: replace with the abstract one usage if possible ->select('a', 'm') ???
      * @throws EntityNotFoundException
      */
     public function findByUuidAndAnrId(string $uuid, int $anrId): Amv
@@ -59,7 +52,6 @@ class AmvTable extends AbstractEntityTable
             ->setParameter('anrId', $anrId)
             ->getQuery()
             ->getOneOrNullResult();
-
         if ($amv === null) {
             throw new EntityNotFoundException(
                 sprintf('Amv with uuid "%s" and Anr id "%d" is not found', $uuid, $anrId)
@@ -69,64 +61,36 @@ class AmvTable extends AbstractEntityTable
         return $amv;
     }
 
-    public function deleteEntity(AmvSuperClass $amv, bool $flush = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->remove($amv);
-        if ($flush) {
-            $em->flush();
-        }
-    }
-
-    public function saveEntity(AmvSuperClass $amv, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($amv);
-        if ($flushAll) {
-            $em->flush();
-        }
-    }
-
-    public function findByAmvItemsUuidAndAnrId(
+    public function findByAmvItemsUuidsAndAnr(
         string $assetUuid,
         string $threatUuid,
         string $vulnerabilityUuid,
-        ?int $anrId = null
+        AnrSuperClass $anr
     ): ?AmvSuperClass {
-        $queryBuilder = $this->getRepository()
+        return $this->getRepository()
             ->createQueryBuilder('amv')
             ->innerJoin('amv.asset', 'a')
             ->innerJoin('amv.threat', 't')
             ->innerJoin('amv.vulnerability', 'v')
+            ->andWhere('amv.anr = :anr')
             ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :anr')
             ->andWhere('t.uuid = :threatUuid')
+            ->andWhere('t.anr = :anr')
             ->andWhere('v.uuid = :vulnerabilityUuid')
+            ->andWhere('v.anr = :anr')
             ->setParameter('assetUuid', $assetUuid)
             ->setParameter('threatUuid', $threatUuid)
-            ->setParameter('vulnerabilityUuid', $vulnerabilityUuid);
-
-        if ($anrId !== null) {
-            $queryBuilder
-                ->andWhere('amv.anr = :anrId')
-                ->setParameter('anrId', $anrId)
-                ->andWhere('a.anr = :assetAnr')
-                ->andWhere('t.anr = :threatAnr')
-                ->andWhere('v.anr = :vulnerabilityAnr')
-                ->setParameter('assetAnr', $anrId)
-                ->setParameter('threatAnr', $anrId)
-                ->setParameter('vulnerabilityAnr', $anrId);
-        }
-
-        return $queryBuilder
+            ->setParameter('vulnerabilityUuid', $vulnerabilityUuid)
+            ->setParameter('anr', $anr)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
     /**
-     * TODO: the Core AmvTable has the same method, after #240 is done and the core table is inherited, can be removed.
      * @return AmvSuperClass[]
      */
-    public function findByAsset(AssetSuperClass $asset)
+    public function findByAsset(AssetSuperClass $asset): array
     {
         return $this->getRepository()
             ->createQueryBuilder('amv')
@@ -139,10 +103,5 @@ class AmvTable extends AbstractEntityTable
             ->setParameter('assetAnr', $asset->getAnr())
             ->getQuery()
             ->getResult();
-    }
-
-    public function deleteEntities(array $entities): void
-    {
-        $this->getDb()->deleteAll($entities);
     }
 }

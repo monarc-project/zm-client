@@ -31,7 +31,7 @@ class ObjectObject extends ObjectObjectSuperClass
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
-    protected $father;
+    protected $parent;
 
     /**
      * @var MonarcObject

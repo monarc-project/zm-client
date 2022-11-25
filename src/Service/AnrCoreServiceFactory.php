@@ -13,7 +13,8 @@ use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Table;
 
 /**
  * Anr Instance Consequence Service Factory
@@ -26,32 +27,32 @@ class AnrCoreServiceFactory extends AbstractServiceFactory
     protected $class = AnrCoreService::class;
 
     protected $ressources = [
-        'table' => Table\AnrTable::class,
+        'table' => DeprecatedTable\AnrTable::class,
         'entity' => Anr::class,
         'scaleService' => AnrScaleService::class,
         'recordService' => AnrRecordService::class,
         'configService' => ConfigService::class,
         'instanceService' => AnrInstanceService::class,
-        'anrObjectCategoryTable' => Table\AnrObjectCategoryTable::class,
-        'instanceTable' => Table\InstanceTable::class,
-        'instanceConsequenceTable' => Table\InstanceConsequenceTable::class,
-        'instanceRiskTable' => Table\InstanceRiskTable::class,
-        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
-        'MonarcObjectTable' => Table\MonarcObjectTable::class,
-        'scaleTable' => Table\ScaleTable::class,
-        'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
-        'scaleCommentTable' => Table\ScaleCommentTable::class,
-        'questionTable' => Table\QuestionTable::class,
-        'questionChoiceTable' => Table\QuestionChoiceTable::class,
+        'anrObjectCategoryTable' => DeprecatedTable\AnrObjectCategoryTable::class,
+        'instanceTable' => DeprecatedTable\InstanceTable::class,
+        'instanceConsequenceTable' => DeprecatedTable\InstanceConsequenceTable::class,
+        'instanceRiskTable' => DeprecatedTable\InstanceRiskTable::class,
+        'instanceRiskOpTable' => DeprecatedTable\InstanceRiskOpTable::class,
+        'MonarcObjectTable' => DeprecatedTable\MonarcObjectTable::class,
+        'scaleTable' => DeprecatedTable\ScaleTable::class,
+        'scaleImpactTypeTable' => DeprecatedTable\ScaleImpactTypeTable::class,
+        'scaleCommentTable' => DeprecatedTable\ScaleCommentTable::class,
+        'questionTable' => DeprecatedTable\QuestionTable::class,
+        'questionChoiceTable' => DeprecatedTable\QuestionChoiceTable::class,
         'threatTable' => Table\ThreatTable::class,
-        'interviewTable' => Table\InterviewTable::class,
-        'deliveryTable' => Table\DeliveryTable::class,
-        'referentialTable' => Table\ReferentialTable::class,
-        'measureTable' => Table\MeasureTable::class,
-        'measureMeasureTable' => Table\MeasureMeasureTable::class,
-        'soaCategoryTable' => Table\SoaCategoryTable::class,
-        'soaTable' => Table\SoaTable::class,
-        'recordTable' => Table\RecordTable::class,
+        'interviewTable' => DeprecatedTable\InterviewTable::class,
+        'deliveryTable' => DeprecatedTable\DeliveryTable::class,
+        'referentialTable' => DeprecatedTable\ReferentialTable::class,
+        'measureTable' => DeprecatedTable\MeasureTable::class,
+        'measureMeasureTable' => DeprecatedTable\MeasureMeasureTable::class,
+        'soaCategoryTable' => DeprecatedTable\SoaCategoryTable::class,
+        'soaTable' => DeprecatedTable\SoaTable::class,
+        'recordTable' => DeprecatedTable\RecordTable::class,
         'operationalRiskScalesExportService' => OperationalRiskScalesExportService::class,
         'anrMetadatasOnInstancesExportService' => AnrMetadatasOnInstancesExportService::class,
         'soaScaleCommentExportService' => SoaScaleCommentExportService::class,

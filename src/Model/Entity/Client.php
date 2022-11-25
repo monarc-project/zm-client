@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
  * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
@@ -7,25 +7,23 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
- * Client
- *
  * @ORM\Table(name="clients")
  * @ORM\Entity
  * @ORM\HasLifecycleCallbacks()
  */
-class Client extends AbstractEntity
+class Client
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -36,16 +34,16 @@ class Client extends AbstractEntity
     /**
      * @var ArrayCollection|ClientModel[]
      *
-     * @ORM\OneToMany(targetEntity="Monarc\FrontOffice\Model\Entity\ClientModel", mappedBy="client")
+     * @ORM\OneToMany(targetEntity="ClientModel", mappedBy="client")
      */
     protected $models;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="logo_id", type="integer", nullable=true)
      */
-    protected $logo_id;
+    protected $logoId;
 
     /**
      * @var string
@@ -73,45 +71,21 @@ class Client extends AbstractEntity
      *
      * @ORM\Column(name="first_user_firstname", type="string", length=255, nullable=true)
      */
-    protected $first_user_firstname;
+    protected $firstUserFirstname;
 
     /**
      * @var string
      *
      * @ORM\Column(name="first_user_lastname", type="string", length=255, nullable=true)
      */
-    protected $first_user_lastname;
+    protected $firstUserLastname;
 
     /**
      * @var string
      *
      * @ORM\Column(name="first_user_email", type="string", length=255, nullable=true)
      */
-    protected $first_user_email;
-
-    /**
-     * @param bool $partial
-     * @return mixed
-     */
-    public function getInputFilter($partial = false)
-    {
-        if (!$this->inputFilter) {
-            parent::getInputFilter($partial);
-
-            $this->inputFilter->add([
-                'name' => 'name',
-                'required' => ($partial) ? false : true,
-                'filters' => [
-                    [
-                        'name' => 'StringTrim',
-                    ],
-                ],
-                'validators' => [],
-            ]);
-        }
-
-        return $this->inputFilter;
-    }
+    protected $firstUserEmail;
 
     public function getModels()
     {

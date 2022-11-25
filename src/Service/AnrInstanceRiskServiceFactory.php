@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 
 /**
@@ -21,19 +22,18 @@ class AnrInstanceRiskServiceFactory extends AbstractServiceFactory
     protected $class = AnrInstanceRiskService::class;
 
     protected $ressources = [
-        'table' => Table\InstanceRiskTable::class,
+        'table' => DeprecatedTable\InstanceRiskTable::class,
         'entity' => InstanceRisk::class,
         'amvTable' => Table\AmvTable::class,
-        'anrTable' => Table\AnrTable::class,
+        'anrTable' => DeprecatedTable\AnrTable::class,
         'userAnrTable' => Table\UserAnrTable::class,
         'assetTable' => Table\AssetTable::class,
-        'instanceTable' => Table\InstanceTable::class,
+        'instanceTable' => DeprecatedTable\InstanceTable::class,
         'instanceRiskOwnerTable' =>  Table\InstanceRiskOwnerTable::class,
-        'monarcObjectTable' => Table\MonarcObjectTable::class,
-        'scaleTable' => Table\ScaleTable::class,
+        'scaleTable' => DeprecatedTable\ScaleTable::class,
         'threatTable' => Table\ThreatTable::class,
-        'recommendationTable' => Table\RecommandationTable::class,
-        'recommendationRiskTable' => Table\RecommandationRiskTable::class,
+        'recommendationTable' => DeprecatedTable\RecommandationTable::class,
+        'recommendationRiskTable' => DeprecatedTable\RecommandationRiskTable::class,
         'translateService' => TranslateService::class,
     ];
 }

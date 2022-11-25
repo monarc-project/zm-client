@@ -23,7 +23,7 @@ class RecommendationHistoricTable extends AbstractEntityTable
     /**
      * @return RecommandationHistoric[]
      */
-    public function findByAnr(AnrSuperClass $anr)
+    public function findByAnr(AnrSuperClass $anr): array
     {
         return $this->getRepository()
             ->createQueryBuilder('rh')

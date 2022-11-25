@@ -14,6 +14,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Service;
+use Monarc\FrontOffice\Table\ClientTable;
 
 /**
  * Factory class attached to DeliverableGenerationService
@@ -25,7 +26,7 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'entity' => Delivery::class,
         'table' => Table\DeliveryTable::class,
         'deliveryModelService' => DeliveriesModelsService::class,
-        'clientTable' => Table\ClientTable::class,
+        'clientTable' => ClientTable::class,
         'anrTable' => Table\AnrTable::class,
         'scaleService' => Service\AnrScaleService::class,
         'scaleTypeService' => Service\AnrScaleTypeService::class,

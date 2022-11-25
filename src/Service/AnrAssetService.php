@@ -10,6 +10,8 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractService;
 
 /**
+ * TODO: next after ThreatService...
+ *
  * This class is the service that handles assets in use within an ANR.
  * @package Monarc\FrontOffice\Service
  */

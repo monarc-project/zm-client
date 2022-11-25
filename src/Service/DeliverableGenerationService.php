@@ -18,7 +18,7 @@ use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\ClientTable;
+use Monarc\FrontOffice\Table\ClientTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
@@ -1606,7 +1606,7 @@ class DeliverableGenerationService extends AbstractService
                     $key = "o-" . $objectUuid;
                     if (!isset($mem_risks[$key])) {
                         $mem_risks[$key] = [
-                            'ctx' => $instance->{'getName' . $this->currentLangAnrIndex}()
+                            'ctx' => $instance->getName($this->currentLangAnrIndex)
                                 . ' (' . $this->anrTranslate('Global') . ')',
                             'global' => true,
                             'risks' => [],
@@ -2616,7 +2616,7 @@ class DeliverableGenerationService extends AbstractService
                     if (!$instance->getObject()->isScopeGlobal()) {
                         $path = $instance->getHierarchyString();
                     } else {
-                        $path = $instance->{'getName' . $this->currentLangAnrIndex}()
+                        $path = $instance->getName($this->currentLangAnrIndex)
                             . ' (' . $this->anrTranslate('Global') . ')';
                     }
 
@@ -5273,7 +5273,7 @@ class DeliverableGenerationService extends AbstractService
                             $table->addRow(400);
                             $table->addCell(Converter::cmToTwip(16), $this->setColSpanCell(6, 'DBE5F1'))
                                 ->addText(
-                                    _WT($instance->{'getName' . $this->currentLangAnrIndex}()),
+                                    _WT($instance->getName($this->currentLangAnrIndex)),
                                     $this->boldFont,
                                     $this->leftParagraph
                                 );
@@ -5496,12 +5496,8 @@ class DeliverableGenerationService extends AbstractService
                     }
 
                     if ($ir->getInstance()->getObject()->isScopeGlobal()) {
-                        $asset = $ir->getInstance()->{
-                            'getName' .
-                            $this->currentLangAnrIndex}() .
-                            ' (' .
-                            $this->anrTranslate('Global') .
-                            ')';
+                        $asset = $ir->getInstance()->getName($this->currentLangAnrIndex) . ' ('
+                            . $this->anrTranslate('Global') . ')';
                         $globalObjectsUuids[] = $uniqueKey;
                     } else {
                         $asset = $ir->getInstance()->getHierarchyString();
@@ -5731,9 +5727,7 @@ class DeliverableGenerationService extends AbstractService
      */
     public function getCompanyName()
     {
-        $client = current($this->clientTable->fetchAll());
-
-        return $client['name'];
+        return $this->clientTable->findFirstClient()->getName();
     }
 
     /**
@@ -5871,7 +5865,7 @@ class DeliverableGenerationService extends AbstractService
     private function getObjectInstancePath(RecommandationRisk $recommendationRisk): string
     {
         if ($recommendationRisk->hasGlobalObjectRelation()) {
-            return $recommendationRisk->getInstance()->{'getName' . $recommendationRisk->getAnr()->getLanguage()}()
+            return $recommendationRisk->getInstance()->getName($recommendationRisk->getAnr()->getLanguage())
                 . ' (' . $this->anrTranslate('Global') . ')';
         }
 

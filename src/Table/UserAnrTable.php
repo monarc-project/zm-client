@@ -1,28 +1,23 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Table;
+namespace Monarc\FrontOffice\Table;
 
+use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
-use Monarc\Core\Model\Table\AbstractEntityTable;
-use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\DbCli;
+use Monarc\Core\Table\AbstractTable;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 
-/**
- * Class UserAnrTable
- * @package Monarc\FrontOffice\Model\Table
- */
-class UserAnrTable extends AbstractEntityTable
+class UserAnrTable extends AbstractTable
 {
-    public function __construct(DbCli $dbCli, ConnectedUserService $connectedUserService)
+    public function __construct(EntityManager $entityManager, string $entityName = UserAnr::class)
     {
-        parent::__construct($dbCli, UserAnr::class, $connectedUserService);
+        parent::__construct($entityManager, $entityName);
     }
 
     public function findByAnrAndUser(AnrSuperClass $anr, UserSuperClass $user): ?UserAnr
@@ -38,10 +33,23 @@ class UserAnrTable extends AbstractEntityTable
             ->getOneOrNullResult();
     }
 
+    public function findByAnrIdAndUser(int $anrId, UserSuperClass $user): ?UserAnr
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('ua')
+            ->where('ua.anr = :anr')
+            ->andWhere('ua.user = :user')
+            ->setParameter('anr', $anrId)
+            ->setParameter('user', $user)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
      * @return UserAnr[]
      */
-    public function findByAnrId(int $anrId)
+    public function findByAnrId(int $anrId): array
     {
         return $this->getRepository()
             ->createQueryBuilder('ua')
@@ -49,14 +57,5 @@ class UserAnrTable extends AbstractEntityTable
             ->setParameter('anrId', $anrId)
             ->getQuery()
             ->getResult();
-    }
-
-    public function saveEntity(UserAnr $userAnr, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($userAnr);
-        if ($flushAll) {
-            $em->flush();
-        }
     }
 }

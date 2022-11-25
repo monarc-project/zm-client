@@ -12,16 +12,17 @@ use Monarc\Core\Service\InstanceService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
+use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Table\TranslationTable;
+use Monarc\FrontOffice\Table\TranslationTable;
 
 /**
  * This class is the service that handles instances in use within an ANR. Inherits most of the behavior from its
@@ -34,7 +35,6 @@ class AnrInstanceService extends InstanceService
 
     /** @var UserAnrTable */
     protected $userAnrTable;
-    protected $themeTable;
     protected $instanceRiskTable;
     protected $instanceRiskOpTable;
 
@@ -49,6 +49,8 @@ class AnrInstanceService extends InstanceService
 
     /** @var TranslationTable */
     protected $translationTable;
+
+    /** @var InstanceMetadataTable */
     protected $instanceMetadataTable;
 
     public function delete($id)

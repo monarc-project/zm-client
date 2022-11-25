@@ -20,7 +20,7 @@ use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
 class AnrInstanceRiskService extends InstanceRiskService
@@ -359,8 +359,8 @@ class AnrInstanceRiskService extends InstanceRiskService
         $amv = $amvTable->findByUuidAndAnrId($amvUuid, $anr->getId());
         $csvData = [];
         foreach ($amv->getMeasures() as $measure) {
-            $csvData[] = "[" . $measure->getReferential()->{'getLabel' . $anr->getLanguage()}() . "] "
-                . $measure->getCode() . " - " . $measure->{'getLabel' . $anr->getLanguage()}();
+            $csvData[] = "[" . $measure->getReferential()->getLabel($anr->getLanguage()) . "] "
+                . $measure->getCode() . " - " . $measure->getLabel($anr->getLanguage());
         }
 
         return implode("\n", $csvData);

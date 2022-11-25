@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Service;
 
@@ -13,17 +18,13 @@ use Monarc\FrontOffice\Model\Table\ObjectObjectTable;
 
 class ObjectExportService
 {
-    /** @var MonarcObjectTable */
-    private $monarcObjectTable;
+    private MonarcObjectTable $monarcObjectTable;
 
-    /** @var AssetExportService */
-    private $assetExportService;
+    private AssetExportService $assetExportService;
 
-    /** @var ObjectObjectTable */
-    private $objectObjectTable;
+    private ObjectObjectTable $objectObjectTable;
 
-    /** @var ConfigService */
-    private $configService;
+    private ConfigService $configService;
 
     public function __construct(
         MonarcObjectTable $monarcObjectTable,
@@ -60,7 +61,7 @@ class ObjectExportService
                 'label2' => $monarcObject->getLabel(2),
                 'label3' => $monarcObject->getLabel(3),
                 'label4' => $monarcObject->getLabel(4),
-                'disponibility' => $monarcObject->getDisponibility(),
+                'availability' => $monarcObject->getAvailability(),
                 'position' => $monarcObject->getPosition(),
                 'category' => null,
                 'asset' => null,
@@ -133,10 +134,10 @@ class ObjectExportService
                                 : null,
                             'referential' => [
                                 'uuid' => $measure->getReferential()->getUuid(),
-                                'label1' => $measure->getReferential()->getLabel1(),
-                                'label2' => $measure->getReferential()->getLabel2(),
-                                'label3' => $measure->getReferential()->getLabel3(),
-                                'label4' => $measure->getReferential()->getLabel4(),
+                                'label1' => $measure->getReferential()->getLabel(1),
+                                'label2' => $measure->getReferential()->getLabel(2),
+                                'label3' => $measure->getReferential()->getLabel(3),
+                                'label4' => $measure->getReferential()->getLabel(4),
                             ],
                             'code' => $measure->getCode(),
                             'label1' => $measure->getLabel1(),
@@ -149,18 +150,15 @@ class ObjectExportService
             }
         }
 
-        $children = $this->objectObjectTable->findChildrenByFather($monarcObject, ['position' => 'ASC']);
-        if (!empty($children)) {
-            $position = 1;
-            foreach ($children as $child) {
-                $childObjectUuid = $child->getChild()->getUuid();
-                $result['children'][$childObjectUuid] = $this->generateExportArray(
-                    $childObjectUuid,
-                    $anr,
-                    $withEval
-                );
-                $result['children'][$childObjectUuid]['object']['position'] = $position++;
-            }
+        $position = 1;
+        foreach ($monarcObject->getChildren() as $child) {
+            $childObjectUuid = $child->getChild()->getUuid();
+            $result['children'][$childObjectUuid] = $this->generateExportArray(
+                $childObjectUuid,
+                $anr,
+                $withEval
+            );
+            $result['children'][$childObjectUuid]['object']['position'] = $position++;
         }
 
         return $result;
@@ -232,10 +230,10 @@ class ObjectExportService
                         $measuresData[] = [
                             'uuid' => $measure->getUuid(),
                             'code' => $measure->getCode(),
-                            'label' => $measure->{'getLabel' . $languageIndex}(),
-                            'category' => $measure->getCategory()->{'getLabel' . $languageIndex}(),
+                            'label' => $measure->getLabel($languageIndex),
+                            'category' => $measure->getCategory()->getLabel($languageIndex),
                             'referential' => $measure->getReferential()->getUuid(),
-                            'referential_label' => $measure->getReferential()->{'getLabel' . $languageIndex}(),
+                            'referential_label' => $measure->getReferential()->getLabel($languageIndex),
                         ];
                     }
 
@@ -249,14 +247,11 @@ class ObjectExportService
             }
         }
 
-        $children = $this->objectObjectTable->findChildrenByFather($monarcObject, ['position' => 'ASC']);
-        if (!empty($children)) {
-            foreach ($children as $child) {
-                $result['children'][] = $this->generateExportMospArray(
-                    $child->getChild()->getUuid(),
-                    $anr
-                );
-            }
+        foreach ($monarcObject->getChildren() as $child) {
+            $result['children'][] = $this->generateExportMospArray(
+                $child->getChild()->getUuid(),
+                $anr
+            );
         }
 
         return ['object' => $result];

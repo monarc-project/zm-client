@@ -5,15 +5,13 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Entity;
+namespace Monarc\FrontOffice\Validator\InputFormatter\Object;
 
-use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\AnrObjectCategorySuperClass;
+use Monarc\Core\InputFormatter\Object\GetObjectsInputFormatter as CoreGetObjectsInputFormatter;
 
-/**
- * @ORM\Table(name="anrs_objects_categories")
- * @ORM\Entity
- */
-class AnrObjectCategory extends AnrObjectCategorySuperClass
+class GetObjectsInputFormatter extends CoreGetObjectsInputFormatter
 {
+    protected static array $allowedFilterFields = [
+        'anr',
+    ];
 }

@@ -205,10 +205,12 @@ class SnapshotService extends AbstractService
          */
         $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
             ->setIsStatsCollected((int)$anrReference->isStatsCollected())
-            ->setLabel1($anrReference->getLabel1())
-            ->setLabel2($anrReference->getLabel2())
-            ->setLabel3($anrReference->getLabel3())
-            ->setLabel4($anrReference->getLabel4());
+            ->setLabels([
+                'label1' => $anrReference->getLabelByLanguageIndex(1),
+                'label2' => $anrReference->getLabelByLanguageIndex(2),
+                'label3' => $anrReference->getLabelByLanguageIndex(3),
+                'label4' => $anrReference->getLabelByLanguageIndex(4),
+            ]);
         $referenceAnrUuid = $anrReference->getUuid();
 
         $anrTable->deleteEntity($anrReference);

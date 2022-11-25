@@ -450,10 +450,10 @@ class StatsAnrService
                     if (!isset($complianceStatsValues[(string)$reference->getUuid()])) {
                         $complianceStatsValues[(string)$reference->getUuid()] = [
                             'referential' => (string)$reference->getUuid(),
-                            'label1' => $reference->getLabel1(),
-                            'label2' => $reference->getLabel2(),
-                            'label3' => $reference->getLabel3(),
-                            'label4' => $reference->getLabel4(),
+                            'label1' => $reference->getLabel(1),
+                            'label2' => $reference->getLabel(2),
+                            'label3' => $reference->getLabel(3),
+                            'label4' => $reference->getLabel(4),
                             'current' => [],
                             'target' => [],
                         ];
@@ -1192,11 +1192,11 @@ class StatsAnrService
 
     private function approximate($x, $minorig, $maxorig, $mindest, $maxdest, $defaultvalue = -1)
     {
-        if ($x == $maxorig) {
+        if ($x === $maxorig) {
             return $maxdest;
         }
 
-        if ($x != -1 && ($maxorig - $minorig) != -1) {
+        if ($x !== -1 && ($maxorig - $minorig) !== -1) {
             return min(max(round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)), $mindest), $maxdest);
         }
 
@@ -1331,8 +1331,8 @@ class StatsAnrService
     private function getAvailableUserAnrsUuids(UserSuperClass $loggedInUser, array $anrIds = []): array
     {
         $anrUuids = [];
-        /** @var User $user */
         // We do this trick to get the User object from FO side instead of Core.
+        /** @var User $user */
         $user = $this->userTable->findById($loggedInUser->getId());
         $userAnrs = $user->getUserAnrs();
         $snapshotAnrsIds = [];

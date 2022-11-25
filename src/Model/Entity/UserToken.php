@@ -8,12 +8,14 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\AnrObjectCategorySuperClass;
+use Monarc\Core\Model\Entity\UserTokenSuperClass;
 
 /**
- * @ORM\Table(name="anrs_objects_categories")
+ * @ORM\Table(name="user_tokens", indexes={
+ *      @ORM\Index(name="user_id", columns={"user_id"})
+ * })
  * @ORM\Entity
  */
-class AnrObjectCategory extends AnrObjectCategorySuperClass
+class UserToken extends UserTokenSuperClass
 {
 }

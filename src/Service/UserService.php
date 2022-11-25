@@ -46,6 +46,7 @@ class UserService extends CoreUserService
 
     public function getCompleteUser(int $userId): array
     {
+        /** @var UserSuperClass $user */
         $user = $this->userTable->findById($userId);
 
         // TODO: replace with normalization layer.
@@ -107,9 +108,6 @@ class UserService extends CoreUserService
         return $user;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($userId, $data): UserSuperClass
     {
         if (isset($data['password'])) {
@@ -139,9 +137,6 @@ class UserService extends CoreUserService
      */
     private function verifySystemUserUpdate(User $user, array $data = [])
     {
-        /*
-         * We just need to validate if the System created user instead.
-        */
         if ($user->isSystemUser()) {
             if (!empty($data['role']) && !\in_array(UserRoleSuperClass::SUPER_ADMIN_FO, $data['role'], true)) {
                 throw new Exception('You can not remove admin role from the "System" user', 412);

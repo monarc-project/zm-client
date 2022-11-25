@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -10,12 +10,9 @@ namespace Monarc\FrontOffice\Model\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AmvSuperClass;
-use Monarc\Core\Model\Entity\MeasureSuperClass;
 use Ramsey\Uuid\Uuid;
 
 /**
- * Amv
- *
  * @ORM\Table(name="amvs", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  *      @ORM\Index(name="asset", columns={"asset_id"}),
@@ -79,25 +76,17 @@ class Amv extends AmvSuperClass
     protected $vulnerability;
 
     /**
-     * @var ArrayCollection|MeasureSuperClass[]
-     *
-     * @ORM\ManyToMany(targetEntity="Measure", mappedBy="amvs", cascade={"persist"})
-     */
-    protected $measures;
-
-    /**
      * @var InstanceRisk[]|ArrayCollection
      *
      * @ORM\OneToMany(targetEntity="InstanceRisk", mappedBy="amv")
      */
     protected $instanceRisks;
 
-    public function __construct($obj = null)
+    public function __construct()
     {
         $this->instanceRisks = new ArrayCollection();
-        $this->measures = new ArrayCollection();
 
-        parent::__construct($obj);
+        parent::__construct();
     }
 
     public function getInstanceRisks()
@@ -105,12 +94,11 @@ class Amv extends AmvSuperClass
         return $this->instanceRisks;
     }
 
-    public function getInputFilter($partial = false)
+    public function getImplicitPositionRelationsValues(): array
     {
-        if (!$this->inputFilter) {
-            parent::getInputFilter($partial);
-        }
-
-        return $this->inputFilter;
+        return array_merge(
+            ['anr' => $this->anr->getId()],
+            parent::getImplicitPositionRelationsValues()
+        );
     }
 }

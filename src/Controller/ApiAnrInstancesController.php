@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\Http\Response;
+use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
@@ -118,13 +119,13 @@ class ApiAnrInstancesController extends ApiAnrAbstractController
                 $missing[] = $field . ' missing';
             }
         }
-        if (count($missing)) {
-            throw new \Monarc\Core\Exception\Exception(implode(', ', $missing), 412);
+        if (!empty($missing)) {
+            throw new Exception(implode(', ', $missing), 412);
         }
 
-        $data['c'] = isset($data['c']) ? $data['c'] : '-1';
-        $data['i'] = isset($data['i']) ? $data['i'] : '-1';
-        $data['d'] = isset($data['d']) ? $data['d'] : '-1';
+        $data['c'] = $data['c'] ?? '-1';
+        $data['i'] = $data['i'] ?? '-1';
+        $data['d'] = $data['d'] ?? '-1';
 
         /** @var AnrInstanceService $service */
         $service = $this->getService();

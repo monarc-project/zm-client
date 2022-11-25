@@ -36,14 +36,14 @@ class ObjectObjectTable extends CoreObjectObjectTable
      *
      * @param MonarcObject $monarcObject
      */
-    public function deleteAllByFather(MonarcObject $monarcObject): void
+    public function deleteAllByParent(MonarcObject $monarcObject): void
     {
         $childrenObjects = $this->getRepository()->createQueryBuilder('oo')
-            ->innerJoin('oo.father', 'father')
-            ->where('father.uuid = :fatherUuuid')
-            ->andWhere('father.anr = :fatherAnr')
-            ->setParameter('fatherUuuid', $monarcObject->getUuid())
-            ->setParameter('fatherAnr', $monarcObject->getAnr())
+            ->innerJoin('oo.parent', 'parent')
+            ->where('parent.uuid = :parentUuuid')
+            ->andWhere('parent.anr = :parentAnr')
+            ->setParameter('parentUuuid', $monarcObject->getUuid())
+            ->setParameter('parentAnr', $monarcObject->getAnr())
             ->getQuery()
             ->getResult();
 
@@ -55,40 +55,19 @@ class ObjectObjectTable extends CoreObjectObjectTable
         }
     }
 
-    public function findMaxPositionByAnrAndFather(Anr $anr, MonarcObject $father): int
+    public function findMaxPositionByAnrAndParent(Anr $anr, MonarcObject $parent): int
     {
         return (int)$this->getRepository()->createQueryBuilder('oo')
             ->select('MAX(oo.position)')
-            ->innerJoin('oo.father', 'father')
+            ->innerJoin('oo.parent', 'parent')
             ->where('oo.anr = :anr')
-            ->andWhere('father.uuid = :fatherUuid')
-            ->andWhere('father.anr = :fatherAnr')
+            ->andWhere('parent.uuid = :parentUuid')
+            ->andWhere('parent.anr = :parentAnr')
             ->setParameter('anr', $anr)
-            ->setParameter('fatherUuid', $father->getUuid())
-            ->setParameter('fatherAnr', $anr)
+            ->setParameter('parentUuid', $parent->getUuid())
+            ->setParameter('parentAnr', $anr)
             ->getQuery()
             ->getSingleScalarResult();
-    }
-
-    /**
-     * @return ObjectObject[]
-     */
-    public function findChildrenByFather(MonarcObject $father, array $order = []): array
-    {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('oo')
-            ->innerJoin('oo.father', 'father')
-            ->where('father.uuid = :fatherUuid')
-            ->andWhere('father.anr = :fatherAnr')
-            ->setParameter('fatherUuid', $father->getUuid())
-            ->setParameter('fatherAnr', $father->getAnr());
-
-        if (!empty($order)) {
-            foreach ($order as $field => $direction) {
-                $queryBuilder->orderBy('oo.' . $field, $direction);
-            }
-        }
-
-        return $queryBuilder->getQuery()->getResult();
     }
 
     public function saveEntity(ObjectObjectSuperClass $objectObject, bool $flushAll = true): void

@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,21 +12,152 @@ use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
-use Monarc\Core\Service\ObjectService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
 
-/**
- * This class is the service that handles objects in use within an ANR. Inherits its behavior from its Monarc\Core
- * parent class ObjectService
- * @see \Monarc\Core\Service\ObjectService
- * @package Monarc\FrontOffice\Service
- */
-class AnrObjectService extends ObjectService
+// TODO: don't forget to remove its factory class.
+class AnrObjectService
 {
     protected $selfCoreService;
     protected $userAnrTable;
     protected $objectImportService;
+
+    private MonarcObjectTable $monarcObjectTable;
+
+    public function __construct(MonarcObjectTable $monarcObjectTable)
+    {
+        $this->monarcObjectTable = $monarcObjectTable;
+    }
+
+    public function getObjectData(Anr $anr, string $uuid): array
+    {
+        // todo...
+    }
+
+    public function create(Anr $anr, array $data, bool $saveInDb = true): MonarcObject
+    {
+        $monarcObject = (new MonarcObject())
+            ->setAnr($anr);
+        // TODO: The $data['mode'] can't be modified. always generic.
+
+        if (isset($data['uuid'])) {
+            $monarcObject->setUuid($data['uuid']);
+        }
+
+        // TODO: import from MOSP.
+//        if (!empty($data['mosp'])) {
+//            $monarcObject = $this->importFromMosp($data, $anr);
+//
+//            return $monarcObject ? $monarcObject->getUuid() : null;
+//        }
+
+        // TODO: we should link it. There is a separate call to link.
+        // $this->attachObjectToAnr($monarcObject, $anr, null, null, $context);
+
+        $this->monarcObjectTable->save($monarcObject);
+
+        return $monarcObject;
+    }
+
+    public function update(Anr $anr, string $uuid, array $data): MonarcObject
+    {
+        $monarcObject = $this->monarcObjectTable->findByAnrAndUuid($anr, $uuid);
+        // TODO: The $data['mode'] can't be modified. always generic.
+
+        $this->monarcObjectTable->save($monarcObject);
+
+        // TODO: on BO we call instancesImpacts in update and patch (renamed to updateInstancesAndOperationalRisks)
+
+        // TODO: when process object cat, we need to check for $monarcObject->getAnr(), if the root cat has link to anr.
+
+        return $monarcObject;
+    }
+
+    public function duplicate(Anr $anr, array $data): MonarcObject
+    {
+
+    }
+
+    public function attachObjectToAnr(
+        string $objectUuid,
+        AnrSuperClass $anr,
+        $parent = null,
+        $objectObjectPosition = null
+    ): MonarcObject {
+        /** @var MonarcObject $monarcObject */
+        $monarcObject = $this->monarcObjectTable->findByAnrAndUuid($anr, $objectUuid);
+
+
+    }
+
+    public function detachObjectFromAnr(string $objectUuid, Anr $anr): void
+    {
+        /** @var MonarcObject $monarcObject */
+        $monarcObject = $this->monarcObjectTable->findByAnrAndUuid($anr, $objectUuid);
+
+        $monarcObject->removeAnr($anr);
+
+        foreach ($monarcObject->getParents() as $objectParent) {
+            $parentInstancesIds = [];
+            foreach ($objectParent->getInstances() as $parentInstance) {
+                $parentInstancesIds[] = $parentInstance->getId();
+            }
+
+            foreach ($monarcObject->getInstances() as $currentObjectInstance) {
+                if ($currentObjectInstance->hasParent()
+                    && \in_array($currentObjectInstance->getParent()->getId(), $parentInstancesIds, true)
+                ) {
+                    $this->instanceTable->deleteEntity($currentObjectInstance);
+                }
+            }
+
+            // Removes from the library object composition of the anr.
+            $objectParent->removeChild($monarcObject);
+            $this->monarcObjectTable->save($objectParent, false);
+        }
+
+        /* If no more objects under its root category, the category need to be unlinked from the analysis. */
+        if ($monarcObject->hasCategory()
+            && !$this->monarcObjectTable->hasObjectsUnderRootCategoryExcludeObject(
+                $monarcObject->getCategory()->getRootCategory(),
+                $monarcObject
+            )
+        ) {
+            $rootCategory = $monarcObject->getCategory()->getRootCategory();
+            $this->objectCategoryTable->save($rootCategory->removeAnrLink($anr), false);
+        }
+
+        foreach ($monarcObject->getInstances() as $instance) {
+            $this->instanceTable->deleteEntity($instance, false);
+        }
+
+        $this->monarcObjectTable->save($monarcObject);
+    }
+
+    public function getParentsInAnr(Anr $anr, string $uuid)
+    {
+        $object = $this->monarcObjectTable->findByAnrAndUuid($anr, $uuid);
+
+        $directParents = [];
+        foreach ($object->getParentsLinks() as $parentLink) {
+            $directParents = [
+                'uuid' => $parentLink->getParent()->getUuid(),
+                'linkid' => $parentLink->getId(),
+                'label1' => $parentLink->getParent()->getLabel(1),
+                'label2' => $parentLink->getParent()->getLabel(2),
+                'label3' => $parentLink->getParent()->getLabel(3),
+                'label4' => $parentLink->getParent()->getLabel(4),
+                'name1' => $parentLink->getParent()->getName(1),
+                'name2' => $parentLink->getParent()->getName(2),
+                'name3' => $parentLink->getParent()->getName(3),
+                'name4' => $parentLink->getParent()->getName(4),
+            ];
+        }
+
+        return $directParents;
+    }
 
     // TODO: move all the import functionality to the ObjectImportService.
 
@@ -117,13 +248,17 @@ class AnrObjectService extends ObjectService
         $anr = $this->get('anrTable')->getEntity($anrId); // throws an Monarc\Core\Exception\Exception if unknown
 
         // Fetch the objects from the common database
+
+        // TODO: the method doesn't exist anymore, we need to use getListSpecific or create a new custom one.
+        // 'name' . $anr->get('language') - order by, $filter - search by name, label, $anr->getModel() - we get by the id and it will exclude all the attached to the model objects.
+
         $objects = $this->get('selfCoreService')->getAnrObjects(
             1,
             -1,
             'name' . $anr->get('language'),
             $filter,
             null,
-            $anr->get('model'),
+            $anr->getModel(),
             null,
             AbstractEntity::FRONT_OFFICE
         );
@@ -189,13 +324,16 @@ class AnrObjectService extends ObjectService
         }
 
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
+
+        // TODO: the method doesn't exist anymore we have to replace to simply find by UUID with use core table.
+
         $object = current($this->get('selfCoreService')->getAnrObjects(
             1,
             -1,
             'name' . $anr->get('language'),
             [],
             ['uuid' => $id],
-            $anr->get('model'),
+            $anr->getModel(),
             null,
             AbstractEntity::FRONT_OFFICE
         ));
@@ -203,7 +341,7 @@ class AnrObjectService extends ObjectService
             throw new Exception('Object not found', 412);
         }
 
-        return $this->get('selfCoreService')->getCompleteEntity($id);
+        return $this->get('selfCoreService')->getObjectData($id);
     }
 
     /**
@@ -220,13 +358,16 @@ class AnrObjectService extends ObjectService
             throw new Exception('Anr id missing', 412);
         }
         $anr = $this->get('anrTable')->getEntity($data['anr']); // on a une erreur si inconnue
+
+        // TODO: the method doesn't exist anymore we have to replace to simply find by UUID with use core table.
+
         $object = current($this->get('selfCoreService')->getAnrObjects(
             1,
             -1,
             'name' . $anr->get('language'),
             [],
             ['uuid' => $id],
-            $anr->get('model'),
+            $anr->getModel(),
             null,
             AbstractEntity::FRONT_OFFICE
         ));

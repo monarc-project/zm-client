@@ -7,12 +7,13 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Table\ModelTable;
+use Monarc\Core\Model\Entity\Model;
+use Monarc\Core\Table\ModelTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Table\OperationalInstanceRiskScaleTable;
-use Monarc\FrontOffice\Model\Table\ThreatTable;
+use Monarc\FrontOffice\Table\ThreatTable;
 
 /**
  * Service that checks if an ANR has been started working on, or if it is safe to change sensitive parameters (such
@@ -61,16 +62,17 @@ class AnrCheckStartedService
     {
         $anr = $this->anrTable->findById($anrId);
 
-        $isScalesEditable = true;
-        if ($anr->getModel()) {
-            $model = $this->modelTable->getEntity($anr->getModel());
-            $isScalesEditable = $model->get('isScalesUpdatable');
+        $areScalesUpdatable = true;
+        if ($anr->getModel() !== null) {
+            /** @var Model $model */
+            $model = $this->modelTable->findById($anr->getModel());
+            $areScalesUpdatable = $model->areScalesUpdatable();
         }
 
-        return $isScalesEditable
+        return $areScalesUpdatable
             && !$this->instanceRiskTable->started($anr->getId())
             && !$this->instanceConsequenceTable->started($anr->getId())
-            && !$this->threatTable->started($anr->getId())
+            && !$this->threatTable->isThreatsEvaluationStarted($anr)
             && !$this->operationalInstanceRiskScaleTable->isRisksEvaluationStartedForAnr($anr);
     }
 }

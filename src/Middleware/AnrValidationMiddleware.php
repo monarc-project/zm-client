@@ -7,12 +7,14 @@
 
 namespace Monarc\FrontOffice\Middleware;
 
+use Doctrine\ORM\EntityNotFoundException;
 use Fig\Http\Message\StatusCodeInterface;
-use Laminas\Mvc\Service\ResponseFactory;
+use Laminas\Diactoros\ResponseFactory;
 use Laminas\Router\RouteMatch;
+use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -22,7 +24,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
 {
     private AnrTable $anrTable;
     private UserAnrTable $userAnrTable;
-    private ConnectedUserService $connectedUserService;
+    private UserSuperClass $connectedUser;
     private ResponseFactory $responseFactory;
 
     public function __construct(
@@ -33,7 +35,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
     ) {
         $this->anrTable = $anrTable;
         $this->userAnrTable = $userAnrTable;
-        $this->connectedUserService = $connectedUserService;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
         $this->responseFactory = $responseFactory;
     }
 
@@ -41,16 +43,18 @@ class AnrValidationMiddleware implements MiddlewareInterface
     {
         /** @var RouteMatch $routeMatch */
         $routeMatch = $request->getAttribute(RouteMatch::class);
-        $anrId = $routeMatch->getParam('anrid');
-        $anr = $this->anrTable->findById($anrId, false);
-        if ($anr === null) {
+        $anrId = (int)$routeMatch->getParam('anrid');
+
+        try {
+            $anr = $this->anrTable->findById($anrId);
+        } catch (EntityNotFoundException $e) {
             return $this->responseFactory->createResponse(
                 StatusCodeInterface::STATUS_NOT_FOUND,
                 sprintf('Analysis with ID %s not found.', $anrId)
             );
         }
 
-        $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUserService->getConnectedUser());
+        $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser);
         if ($userAnr === null) {
             return $this->responseFactory->createResponse(
                 StatusCodeInterface::STATUS_FORBIDDEN,

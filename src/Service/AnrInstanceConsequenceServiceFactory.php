@@ -32,10 +32,10 @@ class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
     // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $objectObjectService = parent::__invoke($container, $requestedName, $options);
+        $anrInstanceConsequenceService = parent::__invoke($container, $requestedName, $options);
 
-        $objectObjectService->setSharedManager($container->get('EventManager')->getSharedManager());
+        $anrInstanceConsequenceService->setSharedManager($container->get('EventManager')->getSharedManager());
 
-        return $objectObjectService;
+        return $anrInstanceConsequenceService;
     }
 }

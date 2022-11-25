@@ -310,7 +310,7 @@ class AnrRecommandationRiskService extends AbstractService
                 }
 
                 if ($type === 'risks' && $recommendationRisk->hasGlobalObjectRelation()) {
-                    $path = $recommendationRisk->getInstance()->{'getName' . $anr->getLanguage()}();
+                    $path = $recommendationRisk->getInstance()->getName($anr->getLanguage());
 
                     $globalObjectUuid = $recommendationRisk->getGlobalObject()->getUuid();
                     $assetUuid = $recommendationRisk->getAsset()->getUuid();
@@ -674,7 +674,7 @@ class AnrRecommandationRiskService extends AbstractService
             'recoComment' => $reco->getComment(),
             'recoDuedate' => $reco->getDueDate(),
             'recoResponsable' => $reco->getResponsable(),
-            'riskInstance' => $instanceRisk->getInstance()->{'getName' . $lang}(),
+            'riskInstance' => $instanceRisk->getInstance()->getName($lang),
             'riskInstanceContext' => $instanceRisk->getInstance()->getHierarchyString(),
             'riskAsset' => $instanceRisk->getAsset()->getLabel($lang),
             'riskThreat' => $instanceRisk->getThreat()->getLabel($lang),
@@ -738,7 +738,7 @@ class AnrRecommandationRiskService extends AbstractService
             'recoComment' => $recommendation->getComment(),
             'recoDuedate' => $recommendation->getDueDate(),
             'recoResponsable' => $recommendation->getResponsable(),
-            'riskInstance' => $instanceRiskOp->getInstance()->{'getName' . $lang}(),
+            'riskInstance' => $instanceRiskOp->getInstance()->getName($lang),
             'riskInstanceContext' => $instanceRiskOp->getInstance()->getHierarchyString(),
             'riskAsset' => $instanceRiskOp->getObject()->getAsset()->getLabel($lang),
             'riskOpDescription' => $instanceRiskOp->getRiskCacheLabel($lang),

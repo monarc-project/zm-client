@@ -1,80 +1,47 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\AbstractController;
+use Laminas\Mvc\Controller\AbstractRestfulController;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\FormattedInputParams;
 use Monarc\Core\Service\ModelService;
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Table\ClientTable;
 
-/**
- * Api Models Controller
- *
- * Class ApiModelsController
- * @package Monarc\Core\Controller
- */
-class ApiModelsController extends AbstractController
+class ApiModelsController extends AbstractRestfulController
 {
-    protected $dependencies = ['anr'];
-    protected $name = 'models';
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    private ModelService $modelService;
+
+    private ClientTable $clientTable;
+
+    public function __construct(ModelService $modelService, ClientTable $clientTable)
+    {
+        $this->modelService = $modelService;
+        $this->clientTable = $clientTable;
+    }
+
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $isGeneric = $this->params()->fromQuery('isGeneric');
-        $status = (string)$this->params()->fromQuery('status', \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE);
+        // TODO: support multiple models...
+        $formattedParams = (new FormattedInputParams())->addFilter('isGeneric', ['value' => 0]);
+        $models = $this->modelService->getList($formattedParams);
 
-        $service = $this->getService();
-        switch ($status) {
-            case (string)\Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE:
-                $filterAnd = ['status' => \Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE];
-                break;
-            default:
-            case (string)\Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE:
-                $filterAnd = ['status' => \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE];
-                break;
-            case 'all':
-                $filterAnd = ['status' => ['op' => 'IN', 'value' => [\Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE, \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE]]];
-                break;
-        }
-
-
-        if (!is_null($isGeneric)) {
-            $filterAnd['isGeneric'] = $isGeneric;
-        }
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd, 'FO');
-
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
+        $formattedParams->addFilter('isGeneric', ['value' => 1]);
+        $client = $this->clientTable->findFirstClient();
+        if ($client->getModelId()) {
+            $formattedParams->addFilter('id', ['value' => $client->getModelId()]);
         }
 
         return new JsonModel([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
+            'models' => array_merge($models, $this->modelService->getList($formattedParams)),
         ]);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function get($id)
-    {
-        /** @var ModelService $modelService */
-        $modelService = $this->getService();
-        $entity = $modelService->getModelWithAnr($id);
-
-        return new JsonModel($entity);
     }
 }

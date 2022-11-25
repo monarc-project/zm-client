@@ -14,73 +14,70 @@ use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
-use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
+use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
-use Monarc\FrontOffice\Model\Table\AmvTable;
-use Monarc\FrontOffice\Model\Table\AssetTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
 use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
-use Monarc\FrontOffice\Model\Table\ThemeTable;
-use Monarc\FrontOffice\Model\Table\ThreatTable;
-use Monarc\FrontOffice\Table\VulnerabilityTable;
+use Monarc\FrontOffice\Table;
 
 class AssetImportService
 {
-    /** @var array|object[] */
-    private $cachedData;
+    /** @var object[][] */
+    private array $cachedData = [];
 
-    /** @var AssetTable */
-    private $assetTable;
+    private Table\AssetTable $assetTable;
 
-    /** @var ThemeTable */
-    private $themeTable;
+    private Table\ThemeTable $themeTable;
 
-    /** @var ThreatTable */
-    private $threatTable;
+    private Table\ThreatTable $threatTable;
 
-    /** @var VulnerabilityTable */
-    private $vulnerabilityTable;
+    private Table\VulnerabilityTable $vulnerabilityTable;
 
-    /** @var MeasureTable */
-    private $measureTable;
+    private MeasureTable $measureTable;
 
-    /** @var AmvTable */
-    private $amvTable;
+    private Table\AmvTable $amvTable;
 
-    /** @var MonarcObjectTable */
-    private $monarcObjectTable;
+    private MonarcObjectTable $monarcObjectTable;
 
-    /** @var InstanceTable */
-    private $instanceTable;
+    private InstanceTable $instanceTable;
 
-    /** @var InstanceRiskTable */
-    private $instanceRiskTable;
+    private InstanceRiskTable $instanceRiskTable;
 
-    /** @var ReferentialTable */
-    private $referentialTable;
+    private ReferentialTable $referentialTable;
 
-    /** @var SoaCategoryTable */
-    private $soaCategoryTable;
+    private SoaCategoryTable $soaCategoryTable;
 
-    private UserSuperClass $connectedUser;
+    private AnrAssetService $anrAssetService;
+
+    private AnrThreatService $anrThreatService;
+
+    private AnrThemeService $anrThemeService;
+
+    private AnrVulnerabilityService $anrVulnerabilityService;
+
+    private User $connectedUser;
 
     public function __construct(
-        AssetTable $assetTable,
-        ThemeTable $themeTable,
-        ThreatTable $threatTable,
-        VulnerabilityTable $vulnerabilityTable,
+        Table\AssetTable $assetTable,
+        Table\ThemeTable $themeTable,
+        Table\ThreatTable $threatTable,
+        Table\VulnerabilityTable $vulnerabilityTable,
         MeasureTable $measureTable,
-        AmvTable $amvTable,
+        Table\AmvTable $amvTable,
         MonarcObjectTable $monarcObjectTable,
         InstanceTable $instanceTable,
         InstanceRiskTable $instanceRiskTable,
         ReferentialTable $referentialTable,
         SoaCategoryTable $soaCategoryTable,
+        AnrAssetService $anrAssetService,
+        AnrThreatService $anrThreatService,
+        AnrThemeService $anrThemeService,
+        AnrVulnerabilityService $anrVulnerabilityService,
         ConnectedUserService $connectedUserService
     ) {
         $this->assetTable = $assetTable;
@@ -94,6 +91,10 @@ class AssetImportService
         $this->instanceRiskTable = $instanceRiskTable;
         $this->referentialTable = $referentialTable;
         $this->soaCategoryTable = $soaCategoryTable;
+        $this->anrAssetService = $anrAssetService;
+        $this->anrThreatService = $anrThreatService;
+        $this->anrThemeService = $anrThemeService;
+        $this->anrVulnerabilityService = $anrVulnerabilityService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
@@ -104,11 +105,14 @@ class AssetImportService
         }
 
         if (version_compare($monarcVersion, '2.8.2') < 0) {
-            throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
-                . ' Please contact us for more details.');
+            throw new Exception(
+                'Import of files exported from MONARC v2.8.1 or lower are not supported.'
+                . ' Please contact us for more details.'
+            );
         }
 
-        $asset = $this->assetTable->findByAnrAndUuid($anr, $data['asset']['uuid']);
+        /** @var Asset $asset */
+        $asset = $this->assetTable->findByUuidAndAnr($data['asset']['uuid'], $anr);
         if ($asset === null) {
             $asset = $this->assetTable->findByAnrAndCode($anr, $data['asset']['code']);
 
@@ -125,7 +129,8 @@ class AssetImportService
                 ->setType($data['asset']['type'])
                 ->setCode($assetCode);
 
-            $this->assetTable->saveEntity($asset);
+            $this->assetTable->save($asset);
+            $asset = $this->anrAssetService->create($anr, $data['asset']);
         }
 
         if (empty($data['amvs'])) {
@@ -141,9 +146,7 @@ class AssetImportService
             $localThemes[$theme->getLabel($languageIndex)] = $theme;
         }
 
-        /*
-         * Threats
-         */
+        /* Threats */
         $threatsUuidsAndCodes = $this->threatTable->findUuidsAndCodesByAnr($anr);
         $threatsUuids = array_column($threatsUuidsAndCodes, 'uuid');
         $threatsCodes = array_column($threatsUuidsAndCodes, 'code');
@@ -153,97 +156,57 @@ class AssetImportService
             }
 
             if (\in_array((string)$threatData['uuid'], $threatsUuids, true)) {
-                $threat = $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
-                $this->cachedData['threats'][$threat->getUuid()] = $threat;
+                /** @var Threat|null $threat */
+                $threat = $this->threatTable->findByUuidAndAnr($threatUuid, $anr, false);
 
-                /* Validate Theme. */
+                /* Validate Theme and set if it's empty for the threat and passed in the data. */
                 $currentTheme = $threat->getTheme();
                 if (!empty($threatData['theme'])
                     && ($currentTheme === null
                         || $currentTheme->getLabel($languageIndex) !== $data['themes'][$threatData['theme']][$labelKey]
                     )
                 ) {
-                    if (isset($localThemes[$data['themes'][$threatData['theme']][$labelKey]])) {
-                        $theme = $localThemes[$data['themes'][$threatData['theme']][$labelKey]];
-                    } else {
-                        $theme = $this->getCreatedTheme($anr, $data['themes'][$threatData['theme']]);
-                    }
+                    $theme = $localThemes[$data['themes'][$threatData['theme']][$labelKey]]
+                        ?? $this->anrThemeService->create($anr, $data['themes'][$threatData['theme']], false);
 
                     $threat->setTheme($theme);
-                    $this->threatTable->saveEntity($threat, false);
+                    $this->threatTable->save($threat, false);
                 }
             } else {
-                $theme = null;
-                if (isset($localThemes[$data['themes'][$threatData['theme']][$labelKey]])) {
-                    $theme = $localThemes[$data['themes'][$threatData['theme']][$labelKey]];
-                } elseif (isset($data['themes'][$threatData['theme']])) {
-                    $theme = $this->getCreatedTheme($anr, $data['themes'][$threatData['theme']]);
-                }
+                $threatData['theme'] = $localThemes[$data['themes'][$threatData['theme']][$labelKey]]
+                    ?? $this->anrThemeService->create($anr, $data['themes'][$threatData['theme']], false);
 
                 if (\in_array($threatData['code'], $threatsCodes, true)) {
                     $threatData['code'] .= '-' . time();
                 }
 
-                $threat = (new Threat())
-                    ->setUuid($threatData['uuid'])
-                    ->setAnr($anr)
-                    ->setCode($threatData['code'])
-                    ->setLabels($threatData)
-                    ->setDescriptions($threatData)
-                    ->setMode((int)$threatData['mode'])
-                    ->setStatus((int)$threatData['status'])
-                    ->setTrend((int)$threatData['trend'])
-                    ->setQualification((int)$threatData['qualification'])
-                    ->setComment($threatData['comment'] ?? '')
-                    ->setCreator($this->connectedUser->getEmail());
-                if (isset($threatData['c'])) {
-                    $threat->setConfidentiality((int)$threatData['c']);
-                }
-                if (isset($threatData['i'])) {
-                    $threat->setIntegrity((int)$threatData['i']);
-                }
-                if (isset($threatData['a'])) {
-                    $threat->setAvailability((int)$threatData['a']);
-                }
-                $threat->setTheme($theme);
-
-                $this->threatTable->saveEntity($threat, false);
-
-                $this->cachedData['threats'][$threat->getUuid()] = $threat;
+                // TODO: refactor the codes validation with use cache
+                $threat = $this->anrThreatService->create($anr, $threatData, false);
             }
+
+            $this->cachedData['threats'][$threat->getUuid()] = $threat;
         }
         unset($threatsUuidsAndCodes, $threatsUuids, $threatsCodes);
 
-        /*
-         * Vulnerabilities
-         */
+        /* Vulnerabilities */
         $vulnerabilitiesUuidsAndCodes = $this->vulnerabilityTable->findUuidsAndCodesByAnr($anr);
         $vulnerabilitiesUuids = array_column($vulnerabilitiesUuidsAndCodes, 'uuid');
         $vulnerabilitiesCodes = array_column($vulnerabilitiesUuidsAndCodes, 'code');
-        foreach ($data['vuls'] as $valueVul) {
-            if (!isset($this->cachedData['vulnerabilities'][(string)$valueVul['uuid']])
-                && !\in_array((string)$valueVul['uuid'], $vulnerabilitiesUuids, true)
+        foreach ($data['vuls'] as $vulnerabilityData) {
+            if (!isset($this->cachedData['vulnerabilities'][(string)$vulnerabilityData['uuid']])
+                && !\in_array((string)$vulnerabilityData['uuid'], $vulnerabilitiesUuids, true)
             ) {
-                if (\in_array($valueVul['code'], $vulnerabilitiesCodes, true)) {
-                    $valueVul['code'] .= '-' . time();
+                if (\in_array($vulnerabilityData['code'], $vulnerabilitiesCodes, true)) {
+                    $vulnerabilityData['code'] .= '-' . time();
                 }
 
-                $vulnerability = (new Vulnerability())
-                    ->setUuid($valueVul['uuid'])
-                    ->setAnr($anr)
-                    ->setLabels($valueVul)
-                    ->setDescriptions($valueVul)
-                    ->setCode($valueVul['code'])
-                    ->setMode($valueVul['mode'])
-                    ->setStatus($valueVul['status'])
-                    ->setCreator($this->connectedUser->getEmail());
-
-                $this->vulnerabilityTable->saveEntity($vulnerability, false);
-
-                $this->cachedData['vulnerabilities'][$valueVul['uuid']] = $vulnerability;
+                $vulnerability = $this->anrVulnerabilityService->create($anr, $vulnerabilityData, false);
+                $vulnerabilitiesUuids[] = $vulnerability->getUuid();
+                $this->cachedData['vulnerabilities'][$vulnerability->getUuid()] = $vulnerability;
             }
         }
-        $this->vulnerabilityTable->getDb()->flush();
+        $this->vulnerabilityTable->flush();
+        // TODO: the same as for threats, refactor the codes validation...
         unset($vulnerabilitiesUuidsAndCodes, $vulnerabilitiesUuids, $vulnerabilitiesCodes);
 
         /*
@@ -266,13 +229,13 @@ class AssetImportService
 
                 if (!isset($this->cachedData['threats'][$valueAmv['threat']])) {
                     $this->cachedData['threats'][$valueAmv['threat']] =
-                        $this->threatTable->findByAnrAndUuid($anr, $valueAmv['threat']);
+                        $this->threatTable->findByUuidAndAnr($valueAmv['threat'], $anr);
                 }
                 $amv->setThreat($this->cachedData['threats'][$valueAmv['threat']]);
 
                 if (!isset($this->cachedData['vulnerabilities'][$valueAmv['vulnerability']])) {
                     $this->cachedData['vulnerabilities'][$valueAmv['vulnerability']] =
-                        $this->vulnerabilityTable->findByAnrAndUuid($anr, $valueAmv['vulnerability']);
+                        $this->vulnerabilityTable->findByUuidAndAnr($valueAmv['vulnerability'], $anr);
                 }
                 $amv->setVulnerability($this->cachedData['vulnerabilities'][$valueAmv['vulnerability']]);
 
@@ -313,21 +276,17 @@ class AssetImportService
                          * Backward compatibility.
                          * Prior v2.10.3 we did not set referential data when exported.
                          */
-                        $referentialUuid = $data['measures'][$measureUuid]['referential']['uuid']
-                            ?? $data['measures'][$measureUuid]['referential'];
+                        $referentialData = $data['measures'][$measureUuid]['referential'];
+                        $referentialUuid = $referentialData['uuid'] ?? $referentialData;
 
                         $referential = $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
 
                         // For backward compatibility issue.
-                        if ($referential === null
-                            && isset($data['measures'][$measureUuid]['referential'][$labelKey])
-                        ) {
+                        if ($referential === null && isset($referentialData[$labelKey])) {
                             $referential = (new Referential())
                                 ->setAnr($anr)
-                                ->setUuid($data['measures'][$measureUuid]['referential']['uuid'])
-                                ->{'setLabel' . $languageIndex}(
-                                    $data['measures'][$measureUuid]['referential'][$labelKey]
-                                );
+                                ->setUuid($referentialUuid)
+                                ->setLabels([$labelKey => $referentialData[$labelKey]]);
                             $this->referentialTable->saveEntity($referential);
                         }
 
@@ -335,10 +294,10 @@ class AssetImportService
                         if ($referential === null) {
                             continue;
                         }
-
+                        $categoryLabel = $data['measures'][$measureUuid]['category'][$labelName];
                         $category = $this->soaCategoryTable->getEntityByFields([
                             'anr' => $anr->getId(),
-                            $labelKey => $data['measures'][$measureUuid]['category'][$labelKey],
+                            $labelName => $categoryLabel,
                             'referential' => [
                                 'anr' => $anr->getId(),
                                 'uuid' => $referential->getUuid(),
@@ -348,7 +307,7 @@ class AssetImportService
                             $category = (new SoaCategory())
                                 ->setAnr($anr)
                                 ->setReferential($referential)
-                                ->{'setLabel' . $languageIndex}($data['measures'][$measureUuid]['category'][$labelKey]);
+                                ->setLabels([$labelName => $categoryLabel]);
                             /** @var SoaCategoryTable $soaCategoryTable */
                             $this->soaCategoryTable->saveEntity($category, false);
                         } else {
@@ -404,29 +363,17 @@ class AssetImportService
         }
 
         if (!empty($amvsToDelete)) {
-            $this->amvTable->deleteEntities($amvsToDelete);
+            $this->amvTable->removeList($amvsToDelete);
         }
 
         return $asset;
     }
 
     /**
-     * @return object[]
+     * @return object[][]
      */
     public function getCachedDataByKey(string $key): array
     {
         return $this->cachedData[$key] ?? [];
-    }
-
-    private function getCreatedTheme(Anr $anr, array $data): Theme
-    {
-        $theme = (new Theme())
-            ->setAnr($anr)
-            ->setLabels($data)
-            ->setCreator($this->connectedUser->getEmail());
-
-        $this->themeTable->saveEntity($theme, false);
-
-        return $theme;
     }
 }

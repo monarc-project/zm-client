@@ -16,25 +16,28 @@ use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Table;
 
 class AnrInstanceServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         // Tables & Entities
-        'table' => Table\InstanceTable::class,
+        'table' => DeprecatedTable\InstanceTable::class,
         'entity' => Instance::class,
-        'anrTable' => Table\AnrTable::class,
-        'assetTable' => Table\AssetTable::class,
+        'anrTable' => DeprecatedTable\AnrTable::class,
         'userAnrTable' => Table\UserAnrTable::class,
         'amvTable' => Table\AmvTable::class,
         'objectTable' => Table\MonarcObjectTable::class,
-        'scaleTable' => Table\ScaleTable::class,
-        'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
-        'instanceConsequenceTable' => Table\InstanceConsequenceTable::class,
-        'instanceRiskTable' => Table\InstanceRiskTable::class,
-        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
+        'scaleTable' => DeprecatedTable\ScaleTable::class,
+        'scaleImpactTypeTable' => DeprecatedTable\ScaleImpactTypeTable::class,
+        'instanceConsequenceTable' => DeprecatedTable\InstanceConsequenceTable::class,
+        'instanceRiskTable' => DeprecatedTable\InstanceRiskTable::class,
+        'instanceRiskOpTable' => DeprecatedTable\InstanceRiskOpTable::class,
         'instanceConsequenceEntity' => InstanceConsequence::class,
+        'recommendationRiskTable' => DeprecatedTable\RecommandationRiskTable::class,
+        'recommendationTable' => DeprecatedTable\RecommandationTable::class,
+        'recommendationSetTable' => DeprecatedTable\RecommandationSetTable::class,
         'recommendationRiskTable' => Table\RecommandationRiskTable::class,
         'recommendationTable' => Table\RecommandationTable::class,
         'recommendationSetTable' => Table\RecommandationSetTable::class,
@@ -46,7 +49,6 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'instanceConsequenceService' => AnrInstanceConsequenceService::class,
         'instanceRiskService' => AnrInstanceRiskService::class,
         'instanceRiskOpService' => AnrInstanceRiskOpService::class,
-        'objectObjectService' => ObjectObjectService::class,
         'translateService' => TranslateService::class,
         'configService' => ConfigService::class,
         'operationalRiskScalesExportService' => OperationalRiskScalesExportService::class,
@@ -56,14 +58,4 @@ class AnrInstanceServiceFactory extends AbstractServiceFactory
         'objectExportService' => ObjectExportService::class,
         'amvService' => AnrAmvService::class,
     ];
-
-    // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $objectObjectService = parent::__invoke($container, $requestedName, $options);
-
-        $objectObjectService->setSharedManager($container->get('EventManager')->getSharedManager());
-
-        return $objectObjectService;
-    }
 }

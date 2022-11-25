@@ -26,7 +26,6 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     protected $instanceRiskOpTable;
     protected $instanceConsequenceTable;
     protected $operationalRiskScaleTable;
-    protected $threatTable;
     protected $filterColumns = [];
     protected $dependencies = [];
     private $anr = null;

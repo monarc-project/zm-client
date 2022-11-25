@@ -117,8 +117,12 @@ abstract class ApiAnrAbstractController extends AbstractController
             if (isset($new_data['amv']) && !is_array($new_data['amv'])) {
                 $new_data['amv'] = ['uuid' => $new_data['amv'], 'anr' => $anrId];
             }
-            if (isset($new_data['father']) && isset($new_data['child'])) {
+            if (isset($new_data['father'], $new_data['child'])) {
                 $new_data['father'] = ['anr' => $anrId, 'uuid' => $new_data['father']];
+                $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
+            }
+            if (isset($new_data['parent'], $new_data['child'])) {
+                $new_data['parent'] = ['anr' => $anrId, 'uuid' => $new_data['parent']];
                 $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
             }
 

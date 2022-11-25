@@ -23,8 +23,6 @@ use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Entity\Translation;
@@ -52,6 +50,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
     protected RolfRiskTable $rolfRiskTable;
 
     protected RecommandationTable $recommendationTable;
+
+    protected RecommandationRiskTable $recommendationRiskTable;
 
     public function __construct(
         AnrTable $anrTable,
@@ -82,8 +82,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $operationalRiskScaleTable,
             $operationalRiskScaleTypeTable,
             $instanceRiskOwnerTable,
-            $configService,
-            $recommendationRiskTable
+            $configService
         );
         $this->recommendationRiskTable = $recommendationRiskTable;
         $this->rolfRiskTable = $rolfRiskTable;
@@ -120,7 +119,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             ->setRolfRisk($rolfRisk)
             ->setInstance($instance)
             ->setObject($instance->getObject())
-            ->setSpecific(1)
+            ->setIsSpecific(true)
             ->setRiskCacheCode($rolfRisk->getCode())
             ->setRiskCacheLabels([
                 'riskCacheLabel1' => $rolfRisk->getLabel(1),
@@ -224,7 +223,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                 'instanceInfos' => [
                     'id' => $operationalInstanceRisk->getInstance()->getId(),
                     'scope' => $operationalInstanceRisk->getInstance()->getObject()->getScope(),
-                    'name' . $anrLanguage => $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
+                    'name' . $anrLanguage => $operationalInstanceRisk->getInstance()->getName($anrLanguage),
                 ],
                 'recommendations' => implode(',', $recommendationUuids),
             ];
@@ -297,7 +296,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         );
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
             $values = [
-                $operationalInstanceRisk->getInstance()->{'getName' . $anrLanguage}(),
+                $operationalInstanceRisk->getInstance()->getName($anrLanguage),
                 $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
             ];
             if ($anr->getShowRolfBrut() === 1) {
@@ -314,7 +313,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $values[] = $operationalInstanceRisk->getCacheNetRisk();
             $values[] = $operationalInstanceRisk->getComment();
             $values[] = InstanceRiskOp::getAvailableMeasureTypes()[$operationalInstanceRisk->getKindOfMeasure()];
-            $values[] = $operationalInstanceRisk->getCacheTargetedRisk() == -1 ?
+            $values[] = $operationalInstanceRisk->getCacheTargetedRisk() === -1 ?
                 $operationalInstanceRisk->getCacheNetRisk() :
                 $operationalInstanceRisk->getCacheTargetedRisk();
             $values[] = $operationalInstanceRisk->getInstanceRiskOwner() !== null ?
@@ -447,6 +446,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         $instancesIds = [];
         if ($instanceId !== null) {
             $instance = $this->instanceTable->findById($instanceId);
+            // TODO: remove initTree and use TreeStructureTrait::getEntityIdsWithLinkedChildren
             $this->instanceTable->initTree($instance);
             $instancesIds = $this->extractInstancesAndTheirChildrenIds([$instance->getId() => $instance]);
         }
@@ -476,8 +476,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             : [];
         $csvData = [];
         foreach ($measures as $measure) {
-            $csvData[] = "[" . $measure->getReferential()->{'getLabel' . $anrLanguage}() . "] " .
-               $measure->getCode() . " - " . $measure->{'getLabel' . $anrLanguage}();
+            $csvData[] = "[" . $measure->getReferential()->getLabel($anrLanguage) . "] " .
+               $measure->getCode() . " - " . $measure->getLabel($anrLanguage);
         }
 
         return implode("\n", $csvData);

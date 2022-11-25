@@ -25,7 +25,7 @@ class UserAnr extends AbstractEntity
     use Traits\UpdateEntityTrait;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -34,17 +34,17 @@ class UserAnr extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\User
+     * @var User
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\User", cascade={"persist"}, inversedBy="userAnrs")
+     * @ORM\ManyToOne(targetEntity="User", cascade={"persist"}, inversedBy="userAnrs")
      * @ORM\JoinColumn(nullable=false)
      */
     protected $user;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })

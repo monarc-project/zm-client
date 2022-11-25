@@ -36,11 +36,26 @@ class InstanceTable extends CoreInstanceTable
     {
         return $this->getRepository()
             ->createQueryBuilder('i')
-            ->innerJoin('i.object', 'obj')
+            ->innerJoin('i.object', 'o')
             ->where('i.anr = :anr')
-            ->andWhere('obj.uuid = :objUuid')
-            ->andWhere('obj.anr = :objAnr')
+            ->andWhere('o.uuid = :objUuid')
+            ->andWhere('o.anr = :objAnr')
             ->setParameter('anr', $anr)
+            ->setParameter('objUuid', $object->getUuid())
+            ->setParameter('objAnr', $object->getAnr())
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceSuperClass[]
+     */
+    public function findByObject(ObjectSuperClass $object): array
+    {
+        return $this->getRepository()->createQueryBuilder('i')
+            ->join('o.object', 'o')
+            ->where('o.uuid = :objUuid')
+            ->andWhere('o.anr = :objAnr')
             ->setParameter('objUuid', $object->getUuid())
             ->setParameter('objAnr', $object->getAnr())
             ->getQuery()

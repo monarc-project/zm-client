@@ -78,6 +78,11 @@ class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
         ]);
     }
 
+    public function get($id)
+    {
+        return $this->getPreparedJsonResponse($this->anrObjectCategoryService->getObjectCategoryData((int)$id));
+    }
+
     /**
      * Helper method that cleans up an entity by only keeping the fields that are listed in the $fields parameter
      * @param array $items The items to filter

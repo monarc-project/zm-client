@@ -1,23 +1,30 @@
 <?php
 
-use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
-use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
+use Laminas\Http\PhpEnvironment\Request;
+use Laminas\Mvc\Middleware\PipeSpec;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Laminas\ServiceManager\Proxy\LazyServiceFactory;
+use Monarc\Core\Adapter\Authentication as AdapterAuthentication;
 use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
+use Monarc\Core\Storage\Authentication as StorageAuthentication;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\Middleware\AnrValidationMiddleware;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Model\Table\Factory\ClientEntityManagerFactory;
-use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service;
-use Monarc\FrontOffice\Stats\Controller\StatsController;
+use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
 use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
+use Monarc\FrontOffice\Stats\Controller\StatsController;
 use Monarc\FrontOffice\Stats\Controller\StatsGeneralSettingsController;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
@@ -26,7 +33,16 @@ use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidator;
 use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidatorFactory;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidatorFactory;
-use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
+use Monarc\FrontOffice\Table;
+use Monarc\FrontOffice\Validator\InputValidator;
+
+$env = getenv('APPLICATION_ENV') ?: 'production';
+$appConfigDir = getenv('APP_CONF_DIR') ?? '';
+
+$dataPath = './data';
+if (!empty($appConfigDir)) {
+    $dataPath = $appConfigDir . '/data';
+}
 
 return [
     'router' => [
@@ -40,19 +56,6 @@ return [
                     ],
                     'defaults' => [
                         'controller' => Controller\ApiAdminUsersRolesController::class,
-                    ],
-                ],
-            ],
-
-            'monarc_api_admin_users_rights' => [
-                'type' => 'segment',
-                'options' => [
-                    'route' => '/api/users-rights[/:id]',
-                    'constraints' => [
-                        'id' => '[0-9]+',
-                    ],
-                    'defaults' => [
-                        'controller' => Controller\ApiAdminUsersRightsController::class,
                     ],
                 ],
             ],
@@ -291,7 +294,11 @@ return [
                                 'id' => '[a-f0-9-]*',
                             ],
                             'defaults' => [
-                                'controller' => Controller\ApiAnrThreatsController::class,
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrThreatsController::class,
+                                ),
                             ],
                         ],
                     ],
@@ -303,7 +310,11 @@ return [
                                 'id' => '[0-9]+',
                             ],
                             'defaults' => [
-                                'controller' => Controller\ApiAnrThemesController::class,
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrThemesController::class,
+                                ),
                             ],
                         ],
                     ],
@@ -315,7 +326,11 @@ return [
                                 'id' => '[a-f0-9-]*',
                             ],
                             'defaults' => [
-                                'controller' => Controller\ApiAnrVulnerabilitiesController::class,
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrVulnerabilitiesController::class,
+                                ),
                             ],
                         ],
                     ],
@@ -363,7 +378,7 @@ return [
                                 'id' => '[a-f0-9-]*',
                             ],
                             'defaults' => [
-                                'controller' => Controller\ApiAnrObjectController::class,
+                                'controller' => Controller\ApiAnrObjectsController::class,
                                 'action' => 'parents'
                             ],
                         ],
@@ -740,18 +755,6 @@ return [
                             ],
                         ],
                     ],
-                    'library_category' => [
-                        'type' => 'segment',
-                        'options' => [
-                            'route' => 'library-category[/:id]',
-                            'constraints' => [
-                                'id' => '[0-9]+',
-                            ],
-                            'defaults' => [
-                                'controller' => Controller\ApiAnrLibraryCategoryController::class,
-                            ],
-                        ],
-                    ],
                     'treatment_plan' => [
                         'type' => 'segment',
                         'options' => [
@@ -885,7 +888,7 @@ return [
                     'instance_metadata' => [
                         'type' => 'segment',
                         'options' => [
-                            'route' => 'instances/:instanceid/instances_metadatas[/:id]',
+                            'route' => 'instances/:instanceid/instances-metadata[/:id]',
                             'constraints' => [
                                 'instanceid' => '[0-9]+',
                                 'id' => '[0-9]+',
@@ -1093,7 +1096,6 @@ return [
             Controller\ApiAdminPasswordsController::class => AutowireFactory::class,
             Controller\ApiAdminUsersController::class => AutowireFactory::class,
             Controller\ApiAdminUsersRolesController::class => AutowireFactory::class,
-            Controller\ApiAdminUsersRightsController::class => Controller\ApiAdminUsersRightsControllerFactory::class,
             Controller\ApiAnrController::class => Controller\ApiAnrControllerFactory::class,
             Controller\ApiGuidesController::class => Controller\ApiGuidesControllerFactory::class,
             Controller\ApiGuidesItemsController::class => Controller\ApiGuidesItemsControllerFactory::class,
@@ -1115,17 +1117,15 @@ return [
             Controller\ApiAnrMeasuresMeasuresController::class
                 => Controller\ApiAnrMeasuresMeasuresControllerFactory::class,
             Controller\ApiAnrObjectsController::class => Controller\ApiAnrObjectsControllerFactory::class,
-            Controller\ApiAnrObjectsObjectsController::class => Controller\ApiAnrObjectsObjectsControllerFactory::class,
+            Controller\ApiAnrObjectsObjectsController::class => AutowireFactory::class,
             Controller\ApiAnrObjectsDuplicationController::class
                 => Controller\ApiAnrObjectsDuplicationControllerFactory::class,
-            Controller\ApiAnrObjectController::class => Controller\ApiAnrObjectControllerFactory::class,
             Controller\ApiAnrQuestionsController::class => Controller\ApiAnrQuestionsControllerFactory::class,
             Controller\ApiAnrQuestionsChoicesController::class
                 => Controller\ApiAnrQuestionsChoicesControllerFactory::class,
             Controller\ApiAnrThreatsController::class => Controller\ApiAnrThreatsControllerFactory::class,
-            Controller\ApiAnrThemesController::class => Controller\ApiAnrThemesControllerFactory::class,
-            Controller\ApiAnrVulnerabilitiesController::class
-                => Controller\ApiAnrVulnerabilitiesControllerFactory::class,
+            Controller\ApiAnrThemesController::class => AutowireFactory::class,
+            Controller\ApiAnrVulnerabilitiesController::class => AutowireFactory::class,
             Controller\ApiAnrRolfTagsController::class => Controller\ApiAnrRolfTagsControllerFactory::class,
             Controller\ApiAnrRolfRisksController::class => Controller\ApiAnrRolfRisksControllerFactory::class,
             Controller\ApiAnrInterviewsController::class => Controller\ApiAnrInterviewsControllerFactory::class,
@@ -1168,8 +1168,6 @@ return [
             Controller\ApiDashboardAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrLibraryController::class => Controller\ApiAnrLibraryControllerFactory::class,
-            Controller\ApiAnrLibraryCategoryController::class
-                => Controller\ApiAnrLibraryCategoryControllerFactory::class,
             Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
             Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
             Controller\ApiAnrInstancesRisksOpController::class => AutowireFactory::class,
@@ -1184,8 +1182,7 @@ return [
             Controller\ApiAnrExportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesConsequencesController::class
                 => Controller\ApiAnrInstancesConsequencesControllerFactory::class,
-            Controller\ApiModelVerifyLanguageController::class
-                => Controller\ApiModelVerifyLanguageControllerFactory::class,
+            Controller\ApiModelVerifyLanguageController::class => AutowireFactory::class,
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
             StatsController::class => AutowireFactory::class,
             StatsAnrsSettingsController::class => AutowireFactory::class,
@@ -1221,51 +1218,53 @@ return [
             Entity\UserAnr::class => Entity\UserAnr::class,
         ],
         'factories' => [
+            AnrValidationMiddleware::class => AutowireFactory::class,
+
             DbCli::class => Service\Model\DbCliFactory::class,
 
+            DeprecatedTable\AnrObjectCategoryTable::class => AutowireFactory::class,
+            DeprecatedTable\AnrTable::class => AutowireFactory::class,
+            DeprecatedTable\InstanceTable::class => AutowireFactory::class,
+            DeprecatedTable\DeliveryTable::class => AutowireFactory::class,
+            DeprecatedTable\InstanceConsequenceTable::class => AutowireFactory::class,
+            DeprecatedTable\InstanceRiskTable::class => AutowireFactory::class,
+            DeprecatedTable\InstanceRiskOpTable::class => AutowireFactory::class,
+            DeprecatedTable\InterviewTable::class => AutowireFactory::class,
+            DeprecatedTable\MeasureTable::class => AutowireFactory::class,
+            DeprecatedTable\MeasureMeasureTable::class => AutowireFactory::class,
+            DeprecatedTable\MonarcObjectTable::class => AutowireFactory::class,
+            DeprecatedTable\ObjectCategoryTable::class => AutowireFactory::class,
+            DeprecatedTable\ObjectObjectTable::class => AutowireFactory::class,
+            DeprecatedTable\RolfRiskTable::class => AutowireFactory::class,
+            DeprecatedTable\RolfTagTable::class => AutowireFactory::class,
+            DeprecatedTable\RecordActorTable::class => AutowireFactory::class,
+            DeprecatedTable\RecordDataCategoryTable::class => AutowireFactory::class,
+            DeprecatedTable\RecordInternationalTransferTable::class => AutowireFactory::class,
+            DeprecatedTable\RecordPersonalDataTable::class => AutowireFactory::class,
+            DeprecatedTable\RecordProcessorTable::class => AutowireFactory::class,
+            DeprecatedTable\RecordRecipientTable::class => AutowireFactory::class,
+            DeprecatedTable\RecordTable::class => AutowireFactory::class,
+            DeprecatedTable\ReferentialTable::class => AutowireFactory::class,
+            DeprecatedTable\RecommandationTable::class => AutowireFactory::class,
+            DeprecatedTable\RecommendationHistoricTable::class => AutowireFactory::class,
+            DeprecatedTable\RecommandationRiskTable::class => AutowireFactory::class,
+            DeprecatedTable\RecommandationSetTable::class => AutowireFactory::class,
+            DeprecatedTable\ScaleTable::class => AutowireFactory::class,
+            DeprecatedTable\ScaleCommentTable::class => AutowireFactory::class,
+            DeprecatedTable\ScaleImpactTypeTable::class => AutowireFactory::class,
+            DeprecatedTable\SnapshotTable::class => AutowireFactory::class,
+            DeprecatedTable\SoaTable::class => AutowireFactory::class,
+            DeprecatedTable\SoaCategoryTable::class => AutowireFactory::class,
+            DeprecatedTable\QuestionTable::class => AutowireFactory::class,
+            DeprecatedTable\QuestionChoiceTable::class => AutowireFactory::class,
             Table\AmvTable::class => ClientEntityManagerFactory::class,
-            Table\AnrObjectCategoryTable::class => ClientEntityManagerFactory::class,
-            Table\AnrTable::class => ClientEntityManagerFactory::class,
             Table\AssetTable::class => ClientEntityManagerFactory::class,
             Table\ClientTable::class => ClientEntityManagerFactory::class,
-            Table\InstanceTable::class => ClientEntityManagerFactory::class,
-            Table\DeliveryTable::class => ClientEntityManagerFactory::class,
-            Table\InstanceConsequenceTable::class => ClientEntityManagerFactory::class,
-            Table\InstanceRiskTable::class => ClientEntityManagerFactory::class,
-            Table\InstanceRiskOpTable::class => ClientEntityManagerFactory::class,
-            Table\InterviewTable::class => ClientEntityManagerFactory::class,
-            Table\MeasureTable::class => ClientEntityManagerFactory::class,
-            Table\MeasureMeasureTable::class => ClientEntityManagerFactory::class,
-            Table\MonarcObjectTable::class => ClientEntityManagerFactory::class,
-            Table\ObjectCategoryTable::class => ClientEntityManagerFactory::class,
-            Table\ObjectObjectTable::class => ClientEntityManagerFactory::class,
-            Table\RolfRiskTable::class => ClientEntityManagerFactory::class,
-            Table\RolfTagTable::class => ClientEntityManagerFactory::class,
-            Table\RecordActorTable::class => ClientEntityManagerFactory::class,
-            Table\RecordDataCategoryTable::class => ClientEntityManagerFactory::class,
-            Table\RecordInternationalTransferTable::class => ClientEntityManagerFactory::class,
-            Table\RecordPersonalDataTable::class => ClientEntityManagerFactory::class,
-            Table\RecordProcessorTable::class => ClientEntityManagerFactory::class,
-            Table\RecordRecipientTable::class => ClientEntityManagerFactory::class,
-            Table\RecordTable::class => ClientEntityManagerFactory::class,
-            Table\ReferentialTable::class => ClientEntityManagerFactory::class,
-            Table\RecommandationTable::class => ClientEntityManagerFactory::class,
-            Table\RecommendationHistoricTable::class => ClientEntityManagerFactory::class,
-            Table\RecommandationRiskTable::class => ClientEntityManagerFactory::class,
-            Table\RecommandationSetTable::class => ClientEntityManagerFactory::class,
-            Table\ScaleTable::class => ClientEntityManagerFactory::class,
-            Table\ScaleCommentTable::class => ClientEntityManagerFactory::class,
-            Table\ScaleImpactTypeTable::class => ClientEntityManagerFactory::class,
-            Table\SnapshotTable::class => ClientEntityManagerFactory::class,
-            Table\SoaTable::class => ClientEntityManagerFactory::class,
-            Table\SoaCategoryTable::class => ClientEntityManagerFactory::class,
             Table\ThemeTable::class => ClientEntityManagerFactory::class,
             Table\ThreatTable::class => ClientEntityManagerFactory::class,
             Table\UserTable::class => ClientEntityManagerFactory::class,
             Table\UserAnrTable::class => ClientEntityManagerFactory::class,
             Table\VulnerabilityTable::class => ClientEntityManagerFactory::class,
-            Table\QuestionTable::class => ClientEntityManagerFactory::class,
-            Table\QuestionChoiceTable::class => ClientEntityManagerFactory::class,
             Table\OperationalRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\OperationalRiskScaleTypeTable::class => ClientEntityManagerFactory::class,
             Table\OperationalRiskScaleCommentTable::class => ClientEntityManagerFactory::class,
@@ -1279,10 +1278,7 @@ return [
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
-            Entity\Amv::class => ModelFactory\AmvServiceModelEntity::class,
             Entity\Anr::class => ModelFactory\AnrServiceModelEntity::class,
-            Entity\AnrObjectCategory::class => ModelFactory\AnrObjectCategoryServiceModelEntity::class,
-            Entity\Asset::class => ModelFactory\AssetServiceModelEntity::class,
             Entity\Delivery::class => ModelFactory\DeliveryServiceModelEntity::class,
             Entity\Instance::class => ModelFactory\InstanceServiceModelEntity::class,
             Entity\InstanceConsequence::class => ModelFactory\InstanceConsequenceServiceModelEntity::class,
@@ -1300,10 +1296,6 @@ return [
             Entity\Referential::class => ModelFactory\ReferentialServiceModelEntity::class,
             Entity\Measure::class => ModelFactory\MeasureServiceModelEntity::class,
             Entity\MeasureMeasure::class => ModelFactory\MeasureMeasureServiceModelEntity::class,
-            Entity\MonarcObject::class => ModelFactory\MonarcObjectServiceModelEntity::class,
-            Entity\ObjectCategory::class => ModelFactory\ObjectCategoryServiceModelEntity::class,
-            Entity\ObjectObject::class => ModelFactory\ObjectObjectServiceModelEntity::class,
-            Entity\PasswordToken::class => ModelFactory\PasswordTokenServiceModelEntity::class,
             Entity\RolfRisk::class => ModelFactory\RolfRiskServiceModelEntity::class,
             Entity\RolfTag::class => ModelFactory\RolfTagServiceModelEntity::class,
             Entity\Recommandation::class => ModelFactory\RecommandationServiceModelEntity::class,
@@ -1316,22 +1308,18 @@ return [
             Entity\Snapshot::class => ModelFactory\SnapshotServiceModelEntity::class,
             Entity\Soa::class => ModelFactory\SoaServiceModelEntity::class,
             Entity\SoaCategory::class => ModelFactory\SoaCategoryServiceModelEntity::class,
-            Entity\Theme::class => ModelFactory\ThemeServiceModelEntity::class,
-            Entity\Threat::class => ModelFactory\ThreatServiceModelEntity::class,
-            Entity\Vulnerability::class => ModelFactory\VulnerabilityServiceModelEntity::class,
             Entity\Question::class => ModelFactory\QuestionServiceModelEntity::class,
             Entity\QuestionChoice::class => ModelFactory\QuestionChoiceServiceModelEntity::class,
 
             // TODO: replace to autowiring.
-            'Monarc\FrontOffice\Service\AnrService' => 'Monarc\FrontOffice\Service\AnrServiceFactory',
-            'Monarc\FrontOffice\Service\AnrCoreService' => 'Monarc\FrontOffice\Service\AnrCoreServiceFactory',
-            'Monarc\FrontOffice\Service\SnapshotService' => 'Monarc\FrontOffice\Service\SnapshotServiceFactory',
+            Service\AnrService::class => Service\AnrServiceFactory::class,
+            Service\AnrCoreService::class => Service\AnrCoreServiceFactory::class,
+            Service\SnapshotService::class => Service\SnapshotServiceFactory::class,
             Service\UserService::class => ReflectionBasedAbstractFactory::class,
-            'Monarc\FrontOffice\Service\UserAnrService' => 'Monarc\FrontOffice\Service\UserAnrServiceFactory',
             Service\UserRoleService::class => AutowireFactory::class,
-            Service\AnrAssetService::class => Service\AnrAssetServiceFactory::class,
+            Service\AnrAssetService::class => AutowireFactory::class,
             Service\AnrAssetCommonService::class => Service\AnrAssetCommonServiceFactory::class,
-            Service\AnrAmvService::class => Service\AnrAmvServiceFactory::class,
+            Service\AnrAmvService::class => AutowireFactory::class,
             Service\AnrInterviewService::class => Service\AnrInterviewServiceFactory::class,
             Service\AnrMeasureService::class => Service\AnrMeasureServiceFactory::class,
             Service\AnrMeasureMeasureService::class => Service\AnrMeasureMeasureServiceFactory::class,
@@ -1348,15 +1336,12 @@ return [
             Service\SoaCategoryService::class => Service\SoaCategoryServiceFactory::class,
             Service\AnrQuestionService::class => Service\AnrQuestionServiceFactory::class,
             Service\AnrQuestionChoiceService::class => Service\AnrQuestionChoiceServiceFactory::class,
-            Service\AnrThreatService::class => Service\AnrThreatServiceFactory::class,
-            Service\AnrThemeService::class => Service\AnrThemeServiceFactory::class,
-            Service\AnrVulnerabilityService::class => Service\AnrVulnerabilityServiceFactory::class,
+            Service\AnrThreatService::class => AutowireFactory::class,
+            Service\AnrThemeService::class => AutowireFactory::class,
+            Service\AnrVulnerabilityService::class => AutowireFactory::class,
             Service\AnrRolfTagService::class => Service\AnrRolfTagServiceFactory::class,
             Service\AnrRolfRiskService::class => Service\AnrRolfRiskServiceFactory::class,
             Service\ClientService::class => AutowireFactory::class,
-            Service\ObjectObjectService::class => Service\ObjectObjectServiceFactory::class,
-            Service\ModelService::class => Service\ModelServiceFactory::class,
-            Service\AnrLibraryService::class => Service\AnrLibraryServiceFactory::class,
             Service\AnrRecommandationService::class => Service\AnrRecommandationServiceFactory::class,
             Service\AnrRecommandationHistoricService::class => Service\AnrRecommandationHistoricServiceFactory::class,
             Service\AnrRecommandationRiskService::class => Service\AnrRecommandationRiskServiceFactory::class,
@@ -1366,7 +1351,8 @@ return [
             Service\AnrScaleCommentService::class => Service\AnrScaleCommentServiceFactory::class,
             Service\AnrCheckStartedService::class => AutowireFactory::class,
             Service\AnrCartoRiskService::class => Service\AnrCartoRiskServiceFactory::class,
-            Service\AnrObjectService::class => Service\AnrObjectServiceFactory::class,
+            Service\AnrObjectService::class => AutowireFactory::class,
+            Service\AnrObjectObjectService::class => AutowireFactory::class,
             Service\AnrInstanceConsequenceService::class => Service\AnrInstanceConsequenceServiceFactory::class,
             Service\AnrInstanceRiskOpService::class => AutowireFactory::class,
             Service\AnrInstanceRiskService::class => Service\AnrInstanceRiskServiceFactory::class,
@@ -1414,13 +1400,42 @@ return [
                 );
             },
 
+            /* Authentication */
+            StorageAuthentication::class => static function (ContainerInterface $container, $serviceName) {
+                return new StorageAuthentication(
+                    $container->get(Table\UserTokenTable::class),
+                    $container->get('config'),
+                );
+            },
+            AdapterAuthentication::class => static function (ContainerInterface $container, $serviceName) {
+                return new AdapterAuthentication($container->get(Table\UserTable::class));
+            },
+            ConnectedUserService::class => static function (ContainerInterface $container, $serviceName) {
+                return new ConnectedUserService(
+                    $container->get(Request::class),
+                    $container->get(Table\UserTokenTable::class)
+                );
+            },
+
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
 
             // Validators
-            CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\User\PostUserDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             GetStatsQueryParamsValidator::class => GetStatsQueryParamsValidatorFactory::class,
             GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
+        ],
+        'lazy_services' => [
+            'class_map' => [
+                Table\UserTokenTable::class => Table\UserTokenTable::class,
+            ],
+            'proxies_target_dir' => $dataPath . '/LazyServices/Proxy',
+            'write_proxy_files' => $env === 'production',
+        ],
+        'delegators' => [
+            Table\UserTokenTable::class => [
+                LazyServiceFactory::class,
+            ],
         ],
     ],
 
@@ -1499,7 +1514,6 @@ return [
             'monarc_api_global_client_anr/export',
             'monarc_api_guides',
             'monarc_api_guides_items',
-            'monarc_api_anr_objects_parents',
             'monarc_api_global_client_anr/questions',
             'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/soa',

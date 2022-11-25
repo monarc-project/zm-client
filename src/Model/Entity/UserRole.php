@@ -18,4 +18,12 @@ use Monarc\Core\Model\Entity\UserRoleSuperClass;
  */
 class UserRole extends UserRoleSuperClass
 {
+    public const SUPER_ADMIN_FO = 'superadminfo';
+    public const USER_FO = 'userfo';
+    public const USER_ROLE_CEO = 'ceo';
+
+    public static function getAvailableRoles(): array
+    {
+        return [static::SUPER_ADMIN_FO, static::USER_FO, static::USER_ROLE_CEO];
+    }
 }

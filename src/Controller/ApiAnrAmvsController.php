@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,16 +12,12 @@ use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrAmvService;
 
 /**
- * Api ANR Amvs Controller
- *
- * Class ApiAnrAmvsController
- * @package Monarc\FrontOffice\Controller
+ * TODO: Refactor the class!!!
  */
 class ApiAnrAmvsController extends ApiAnrAbstractController
 {
     protected $name = 'amvs';
     protected $dependencies = ['asset', 'threat', 'vulnerability', 'measures'];
-
 
     public function getList()
     {
@@ -147,7 +143,7 @@ class ApiAnrAmvsController extends ApiAnrAbstractController
         if (array_keys($data) === range(0, \count($data) - 1)) {
             /** @var AnrAmvService $anrAmvService */
             $anrAmvService = $this->getService();
-            $data = $anrAmvService->createAmvsItems($anrId, $data);
+            $data = $anrAmvService->createAmvItems($anrId, $data);
 
             if (empty($data)) {
                 throw new Exception('No new information risks to be imported. Already exist in Knowledge Base', 412);

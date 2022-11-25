@@ -13,7 +13,7 @@ use Monarc\FrontOffice\Model\Entity\Translation;
 
 class TranslationTable extends CoreTranslationTable
 {
-    public function __construct(EntityManager $entityManager, $entityName = Translation::class)
+    public function __construct(EntityManager $entityManager, string $entityName = Translation::class)
     {
         parent::__construct($entityManager, $entityName);
     }

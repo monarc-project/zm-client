@@ -25,6 +25,5 @@ class AnrCartoRiskServiceFactory extends AbstractServiceFactory
         'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
         'instanceConsequenceTable' => 'Monarc\FrontOffice\Model\Table\InstanceConsequenceTable',
         'operationalRiskScaleTable' => 'Monarc\FrontOffice\Table\OperationalRiskScaleTable',
-        'threatTable' => 'Monarc\FrontOffice\Model\Table\ThreatTable',
     ];
 }

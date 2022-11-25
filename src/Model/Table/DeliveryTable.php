@@ -22,4 +22,13 @@ class DeliveryTable extends AbstractEntityTable
     {
         parent::__construct($dbService, Delivery::class, $connectedUserService);
     }
+
+    public function saveEntity(Delivery $delivery, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($delivery);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

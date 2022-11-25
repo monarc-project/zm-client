@@ -1,90 +1,81 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2021 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Exception\Exception;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\User\GetUsersInputFormatter;
 use Monarc\Core\Service\PasswordService;
-use Monarc\FrontOffice\Validator\InputValidator\User\CreateUserInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\User\PostUserDataInputValidator;
 use Monarc\FrontOffice\Service\UserService;
 use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
 
 class ApiAdminUsersController extends AbstractRestfulController
 {
-    private const DEFAULT_LIMIT = 25;
+    use ControllerRequestResponseHandlerTrait;
 
-    /** @var CreateUserInputValidator */
-    private $createUserInputValidator;
+    private GetUsersInputFormatter $getUsersInputFormatter;
 
-    /** @var UserService */
-    private $userService;
+    private PostUserDataInputValidator $postUserDataInputValidator;
 
-    /** @var PasswordService */
-    private $passwordService;
+    private UserService $userService;
+
+    private PasswordService $passwordService;
 
     public function __construct(
-        CreateUserInputValidator $createUserInputValidator,
+        GetUsersInputFormatter $getUsersInputFormatter,
+        PostUserDataInputValidator $postUserDataInputValidator,
         UserService $userService,
         PasswordService $passwordService
     ) {
-        $this->createUserInputValidator = $createUserInputValidator;
+        $this->getUsersInputFormatter = $getUsersInputFormatter;
+        $this->postUserDataInputValidator = $postUserDataInputValidator;
         $this->userService = $userService;
         $this->passwordService = $passwordService;
     }
 
     public function getList()
     {
-        $searchString = $this->params()->fromQuery('filter', '');
-        $status = $this->params()->fromQuery('status', 1);
-        $filter = $status === 'all'
-            ? null
-            : ['status' => (int)$status];
-        $page = $this->params()->fromQuery('page', 1);
-        $limit = $this->params()->fromQuery('limit', static::DEFAULT_LIMIT);
-        $order = $this->params()->fromQuery('order', '');
+        $formattedInput = $this->getFormattedInputParams($this->getUsersInputFormatter);
 
-        $users = $this->userService->getUsersList($searchString, $filter, $order);
-
-        return new JsonModel(array(
-            'count' => \count($users),
-            'users' => \array_slice($users, $page - 1, $limit),
-        ));
+        return $this->getPreparedJsonResponse([
+            'count' => $this->userService->getCount($formattedInput),
+            'users' => $this->userService->getList($formattedInput),
+        ]);
     }
 
     public function create($data)
     {
-        if (!$this->createUserInputValidator->isValid($data)) {
-            throw new Exception(
-                'Data validation errors: [ ' . json_encode($this->createUserInputValidator->getErrorMessages()),
-                400
-            );
-            /* TODO: make it on the application level to throw a particular exception interface and process in Module.
-            return new JsonModel([
-                'httpStatus' => 400,
-                'errors' => $this->createUserInputValidator->getErrorMessages(),
-            ]);*/
-        }
+        $this->validatePostParams($this->postUserDataInputValidator, $data);
 
-        $this->userService->create($this->createUserInputValidator->getValidData());
+        $this->userService->create($this->postUserDataInputValidator->getValidData());
 
-        return new JsonModel(['status' => 'ok']);
-    }
-
-    public function update($id, $data)
-    {
-        $this->userService->update($id, $data);
-
-        return new JsonModel(['status' => 'ok']);
+        return $this->getPreparedJsonResponse(['status' => 'ok']);
     }
 
     public function get($id)
     {
-        return new JsonModel($this->userService->getCompleteUser($id));
+        return $this->getPreparedJsonResponse($this->userService->getCompleteUser($id));
+    }
+
+    public function update($id, $data)
+    {
+        $this->validatePostParams($this->postUserDataInputValidator, $data);
+
+        $this->userService->update($id, $this->postUserDataInputValidator->getValidData());
+
+        return $this->getPreparedJsonResponse(['status' => 'ok']);
+    }
+
+    public function patch($id, $data)
+    {
+        $this->userService->patch($id, $data);
+
+        return $this->getPreparedJsonResponse(['status' => 'ok']);
     }
 
     public function resetPasswordAction()
@@ -93,7 +84,7 @@ class ApiAdminUsersController extends AbstractRestfulController
 
         $this->passwordService->resetPassword($id);
 
-        return new JsonModel($this->userService->getCompleteUser($id));
+        return $this->getPreparedJsonResponse($this->userService->getCompleteUser($id));
     }
 
     public function delete($id)
@@ -102,13 +93,6 @@ class ApiAdminUsersController extends AbstractRestfulController
 
         $this->getResponse()->setStatusCode(204);
 
-        return new JsonModel();
-    }
-
-    public function patch($id, $data)
-    {
-        $this->userService->patch($id, $data);
-
-        return new JsonModel(['status' => 'ok']);
+        return $this->getPreparedJsonResponse([]);
     }
 }

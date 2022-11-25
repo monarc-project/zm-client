@@ -11,35 +11,32 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserProfileService;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Model\Entity\User;
 
 class ApiUserProfileController extends AbstractRestfulController
 {
-    /** @var ConnectedUserService */
-    private $connectedUserService;
+    private UserProfileService $userProfileService;
 
-    /** @var UserProfileService */
-    private $userProfileService;
+    private User $connectedUser;
 
     public function __construct(UserProfileService $userProfileService, ConnectedUserService $connectedUserService)
     {
         $this->userProfileService = $userProfileService;
-        $this->connectedUserService = $connectedUserService;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
     public function getList()
     {
-        $connectedUser = $this->connectedUserService->getConnectedUser();
-
         return new JsonModel([
-            'id' => $connectedUser->getId(),
-            'firstname' => $connectedUser->getFirstname(),
-            'lastname' => $connectedUser->getLastname(),
-            'email' => $connectedUser->getEmail(),
-            'status' => $connectedUser->getStatus(),
-            'role' => $connectedUser->getRolesArray(),
-            'isTwoFactorAuthEnabled' => $connectedUser->isTwoFactorAuthEnabled(),
-            'remainingRecoveryCodes' => \count($connectedUser->getRecoveryCodes()),
-            'mospApiKey' => $connectedUser->getMospApiKey(),
+            'id' => $this->connectedUser->getId(),
+            'firstname' => $this->connectedUser->getFirstname(),
+            'lastname' => $this->connectedUser->getLastname(),
+            'email' => $this->connectedUser->getEmail(),
+            'status' => $this->connectedUser->getStatus(),
+            'role' => $this->connectedUser->getRolesArray(),
+            'isTwoFactorAuthEnabled' => $this->connectedUser->isTwoFactorAuthEnabled(),
+            'remainingRecoveryCodes' => \count($this->connectedUser->getRecoveryCodes()),
+            'mospApiKey' => $this->connectedUser->getMospApiKey(),
         ]);
     }
 

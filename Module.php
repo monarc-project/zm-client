@@ -1,9 +1,17 @@
 <?php
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
+
 namespace Monarc\FrontOffice;
 
+use Laminas\Stdlib\ResponseInterface;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Snapshot;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 use Laminas\Http\Request;
 use Laminas\Mvc\ModuleRouteListener;
 use Laminas\Mvc\MvcEvent;
@@ -22,9 +30,9 @@ class Module
 
             $this->initRbac($e);
 
-            $eventManager->attach(MvcEvent::EVENT_ROUTE, array($this, 'checkRbac'), 0);
-            $eventManager->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this, 'onDispatchError'), 0);
-            $eventManager->attach(MvcEvent::EVENT_RENDER_ERROR, array($this, 'onRenderError'), 0);
+            $eventManager->attach(MvcEvent::EVENT_ROUTE, [$this, 'checkRbac'], 0);
+            $eventManager->attach(MvcEvent::EVENT_DISPATCH_ERROR, [$this, 'onDispatchError'], 0);
+            $eventManager->attach(MvcEvent::EVENT_RENDER_ERROR, [$this, 'onRenderError'], 0);
         }
     }
 
@@ -47,66 +55,62 @@ class Module
     {
         $error = $e->getError();
         if (!$error) {
-            return;
+            return null;
         }
 
         $exception = $e->getParam('exception');
-        $exceptionJson = array();
+        $exceptionJson = [];
         if ($exception) {
-            $exceptionJson = array(
-                'class' => get_class($exception),
+            $exceptionJson = [
+                'class' => \get_class($exception),
                 'file' => $exception->getFile(),
                 'line' => $exception->getLine(),
                 'message' => $exception->getMessage(),
-                'stacktrace' => $exception->getTraceAsString()
-            );
+                'stacktrace' => $exception->getTraceAsString(),
+            ];
 
             if ($exception->getCode() >= 400 && $exception->getCode() < 600) {
                 $e->getResponse()->setStatusCode($exception->getCode());
             }
         }
-        $errorJson = array(
-            'message'   => $exception ? $exception->getMessage() : 'An error occurred during execution; please try again later.',
-            'error'     => $error,
+        $errorJson = [
+            'message' => $exception ? $exception->getMessage(
+            ) : 'An error occurred during execution; please try again later.',
+            'error' => $error,
             'exception' => $exceptionJson,
-        );
-        if ($error == 'error-router-no-match') {
+        ];
+        if ($error === 'error-router-no-match') {
             $errorJson['message'] = 'Resource not found.';
         }
-        $model = new JsonModel(array('errors' => array($errorJson)));
+        $model = new JsonModel(['errors' => [$errorJson]]);
         $e->setResult($model);
+
         return $model;
     }
 
-    /**
-     * init Rbac
-     *
-     * @param MvcEvent $e
-     */
-    public function initRbac(MvcEvent $e)
+    public function initRbac(MvcEvent $mvcEvent)
     {
-        $sm = $e->getApplication()->getServiceManager();
+        $sm = $mvcEvent->getApplication()->getServiceManager();
         $config = $sm->get('Config');
 
-        $globalPermissions = isset($config['permissions'])?$config['permissions']:array();
+        $globalPermissions = $config['permissions'] ?? [];
 
-        $rolesPermissions = isset($config['roles'])?$config['roles']:array();
+        $rolesPermissions = $config['roles'] ?? [];
 
         $rbac = new Rbac();
         foreach ($rolesPermissions as $role => $permissions) {
-
             $role = new Role($role);
 
             //global permissions
-            foreach($globalPermissions as $globalPermission) {
-                if (! $role->hasPermission($globalPermission)) {
+            foreach ($globalPermissions as $globalPermission) {
+                if (!$role->hasPermission($globalPermission)) {
                     $role->addPermission($globalPermission);
                 }
             }
 
             //role permissions
             foreach ($permissions as $permission) {
-                if (! $role->hasPermission($permission)) {
+                if (!$role->hasPermission($permission)) {
                     $role->addPermission($permission);
                 }
             }
@@ -116,30 +120,29 @@ class Module
 
         //add role for guest (user not logged)
         $role = new Role('guest');
-        foreach($globalPermissions as $globalPermission) {
-            if (! $role->hasPermission($globalPermission)) {
+        foreach ($globalPermissions as $globalPermission) {
+            if (!$role->hasPermission($globalPermission)) {
                 $role->addPermission($globalPermission);
             }
         }
         $rbac->addRole($role);
 
         //setting to view
-        $e->getViewModel()->rbac = $rbac;
+        $mvcEvent->getViewModel()->rbac = $rbac;
     }
 
     /**
-     * Check Rbac
+     * @param MvcEvent $mvcEvent
      *
-     * @param MvcEvent $e
-     * @return \Laminas\Stdlib\ResponseInterface
+     * @return ResponseInterface|void
      */
-    public function checkRbac(MvcEvent $e)
+    public function checkRbac(MvcEvent $mvcEvent)
     {
-        $route = $e->getRouteMatch()->getMatchedRouteName();
-        $sm = $e->getApplication()->getServiceManager();
+        $route = $mvcEvent->getRouteMatch()->getMatchedRouteName();
+        $serviceManager = $mvcEvent->getApplication()->getServiceManager();
 
         /** @var ConnectedUserService $connectedUserService */
-        $connectedUserService = $sm->get(ConnectedUserService::class);
+        $connectedUserService = $serviceManager->get(ConnectedUserService::class);
         $connectedUser = $connectedUserService->getConnectedUser();
 
         $roles[] = 'guest';
@@ -148,64 +151,74 @@ class Module
         }
 
         $isGranted = false;
-        foreach($roles as $role) {
-            if ($e->getViewModel()->rbac->isGranted($role, $route)) {
-                $id = (int)$e->getRouteMatch()->getParam('id');
-                if(strpos($route, 'monarc_api_global_client_anr/') === 0 || ($route == 'monarc_api_client_anr' && !empty($id))){
-                    if($route == 'monarc_api_client_anr') {
-                        $anrid = $id;
-                    }else{
-                        $anrid = (int)$e->getRouteMatch()->getParam('anrid');
+        /** @var SnapshotTable $snapshotTable */
+        $snapshotTable = $serviceManager->get(SnapshotTable::class);
+        /** @var UserAnrTable $userAnrTable */
+        $userAnrTable = $serviceManager->get(UserAnrTable::class);
+        foreach ($roles as $role) {
+            if ($mvcEvent->getViewModel()->rbac->isGranted($role, $route)) {
+                $anrId = (int)$mvcEvent->getRouteMatch()->getParam('id');
+                if (($route === 'monarc_api_client_anr' && $anrId !== 0)
+                    || strncmp($route, 'monarc_api_global_client_anr/', 29) === 0
+                ) {
+                    if ($route !== 'monarc_api_client_anr') {
+                        $anrId = (int)$mvcEvent->getRouteMatch()->getParam('anrid');
                     }
-                    if(empty($anrid)){
-                        break; // pas besoin d'aller plus loin
-                    }else{
-                        $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser->getId()]));
-                        if(empty($lk)){
-                            // On doit tester si c'est un snapshot, dans ce cas, on autorise l'accès mais en READ-ONLY
-                            if($e->getRequest()->getMethod() != 'GET' && !$this->authorizedPost($route,$e->getRequest()->getMethod())){
-                                break; // même si c'est un snapshot, on n'autorise que du GET
-                            }
-                            $snap = current($sm->get(SnapshotTable::class)->getEntityByFields(['anr'=>$anrid]));
-                            if(empty($snap)){
-                                break; // ce n'est pas un snapshot
-                            }
-                            $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$snap->get('anrReference')->get('id'),'user'=>$connectedUser->getId()]));
-                            if(empty($lk)){
-                                break; // l'user n'avait de toute façon pas accès à l'anr dont est issue ce snapshot
-                            }
-                            $isGranted = true;
-                            break;
-                        }elseif($lk->get('rwd') == 0 && $e->getRequest()->getMethod() != 'GET'){
-                            if($this->authorizedPost($route,$e->getRequest()->getMethod())){ // on autorise les POST pour les export
-                                $isGranted = true;
-                            }
-                            break; // les droits ne sont pas bon
-                        }else{
-                            $isGranted = true;
+                    if ($anrId === 0) {
+                        break;
+                    }
+
+                    $userAnr = $userAnrTable->findByAnrIdAndUser($anrId, $connectedUser);
+                    if ($userAnr === null) {
+                        // We authorise the access for snapshot, but for read only (GET).
+                        if ($mvcEvent->getRequest()->getMethod() !== 'GET'
+                            && !$this->authorizedPost($route, $mvcEvent->getRequest()->getMethod())
+                        ) {
                             break;
                         }
+                        /** @var Snapshot|false $snapshot */
+                        $snapshot = current($snapshotTable->getEntityByFields(['anr' => $anrId]));
+                        if ($snapshot === false) {
+                            break;
+                        }
+                        $userAnr = $userAnrTable->findByAnrAndUser($snapshot->getAnrReference(), $connectedUser);
+                        if ($userAnr === null) {
+                            // the user did not have access to the anr, from which this snapshot was created.
+                            break;
+                        }
+                        $isGranted = true;
+                        break;
                     }
-                }else{
-                    $isGranted = true;
-                    break; // pas besoin d'aller plus loin
+
+                    if (!$userAnr->hasWriteAccess() && $mvcEvent->getRequest()->getMethod() !== 'GET') {
+                        // We authorize POST for the specific actions.
+                        if ($this->authorizedPost($route, $mvcEvent->getRequest()->getMethod())) {
+                            $isGranted = true;
+                        }
+                        break;
+                    }
                 }
+
+                $isGranted = true;
+                break;
             }
         }
 
         if (!$isGranted) {
-            $response = $e->getResponse();
+            $response = $mvcEvent->getResponse();
             $response->setStatusCode($connectedUser === null ? 401 : 403);
 
             return $response;
         }
     }
 
-    private function authorizedPost($route, $method){
-        return $method == 'POST' &&
-                ($route == 'monarc_api_global_client_anr/export' || // export ANR
-                $route == 'monarc_api_global_client_anr/instance_export' || // export Instance
-                $route == 'monarc_api_global_client_anr/objects_export' || // export  Object
-                $route == 'monarc_api_global_client_anr/deliverable'); // generate a report
+    private function authorizedPost($route, $method)
+    {
+        return $method === 'POST'
+            && ($route === 'monarc_api_global_client_anr/export' // export ANR
+                || $route === 'monarc_api_global_client_anr/instance_export' // export Instance
+                || $route === 'monarc_api_global_client_anr/objects_export' // export  Object
+                || $route === 'monarc_api_global_client_anr/deliverable' // generate a report
+            );
     }
 }

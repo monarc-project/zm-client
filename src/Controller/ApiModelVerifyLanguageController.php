@@ -1,70 +1,29 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\AbstractController;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrService;
 
-/**
- * Api Model Verify Language Controller
- *
- * Class ApiModelVerifyLanguageController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiModelVerifyLanguageController extends AbstractController
+class ApiModelVerifyLanguageController extends AbstractRestfulController
 {
-    /**
-     * @inheritdoc
-     */
+    private AnrService $anrService;
+
+    public function __construct(AnrService $anrService)
+    {
+        $this->anrService = $anrService;
+    }
+
     public function get($id)
     {
-        $result = $this->getService()->verifyLanguage($id);
+        $result = $this->anrService->verifyLanguage((int)$id);
 
         return new JsonModel($result);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getList()
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function create($data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($token, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
     }
 }

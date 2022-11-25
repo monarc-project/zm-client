@@ -161,9 +161,9 @@ class Recommandation extends AbstractEntity
         parent::__construct($obj);
     }
 
-    public function getUuid(): ?string
+    public function getUuid(): string
     {
-        return $this->uuid;
+        return (string)$this->uuid;
     }
 
     public function setUuid($uuid): self

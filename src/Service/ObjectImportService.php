@@ -1,4 +1,9 @@
 <?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Service;
 
@@ -30,40 +35,29 @@ use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
 
 class ObjectImportService
 {
-    /** @var MonarcObjectTable */
-    private $monarcObjectTable;
+    private MonarcObjectTable $monarcObjectTable;
 
-    /** @var AssetImportService */
-    private $assetImportService;
+    private AssetImportService $assetImportService;
 
-    /** @var RolfTagTable */
-    private $rolfTagTable;
+    private RolfTagTable $rolfTagTable;
 
-    /** @var RolfRiskTable */
-    private $rolfRiskTable;
+    private RolfRiskTable $rolfRiskTable;
 
-    /** @var MeasureTable */
-    private $measureTable;
+    private MeasureTable $measureTable;
 
-    /** @var ObjectObjectTable */
-    private $objectObjectTable;
+    private ObjectObjectTable $objectObjectTable;
 
-    /** @var ReferentialTable */
-    private $referentialTable;
+    private ReferentialTable $referentialTable;
 
-    /** @var SoaCategoryTable */
-    private $soaCategoryTable;
+    private SoaCategoryTable $soaCategoryTable;
 
-    /** @var ObjectCategoryTable */
-    private $objectCategoryTable;
+    private ObjectCategoryTable $objectCategoryTable;
 
-    /** @var AnrObjectCategoryTable */
-    private $anrObjectCategoryTable;
-
-    /** @var array */
-    private $cachedData = [];
+    private AnrObjectCategoryTable $anrObjectCategoryTable;
 
     private UserSuperClass $connectedUser;
+
+    private array $cachedData = [];
 
     public function __construct(
         MonarcObjectTable $monarcObjectTable,
@@ -145,7 +139,7 @@ class ObjectImportService
                 $objectCategory
             );
             if ($monarcObject !== null) {
-                $this->objectObjectTable->deleteAllByFather($monarcObject);
+                $this->objectObjectTable->deleteAllByParent($monarcObject);
             }
         }
 
@@ -160,7 +154,7 @@ class ObjectImportService
                 ->setMode($objectData['mode'] ?? 1)
                 ->setScope($objectData['scope'])
                 ->setLabel($labelKey, $objectData[$labelKey])
-                ->setDisponibility(isset($objectData['disponibility']) ? (float)$objectData['disponibility'] : 0)
+                ->setAvailability((float)($objectData['availability'] ?? 0))
                 ->setPosition((int)$objectData['position'])
                 ->setCreator($this->connectedUser->getEmail());
             try {
@@ -174,7 +168,7 @@ class ObjectImportService
 
         $monarcObject->addAnr($anr);
 
-        $this->monarcObjectTable->saveEntity($monarcObject);
+        $this->monarcObjectTable->save($monarcObject);
 
         $this->cachedData['objects'][$monarcObject->getUuid()] = $monarcObject;
 
@@ -191,10 +185,10 @@ class ObjectImportService
                 $childMonarcObject = $this->importFromArray($childObjectData, $anr, $modeImport);
 
                 if ($childMonarcObject !== null) {
-                    $maxPosition = $this->objectObjectTable->findMaxPositionByAnrAndFather($anr, $monarcObject);
+                    $maxPosition = $this->objectObjectTable->findMaxPositionByAnrAndParent($anr, $monarcObject);
                     $objectsRelation = (new ObjectObject())
                         ->setAnr($anr)
-                        ->setFather($monarcObject)
+                        ->setParent($monarcObject)
                         ->setChild($childMonarcObject)
                         ->setPosition($maxPosition + 1)
                         ->setCreator($this->connectedUser->getEmail());
@@ -243,7 +237,7 @@ class ObjectImportService
                 ->setPosition($maxPosition + 1)
                 ->setCreator($this->connectedUser->getEmail());
 
-            $this->objectCategoryTable->saveEntity($objectCategory);
+            $this->objectCategoryTable->save($objectCategory);
         }
 
         if ($objectCategory->getParent() === null) {
@@ -262,7 +256,7 @@ class ObjectImportService
         );
         if ($anrObjectCategory === null) {
             $maxPosition = $this->anrObjectCategoryTable->findMaxPositionByAnr($objectCategory->getAnr());
-            $this->anrObjectCategoryTable->saveEntity(
+            $this->anrObjectCategoryTable->save(
                 (new AnrObjectCategory())
                     ->setAnr($objectCategory->getAnr())
                     ->setCategory($objectCategory)
@@ -331,6 +325,7 @@ class ObjectImportService
                         if ($measure === null
                             && isset($newMeasure['referential'], $newMeasure['category'])
                         ) {
+                            $labelName = 'label' . $anr->getLanguage();
                             $referential = $this->referentialTable->findByAnrAndUuid(
                                 $anr,
                                 $newMeasure['referential']['uuid']
@@ -340,15 +335,15 @@ class ObjectImportService
                                     ->setAnr($anr)
                                     ->setUuid($newMeasure['referential']['uuid'])
                                     ->setCreator($this->connectedUser->getEmail())
-                                    ->{'setLabel' . $anr->getLanguage()}(
-                                        $newMeasure['referential']['label' . $anr->getLanguage()]
-                                    );
+                                    ->setLabels([
+                                        $labelName => $newMeasure['referential'][$labelName]
+                                    ]);
                                 $this->referentialTable->saveEntity($referential);
                             }
 
                             $category = $this->soaCategoryTable->getEntityByFields([
                                 'anr' => $anr->getId(),
-                                'label' . $anr->getLanguage() => $newMeasure['category']['label' . $anr->getLanguage()],
+                                $labelName => $newMeasure['category'][$labelName],
                                 'referential' => [
                                     'anr' => $anr->getId(),
                                     'uuid' => $referential->getUuid(),
@@ -358,9 +353,7 @@ class ObjectImportService
                                 $category = (new SoaCategory())
                                     ->setAnr($anr)
                                     ->setReferential($referential)
-                                    ->{'setLabel' . $anr->getLanguage()}(
-                                        $newMeasure['category']['label' . $anr->getLanguage()]
-                                    );
+                                    ->setLabels([$labelName => $newMeasure['category'][$labelName]]);
                                 $this->soaCategoryTable->saveEntity($category, false);
                             } else {
                                 $category = current($category);
@@ -374,12 +367,11 @@ class ObjectImportService
                                 ->setCode($newMeasure['code'])
                                 ->setLabels($newMeasure)
                                 ->setCreator($this->connectedUser->getEmail());
-
-                            $this->measureTable->saveEntity($measure);
                         }
 
                         if ($measure !== null) {
                             $measure->addOpRisk($rolfRisk);
+                            $this->measureTable->saveEntity($measure);
 
                             $this->cachedData['measures'][$measureUuid] = $measure;
                         }
@@ -413,7 +405,11 @@ class ObjectImportService
             $objectData[$nameFiledKey]
         );
         if ($existedObject !== null) {
-            $objectData[$nameFiledKey] .= ' - Imp. #' . $index;
+            if (strpos($objectData[$nameFiledKey], ' - Imp. #') !== false) {
+                $objectData[$nameFiledKey] = preg_replace('/#\d+/', '#' . $index, $objectData[$nameFiledKey]);
+            } else {
+                $objectData[$nameFiledKey] .= ' - Imp. #' . $index;
+            }
 
             return $this->setMonarcObjectName($monarcObject, $objectData, $nameFiledKey, $index + 1);
         }

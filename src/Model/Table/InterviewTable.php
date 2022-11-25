@@ -22,4 +22,13 @@ class InterviewTable extends AbstractEntityTable
     {
         parent::__construct($dbService, Interview::class, $connectedUserService);
     }
+
+    public function saveEntity(Interview $interview, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($interview);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }
