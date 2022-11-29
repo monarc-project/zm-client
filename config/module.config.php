@@ -1416,6 +1416,9 @@ return [
                 );
             },
 
+            // Helpers
+            Service\Helper\ImportCacheHelper::class => AutowireFactory::class,
+
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
 

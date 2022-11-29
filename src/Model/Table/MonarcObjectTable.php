@@ -16,6 +16,7 @@ use Monarc\Core\Model\Entity\RolfTagSuperClass;
 use Monarc\Core\Model\Table\MonarcObjectTable as CoreMonarcObjectTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 
@@ -52,6 +53,19 @@ class MonarcObjectTable extends CoreMonarcObjectTable
         }
 
         return $monarcObject;
+    }
+
+    /**
+     * @return MonarcObject[]
+     */
+    public function findByAnrIndexedByUuid(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('o', 'o.uuid')
+            ->where('o.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 
     /**

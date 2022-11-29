@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\ThreatSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -40,7 +39,6 @@ class ThreatTable extends AbstractEntityTable
         return $res > 0;
     }
 
-
     /**
      * @return Threat[]
      */
@@ -49,57 +47,6 @@ class ThreatTable extends AbstractEntityTable
         return $this->getRepository()
             ->createQueryBuilder('t')
             ->where('t.anr = :anr')
-            ->setParameter(':anr', $anr)
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function findUuidsAndCodesByAnr(Anr $anr): array
-    {
-        return $this->getRepository()->createQueryBuilder('t')
-            ->select('t.uuid, t.code')
-            ->where('t.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getScalarResult();
-    }
-
-    /**
-     * @throws EntityNotFoundException
-     */
-    public function findByAnrAndUuid(Anr $anr, string $uuid): ThreatSuperClass
-    {
-        $threat = $this->getRepository()
-            ->createQueryBuilder('t')
-            ->where('t.anr = :anr')
-            ->andWhere('t.uuid = :uuid')
-            ->setParameter(':anr', $anr)
-            ->setParameter(':uuid', $uuid)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-
-        if ($threat === null) {
-            throw new EntityNotFoundException(
-                sprintf('Threat with anr ID "%d" and uuid "%s" has not been found.', $anr->getId(), $uuid)
-            );
-        }
-
-        return $threat;
-    }
-
-    /**
-     * @param Anr $anr
-     * @param string[] $uuids
-     *
-     * @return array
-     */
-    public function findByAnrAndUuidsIndexedByField(Anr $anr, array $uuids, string $indexField = 'uuid'): array
-    {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.' . $indexField);
-
-        return $queryBuilder->where('t.anr = :anr')
-            ->andWhere($queryBuilder->expr()->in('t.uuid', $uuids))
             ->setParameter(':anr', $anr)
             ->getQuery()
             ->getResult();
