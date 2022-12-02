@@ -49,7 +49,7 @@ class ImportCacheHelper
         ReferentialTable $referentialTable,
         RolfTagTable $rolfTagTable,
         RolfRiskTable $rolfRiskTable,
-        AmvTable $amvTable,
+        AmvTable $amvTable
     ) {
         $this->assetTable = $assetTable;
         $this->threatTable = $threatTable;
