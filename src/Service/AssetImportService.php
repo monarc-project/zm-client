@@ -261,10 +261,7 @@ class AssetImportService
     private function processAmvsData(array $amvsData, Anr $anr, Asset $asset): void
     {
         $this->importCacheHelper->prepareAmvsCacheData($anr);
-        $this->importCacheHelper->prepareInstancesByAssetCacheData($anr);
-        /** @var Instance[]|null $instances */
-        $instances = $this->importCacheHelper->getCachedObjectByKeyAndId('instancesByAssets', $asset->getUuid());
-
+        $instances = [];
         foreach ($amvsData as $amvUuid => $amvData) {
             $amv = $this->importCacheHelper->getCachedObjectByKeyAndId('amvs', $amvUuid);
             if ($amv === null) {
@@ -292,18 +289,19 @@ class AssetImportService
 
                 $this->importCacheHelper->addDataToCache('amvs', $amv, $amv->getUuid());
 
-                if ($instances !== null) {
-                    foreach ($instances as $instance) {
-                        $instanceRisk = (new InstanceRisk())
-                            ->setAnr($anr)
-                            ->setAmv($amv)
-                            ->setAsset($asset)
-                            ->setInstance($instance)
-                            ->setThreat($threat)
-                            ->setVulnerability($vulnerability);
+                if ($instances === null) {
+                    $instances = $this->instanceTable->findByAnrAndAsset($anr, $asset);
+                }
+                foreach ($instances as $instance) {
+                    $instanceRisk = (new InstanceRisk())
+                        ->setAnr($anr)
+                        ->setAmv($amv)
+                        ->setAsset($asset)
+                        ->setInstance($instance)
+                        ->setThreat($threat)
+                        ->setVulnerability($vulnerability);
 
-                        $this->instanceRiskTable->saveEntity($instanceRisk, false);
-                    }
+                    $this->instanceRiskTable->saveEntity($instanceRisk, false);
                 }
             }
 
@@ -312,14 +310,10 @@ class AssetImportService
             }
         }
 
-        $this->importCacheHelper->prepareAmvsByAssetsCacheData($anr);
-        /** @var Amv[]|null $oldAmvs */
-        $oldAmvs = $this->importCacheHelper->getCachedObjectByKeyAndId('amvsByAssets', $asset->getUuid());
-        foreach ($oldAmvs as $oldAmv) {
+        foreach ($this->amvTable->findByAnrAndAsset($anr, $asset) as $oldAmv) {
             if (!isset($amvsData[$oldAmv->getUuid()])) {
-                /** Set instance risks to specific. and delete amvs leter */
-
-                $instanceRisks = $this->instanceRiskTable->findByAmv($amv);
+                /** Set related instance risks to specific and delete the amvs leter */
+                $instanceRisks = $amv->getInstanceRisks();
 
                 // TODO: remove the double iteration when #240 is done.
                 // We do it due to multi-fields relation issue. When amv is set to null, anr is set to null as well.

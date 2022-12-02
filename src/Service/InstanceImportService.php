@@ -435,11 +435,11 @@ class InstanceImportService
 
         $instance = $this->createInstance($data, $anr, $parentInstance, $monarcObject);
 
-        $includeEval = !empty($data['with_eval']);
-
         $this->anrInstanceRiskService->createInstanceRisks($instance, $anr, $monarcObject, $data);
 
         $this->createInstanceMetadata($instance, $data);
+
+        $includeEval = !empty($data['with_eval']);
 
         $this->prepareInstanceConsequences($data, $anr, $instance, $monarcObject, $includeEval);
 
@@ -1408,9 +1408,6 @@ class InstanceImportService
             return;
         }
 
-        /**
-         * First we get the data from the cached data AssetImportService and compute the difference.
-         */
         $scalesData = [];
         if ($includeEval && !$this->isImportTypeAnr()) {
             $scalesData = $this->getCurrentAndExternalScalesData($anr, $data);

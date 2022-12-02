@@ -15,6 +15,7 @@ use Monarc\Core\Model\Table\InstanceTable as CoreInstanceTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\Instance;
 
 /**
@@ -51,14 +52,16 @@ class InstanceTable extends CoreInstanceTable
     /**
      * @return Instance[]
      */
-    public function findByAnrJoinAsset(Anr $anr): array
+    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
     {
         return $this->getRepository()
             ->createQueryBuilder('i')
-            ->select('i, a')
             ->innerJoin('i.asset', 'a')
             ->where('i.anr = :anr')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :anr')
             ->setParameter('anr', $anr)
+            ->setParameter('assetUuid', $asset->getUuid())
             ->getQuery()
             ->getResult();
     }

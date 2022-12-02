@@ -15,6 +15,7 @@ use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
 
 /**
  * Class AmvTable
@@ -47,13 +48,16 @@ class AmvTable extends AbstractEntityTable
     /**
      * @return Amv[]
      */
-    public function findByAnrJoinAsset(Anr $anr): array
+    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
     {
         return $this->getRepository()
             ->createQueryBuilder('amv')
             ->innerJoin('amv.asset', 'a')
             ->where('amv.anr = :anr')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :anr')
             ->setParameter('anr', $anr)
+            ->setParameter('assetUuid', $asset->getUuid())
             ->getQuery()
             ->getResult();
     }

@@ -10,7 +10,6 @@ namespace Monarc\FrontOffice\Service\Helper;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Table\AmvTable;
 use Monarc\FrontOffice\Model\Table\AssetTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
@@ -39,8 +38,6 @@ class ImportCacheHelper
 
     private AmvTable $amvTable;
 
-    private InstanceTable $instanceTable;
-
     private array $cachedData = [];
 
     public function __construct(
@@ -53,7 +50,6 @@ class ImportCacheHelper
         RolfTagTable $rolfTagTable,
         RolfRiskTable $rolfRiskTable,
         AmvTable $amvTable,
-        InstanceTable $instanceTable
     ) {
         $this->assetTable = $assetTable;
         $this->threatTable = $threatTable;
@@ -64,7 +60,6 @@ class ImportCacheHelper
         $this->rolfTagTable = $rolfTagTable;
         $this->rolfRiskTable = $rolfRiskTable;
         $this->amvTable = $amvTable;
-        $this->instanceTable = $instanceTable;
     }
 
     public function prepareAssetsThreatsVulnerabilitiesAndThemesCacheData(Anr $anr): void
@@ -159,26 +154,6 @@ class ImportCacheHelper
     {
         if (!isset($this->cachedData['amvs'])) {
             $this->cachedData['amvs'] = $this->amvTable->findByAnrIndexedByUuid($anr);
-        }
-    }
-
-    public function prepareAmvsByAssetsCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['amvsByAssets'])) {
-            $this->cachedData['amvsByAssets'] = [];
-            foreach ($this->amvTable->findByAnrJoinAsset($anr) as $amv) {
-                $this->cachedData['amvsByAssets'][$amv->getAsset()->getUuid()][] = $amv;
-            }
-        }
-    }
-
-    public function prepareInstancesByAssetCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['instancesByAssets'])) {
-            $this->cachedData['instancesByAssets'] = [];
-            foreach ($this->instanceTable->findByAnrJoinAsset($anr) as $instance) {
-                $this->cachedData['instancesByAssets'][$instance->getAsset()->getUuid()][] = $instance;
-            }
         }
     }
 
