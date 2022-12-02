@@ -45,6 +45,20 @@ class AmvTable extends AbstractEntityTable
     }
 
     /**
+     * @return Amv[]
+     */
+    public function findByAnrJoinAsset(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('amv')
+            ->innerJoin('amv.asset', 'a')
+            ->where('amv.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @throws EntityNotFoundException
      */
     public function findByUuidAndAnrId(string $uuid, int $anrId): Amv
@@ -87,6 +101,9 @@ class AmvTable extends AbstractEntityTable
         }
     }
 
+    /**
+     * Called from Core/AmvService.
+     */
     public function findByAmvItemsUuidAndAnrId(
         string $assetUuid,
         string $threatUuid,

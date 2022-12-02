@@ -96,7 +96,7 @@ class ObjectImportService
 
         $objectData = $data['object'];
 
-        $this->importCacheHelper->prepareObjectsCacheData($anr);
+        /* The objects cache preparation is not called, because all the importing objects have to be processed. */
         /** @var MonarcObject|null $object */
         $object = $this->importCacheHelper->getCachedObjectByKeyAndId('objects', $objectData['uuid']);
         if ($object !== null) {
@@ -113,9 +113,7 @@ class ObjectImportService
             return null;
         }
 
-        /*
-         * Import Operational Risks.
-         */
+        /* Import Operational Risks. */
         $rolfTag = $this->processRolfTagAndRolfRisks($data, $anr);
 
         /*
@@ -125,9 +123,9 @@ class ObjectImportService
         $objectScope = (int)$objectData['scope'];
         $nameFiledKey = 'name' . $anr->getLanguage();
         $monarcObject = null;
-        if ($objectScope === MonarcObject::SCOPE_LOCAL
+        if ($objectScope === ObjectSuperClass::SCOPE_LOCAL
             || (
-                $objectScope === MonarcObject::SCOPE_GLOBAL
+                $objectScope === ObjectSuperClass::SCOPE_GLOBAL
                 && $modeImport === 'merge'
             )
         ) {

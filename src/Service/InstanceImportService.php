@@ -488,7 +488,7 @@ class InstanceImportService
         string $modeImport
     ): array {
         $labelKey = 'label' . $anr->getLanguage();
-        $anrLanguageCode = $this->getAnrLanguageCode($anr);
+
         // Method information
         if (!empty($data['method'])) { //Steps checkboxes
             if (!empty($data['method']['steps'])) {

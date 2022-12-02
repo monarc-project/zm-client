@@ -8,9 +8,10 @@
 namespace Monarc\FrontOffice\Service\Helper;
 
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Table\AmvTable;
 use Monarc\FrontOffice\Model\Table\AssetTable;
+use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
-use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfTagTable;
@@ -32,11 +33,13 @@ class ImportCacheHelper
 
     private ReferentialTable $referentialTable;
 
-    private MonarcObjectTable $monarcObjectTable;
-
     private RolfTagTable $rolfTagTable;
 
     private RolfRiskTable $rolfRiskTable;
+
+    private AmvTable $amvTable;
+
+    private InstanceTable $instanceTable;
 
     private array $cachedData = [];
 
@@ -47,9 +50,10 @@ class ImportCacheHelper
         ThemeTable $themeTable,
         MeasureTable $measureTable,
         ReferentialTable $referentialTable,
-        MonarcObjectTable $monarcObjectTable,
         RolfTagTable $rolfTagTable,
-        RolfRiskTable $rolfRiskTable
+        RolfRiskTable $rolfRiskTable,
+        AmvTable $amvTable,
+        InstanceTable $instanceTable
     ) {
         $this->assetTable = $assetTable;
         $this->threatTable = $threatTable;
@@ -57,9 +61,10 @@ class ImportCacheHelper
         $this->themeTable = $themeTable;
         $this->measureTable = $measureTable;
         $this->referentialTable = $referentialTable;
-        $this->monarcObjectTable = $monarcObjectTable;
         $this->rolfTagTable = $rolfTagTable;
         $this->rolfRiskTable = $rolfRiskTable;
+        $this->amvTable = $amvTable;
+        $this->instanceTable = $instanceTable;
     }
 
     public function prepareAssetsThreatsVulnerabilitiesAndThemesCacheData(Anr $anr): void
@@ -136,13 +141,6 @@ class ImportCacheHelper
         }
     }
 
-    public function prepareObjectsCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['objects'])) {
-            $this->cachedData['objects'] = $this->monarcObjectTable->findByAnrIndexedByUuid($anr);
-        }
-    }
-
     public function prepareRolfTagsCacheData(Anr $anr): void
     {
         if (!isset($this->cachedData['rolfTags'])) {
@@ -157,12 +155,48 @@ class ImportCacheHelper
         }
     }
 
+    public function prepareAmvsCacheData(Anr $anr): void
+    {
+        if (!isset($this->cachedData['amvs'])) {
+            $this->cachedData['amvs'] = $this->amvTable->findByAnrIndexedByUuid($anr);
+        }
+    }
+
+    public function prepareAmvsByAssetsCacheData(Anr $anr): void
+    {
+        if (!isset($this->cachedData['amvsByAssets'])) {
+            $this->cachedData['amvsByAssets'] = [];
+            foreach ($this->amvTable->findByAnrJoinAsset($anr) as $amv) {
+                $this->cachedData['amvsByAssets'][$amv->getAsset()->getUuid()][] = $amv;
+            }
+        }
+    }
+
+    public function prepareInstancesByAssetCacheData(Anr $anr): void
+    {
+        if (!isset($this->cachedData['instancesByAssets'])) {
+            $this->cachedData['instancesByAssets'] = [];
+            foreach ($this->instanceTable->findByAnrJoinAsset($anr) as $instance) {
+                $this->cachedData['instancesByAssets'][$instance->getAsset()->getUuid()][] = $instance;
+            }
+        }
+    }
+
     public function addDataToCache(string $cacheKey, $value, $elementKey = null): void
     {
         if ($elementKey === null) {
             $this->cachedData[$cacheKey][] = $value;
         } else {
             $this->cachedData[$cacheKey][$elementKey] = $value;
+        }
+    }
+
+    public function removeDataFromCache(string $cacheKey, $value, $elementKey = null): void
+    {
+        if ($elementKey === null) {
+            unset($this->cachedData[$cacheKey]);
+        } else {
+            unset($this->cachedData[$cacheKey][$elementKey]);
         }
     }
 
@@ -174,7 +208,10 @@ class ImportCacheHelper
         return $this->cachedData[$cacheKey] ?? [];
     }
 
-    public function getCachedObjectByKeyAndId(string $cacheKey, $elementKey): ?object
+    /**
+     * @return mixed|null Can be an object or array of objects.
+     */
+    public function getCachedObjectByKeyAndId(string $cacheKey, $elementKey)
     {
         return $this->cachedData[$cacheKey][$elementKey] ?? null;
     }
