@@ -26,8 +26,7 @@ class AssetTable extends AbstractEntityTable
 
     public function findByAnrAndUuid(Anr $anr, string $uuid): ?Asset
     {
-        return $this->getRepository()
-            ->createQueryBuilder('a')
+        return $this->getRepository()->createQueryBuilder('a')
             ->where('a.anr = :anr')
             ->andWhere('a.uuid = :uuid')
             ->setParameter('anr', $anr)
@@ -35,6 +34,18 @@ class AssetTable extends AbstractEntityTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    public function existsWithAnrAndCode(Anr $anr, string $code): bool
+    {
+        return $this->getRepository()->createQueryBuilder('a')
+            ->where('a.anr = :anr')
+            ->andWhere('a.uuid = :code')
+            ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult() !== null;
     }
 
     /**

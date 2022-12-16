@@ -26,16 +26,16 @@ class RolfRiskTable extends CoreRolfRiskTable
         $this->entityClass = RolfRisk::class;
     }
 
-    /**
-     * @return RolfRisk[]
-     */
-    public function findByAnrIndexedByCode(Anr $anr): array
+    public function findByAnrAndCode(Anr $anr, string $code): ?RolfRisk
     {
         return $this->getRepository()
-            ->createQueryBuilder('rr', 'rr.code')
+            ->createQueryBuilder('rr')
             ->where('rr.anr = :anr')
+            ->andWhere('rr.code = :code')
             ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
     }
 }

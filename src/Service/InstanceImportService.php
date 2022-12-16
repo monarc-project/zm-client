@@ -78,6 +78,7 @@ use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
+use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
@@ -99,15 +100,11 @@ class InstanceImportService
 
     private int $currentAnalyseMaxRecommendationPosition;
 
-    private int $initialAnalyseMaxRecommendationPosition;
-
     private int $currentMaxInstancePosition;
 
     private AnrInstanceRiskService $anrInstanceRiskService;
 
     private AnrInstanceService $anrInstanceService;
-
-    private AssetImportService $assetImportService;
 
     private AnrRecordService $anrRecordService;
 
@@ -183,7 +180,11 @@ class InstanceImportService
 
     private SoaScaleCommentTable $soaScaleCommentTable;
 
+    private RolfRiskTable $rolfRiskTable;
+
     private ImportCacheHelper $importCacheHelper;
+
+    private SoaCategoryService $soaCategoryService;
 
     private string $importType;
 
@@ -192,7 +193,6 @@ class InstanceImportService
     public function __construct(
         AnrInstanceRiskService $anrInstanceRiskService,
         AnrInstanceService $anrInstanceService,
-        AssetImportService $assetImportService,
         ObjectImportService $objectImportService,
         AnrRecordService $anrRecordService,
         AnrInstanceRiskOpService $anrInstanceRiskOpService,
@@ -229,8 +229,10 @@ class InstanceImportService
         AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
         InstanceMetadataTable $instanceMetadataTable,
         SoaScaleCommentTable $soaScaleCommentTable,
+        RolfRiskTable $rolfRiskTable,
         ConfigService $configService,
-        ImportCacheHelper $importCacheHelper
+        ImportCacheHelper $importCacheHelper,
+        SoaCategoryService $soaCategoryService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
         $this->anrInstanceService = $anrInstanceService;
@@ -251,7 +253,6 @@ class InstanceImportService
         $this->recommendationRiskTable = $recommendationRiskTable;
         $this->questionTable = $questionTable;
         $this->questionChoiceTable = $questionChoiceTable;
-        $this->assetImportService = $assetImportService;
         $this->soaTable = $soaTable;
         $this->measureTable = $measureTable;
         $this->measureMeasureTable = $measureMeasureTable;
@@ -270,9 +271,11 @@ class InstanceImportService
         $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
         $this->instanceMetadataTable = $instanceMetadataTable;
         $this->soaScaleCommentTable = $soaScaleCommentTable;
+        $this->rolfRiskTable = $rolfRiskTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->importCacheHelper = $importCacheHelper;
+        $this->soaCategoryService = $soaCategoryService;
     }
 
     /**
@@ -382,8 +385,7 @@ class InstanceImportService
 
         $this->setAndValidateMonarcVersion($data);
 
-        $this->initialAnalyseMaxRecommendationPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
-        $this->currentAnalyseMaxRecommendationPosition = $this->initialAnalyseMaxRecommendationPosition;
+        $this->currentAnalyseMaxRecommendationPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
         $this->currentMaxInstancePosition = $this->instanceTable->getMaxPositionByAnrAndParent($anr, $parentInstance);
 
         $result = false;
@@ -622,18 +624,16 @@ class InstanceImportService
 
             /* Process the evaluation of threats. */
             if (!empty($data['method']['threats'])) {
-                $this->importCacheHelper->prepareThreatsCacheData($anr);
+                $this->importCacheHelper->prepareThemesCacheData($anr);
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
-                    $threat = $this->importCacheHelper->getCachedObjectByKeyAndId('threats', $threatUuid);
+                    $threat = $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
                     if ($threat === null) {
                         $threatData = $data['method']['threats'][$threatUuid];
 
                         /* The code should be unique. */
-                        $threatData['code'] = \in_array(
-                            $threatData['code'],
-                            $this->importCacheHelper->getCachedDataByKey('threats_codes'),
-                            true
-                        ) ? $threatData['code'] . '-' . time() : $threatData['code'];
+                        $threatData['code'] = $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                            ? $threatData['code'] . '-' . time()
+                            : $threatData['code'];
 
                         $threat = (new Threat())
                             ->setUuid($threatData['uuid'])
@@ -654,7 +654,7 @@ class InstanceImportService
                         if (!empty($data['method']['threats'][$threatUuid]['theme'])) {
                             $themeData = $data['method']['threats'][$threatUuid]['theme'];
                             $labelValue = $themeData[$labelKey];
-                            $theme = $this->importCacheHelper->getCachedObjectByKeyAndId('themes', $labelValue);
+                            $theme = $this->importCacheHelper->getItemFromArrayCache('themes_by_labels', $labelValue);
                             if ($theme === null) {
                                 $theme = (new Theme())
                                     ->setAnr($anr)
@@ -662,107 +662,96 @@ class InstanceImportService
                                     ->setCreator($this->connectedUser->getEmail());
 
                                 $this->themeTable->saveEntity($theme, false);
-                                $this->importCacheHelper->addDataToCache('themes', $theme, $labelValue);
+                                $this->importCacheHelper->addItemToArrayCache('themes_by_labels', $theme, $labelValue);
                             }
 
                             $threat->setTheme($theme);
                         }
-
-                        $this->importCacheHelper->addDataToCache('threats', $threat, $threat->getUuid());
-                        $this->importCacheHelper->addDataToCache('threats_codes', $threat->getCode());
                     }
 
                     $threat->setTrend((int)$data['method']['threats'][$threatUuid]['trend']);
                     $threat->setComment((string)$data['method']['threats'][$threatUuid]['comment']);
                     $threat->setQualification((int)$data['method']['threats'][$threatUuid]['qualification']);
 
-                    $this->threatTable->saveEntity($threat);
+                    $this->threatTable->saveEntity($threat, false);
                 }
             }
         }
 
         /* Import the referentials. */
         if (!empty($data['referentials'])) {
-            $this->importCacheHelper->prepareReferentialsCacheData($anr);
             foreach ($data['referentials'] as $referentialUuid => $referentialData) {
-                $referential = $this->importCacheHelper->getCachedObjectByKeyAndId('referentials', $referentialUuid);
+                $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialUuid)
+                    ?: $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
                 if ($referential === null) {
-                    $referential = (new Referential($referentialData))->setAnr($anr);
-                    $this->referentialTable->saveEntity($referential, false);
-                    $this->importCacheHelper->addDataToCache('referentials', $referential, $referentialUuid);
-                }
-            }
+                    $referential = (new Referential($referentialData))
+                        ->setUuid($referentialUuid)
+                        ->setAnr($anr)
+                        ->setCreator($this->connectedUser->getEmail());
 
-            $this->referentialTable->getDb()->flush();
+                    $this->referentialTable->saveEntity($referential, false);
+                }
+
+                $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referentialUuid);
+            }
         }
 
         /*
          * Import the soa categories.
          */
         if (!empty($data['soacategories'])) {
-            $this->importCacheHelper->prepareReferentialsCacheData($anr);
-            foreach ($data['soacategories'] as $soaCategory) {
-                /** @var Referential|null $referential */
+            foreach ($data['soacategories'] as $soaCategoryData) {
                 $referential = $this->importCacheHelper
-                    ->getCachedObjectByKeyAndId('referentials', $soaCategory['referential']);
+                    ->getItemFromArrayCache('referentials', $soaCategoryData['referential']);
                 if ($referential !== null) {
-                    $categories = $this->soaCategoryTable->getEntityByFields([
-                        'anr' => $anr->getId(),
-                        $labelKey => $soaCategory[$labelKey],
-                        'referential' => [
-                            'anr' => $anr->getId(),
-                            'uuid' => $referential->getUuid(),
-                        ]
-                    ]);
-                    if (empty($categories)) {
-                        // TODO: set labels and status, remove the constructor set.
-                        $newSoaCategory = (new SoaCategory($soaCategory))
-                            ->setAnr($anr)
-                            ->setReferential($referential);
-                        $this->soaCategoryTable->saveEntity($newSoaCategory, false);
-                    }
+                    $this->soaCategoryService->getOrCreateSoaCategory(
+                        $this->importCacheHelper,
+                        $anr,
+                        $referential,
+                        $soaCategoryData[$labelKey]
+                    );
                 }
             }
-            $this->soaCategoryTable->getDb()->flush();
         }
 
         /*
          * Import the measures.
          */
         if (isset($data['measures'])) {
-            $this->importCacheHelper->prepareMeasuresAndReferentialCacheData($anr);
             foreach ($data['measures'] as $measureUuid => $measureData) {
-                $measure = $this->importCacheHelper->getCachedObjectByKeyAndId('measures', $measureUuid);
-                if ($measure === null) {
-                    // TODO: findBy...
-                    /** @var SoaCategory[] $soaCategories */
-                    $soaCategories = $this->soaCategoryTable->getEntityByFields([
-                        'anr' => $anr->getId(),
-                        $labelKey => $measureData['category']
-                    ]);
-                    /** @var Referential|null $referential */
-                    $referential = $this->importCacheHelper
-                        ->getCachedObjectByKeyAndId('referentials', $measureData['referential']);
-                    if ($referential !== null && !empty($soaCategories)) {
-                        $measure = (new Measure($measureData))
-                            ->setUuid($measureUuid)
+                $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
+                    ?: $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
+                $referential = $this->importCacheHelper
+                    ->getItemFromArrayCache('referentials', $measureData['referential']);
+                if ($measure === null && $referential !== null) {
+                    /** @var SoaCategory|null $soaCategory */
+                    $soaCategory = $this->soaCategoryService->getOrCreateSoaCategory(
+                        $this->importCacheHelper,
+                        $anr,
+                        $referential,
+                        $measureData['category']
+                    );
+
+                    $measure = (new Measure($measureData))
+                        ->setUuid($measureUuid)
+                        ->setAnr($anr)
+                        ->setReferential($referential)
+                        ->setCategory($soaCategory)
+                        ->setAmvs(new ArrayCollection()) // need to initialize the amvs link
+                        ->setRolfRisks(new ArrayCollection())
+                        ->setCreator($this->connectedUser->getEmail());
+
+                    $this->measureTable->saveEntity($measure, false);
+
+                    $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measureUuid);
+
+                    if (!isset($data['soas'])) {
+                        // if no SOAs in the analysis to import, create new ones
+                        $newSoa = (new Soa())
                             ->setAnr($anr)
-                            ->setReferential($referential)
-                            ->setCategory($soaCategories[0])
-                            ->setAmvs(new ArrayCollection()) // need to initialize the amvs link
-                            ->setRolfRisks(new ArrayCollection());
+                            ->setMeasure($measure);
 
-                        $this->measureTable->saveEntity($measure);
-
-                        if (!isset($data['soas'])) {
-                            // if no SOAs in the analysis to import, create new ones
-                            $newSoa = (new Soa())
-                                ->setAnr($anr)
-                                ->setMeasure($measure);
-                            $this->soaTable->saveEntity($newSoa, false);
-                        }
-
-                        $this->importCacheHelper->addDataToCache('measures', $measure, $measure->getUuid());
+                        $this->soaTable->saveEntity($newSoa, false);
                     }
                 }
             }
@@ -859,9 +848,11 @@ class InstanceImportService
                         $maxOrig,
                         0
                     );
-                    $existedSoa->setSoaScaleComment(
-                        $this->cachedData['newSoaScaleCommentIndexedByScale'][$newScaleIndex]
-                    );
+                    $soaScaleComment = $this->importCacheHelper
+                        ->getItemFromArrayCache('newSoaScaleCommentIndexedByScale', $newScaleIndex);
+                    if ($soaScaleComment !== null) {
+                        $existedSoa->setSoaScaleComment($soaScaleComment);
+                    }
                     $this->soaTable->saveEntity($existedSoa, false);
                 }
             }
@@ -869,13 +860,11 @@ class InstanceImportService
 
         // import the SOAs
         if (isset($data['soas'])) {
-            $this->importCacheHelper->prepareMeasuresCacheData($anr);
             foreach ($data['soas'] as $soaData) {
-                /** @var Measure|null $measure */
-                $measure = $this->importCacheHelper->getCachedObjectByKeyAndId('measures', $soaData['measure_id']);
+                $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $soaData['measure_id'])
+                    ?: $this->measureTable->findByAnrAndUuid($anr, $soaData['measure_id']);
                 if ($measure !== null) {
-                    // TODO: $existedMeasure->getSoa() ...
-                    $soa = $this->soaTable->findByMeasure($measure);
+                    $soa = $this->soaTable->findByAnrAndMeasureUuid($anr, $soaData['measure_id']);
                     if ($soa === null) {
                         $soa = (new Soa($soaData))
                             ->setAnr($anr)
@@ -892,7 +881,7 @@ class InstanceImportService
                             ->setRRA($soaData['RRA']);
                     }
                     if (isset($soaData['soaScaleComment'])) {
-                        $soaScaleComment = $this->importCacheHelper->getCachedObjectByKeyAndId(
+                        $soaScaleComment = $this->importCacheHelper->getItemFromArrayCache(
                             'soaScaleCommentExternalIdMapToNewObject',
                             $soaData['soaScaleComment']
                         );
@@ -966,10 +955,8 @@ class InstanceImportService
                 }
             }
 
-
-            // Threat Qualification
-            $threats = $this->threatTable->findByAnr($anr);
-            foreach ($threats as $threat) {
+            /* Threats qualification. */
+            foreach ($this->threatTable->findByAnr($anr) as $threat) {
                 $threat->setQualification($this->approximate(
                     $threat->getQualification(),
                     $scalesData['current'][Scale::TYPE_THREAT]['min'],
@@ -981,8 +968,7 @@ class InstanceImportService
             }
 
             // Informational Risks
-            $instanceRisks = $this->instanceRiskTable->findByAnr($anr);
-            foreach ($instanceRisks as $instanceRisk) {
+            foreach ($this->instanceRiskTable->findByAnr($anr) as $instanceRisk) {
                 $instanceRisk->setThreatRate($this->approximate(
                     $instanceRisk->getThreatRate(),
                     $scalesData['current'][Scale::TYPE_THREAT]['min'],
@@ -1425,14 +1411,12 @@ class InstanceImportService
             );
 
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
-                $threat = $this->importCacheHelper->getCachedObjectByKeyAndId('threats', $threatData['uuid']);
+                $threat = $this->threatTable->findByAnrAndUuid($anr, $threatData['uuid']);
                 if ($threat === null) {
                     /* The code should be unique. */
-                    $threatData['code'] = \in_array(
-                        $threatData['code'],
-                        $this->importCacheHelper->getCachedDataByKey('threats_codes'),
-                        true
-                    ) ? $threatData['code'] . '-' . time() : $threatData['code'];
+                    $threatData['code'] = $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                        ? $threatData['code'] . '-' . time()
+                        : $threatData['code'];
 
                     $threat = (new Threat())
                         ->setUuid($threatData['uuid'])
@@ -1464,19 +1448,14 @@ class InstanceImportService
                      */
 
                     $this->threatTable->saveEntity($threat, false);
-
-                    $this->importCacheHelper->addDataToCache('threats', $threat, $threat->getUuid());
-                    $this->importCacheHelper->addDataToCache('threats_codes', $threat->getCode());
                 }
 
-                $vulnerability = $this->importCacheHelper
-                    ->getCachedObjectByKeyAndId('vulnerabilities', $vulnerabilityData['uuid']);
+                $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid($anr, $vulnerabilityData['uuid'], false);
                 if ($vulnerability === null) {
                     /* The code should be unique. */
-                    $vulnerabilityData['code'] = \in_array(
-                        $vulnerabilityData['code'],
-                        $this->importCacheHelper->getCachedDataByKey('vulnerabilities_codes'),
-                        true
+                    $vulnerabilityData['code'] = $this->vulnerabilityTable->existsWithAnrAndCode(
+                        $anr,
+                        $vulnerabilityData['code']
                     ) ? $vulnerabilityData['code'] . '-' . time() : $vulnerabilityData['code'];
 
                     $vulnerability = (new Vulnerability())
@@ -1490,10 +1469,6 @@ class InstanceImportService
                         ->setCreator($this->connectedUser->getEmail());
 
                     $this->vulnerabilityTable->saveEntity($vulnerability, false);
-
-                    $this->importCacheHelper
-                        ->addDataToCache('vulnerabilities', $vulnerability, $vulnerability->getUuid());
-                    $this->importCacheHelper->addDataToCache('vulnerabilities_codes', $vulnerability->getCode());
                 }
 
                 $instanceRisk = $this->createInstanceRiskFromData(
@@ -1909,9 +1884,13 @@ class InstanceImportService
 
             if (!empty($operationalRiskData['rolfRisk']) && $monarcObject->getRolfTag() !== null) {
                 /** @var RolfRisk|null $rolfRisk */
-                $rolfRisk = $this->importCacheHelper
-                    ->getCachedObjectByKeyAndId('rolfRisksByOldIds', (int)$operationalRiskData['rolfRisk']);
-                if ($rolfRisk !== null) {
+                $rolfRiskId = $this->importCacheHelper->getItemFromArrayCache(
+                    'rolf_risks_by_old_ids',
+                    (int)$operationalRiskData['rolfRisk']
+                );
+                if ($rolfRiskId !== null) {
+                    $rolfRisk = $this->rolfRiskTable->findById((int)$rolfRiskId);
+
                     $operationalInstanceRisk
                         ->setRolfRisk($rolfRisk)
                         ->setRiskCacheCode($rolfRisk->getCode());
@@ -3290,13 +3269,13 @@ class InstanceImportService
 
             $this->translationTable->save($translation, false);
 
-            $this->cachedData['newSoaScaleCommentIndexedByScale'][$newScale['scaleIndex']] =
-                $scales[$newScale['scaleIndex']];
-            $this->importCacheHelper->addDataToCache(
-                'soaScaleCommentExternalIdMapToNewObject',
+            $this->importCacheHelper->addItemToArrayCache(
+                'newSoaScaleCommentIndexedByScale',
                 $scales[$newScale['scaleIndex']],
-                $id
+                $newScale['scaleIndex']
             );
+            $this->importCacheHelper
+                ->addItemToArrayCache('soaScaleCommentExternalIdMapToNewObject', $scales[$newScale['scaleIndex']], $id);
         }
         $this->soaScaleCommentTable->flush();
     }

@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\MeasureSuperClass;
 use Monarc\Core\Model\Table\MeasureTable as CoreMeasureTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
@@ -31,17 +30,17 @@ class MeasureTable extends CoreMeasureTable
     /**
      * @return Measure[]
      */
-    public function findByAnrIndexedByUuid(Anr $anr): array
+    public function findByAnr(Anr $anr): array
     {
         return $this->getRepository()
-            ->createQueryBuilder('m', 'm.uuid')
+            ->createQueryBuilder('m')
             ->where('m.anr = :anr')
             ->setParameter('anr', $anr)
             ->getQuery()
             ->getResult();
     }
 
-    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): ?MeasureSuperClass
+    public function findByAnrAndUuid(AnrSuperClass $anr, string $uuid): ?Measure
     {
         return $this->getRepository()
             ->createQueryBuilder('m')

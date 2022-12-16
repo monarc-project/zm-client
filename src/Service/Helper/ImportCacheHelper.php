@@ -8,186 +8,93 @@
 namespace Monarc\FrontOffice\Service\Helper;
 
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Table\AmvTable;
-use Monarc\FrontOffice\Model\Table\AssetTable;
-use Monarc\FrontOffice\Model\Table\MeasureTable;
-use Monarc\FrontOffice\Model\Table\ReferentialTable;
-use Monarc\FrontOffice\Model\Table\RolfRiskTable;
-use Monarc\FrontOffice\Model\Table\RolfTagTable;
+use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
 use Monarc\FrontOffice\Model\Table\ThemeTable;
-use Monarc\FrontOffice\Model\Table\ThreatTable;
-use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
 
 class ImportCacheHelper
 {
-    private AssetTable $assetTable;
-
-    private ThreatTable $threatTable;
-
-    private VulnerabilityTable $vulnerabilityTable;
-
     private ThemeTable $themeTable;
 
-    private MeasureTable $measureTable;
+    private SoaCategoryTable $soaCategoryTable;
 
-    private ReferentialTable $referentialTable;
-
-    private RolfTagTable $rolfTagTable;
-
-    private RolfRiskTable $rolfRiskTable;
-
-    private AmvTable $amvTable;
-
-    private array $cachedData = [];
+    private array $arrayCache = [];
 
     public function __construct(
-        AssetTable $assetTable,
-        ThreatTable $threatTable,
-        VulnerabilityTable $vulnerabilityTable,
         ThemeTable $themeTable,
-        MeasureTable $measureTable,
-        ReferentialTable $referentialTable,
-        RolfTagTable $rolfTagTable,
-        RolfRiskTable $rolfRiskTable,
-        AmvTable $amvTable
+        SoaCategoryTable $soaCategoryTable
     ) {
-        $this->assetTable = $assetTable;
-        $this->threatTable = $threatTable;
-        $this->vulnerabilityTable = $vulnerabilityTable;
         $this->themeTable = $themeTable;
-        $this->measureTable = $measureTable;
-        $this->referentialTable = $referentialTable;
-        $this->rolfTagTable = $rolfTagTable;
-        $this->rolfRiskTable = $rolfRiskTable;
-        $this->amvTable = $amvTable;
-    }
-
-    public function prepareAssetsThreatsVulnerabilitiesAndThemesCacheData(Anr $anr): void
-    {
-        $this->prepareAssetsCacheData($anr);
-        $this->prepareThreatsCacheData($anr);
-        $this->prepareVulnerabilitiesCacheData($anr);
-        $this->prepareThemesCacheData($anr);
-    }
-
-    public function prepareAssetsCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['assets'])) {
-            $this->cachedData['assets'] = [];
-            $this->cachedData['assets_codes'] = [];
-            foreach ($this->assetTable->findByAnr($anr) as $asset) {
-                $this->cachedData['assets'][$asset->getUuid()] = $asset;
-                $this->cachedData['assets_codes'][] = $asset->getCode();
-            }
-        }
-    }
-
-    public function prepareThreatsCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['threats'])) {
-            $this->cachedData['threats'] = [];
-            $this->cachedData['threats_codes'] = [];
-            foreach ($this->threatTable->findByAnr($anr) as $threat) {
-                $this->cachedData['threats'][$threat->getUuid()] = $threat;
-                $this->cachedData['threats_codes'][] = $threat->getCode();
-            }
-        }
-    }
-
-    public function prepareVulnerabilitiesCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['vulnerabilities'])) {
-            $this->cachedData['vulnerabilities'] = [];
-            $this->cachedData['vulnerabilities_codes'] = [];
-            foreach ($this->vulnerabilityTable->findByAnr($anr) as $vulnerability) {
-                $this->cachedData['vulnerabilities'][$vulnerability->getUuid()] = $vulnerability;
-                $this->cachedData['vulnerabilities_codes'][] = $vulnerability->getCode();
-            }
-        }
+        $this->soaCategoryTable = $soaCategoryTable;
     }
 
     public function prepareThemesCacheData(Anr $anr): void
     {
-        if (!isset($this->cachedData['themes'])) {
-            $this->cachedData['themes'] = [];
+        if (!isset($this->arrayCache['themes_by_labels'])) {
             foreach ($this->themeTable->findByAnr($anr) as $theme) {
-                $this->cachedData['themes'][$theme->getLabel($anr->getLanguage())] = $theme;
+                $this->addItemToArrayCache('themes_by_labels', $theme, $theme->getLabel($anr->getLanguage()));
             }
         }
     }
 
-    public function prepareMeasuresAndReferentialCacheData(Anr $anr): void
+    public function prepareSoaCategoriesCacheData(Anr $anr): void
     {
-        $this->prepareMeasuresCacheData($anr);
-        $this->prepareReferentialsCacheData($anr);
-    }
-
-    public function prepareMeasuresCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['measures'])) {
-            $this->cachedData['measures'] = $this->measureTable->findByAnrIndexedByUuid($anr);
+        if (!isset($this->arrayCache['soa_categories_by_ref_and_label'])) {
+            foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
+                $this->addItemToArrayCache(
+                    'soa_categories_by_ref_and_label',
+                    $soaCategory,
+                    $soaCategory->getReferential()->getUuid() . '_' . $soaCategory->getLabel($anr->getLanguage())
+                );
+            }
         }
     }
 
-    public function prepareReferentialsCacheData(Anr $anr): void
+    public function addItemToArrayCache(string $cacheKey, $value, $itemKey = null): void
     {
-        if (!isset($this->cachedData['referentials'])) {
-            $this->cachedData['referentials'] = $this->referentialTable->findByAnrIndexedByUuid($anr);
-        }
-    }
-
-    public function prepareRolfTagsCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['rolfTags'])) {
-            $this->cachedData['rolfTags'] = $this->rolfTagTable->findByAnrIndexedByCode($anr);
-        }
-    }
-
-    public function prepareRolfRisksCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['rolfRisks'])) {
-            $this->cachedData['rolfRisks'] = $this->rolfRiskTable->findByAnrIndexedByCode($anr);
-        }
-    }
-
-    public function prepareAmvsCacheData(Anr $anr): void
-    {
-        if (!isset($this->cachedData['amvs'])) {
-            $this->cachedData['amvs'] = $this->amvTable->findByAnrIndexedByUuid($anr);
-        }
-    }
-
-    public function addDataToCache(string $cacheKey, $value, $elementKey = null): void
-    {
-        if ($elementKey === null) {
-            $this->cachedData[$cacheKey][] = $value;
+        if ($itemKey === null) {
+            $this->arrayCache[$cacheKey][] = $value;
         } else {
-            $this->cachedData[$cacheKey][$elementKey] = $value;
-        }
-    }
-
-    public function removeDataFromCache(string $cacheKey, $value, $elementKey = null): void
-    {
-        if ($elementKey === null) {
-            unset($this->cachedData[$cacheKey]);
-        } else {
-            unset($this->cachedData[$cacheKey][$elementKey]);
+            $this->arrayCache[$cacheKey][$itemKey] = $value;
         }
     }
 
     /**
-     * @return object[]
+     * @return mixed
      */
-    public function getCachedDataByKey(string $cacheKey): array
+    public function getItemFromArrayCache(string $cacheKey, $itemKey = null)
     {
-        return $this->cachedData[$cacheKey] ?? [];
+        if ($itemKey === null) {
+            return $this->arrayCache[$cacheKey] ?? null;
+        }
+
+        return $this->arrayCache[$cacheKey][$itemKey] ?? null;
     }
 
-    /**
-     * @return mixed|null Can be an object or array of objects.
-     */
-    public function getCachedObjectByKeyAndId(string $cacheKey, $elementKey)
+    public function cleanArrayCache(string $cacheKey = null, $itemKey = null): void
     {
-        return $this->cachedData[$cacheKey][$elementKey] ?? null;
+        if ($cacheKey === null) {
+            $this->arrayCache = [];
+
+            return;
+        }
+
+        if ($itemKey === null) {
+            if (isset($this->arrayCache[$cacheKey])) {
+                unset($this->arrayCache[$cacheKey]);
+            }
+
+            return;
+        }
+
+        if (isset($this->arrayCache[$cacheKey][$itemKey])) {
+            unset($this->arrayCache[$cacheKey][$itemKey]);
+        }
+    }
+
+    public function cleanArrayCacheByItems(array $cacheKeys): void
+    {
+        foreach ($cacheKeys as $cacheKey) {
+            $this->cleanArrayCache($cacheKey);
+        }
     }
 }

@@ -35,7 +35,10 @@ class ThreatTable extends AbstractEntityTable
         $res = $qb->select('COUNT(t.uuid)')
             ->where('t.anr = :anrid')
             ->setParameter(':anrid', $anrId)
-            ->andWhere('t.qualification != -1')->getQuery()->getSingleScalarResult();
+            ->andWhere('t.qualification != -1')
+            ->getQuery()
+            ->getSingleScalarResult();
+
         return $res > 0;
     }
 
@@ -50,6 +53,31 @@ class ThreatTable extends AbstractEntityTable
             ->setParameter(':anr', $anr)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Threat
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('t')
+            ->where('t.anr = :anr')
+            ->andWhere('t.uuid = :uuid')
+            ->setParameter(':anr', $anr)
+            ->setParameter(':uuid', $uuid)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function existsWithAnrAndCode(Anr $anr, string $code): bool
+    {
+        return $this->getRepository()->createQueryBuilder('t')
+            ->where('t.anr = :anr')
+            ->andWhere('t.uuid = :code')
+            ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult() !== null;
     }
 
     public function saveEntity(ThreatSuperClass $threat, bool $flushAll = true): void

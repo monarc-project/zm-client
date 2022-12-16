@@ -32,13 +32,24 @@ class AmvTable extends AbstractEntityTable
         parent::__construct($dbService, Amv::class, $connectedUserService);
     }
 
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Amv
+    {
+        return $this->getRepository()->createQueryBuilder('amv')
+            ->where('amv.anr = :anr')
+            ->andWhere('amv.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
      * @return Amv[]
      */
-    public function findByAnrIndexedByUuid(Anr $anr): array
+    public function findByAnr(Anr $anr): array
     {
         return $this->getRepository()
-            ->createQueryBuilder('amv', 'amv.uuid')
+            ->createQueryBuilder('amv')
             ->where('amv.anr = :anr')
             ->setParameter('anr', $anr)
             ->getQuery()

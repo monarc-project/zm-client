@@ -40,19 +40,6 @@ class ReferentialTable extends AbstractEntityTable
     }
 
     /**
-     * @return Referential[]
-     */
-    public function findByAnrIndexedByUuid(Anr $anr): array
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('r', 'r.uuid')
-            ->where('r.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
      * @return Referential|null
      * @throws NonUniqueResultException
      */

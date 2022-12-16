@@ -29,6 +29,11 @@ class ThemeTable extends CoreThemeTable
         return Theme::class;
     }
 
+    public function findById(int $id): ?Theme
+    {
+        return $this->getRepository()->find($id);
+    }
+
     /**
      * @return Theme[]
      */
