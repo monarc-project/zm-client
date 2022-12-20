@@ -329,9 +329,6 @@ class AssetImportService
         if (!empty($amvsToDelete)) {
             $this->amvTable->deleteEntities($amvsToDelete);
         }
-
-        /* The array cache is not needed for the items. */
-        $this->importCacheHelper->cleanArrayCacheByItems(['threats', 'vulnerabilities', 'measures', 'referentials']);
     }
 
     private function processMeasuresAndReferentialData(array $measuresData, Anr $anr, Amv $amv): void

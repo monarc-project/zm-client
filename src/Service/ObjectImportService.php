@@ -269,6 +269,11 @@ class ObjectImportService
         }
 
         $rolfTagData = $data['rolfTags'][(int)$data['object']['rolfTag']];
+        $rolfTag = $this->importCacheHelper->getItemFromArrayCache('rolfTags', $rolfTagData['code']);
+        if ($rolfTag !== null) {
+            return $rolfTag;
+        }
+
         $rolfTag = $this->rolfTagTable->findByAnrAndCode($anr, $rolfTagData['code']);
         if ($rolfTag === null) {
             $rolfTag = (new RolfTag())
@@ -286,15 +291,21 @@ class ObjectImportService
 
                 $rolfRiskData = $data['rolfRisks'][$riskId];
                 $rolfRiskCode = (string)$rolfRiskData['code'];
-
-                $rolfRisk = $this->rolfRiskTable->findByAnrAndCode($anr, $rolfRiskCode);
+                $rolfRisk = $this->importCacheHelper->getItemFromArrayCache('rolf_risks_by_old_ids', $riskId);
                 if ($rolfRisk === null) {
-                    $rolfRisk = (new RolfRisk())
-                        ->setAnr($anr)
-                        ->setCode($rolfRiskCode)
-                        ->setLabels($rolfRiskData)
-                        ->setDescriptions($rolfRiskData)
-                        ->setCreator($this->connectedUser->getEmail());
+                    $rolfRisk = $this->rolfRiskTable->findByAnrAndCode($anr, $rolfRiskCode);
+                    if ($rolfRisk === null) {
+                        $rolfRisk = (new RolfRisk())
+                            ->setAnr($anr)
+                            ->setCode($rolfRiskCode)
+                            ->setLabels($rolfRiskData)
+                            ->setDescriptions($rolfRiskData)
+                            ->setCreator($this->connectedUser->getEmail());
+                    }
+
+                    if (!empty($rolfRiskData['measures'])) {
+                        $this->processMeasuresAndReferentialData($anr, $rolfRisk, $rolfRiskData['measures']);
+                    }
 
                     $this->rolfRiskTable->saveEntity($rolfRisk, false);
 
@@ -302,18 +313,13 @@ class ObjectImportService
                     $this->importCacheHelper->addItemToArrayCache('rolf_risks_by_old_ids', $rolfRisk, (int)$riskId);
                 }
 
-                if (!empty($rolfRiskData['measures'])) {
-                    $this->processMeasuresAndReferentialData($anr, $rolfRisk, $rolfRiskData['measures']);
-                }
-
                 $rolfTag->addRisk($rolfRisk);
             }
-
-            /* The array cache data is not needed for the items anymore. */
-            $this->importCacheHelper->cleanArrayCacheByItems(['measures']);
         }
 
         $this->rolfTagTable->saveEntity($rolfTag, false);
+
+        $this->importCacheHelper->addItemToArrayCache('rolfTags', $rolfTag, $rolfTagData['code']);
 
         return $rolfTag;
     }

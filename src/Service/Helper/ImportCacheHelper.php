@@ -69,32 +69,4 @@ class ImportCacheHelper
 
         return $this->arrayCache[$cacheKey][$itemKey] ?? null;
     }
-
-    public function cleanArrayCache(string $cacheKey = null, $itemKey = null): void
-    {
-        if ($cacheKey === null) {
-            $this->arrayCache = [];
-
-            return;
-        }
-
-        if ($itemKey === null) {
-            if (isset($this->arrayCache[$cacheKey])) {
-                unset($this->arrayCache[$cacheKey]);
-            }
-
-            return;
-        }
-
-        if (isset($this->arrayCache[$cacheKey][$itemKey])) {
-            unset($this->arrayCache[$cacheKey][$itemKey]);
-        }
-    }
-
-    public function cleanArrayCacheByItems(array $cacheKeys): void
-    {
-        foreach ($cacheKeys as $cacheKey) {
-            $this->cleanArrayCache($cacheKey);
-        }
-    }
 }

@@ -1884,13 +1884,9 @@ class InstanceImportService
 
             if (!empty($operationalRiskData['rolfRisk']) && $monarcObject->getRolfTag() !== null) {
                 /** @var RolfRisk|null $rolfRisk */
-                $rolfRiskId = $this->importCacheHelper->getItemFromArrayCache(
-                    'rolf_risks_by_old_ids',
-                    (int)$operationalRiskData['rolfRisk']
-                );
-                if ($rolfRiskId !== null) {
-                    $rolfRisk = $this->rolfRiskTable->findById((int)$rolfRiskId);
-
+                $rolfRisk = $this->importCacheHelper
+                    ->getItemFromArrayCache('rolf_risks_by_old_ids', (int)$operationalRiskData['rolfRisk']);
+                if ($rolfRisk !== null) {
                     $operationalInstanceRisk
                         ->setRolfRisk($rolfRisk)
                         ->setRiskCacheCode($rolfRisk->getCode());
