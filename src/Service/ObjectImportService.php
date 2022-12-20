@@ -17,7 +17,6 @@ use Monarc\FrontOffice\Model\Entity\ObjectObject;
 use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\RolfTag;
-use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\MeasureTable;
 use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
@@ -26,44 +25,33 @@ use Monarc\FrontOffice\Model\Table\ObjectObjectTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfTagTable;
-use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
+use Monarc\FrontOffice\Service\Helper\ImportCacheHelper;
 
 class ObjectImportService
 {
-    /** @var MonarcObjectTable */
-    private $monarcObjectTable;
+    private MonarcObjectTable $monarcObjectTable;
 
-    /** @var AssetImportService */
-    private $assetImportService;
+    private AssetImportService $assetImportService;
 
-    /** @var RolfTagTable */
-    private $rolfTagTable;
+    private RolfTagTable $rolfTagTable;
 
-    /** @var RolfRiskTable */
-    private $rolfRiskTable;
+    private RolfRiskTable $rolfRiskTable;
 
-    /** @var MeasureTable */
-    private $measureTable;
+    private MeasureTable $measureTable;
 
-    /** @var ObjectObjectTable */
-    private $objectObjectTable;
+    private ObjectObjectTable $objectObjectTable;
 
-    /** @var ReferentialTable */
-    private $referentialTable;
+    private ReferentialTable $referentialTable;
 
-    /** @var SoaCategoryTable */
-    private $soaCategoryTable;
+    private ObjectCategoryTable $objectCategoryTable;
 
-    /** @var ObjectCategoryTable */
-    private $objectCategoryTable;
-
-    /** @var AnrObjectCategoryTable */
-    private $anrObjectCategoryTable;
-
-    /** @var array */
-    private $cachedData = [];
+    private AnrObjectCategoryTable $anrObjectCategoryTable;
 
     private UserSuperClass $connectedUser;
+
+    private ImportCacheHelper $importCacheHelper;
+
+    private SoaCategoryService $soaCategoryService;
 
     public function __construct(
         MonarcObjectTable $monarcObjectTable,
@@ -73,10 +61,11 @@ class ObjectImportService
         RolfRiskTable $rolfRiskTable,
         MeasureTable $measureTable,
         ReferentialTable $referentialTable,
-        SoaCategoryTable $soaCategoryTable,
         ObjectCategoryTable $objectCategoryTable,
         AnrObjectCategoryTable $anrObjectCategoryTable,
-        ConnectedUserService $connectedUserService
+        ConnectedUserService $connectedUserService,
+        ImportCacheHelper $importCacheHelper,
+        SoaCategoryService $soaCategoryService
     ) {
         $this->monarcObjectTable = $monarcObjectTable;
         $this->objectObjectTable = $objectObjectTable;
@@ -85,10 +74,11 @@ class ObjectImportService
         $this->rolfRiskTable = $rolfRiskTable;
         $this->measureTable = $measureTable;
         $this->referentialTable = $referentialTable;
-        $this->soaCategoryTable = $soaCategoryTable;
         $this->objectCategoryTable = $objectCategoryTable;
         $this->anrObjectCategoryTable = $anrObjectCategoryTable;
         $this->connectedUser = $connectedUserService->getConnectedUser();
+        $this->importCacheHelper = $importCacheHelper;
+        $this->soaCategoryService = $soaCategoryService;
     }
 
     /**
@@ -104,8 +94,10 @@ class ObjectImportService
 
         $objectData = $data['object'];
 
-        if (isset($this->cachedData['objects'][$objectData['uuid']])) {
-            return $this->cachedData['objects'][$objectData['uuid']];
+        /* The objects cache preparation is not called, because all the importing objects have to be processed. */
+        $monarcObject = $this->importCacheHelper->getItemFromArrayCache('objects', $objectData['uuid']);
+        if ($monarcObject !== null) {
+            return $monarcObject;
         }
 
         $asset = $this->assetImportService->importFromArray($this->getMonarcVersion($data), $data['asset'], $anr);
@@ -118,9 +110,7 @@ class ObjectImportService
             return null;
         }
 
-        /*
-         * Import Operational Risks.
-         */
+        /* Import Operational Risks. */
         $rolfTag = $this->processRolfTagAndRolfRisks($data, $anr);
 
         /*
@@ -130,9 +120,9 @@ class ObjectImportService
         $objectScope = (int)$objectData['scope'];
         $nameFiledKey = 'name' . $anr->getLanguage();
         $monarcObject = null;
-        if ($objectScope === MonarcObject::SCOPE_LOCAL
+        if ($objectScope === ObjectSuperClass::SCOPE_LOCAL
             || (
-                $objectScope === MonarcObject::SCOPE_GLOBAL
+                $objectScope === ObjectSuperClass::SCOPE_GLOBAL
                 && $modeImport === 'merge'
             )
         ) {
@@ -176,7 +166,7 @@ class ObjectImportService
 
         $this->monarcObjectTable->saveEntity($monarcObject);
 
-        $this->cachedData['objects'][$monarcObject->getUuid()] = $monarcObject;
+        $this->importCacheHelper->addItemToArrayCache('objects', $monarcObject, $monarcObject->getUuid());
 
         if (!empty($data['children'])) {
             usort($data['children'], static function ($a, $b) {
@@ -272,21 +262,18 @@ class ObjectImportService
         }
     }
 
-    /**
-     * @throws NonUniqueResultException
-     */
     private function processRolfTagAndRolfRisks(array $data, Anr $anr): ?RolfTag
     {
         if (empty($data['object']['rolfTag']) || empty($data['rolfTags'][$data['object']['rolfTag']])) {
             return null;
         }
 
-        $rolfTagId = (int)$data['object']['rolfTag'];
-        if (isset($this->cachedData['rolfTags'][$rolfTagId])) {
-            return $this->cachedData['rolfTags'][$rolfTagId];
+        $rolfTagData = $data['rolfTags'][(int)$data['object']['rolfTag']];
+        $rolfTag = $this->importCacheHelper->getItemFromArrayCache('rolfTags', $rolfTagData['code']);
+        if ($rolfTag !== null) {
+            return $rolfTag;
         }
 
-        $rolfTagData = $data['rolfTags'][$rolfTagId];
         $rolfTag = $this->rolfTagTable->findByAnrAndCode($anr, $rolfTagData['code']);
         if ($rolfTag === null) {
             $rolfTag = (new RolfTag())
@@ -297,10 +284,6 @@ class ObjectImportService
         }
 
         if (!empty($rolfTagData['risks'])) {
-            $this->cachedData['measures'] = array_merge(
-                $this->cachedData['measures'] ?? [],
-                $this->assetImportService->getCachedDataByKey('measures')
-            );
             foreach ($rolfTagData['risks'] as $riskId) {
                 if (!isset($data['rolfRisks'][$riskId])) {
                     continue;
@@ -308,8 +291,8 @@ class ObjectImportService
 
                 $rolfRiskData = $data['rolfRisks'][$riskId];
                 $rolfRiskCode = (string)$rolfRiskData['code'];
-
-                if (!isset($this->cachedData['rolfRisks'][$riskId])) {
+                $rolfRisk = $this->importCacheHelper->getItemFromArrayCache('rolf_risks_by_old_ids', $riskId);
+                if ($rolfRisk === null) {
                     $rolfRisk = $this->rolfRiskTable->findByAnrAndCode($anr, $rolfRiskCode);
                     if ($rolfRisk === null) {
                         $rolfRisk = (new RolfRisk())
@@ -320,83 +303,23 @@ class ObjectImportService
                             ->setCreator($this->connectedUser->getEmail());
                     }
 
-                    foreach ($rolfRiskData['measures'] as $newMeasure) {
-                        /*
-                         * Backward compatibility.
-                         * Prior v2.10.3 we did not set the measures data when exported.
-                         */
-                        $measureUuid = $newMeasure['uuid'] ?? $newMeasure;
-                        $measure = $this->cachedData['measures'][$measureUuid]
-                            ?? $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
-                        if ($measure === null
-                            && isset($newMeasure['referential'], $newMeasure['category'])
-                        ) {
-                            $referential = $this->referentialTable->findByAnrAndUuid(
-                                $anr,
-                                $newMeasure['referential']['uuid']
-                            );
-                            if ($referential === null) {
-                                $referential = (new Referential())
-                                    ->setAnr($anr)
-                                    ->setUuid($newMeasure['referential']['uuid'])
-                                    ->setCreator($this->connectedUser->getEmail())
-                                    ->{'setLabel' . $anr->getLanguage()}(
-                                        $newMeasure['referential']['label' . $anr->getLanguage()]
-                                    );
-                                $this->referentialTable->saveEntity($referential);
-                            }
-
-                            $category = $this->soaCategoryTable->getEntityByFields([
-                                'anr' => $anr->getId(),
-                                'label' . $anr->getLanguage() => $newMeasure['category']['label' . $anr->getLanguage()],
-                                'referential' => [
-                                    'anr' => $anr->getId(),
-                                    'uuid' => $referential->getUuid(),
-                                ],
-                            ]);
-                            if (empty($category)) {
-                                $category = (new SoaCategory())
-                                    ->setAnr($anr)
-                                    ->setReferential($referential)
-                                    ->{'setLabel' . $anr->getLanguage()}(
-                                        $newMeasure['category']['label' . $anr->getLanguage()]
-                                    );
-                                $this->soaCategoryTable->saveEntity($category, false);
-                            } else {
-                                $category = current($category);
-                            }
-
-                            $measure = (new Measure())
-                                ->setAnr($anr)
-                                ->setUuid($measureUuid)
-                                ->setCategory($category)
-                                ->setReferential($referential)
-                                ->setCode($newMeasure['code'])
-                                ->setLabels($newMeasure)
-                                ->setCreator($this->connectedUser->getEmail());
-
-                            $this->measureTable->saveEntity($measure);
-                        }
-
-                        if ($measure !== null) {
-                            $measure->addOpRisk($rolfRisk);
-
-                            $this->cachedData['measures'][$measureUuid] = $measure;
-                        }
+                    if (!empty($rolfRiskData['measures'])) {
+                        $this->processMeasuresAndReferentialData($anr, $rolfRisk, $rolfRiskData['measures']);
                     }
 
-                    $this->rolfRiskTable->saveEntity($rolfRisk);
+                    $this->rolfRiskTable->saveEntity($rolfRisk, false);
 
-                    $this->cachedData['rolfRisks'][$riskId] = $rolfRisk;
+                    /* The cache with IDs is required to link them with operational risks in InstanceImportService. */
+                    $this->importCacheHelper->addItemToArrayCache('rolf_risks_by_old_ids', $rolfRisk, (int)$riskId);
                 }
 
-                $rolfTag->addRisk($this->cachedData['rolfRisks'][$riskId]);
+                $rolfTag->addRisk($rolfRisk);
             }
         }
 
-        $this->rolfTagTable->saveEntity($rolfTag);
+        $this->rolfTagTable->saveEntity($rolfTag, false);
 
-        $this->cachedData['rolfTags'][$rolfTagId] = $rolfTag;
+        $this->importCacheHelper->addItemToArrayCache('rolfTags', $rolfTag, $rolfTagData['code']);
 
         return $rolfTag;
     }
@@ -443,11 +366,56 @@ class ObjectImportService
         }
     }
 
-    /**
-     * @return object[]
-     */
-    public function getCachedDataByKey(string $key): array
+    private function processMeasuresAndReferentialData(Anr $anr, RolfRisk $rolfRisk, array $measuresData): void
     {
-        return $this->cachedData[$key] ?? [];
+        $labelKey = 'label' . $anr->getLanguage();
+        foreach ($measuresData as $measureData) {
+            /* Backward compatibility. Prior v2.10.3 measures data were not exported. */
+            $measureUuid = $measureData['uuid'] ?? $measureData;
+            $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
+                ?: $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
+
+            if ($measure === null && isset($measureData['referential'], $measureData['category'])) {
+                $referentialUuid = $measuresData['referential']['uuid'];
+                $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialUuid)
+                    ?: $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
+
+                if ($referential === null) {
+                    $referential = (new Referential())
+                        ->setAnr($anr)
+                        ->setUuid($referentialUuid)
+                        ->setCreator($this->connectedUser->getEmail())
+                        ->{'setLabel' . $anr->getLanguage()}($measureData['referential'][$labelKey]);
+
+                    $this->referentialTable->saveEntity($referential, false);
+
+                    $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referentialUuid);
+                }
+
+                $soaCategory = $this->soaCategoryService->getOrCreateSoaCategory(
+                    $this->importCacheHelper,
+                    $anr,
+                    $referential,
+                    $measureData['category'][$labelKey] ?? ''
+                );
+
+                $measure = (new Measure())
+                    ->setAnr($anr)
+                    ->setUuid($measureUuid)
+                    ->setCategory($soaCategory)
+                    ->setReferential($referential)
+                    ->setCode($measureData['code'])
+                    ->setLabels($measureData)
+                    ->setCreator($this->connectedUser->getEmail());
+
+                $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measureUuid);
+            }
+
+            if ($measure !== null) {
+                $measure->addOpRisk($rolfRisk);
+
+                $this->measureTable->saveEntity($measure, false);
+            }
+        }
     }
 }

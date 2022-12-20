@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Entity\ThreatSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -36,10 +35,12 @@ class ThreatTable extends AbstractEntityTable
         $res = $qb->select('COUNT(t.uuid)')
             ->where('t.anr = :anrid')
             ->setParameter(':anrid', $anrId)
-            ->andWhere('t.qualification != -1')->getQuery()->getSingleScalarResult();
+            ->andWhere('t.qualification != -1')
+            ->getQuery()
+            ->getSingleScalarResult();
+
         return $res > 0;
     }
-
 
     /**
      * @return Threat[]
@@ -54,22 +55,9 @@ class ThreatTable extends AbstractEntityTable
             ->getResult();
     }
 
-    public function findUuidsAndCodesByAnr(Anr $anr): array
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Threat
     {
-        return $this->getRepository()->createQueryBuilder('t')
-            ->select('t.uuid, t.code')
-            ->where('t.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getScalarResult();
-    }
-
-    /**
-     * @throws EntityNotFoundException
-     */
-    public function findByAnrAndUuid(Anr $anr, string $uuid): ThreatSuperClass
-    {
-        $threat = $this->getRepository()
+        return $this->getRepository()
             ->createQueryBuilder('t')
             ->where('t.anr = :anr')
             ->andWhere('t.uuid = :uuid')
@@ -78,31 +66,18 @@ class ThreatTable extends AbstractEntityTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-
-        if ($threat === null) {
-            throw new EntityNotFoundException(
-                sprintf('Threat with anr ID "%d" and uuid "%s" has not been found.', $anr->getId(), $uuid)
-            );
-        }
-
-        return $threat;
     }
 
-    /**
-     * @param Anr $anr
-     * @param string[] $uuids
-     *
-     * @return array
-     */
-    public function findByAnrAndUuidsIndexedByField(Anr $anr, array $uuids, string $indexField = 'uuid'): array
+    public function existsWithAnrAndCode(Anr $anr, string $code): bool
     {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.' . $indexField);
-
-        return $queryBuilder->where('t.anr = :anr')
-            ->andWhere($queryBuilder->expr()->in('t.uuid', $uuids))
-            ->setParameter(':anr', $anr)
+        return $this->getRepository()->createQueryBuilder('t')
+            ->where('t.anr = :anr')
+            ->andWhere('t.uuid = :code')
+            ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult() !== null;
     }
 
     public function saveEntity(ThreatSuperClass $threat, bool $flushAll = true): void
