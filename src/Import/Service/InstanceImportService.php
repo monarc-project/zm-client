@@ -1,21 +1,16 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Service;
+namespace Monarc\FrontOffice\Import\Service;
 
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\NonUniqueResultException;
-use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
+use Doctrine\ORM;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
@@ -24,8 +19,10 @@ use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Helper\EncryptDecryptHelperTrait;
+use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
+use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
@@ -57,39 +54,8 @@ use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
-use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\DeliveryTable;
-use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
-use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
-use Monarc\FrontOffice\Model\Table\InterviewTable;
-use Monarc\FrontOffice\Model\Table\MeasureMeasureTable;
-use Monarc\FrontOffice\Model\Table\MeasureTable;
-use Monarc\FrontOffice\Model\Table\OperationalInstanceRiskScaleTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleCommentTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTable;
-use Monarc\FrontOffice\Model\Table\OperationalRiskScaleTypeTable;
-use Monarc\FrontOffice\Model\Table\QuestionChoiceTable;
-use Monarc\FrontOffice\Model\Table\QuestionTable;
-use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
-use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
-use Monarc\FrontOffice\Model\Table\ReferentialTable;
-use Monarc\FrontOffice\Model\Table\RolfRiskTable;
-use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
-use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
-use Monarc\FrontOffice\Model\Table\ScaleTable;
-use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
-use Monarc\FrontOffice\Model\Table\SoaScaleCommentTable;
-use Monarc\FrontOffice\Model\Table\SoaTable;
-use Monarc\FrontOffice\Model\Table\ThemeTable;
-use Monarc\FrontOffice\Model\Table\ThreatTable;
-use Monarc\FrontOffice\Model\Table\TranslationTable;
-use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
-use Monarc\FrontOffice\Service\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Service;
 use Ramsey\Uuid\Uuid;
 
 class InstanceImportService
@@ -102,137 +68,128 @@ class InstanceImportService
 
     private int $currentMaxInstancePosition;
 
-    private AnrInstanceRiskService $anrInstanceRiskService;
+    private Service\AnrInstanceRiskService $anrInstanceRiskService;
 
-    private AnrInstanceService $anrInstanceService;
+    private Service\AnrInstanceService $anrInstanceService;
 
-    private AnrRecordService $anrRecordService;
+    private Service\AnrRecordService $anrRecordService;
 
-    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
+    private Service\AnrInstanceRiskOpService $anrInstanceRiskOpService;
 
-    private InstanceTable $instanceTable;
+    private Table\InstanceTable $instanceTable;
 
-    private AnrTable $anrTable;
+    private Table\AnrTable $anrTable;
 
-    private RecommandationTable $recommendationTable;
+    private Table\RecommandationTable $recommendationTable;
 
-    private InstanceConsequenceTable $instanceConsequenceTable;
+    private Table\InstanceConsequenceTable $instanceConsequenceTable;
 
-    private ScaleTable $scaleTable;
+    private Table\ScaleTable $scaleTable;
 
-    private ScaleImpactTypeTable $scalesImpactTypeTable;
+    private Table\ThreatTable $threatTable;
 
-    private ThreatTable $threatTable;
+    private Table\VulnerabilityTable $vulnerabilityTable;
 
-    private VulnerabilityTable $vulnerabilityTable;
+    private Table\RecommandationSetTable $recommendationSetTable;
 
-    private RecommandationSetTable $recommendationSetTable;
+    private Table\InstanceRiskTable $instanceRiskTable;
 
-    private InstanceRiskTable $instanceRiskTable;
+    private Table\InstanceRiskOpTable $instanceRiskOpTable;
 
-    private InstanceRiskOpTable $instanceRiskOpTable;
+    private Table\RecommandationRiskTable $recommendationRiskTable;
 
-    private RecommandationRiskTable $recommendationRiskTable;
+    private Table\QuestionTable $questionTable;
 
-    private QuestionTable $questionTable;
+    private Table\QuestionChoiceTable $questionChoiceTable;
 
-    private QuestionChoiceTable $questionChoiceTable;
+    private Table\SoaTable $soaTable;
 
-    private SoaTable $soaTable;
+    private Table\MeasureTable $measureTable;
 
-    private MeasureTable $measureTable;
+    private Table\MeasureMeasureTable $measureMeasureTable;
 
-    private MeasureMeasureTable $measureMeasureTable;
+    private Table\ThemeTable $themeTable;
 
-    private ThemeTable $themeTable;
-
-    private ReferentialTable $referentialTable;
-
-    private SoaCategoryTable $soaCategoryTable;
+    private Table\ReferentialTable $referentialTable;
 
     private ObjectImportService $objectImportService;
 
-    private InterviewTable $interviewTable;
+    private Table\InterviewTable $interviewTable;
 
-    private DeliveryTable $deliveryTable;
+    private Table\DeliveryTable $deliveryTable;
 
-    private ScaleImpactTypeTable $scaleImpactTypeTable;
+    private Table\ScaleImpactTypeTable $scaleImpactTypeTable;
 
-    private ScaleCommentTable $scaleCommentTable;
+    private Table\ScaleCommentTable $scaleCommentTable;
 
-    private OperationalRiskScaleTable $operationalRiskScaleTable;
+    private Table\OperationalRiskScaleTable $operationalRiskScaleTable;
 
-    private OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable;
+    private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable;
 
     private UserSuperClass $connectedUser;
 
-    private TranslationTable $translationTable;
+    private Table\TranslationTable $translationTable;
 
     private ConfigService $configService;
 
-    private OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable;
+    private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable;
 
-    private OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
+    private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
 
-    private AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
+    private Table\AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
 
-    private InstanceMetadataTable $instanceMetadataTable;
+    private Table\InstanceMetadataTable $instanceMetadataTable;
 
-    private SoaScaleCommentTable $soaScaleCommentTable;
-
-    private RolfRiskTable $rolfRiskTable;
+    private Table\SoaScaleCommentTable $soaScaleCommentTable;
 
     private ImportCacheHelper $importCacheHelper;
 
-    private SoaCategoryService $soaCategoryService;
+    private Service\SoaCategoryService $soaCategoryService;
 
     private string $importType;
 
     private array $cachedData = [];
 
     public function __construct(
-        AnrInstanceRiskService $anrInstanceRiskService,
-        AnrInstanceService $anrInstanceService,
+        Service\AnrInstanceRiskService $anrInstanceRiskService,
+        Service\AnrInstanceService $anrInstanceService,
         ObjectImportService $objectImportService,
-        AnrRecordService $anrRecordService,
-        AnrInstanceRiskOpService $anrInstanceRiskOpService,
-        InstanceTable $instanceTable,
-        AnrTable $anrTable,
-        InstanceConsequenceTable $instanceConsequenceTable,
-        ScaleTable $scaleTable,
-        ScaleImpactTypeTable $scalesImpactTypeTable,
-        ThreatTable $threatTable,
-        VulnerabilityTable $vulnerabilityTable,
-        RecommandationTable $recommendationTable,
-        RecommandationSetTable $recommendationSetTable,
-        InstanceRiskTable $instanceRiskTable,
-        InstanceRiskOpTable $instanceRiskOpTable,
-        RecommandationRiskTable $recommendationRiskTable,
-        QuestionTable $questionTable,
-        QuestionChoiceTable $questionChoiceTable,
-        SoaTable $soaTable,
-        MeasureTable $measureTable,
-        MeasureMeasureTable $measureMeasureTable,
-        ThemeTable $themeTable,
-        ReferentialTable $referentialTable,
-        SoaCategoryTable $soaCategoryTable,
-        InterviewTable $interviewTable,
-        DeliveryTable $deliveryTable,
-        ScaleImpactTypeTable $scaleImpactTypeTable,
-        ScaleCommentTable $scaleCommentTable,
-        OperationalRiskScaleTable $operationalRiskScaleTable,
-        OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
-        OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
-        OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
+        Service\AnrRecordService $anrRecordService,
+        Service\AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        Table\InstanceTable $instanceTable,
+        Table\AnrTable $anrTable,
+        Table\InstanceConsequenceTable $instanceConsequenceTable,
+        Table\ScaleTable $scaleTable,
+        Table\ThreatTable $threatTable,
+        Table\VulnerabilityTable $vulnerabilityTable,
+        Table\RecommandationTable $recommendationTable,
+        Table\RecommandationSetTable $recommendationSetTable,
+        Table\InstanceRiskTable $instanceRiskTable,
+        Table\InstanceRiskOpTable $instanceRiskOpTable,
+        Table\RecommandationRiskTable $recommendationRiskTable,
+        Table\QuestionTable $questionTable,
+        Table\QuestionChoiceTable $questionChoiceTable,
+        Table\SoaTable $soaTable,
+        Table\MeasureTable $measureTable,
+        Table\MeasureMeasureTable $measureMeasureTable,
+        Table\ThemeTable $themeTable,
+        Table\ReferentialTable $referentialTable,
+        Table\InterviewTable $interviewTable,
+        Table\DeliveryTable $deliveryTable,
+        Table\ScaleImpactTypeTable $scaleImpactTypeTable,
+        Table\ScaleCommentTable $scaleCommentTable,
+        Table\OperationalRiskScaleTable $operationalRiskScaleTable,
+        Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
+        Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
+        Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
         ConnectedUserService $connectedUserService,
-        TranslationTable $translationTable,
-        AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
-        InstanceMetadataTable $instanceMetadataTable,
-        SoaScaleCommentTable $soaScaleCommentTable,
-        RolfRiskTable $rolfRiskTable,
+        Table\TranslationTable $translationTable,
+        Table\AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
+        Table\InstanceMetadataTable $instanceMetadataTable,
+        Table\SoaScaleCommentTable $soaScaleCommentTable,
         ConfigService $configService,
         ImportCacheHelper $importCacheHelper,
-        SoaCategoryService $soaCategoryService
+        Service\SoaCategoryService $soaCategoryService
     ) {
         $this->anrInstanceRiskService = $anrInstanceRiskService;
         $this->anrInstanceService = $anrInstanceService;
@@ -243,7 +200,6 @@ class InstanceImportService
         $this->anrTable = $anrTable;
         $this->instanceConsequenceTable = $instanceConsequenceTable;
         $this->scaleTable = $scaleTable;
-        $this->scalesImpactTypeTable = $scalesImpactTypeTable;
         $this->threatTable = $threatTable;
         $this->vulnerabilityTable = $vulnerabilityTable;
         $this->recommendationTable = $recommendationTable;
@@ -258,7 +214,6 @@ class InstanceImportService
         $this->measureMeasureTable = $measureMeasureTable;
         $this->themeTable = $themeTable;
         $this->referentialTable = $referentialTable;
-        $this->soaCategoryTable = $soaCategoryTable;
         $this->interviewTable = $interviewTable;
         $this->deliveryTable = $deliveryTable;
         $this->scaleImpactTypeTable = $scaleImpactTypeTable;
@@ -271,7 +226,6 @@ class InstanceImportService
         $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
         $this->instanceMetadataTable = $instanceMetadataTable;
         $this->soaScaleCommentTable = $soaScaleCommentTable;
-        $this->rolfRiskTable = $rolfRiskTable;
         $this->configService = $configService;
         $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
         $this->importCacheHelper = $importCacheHelper;
@@ -279,19 +233,12 @@ class InstanceImportService
     }
 
     /**
-     *  Available import modes: 'merge', which will update the existing
-     * instances using the file's data, or 'duplicate' which
-     * will create a new instance using the data.
-     *
-     * @param int $anrId The ANR ID
-     * @param array $data The data that has been posted to the API
+     * Available import modes: 'merge', which will update the existing instances using the file's data,
+     * or 'duplicate' which will create a new instance using the data.
      *
      * @return array An array where the first key is the generated IDs, and the second are import errors
-     * @throws EntityNotFoundException
-     * @throws Exception If the uploaded data is invalid, or the ANR invalid
-     * @throws OptimisticLockException
      */
-    public function importFromFile($anrId, $data)
+    public function importFromFile(int $anrId, array $data): array
     {
         // Mode may either be 'merge' or 'duplicate'
         $mode = empty($data['mode']) ? 'merge' : $data['mode'];
@@ -333,9 +280,7 @@ class InstanceImportService
                     if ($file === false) {
                         // Support legacy export which were base64 encoded.
                         $file = json_decode(
-                            trim(
-                                $this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)
-                            ),
+                            trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)),
                             true
                         );
                     }
@@ -370,10 +315,6 @@ class InstanceImportService
      * @param string $modeImport Import mode, either 'merge' or 'duplicate'
      *
      * @return array|bool An array of created instances IDs, or false in case of error
-     *
-     * @throws Exception
-     * @throws OptimisticLockException
-     * @throws EntityNotFoundException
      */
     public function importFromArray(
         array $data,
@@ -417,12 +358,6 @@ class InstanceImportService
      * @param string $modeImport
      *
      * @return bool|int
-     *
-     * @throws EntityNotFoundException
-     * @throws Exception
-     * @throws NonUniqueResultException
-     * @throws OptimisticLockException
-     * @throws ORMException
      */
     private function importInstanceFromArray(
         array $data,
@@ -479,9 +414,6 @@ class InstanceImportService
 
     /**
      * TODO: refactor the method entirely.
-     *
-     * @throws Exception
-     * @throws OptimisticLockException
      */
     private function importAnrFromArray(
         array $data,
@@ -1099,7 +1031,7 @@ class InstanceImportService
                 if (!isset($this->cachedData['recSets'][$recSetUuid])) {
                     try {
                         $recommendationsSet = $this->recommendationSetTable->findByAnrAndUuid($anr, $recSetUuid);
-                    } catch (EntityNotFoundException $e) {
+                    } catch (ORM\EntityNotFoundException $e) {
                         $recommendationsSet = (new RecommandationSet())
                             ->setUuid($recSetUuid)
                             ->setAnr($anr)
@@ -1144,7 +1076,7 @@ class InstanceImportService
                 if (!isset($this->cachedData['recs'][$recUuid])) {
                     try {
                         $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $recUuid);
-                    } catch (EntityNotFoundException $e) {
+                    } catch (ORM\EntityNotFoundException $e) {
                         $recommendation = (new Recommandation())
                             ->setUuid($recommendationData['uuid'])
                             ->setAnr($anr)
@@ -1174,10 +1106,6 @@ class InstanceImportService
         }
     }
 
-    /**
-     * @throws EntityNotFoundException
-     * @throws NonUniqueResultException
-     */
     private function processRecommendationDataLinkedToRisk(
         Anr $anr,
         array $recommendationData,
@@ -1297,12 +1225,12 @@ class InstanceImportService
 
         if (!empty($data['consequences'])) {
             $localScaleImpact = $this->scaleTable->findByAnrAndType($anr, Scale::TYPE_IMPACT);
-            $scalesImpactTypes = $this->scalesImpactTypeTable->findByAnr($anr);
+            $scalesImpactTypes = $this->scaleImpactTypeTable->findByAnr($anr);
             $localScalesImpactTypes = [];
             foreach ($scalesImpactTypes as $scalesImpactType) {
                 $localScalesImpactTypes[$scalesImpactType->getLabel($anr->getLanguage())] = $scalesImpactType;
             }
-            $scaleImpactTypeMaxPosition = $this->scalesImpactTypeTable->findMaxPositionByAnrAndScale(
+            $scaleImpactTypeMaxPosition = $this->scaleImpactTypeTable->findMaxPositionByAnrAndScale(
                 $anr,
                 $localScaleImpact
             );
@@ -1321,7 +1249,7 @@ class InstanceImportService
                         ->setPosition(++$scaleImpactTypeMaxPosition)
                         ->setCreator($this->connectedUser->getEmail());
 
-                    $this->scalesImpactTypeTable->saveEntity($scaleImpactType, false);
+                    $this->scaleImpactTypeTable->saveEntity($scaleImpactType, false);
 
                     $localScalesImpactTypes[$consequenceData['scaleImpactType'][$labelKey]] = $scaleImpactType;
                 }
@@ -2078,7 +2006,7 @@ class InstanceImportService
     }
 
     private function matchAndGetOperationalRiskScaleTypesMap(
-        AnrSuperClass $anr,
+        Anr $anr,
         array $operationalRiskScalesData,
         array $externalOperationalRiskScalesData
     ): array {
@@ -2237,11 +2165,10 @@ class InstanceImportService
         array $instanceRiskData,
         Anr $anr,
         Instance $instance,
-        AssetSuperClass $asset,
+        Asset $asset,
         Threat $threat,
         Vulnerability $vulnerability
     ): InstanceRisk {
-        /** @var InstanceRisk $instanceRisk */
         $instanceRisk = (new InstanceRisk())
             ->setAnr($anr)
             ->setInstance($instance)
@@ -2275,10 +2202,6 @@ class InstanceImportService
         return $instanceRisk;
     }
 
-    /**
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
     private function createInstance(
         array $data,
         Anr $anr,
@@ -2339,7 +2262,7 @@ class InstanceImportService
         }
     }
 
-    private function adjustOperationalRisksScaleValuesBasedOnNewScales(AnrSuperClass $anr, array $data): void
+    private function adjustOperationalRisksScaleValuesBasedOnNewScales(Anr $anr, array $data): void
     {
         $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnr($anr);
         if (!empty($operationalInstanceRisks)) {
@@ -2421,7 +2344,7 @@ class InstanceImportService
         }
     }
 
-    private function getCurrentOperationalRiskScalesData(AnrSuperClass $anr): array
+    private function getCurrentOperationalRiskScalesData(Anr $anr): array
     {
         if (empty($this->cachedData['currentOperationalRiskScalesData'])) {
             $operationalRisksScales = $this->operationalRiskScaleTable->findByAnr($anr);
@@ -2461,7 +2384,7 @@ class InstanceImportService
      * Prepare and cache the new scales for the future use.
      * The format can be different, depends on the version (before v2.11.0 and after).
      */
-    private function getExternalOperationalRiskScalesData(AnrSuperClass $anr, array $data): array
+    private function getExternalOperationalRiskScalesData(Anr $anr, array $data): array
     {
         if (empty($this->cachedData['externalOperationalRiskScalesData'])) {
             /* Populate with informational risks scales in case if there is an import of file before v2.11.0. */
@@ -2577,7 +2500,7 @@ class InstanceImportService
         return $this->cachedData['externalOperationalRiskScalesData'];
     }
 
-    private function updateScalesAndComments(AnrSuperClass $anr, array $data): void
+    private function updateScalesAndComments(Anr $anr, array $data): void
     {
         $scalesByType = [];
         $scales = $this->scaleTable->findByAnr($anr);
@@ -2606,7 +2529,7 @@ class InstanceImportService
             $this->scaleCommentTable->getDb()->flush();
 
             $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedAndIndexedByPosition($anr);
-            $scaleImpactTypeMaxPosition = $this->scalesImpactTypeTable->findMaxPositionByAnrAndScale(
+            $scaleImpactTypeMaxPosition = $this->scaleImpactTypeTable->findMaxPositionByAnrAndScale(
                 $anr,
                 $scalesByType[Scale::TYPE_IMPACT]
             );
@@ -2658,7 +2581,7 @@ class InstanceImportService
                             ->setPosition(++$scaleImpactTypeMaxPosition)
                             ->setCreator($this->connectedUser->getEmail());
 
-                        $this->scalesImpactTypeTable->saveEntity($scaleImpactType, false);
+                        $this->scaleImpactTypeTable->saveEntity($scaleImpactType, false);
 
                         $scaleImpactTypes[$scaleImpactTypePosition] = $scaleImpactType;
                     }
@@ -2679,7 +2602,7 @@ class InstanceImportService
         $this->cachedData['scales'] = [];
     }
 
-    private function updateOperationalRisksScalesAndRelatedInstances(AnrSuperClass $anr, array $data): void
+    private function updateOperationalRisksScalesAndRelatedInstances(Anr $anr, array $data): void
     {
         $operationalRiskScales = $this->operationalRiskScaleTable->findByAnr($anr);
         $anrLanguageCode = $this->getAnrLanguageCode($anr);
@@ -2878,7 +2801,7 @@ class InstanceImportService
     }
 
     private function createOrUpdateOperationalRiskScaleComment(
-        AnrSuperClass $anr,
+        Anr $anr,
         bool $isMatchRequired,
         OperationalRiskScale $operationalRiskScale,
         array $scaleCommentData,
@@ -2949,17 +2872,6 @@ class InstanceImportService
         return null;
     }
 
-    /**
-     * @param OperationalRiskScale $operationalRiskScale
-     * @param array $scaleTypeCommentData
-     * @param OperationalRiskScaleComment[] $operationalRiskScaleComments
-     * @param Translation[] $scalesTranslations
-     *
-     * @return OperationalRiskScaleComment|null
-     *
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
     private function matchScaleCommentDataWithScaleCommentsList(
         OperationalRiskScale $operationalRiskScale,
         array $scaleTypeCommentData,
@@ -2985,18 +2897,11 @@ class InstanceImportService
         return null;
     }
 
-    private function getAnrLanguageCode(AnrSuperClass $anr): string
+    private function getAnrLanguageCode(Anr $anr): string
     {
         return strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
     }
 
-    /**
-     * @param InstanceSuperClass $instance
-     * @param array $data
-     *
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
     private function createInstanceMetadata(InstanceSuperClass $instance, $data): void
     {
         $anr = $instance->getAnr();
@@ -3063,19 +2968,12 @@ class InstanceImportService
         $this->instanceMetadataTable->flush();
     }
 
-    /**
-     * @param AnrSuperClass $anr
-     * @param array $data
-     *
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    private function createAnrMetadataOnInstances(AnrSuperClass $anr, $data): void
+    private function createAnrMetadataOnInstances(Anr $anr, $data): void
     {
         $anrLanguageCode = $this->getAnrLanguageCode($anr);
         $labels = array_column($this->cachedData['anrMetadataOnInstances'], 'label');
         foreach ($data as $v) {
-            if (!in_array($v['label'], $labels)) {
+            if (!\in_array($v['label'], $labels, true)) {
                 $labelTranslationKey = (string)Uuid::uuid4();
                 $metadata = (new AnrMetadatasOnInstances())
                     ->setAnr($anr)
@@ -3104,15 +3002,7 @@ class InstanceImportService
         $this->anrMetadatasOnInstancesTable->flush();
     }
 
-    /**
-     * @param AnrSuperClass $anr
-     *
-     * @return array
-     *
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    private function getCurrentAnrMetadataOnInstances(AnrSuperClass $anr): array
+    private function getCurrentAnrMetadataOnInstances(Anr $anr): array
     {
         $this->cachedData['currentAnrMetadataOnInstances'] = [];
         $anrMetadatasOnInstancesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
@@ -3135,9 +3025,7 @@ class InstanceImportService
     }
 
     /**
-     * Update the instance impacts from brothers for global assets.
-     *
-     * @param InstanceSuperClass $instance
+     * Updates the instance impacts from brothers for global assets.
      */
     private function updateInstanceMetadataFromBrothers(InstanceSuperClass $instance): void
     {
@@ -3165,10 +3053,7 @@ class InstanceImportService
     }
 
     /**
-     * Update the instance impacts from instance to Brothers for global assets.
-     *
-     * @param InstanceSuperClass $instance
-     * @param InstanceMetadata $instanceMetadata
+     * Updates the instance impacts from instance to Brothers for global assets.
      */
     private function updateInstanceMetadataToBrothers(
         InstanceSuperClass $instance,
@@ -3194,10 +3079,9 @@ class InstanceImportService
         }
     }
 
-    private function getCurrentSoaScaleCommentData(AnrSuperClass $anr): array
+    private function getCurrentSoaScaleCommentData(Anr $anr): array
     {
         if (empty($this->cachedData['currentSoaScaleCommentData'])) {
-            /** @var SoaScaleCommentTable $soaScaleCommentTable */
             $scales = $this->soaScaleCommentTable->findByAnr($anr);
             foreach ($scales as $scale) {
                 if (!$scale->isHidden()) {
@@ -3214,7 +3098,7 @@ class InstanceImportService
         return $this->cachedData['currentSoaScaleCommentData'] ?? [];
     }
 
-    private function mergeSoaScaleComment(array $newScales, AnrSuperClass $anr)
+    private function mergeSoaScaleComment(array $newScales, Anr $anr)
     {
         $soaScaleCommentTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
