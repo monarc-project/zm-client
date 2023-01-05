@@ -870,19 +870,24 @@ class InstanceImportService
                             ->setAnr($anr)
                             ->setMeasure($measure);
                     } else {
-                        $existedSoa->setRemarks($soa['remarks'])
-                            ->setEvidences($soa['evidences'])
-                            ->setActions($soa['actions'])
-                            ->setEX($soa['EX'])
-                            ->setLR($soa['LR'])
-                            ->setCO($soa['CO'])
-                            ->setBR($soa['BR'])
-                            ->setBP($soa['BP'])
-                            ->setRRA($soa['RRA'])
-                            ->setSoaScaleComment(
-                                $this->cachedData['soaScaleCommentExternalIdMapToNewObject'][$soa['soaScaleComment']]
-                            );
-                        $this->soaTable->saveEntity($existedSoa, false);
+                        $soa->setRemarks($soaData['remarks'])
+                        ->setEvidences($soaData['evidences'])
+                        ->setActions($soaData['actions'])
+                        ->setEX($soaData['EX'])
+                        ->setLR($soaData['LR'])
+                        ->setCO($soaData['CO'])
+                        ->setBR($soaData['BR'])
+                        ->setBP($soaData['BP'])
+                        ->setRRA($soaData['RRA']);
+                    }
+                    if (isset($soaData['soaScaleComment'])) {
+                        $soaScaleComment = $this->importCacheHelper->getItemFromArrayCache(
+                            'soaScaleCommentExternalIdMapToNewObject',
+                            $soaData['soaScaleComment']
+                        );
+                        if ($soaScaleComment !== null) {
+                            $soa->setSoaScaleComment($soaScaleComment);
+                        }
                     }
                     $this->soaTable->saveEntity($soa, false);
                 }
