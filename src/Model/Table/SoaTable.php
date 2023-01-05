@@ -73,15 +73,16 @@ class SoaTable extends AbstractEntityTable
     }
 
 
-    public function findByMeasure(Measure $measure): ?Soa
+    public function findByAnrAndMeasureUuid(Anr $anr, string $measureUuid): ?Soa
     {
         return $this->getRepository()
             ->createQueryBuilder('s')
             ->innerJoin('s.measure', 'm')
-            ->where('m.uuid = :measure_uuid')
-            ->andWhere('m.anr = :measure_anr')
-            ->setParameter('measure_uuid', $measure->getUuid())
-            ->setParameter('measure_anr', $measure->getAnr())
+            ->where('s.anr = :anr')
+            ->andWhere('m.uuid = :measure_uuid')
+            ->andWhere('m.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('measure_uuid', $measureUuid)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
