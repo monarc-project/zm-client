@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\CronTask\Table;
 
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Table\AbstractTable;
 use Monarc\FrontOffice\Model\Entity\CronTask;
@@ -16,5 +17,18 @@ class CronTaskTable extends AbstractTable
     public function __construct(EntityManager $entityManager, $entityName = CronTask::class)
     {
         parent::__construct($entityManager, $entityName);
+    }
+
+    public function findNewOneByNameWithHigherPriority(string $name): ?CronTask
+    {
+        return $this->getRepository()->createQueryBuilder('ct')
+            ->where('ct.name = :name')
+            ->andWhere('ct.status', CronTask::STATUS_NEW)
+            ->setParameter('name', $name)
+            ->orderBy('ct.priority', Criteria::DESC)
+            ->addOrderBy('ct.id', Criteria::ASC)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

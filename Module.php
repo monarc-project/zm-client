@@ -1,7 +1,10 @@
 <?php
 namespace Monarc\FrontOffice;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Laminas\Http\Request;
@@ -160,6 +163,19 @@ class Module
                     if(empty($anrid)){
                         break; // pas besoin d'aller plus loin
                     }else{
+
+                        /* Validate the anr status for all not GET method requests. */
+                        if ($e->getRequest()->getMethod() !== 'GET') {
+                            /** @var Anr $anr */
+                            $anr = $sm->get(AnrTable::class)->findById($anrid);
+                            if (!$anr->isActive()) {
+                                throw new Exception(
+                                    'The analysis is not active for the moment, '
+                                    . 'please wait when the process is finished.'
+                                );
+                            }
+                        }
+
                         $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser->getId()]));
                         if(empty($lk)){
                             // On doit tester si c'est un snapshot, dans ce cas, on autorise l'accès mais en READ-ONLY
@@ -201,11 +217,12 @@ class Module
         }
     }
 
-    private function authorizedPost($route, $method){
-        return $method == 'POST' &&
-                ($route == 'monarc_api_global_client_anr/export' || // export ANR
-                $route == 'monarc_api_global_client_anr/instance_export' || // export Instance
-                $route == 'monarc_api_global_client_anr/objects_export' || // export  Object
-                $route == 'monarc_api_global_client_anr/deliverable'); // generate a report
+    private function authorizedPost($route, $method)
+    {
+        return $method === 'POST' &&
+                ($route === 'monarc_api_global_client_anr/export' || // export ANR
+                $route === 'monarc_api_global_client_anr/instance_export' || // export Instance
+                $route === 'monarc_api_global_client_anr/objects_export' || // export  Object
+                $route === 'monarc_api_global_client_anr/deliverable'); // generate a report
     }
 }

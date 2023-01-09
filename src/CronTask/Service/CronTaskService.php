@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\CronTask\Service;
 
+use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\CronTask\Table\CronTaskTable;
 use Monarc\FrontOffice\Model\Entity\CronTask;
 
@@ -14,24 +16,41 @@ class CronTaskService
 {
     private CronTaskTable $cronTaskTable;
 
-    public function __construct(CronTaskTable $cronTaskTable)
+    private UserSuperClass $connectedUser;
+
+    public function __construct(CronTaskTable $cronTaskTable, ConnectedUserService $connectedUserService)
     {
         $this->cronTaskTable = $cronTaskTable;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function createNewTask(): CronTask
+    public function createTask(string $name, array $params = [], int $priority = CronTask::PRIORITY_LOW): CronTask
     {
-        // TODO:
-        $cronTask = (new CronTask())
-            ->setName('');
+        $cronTask = (new CronTask($name, $params, $priority))
+            ->setCreator($this->connectedUser->getEmail());
 
         $this->cronTaskTable->save($cronTask);
+
+        return $cronTask;
     }
 
     public function getNextTaskByName(string $name): ?CronTask
     {
-        // TODO:
+        return $this->cronTaskTable->findNewOneByNameWithHigherPriority($name);
+    }
 
-        return $this->cronTaskTable->findById(123);
+    public function setInProgress(CronTask $cronTask): void
+    {
+        $this->cronTaskTable->save($cronTask->setStatus(CronTask::STATUS_IN_PROGRESS));
+    }
+
+    public function setFailure(CronTask $cronTask, $errorMessage): void
+    {
+        $this->cronTaskTable->save($cronTask->setStatus(CronTask::STATUS_FAILURE)->setErrorMessage($errorMessage));
+    }
+
+    public function setSuccessful(CronTask $cronTask, string $message): void
+    {
+        $this->cronTaskTable->save($cronTask->setStatus(CronTask::STATUS_DONE)->setSuccessfulMessage($message));
     }
 }

@@ -9,9 +9,9 @@ namespace Monarc\FrontOffice\Helper;
 
 use Monarc\Core\Exception\Exception;
 
-class FileUploadHelper
+trait FileUploadHelperTrait
 {
-    public function moveTmpFile(array $tmpFile, $destinationPath, $filename): void
+    public function moveTmpFile(array $tmpFile, $destinationPath, $filename): string
     {
         if ($tmpFile['error'] !== UPLOAD_ERR_OK) {
             throw new Exception(sprintf(
@@ -20,10 +20,13 @@ class FileUploadHelper
             ));
         }
 
-        if (!move_uploaded_file(basename($tmpFile['tmp_name']), $destinationPath . DIRECTORY_SEPARATOR . $filename)) {
+        $filePathAndName = $destinationPath . DIRECTORY_SEPARATOR . $filename;
+        if (!move_uploaded_file(basename($tmpFile['tmp_name']), $filePathAndName)) {
             throw new Exception(
                 'The file cant be saved, please check if the destination directory exists and has write permissions.',
             );
         }
+
+        return $filePathAndName;
     }
 }

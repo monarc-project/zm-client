@@ -10,12 +10,12 @@ namespace Monarc\FrontOffice\Model\Entity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
-// TODO : create migration !!!
+// TODO migration:
+// 1 create the `cron_tasks` table
+// 2 for `anr` table - add field `status` (also set active to all existed)
 /**
  * @ORM\Table(name="cron_tasks", indexes={
  *      @ORM\Index(name="name", columns={"name"}),
- *  }, uniqueConstraints={
- *      @ORM\UniqueConstraint(name="name_priority", columns={"name", "priority"})
  *  }
  * )
  * @ORM\Entity
@@ -26,10 +26,15 @@ class CronTask
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
+    public const NAME_INSTANCE_IMPORT = 'instance-import';
+
     public const STATUS_NEW = 0;
     public const STATUS_IN_PROGRESS = 1;
     public const STATUS_DONE = 2;
     public const STATUS_FAILURE = 9;
+
+    public const PRIORITY_LOW = 1;
+    public const PRIORITY_HIGH = 9;
 
     /**
      * @var int
@@ -71,9 +76,28 @@ class CronTask
     /**
      * @var string
      *
-     * @ORM\Column(name="status", type="text", nullable=true)
+     * @ORM\Column(name="successful_message", type="text", nullable=true)
+     */
+    protected $successfulMessage;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="error_message", type="text", nullable=true)
      */
     protected $errorMessage;
+
+    public function __construct(string $name, array $params, int $priority)
+    {
+        $this->setName($name)
+            ->setParams($params)
+            ->setPriority($priority);
+    }
+
+    public static function getAvailableNames(): array
+    {
+        return [self::NAME_INSTANCE_IMPORT];
+    }
 
     public function getId(): int
     {
@@ -87,6 +111,10 @@ class CronTask
 
     public function setName(string $name): self
     {
+        if (!\in_array($name, self::getAvailableNames(), true)) {
+            throw new \LogicException(sprintf('The cron task name "%s" is not supported.', $name));
+        }
+
         $this->name = $name;
 
         return $this;
@@ -124,6 +152,18 @@ class CronTask
     public function setStatus(int $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getSuccessfulMessage(): string
+    {
+        return $this->successfulMessage;
+    }
+
+    public function setSuccessfulMessage(string $successfulMessage): self
+    {
+        $this->successfulMessage = $successfulMessage;
 
         return $this;
     }
