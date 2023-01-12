@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Import\Controller;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Helper\FileUploadHelperTrait;
@@ -58,20 +59,26 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
             /* Upload file to process it later. */
             $tmpFile = current($files);
             $fileName = $anrId . '-' . $tmpFile['name'];
-            $fileNameWithPath = $this->moveTmpFile(current($files), $this->importConfig['uploadFolder'], $fileName);
+            $fileNameWithPath = $this->moveTmpFile($tmpFile, $this->importConfig['uploadFolder'], $fileName);
 
+            /* Prepare the import params. */
             $password = '';
             if (!empty($data['password'])) {
                 $password = base64_encode($data['password']);
             }
-            $mode = $data['mode'] ?: 'merge';
-            $idparent = $data['idparent'] ?: 0;
+            $mode = $data['mode'] ?? 'merge';
+            $idparent = $data['idparent'] ?? 0;
 
             /* Create a job for the process */
             $this->cronTaskService->createTask(
                 CronTask::NAME_INSTANCE_IMPORT,
                 compact('anrId', 'fileNameWithPath', 'password', 'mode', 'idparent'),
                 CronTask::PRIORITY_HIGH
+            );
+
+            /* Set Anr status to pending. */
+            $this->anrTable->saveEntity(
+                $this->anrTable->findById($anrId)->setStatus(AnrSuperClass::STATUS_AWAITING_OF_IMPORT)
             );
 
             return new JsonModel([

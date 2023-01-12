@@ -16,7 +16,11 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-// TODO: Added readme section about this command.
+/**
+ * The command executes all the pending analysis imports.
+ * The first CronTask record with name "instance-import", status "new"(0) and highest priority will be taken.
+ * The process ID is stored in the database (CronTask record) to allow termination of the import process if needed.
+ */
 class ImportAnalysesCommand extends Command
 {
     protected static $defaultName = 'monarc:import-analyses';
@@ -47,6 +51,9 @@ class ImportAnalysesCommand extends Command
             return 0;
         }
 
+        /* Set status to in process immediately that other executions don't fetch it. */
+        $this->cronTaskService->setInProgress($cronTask, getmypid() ?: 0);
+
         $params = $cronTask->getParams();
         $anrId = $params['anrId'] ?? null;
         if ($anrId === null) {
@@ -57,28 +64,34 @@ class ImportAnalysesCommand extends Command
 
         try {
             $anr = $this->anrTable->findById((int)$anrId);
+            if ($anr->getStatus() !== AnrSuperClass::STATUS_AWAITING_OF_IMPORT) {
+                $this->cronTaskService->setFailure(
+                    $cronTask,
+                    sprintf('The analysis status "%d" is not correct to start the import process.', $anr->getStatus())
+                );
+
+                return 1;
+            }
         } catch (\Throwable $e) {
             $this->cronTaskService->setFailure($cronTask, $e->getMessage());
 
             return 1;
         }
 
-        /* Set statuses for the upcoming process. */
-        $this->cronTaskService->setInProgress($cronTask);
-        $anr->setStatus(AnrSuperClass::STATUS_UNDER_IMPORT);
-        $this->anrTable->saveEntity($anr);
-
         $password = null;
         if ($params['password'] !== '') {
             $password = base64_decode($params['password']);
         }
 
+        $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_UNDER_IMPORT));
         $ids = [];
+        $errors = [];
         try {
             [$ids, $errors] = $this->instanceImportService->importFromFile($anrId, [
-                'file' => [
-                    'tmp_name' => $params['fileNameWithPath']
-                ],
+                'file' => [[
+                    'tmp_name' => $params['fileNameWithPath'],
+                    'error' => UPLOAD_ERR_OK,
+                ]],
                 'password' => $password,
                 'mode' => $params['mode'] ?? null,
                 'idparent' => $params['idparent'] ?? null,
@@ -89,15 +102,19 @@ class ImportAnalysesCommand extends Command
 
         if (!empty($errors)) {
             $this->cronTaskService->setFailure($cronTask, implode("\n", $errors));
+            $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_IMPORT_ERROR));
 
             return 1;
         }
 
+        $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_ACTIVE));
         $this->cronTaskService->setSuccessful(
             $cronTask,
             'The Analysis was successfully imported with anr ID ' . $anrId
             . ' and root instance IDs: ' . implode(', ', $ids)
         );
+
+        unlink($params['fileNameWithPath']);
 
         return 0;
     }

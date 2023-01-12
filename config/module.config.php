@@ -7,12 +7,16 @@ use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
+use Monarc\FrontOffice\CronTask\Table\CronTaskTable;
 use Monarc\FrontOffice\Import;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\Table\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Service;
@@ -1278,6 +1282,7 @@ return [
             Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
             Table\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
             Table\ClientModelTable::class => ClientEntityManagerFactory::class,
+            CronTaskTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1416,6 +1421,7 @@ return [
                     $container->get(ConfigService::class),
                 );
             },
+            CronTaskService::class => AutowireFactory::class,
 
             // Helpers
             Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
@@ -1427,6 +1433,30 @@ return [
             CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
             GetStatsQueryParamsValidator::class => GetStatsQueryParamsValidatorFactory::class,
             GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
+
+            // Commands
+            Import\Command\ImportAnalysesCommand::class => static function (
+                ContainerInterface $container,
+                $serviceName
+            ) {
+                /** @var ConnectedUserService $connectedUserService */
+                $connectedUserService = $container->get(ConnectedUserService::class);
+                $connectedUserService->setConnectedUser(new User([
+                    'firstname' => 'System',
+                    'lastname' => 'System',
+                    'email' => 'System',
+                    'language' => 1,
+                    'mospApiKey' => '',
+                    'creator' => 'System',
+                    'role' => [],
+                ]));
+
+                return new Import\Command\ImportAnalysesCommand(
+                    $container->get(CronTaskService::class),
+                    $container->get(Import\Service\InstanceImportService::class),
+                    $container->get(Table\AnrTable::class)
+                );
+            },
         ],
     ],
 

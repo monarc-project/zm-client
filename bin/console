@@ -5,6 +5,7 @@ define('PROJECT_ROOT', __DIR__ . '/../../../../');
 
 require PROJECT_ROOT . 'vendor/autoload.php';
 
+use Monarc\FrontOffice\Import\Command\ImportAnalysesCommand;
 use Monarc\FrontOffice\Stats\Command\CollectStatsCommand;
 use Monarc\FrontOffice\Command\CreateUsersCommand;
 use Monarc\FrontOffice\Command\FixRecommendationsPosition;
@@ -19,5 +20,6 @@ $consoleApp = new ConsoleApp();
 $consoleApp->add($laminasApp->getServiceManager()->get(CreateUsersCommand::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(FixRecommendationsPosition::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(CollectStatsCommand::class));
+$consoleApp->add($laminasApp->getServiceManager()->get(ImportAnalysesCommand::class));
 
 $consoleApp->run();

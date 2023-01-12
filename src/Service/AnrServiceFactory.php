@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Model\Table as CoreTable;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Model\Entity\Anr;
@@ -122,5 +123,6 @@ class AnrServiceFactory extends AbstractServiceFactory
 
         // other Service
         'configService' => ConfigService::class,
+        'cronTaskService' => CronTaskService::class,
     ];
 }

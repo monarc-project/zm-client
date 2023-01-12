@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\CronTask\Service;
 
+use DateTime;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\CronTask\Table\CronTaskTable;
@@ -16,18 +17,20 @@ class CronTaskService
 {
     private CronTaskTable $cronTaskTable;
 
-    private UserSuperClass $connectedUser;
+    private ?UserSuperClass $connectedUser;
 
     public function __construct(CronTaskTable $cronTaskTable, ConnectedUserService $connectedUserService)
     {
         $this->cronTaskTable = $cronTaskTable;
-        $this->connectedUser = $connectedUserService->getConnectedUser();
+        if ($connectedUserService->getConnectedUser() !== null) {
+            $this->connectedUser = $connectedUserService->getConnectedUser();
+        }
     }
 
     public function createTask(string $name, array $params = [], int $priority = CronTask::PRIORITY_LOW): CronTask
     {
         $cronTask = (new CronTask($name, $params, $priority))
-            ->setCreator($this->connectedUser->getEmail());
+            ->setCreator($this->connectedUser !== null ? $this->connectedUser->getEmail() : 'System');
 
         $this->cronTaskTable->save($cronTask);
 
@@ -39,18 +42,53 @@ class CronTaskService
         return $this->cronTaskTable->findNewOneByNameWithHigherPriority($name);
     }
 
-    public function setInProgress(CronTask $cronTask): void
+    public function getLatestTaskByNameWithParam(string $name, array $searchParam): ?CronTask
     {
-        $this->cronTaskTable->save($cronTask->setStatus(CronTask::STATUS_IN_PROGRESS));
+        $searchParamKey = (string)array_key_first($searchParam);
+        if ($searchParamKey === '') {
+            return null;
+        }
+
+        $searchParamValue = current($searchParam);
+        $dateTimeFrom = new DateTime('-1 day');
+        $cronTasks = $this->cronTaskTable->findByNameOrderedByExecutionOrderLimitedByDate($name, $dateTimeFrom);
+        foreach ($cronTasks as $cronTask) {
+            $params = $cronTask->getParams();
+            if (\array_key_exists($searchParamKey, $params) && $params[$searchParamKey] === $searchParamValue) {
+                return $cronTask;
+            }
+        }
+
+        return null;
     }
 
-    public function setFailure(CronTask $cronTask, $errorMessage): void
+    public function setInProgress(CronTask $cronTask, int $pid): void
     {
-        $this->cronTaskTable->save($cronTask->setStatus(CronTask::STATUS_FAILURE)->setErrorMessage($errorMessage));
+        $cronTask
+            ->setStatus(CronTask::STATUS_IN_PROGRESS)
+            ->setPid($pid)
+            ->setUpdater($this->connectedUser !== null ? $this->connectedUser->getEmail() : 'System');
+
+        $this->cronTaskTable->save($cronTask);
+    }
+
+    public function setFailure(CronTask $cronTask, string $message): void
+    {
+        $cronTask
+            ->setStatus(CronTask::STATUS_FAILURE)
+            ->setResultMessage($message)
+            ->setUpdater($this->connectedUser !== null ? $this->connectedUser->getEmail() : 'System');
+
+        $this->cronTaskTable->save($cronTask);
     }
 
     public function setSuccessful(CronTask $cronTask, string $message): void
     {
-        $this->cronTaskTable->save($cronTask->setStatus(CronTask::STATUS_DONE)->setSuccessfulMessage($message));
+        $cronTask
+            ->setStatus(CronTask::STATUS_DONE)
+            ->setResultMessage($message)
+            ->setUpdater($this->connectedUser !== null ? $this->connectedUser->getEmail() : 'System');
+
+        $this->cronTaskTable->save($cronTask);
     }
 }

@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\CronTask\Table;
 
+use DateTime;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Table\AbstractTable;
@@ -23,12 +24,28 @@ class CronTaskTable extends AbstractTable
     {
         return $this->getRepository()->createQueryBuilder('ct')
             ->where('ct.name = :name')
-            ->andWhere('ct.status', CronTask::STATUS_NEW)
+            ->andWhere('ct.status = ' . CronTask::STATUS_NEW)
             ->setParameter('name', $name)
             ->orderBy('ct.priority', Criteria::DESC)
             ->addOrderBy('ct.id', Criteria::ASC)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * @return CronTask[]
+     */
+    public function findByNameOrderedByExecutionOrderLimitedByDate(string $name, DateTime $dateTimeFrom): array
+    {
+        return $this->getRepository()->createQueryBuilder('ct')
+            ->where('ct.name = :name')
+            ->andWhere('ct.createdAt >= :dateTimeFrom')
+            ->setParameter('name', $name)
+            ->setParameter('dateTimeFrom', $dateTimeFrom)
+            ->orderBy('ct.priority', Criteria::DESC)
+            ->addOrderBy('ct.id', Criteria::DESC)
+            ->getQuery()
+            ->getResult();
     }
 }

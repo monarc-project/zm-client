@@ -7,12 +7,11 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\AnrMetadatasOnInstancesSuperClass;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
-use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\Model;
 use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
@@ -25,7 +24,6 @@ use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
-use Monarc\Core\Model\Table\AnrMetadatasOnInstancesTable as CoreAnrMetadatasOnInstancesTable;
 use Monarc\Core\Model\Table\AnrObjectCategoryTable as CoreAnrObjectCategoryTable;
 use Monarc\Core\Model\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
 use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
@@ -34,13 +32,14 @@ use Monarc\Core\Model\Table\ModelTable;
 use Monarc\Core\Model\Table\ObjectCategoryTable as CoreObjectCategoryTable;
 use Monarc\Core\Model\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
 use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
-use Monarc\Core\Model\Table\SoaScaleCommentTable as CoreSoaScaleCommentTable;
 use Monarc\Core\Model\Table\TranslationTable as CoreTranslationTable;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\ConfigService;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
+use Monarc\FrontOffice\Model\Entity\CronTask;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Instance;
@@ -82,8 +81,6 @@ use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
-use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
-use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
 use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
@@ -102,7 +99,6 @@ use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
-use Monarc\FrontOffice\Model\Table\SoaScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\TranslationTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Monarc\FrontOffice\Model\Entity\Asset;
@@ -114,8 +110,6 @@ use Monarc\FrontOffice\Model\Entity\Record;
 use Monarc\FrontOffice\Model\Entity\RecordRecipient;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Throwable;
-
-use Ramsey\Uuid\Uuid;
 
 /**
  * This class is the service that handles ANR CRUD operations, and various actions on them.
@@ -160,6 +154,7 @@ class AnrService extends AbstractService
     protected $anrCliTable;
     protected $anrObjectCategoryCliTable;
     protected $assetCliTable;
+    /** @var InstanceTable */
     protected $instanceCliTable;
     protected $instanceConsequenceCliTable;
     protected $instanceRiskCliTable;
@@ -212,8 +207,12 @@ class AnrService extends AbstractService
     protected $recordService;
     protected $recordProcessorService;
 
+    /** @var StatsAnrService */
     protected $statsAnrService;
+    /** @var ConfigService */
     protected $configService;
+    /** @var CronTaskService */
+    protected $cronTaskService;
 
     /** @var array */
     private $cachedData;
@@ -283,6 +282,26 @@ class AnrService extends AbstractService
                 'anr' => $anr['id'],
             ]));
             $anr['rwd'] = (empty($lk)) ? -1 : $lk->get('rwd');
+
+            /* Check if the Anr is under background import. */
+            $anr['importStatus'] = [];
+            if ($anr['status'] === AnrSuperClass::STATUS_UNDER_IMPORT) {
+                $importCronTask = $this->cronTaskService->getLatestTaskByNameWithParam(
+                    CronTask::NAME_INSTANCE_IMPORT,
+                    ['anrId' => $anr['id']]
+                );
+                if ($importCronTask !== null && $importCronTask->getStatus() === CronTask::STATUS_IN_PROGRESS) {
+                    $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
+                    $instancesNumber = $this->instanceCliTable->countByAnrIdFromDate(
+                        (int)$anr['id'],
+                        $importCronTask->getUpdatedAt()
+                    );
+                    $anr['importStatus'] = [
+                        'executionTime' => $timeDiff->h . ' hours ' . $timeDiff->i . ' min ' . $timeDiff->s . ' sec',
+                        'createdInstances' => $instancesNumber,
+                    ];
+                }
+            }
         }
 
         return $anrs;

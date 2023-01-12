@@ -1,10 +1,16 @@
 <?php
 namespace Monarc\FrontOffice;
 
+use DateTime;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\CronTask;
+use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Model\Table\UserAnrTable;
 use Laminas\Http\Request;
@@ -164,15 +170,44 @@ class Module
                         break; // pas besoin d'aller plus loin
                     }else{
 
-                        /* Validate the anr status for all not GET method requests. */
+                        /* Validate the anr status for NON GET method requests. */
                         if ($e->getRequest()->getMethod() !== 'GET') {
                             /** @var Anr $anr */
                             $anr = $sm->get(AnrTable::class)->findById($anrid);
                             if (!$anr->isActive()) {
-                                throw new Exception(
-                                    'The analysis is not active for the moment, '
-                                    . 'please wait when the process is finished.'
-                                );
+                                $response = $e->getResponse();
+                                $result = [
+                                    'status' => $anr->getStatus(),
+                                    'importStatus' => [],
+                                ];
+                                if ($anr->getStatus() === AnrSuperClass::STATUS_UNDER_IMPORT) {
+                                    /** @var CronTaskService $cronTaskService */
+                                    $cronTaskService = $sm->get(CronTaskService::class);
+                                    $importCronTask = $cronTaskService->getLatestTaskByNameWithParam(
+                                        CronTask::NAME_INSTANCE_IMPORT,
+                                        ['anrId' => $anrid]
+                                    );
+                                    if ($importCronTask !== null
+                                        && $importCronTask->getStatus() === CronTask::STATUS_IN_PROGRESS
+                                    ) {
+                                        /** @var InstanceTable $instanceTable */
+                                        $instanceTable = $sm->get(InstanceTable::class);
+                                        $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
+                                        $instancesNumber = $instanceTable->countByAnrIdFromDate(
+                                            $anrid,
+                                            $importCronTask->getUpdatedAt()
+                                        );
+                                        $result['importStatus'] = [
+                                            'executionTime' => $timeDiff->h . ' hours ' . $timeDiff->i . ' min '
+                                                . $timeDiff->s . ' sec',
+                                            'createdInstances' => $instancesNumber,
+                                        ];
+                                    }
+                                }
+                                $response->setContent(json_encode($result, JSON_THROW_ON_ERROR));
+                                $response->setStatusCode(409);
+
+                                return $response;
                             }
                         }
 

@@ -7,17 +7,14 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
-// TODO migration:
-// 1 create the `cron_tasks` table
-// 2 for `anr` table - add field `status` (also set active to all existed)
 /**
  * @ORM\Table(name="cron_tasks", indexes={
- *      @ORM\Index(name="name", columns={"name"}),
- *  }
- * )
+ *   @ORM\Index(name="name", columns={"name"}),
+ * })
  * @ORM\Entity
  * @ORM\HasLifecycleCallbacks()
  */
@@ -31,6 +28,7 @@ class CronTask
     public const STATUS_NEW = 0;
     public const STATUS_IN_PROGRESS = 1;
     public const STATUS_DONE = 2;
+    public const STATUS_TERMINATED = 5;
     public const STATUS_FAILURE = 9;
 
     public const PRIORITY_LOW = 1;
@@ -69,6 +67,13 @@ class CronTask
     /**
      * @var int
      *
+     * @ORM\Column(name="pid", type="integer", nullable=true)
+     */
+    protected $pid;
+
+    /**
+     * @var int
+     *
      * @ORM\Column(name="status", type="smallint", nullable=false)
      */
     protected $status = self::STATUS_NEW;
@@ -76,16 +81,9 @@ class CronTask
     /**
      * @var string
      *
-     * @ORM\Column(name="successful_message", type="text", nullable=true)
+     * @ORM\Column(name="result_message", type="text", nullable=true)
      */
-    protected $successfulMessage;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="error_message", type="text", nullable=true)
-     */
-    protected $errorMessage;
+    protected $resultMessage;
 
     public function __construct(string $name, array $params, int $priority)
     {
@@ -144,6 +142,18 @@ class CronTask
         return $this;
     }
 
+    public function getPid(): int
+    {
+        return $this->pid;
+    }
+
+    public function setPid(int $pid): self
+    {
+        $this->pid = $pid;
+
+        return $this;
+    }
+
     public function getStatus(): int
     {
         return $this->status;
@@ -156,26 +166,14 @@ class CronTask
         return $this;
     }
 
-    public function getSuccessfulMessage(): string
+    public function getResultMessage(): string
     {
-        return $this->successfulMessage;
+        return $this->resultMessage;
     }
 
-    public function setSuccessfulMessage(string $successfulMessage): self
+    public function setResultMessage(string $message): self
     {
-        $this->successfulMessage = $successfulMessage;
-
-        return $this;
-    }
-
-    public function getErrorMessage(): string
-    {
-        return $this->errorMessage;
-    }
-
-    public function setErrorMessage(string $errorMessage): self
-    {
-        $this->errorMessage = $errorMessage;
+        $this->resultMessage = $message;
 
         return $this;
     }
