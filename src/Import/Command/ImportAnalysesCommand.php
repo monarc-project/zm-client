@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Import\Command;
 
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Model\Entity\CronTask;
@@ -31,14 +32,18 @@ class ImportAnalysesCommand extends Command
 
     private AnrTable $anrTable;
 
+    private ConfigService $configService;
+
     public function __construct(
         CronTaskService $cronTaskService,
         InstanceImportService $instanceImportService,
-        AnrTable $anrTable
+        AnrTable $anrTable,
+        ConfigService $configService
     ) {
         $this->cronTaskService = $cronTaskService;
         $this->anrTable = $anrTable;
         $this->instanceImportService = $instanceImportService;
+        $this->configService = $configService;
 
         parent::__construct();
     }
@@ -46,6 +51,9 @@ class ImportAnalysesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        if (!empty($this->configService->getConfigOption('import', [])['isBackgroundProcessActive'])) {
+            return 0;
+        }
         $cronTask = $this->cronTaskService->getNextTaskByName(CronTask::NAME_INSTANCE_IMPORT);
         if ($cronTask === null) {
             return 0;

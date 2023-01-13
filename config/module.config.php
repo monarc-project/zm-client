@@ -1454,7 +1454,8 @@ return [
                 return new Import\Command\ImportAnalysesCommand(
                     $container->get(CronTaskService::class),
                     $container->get(Import\Service\InstanceImportService::class),
-                    $container->get(Table\AnrTable::class)
+                    $container->get(Table\AnrTable::class),
+                    $container->get(ConfigService::class)
                 );
             },
         ],
