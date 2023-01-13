@@ -98,4 +98,30 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
             'errors' => $errors,
         ]);
     }
+
+    /**
+     * Terminates background import process if an anr is under import.
+     *
+     * @return JsonModel
+     */
+    public function deleteList($data)
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        if (empty($anrId)) {
+            throw new Exception('Anr id missing', 412);
+        }
+
+        if (!empty($this->importConfig['isBackgroundProcessActive'])) {
+            $importCronTask = $this->cronTaskService
+                ->getLatestTaskByNameWithParam(CronTask::NAME_INSTANCE_IMPORT, ['anrId' => $anrId]);
+            $anr = $this->anrTable->findById($anrId);
+            if ($importCronTask !== null && !$anr->isActive()) {
+                $anr->setStatus(AnrSuperClass::STATUS_ACTIVE);
+                $this->anrTable->saveEntity($anr, false);
+                $this->cronTaskService->terminateCronTask($importCronTask);
+            }
+        }
+
+        return new JsonModel(['status' => 'ok']);
+    }
 }

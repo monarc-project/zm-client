@@ -91,4 +91,17 @@ class CronTaskService
 
         $this->cronTaskTable->save($cronTask);
     }
+
+    public function terminateCronTask(CronTask $cronTask): void
+    {
+        if ($cronTask->getStatus() === CronTask::STATUS_IN_PROGRESS && !empty($cronTask->getPid())) {
+            if (posix_kill($cronTask->getPid(), 9)) {
+                $cronTask->setStatus(CronTask::STATUS_TERMINATED);
+            }
+        } elseif ($cronTask->getStatus() === CronTask::STATUS_NEW) {
+            $cronTask->setStatus(CronTask::STATUS_TERMINATED);
+        }
+
+        $this->cronTaskTable->save($cronTask);
+    }
 }

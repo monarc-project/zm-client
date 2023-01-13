@@ -2,6 +2,7 @@
 namespace Monarc\FrontOffice;
 
 use DateTime;
+use Laminas\Stdlib\ResponseInterface;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
@@ -170,45 +171,9 @@ class Module
                         break; // pas besoin d'aller plus loin
                     }else{
 
-                        /* Validate the anr status for NON GET method requests. */
-                        if ($e->getRequest()->getMethod() !== 'GET') {
-                            /** @var Anr $anr */
-                            $anr = $sm->get(AnrTable::class)->findById($anrid);
-                            if (!$anr->isActive()) {
-                                $response = $e->getResponse();
-                                $result = [
-                                    'status' => $anr->getStatus(),
-                                    'importStatus' => [],
-                                ];
-                                if ($anr->getStatus() === AnrSuperClass::STATUS_UNDER_IMPORT) {
-                                    /** @var CronTaskService $cronTaskService */
-                                    $cronTaskService = $sm->get(CronTaskService::class);
-                                    $importCronTask = $cronTaskService->getLatestTaskByNameWithParam(
-                                        CronTask::NAME_INSTANCE_IMPORT,
-                                        ['anrId' => $anrid]
-                                    );
-                                    if ($importCronTask !== null
-                                        && $importCronTask->getStatus() === CronTask::STATUS_IN_PROGRESS
-                                    ) {
-                                        /** @var InstanceTable $instanceTable */
-                                        $instanceTable = $sm->get(InstanceTable::class);
-                                        $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
-                                        $instancesNumber = $instanceTable->countByAnrIdFromDate(
-                                            $anrid,
-                                            $importCronTask->getUpdatedAt()
-                                        );
-                                        $result['importStatus'] = [
-                                            'executionTime' => $timeDiff->h . ' hours ' . $timeDiff->i . ' min '
-                                                . $timeDiff->s . ' sec',
-                                            'createdInstances' => $instancesNumber,
-                                        ];
-                                    }
-                                }
-                                $response->setContent(json_encode($result, JSON_THROW_ON_ERROR));
-                                $response->setStatusCode(409);
-
-                                return $response;
-                            }
+                        $result = $this->validateAnrStatusAndGetResponseIfInvalid($anrid, $e, $route);
+                        if ($result !== null) {
+                            return $result;
                         }
 
                         $lk = current($sm->get(UserAnrTable::class)->getEntityByFields(['anr'=>$anrid,'user'=>$connectedUser->getId()]));
@@ -259,5 +224,71 @@ class Module
                 $route === 'monarc_api_global_client_anr/instance_export' || // export Instance
                 $route === 'monarc_api_global_client_anr/objects_export' || // export  Object
                 $route === 'monarc_api_global_client_anr/deliverable'); // generate a report
+    }
+
+    /**
+     * Validates the anr status for NON GET method requests exclude DELETE (cancelation of background import).
+     */
+    private function validateAnrStatusAndGetResponseIfInvalid(
+        int $anrId,
+        MvcEvent $e,
+        string $route
+    ): ?ResponseInterface {
+        if ($e->getRequest()->getMethod() === 'GET'
+            || (
+                $e->getRequest()->getMethod() === 'DELETE'
+                && $route === 'monarc_api_global_client_anr/instance_import'
+            )
+        ) {
+            return null;
+        }
+
+        $sm = $e->getApplication()->getServiceManager();
+
+        /** @var Anr $anr */
+        $anr = $sm->get(AnrTable::class)->findById($anrId);
+        if ($anr->isActive()) {
+            return null;
+        }
+
+        $result = [
+            'status' => $anr->getStatus(),
+            'importStatus' => [],
+        ];
+        /** @var CronTaskService $cronTaskService */
+        $cronTaskService = $sm->get(CronTaskService::class);
+
+        if ($anr->getStatus() === AnrSuperClass::STATUS_UNDER_IMPORT) {
+            $importCronTask = $cronTaskService->getLatestTaskByNameWithParam(
+                CronTask::NAME_INSTANCE_IMPORT,
+                ['anrId' => $anrId]
+            );
+            if ($importCronTask !== null && $importCronTask->getStatus() === CronTask::STATUS_IN_PROGRESS) {
+                /** @var InstanceTable $instanceTable */
+                $instanceTable = $sm->get(InstanceTable::class);
+                $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
+                $instancesNumber = $instanceTable->countByAnrIdFromDate($anrId, $importCronTask->getUpdatedAt());
+                $result['importStatus'] = [
+                    'executionTime' => $timeDiff->h . ' hours ' . $timeDiff->i . ' min ' . $timeDiff->s . ' sec',
+                    'createdInstances' => $instancesNumber,
+                ];
+            }
+        } elseif ($anr->getStatus() === AnrSuperClass::STATUS_IMPORT_ERROR) {
+            $importCronTask = $cronTaskService->getLatestTaskByNameWithParam(
+                CronTask::NAME_INSTANCE_IMPORT,
+                ['anrId' => $anrId]
+            );
+            if ($importCronTask !== null && $importCronTask->getStatus() === CronTask::STATUS_FAILURE) {
+                $result['importStatus'] = [
+                    'errorMessage' => $importCronTask->getResultMessage(),
+                ];
+            }
+        }
+
+        $response = $e->getResponse();
+        $response->setContent(json_encode($result, JSON_THROW_ON_ERROR));
+        $response->setStatusCode(409);
+
+        return $response;
     }
 }
