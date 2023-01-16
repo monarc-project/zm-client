@@ -1411,12 +1411,15 @@ class InstanceImportService
             );
 
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
-                $threat = $this->threatTable->findByAnrAndUuid($anr, $threatData['uuid']);
+                $threat = $this->importCacheHelper->getItemFromArrayCache('threats', $threatData['uuid'])
+                    ?: $this->threatTable->findByAnrAndUuid($anr, $threatData['uuid']);
                 if ($threat === null) {
                     /* The code should be unique. */
-                    $threatData['code'] = $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
-                        ? $threatData['code'] . '-' . time()
-                        : $threatData['code'];
+                    $threatData['code'] =
+                        $this->importCacheHelper->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
+                        || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                            ? $threatData['code'] . '-' . time()
+                            : $threatData['code'];
 
                     $threat = (new Threat())
                         ->setUuid($threatData['uuid'])
@@ -1448,15 +1451,23 @@ class InstanceImportService
                      */
 
                     $this->threatTable->saveEntity($threat, false);
+
+                    $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
+                    $this->importCacheHelper
+                        ->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
                 }
 
-                $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid($anr, $vulnerabilityData['uuid'], false);
+                $vulnerability = $this->importCacheHelper
+                    ->getItemFromArrayCache('vulnerabilities', $vulnerabilityData['uuid'])
+                    ?: $this->vulnerabilityTable->findByAnrAndUuid($anr, $vulnerabilityData['uuid'], false);
                 if ($vulnerability === null) {
                     /* The code should be unique. */
-                    $vulnerabilityData['code'] = $this->vulnerabilityTable->existsWithAnrAndCode(
-                        $anr,
-                        $vulnerabilityData['code']
-                    ) ? $vulnerabilityData['code'] . '-' . time() : $vulnerabilityData['code'];
+                    $vulnerabilityData['code'] =
+                        $this->importCacheHelper
+                            ->getItemFromArrayCache('vulnerabilities_codes', $vulnerabilityData['code']) !== null
+                        || $this->vulnerabilityTable->existsWithAnrAndCode($anr, $vulnerabilityData['code'])
+                            ? $vulnerabilityData['code'] . '-' . time()
+                            : $vulnerabilityData['code'];
 
                     $vulnerability = (new Vulnerability())
                         ->setUuid($vulnerabilityData['uuid'])
@@ -1469,6 +1480,14 @@ class InstanceImportService
                         ->setCreator($this->connectedUser->getEmail());
 
                     $this->vulnerabilityTable->saveEntity($vulnerability, false);
+
+                    $this->importCacheHelper
+                        ->addItemToArrayCache('vulnerabilities', $vulnerability, $vulnerability->getUuid());
+                    $this->importCacheHelper->addItemToArrayCache(
+                        'vulnerabilities_codes',
+                        $vulnerability->getCode(),
+                        $vulnerability->getCode()
+                    );
                 }
 
                 $instanceRisk = $this->createInstanceRiskFromData(
