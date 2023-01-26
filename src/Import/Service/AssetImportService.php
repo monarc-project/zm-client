@@ -90,7 +90,7 @@ class AssetImportService
 
         $asset = $this->processAssetDataAndGetAsset($data['asset'], $anr);
         if (!empty($data['amvs'])) {
-            $this->processThreatsData($data['threats'], $anr);
+            $this->processThreatsData($data['threats'], $data['themes'] ?? [], $anr);
             $this->processVulnerabilitiesData($data['vuls'], $anr);
             $this->processAmvsData($data['amvs'], $anr, $asset);
         }
@@ -125,13 +125,13 @@ class AssetImportService
         return $asset;
     }
 
-    private function processThreatsData(array $threatsData, Anr $anr): void
+    private function processThreatsData(array $threatsData, array $themesData, Anr $anr): void
     {
         $languageIndex = $anr->getLanguage();
         $labelKey = 'label' . $languageIndex;
 
         foreach ($threatsData as $threatUuid => $threatData) {
-            $themeData = $data['themes'][$threatData['theme']] ?? [];
+            $themeData = $themesData[$threatData['theme']] ?? [];
             $threat = $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
             if ($threat !== null) {
                 /* Validate Theme. */
@@ -145,8 +145,6 @@ class AssetImportService
                     $threat->setTheme($theme);
                 }
             } else {
-                $theme = $this->processThemeDataAndGetTheme($themeData, $anr);
-
                 /* The code should be unique. */
                 $threatData['code'] = $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
                     ? $threatData['code'] . '-' . time()
@@ -173,7 +171,9 @@ class AssetImportService
                 if (isset($threatData['a'])) {
                     $threat->setAvailability((int)$threatData['a']);
                 }
-                $threat->setTheme($theme);
+                if (!empty($themeData)) {
+                    $threat->setTheme($this->processThemeDataAndGetTheme($themeData, $anr));
+                }
             }
 
             $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());

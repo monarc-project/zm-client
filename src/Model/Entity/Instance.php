@@ -49,7 +49,7 @@ class Instance extends InstanceSuperClass
     /**
      * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
