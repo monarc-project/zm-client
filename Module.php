@@ -227,16 +227,16 @@ class Module
     }
 
     /**
-     * Validates the anr status for NON GET method requests exclude DELETE (cancelation of background import).
+     * Validates the anr status for NON GET method requests exclude DELETE (cancellation of background import).
      */
     private function validateAnrStatusAndGetResponseIfInvalid(
         int $anrId,
         MvcEvent $e,
         string $route
     ): ?ResponseInterface {
-        if ($e->getRequest()->getMethod() === 'GET'
+        if ($e->getRequest()->getMethod() === Request::METHOD_GET
             || (
-                $e->getRequest()->getMethod() === 'DELETE'
+                $e->getRequest()->getMethod() === Request::METHOD_DELETE
                 && $route === 'monarc_api_global_client_anr/instance_import'
             )
         ) {
@@ -248,6 +248,14 @@ class Module
         /** @var Anr $anr */
         $anr = $sm->get(AnrTable::class)->findById($anrId);
         if ($anr->isActive()) {
+            return null;
+        }
+        if ($route === 'monarc_api_client_anr'
+            && $e->getRequest()->getMethod() === Request::METHOD_DELETE
+            && ($anr->getStatus() === AnrSuperClass::STATUS_IMPORT_ERROR
+                || $anr->getStatus() === AnrSuperClass::STATUS_AWAITING_OF_IMPORT
+            )
+        ) {
             return null;
         }
 
