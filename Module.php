@@ -260,7 +260,7 @@ class Module
         }
 
         $result = [
-            'status' => $anr->getStatus(),
+            'status' => $anr->getStatusName(),
             'importStatus' => [],
         ];
         /** @var CronTaskService $cronTaskService */
