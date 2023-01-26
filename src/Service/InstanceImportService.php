@@ -626,14 +626,17 @@ class InstanceImportService
             if (!empty($data['method']['threats'])) {
                 $this->importCacheHelper->prepareThemesCacheData($anr);
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
-                    $threat = $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
+                    $threat = $this->importCacheHelper->getItemFromArrayCache('threats', $threatUuid)
+                        ?: $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
                     if ($threat === null) {
                         $threatData = $data['method']['threats'][$threatUuid];
 
                         /* The code should be unique. */
-                        $threatData['code'] = $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
-                            ? $threatData['code'] . '-' . time()
-                            : $threatData['code'];
+                        $threatData['code'] = $this->importCacheHelper->
+                            getItemFromArrayCache('threats_codes', $threatData['code']) !== null
+                            || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                                ? $threatData['code'] . '-' . time()
+                                : $threatData['code'];
 
                         $threat = (new Threat())
                             ->setUuid($threatData['uuid'])
@@ -674,6 +677,10 @@ class InstanceImportService
                     $threat->setQualification((int)$data['method']['threats'][$threatUuid]['qualification']);
 
                     $this->threatTable->saveEntity($threat, false);
+
+                    $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
+                    $this->importCacheHelper
+                        ->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
                 }
             }
         }
