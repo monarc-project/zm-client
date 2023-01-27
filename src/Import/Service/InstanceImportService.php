@@ -564,8 +564,8 @@ class InstanceImportService
                         $threatData = $data['method']['threats'][$threatUuid];
 
                         /* The code should be unique. */
-                        $threatData['code'] = $this->importCacheHelper->
-                            getItemFromArrayCache('threats_codes', $threatData['code']) !== null
+                        $threatData['code'] = $this->importCacheHelper
+                            ->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
                             || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
                                 ? $threatData['code'] . '-' . time()
                                 : $threatData['code'];

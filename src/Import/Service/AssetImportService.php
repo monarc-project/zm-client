@@ -146,7 +146,9 @@ class AssetImportService
                 }
             } else {
                 /* The code should be unique. */
-                $threatData['code'] = $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                $threatData['code'] = $this->importCacheHelper
+                    ->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
+                || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
                     ? $threatData['code'] . '-' . time()
                     : $threatData['code'];
 
@@ -177,6 +179,7 @@ class AssetImportService
             }
 
             $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
+            $this->importCacheHelper->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
 
             $this->threatTable->saveEntity($threat, false);
         }
@@ -215,10 +218,11 @@ class AssetImportService
             $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid($anr, $vulnerabilityData['uuid'], false);
             if ($vulnerability === null) {
                 /* The code should be unique. */
-                $vulnerabilityData['code'] = $this->vulnerabilityTable->existsWithAnrAndCode(
-                    $anr,
-                    $vulnerabilityData['code']
-                ) ? $vulnerabilityData['code'] . '-' . time() : $vulnerabilityData['code'];
+                $vulnerabilityData['code'] = $this->importCacheHelper
+                    ->getItemFromArrayCache('vulnerabilities_codes', $vulnerabilityData['code']) !== null
+                || $this->vulnerabilityTable->existsWithAnrAndCode($anr, $vulnerabilityData['code'])
+                    ? $vulnerabilityData['code'] . '-' . time()
+                    : $vulnerabilityData['code'];
 
                 $vulnerability = (new Vulnerability())
                     ->setUuid($vulnerabilityData['uuid'])
@@ -234,6 +238,8 @@ class AssetImportService
             }
 
             $this->importCacheHelper->addItemToArrayCache('vulnerabilities', $vulnerability, $vulnerability->getUuid());
+            $this->importCacheHelper
+                ->addItemToArrayCache('vulnerabilities_codes', $vulnerability->getCode(), $vulnerability->getCode());
         }
     }
 
