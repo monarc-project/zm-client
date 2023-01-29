@@ -62,6 +62,27 @@ class CronTaskService
         return null;
     }
 
+    public function getResultMessagesByNameWithParam(string $name, array $searchParam): array
+    {
+        $searchParamKey = (string)array_key_first($searchParam);
+        if ($searchParamKey === '') {
+            return [];
+        }
+
+        $searchParamValue = current($searchParam);
+        $dateTimeFrom = new DateTime('-10 days');
+        $cronTasks = $this->cronTaskTable->findByNameOrderedByExecutionOrderLimitedByDate($name, $dateTimeFrom);
+        $messages = [];
+        foreach ($cronTasks as $cronTask) {
+            $params = $cronTask->getParams();
+            if (\array_key_exists($searchParamKey, $params) && $params[$searchParamKey] === $searchParamValue) {
+                $messages[] =  $cronTask->getResultMessage();
+            }
+        }
+
+        return $messages;
+    }
+
     public function setInProgress(CronTask $cronTask, int $pid): void
     {
         $cronTask

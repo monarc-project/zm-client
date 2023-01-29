@@ -42,6 +42,23 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
         $this->anrTable = $anrTable;
     }
 
+    /**
+     * Returns all the result messages logs of imports of the analysis.
+     */
+    public function getList()
+    {
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $anr = $this->anrTable->findById($anrId);
+
+        return new JsonModel([
+            'status' => $anr->getStatusName(),
+            'messages' => $this->cronTaskService->getResultMessagesByNameWithParam(
+                CronTask::NAME_INSTANCE_IMPORT,
+                ['anrId' => $anrId]
+            ),
+        ]);
+    }
+
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');

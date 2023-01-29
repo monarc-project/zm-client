@@ -23,6 +23,7 @@ use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
 use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
+use Monarc\Core\Model\Entity\UserRoleSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Table\AnrObjectCategoryTable as CoreAnrObjectCategoryTable;
 use Monarc\Core\Model\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
@@ -580,12 +581,14 @@ class AnrService extends AbstractService
         /** @var CoreUser $connectedUser */
         $connectedUser = $userCliTable->getConnectedUser();
 
-        if ($source == MonarcObject::SOURCE_CLIENT && !$isSnapshotCloning) {
+        if ($source === MonarcObject::SOURCE_CLIENT
+            && !$isSnapshotCloning
+            && !$connectedUser->hasRole(UserRoleSuperClass::USER_ROLE_SYSTEM)
+        ) {
             /** @var UserAnrTable $userAnrCliTable */
             $userAnrCliTable = $this->get('userAnrCliTable');
-            $userAnr = $userAnrCliTable->getEntityByFields(['anr' => $anr->id, 'user' => $connectedUser->getId()]);
-
-            if (count($userAnr) == 0) {
+            $userAnr = $userAnrCliTable->findByAnrAndUser($anr, $connectedUser);
+            if ($userAnr === null) {
                 throw new Exception('You are not authorized to duplicate this analysis', 412);
             }
         }
@@ -599,6 +602,7 @@ class AnrService extends AbstractService
             $newAnr->exchangeArray($data);
             $newAnr->set('model', $idModel);
             $newAnr->setReferentials(null);
+            $newAnr->setStatus(AnrSuperClass::STATUS_ACTIVE);
             $newAnr->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
             if (!empty($model) && is_object($model)) {
                 $newAnr->set('cacheModelShowRolfBrut', $model->showRolfBrut);
@@ -1547,7 +1551,9 @@ class AnrService extends AbstractService
 
             $this->get('table')->getDb()->flush();
 
-            $this->setUserCurrentAnr($newAnr->getId());
+            if (!$isSnapshot) {
+                $this->setUserCurrentAnr($newAnr->getId());
+            }
         } catch (\Exception $e) {
             if (!empty($newAnr)) {
                 $anrCliTable->deleteEntity($newAnr);

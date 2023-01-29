@@ -5,6 +5,7 @@ use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Monarc\Core\Model\Entity\UserRoleSuperClass;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
@@ -1448,14 +1449,14 @@ return [
                     'language' => 1,
                     'mospApiKey' => '',
                     'creator' => 'System',
-                    'role' => [],
+                    'role' => [UserRoleSuperClass::USER_ROLE_SYSTEM],
                 ]));
 
                 return new Import\Command\ImportAnalysesCommand(
                     $container->get(CronTaskService::class),
                     $container->get(Import\Service\InstanceImportService::class),
                     $container->get(Table\AnrTable::class),
-                    $container->get(ConfigService::class)
+                    $container->get(Service\SnapshotService::class)
                 );
             },
         ],

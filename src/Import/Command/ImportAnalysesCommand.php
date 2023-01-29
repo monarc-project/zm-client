@@ -12,6 +12,7 @@ use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Model\Entity\CronTask;
 use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Service\SnapshotService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,18 +28,22 @@ class ImportAnalysesCommand extends Command
 
     private CronTaskService $cronTaskService;
 
+    private AnrTable $anrTable;
+
     private InstanceImportService $instanceImportService;
 
-    private AnrTable $anrTable;
+    private SnapshotService $snapshotService;
 
     public function __construct(
         CronTaskService $cronTaskService,
         InstanceImportService $instanceImportService,
-        AnrTable $anrTable
+        AnrTable $anrTable,
+        SnapshotService $snapshotService
     ) {
         $this->cronTaskService = $cronTaskService;
         $this->anrTable = $anrTable;
         $this->instanceImportService = $instanceImportService;
+        $this->snapshotService = $snapshotService;
 
         parent::__construct();
     }
@@ -87,6 +92,8 @@ class ImportAnalysesCommand extends Command
         $ids = [];
         $errors = [];
         try {
+            /* Create a Snapshot as a backup. */
+            $this->snapshotService->create(['anr' => $anr, 'comment' => 'Import Backup #' . time()]);
             [$ids, $errors] = $this->instanceImportService->importFromFile($anrId, [
                 'file' => [[
                     'tmp_name' => $params['fileNameWithPath'],
@@ -98,6 +105,8 @@ class ImportAnalysesCommand extends Command
             ]);
         } catch (\Throwable $e) {
             $errors[] = $e->getMessage();
+            $errors[] = 'Error Trace:';
+            $errors[] = $e->getTraceAsString();
         }
 
         if (!empty($errors)) {
