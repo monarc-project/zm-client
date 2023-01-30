@@ -10,7 +10,6 @@ namespace Monarc\FrontOffice\Model\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
-use Monarc\Core\Model\Entity\QuestionSuperClass;
 
 /**
  * Question Choice
@@ -24,16 +23,6 @@ use Monarc\Core\Model\Entity\QuestionSuperClass;
 class QuestionChoice extends QuestionChoiceSuperClass
 {
     /**
-     * @var Question
-     *
-     * @ORM\ManyToOne(targetEntity="Question")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="question_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $question;
-
-    /**
      * @var AnrSuperClass
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
@@ -42,24 +31,6 @@ class QuestionChoice extends QuestionChoiceSuperClass
      * })
      */
     protected $anr;
-
-    /**
-     * @return QuestionSuperClass
-     */
-    public function getQuestion()
-    {
-        return $this->question;
-    }
-
-    /**
-     * @param QuestionSuperClass $question
-     */
-    public function setQuestion($question): self
-    {
-        $this->question = $question;
-
-        return $this;
-    }
 
     /**
      * @return AnrSuperClass
