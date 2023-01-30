@@ -72,7 +72,7 @@ class ThreatTable extends AbstractEntityTable
     {
         return $this->getRepository()->createQueryBuilder('t')
             ->where('t.anr = :anr')
-            ->andWhere('t.uuid = :code')
+            ->andWhere('t.code = :code')
             ->setParameter('anr', $anr)
             ->setParameter('code', $code)
             ->setMaxResults(1)

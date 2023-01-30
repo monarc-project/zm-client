@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use DateTime;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
@@ -110,5 +111,17 @@ class InstanceTable extends CoreInstanceTable
         }
 
         return (int)$queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    public function countByAnrIdFromDate(int $anrId, DateTime $fromDate): int
+    {
+        return (int)$this->getRepository()->createQueryBuilder('i')
+            ->select('COUNT(i.id)')
+            ->where('i.anr = :anrId')
+            ->andWhere('i.createdAt >= :fromDate')
+            ->setParameter(':anrId', $anrId)
+            ->setParameter(':fromDate', $fromDate)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

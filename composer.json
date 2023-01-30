@@ -46,6 +46,7 @@
         "ext-json": "*",
         "ext-bcmath": "*",
         "ext-openssl": "*",
+        "ext-posix": "*",
         "doctrine/doctrine-orm-module": "^5.1",
         "monarc/core": "dev-feature/php8",
         "robmorgan/phinx": "^0.11.1",

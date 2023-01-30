@@ -8,11 +8,11 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
-use Monarc\FrontOffice\Service\Helper\ImportCacheHelper;
 
 /**
  * @package Monarc\FrontOffice\Service

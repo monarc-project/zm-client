@@ -1,58 +1,47 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2022 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Service;
+namespace Monarc\FrontOffice\Import\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\Referential;
-use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
 use Monarc\FrontOffice\Model\Entity\Vulnerability;
-use Monarc\FrontOffice\Model\Table\AmvTable;
-use Monarc\FrontOffice\Model\Table\AssetTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
-use Monarc\FrontOffice\Model\Table\MeasureTable;
-use Monarc\FrontOffice\Model\Table\ReferentialTable;
-use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
-use Monarc\FrontOffice\Model\Table\ThemeTable;
-use Monarc\FrontOffice\Model\Table\ThreatTable;
-use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
-use Monarc\FrontOffice\Service\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Service\SoaCategoryService;
 
 class AssetImportService
 {
-    private AssetTable $assetTable;
+    private Table\AssetTable $assetTable;
 
-    private ThemeTable $themeTable;
+    private Table\ThemeTable $themeTable;
 
-    private ThreatTable $threatTable;
+    private Table\ThreatTable $threatTable;
 
-    private VulnerabilityTable $vulnerabilityTable;
+    private Table\VulnerabilityTable $vulnerabilityTable;
 
-    private MeasureTable $measureTable;
+    private Table\MeasureTable $measureTable;
 
-    private AmvTable $amvTable;
+    private Table\AmvTable $amvTable;
 
-    private InstanceTable $instanceTable;
+    private Table\InstanceTable $instanceTable;
 
-    private InstanceRiskTable $instanceRiskTable;
+    private Table\InstanceRiskTable $instanceRiskTable;
 
-    private ReferentialTable $referentialTable;
-
-    private SoaCategoryTable $soaCategoryTable;
+    private Table\ReferentialTable $referentialTable;
 
     private UserSuperClass $connectedUser;
 
@@ -61,16 +50,15 @@ class AssetImportService
     private SoaCategoryService $soaCategoryService;
 
     public function __construct(
-        AssetTable $assetTable,
-        ThemeTable $themeTable,
-        ThreatTable $threatTable,
-        VulnerabilityTable $vulnerabilityTable,
-        MeasureTable $measureTable,
-        AmvTable $amvTable,
-        InstanceTable $instanceTable,
-        InstanceRiskTable $instanceRiskTable,
-        ReferentialTable $referentialTable,
-        SoaCategoryTable $soaCategoryTable,
+        Table\AssetTable $assetTable,
+        Table\ThemeTable $themeTable,
+        Table\ThreatTable $threatTable,
+        Table\VulnerabilityTable $vulnerabilityTable,
+        Table\MeasureTable $measureTable,
+        Table\AmvTable $amvTable,
+        Table\InstanceTable $instanceTable,
+        Table\InstanceRiskTable $instanceRiskTable,
+        Table\ReferentialTable $referentialTable,
         ConnectedUserService $connectedUserService,
         ImportCacheHelper $importCacheHelper,
         SoaCategoryService $soaCategoryService
@@ -84,7 +72,6 @@ class AssetImportService
         $this->instanceTable = $instanceTable;
         $this->instanceRiskTable = $instanceRiskTable;
         $this->referentialTable = $referentialTable;
-        $this->soaCategoryTable = $soaCategoryTable;
         $this->connectedUser = $connectedUserService->getConnectedUser();
         $this->importCacheHelper = $importCacheHelper;
         $this->soaCategoryService = $soaCategoryService;
@@ -159,7 +146,9 @@ class AssetImportService
                 }
             } else {
                 /* The code should be unique. */
-                $threatData['code'] = $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                $threatData['code'] = $this->importCacheHelper
+                    ->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
+                || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
                     ? $threatData['code'] . '-' . time()
                     : $threatData['code'];
 
@@ -190,6 +179,7 @@ class AssetImportService
             }
 
             $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
+            $this->importCacheHelper->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
 
             $this->threatTable->saveEntity($threat, false);
         }
@@ -228,10 +218,11 @@ class AssetImportService
             $vulnerability = $this->vulnerabilityTable->findByAnrAndUuid($anr, $vulnerabilityData['uuid'], false);
             if ($vulnerability === null) {
                 /* The code should be unique. */
-                $vulnerabilityData['code'] = $this->vulnerabilityTable->existsWithAnrAndCode(
-                    $anr,
-                    $vulnerabilityData['code']
-                ) ? $vulnerabilityData['code'] . '-' . time() : $vulnerabilityData['code'];
+                $vulnerabilityData['code'] = $this->importCacheHelper
+                    ->getItemFromArrayCache('vulnerabilities_codes', $vulnerabilityData['code']) !== null
+                || $this->vulnerabilityTable->existsWithAnrAndCode($anr, $vulnerabilityData['code'])
+                    ? $vulnerabilityData['code'] . '-' . time()
+                    : $vulnerabilityData['code'];
 
                 $vulnerability = (new Vulnerability())
                     ->setUuid($vulnerabilityData['uuid'])
@@ -247,6 +238,8 @@ class AssetImportService
             }
 
             $this->importCacheHelper->addItemToArrayCache('vulnerabilities', $vulnerability, $vulnerability->getUuid());
+            $this->importCacheHelper
+                ->addItemToArrayCache('vulnerabilities_codes', $vulnerability->getCode(), $vulnerability->getCode());
         }
     }
 

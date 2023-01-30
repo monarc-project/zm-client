@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Import\Service\ObjectImportService;
 
 /**
  * Factory class attached to AnrObjectService
