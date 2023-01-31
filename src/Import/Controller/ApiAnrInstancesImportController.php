@@ -85,11 +85,12 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
             }
             $mode = $data['mode'] ?? 'merge';
             $idparent = $data['idparent'] ?? 0;
+            $createSnapshot = filter_var($data['createSnapshot'], FILTER_VALIDATE_BOOLEAN);
 
             /* Create a job for the process */
             $this->cronTaskService->createTask(
                 CronTask::NAME_INSTANCE_IMPORT,
-                compact('anrId', 'fileNameWithPath', 'password', 'mode', 'idparent'),
+                compact('anrId', 'fileNameWithPath', 'password', 'mode', 'idparent', 'createSnapshot'),
                 CronTask::PRIORITY_HIGH
             );
 
