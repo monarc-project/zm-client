@@ -51,81 +51,79 @@ class ImportAnalysesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $cronTask = $this->cronTaskService->getNextTaskByName(CronTask::NAME_INSTANCE_IMPORT);
-        if ($cronTask === null) {
-            return 0;
-        }
+        while ($cronTask = $this->cronTaskService->getNextTaskByName(CronTask::NAME_INSTANCE_IMPORT)) {
+            /* Set status to in process immediately that other executions don't fetch it. */
+            $this->cronTaskService->setInProgress($cronTask, getmypid() ?: 0);
 
-        /* Set status to in process immediately that other executions don't fetch it. */
-        $this->cronTaskService->setInProgress($cronTask, getmypid() ?: 0);
-
-        $params = $cronTask->getParams();
-        $anrId = $params['anrId'] ?? null;
-        if ($anrId === null) {
-            $this->cronTaskService->setFailure($cronTask, 'A mandatory parameter "anrId" is missing in the cron task.');
-
-            return 1;
-        }
-
-        try {
-            $anr = $this->anrTable->findById((int)$anrId);
-            if ($anr->getStatus() !== AnrSuperClass::STATUS_AWAITING_OF_IMPORT) {
-                $this->cronTaskService->setFailure(
-                    $cronTask,
-                    sprintf('The analysis status "%d" is not correct to start the import process.', $anr->getStatus())
-                );
+            $params = $cronTask->getParams();
+            $anrId = $params['anrId'] ?? null;
+            if ($anrId === null) {
+                $this->cronTaskService
+                    ->setFailure($cronTask, 'A mandatory parameter "anrId" is missing in the cron task.');
 
                 return 1;
             }
-        } catch (\Throwable $e) {
-            $this->cronTaskService->setFailure($cronTask, $e->getMessage());
 
-            return 1;
-        }
+            try {
+                $anr = $this->anrTable->findById((int)$anrId);
+                if ($anr->getStatus() !== AnrSuperClass::STATUS_AWAITING_OF_IMPORT) {
+                    $this->cronTaskService->setFailure($cronTask, sprintf(
+                        'The analysis status "%d" is not correct to start the import process.',
+                        $anr->getStatus()
+                    ));
 
-        $password = null;
-        if ($params['password'] !== '') {
-            $password = base64_decode($params['password']);
-        }
+                    return 1;
+                }
+            } catch (\Throwable $e) {
+                $this->cronTaskService->setFailure($cronTask, $e->getMessage());
 
-        $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_UNDER_IMPORT));
-        $ids = [];
-        $errors = [];
-        try {
-            /* Create a Snapshot as a backup. */
-            if ($params['createSnapshot']) {
-                $this->snapshotService->create(['anr' => $anr, 'comment' => 'Import Backup #' . time()]);
+                return 1;
             }
-            [$ids, $errors] = $this->instanceImportService->importFromFile($anrId, [
-                'file' => [[
-                    'tmp_name' => $params['fileNameWithPath'],
-                    'error' => UPLOAD_ERR_OK,
-                ]],
-                'password' => $password,
-                'mode' => $params['mode'] ?? null,
-                'idparent' => $params['idparent'] ?? null,
-            ]);
-        } catch (\Throwable $e) {
-            $errors[] = $e->getMessage();
-            $errors[] = 'Error Trace:';
-            $errors[] = $e->getTraceAsString();
+
+            $password = null;
+            if ($params['password'] !== '') {
+                $password = base64_decode($params['password']);
+            }
+
+            $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_UNDER_IMPORT));
+            $ids = [];
+            $errors = [];
+            try {
+                /* Create a Snapshot as a backup. */
+                if (!empty($params['createSnapshot'])) {
+                    $this->snapshotService->create(['anr' => $anr, 'comment' => 'Import Backup #' . time()]);
+                }
+                [$ids, $errors] = $this->instanceImportService->importFromFile($anrId, [
+                    'file' => [[
+                        'tmp_name' => $params['fileNameWithPath'],
+                        'error' => UPLOAD_ERR_OK,
+                    ]],
+                    'password' => $password,
+                    'mode' => $params['mode'] ?? null,
+                    'idparent' => $params['idparent'] ?? null,
+                ]);
+            } catch (\Throwable $e) {
+                $errors[] = $e->getMessage();
+                $errors[] = 'Error Trace:';
+                $errors[] = $e->getTraceAsString();
+            }
+
+            if (!empty($errors)) {
+                $this->cronTaskService->setFailure($cronTask, implode("\n", $errors));
+                $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_IMPORT_ERROR));
+
+                return 1;
+            }
+
+            $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_ACTIVE));
+            $this->cronTaskService->setSuccessful(
+                $cronTask,
+                'The Analysis was successfully imported with anr ID ' . $anrId
+                . ' and root instance IDs: ' . implode(', ', $ids)
+            );
+
+            unlink($params['fileNameWithPath']);
         }
-
-        if (!empty($errors)) {
-            $this->cronTaskService->setFailure($cronTask, implode("\n", $errors));
-            $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_IMPORT_ERROR));
-
-            return 1;
-        }
-
-        $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_ACTIVE));
-        $this->cronTaskService->setSuccessful(
-            $cronTask,
-            'The Analysis was successfully imported with anr ID ' . $anrId
-            . ' and root instance IDs: ' . implode(', ', $ids)
-        );
-
-        unlink($params['fileNameWithPath']);
 
         return 0;
     }
