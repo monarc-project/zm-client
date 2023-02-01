@@ -44,7 +44,7 @@ class ApiAnrObjectsImportController extends AbstractRestfulController
             throw new Exception('Anr id missing', 412);
         }
 
-        $object = $this->anrObjectService->getCommonEntity($anrId, (int)$id);
+        $object = $this->anrObjectService->getCommonEntity($anrId, $id);
 
         $this->formatDependencies($object, ['asset', 'category', 'rolfTag']);
         unset($object['anrs']);
@@ -82,7 +82,7 @@ class ApiAnrObjectsImportController extends AbstractRestfulController
         }
         $data['anr'] = $anrId;
 
-        $monarcObject = $this->anrObjectService->importFromCommon((int)$id, $data);
+        $monarcObject = $this->anrObjectService->importFromCommon($id, $data);
         if ($monarcObject === null) {
             throw new Exception('An error occurred during the import of the object.', 412);
         }
