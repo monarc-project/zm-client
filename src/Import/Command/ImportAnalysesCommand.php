@@ -90,7 +90,9 @@ class ImportAnalysesCommand extends Command
             $errors = [];
             try {
                 /* Create a Snapshot as a backup. */
-                $this->snapshotService->create(['anr' => $anr, 'comment' => 'Import Backup #' . time()]);
+                if (!empty($params['createSnapshot'])) {
+                    $this->snapshotService->create(['anr' => $anr, 'comment' => 'Import Backup #' . time()]);
+                }
                 [$ids, $errors] = $this->instanceImportService->importFromFile($anrId, [
                     'file' => [[
                         'tmp_name' => $params['fileNameWithPath'],
