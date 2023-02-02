@@ -46,9 +46,6 @@ class ApiAnrObjectsImportController extends AbstractRestfulController
 
         $object = $this->anrObjectService->getCommonEntity($anrId, $id);
 
-        $this->formatDependencies($object, ['asset', 'category', 'rolfTag']);
-        unset($object['anrs']);
-
         return new JsonModel($object);
     }
 
