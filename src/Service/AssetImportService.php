@@ -302,7 +302,7 @@ class AssetImportService
             }
 
             if (!empty($amvData['measures'])) {
-                $this->processMeasuresAndReferentialData($data, $anr, $amv);
+                $this->processMeasuresAndReferentialData($amvData['measures'], $data['measures'] ?? [], $anr, $amv);
             }
         }
 
@@ -335,15 +335,20 @@ class AssetImportService
 
         if (!empty($amvsToDelete)) {
             $this->amvTable->deleteEntities($amvsToDelete);
+        } elseif (!empty($amvsData)) {
+            $this->amvTable->getDb()->flush();
         }
     }
 
-    private function processMeasuresAndReferentialData(array $data, Anr $anr, Amv $amv): void
-    {
+    private function processMeasuresAndReferentialData(
+        array $amvMeasuresUuids,
+        array $measuresData,
+        Anr $anr,
+        Amv $amv
+    ): void {
         $languageIndex = $anr->getLanguage();
         $labelKey = 'label' . $languageIndex;
-        $measuresData = $data['measures'] ?? [];
-        foreach ($data['amvs']['measures'] as $measureUuid) {
+        foreach ($amvMeasuresUuids as $measureUuid) {
             $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
                 ?: $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
             if ($measure === null) {
