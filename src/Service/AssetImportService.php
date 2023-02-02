@@ -259,7 +259,7 @@ class AssetImportService
     private function processAmvsData(array $data, Anr $anr, Asset $asset): void
     {
         $instances = null;
-        $amvsData = $amvsData['amvs'];
+        $amvsData = $data['amvs'];
         foreach ($amvsData as $amvUuid => $amvData) {
             $amv = $this->amvTable->findByAnrAndUuid($anr, $amvUuid);
             if ($amv === null) {
