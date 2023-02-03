@@ -92,7 +92,7 @@ class AssetImportService
         if (!empty($data['amvs'])) {
             $this->processThreatsData($data['threats'], $data['themes'] ?? [], $anr);
             $this->processVulnerabilitiesData($data['vuls'], $anr);
-            $this->processAmvsData($data['amvs'], $anr, $asset);
+            $this->processAmvsData($data, $anr, $asset);
         }
 
         return $asset;
@@ -243,9 +243,10 @@ class AssetImportService
         }
     }
 
-    private function processAmvsData(array $amvsData, Anr $anr, Asset $asset): void
+    private function processAmvsData(array $data, Anr $anr, Asset $asset): void
     {
         $instances = null;
+        $amvsData = $data['amvs'];
         foreach ($amvsData as $amvUuid => $amvData) {
             $amv = $this->amvTable->findByAnrAndUuid($anr, $amvUuid);
             if ($amv === null) {
@@ -288,7 +289,7 @@ class AssetImportService
             }
 
             if (!empty($amvData['measures'])) {
-                $this->processMeasuresAndReferentialData($amvData['measures'], $anr, $amv);
+                $this->processMeasuresAndReferentialData($amvData['measures'], $data['measures'] ?? [], $anr, $amv);
             }
         }
 
@@ -321,33 +322,39 @@ class AssetImportService
 
         if (!empty($amvsToDelete)) {
             $this->amvTable->deleteEntities($amvsToDelete);
+        } elseif (!empty($amvsData)) {
+            $this->amvTable->getDb()->flush();
         }
     }
 
-    private function processMeasuresAndReferentialData(array $measuresData, Anr $anr, Amv $amv): void
-    {
+    private function processMeasuresAndReferentialData(
+        array $amvMeasuresUuids,
+        array $measuresData,
+        Anr $anr,
+        Amv $amv
+    ): void {
         $languageIndex = $anr->getLanguage();
         $labelKey = 'label' . $languageIndex;
-        foreach ($measuresData as $measureUuid) {
+        foreach ($amvMeasuresUuids as $measureUuid) {
             $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
                 ?: $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
             if ($measure === null) {
                 /* Backward compatibility. Prior v2.10.3 we did not set referential data when exported. */
-                $referentialUuid = $data['measures'][$measureUuid]['referential']['uuid']
-                    ?? $data['measures'][$measureUuid]['referential'];
+                $referentialUuid = $measuresData[$measureUuid]['referential']['uuid']
+                    ?? $measuresData[$measureUuid]['referential'];
 
                 $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialUuid)
                     ?: $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
 
                 /* For backward compatibility. */
                 if ($referential === null
-                    && isset($data['measures'][$measureUuid]['referential'][$labelKey])
+                    && isset($measuresData[$measureUuid]['referential'][$labelKey])
                 ) {
                     $referential = (new Referential())
                         ->setAnr($anr)
                         ->setUuid($referentialUuid)
                         ->{'setLabel' . $languageIndex}(
-                            $data['measures'][$measureUuid]['referential'][$labelKey]
+                            $measuresData[$measureUuid]['referential'][$labelKey]
                         )
                         ->setCreator($this->connectedUser->getEmail());
 
@@ -365,7 +372,7 @@ class AssetImportService
                     $this->importCacheHelper,
                     $anr,
                     $referential,
-                    $data['measures'][$measureUuid]['category'][$labelKey] ?? ''
+                    $measuresData[$measureUuid]['category'][$labelKey] ?? ''
                 );
 
                 $measure = (new Measure())
@@ -373,8 +380,8 @@ class AssetImportService
                     ->setUuid($measureUuid)
                     ->setCategory($soaCategory)
                     ->setReferential($referential)
-                    ->setCode($data['measures'][$measureUuid]['code'])
-                    ->setLabels($data['measures'][$measureUuid])
+                    ->setCode($measuresData[$measureUuid]['code'])
+                    ->setLabels($measuresData[$measureUuid])
                     ->setCreator($this->connectedUser->getEmail());
 
                 $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measure->getUuid());
