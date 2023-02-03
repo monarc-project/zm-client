@@ -232,7 +232,13 @@ class InstanceImportService
         $this->soaCategoryService = $soaCategoryService;
     }
 
-    /**
+    public function cleanCache(): void
+    {
+        $this->cachedData = [];
+        $this->importCacheHelper->cleanArrayCache();
+    }
+
+        /**
      * Available import modes: 'merge', which will update the existing instances using the file's data,
      * or 'duplicate' which will create a new instance using the data.
      *
@@ -2237,8 +2243,8 @@ class InstanceImportService
         $instanceData = $data['instance'];
         $instance = (new Instance())
             ->setAnr($anr)
-            ->setLabels($instanceData)
-            ->setNames($instanceData)
+            ->setLabels($monarcObject->getLabels())
+            ->setNames($monarcObject->getNames())
             ->setDisponibility(!empty($instanceData['disponibility']) ? (float)$instanceData['disponibility'] : 0)
             ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
             ->setRoot($parentInstance === null ? null : ($parentInstance->getRoot() ?? $parentInstance))

@@ -69,4 +69,9 @@ class ImportCacheHelper
 
         return $this->arrayCache[$cacheKey][$itemKey] ?? null;
     }
+
+    public function cleanArrayCache(): void
+    {
+        $this->arrayCache = [];
+    }
 }

@@ -325,13 +325,18 @@ class ObjectImportService
         string $nameFiledKey,
         int $index = 1
     ): ObjectSuperClass {
-        $existedObject = $this->monarcObjectTable->findOneByAnrAndName(
+        $existedObject = $this->monarcObjectTable->findOneByAnrCategoryAndName(
             $monarcObject->getAnr(),
+            $monarcObject->getCategory(),
             $nameFiledKey,
             $objectData[$nameFiledKey]
         );
         if ($existedObject !== null) {
-            $objectData[$nameFiledKey] .= ' - Imp. #' . $index;
+            if (strpos($objectData[$nameFiledKey], ' - Imp. #') !== false) {
+                $objectData[$nameFiledKey] = preg_replace('/#\d+/', '#' . $index, $objectData[$nameFiledKey]);
+            } else {
+                $objectData[$nameFiledKey] .= ' - Imp. #' . $index;
+            }
 
             return $this->setMonarcObjectName($monarcObject, $objectData, $nameFiledKey, $index + 1);
         }
