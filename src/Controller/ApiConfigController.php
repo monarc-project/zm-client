@@ -29,7 +29,7 @@ class ApiConfigController extends AbstractRestfulController
             $this->configService->getAppCheckingURL(),
             $this->configService->getMospApiUrl(),
             $this->configService->getTerms(),
-            $this->configService->getConfigOption('import')
+            $this->configService->getConfigOption('import', [])
         ));
     }
 }
