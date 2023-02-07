@@ -1,23 +1,29 @@
 <?php
 
-use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
-use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
-use Monarc\Core\Service\ConfigService;
-use Monarc\Core\Service\OperationalRiskScalesExportService;
+use Monarc\Core\Model\Entity\UserRoleSuperClass;
 use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
+use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Controller;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
+use Monarc\FrontOffice\CronTask\Table\CronTaskTable;
+use Monarc\FrontOffice\Import;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
-use Monarc\FrontOffice\Model\Table\Factory\ClientEntityManagerFactory;
+use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Table\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Service;
-use Monarc\FrontOffice\Stats\Controller\StatsController;
+use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
 use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
+use Monarc\FrontOffice\Stats\Controller\StatsController;
 use Monarc\FrontOffice\Stats\Controller\StatsGeneralSettingsController;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
@@ -818,7 +824,7 @@ return [
                             'route' => 'instances/import',
                             'constraints' => [],
                             'defaults' => [
-                                'controller' => Controller\ApiAnrInstancesImportController::class,
+                                'controller' => Import\Controller\ApiAnrInstancesImportController::class,
                             ],
                         ],
                     ],
@@ -1102,7 +1108,7 @@ return [
             Controller\ApiConfigController::class => AutowireFactory::class,
             Controller\ApiClientsController::class => AutowireFactory::class,
             Controller\ApiModelsController::class => Controller\ApiModelsControllerFactory::class,
-            Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
+            Controller\ApiReferentialsController::class => AutowireFactory::class,
             Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
             Controller\ApiUserPasswordController::class => AutowireFactory::class,
             Controller\ApiUserTwoFAController::class => AutowireFactory::class,
@@ -1154,7 +1160,7 @@ return [
                 => Controller\ApiAnrRecordRecipientsControllerFactory::class,
             Controller\ApiAnrRecordsController::class => Controller\ApiAnrRecordsControllerFactory::class,
             Controller\ApiAnrRecordsExportController::class => Controller\ApiAnrRecordsExportControllerFactory::class,
-            Controller\ApiAnrRecordsImportController::class => Controller\ApiAnrRecordsImportControllerFactory::class,
+            Controller\ApiAnrRecordsImportController::class => AutowireFactory::class,
             Controller\ApiAnrTreatmentPlanController::class => Controller\ApiAnrTreatmentPlanControllerFactory::class,
             Controller\ApiSoaController::class => AutowireFactory::class,
             Controller\ApiSoaCategoryController::class => Controller\ApiSoaCategoryControllerFactory::class,
@@ -1173,13 +1179,13 @@ return [
             Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
             Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
             Controller\ApiAnrInstancesRisksOpController::class => AutowireFactory::class,
-            Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
+            Import\Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesExportController::class
                 => Controller\ApiAnrInstancesExportControllerFactory::class,
             Controller\ApiAnrObjectsCategoriesController::class
                 => Controller\ApiAnrObjectsCategoriesControllerFactory::class,
             Controller\ApiAnrObjectsExportController::class => Controller\ApiAnrObjectsExportControllerFactory::class,
-            Controller\ApiAnrObjectsImportController::class => Controller\ApiAnrObjectsImportControllerFactory::class,
+            Controller\ApiAnrObjectsImportController::class => AutowireFactory::class,
             Controller\ApiAnrDeliverableController::class => AutowireFactory::class,
             Controller\ApiAnrExportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesConsequencesController::class
@@ -1277,6 +1283,7 @@ return [
             Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
             Table\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
             Table\ClientModelTable::class => ClientEntityManagerFactory::class,
+            CronTaskTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1324,11 +1331,11 @@ return [
             Entity\QuestionChoice::class => ModelFactory\QuestionChoiceServiceModelEntity::class,
 
             // TODO: replace to autowiring.
-            'Monarc\FrontOffice\Service\AnrService' => 'Monarc\FrontOffice\Service\AnrServiceFactory',
-            'Monarc\FrontOffice\Service\AnrCoreService' => 'Monarc\FrontOffice\Service\AnrCoreServiceFactory',
-            'Monarc\FrontOffice\Service\SnapshotService' => 'Monarc\FrontOffice\Service\SnapshotServiceFactory',
+            Service\AnrService::class => Service\AnrServiceFactory::class,
+            Service\AnrCoreService::class => Service\AnrCoreServiceFactory::class,
+            Service\SnapshotService::class => Service\SnapshotServiceFactory::class,
             Service\UserService::class => ReflectionBasedAbstractFactory::class,
-            'Monarc\FrontOffice\Service\UserAnrService' => 'Monarc\FrontOffice\Service\UserAnrServiceFactory',
+            Service\UserAnrService::class => Service\UserAnrServiceFactory::class,
             Service\UserRoleService::class => AutowireFactory::class,
             Service\AnrAssetService::class => Service\AnrAssetServiceFactory::class,
             Service\AnrAssetCommonService::class => Service\AnrAssetCommonServiceFactory::class,
@@ -1377,9 +1384,9 @@ return [
             Service\AssetExportService::class => Service\AssetExportServiceFactory::class,
             Service\DeliverableGenerationService::class => Service\DeliverableGenerationServiceFactory::class,
             Service\ObjectExportService::class => AutowireFactory::class,
-            Service\ObjectImportService::class => AutowireFactory::class,
-            Service\AssetImportService::class => AutowireFactory::class,
-            Service\InstanceImportService::class => AutowireFactory::class,
+            Import\Service\ObjectImportService::class => AutowireFactory::class,
+            Import\Service\AssetImportService::class => AutowireFactory::class,
+            Import\Service\InstanceImportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
             Service\OperationalRiskScaleService::class => AutowireFactory::class,
@@ -1415,9 +1422,10 @@ return [
                     $container->get(ConfigService::class),
                 );
             },
+            CronTaskService::class => AutowireFactory::class,
 
             // Helpers
-            Service\Helper\ImportCacheHelper::class => AutowireFactory::class,
+            Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
 
             // Providers
             StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
@@ -1426,6 +1434,31 @@ return [
             CreateUserInputValidator::class => ReflectionBasedAbstractFactory::class,
             GetStatsQueryParamsValidator::class => GetStatsQueryParamsValidatorFactory::class,
             GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
+
+            // Commands
+            Import\Command\ImportAnalysesCommand::class => static function (
+                ContainerInterface $container,
+                $serviceName
+            ) {
+                /** @var ConnectedUserService $connectedUserService */
+                $connectedUserService = $container->get(ConnectedUserService::class);
+                $connectedUserService->setConnectedUser(new User([
+                    'firstname' => 'System',
+                    'lastname' => 'System',
+                    'email' => 'System',
+                    'language' => 1,
+                    'mospApiKey' => '',
+                    'creator' => 'System',
+                    'role' => [UserRoleSuperClass::USER_ROLE_SYSTEM],
+                ]));
+
+                return new Import\Command\ImportAnalysesCommand(
+                    $container->get(CronTaskService::class),
+                    $container->get(Import\Service\InstanceImportService::class),
+                    $container->get(Table\AnrTable::class),
+                    $container->get(Service\SnapshotService::class)
+                );
+            },
         ],
     ],
 

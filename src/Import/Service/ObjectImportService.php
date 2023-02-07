@@ -1,13 +1,18 @@
 <?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2022 Luxembourg House of Cybersecurity LHL.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
-namespace Monarc\FrontOffice\Service;
+namespace Monarc\FrontOffice\Import\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Measure;
@@ -17,35 +22,28 @@ use Monarc\FrontOffice\Model\Entity\ObjectObject;
 use Monarc\FrontOffice\Model\Entity\Referential;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\RolfTag;
-use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
-use Monarc\FrontOffice\Model\Table\MeasureTable;
-use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
-use Monarc\FrontOffice\Model\Table\ObjectCategoryTable;
-use Monarc\FrontOffice\Model\Table\ObjectObjectTable;
-use Monarc\FrontOffice\Model\Table\ReferentialTable;
-use Monarc\FrontOffice\Model\Table\RolfRiskTable;
-use Monarc\FrontOffice\Model\Table\RolfTagTable;
-use Monarc\FrontOffice\Service\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Service\SoaCategoryService;
 
 class ObjectImportService
 {
-    private MonarcObjectTable $monarcObjectTable;
+    private Table\MonarcObjectTable $monarcObjectTable;
 
     private AssetImportService $assetImportService;
 
-    private RolfTagTable $rolfTagTable;
+    private Table\RolfTagTable $rolfTagTable;
 
-    private RolfRiskTable $rolfRiskTable;
+    private Table\RolfRiskTable $rolfRiskTable;
 
-    private MeasureTable $measureTable;
+    private Table\MeasureTable $measureTable;
 
-    private ObjectObjectTable $objectObjectTable;
+    private Table\ObjectObjectTable $objectObjectTable;
 
-    private ReferentialTable $referentialTable;
+    private Table\ReferentialTable $referentialTable;
 
-    private ObjectCategoryTable $objectCategoryTable;
+    private Table\ObjectCategoryTable $objectCategoryTable;
 
-    private AnrObjectCategoryTable $anrObjectCategoryTable;
+    private Table\AnrObjectCategoryTable $anrObjectCategoryTable;
 
     private UserSuperClass $connectedUser;
 
@@ -54,15 +52,15 @@ class ObjectImportService
     private SoaCategoryService $soaCategoryService;
 
     public function __construct(
-        MonarcObjectTable $monarcObjectTable,
-        ObjectObjectTable $objectObjectTable,
+        Table\MonarcObjectTable $monarcObjectTable,
+        Table\ObjectObjectTable $objectObjectTable,
         AssetImportService $assetImportService,
-        RolfTagTable $rolfTagTable,
-        RolfRiskTable $rolfRiskTable,
-        MeasureTable $measureTable,
-        ReferentialTable $referentialTable,
-        ObjectCategoryTable $objectCategoryTable,
-        AnrObjectCategoryTable $anrObjectCategoryTable,
+        Table\RolfTagTable $rolfTagTable,
+        Table\RolfRiskTable $rolfRiskTable,
+        Table\MeasureTable $measureTable,
+        Table\ReferentialTable $referentialTable,
+        Table\ObjectCategoryTable $objectCategoryTable,
+        Table\AnrObjectCategoryTable $anrObjectCategoryTable,
         ConnectedUserService $connectedUserService,
         ImportCacheHelper $importCacheHelper,
         SoaCategoryService $soaCategoryService
@@ -81,9 +79,6 @@ class ObjectImportService
         $this->soaCategoryService = $soaCategoryService;
     }
 
-    /**
-     * @throws NonUniqueResultException
-     */
     public function importFromArray(array $data, Anr $anr, string $modeImport = 'merge'): ?MonarcObject
     {
         if (!isset($data['type'], $data['object']) || $data['type'] !== 'object') {

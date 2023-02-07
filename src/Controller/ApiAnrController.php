@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\AbstractController;
 use Monarc\FrontOffice\Service\AnrService;
 use Laminas\View\Model\JsonModel;
 
@@ -16,7 +17,7 @@ use Laminas\View\Model\JsonModel;
  * Class ApiAnrController
  * @package Monarc\FrontOffice\Controller
  */
-class ApiAnrController extends \Monarc\Core\Controller\AbstractController
+class ApiAnrController extends AbstractController
 {
     protected $name = 'anrs';
     protected $dependencies = ['referentials'];
