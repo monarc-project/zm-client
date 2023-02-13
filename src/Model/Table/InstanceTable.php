@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use DateTime;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
@@ -14,6 +15,8 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Table\InstanceTable as CoreInstanceTable;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\Instance;
 
 /**
@@ -65,6 +68,23 @@ class InstanceTable extends CoreInstanceTable
     /**
      * @return Instance[]
      */
+    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('i')
+            ->innerJoin('i.asset', 'a')
+            ->where('i.anr = :anr')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('assetUuid', $asset->getUuid())
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Instance[]
+     */
     public function findByAnrAssetAndObjectExcludeInstance(
         AnrSuperClass $anr,
         AssetSuperClass $asset,
@@ -106,5 +126,17 @@ class InstanceTable extends CoreInstanceTable
         }
 
         return (int)$queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    public function countByAnrIdFromDate(int $anrId, DateTime $fromDate): int
+    {
+        return (int)$this->getRepository()->createQueryBuilder('i')
+            ->select('COUNT(i.id)')
+            ->where('i.anr = :anrId')
+            ->andWhere('i.createdAt >= :fromDate')
+            ->setParameter(':anrId', $anrId)
+            ->setParameter(':fromDate', $fromDate)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

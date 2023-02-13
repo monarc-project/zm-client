@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
@@ -17,6 +18,8 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleCommentSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleTypeSuperClass;
+use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
+use Monarc\Core\Model\Entity\QuestionSuperClass;
 use Monarc\Core\Model\Entity\ScaleCommentSuperClass;
 use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
 use Monarc\Core\Model\Entity\ScaleSuperClass;
@@ -40,10 +43,12 @@ use Monarc\Core\Table\ThreatTable as CoreThreatTable;
 use Monarc\Core\Table\TranslationTable as CoreTranslationTable;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\ConfigService;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\Core\Table\VulnerabilityTable as CoreVulnerabilityTable;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
+use Monarc\FrontOffice\Model\Entity\CronTask;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Instance;
@@ -161,7 +166,7 @@ class AnrService extends AbstractService
     protected $anrCliTable;
     protected $anrObjectCategoryCliTable;
     protected $assetCliTable;
-    protected $instanceCliTable;
+    protected InstanceTable $instanceCliTable;
     protected $instanceConsequenceCliTable;
     protected $instanceRiskCliTable;
     protected $instanceRiskOpCliTable;
@@ -211,8 +216,12 @@ class AnrService extends AbstractService
     protected $recordService;
     protected $recordProcessorService;
 
+    /** @var StatsAnrService */
     protected $statsAnrService;
+    /** @var ConfigService */
     protected $configService;
+    /** @var CronTaskService */
+    protected $cronTaskService;
 
     /** @var array */
     private $cachedData;
@@ -282,6 +291,26 @@ class AnrService extends AbstractService
                 'anr' => $anr['id'],
             ]));
             $anr['rwd'] = (empty($lk)) ? -1 : $lk->get('rwd');
+
+            /* Check if the Anr is under background import. */
+            $anr['importStatus'] = [];
+            if ($anr['status'] === AnrSuperClass::STATUS_UNDER_IMPORT) {
+                $importCronTask = $this->cronTaskService->getLatestTaskByNameWithParam(
+                    CronTask::NAME_INSTANCE_IMPORT,
+                    ['anrId' => $anr['id']]
+                );
+                if ($importCronTask !== null && $importCronTask->getStatus() === CronTask::STATUS_IN_PROGRESS) {
+                    $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
+                    $instancesNumber = $this->instanceCliTable->countByAnrIdFromDate(
+                        (int)$anr['id'],
+                        $importCronTask->getUpdatedAt()
+                    );
+                    $anr['importStatus'] = [
+                        'executionTime' => $timeDiff->h . ' hours ' . $timeDiff->i . ' min ' . $timeDiff->s . ' sec',
+                        'createdInstances' => $instancesNumber,
+                    ];
+                }
+            }
         }
 
         return $anrs;
@@ -560,13 +589,12 @@ class AnrService extends AbstractService
         /** @var CoreUser $connectedUser */
         $connectedUser = $this->getConnectedUser();
 
-        if (!$isSourceCommon && !$isSnapshotCloning) {
+        if (!$isSourceCommon && !$isSnapshotCloning && !$connectedUser->hasRole(UserRole::USER_ROLE_SYSTEM)) {
             /** @var UserAnrTable $userAnrCliTable */
             $userAnrCliTable = $this->get('userAnrCliTable');
             $userAnr = $userAnrCliTable->findByAnrAndUser($anr, $connectedUser);
-
             if ($userAnr === null) {
-                throw new Exception('Insufficient permissions to duplicate this analysis', 412);
+                throw new Exception('You are not authorized to duplicate this analysis', 412);
             }
         }
 
@@ -577,8 +605,9 @@ class AnrService extends AbstractService
                 ->generateAndSetUuid()
                 ->setObjects(new ArrayCollection());
             $newAnr->exchangeArray($data);
-            $newAnr->set('model', $idModel);
+                 set('model', $idModel);
             $newAnr->setReferentials(null);
+            $newAnr->setStatus(AnrSuperClass::STATUS_ACTIVE);
             $newAnr->setCreator($connectedUser->getEmail());
             if (!empty($model) && is_object($model)) {
                 $newAnr->set('cacheModelShowRolfBrut', $model->getShowRolfBrut());
@@ -1228,25 +1257,27 @@ class AnrService extends AbstractService
             }
 
             // duplicate questions & choices
+            /** @var QuestionSuperClass[] $questions */
             $questions = $isSourceCommon
                 ? $this->get('questionTable')->fetchAllObject()
                 : $this->get('questionCliTable')->getEntityByFields(['anr' => $anr->id]);
             $questionsNewIds = [];
             foreach ($questions as $q) {
                 $newQuestion = new Question($q);
-                $newQuestion->set('id', null);
-                $newQuestion->set('anr', $newAnr);
+                $newQuestion->setId(null);
+                $newQuestion->setAnr($newAnr);
                 $this->get('questionCliTable')->save($newQuestion, false);
-                $questionsNewIds[$q->id] = $newQuestion;
+                $questionsNewIds[$q->getId()] = $newQuestion;
             }
+            /** @var QuestionChoiceSuperClass[] $questionChoices */
             $questionChoices = $isSourceCommon
                 ? $this->get('questionChoiceTable')->fetchAllObject()
-                : $this->get('questionChoiceCliTable')->getEntityByFields(['anr' => $anr->id]);
+                : $this->get('questionChoiceCliTable')->getEntityByFields(['anr' => $anr->getId()]);
             foreach ($questionChoices as $qc) {
                 $newQuestionChoice = new QuestionChoice($qc);
-                $newQuestionChoice->set('id', null);
-                $newQuestionChoice->set('anr', $newAnr);
-                $newQuestionChoice->set('question', $questionsNewIds[$qc->get('question')->get('id')]);
+                $newQuestionChoice->setId(null);
+                $newQuestionChoice->setAnr($newAnr);
+                $newQuestionChoice->setQuestion($questionsNewIds[$qc->getQuestion()->getId()]);
                 $this->get('questionChoiceCliTable')->save($newQuestionChoice, false);
             }
 
@@ -1497,7 +1528,9 @@ class AnrService extends AbstractService
 
             $this->get('table')->getDb()->flush();
 
-            $this->setCurrentAnrToConnectedUser($newAnr);
+            if (!$isSnapshot) {
+                $this->setCurrentAnrToConnectedUser($newAnr);
+            }
         } catch (\Exception $e) {
             if (!empty($newAnr)) {
                 $anrCliTable->deleteEntity($newAnr);

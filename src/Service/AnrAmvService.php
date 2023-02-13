@@ -162,6 +162,7 @@ class AnrAmvService
     {
         /** @var AmvTable $amvTable */
         $amvTable = $this->get('table');
+        // TODO: use findByUuidAndAnr and pass the anr obj found by the middleware, remove the current method.
         $amv = $amvTable->findByUuidAndAnrId($id['uuid'], (int)$data['anr']);
 
         if (isset($data['status'])) {

@@ -13,6 +13,7 @@ use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 
@@ -106,9 +107,9 @@ class AnrServiceFactory extends AbstractServiceFactory
         'operationalInstanceRiskScaleCliTable' => Table\OperationalInstanceRiskScaleTable::class,
         'instanceRiskOwnerCliTable' => Table\InstanceRiskOwnerTable::class,
         'translationCliTable' => Table\TranslationTable::class,
-        'anrMetadatasOnInstancesCliTable' => Table\AnrMetadatasOnInstancesTable::class,
-        'instanceMetadataCliTable' => Table\InstanceMetadataTable::class,
-        'soaScaleCommentCliTable' => Table\SoaScaleCommentTable::class,
+        'anrMetadatasOnInstancesCliTable' => DeprecatedTable\AnrMetadatasOnInstancesTable::class,
+        'instanceMetadataCliTable' => DeprecatedTable\InstanceMetadataTable::class,
+        'soaScaleCommentCliTable' => DeprecatedTable\SoaScaleCommentTable::class,
 
 
         // export
@@ -121,5 +122,6 @@ class AnrServiceFactory extends AbstractServiceFactory
 
         // other Service
         'configService' => ConfigService::class,
+        'cronTaskService' => CronTaskService::class,
     ];
 }

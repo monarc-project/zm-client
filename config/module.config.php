@@ -9,18 +9,22 @@ use Laminas\Mvc\Middleware\PipeSpec;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Laminas\ServiceManager\Proxy\LazyServiceFactory;
 use Monarc\Core\Adapter\Authentication as AdapterAuthentication;
+use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\OperationalRiskScalesExportService;
 use Monarc\Core\Storage\Authentication as StorageAuthentication;
-use Monarc\Core\Service\AnrMetadatasOnInstancesExportService;
 use Monarc\Core\Service\SoaScaleCommentExportService;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\Middleware\AnrValidationMiddleware;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
+use Monarc\FrontOffice\CronTask\Table\CronTaskTable;
+use Monarc\FrontOffice\Import;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Model\Table\Factory\ClientEntityManagerFactory;
+use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
 use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
@@ -821,7 +825,7 @@ return [
                             'route' => 'instances/import',
                             'constraints' => [],
                             'defaults' => [
-                                'controller' => Controller\ApiAnrInstancesImportController::class,
+                                'controller' => Import\Controller\ApiAnrInstancesImportController::class,
                             ],
                         ],
                     ],
@@ -1104,7 +1108,7 @@ return [
             Controller\ApiConfigController::class => AutowireFactory::class,
             Controller\ApiClientsController::class => AutowireFactory::class,
             Controller\ApiModelsController::class => Controller\ApiModelsControllerFactory::class,
-            Controller\ApiReferentialsController::class => Controller\ApiReferentialsControllerFactory::class,
+            Controller\ApiReferentialsController::class => AutowireFactory::class,
             Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
             Controller\ApiUserPasswordController::class => AutowireFactory::class,
             Controller\ApiUserTwoFAController::class => AutowireFactory::class,
@@ -1154,7 +1158,7 @@ return [
                 => Controller\ApiAnrRecordRecipientsControllerFactory::class,
             Controller\ApiAnrRecordsController::class => Controller\ApiAnrRecordsControllerFactory::class,
             Controller\ApiAnrRecordsExportController::class => Controller\ApiAnrRecordsExportControllerFactory::class,
-            Controller\ApiAnrRecordsImportController::class => Controller\ApiAnrRecordsImportControllerFactory::class,
+            Controller\ApiAnrRecordsImportController::class => AutowireFactory::class,
             Controller\ApiAnrTreatmentPlanController::class => Controller\ApiAnrTreatmentPlanControllerFactory::class,
             Controller\ApiSoaController::class => AutowireFactory::class,
             Controller\ApiSoaCategoryController::class => Controller\ApiSoaCategoryControllerFactory::class,
@@ -1171,13 +1175,13 @@ return [
             Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
             Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
             Controller\ApiAnrInstancesRisksOpController::class => AutowireFactory::class,
-            Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
+            Import\Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesExportController::class
                 => Controller\ApiAnrInstancesExportControllerFactory::class,
             Controller\ApiAnrObjectsCategoriesController::class
                 => Controller\ApiAnrObjectsCategoriesControllerFactory::class,
             Controller\ApiAnrObjectsExportController::class => Controller\ApiAnrObjectsExportControllerFactory::class,
-            Controller\ApiAnrObjectsImportController::class => Controller\ApiAnrObjectsImportControllerFactory::class,
+            Controller\ApiAnrObjectsImportController::class => AutowireFactory::class,
             Controller\ApiAnrDeliverableController::class => AutowireFactory::class,
             Controller\ApiAnrExportController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesConsequencesController::class
@@ -1271,10 +1275,11 @@ return [
             Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\TranslationTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
-            Table\AnrMetadatasOnInstancesTable::class => ClientEntityManagerFactory::class,
-            Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
-            Table\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
-            Table\ClientModelTable::class => ClientEntityManagerFactory::class,
+            DeprecatedTable\AnrMetadatasOnInstancesTable::class => ClientEntityManagerFactory::class,
+            DeprecatedTable\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
+            DeprecatedTable\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
+            DeprecatedTable\ClientModelTable::class => ClientEntityManagerFactory::class,
+            CronTaskTable::class => ClientEntityManagerFactory::class,
 
             //entities
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1361,9 +1366,9 @@ return [
             Service\AssetExportService::class => Service\AssetExportServiceFactory::class,
             Service\DeliverableGenerationService::class => Service\DeliverableGenerationServiceFactory::class,
             Service\ObjectExportService::class => AutowireFactory::class,
-            Service\ObjectImportService::class => AutowireFactory::class,
-            Service\AssetImportService::class => AutowireFactory::class,
-            Service\InstanceImportService::class => AutowireFactory::class,
+            Import\Service\ObjectImportService::class => AutowireFactory::class,
+            Import\Service\AssetImportService::class => AutowireFactory::class,
+            Import\Service\InstanceImportService::class => AutowireFactory::class,
             StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             StatsSettingsService::class => AutowireFactory::class,
             Service\OperationalRiskScaleService::class => AutowireFactory::class,
@@ -1394,11 +1399,15 @@ return [
                 $serviceName
             ) {
                 return new SoaScaleCommentExportService(
-                    $container->get(Table\SoaScaleCommentTable::class),
+                    $container->get(DeprecatedTable\SoaScaleCommentTable::class),
                     $container->get(Table\TranslationTable::class),
                     $container->get(ConfigService::class),
                 );
             },
+            CronTaskService::class => AutowireFactory::class,
+
+            // Helpers
+            Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
 
             /* Authentication */
             StorageAuthentication::class => static function (ContainerInterface $container, $serviceName) {
@@ -1408,7 +1417,10 @@ return [
                 );
             },
             AdapterAuthentication::class => static function (ContainerInterface $container, $serviceName) {
-                return new AdapterAuthentication($container->get(Table\UserTable::class));
+                return new AdapterAuthentication(
+                    $container->get(Table\UserTable::class),
+                    $container->get(ConfigService::class)
+                );
             },
             ConnectedUserService::class => static function (ContainerInterface $container, $serviceName) {
                 return new ConnectedUserService(
@@ -1424,6 +1436,31 @@ return [
             InputValidator\User\PostUserDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             GetStatsQueryParamsValidator::class => GetStatsQueryParamsValidatorFactory::class,
             GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
+
+            // Commands
+            Import\Command\ImportAnalysesCommand::class => static function (
+                ContainerInterface $container,
+                $serviceName
+            ) {
+                /** @var ConnectedUserService $connectedUserService */
+                $connectedUserService = $container->get(ConnectedUserService::class);
+                $connectedUserService->setConnectedUser(new User([
+                    'firstname' => 'System',
+                    'lastname' => 'System',
+                    'email' => 'System',
+                    'language' => 1,
+                    'mospApiKey' => '',
+                    'creator' => 'System',
+                    'role' => [Entity\UserRole::USER_ROLE_SYSTEM],
+                ]));
+
+                return new Import\Command\ImportAnalysesCommand(
+                    $container->get(CronTaskService::class),
+                    $container->get(Import\Service\InstanceImportService::class),
+                    $container->get(DeprecatedTable\AnrTable::class),
+                    $container->get(Service\SnapshotService::class)
+                );
+            },
         ],
         'lazy_services' => [
             'class_map' => [

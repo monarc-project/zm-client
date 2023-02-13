@@ -76,18 +76,31 @@ class AnrThreatService
             ->setCode($data['code'])
             ->setLabels($data)
             ->setDescriptions($data)
-            ->setConfidentiality((int)$data['c'])
-            ->setIntegrity((int)$data['i'])
-            ->setAvailability((int)$data['a'])
+            ->setComment($threatData['comment'] ?? '')
             ->setCreator($this->connectedUser->getEmail());
         if (isset($data['uuid'])) {
             $threat->setUuid($data['uuid']);
+        }
+        if (isset($data['c'])) {
+            $threat->setConfidentiality((int)$data['c']);
+        }
+        if (isset($data['i'])) {
+            $threat->setIntegrity((int)$data['i']);
+        }
+        if (isset($data['a'])) {
+            $threat->setAvailability((int)$data['a']);
         }
         if (isset($data['mode'])) {
             $threat->setMode((int)$data['mode']);
         }
         if (isset($data['status'])) {
             $threat->setStatus($data['status']);
+        }
+        if (isset($data['trend'])) {
+            $threat->setTrend((int)$data['trend']);
+        }
+        if (isset($data['qualification'])) {
+            $threat->setTrend((int)$data['qualification']);
         }
 
         if (!empty($data['theme'])) {

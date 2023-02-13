@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Table;
 
-use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Entity\ThreatSuperClass;
 use Monarc\Core\Table\AbstractTable;
@@ -32,45 +31,16 @@ class ThreatTable extends AbstractTable
             ->getSingleScalarResult();
     }
 
-    /**
-     * @return Threat[]
-     */
-    public function findByAnr(Anr $anr)
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('t')
-            ->where('t.anr = :anr')
-            ->setParameter(':anr', $anr)
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function findUuidsAndCodesByAnr(Anr $anr): array
+    public function existsWithAnrAndCode(Anr $anr, string $code): bool
     {
         return $this->getRepository()->createQueryBuilder('t')
-            ->select('t.uuid, t.code')
             ->where('t.anr = :anr')
+            ->andWhere('t.code = :code')
             ->setParameter('anr', $anr)
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
             ->getQuery()
-            ->getScalarResult();
-    }
-
-    /**
-     * @param Anr $anr
-     * @param string[] $uuids
-     * @param string $indexField
-     *
-     * @return array
-     */
-    public function findByAnrAndUuidsIndexedByField(Anr $anr, array $uuids, string $indexField = 'uuid'): array
-    {
-        $queryBuilder = $this->getRepository()->createQueryBuilder('t', 't.' . $indexField);
-
-        return $queryBuilder->where('t.anr = :anr')
-            ->andWhere($queryBuilder->expr()->in('t.uuid', $uuids))
-            ->setParameter(':anr', $anr)
-            ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult() !== null;
     }
 
     // TODO: ....

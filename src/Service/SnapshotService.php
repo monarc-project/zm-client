@@ -70,7 +70,7 @@ class SnapshotService extends AbstractService
         // TODO: Refactor this service and AnrService to be able to pass snapshot data in the constructor.
         $snapshot = (new Snapshot())
             ->setAnr($newAnr)
-            ->setAnrReference($anrTable->findById($data['anr']))
+            ->setAnrReference($data['anr'] instanceof Anr ? $data['anr'] : $anrTable->findById($data['anr']))
             ->setCreator($newAnr->getCreator())
             ->setComment($data['comment']);
 

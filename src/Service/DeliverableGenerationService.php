@@ -990,7 +990,7 @@ class DeliverableGenerationService extends AbstractService
         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
             $table->addCell(Converter::cmToTwip($sizeColumn), $this->grayCell)
                 ->addText(
-                    $opRiskImpactScale['label'],
+                    _WT($opRiskImpactScale['label']),
                     $this->boldFont,
                     $this->centerParagraph
                 );

@@ -15,6 +15,7 @@ use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
 
 class AmvTable extends AbstractTable
 {
@@ -23,15 +24,43 @@ class AmvTable extends AbstractTable
         parent::__construct($entityManager, $entityName);
     }
 
+    public function findByAnrAndUuid(Anr $anr, string $uuid): ?Amv
+    {
+        return $this->getRepository()->createQueryBuilder('amv')
+            ->where('amv.anr = :anr')
+            ->andWhere('amv.uuid = :uuid')
+            ->setParameter('anr', $anr)
+            ->setParameter('uuid', $uuid)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
      * @return Amv[]
      */
-    public function findByAnrIndexedByUuid(Anr $anr): array
+    public function findByAnr(Anr $anr): array
     {
         return $this->getRepository()
-            ->createQueryBuilder('amv', 'amv.uuid')
+            ->createQueryBuilder('amv')
             ->where('amv.anr = :anr')
             ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Amv[]
+     */
+    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('amv')
+            ->innerJoin('amv.asset', 'a')
+            ->where('amv.anr = :anr')
+            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('assetUuid', $asset->getUuid())
             ->getQuery()
             ->getResult();
     }

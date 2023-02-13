@@ -7,9 +7,16 @@
 
 namespace Monarc\FrontOffice;
 
+use DateTime;
 use Laminas\Stdlib\ResponseInterface;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\CronTask\Service\CronTaskService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\CronTask;
 use Monarc\FrontOffice\Model\Entity\Snapshot;
+use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\FrontOffice\Table\UserAnrTable;
 use Laminas\Http\Request;
@@ -74,8 +81,9 @@ class Module
             }
         }
         $errorJson = [
-            'message' => $exception ? $exception->getMessage(
-            ) : 'An error occurred during execution; please try again later.',
+            'message' => $exception
+                ? $exception->getMessage()
+                : 'An error occurred during execution; please try again later.',
             'error' => $error,
             'exception' => $exceptionJson,
         ];
@@ -168,6 +176,11 @@ class Module
                         break;
                     }
 
+                    $result = $this->validateAnrStatusAndGetResponseIfInvalid($anrId, $mvcEvent, $route);
+                    if ($result !== null) {
+                        return $result;
+                    }
+
                     $userAnr = $userAnrTable->findByAnrIdAndUser($anrId, $connectedUser);
                     if ($userAnr === null) {
                         // We authorise the access for snapshot, but for read only (GET).
@@ -220,5 +233,90 @@ class Module
                 || $route === 'monarc_api_global_client_anr/objects_export' // export  Object
                 || $route === 'monarc_api_global_client_anr/deliverable' // generate a report
             );
+    }
+
+    /**
+     * Validates the anr status for NON GET method requests exclude DELETE (cancellation of background import).
+     */
+    private function validateAnrStatusAndGetResponseIfInvalid(
+        int $anrId,
+        MvcEvent $mvcEvent,
+        string $route
+    ): ?ResponseInterface {
+        /* GET requests are always allowed and cancellation of import (delete import process -> PID). */
+        if ($mvcEvent->getRequest()->getMethod() === Request::METHOD_GET
+            || (
+                $mvcEvent->getRequest()->getMethod() === Request::METHOD_DELETE
+                && $route === 'monarc_api_global_client_anr/instance_import'
+            )
+        ) {
+            return null;
+        }
+
+        $serviceManager = $mvcEvent->getApplication()->getServiceManager();
+
+        /** @var Anr $anr */
+        $anr = $serviceManager->get(AnrTable::class)->findById($anrId);
+        if ($anr->isActive()) {
+            return null;
+        }
+
+        /* Allow deleting anr if the status is waiting for import or there is an import error. */
+        if ($route === 'monarc_api_client_anr'
+            && $mvcEvent->getRequest()->getMethod() === Request::METHOD_DELETE
+            && ($anr->getStatus() === AnrSuperClass::STATUS_IMPORT_ERROR
+                || $anr->getStatus() === AnrSuperClass::STATUS_AWAITING_OF_IMPORT
+            )
+        ) {
+            return null;
+        }
+
+        /* Allow to restore a snapshot if there is an import error. */
+        if ($route === 'monarc_api_global_client_anr/snapshot_restore'
+            && $anr->getStatus() === AnrSuperClass::STATUS_IMPORT_ERROR
+            && $mvcEvent->getRequest()->getMethod() === Request::METHOD_POST
+        ) {
+            return null;
+        }
+
+        $result = [
+            'status' => $anr->getStatusName(),
+            'importStatus' => [],
+        ];
+        /** @var CronTaskService $cronTaskService */
+        $cronTaskService = $serviceManager->get(CronTaskService::class);
+
+        if ($anr->getStatus() === AnrSuperClass::STATUS_UNDER_IMPORT) {
+            $importCronTask = $cronTaskService->getLatestTaskByNameWithParam(
+                CronTask::NAME_INSTANCE_IMPORT,
+                ['anrId' => $anrId]
+            );
+            if ($importCronTask !== null && $importCronTask->getStatus() === CronTask::STATUS_IN_PROGRESS) {
+                /** @var InstanceTable $instanceTable */
+                $instanceTable = $serviceManager->get(InstanceTable::class);
+                $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
+                $instancesNumber = $instanceTable->countByAnrIdFromDate($anrId, $importCronTask->getUpdatedAt());
+                $result['importStatus'] = [
+                    'executionTime' => $timeDiff->h . ' hours ' . $timeDiff->i . ' min ' . $timeDiff->s . ' sec',
+                    'createdInstances' => $instancesNumber,
+                ];
+            }
+        } elseif ($anr->getStatus() === AnrSuperClass::STATUS_IMPORT_ERROR) {
+            $importCronTask = $cronTaskService->getLatestTaskByNameWithParam(
+                CronTask::NAME_INSTANCE_IMPORT,
+                ['anrId' => $anrId]
+            );
+            if ($importCronTask !== null && $importCronTask->getStatus() === CronTask::STATUS_FAILURE) {
+                $result['importStatus'] = [
+                    'errorMessage' => $importCronTask->getResultMessage(),
+                ];
+            }
+        }
+
+        $response = $mvcEvent->getResponse();
+        $response->setContent(json_encode($result, JSON_THROW_ON_ERROR));
+        $response->setStatusCode(409);
+
+        return $response;
     }
 }

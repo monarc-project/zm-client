@@ -19,6 +19,11 @@ class ThemeTable extends AbstractTable
         parent::__construct($entityManager, $entityName);
     }
 
+    public function findById(int $id): ?Theme
+    {
+        return $this->getRepository()->find($id);
+    }
+
     public function findByAnrAndLabel(Anr $anr, string $labelKey, string $labelValue): ?Theme
     {
         return $this->getRepository()->createQueryBuilder('t')
@@ -29,17 +34,5 @@ class ThemeTable extends AbstractTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    /**
-     * @return Theme[]
-     */
-    public function findByAnr(Anr $anr): array
-    {
-        return $this->getRepository()->createQueryBuilder('t')
-            ->where('t.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getResult();
     }
 }
