@@ -1354,7 +1354,6 @@ class InstanceImportService
                     ->setInstance($instance)
                     ->setScaleImpactType($localScalesImpactTypes[$consequenceData['scaleImpactType'][$labelKey]])
                     ->setIsHidden((bool)$consequenceData['isHidden'])
-                    ->setLocallyTouched($consequenceData['locallyTouched'])
                     ->setCreator($this->connectedUser->getEmail());
 
                 foreach (InstanceConsequence::getAvailableScalesCriteria() as $scaleCriteriaKey => $scaleCriteria) {
@@ -2267,7 +2266,6 @@ class InstanceImportService
                             );
                         foreach ($instanceConsequenceBrothers as $instanceConsequenceBrother) {
                             $instanceConsequenceBrother->setIsHidden($instanceConsequence->isHidden())
-                                ->setLocallyTouched($instanceConsequence->getLocallyTouched())
                                 ->setConfidentiality($instanceConsequence->getConfidentiality())
                                 ->setIntegrity($instanceConsequence->getIntegrity())
                                 ->setAvailability($instanceConsequence->getAvailability());

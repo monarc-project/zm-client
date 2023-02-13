@@ -16,5 +16,10 @@ class AlterAnrTableRenameScalesUpdatableField extends AbstractMigration
         $this->execute('update users set recovery_codes = "' . serialize([]) . '" where recovery_codes IS NULL');
 
         $this->execute('ALTER TABLE clients DROP COLUMN model_id');
+
+        $this->table('instances')->removeColumn('disponibility')->update();
+        $this->table('objects')->removeColumn('disponibility')->update();
+
+        $this->table('instances_consequences')->removeColumn('object_id')->removeColumn('locally_touched')->update();
     }
 }

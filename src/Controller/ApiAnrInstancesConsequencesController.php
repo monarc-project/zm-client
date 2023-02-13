@@ -19,9 +19,6 @@ class ApiAnrInstancesConsequencesController extends ApiAnrAbstractController
 {
     protected $name = 'instances-consequences';
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         $data['anr'] = (int)$this->params()->fromRoute('anrid');
