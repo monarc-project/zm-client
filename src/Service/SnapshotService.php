@@ -16,7 +16,7 @@ use Monarc\FrontOffice\Model\Entity\Snapshot;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\Core\Model\Entity\User;
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * This class is the service that handles snapshots. Snapshots are backups of ANRs at a specific point in time, and
@@ -28,6 +28,7 @@ class SnapshotService extends AbstractService
     protected $dependencies = ['anr', 'anrReference'];
     protected $filterColumns = [];
     protected $anrTable;
+    /** @var UserAnrTable */
     protected $userAnrTable;
     protected $anrService;
 
@@ -191,8 +192,7 @@ class SnapshotService extends AbstractService
          * Transmit the to the new anr (restored from snapshot) access and settings from the replaced (old) anr.
          */
         /** @var UserAnrTable $userAnrTable */
-        $userAnrTable = $anrService->get('userAnrCliTable');
-        $usersAnrs = $userAnrTable->findByAnrId($anrId);
+        $usersAnrs = $this->userAnrTable->findByAnr($anrReference);
 
         foreach ($usersAnrs as $userAnr) {
             $userAnr->setAnr($newAnr);

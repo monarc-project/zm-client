@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Service\Traits\RiskCalculationTrait;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
@@ -27,6 +28,7 @@ use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
  */
 class AnrRecommandationRiskService extends AbstractService
 {
+    use RiskCalculationTrait;
     use RecommendationsPositionsUpdateTrait;
 
     protected Table\AnrTable $anrTable;

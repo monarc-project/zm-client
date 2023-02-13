@@ -2471,7 +2471,7 @@ class DeliverableGenerationService extends AbstractService
                 );
             $risksOpByTreatment = $this->get('anrInstanceRiskOpService')
                 ->getOperationalRisks(
-                    $this->anr->getId(),
+                    $this->anr,
                     null,
                     ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]
                 );
@@ -3938,7 +3938,7 @@ class DeliverableGenerationService extends AbstractService
             $controlSoa['measure']->rolfRisks = [];
             if (!empty($rolfRisks)) {
                 $controlSoa['measure']->rolfRisks = $this->get('anrInstanceRiskOpService')->getOperationalRisks(
-                    $this->anr->getId(),
+                    $this->anr,
                     null,
                     ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']
                 );
@@ -5215,9 +5215,9 @@ class DeliverableGenerationService extends AbstractService
         $allInstances = $this->instanceTable->findByAnrAndOrderByParams($this->anr, ['i.position' => 'ASC']);
         /** @var Instance[] $instances */
         $instances = array_filter($allInstances, function ($ins) {
-            return ($ins->getConfidentiality() > -1 && $ins->getInheritedConfidentiality() === 0) ||
-                ($ins->getIntegrity() > -1 && $ins->getInheritedIntegrity() === 0) ||
-                ($ins->getAvailability() > -1 && $ins->getInheritedAvailability() === 0);
+            return ($ins->getConfidentiality() > -1 && !$ins->isConfidentialityInherited()) ||
+                ($ins->getIntegrity() > -1 && !$ins->isIntegrityInherited()) ||
+                ($ins->getAvailability() > -1 && !$ins->getAvailabilityInherited());
         });
         $impacts = ['c', 'i', 'd'];
         $instanceCriteria = Instance::getAvailableScalesCriteria();
@@ -5250,7 +5250,7 @@ class DeliverableGenerationService extends AbstractService
                 continue;
             }
 
-            $instanceConsequences = $this->anrInstanceConsequenceService->getConsequences($instance, true);
+            $instanceConsequences = $this->anrInstanceConsequenceService->getConsequencesData($instance, true);
 
             //delete scale type C,I and D
             // set the correct order in the deliverable. not perfect but work
@@ -5258,7 +5258,6 @@ class DeliverableGenerationService extends AbstractService
             foreach ($instanceConsequences as $keyConsequence => $instanceConsequence) {
                 if ($instanceConsequence['scaleImpactType'] < 4) {
                     unset($instanceConsequences[$keyConsequence]);
-                    $impactsConsequences[$instanceConsequence['scaleImpactType'] - 1] = $instanceConsequence;
                 }
                 $impactsConsequences[$instanceConsequence['scaleImpactType'] - 1] = $instanceConsequence;
             }
@@ -5598,7 +5597,7 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateAssetContextTable()
     {
-        $allInstances = $this->instanceTable->findByAnrId($this->anr->getId());
+        $allInstances = $this->instanceTable->findByAnr($this->anr);
         $allMetadatas = $this->metadatasOnInstancesTable->findByAnr($this->anr);
         $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $this->anr,

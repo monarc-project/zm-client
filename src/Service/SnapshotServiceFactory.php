@@ -8,6 +8,10 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserAnrTable;
+use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\SnapshotTable;
+use Monarc\FrontOffice\Model\Entity\Snapshot;
 
 /**
  * Factory class attached to SnapshotService
@@ -16,10 +20,10 @@ use Monarc\Core\Service\AbstractServiceFactory;
 class SnapshotServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Snapshot',
-        'table' => 'Monarc\FrontOffice\Model\Table\SnapshotTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'anrService' => 'Monarc\FrontOffice\Service\AnrService',
+        'entity' => Snapshot::class,
+        'table' => SnapshotTable::class,
+        'anrTable' => AnrTable::class,
+        'userAnrTable' => UserAnrTable::class,
+        'anrService' => AnrService::class,
     ];
 }

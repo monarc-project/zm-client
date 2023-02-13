@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Service\InstanceService;
-use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
 use Monarc\FrontOffice\Model\Table\InstanceMetadataTable;
@@ -19,7 +18,6 @@ use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
-use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Table\TranslationTable;

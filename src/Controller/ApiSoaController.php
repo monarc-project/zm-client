@@ -102,7 +102,7 @@ class ApiSoaController extends AbstractRestfulController
             $amvs = [];
             $rolfRisks = [];
 
-            /** @var SoaScaleComment $measure */
+            /** @var SoaScaleComment $soaScaleComment */
             $soaScaleComment = $entity['soaScaleComment'];
 
             /** @var Measure $measure */
@@ -115,16 +115,20 @@ class ApiSoaController extends AbstractRestfulController
             }
             $entity['measure']->rolfRisks = [];
             if (!empty($rolfRisks)) {
-                $entity['measure']->rolfRisks = $this->anrInstanceRiskOpService->getOperationalRisks($anrId, null, [
-                    'rolfRisks' => $rolfRisks,
-                    'limit' => -1,
-                    'order' => 'cacheNetRisk',
-                    'order_direction' => 'desc',
-                ]);
+                $entity['measure']->rolfRisks = $this->anrInstanceRiskOpService->getOperationalRisks(
+                    $measure->getAnr(),
+                    null,
+                    [
+                        'rolfRisks' => $rolfRisks,
+                        'limit' => -1,
+                        'order' => 'cacheNetRisk',
+                        'order_direction' => 'desc',
+                    ]
+                );
             }
             $entity['measure']->amvs = [];
             if (!empty($amvs)) {
-                $entity['measure']->amvs = $this->anrInstanceRiskService->getInstanceRisks($anrId, null, [
+                $entity['measure']->amvs = $this->anrInstanceRiskService->getInstanceRisks($measure->getAnr(), null, [
                     'amvs' => $amvs,
                     'limit' => -1,
                     'order' => 'maxRisk',

@@ -1074,6 +1074,7 @@ class AnrService extends AbstractService
                 : $this->get('instanceCliTable');
             $instances = $instanceTable->getEntityByFields(['anr' => $anr->getId()], ['parent' => 'ASC']);
             foreach ($instances as $instance) {
+                // TODO: replace with normal object setup.
                 $newInstance = new Instance($instance);
                 $newInstance->set('id', null);
                 $newInstance->setAnr($newAnr);
@@ -1084,9 +1085,11 @@ class AnrService extends AbstractService
                 /*
                  * TODO: remove the reset method when all the entities creation from another entities wil be forbidden.
                  * Currently we link the core related classes, that's why have to clean up the relations.
+                 * -> should be dropped now !!!
                  */
                 $newInstance->resetInstanceRisks();
                 $newInstance->resetInstanceConsequences();
+
                 if (!$isSourceCommon) {
                     $this->createInstanceMetadatasFromSource(
                         $connectedUser,
@@ -1676,7 +1679,7 @@ class AnrService extends AbstractService
         //instances
         /** @var CoreInstanceTable $coreinstanceTable */
         $coreinstanceTable = $this->get('instanceTable');
-        $instances = $coreinstanceTable->findByAnrId($model->getAnr()->getId());
+        $instances = $coreinstanceTable->findByAnr($model->getAnr());
         foreach ($instances as $instance) {
             foreach ($languages as $lang) {
                 if ($instance->getName($lang) === '' || $instance->getLabel($lang) === '') {

@@ -73,6 +73,8 @@ class InstanceImportService
 
     private Service\AnrInstanceService $anrInstanceService;
 
+    private Service\AnrInstanceConsequenceService $anrInstanceConsequenceService;
+
     private Service\AnrRecordService $anrRecordService;
 
     private Service\AnrInstanceRiskOpService $anrInstanceRiskOpService;
@@ -156,6 +158,7 @@ class InstanceImportService
     public function __construct(
         Service\AnrInstanceRiskService $anrInstanceRiskService,
         Service\AnrInstanceService $anrInstanceService,
+        Service\AnrInstanceConsequenceService $anrInstanceConsequenceService,
         ObjectImportService $objectImportService,
         Service\AnrRecordService $anrRecordService,
         Service\AnrInstanceRiskOpService $anrInstanceRiskOpService,
@@ -234,6 +237,7 @@ class InstanceImportService
         $this->importCacheHelper = $importCacheHelper;
         $this->soaCategoryService = $soaCategoryService;
         $this->anrThemeService = $anrThemeService;
+        $this->anrInstanceConsequenceService = $anrInstanceConsequenceService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
@@ -859,7 +863,7 @@ class InstanceImportService
             $scalesData = $this->getCurrentAndExternalScalesData($anr, $data);
 
             $ts = ['c', 'i', 'd'];
-            $instances = $this->instanceTable->findByAnrId($anr->getId());
+            $instances = $this->instanceTable->findByAnr($anr);
             $consequences = $this->instanceConsequenceTable->findByAnr($anr);
 
             // Instances
@@ -890,7 +894,7 @@ class InstanceImportService
                         $scalesData['external'][Scale::TYPE_IMPACT]['min'],
                         $scalesData['external'][Scale::TYPE_IMPACT]['max']
                     ));
-                    $this->instanceConsequenceTable->saveEntity($conseq, false);
+                    $this->instanceConsequenceTable->save($conseq, false);
                 }
             }
 
@@ -964,7 +968,7 @@ class InstanceImportService
         }
 
         //Add user consequences to all instances
-        $instances = $this->instanceTable->findByAnrId($anr->getId());
+        $instances = $this->instanceTable->findByAnr($anr);
         $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnr($anr);
         foreach ($instances as $instance) {
             foreach ($scaleImpactTypes as $siType) {
@@ -981,7 +985,7 @@ class InstanceImportService
                         ->setScaleImpactType($siType)
                         ->setCreator($this->connectedUser->getEmail());
 
-                    $this->instanceConsequenceTable->saveEntity($consequence, false);
+                    $this->instanceConsequenceTable->save($consequence, false);
                 }
             }
         }
@@ -1206,7 +1210,7 @@ class InstanceImportService
     ): void {
         $labelKey = 'label' . $anr->getLanguage();
         if (!$includeEval) {
-            $this->anrInstanceService->createInstanceConsequences($instance, $anr, $monarcObject);
+            $this->anrInstanceConsequenceService->createInstanceConsequences($instance, $anr, $monarcObject);
 
             return;
         }
@@ -1289,7 +1293,7 @@ class InstanceImportService
                     $instanceConsequence->{'set' . $scaleCriteria}($value);
                 }
 
-                $this->instanceConsequenceTable->saveEntity($instanceConsequence, false);
+                $this->instanceConsequenceTable->save($instanceConsequence, false);
             }
 
             $this->instanceConsequenceTable->getDb()->flush();
@@ -2249,7 +2253,6 @@ class InstanceImportService
             ->setAnr($anr)
             ->setLabels($instanceData)
             ->setNames($instanceData)
-            ->setDisponibility(!empty($instanceData['disponibility']) ? (float)$instanceData['disponibility'] : 0)
             ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
             ->setRoot($parentInstance === null ? null : ($parentInstance->getRoot() ?? $parentInstance))
             ->setParent($parentInstance)

@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Interop\Container\ContainerInterface;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Table;
@@ -28,14 +27,4 @@ class AnrInstanceConsequenceServiceFactory extends AbstractServiceFactory
         'scaleImpactTypeTable' => Table\ScaleImpactTypeTable::class,
         'scaleCommentTable' => Table\ScaleCommentTable::class,
     ];
-
-    // TODO: A temporary solution to inject SharedEventManager. All the factories classes will be removed.
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $anrInstanceConsequenceService = parent::__invoke($container, $requestedName, $options);
-
-        $anrInstanceConsequenceService->setSharedManager($container->get('EventManager')->getSharedManager());
-
-        return $anrInstanceConsequenceService;
-    }
 }

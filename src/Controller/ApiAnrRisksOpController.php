@@ -11,6 +11,7 @@ use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 
 /**
@@ -35,7 +36,8 @@ class ApiAnrRisksOpController extends AbstractRestfulController
      */
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
         $params = $this->getFilterParams();
 
         if ($this->params()->fromQuery('csv', false)) {
@@ -43,13 +45,13 @@ class ApiAnrRisksOpController extends AbstractRestfulController
             $response = $this->getResponse();
             $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
             $response->setContent(
-                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anrId, $id, $params)
+                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, $id, $params)
             );
 
             return $response;
         }
 
-        $risks = $this->anrInstanceRiskOpService->getOperationalRisks($anrId, $id, $params);
+        $risks = $this->anrInstanceRiskOpService->getOperationalRisks($anr, $id, $params);
 
         return new JsonModel([
             'count' => \count($risks),
@@ -61,6 +63,9 @@ class ApiAnrRisksOpController extends AbstractRestfulController
 
     public function getList()
     {
+        // TODO: apply the middleware.
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
         $anrId = (int)$this->params()->fromRoute('anrid');
         $params = $this->getFilterParams();
 
@@ -69,13 +74,13 @@ class ApiAnrRisksOpController extends AbstractRestfulController
             $response = $this->getResponse();
             $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
             $response->setContent(
-                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anrId, null, $params)
+                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, null, $params)
             );
 
             return $response;
         }
 
-        $risks = $this->anrInstanceRiskOpService->getOperationalRisks($anrId, null, $params);
+        $risks = $this->anrInstanceRiskOpService->getOperationalRisks($anr, null, $params);
 
         return new JsonModel([
             'count' => \count($risks),

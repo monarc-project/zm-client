@@ -11,6 +11,7 @@ use Monarc\Core\Model\Entity\InstanceRiskOwnerSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Service\InstanceRiskService;
 use Monarc\Core\Service\TranslateService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
@@ -79,11 +80,8 @@ class AnrInstanceRiskService extends InstanceRiskService
         $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
     }
 
-    public function getInstanceRisksInCsv($anrId, $instanceId = null, $params = []): string
+    public function getInstanceRisksInCsv(Anr $anr, $instanceId = null, $params = []): string
     {
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        $anr = $anrTable->findById($anrId);
         $anrLanguage = $anr->getLanguage();
 
         // Fill in the header
@@ -109,7 +107,7 @@ class AnrInstanceRiskService extends InstanceRiskService
             $this->translateService->translate('Security referentials', $anrLanguage),
         ]) . "\n";
 
-        $instanceRisks = $this->getInstanceRisks($anrId, $instanceId, $params);
+        $instanceRisks = $this->getInstanceRisks($anr, $instanceId, $params);
 
         // Fill in the content
         foreach ($instanceRisks as $instanceRisk) {

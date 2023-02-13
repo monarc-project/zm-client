@@ -271,7 +271,6 @@ class AnrObjectService
             'scope',
             'name' . $anr->get('language'),
             'label' . $anr->get('language'),
-            'disponibility',
             'position',
         ];
         $fields = array_combine($fields, $fields);

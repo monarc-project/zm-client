@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Model\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractRestfulController;
@@ -30,19 +31,21 @@ class ApiAnrRisksController extends AbstractRestfulController
 
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+        // TODO: apply AnrMiddleware and use anr object
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
         $params = $this->prepareParams();
 
         if ($this->params()->fromQuery('csv', false)) {
             /** @var Response $response */
             $response = $this->getResponse();
             $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
-            $response->setContent($this->anrInstanceRiskService->getInstanceRisksInCsv($anrId, $id, $params));
+            $response->setContent($this->anrInstanceRiskService->getInstanceRisksInCsv($anr, $id, $params));
 
             return $response;
         }
 
-        $risks = $this->anrInstanceRiskService->getInstanceRisks($anrId, $id, $params);
+        $risks = $this->anrInstanceRiskService->getInstanceRisks($anr, $id, $params);
 
         return new JsonModel([
             'count' => \count($risks),

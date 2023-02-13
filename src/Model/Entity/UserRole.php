@@ -11,8 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\UserRoleSuperClass;
 
 /**
- * User Role
- *
  * @ORM\Table(name="users_roles")
  * @ORM\Entity
  */

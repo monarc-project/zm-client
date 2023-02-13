@@ -5,6 +5,7 @@ namespace Monarc\FrontOffice\Controller;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\Anr;
 use Monarc\FrontOffice\Service\OperationalRiskScaleService;
 
 class ApiOperationalRisksScalesController extends AbstractRestfulController
@@ -18,10 +19,12 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
 
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+        // TODO: apply the middleware
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
         return new JsonModel([
-            'data' => $this->operationalRiskScaleService->getOperationalRiskScales($anrId),
+            'data' => $this->operationalRiskScaleService->getOperationalRiskScales($anr),
         ]);
     }
 

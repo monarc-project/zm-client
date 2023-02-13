@@ -19,6 +19,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\InstanceRiskOpService;
 use Monarc\Core\Service\TranslateService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
@@ -155,11 +156,10 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         return $operationalInstanceRisk->getId();
     }
 
-    public function getOperationalRisks(int $anrId, int $instanceId = null, array $params = []): array
+    public function getOperationalRisks(AnrSuperClass $anr, int $instanceId = null, array $params = []): array
     {
         $instancesIds = $this->determineInstancesIdsFromParam($instanceId);
 
-        $anr = $this->anrTable->findById($anrId);
         $anrLanguage = $anr->getLanguage();
 
         $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrInstancesAndFilterParams(
@@ -232,10 +232,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         return $result;
     }
 
-    public function getOperationalRisksInCsv(int $anrId, int $instanceId = null, array $params = []): string
+    public function getOperationalRisksInCsv(Anr $anr, int $instanceId = null, array $params = []): string
     {
         $instancesIds = $this->determineInstancesIdsFromParam($instanceId);
-        $anr = $this->anrTable->findById($anrId);
         $anrLanguage = $anr->getLanguage();
 
         $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(

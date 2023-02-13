@@ -45,17 +45,4 @@ class UserAnrTable extends AbstractTable
             ->getQuery()
             ->getOneOrNullResult();
     }
-
-    /**
-     * @return UserAnr[]
-     */
-    public function findByAnrId(int $anrId): array
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('ua')
-            ->where('ua.anr = :anrId')
-            ->setParameter('anrId', $anrId)
-            ->getQuery()
-            ->getResult();
-    }
 }

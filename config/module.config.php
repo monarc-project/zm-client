@@ -1172,7 +1172,7 @@ return [
             Controller\ApiDashboardAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrLibraryController::class => Controller\ApiAnrLibraryControllerFactory::class,
-            Controller\ApiAnrInstancesController::class => Controller\ApiAnrInstancesControllerFactory::class,
+            Controller\ApiAnrInstancesController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesRisksController::class => Controller\ApiAnrInstancesRisksControllerFactory::class,
             Controller\ApiAnrInstancesRisksOpController::class => AutowireFactory::class,
             Import\Controller\ApiAnrInstancesImportController::class => AutowireFactory::class,
@@ -1184,8 +1184,7 @@ return [
             Controller\ApiAnrObjectsImportController::class => AutowireFactory::class,
             Controller\ApiAnrDeliverableController::class => AutowireFactory::class,
             Controller\ApiAnrExportController::class => AutowireFactory::class,
-            Controller\ApiAnrInstancesConsequencesController::class
-                => Controller\ApiAnrInstancesConsequencesControllerFactory::class,
+            Controller\ApiAnrInstancesConsequencesController::class => AutowireFactory::class,
             Controller\ApiModelVerifyLanguageController::class => AutowireFactory::class,
             Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
             StatsController::class => AutowireFactory::class,
@@ -1285,8 +1284,6 @@ return [
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
             Entity\Anr::class => ModelFactory\AnrServiceModelEntity::class,
             Entity\Delivery::class => ModelFactory\DeliveryServiceModelEntity::class,
-            Entity\Instance::class => ModelFactory\InstanceServiceModelEntity::class,
-            Entity\InstanceConsequence::class => ModelFactory\InstanceConsequenceServiceModelEntity::class,
             Entity\InstanceRisk::class => ModelFactory\InstanceRiskServiceModelEntity::class,
             Entity\InstanceRiskOp::class => ModelFactory\InstanceRiskOpServiceModelEntity::class,
             Entity\Interview::class => ModelFactory\InterviewServiceModelEntity::class,
