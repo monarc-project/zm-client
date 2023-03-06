@@ -49,7 +49,10 @@ class ApiUserProfileController extends AbstractRestfulController
             'status' => $connectedUser->getStatus(),
             'role' => $connectedUser->getRoles(),
             'isTwoFactorAuthEnabled' => $connectedUser->isTwoFactorAuthEnabled(),
-            'remainingRecoveryCodes' => count($connectedUser->getRecoveryCodes()),
+            'remainingRecoveryCodes' =>
+                !is_array($connectedUser->getRecoveryCodes())
+                    ? 0
+                    : count($connectedUser->getRecoveryCodes()),
             'mospApiKey' => $connectedUser->getMospApiKey(),
         ]);
     }

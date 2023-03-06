@@ -809,14 +809,14 @@ class InstanceImportService
                             ->setMeasure($measure);
                     } else {
                         $soa->setRemarks($soaData['remarks'])
-                            ->setEvidences($soaData['evidences'])
-                            ->setActions($soaData['actions'])
-                            ->setEX($soaData['EX'])
-                            ->setLR($soaData['LR'])
-                            ->setCO($soaData['CO'])
-                            ->setBR($soaData['BR'])
-                            ->setBP($soaData['BP'])
-                            ->setRRA($soaData['RRA']);
+                        ->setEvidences($soaData['evidences'])
+                        ->setActions($soaData['actions'])
+                        ->setEX($soaData['EX'])
+                        ->setLR($soaData['LR'])
+                        ->setCO($soaData['CO'])
+                        ->setBR($soaData['BR'])
+                        ->setBP($soaData['BP'])
+                        ->setRRA($soaData['RRA']);
                     }
                     if (isset($soaData['soaScaleComment'])) {
                         $soaScaleComment = $this->importCacheHelper->getItemFromArrayCache(
