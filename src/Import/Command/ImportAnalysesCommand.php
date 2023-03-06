@@ -102,6 +102,7 @@ class ImportAnalysesCommand extends Command
                     'mode' => $params['mode'] ?? null,
                     'idparent' => $params['idparent'] ?? null,
                 ]);
+                $this->instanceImportService->cleanCache();
             } catch (\Throwable $e) {
                 $errors[] = $e->getMessage();
                 $errors[] = 'Error Trace:';

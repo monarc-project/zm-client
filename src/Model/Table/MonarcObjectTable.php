@@ -18,6 +18,7 @@ use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Entity\ObjectCategory;
 
 /**
  * Class MonarcObjectTable
@@ -82,20 +83,27 @@ class MonarcObjectTable extends CoreMonarcObjectTable
             ->getOneOrNullResult();
     }
 
-    public function findOneByAnrAndName(
+    public function findOneByAnrCategoryAndName(
         AnrSuperClass $anr,
+        ?ObjectCategory $objectCategory,
         string $nameKey,
         string $nameValue
     ): ?MonarcObject {
-        return $this->getRepository()
+        $queryBuilder = $this->getRepository()
             ->createQueryBuilder('mo')
             ->where('mo.anr = :anr')
             ->andWhere('mo.' . $nameKey . ' = :name')
             ->setParameter('anr', $anr)
             ->setParameter('name', $nameValue)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+            ->setMaxResults(1);
+        if ($objectCategory === null) {
+            $queryBuilder->andWhere('mo.category IS NULL');
+        } else {
+            $queryBuilder->andWhere('mo.category = :category')
+                ->setParameter('category', $objectCategory);
+        }
+
+        return $queryBuilder->getQuery()->getOneOrNullResult();
     }
 
     /**

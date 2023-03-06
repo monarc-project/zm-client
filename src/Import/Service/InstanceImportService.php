@@ -232,7 +232,13 @@ class InstanceImportService
         $this->soaCategoryService = $soaCategoryService;
     }
 
-    /**
+    public function cleanCache(): void
+    {
+        $this->cachedData = [];
+        $this->importCacheHelper->cleanArrayCache();
+    }
+
+        /**
      * Available import modes: 'merge', which will update the existing instances using the file's data,
      * or 'duplicate' which will create a new instance using the data.
      *
@@ -268,22 +274,15 @@ class InstanceImportService
             // Ensure the file has been uploaded properly, silently skip the files that are erroneous
             if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
                 if (empty($data['password'])) {
-                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
-                    if ($file === false) {
-                        // Support legacy export which were base64 encoded.
-                        $file = json_decode(trim(base64_decode(file_get_contents($f['tmp_name']))), true);
-                    }
+                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true, 512, JSON_THROW_ON_ERROR);
                 } else {
-                    // Decrypt the file and store the JSON data as an array in memory.
                     $key = $data['password'];
-                    $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
-                    if ($file === false) {
-                        // Support legacy export which were base64 encoded.
-                        $file = json_decode(
-                            trim($this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)),
-                            true
-                        );
+                    $decryptedResult = $this->decrypt(file_get_contents($f['tmp_name']), $key);
+                    if ($decryptedResult === false) {
+                        throw new Exception('Password is not correct.', 412);
                     }
+                    $file = json_decode(trim($decryptedResult), true, 512, JSON_THROW_ON_ERROR);
+                    unset($decryptedResult);
                 }
 
                 if ($file !== false
@@ -2237,8 +2236,8 @@ class InstanceImportService
         $instanceData = $data['instance'];
         $instance = (new Instance())
             ->setAnr($anr)
-            ->setLabels($instanceData)
-            ->setNames($instanceData)
+            ->setLabels($monarcObject->getLabels())
+            ->setNames($monarcObject->getNames())
             ->setDisponibility(!empty($instanceData['disponibility']) ? (float)$instanceData['disponibility'] : 0)
             ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
             ->setRoot($parentInstance === null ? null : ($parentInstance->getRoot() ?? $parentInstance))

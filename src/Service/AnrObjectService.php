@@ -11,9 +11,13 @@ use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Model\Entity\AssetSuperClass;
+use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Model\Entity\RolfTagSuperClass;
 use Monarc\Core\Service\ObjectService;
 use Monarc\FrontOffice\Import\Service\ObjectImportService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Table\AnrTable;
 
@@ -189,14 +193,16 @@ class AnrObjectService extends ObjectService
             throw new Exception('Anr id missing', 412);
         }
 
+        /** @var Anr $anr */
         $anr = $this->get('anrTable')->getEntity($anrId); // on a une erreur si inconnue
+        $anrLanguage = $anr->getLanguage();
         $object = current($this->get('selfCoreService')->getAnrObjects(
             1,
             -1,
-            'name' . $anr->get('language'),
+            'name' . $anrLanguage,
             [],
             ['uuid' => $id],
-            $anr->get('model'),
+            $anr->getModel(),
             null,
             AbstractEntity::FRONT_OFFICE
         ));
@@ -204,7 +210,40 @@ class AnrObjectService extends ObjectService
             throw new Exception('Object not found', 412);
         }
 
-        return $this->get('selfCoreService')->getCompleteEntity($id);
+        $objectData = $this->get('selfCoreService')->getCompleteEntity($id);
+        /** @var AssetSuperClass $asset */
+        $asset = $object['asset'];
+        $object['asset'] = [
+            'uuid' => $asset->getUuid(),
+            'code' => $asset->getCode(),
+            'label' . $anrLanguage  => $asset->getLabel($anrLanguage),
+            'description' . $anrLanguage  => $asset->getDescription($anrLanguage),
+            'type' => $asset->getType(),
+            'mode' => $asset->getMode(),
+        ];
+        if (!empty($object['category'])) {
+            /** @var ObjectCategorySuperClass $objectCategory */
+            $objectCategory = $objectData['category'];
+            $objectData['category'] = [
+                'id' => $objectCategory->getId(),
+                'label' . $anrLanguage => $objectCategory->getLabel($anrLanguage),
+                'root' => $objectCategory->getRoot() !== null ? $objectCategory->getRoot()->getId() : null,
+                'parent' => $objectCategory->getParent() !== null ? $objectCategory->getParent()->getId() : null,
+            ];
+        }
+        if (!empty($object['rolfTag'])) {
+            /** @var RolfTagSuperClass $rolfTag */
+            $rolfTag = $objectData['rolfTag'];
+            $objectData['rolfTag'] = [
+                'id' => $rolfTag->getId(),
+                'code' => $rolfTag->getCode(),
+                'label' . $anrLanguage  => $rolfTag->getLabel($anrLanguage),
+            ];
+        }
+
+        unset($object['anrs']);
+
+        return $objectData;
     }
 
     /**

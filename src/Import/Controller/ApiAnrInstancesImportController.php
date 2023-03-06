@@ -37,7 +37,7 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
         AnrTable $anrTable
     ) {
         $this->instanceImportService = $instanceImportService;
-        $this->importConfig = $configService->getConfigOption('import') ? : [];
+        $this->importConfig = $configService->getConfigOption('import', []);
         $this->cronTaskService = $cronTaskService;
         $this->anrTable = $anrTable;
     }
