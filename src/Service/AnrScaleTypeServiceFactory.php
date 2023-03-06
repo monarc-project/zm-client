@@ -7,19 +7,26 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
+use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
+use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Model\Table\ScaleTable;
+use Monarc\FrontOffice\Model\Table\InstanceTable;
+
 /**
  * Factory class attached to AnrScaleTypeService
  * @package Monarc\FrontOffice\Service
  */
-class AnrScaleTypeServiceFactory extends \Monarc\Core\Service\AbstractServiceFactory
+class AnrScaleTypeServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => 'Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\ScaleImpactType',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'scaleTable' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
-        'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
-        'instanceConsequenceService' => 'Monarc\FrontOffice\Service\AnrInstanceConsequenceService'
+        'table' => ScaleImpactTypeTable::class,
+        'entity' => ScaleImpactType::class,
+        'anrTable' => AnrTable::class,
+        'scaleTable' => ScaleTable::class,
+        'instanceTable' => InstanceTable::class,
+        'instanceConsequenceService' => AnrInstanceConsequenceService::class,
+        'instanceService' => AnrInstanceService::class,
     ];
 }

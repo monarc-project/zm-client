@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Model\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrObjectService;
 use Laminas\View\Model\JsonModel;
 
@@ -25,15 +26,13 @@ class ApiAnrLibraryController extends AbstractRestfulControllerRequestHandler
 
     public function getList()
     {
-        // TODO: get anr obj from the attribute. Attach the middleware.
-        $anrId = $this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
+        // TODO: Attach the middleware.
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
         /** @var AnrObjectService $service */
         $service = $this->getService();
-        $objectsCategories = $service->getLibraryTreeStructure($anrId);
+        $objectsCategories = $service->getLibraryTreeStructure($anr);
 
         $this->formatDependencies($objectsCategories, $this->dependencies);
 

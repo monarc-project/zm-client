@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\NonUniqueResultException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
@@ -21,6 +22,8 @@ use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
 // TODO: don't forget to remove its factory class.
 class AnrObjectService
 {
+    use EncryptDecryptHelperTrait;
+
     protected $selfCoreService;
     protected $userAnrTable;
     protected $objectImportService;
@@ -161,7 +164,6 @@ class AnrObjectService
     }
 
     // TODO: move all the import functionality to the ObjectImportService.
-
     /**
      * Imports a previously exported object from an uploaded file into the current ANR. It may be imported using two
      * different modes: 'merge', which will update the existing objects using the file's data, or 'duplicate' which

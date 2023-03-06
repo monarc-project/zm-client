@@ -24,6 +24,8 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
  */
 class MonarcObject extends ObjectSuperClass
 {
+    // TODO: implement the same links on Client's entity side with 2 fields rel for parents, children, links... !!!
+
     /**
      * @var Anr
      *

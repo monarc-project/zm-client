@@ -18,7 +18,7 @@ use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Helper\EncryptDecryptHelperTrait;
+use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
@@ -277,21 +277,14 @@ class InstanceImportService
             // Ensure the file has been uploaded properly, silently skip the files that are erroneous
             if (isset($f['error']) && $f['error'] === UPLOAD_ERR_OK && file_exists($f['tmp_name'])) {
                 if (empty($data['password'])) {
-                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true);
-                    if ($file === false) {
-                        // Support legacy export which were base64 encoded.
-                        $file = json_decode(trim(base64_decode(file_get_contents($f['tmp_name']))), true);
-                    }
+                    $file = json_decode(trim(file_get_contents($f['tmp_name'])), true, 512, JSON_THROW_ON_ERROR);
                 } else {
-                    // Decrypt the file and store the JSON data as an array in memory.
-                    $key = $data['password'];
-                    $file = json_decode(trim($this->decrypt(file_get_contents($f['tmp_name']), $key)), true);
-                    if ($file === false) {
-                        // Support legacy export which were base64 encoded.
-                        $file = json_decode(trim(
-                            $this->decrypt(base64_decode(file_get_contents($f['tmp_name'])), $key)
-                        ), true);
+                    $decryptedResult = $this->decrypt(file_get_contents($f['tmp_name']), $data['password']);
+                    if ($decryptedResult === false) {
+                        throw new Exception('Password is not correct.', 412);
                     }
+                    $file = json_decode(trim($decryptedResult), true, 512, JSON_THROW_ON_ERROR);
+                    unset($decryptedResult);
                 }
 
                 if ($file !== false
@@ -390,7 +383,7 @@ class InstanceImportService
 
         $this->updateInstanceImpactsFromBrothers($instance, $modeImport);
 
-        $this->anrInstanceService->refreshImpactsInherited($instance);
+        $this->instanceTable->save($instance->refreshInheritedImpact(), false);
 
         $this->createSetOfRecommendations($data, $anr);
 
@@ -412,7 +405,7 @@ class InstanceImportService
                 }
                 $this->importInstanceFromArray($child, $anr, $instance, $modeImport);
             }
-            $this->anrInstanceService->updateChildrenImpacts($instance);
+            $this->anrInstanceService->updateChildrenImpactsAndRisks($instance);
         }
 
         $this->instanceTable->getDb()->flush();
@@ -862,6 +855,7 @@ class InstanceImportService
 
             $scalesData = $this->getCurrentAndExternalScalesData($anr, $data);
 
+            // TODO: adjust the code. Instance and InstanceConsequence are refactored.
             $ts = ['c', 'i', 'd'];
             $instances = $this->instanceTable->findByAnr($anr);
             $consequences = $this->instanceConsequenceTable->findByAnr($anr);
@@ -883,7 +877,7 @@ class InstanceImportService
                         ));
                     }
 
-                    $this->anrInstanceService->refreshImpactsInherited($instance);
+                    $this->instanceTable->save($instance->refreshInheritedImpact(), false);
                 }
                 // Impacts & Consequences.
                 foreach ($consequences as $conseq) {

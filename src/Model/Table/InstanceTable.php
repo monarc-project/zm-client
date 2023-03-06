@@ -51,21 +51,6 @@ class InstanceTable extends CoreInstanceTable
     }
 
     /**
-     * @return InstanceSuperClass[]
-     */
-    public function findByObject(ObjectSuperClass $object): array
-    {
-        return $this->getRepository()->createQueryBuilder('i')
-            ->join('o.object', 'o')
-            ->where('o.uuid = :objUuid')
-            ->andWhere('o.anr = :objAnr')
-            ->setParameter('objUuid', $object->getUuid())
-            ->setParameter('objAnr', $object->getAnr())
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
      * @return Instance[]
      */
     public function findByAnrAndAsset(Anr $anr, Asset $asset): array
@@ -138,5 +123,27 @@ class InstanceTable extends CoreInstanceTable
             ->setParameter(':fromDate', $fromDate)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+
+    /**
+     * @return InstanceSuperClass[]
+     */
+    public function findGlobalBrothersByAnrAndInstance(AnrSuperClass $anr, InstanceSuperClass $instance): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('i')
+            ->innerJoin('i.object', 'o')
+            ->where('i.anr = :anr')
+            ->andWhere('o.uuid = :object_uuid')
+            ->andWhere('o.anr = :anr')
+            ->andWhere('i.id != :id')
+            ->andWhere('o.scope = :scopeMode')
+            ->setParameter('anr', $anr)
+            ->setParameter('id', $instance->getId())
+            ->setParameter('object_uuid', $instance->getObject()->getUuid())
+            ->setParameter('scopeMode', ObjectSuperClass::SCOPE_GLOBAL)
+            ->getQuery()
+            ->getResult();
     }
 }

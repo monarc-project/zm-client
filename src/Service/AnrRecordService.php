@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Record;
@@ -22,6 +23,8 @@ use Monarc\FrontOffice\Model\Entity\RecordPersonalData;
  */
 class AnrRecordService extends AbstractService
 {
+    use EncryptDecryptHelperTrait;
+
     protected $dependencies = [ 'anr', 'controller', 'representative', 'dpo', 'jointControllers',
         'personalData', 'internationalTransfers', 'processors', 'recipients'];
     protected $filterColumns = [ 'label' ];

@@ -45,6 +45,7 @@ class ApiAnrExportController extends AbstractRestfulController
             ->getHeaders()
             ->clearHeaders()
             ->addHeaderLine('Content-Type', $contentType)
+            ->addHeaderLine('Content-Length', \strlen($output))
             ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
                 (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
 

@@ -7,23 +7,25 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\InstanceConsequenceService;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 
 /**
  * This class is the service that handles scales types within an ANR. This is a simple CRUD service.
  * @package Monarc\FrontOffice\Service
  */
-class AnrScaleTypeService extends \Monarc\Core\Service\AbstractService
+class AnrScaleTypeService extends AbstractService
 {
     protected $filterColumns = [];
     protected $dependencies = ['anr', 'scale'];
     protected $anrTable;
-    protected $userAnrTable;
     protected $scaleTable;
     protected $instanceTable;
     protected $instanceConsequenceService;
+    protected $instanceService;
     protected $types = [
         1 => 'C',
         2 => 'I',
@@ -44,37 +46,29 @@ class AnrScaleTypeService extends \Monarc\Core\Service\AbstractService
         return $this->types;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         $types = $this->getTypes();
 
         $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
 
-
         foreach ($scales as $key => $scale) {
-
             if (isset($scale['type'])) {
-              if (isset($types[$scale['type']])) {
-                  $scales[$key]['type'] = $types[$scale['type']];
-              } else {
-                  $scales[$key]['type'] = 'CUS'; // Custom user-defined column
-              }
-              $scales[$key]['type_id'] = $scale['type'];
+                if (isset($types[$scale['type']])) {
+                    $scales[$key]['type'] = $types[$scale['type']];
+                } else {
+                    $scales[$key]['type'] = 'CUS'; // Custom user-defined column
+                }
+                $scales[$key]['type_id'] = $scale['type'];
             }
         }
 
         return $scales;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function create($data, $last = true)
     {
-        $scales = parent::getList(1,0, null, null, ['anr' => $data['anrId']]);
+        $scales = parent::getList(1, 0, null, null, ['anr' => $data['anrId']]);
 
         if (!isset($data['isSys'])) {
             $data['isSys'] = 0;
@@ -124,5 +118,28 @@ class AnrScaleTypeService extends \Monarc\Core\Service\AbstractService
         }
 
         return $id;
+    }
+
+    /**
+     * Hide / show scales' types on Edit Impacts dialog.
+     */
+    public function patch($id, $data)
+    {
+        $this->filterPatchFields($data);
+
+        /** @var ScaleImpactTypeTable $scaleImpactTypeTable */
+        $scaleImpactTypeTable = $this->get('table');
+        $scaleImpactType = $scaleImpactTypeTable->findById((int)$id);
+
+        if (isset($data['isHidden'])) {
+            /** @var AnrInstanceConsequenceService $instanceConsequenceService */
+            $instanceConsequenceService = $this->get('instanceConsequenceService');
+            $instanceConsequenceService->updateConsequencesByScaleImpactType($scaleImpactType, (bool)$data['isHidden']);
+            /** @var AnrInstanceService $instanceService */
+            $instanceService = $this->get('instanceService');
+            $instanceService->refreshAllTheInstancesImpactAndUpdateRisks($scaleImpactType->getAnr());
+        }
+
+        parent::patch($id, $data);
     }
 }

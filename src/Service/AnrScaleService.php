@@ -30,7 +30,7 @@ class AnrScaleService extends ScaleService
         /** @var AnrCheckStartedService $anrCheckStartedService */
         $anrCheckStartedService = $this->get('anrCheckStartedService');
 
-        // Return both the scales, and also whether or not we can modify them
+        // Return both the scales, and also whether we can modify them
         return [$scales, $anrCheckStartedService->canChange($filterAnd['anr'])];
     }
 
@@ -38,7 +38,7 @@ class AnrScaleService extends ScaleService
     {
         $this->validateScaleEditable($data['anr']);
 
-        return parent::create($data,$last);
+        return parent::create($data, $last);
     }
 
     public function patch($id, $data)

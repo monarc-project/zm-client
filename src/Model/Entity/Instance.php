@@ -35,6 +35,8 @@ class Instance extends InstanceSuperClass
      */
     protected $anr;
 
+    // TODO: implement the same links on Client's entity side with 2 fields rel for parent etc. !!!
+
     /**
      * @var Asset
      *

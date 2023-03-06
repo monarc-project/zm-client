@@ -22,11 +22,7 @@ use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Table\TranslationTable;
 
-/**
- * This class is the service that handles instances in use within an ANR. Inherits most of the behavior from its
- * Monarc\Core parent class.
- * @package Monarc\FrontOffice\Service
- */
+// TODO: ...
 class AnrInstanceService extends InstanceService
 {
     use RecommendationsPositionsUpdateTrait;

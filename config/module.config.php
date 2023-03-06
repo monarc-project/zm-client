@@ -1355,10 +1355,10 @@ return [
             Service\AnrCartoRiskService::class => Service\AnrCartoRiskServiceFactory::class,
             Service\AnrObjectService::class => AutowireFactory::class,
             Service\AnrObjectObjectService::class => AutowireFactory::class,
-            Service\AnrInstanceConsequenceService::class => Service\AnrInstanceConsequenceServiceFactory::class,
+            Service\AnrInstanceConsequenceService::class => AutowireFactory::class,
             Service\AnrInstanceRiskOpService::class => AutowireFactory::class,
             Service\AnrInstanceRiskService::class => Service\AnrInstanceRiskServiceFactory::class,
-            Service\AnrInstanceService::class => Service\AnrInstanceServiceFactory::class,
+            Service\AnrInstanceService::class => AutowireFactory::class,
             Service\AnrObjectCategoryService::class => Service\AnrObjectCategoryServiceFactory::class,
             Service\AssetExportService::class => Service\AssetExportServiceFactory::class,
             Service\DeliverableGenerationService::class => Service\DeliverableGenerationServiceFactory::class,
@@ -1383,6 +1383,7 @@ return [
                 $serviceName
             ) {
                 return new AnrMetadatasOnInstancesExportService(
+                    // TODO: the table AnrMetadatasOnInstancesTable is renamed.
                     $container->get(Table\AnrMetadatasOnInstancesTable::class),
                     $container->get(Table\TranslationTable::class),
                     $container->get(ConfigService::class),
@@ -1462,12 +1463,16 @@ return [
         'lazy_services' => [
             'class_map' => [
                 Table\UserTokenTable::class => Table\UserTokenTable::class,
+                Service\AnrInstanceService::class => Service\AnrInstanceService::class
             ],
             'proxies_target_dir' => $dataPath . '/LazyServices/Proxy',
             'write_proxy_files' => $env === 'production',
         ],
         'delegators' => [
             Table\UserTokenTable::class => [
+                LazyServiceFactory::class,
+            ],
+            Service\AnrInstanceService::class => [
                 LazyServiceFactory::class,
             ],
         ],

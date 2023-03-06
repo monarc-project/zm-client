@@ -7,36 +7,20 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
-use Monarc\Core\Model\Table\AbstractEntityTable;
+use Monarc\Core\Model\Table\ScaleImpactTypeTable as CoreScaleImpactTypeTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 
-/**
- * Class ScaleImpactTypeTable
- * @package Monarc\FrontOffice\Model\Table
- */
-class ScaleImpactTypeTable extends AbstractEntityTable
+class ScaleImpactTypeTable extends CoreScaleImpactTypeTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
-        parent::__construct($dbService, ScaleImpactType::class, $connectedUserService);
-    }
+        parent::__construct($dbService, $connectedUserService);
 
-    /**
-     * @return ScaleImpactType[]
-     */
-    public function findByAnr(Anr $anr): array
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('sit')
-            ->where('sit.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getResult();
+        $this->entityClass = ConnectedUserService::class;
     }
 
     /**
@@ -79,14 +63,5 @@ class ScaleImpactTypeTable extends AbstractEntityTable
             ->setMaxResults(1)
             ->getQuery()
             ->getSingleScalarResult();
-    }
-
-    public function saveEntity(ScaleImpactTypeSuperClass $scaleImpactType, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($scaleImpactType);
-        if ($flushAll) {
-            $em->flush();
-        }
     }
 }
