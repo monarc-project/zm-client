@@ -94,7 +94,6 @@ class AnrRecommandationService extends AbstractService
             try {
                 $recommendation->setDueDate(new DateTime($data['duedate']));
             } catch (Throwable $e) {
-                throw new Exception('Invalid date format', 412);
             }
         } elseif (isset($data['duedate']) && $data['duedate'] === '') {
             $recommendation->setDueDate(null);
