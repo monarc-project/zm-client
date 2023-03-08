@@ -243,7 +243,6 @@ class AnrRecommandationService extends AbstractService
             }
 
             $this->recommendationTable->saveEntity($recommendation->setPosition($newPosition));
-
         } elseif ($isImportanceChanged && !$recommendation->getRecommendationRisks()->isEmpty()) {
             foreach ($recommendation->getRecommendationRisks() as $recommendationRisk) {
                 $linkedRisk = $recommendationRisk->getInstanceRisk() ?? $recommendationRisk->getInstanceRiskOp();
