@@ -28,7 +28,7 @@ return array(
     ),
     'environments' => array(
         'default_migration_table' => 'phinxlog',
-        'default_database' => 'cli',
+        'default_environment' => 'cli',
         'cli' => array(
             'adapter' => 'mysql',
             'host' => $globalConf['doctrine']['connection'][$paramToUse]['params']['host'],
