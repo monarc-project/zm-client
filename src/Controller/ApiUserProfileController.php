@@ -81,7 +81,7 @@ class ApiUserProfileController extends AbstractRestfulController
      */
     public function deleteList($id)
     {
-        $this->userProfileService->delete($this->connectedUserService->getConnectedUser());
+        $this->userProfileService->delete($this->connectedUserService->getConnectedUser()->getId());
 
         $this->getResponse()->setStatusCode(204);
 
