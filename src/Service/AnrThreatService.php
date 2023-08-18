@@ -62,7 +62,7 @@ class AnrThreatService extends AbstractService
             ];
 
             // If qualification is not forced, retrieve only inherited instance risksx
-            if (!isset($data['forceQualification']) || $data['forceQualification'] === 0) {
+            if (empty($data['forceQualification'])) {
                 $filter['mh'] = 1;
             }
 
@@ -77,7 +77,7 @@ class AnrThreatService extends AbstractService
                 $instanceRisk->threatRate = $data['qualification'];
 
                 // If qualification is forced, instances risks become inherited
-                if (isset($data['forceQualification']) && $data['forceQualification'] === 1) {
+                if (!empty($data['forceQualification'])) {
                     $instanceRisk->mh = 1;
                 }
 
