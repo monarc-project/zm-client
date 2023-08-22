@@ -17,7 +17,7 @@ use Laminas\View\Model\JsonModel;
 class ApiAnrMeasuresController extends ApiAnrAbstractController
 {
     protected $name = 'measures';
-    protected $dependencies = ['anr', 'category', 'referential',  'amvs', 'measuresLinked', 'rolfRisks'];
+    protected $dependencies = ['anr', 'category', 'referential',  'amvs', 'linkedMeasures', 'rolfRisks'];
 
     public function getList()
     {
@@ -75,7 +75,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
       $data['anr'] = $anrId;
       $data ['referential'] = ['anr' => $anrId, 'uuid' => $data['referential']]; //all the objects is send but we just need the uuid
       $data['category'] ['referential'] = $data ['referential'];
-      unset($data['measuresLinked']);
+      unset($data['linkedMeasures']);
       unset($data['amvs']);
       return parent::update($ids, $data);
 
@@ -91,7 +91,7 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
     {
       unset($data['rolfRisks']); // not managed for the moement
 
-        unset($data['measuresLinked']);
+        unset($data['linkedMeasures']);
         unset($data['amvs']);
         return parent::create($data);
     }

@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
 use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\Core\Service\QuestionChoiceService;
@@ -17,18 +18,17 @@ use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Table\ClientTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
-use Monarc\FrontOffice\Model\Table\AnrMetadatasOnInstancesTable;
-use Monarc\FrontOffice\Model\Table\TranslationTable;
-use Monarc\FrontOffice\Model\Entity\Translation;
+use Monarc\FrontOffice\Table\AnrInstanceMetadataFieldTable;
+use Monarc\FrontOffice\Table\SoaScaleCommentTable;
+use Monarc\FrontOffice\Table\ClientTable;
+use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 use PhpOffice\PhpWord\Element\Table;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Converter;
@@ -104,7 +104,7 @@ class DeliverableGenerationService extends AbstractService
     protected $recommendationRiskTable;
     /** @var RecommendationHistoricTable */
     protected $recommendationHistoricTable;
-    /** @var AnrMetadatasOnInstancesTable */
+    /** @var AnrInstanceMetadataFieldTable */
     protected $metadatasOnInstancesTable;
     /** @var TranslationTable */
     protected $translationTable;
@@ -560,17 +560,18 @@ class DeliverableGenerationService extends AbstractService
 
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());
         $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function ($scale) {
-            return $scale['type'] == 1;
+            return $scale['type'] === OperationalRiskScaleSuperClass::TYPE_IMPACT;
         }));
         $opRisksImpactsScaleMin = $opRisksImpactsScaleType[0]['min'];
         $opRisksImpactsScaleMax = $opRisksImpactsScaleType[0]['max'];
         $opRisksImpactsScales = array_values(array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function ($scale) {
-            return $scale['isHidden'] == false;
+            return $scale['isHidden'] === false;
         }));
         $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function ($scale) {
-            return $scale['type'] == 2;
+            return $scale['type'] == OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD;
         }))[0];
 
+        // TODO : replace with $anr getters....
         $values = [
             'xml' => [
                 'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml(_WT($this->anr->contextAnaRisk)),
@@ -702,7 +703,7 @@ class DeliverableGenerationService extends AbstractService
     {
         $values = [];
         $soaScaleComments = array_filter(
-            $this->soaScaleCommentTable->findByAnr($this->anr),
+            $this->soaScaleCommentTable->findByAnrOrderByIndex($this->anr),
             function ($soaScaleComment) {
                 return !$soaScaleComment->isHidden();
             }
@@ -5208,7 +5209,6 @@ class DeliverableGenerationService extends AbstractService
      * Generate the impacts appreciation table data
      * @return mixed|string The WordXml table data
      */
-
     protected function generateImpactsAppreciation()
     {
         // TODO: C'est moche, optimiser
@@ -5353,6 +5353,7 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateThreatsTable($fullGen = false)
     {
+        // TODO: use threatTable instead.
         $threats = $this->threatService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
 
         $tableWord = new PhpWord();

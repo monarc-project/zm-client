@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Proxy class to instantiate Monarc\Core's QuestionService, with Monarc\FrontOffice's services
@@ -21,7 +23,7 @@ class AnrQuestionServiceFactory extends AbstractServiceFactory
         'table' => 'Monarc\FrontOffice\Model\Table\QuestionTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\Question',
         'choiceTable' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'anrTable' => AnrTable::class,
+        'userAnrTable' => UserAnrTable::class,
     ];
 }

@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 
 /**
  * Factory class attached to AnrInterviewService
@@ -18,7 +20,7 @@ class SoaCategoryServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'entity' => 'Monarc\FrontOffice\Model\Entity\SoaCategory',
         'table' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'anrTable' => AnrTable::class,
+        'userAnrTable' => UserAnrTable::class,
     ];
 }

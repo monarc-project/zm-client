@@ -38,7 +38,7 @@ class RecommandationHistoric extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=False)
      * })
      */
     protected $anr;

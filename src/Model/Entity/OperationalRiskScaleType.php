@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -20,4 +20,22 @@ use Monarc\Core\Model\Entity\OperationalRiskScaleTypeSuperClass;
  */
 class OperationalRiskScaleType extends OperationalRiskScaleTypeSuperClass
 {
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="label", type="string", length=255, nullable=false, options={"default": ""})
+     */
+    protected $label = '';
+
+    public function getLabel(): string
+    {
+        return $this->label;
+    }
+
+    public function setLabel(string $label): self
+    {
+        $this->label = $label;
+
+        return $this;
+    }
 }

@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,8 +12,6 @@ use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
- * Instance
- *
  * @ORM\Table(name="instances", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  *      @ORM\Index(name="asset_id", columns={"asset_id"}),
@@ -30,12 +28,10 @@ class Instance extends InstanceSuperClass
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      */
     protected $anr;
-
-    // TODO: implement the same links on Client's entity side with 2 fields rel for parent etc. !!!
 
     /**
      * @var Asset
@@ -64,30 +60,35 @@ class Instance extends InstanceSuperClass
      *
      * @ORM\OneToMany(targetEntity="InstanceMetadata", mappedBy="instance")
      */
-    protected $instanceMetadatas;
+    protected $instanceMetadata;
 
-    public function __construct($obj = null)
+    public function __construct()
     {
-        $this->instanceMetadatas = new ArrayCollection();
+        parent::__construct();
 
-        parent::__construct($obj);
+        $this->instanceMetadata = new ArrayCollection();
     }
 
     /**
      * @return InstanceMetadata[]
      */
-    public function getInstanceMetadatas()
+    public function getInstanceMetadata()
     {
-        return $this->instanceMetadatas;
+        return $this->instanceMetadata;
     }
 
-    public function addInstanceMetadata(InstanceMetadata $instanceMetada): self
+    public function addInstanceMetadata(InstanceMetadata $instanceMetadata): self
     {
-        if (!$this->instanceMetadatas->contains($instanceMetada)) {
-            $this->instanceMetadatas->add($instanceMetada);
-            $instanceMetada->setInstance($this);
+        if (!$this->instanceMetadata->contains($instanceMetadata)) {
+            $this->instanceMetadata->add($instanceMetadata);
+            $instanceMetadata->setInstance($this);
         }
 
         return $this;
+    }
+
+    public function getHierarchyString(): string
+    {
+        return implode(' > ', array_column($this->getHierarchyArray(), 'name' . $this->anr->getLanguage()));
     }
 }

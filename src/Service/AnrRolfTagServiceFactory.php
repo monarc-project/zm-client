@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Factory class attached to AnrRolfTagService
@@ -18,7 +20,7 @@ class AnrRolfTagServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'entity' => 'Monarc\FrontOffice\Model\Entity\RolfTag',
         'table' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'anrTable' => AnrTable::class,
+        'userAnrTable' => UserAnrTable::class,
     ];
 }

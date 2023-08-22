@@ -19,7 +19,7 @@ use Monarc\Core\Service\PasswordService;
 use Monarc\Core\Service\UserService as CoreUserService;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\UserTable;
 
 class UserService extends CoreUserService
@@ -108,7 +108,7 @@ class UserService extends CoreUserService
         return $user;
     }
 
-    public function patch($userId, $data): UserSuperClass
+    public function patch(int $userId, array $data): UserSuperClass
     {
         if (isset($data['password'])) {
             $this->passwordService->changePasswordWithoutOldPassword($data['id'], $data['password']);

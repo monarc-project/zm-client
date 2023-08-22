@@ -12,7 +12,7 @@ use Laminas\Validator\Date;
 use Laminas\Validator\Digits;
 use Laminas\Validator\InArray;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Validator\FieldValidator\AnrExistenceValidator;

@@ -1,16 +1,15 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Model\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AmvSuperClass;
-use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @ORM\Table(name="amvs", indexes={
@@ -24,7 +23,7 @@ use Ramsey\Uuid\Uuid;
 class Amv extends AmvSuperClass
 {
     /**
-     * @var Uuid
+     * @var UuidInterface|string
      *
      * @ORM\Id
      * @ORM\Column(name="uuid", type="uuid", nullable=false)
@@ -37,7 +36,7 @@ class Amv extends AmvSuperClass
      * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $anr;
@@ -74,31 +73,4 @@ class Amv extends AmvSuperClass
      * })
      */
     protected $vulnerability;
-
-    /**
-     * @var InstanceRisk[]|ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="InstanceRisk", mappedBy="amv")
-     */
-    protected $instanceRisks;
-
-    public function __construct()
-    {
-        $this->instanceRisks = new ArrayCollection();
-
-        parent::__construct();
-    }
-
-    public function getInstanceRisks()
-    {
-        return $this->instanceRisks;
-    }
-
-    public function getImplicitPositionRelationsValues(): array
-    {
-        return array_merge(
-            ['anr' => $this->anr->getId()],
-            parent::getImplicitPositionRelationsValues()
-        );
-    }
 }

@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 /**
+ * TODO: Remove and use the core table instead.
  * This class is the service that handles assets coming from the common database and that may be imported into a
  * client-specific ANR.
  * @package Monarc\FrontOffice\Service

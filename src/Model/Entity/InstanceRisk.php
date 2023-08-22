@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,8 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 
 /**
- * Instance Risk
- *
  * @ORM\Table(name="instances_risks", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  *      @ORM\Index(name="amv_id", columns={"amv_id"}),
@@ -21,6 +19,7 @@ use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
  *      @ORM\Index(name="threat_id", columns={"threat_id"}),
  *      @ORM\Index(name="vulnerability_id", columns={"vulnerability_id"}),
  *      @ORM\Index(name="instance_id", columns={"instance_id"})
+ *      @ORM\Index(name="risk_owner_id", columns={"risk_owner_id"})
  * })
  * @ORM\Entity
  */
@@ -42,8 +41,8 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid"),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $asset;
@@ -53,8 +52,8 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="Threat", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid"),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $threat;
@@ -64,21 +63,11 @@ class InstanceRisk extends InstanceRiskSuperClass
      *
      * @ORM\ManyToOne(targetEntity="Vulnerability", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid"),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $vulnerability;
-
-    /**
-     * @var Instance
-     *
-     * @ORM\ManyToOne(targetEntity="Instance", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $instance;
 
     /**
      * @var ArrayCollection|RecommandationRisk[]
@@ -88,10 +77,64 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $recommendationRisks;
 
     /**
+     * @var InstanceRiskOwner|null
+     *
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="risk_owner_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $instanceRiskOwner;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="context", type="string", length=255, nullable=true)
+     */
+    protected $context;
+
+    public static function constructFromObject(InstanceRiskSuperClass $instanceRisk): InstanceRiskSuperClass
+    {
+        return static::constructFromObject($instanceRisk)->setContext($instanceRisk->getContext());
+    }
+
+    /**
      * @return ArrayCollection|RecommandationRisk[]
      */
     public function getRecommendationRisks()
     {
         return $this->recommendationRisks;
+    }
+
+    public function getInstanceRiskOwner(): ?InstanceRiskOwner
+    {
+        return $this->instanceRiskOwner;
+    }
+
+    public function setInstanceRiskOwner(?InstanceRiskOwner $instanceRiskOwner): self
+    {
+        if ($instanceRiskOwner === null) {
+            if ($this->instanceRiskOwner !== null) {
+                $this->instanceRiskOwner->removeInstanceRisk($this);
+                $this->instanceRiskOwner = null;
+            }
+        } else {
+            $this->instanceRiskOwner = $instanceRiskOwner;
+            $instanceRiskOwner->addInstanceRisk($this);
+        }
+
+        return $this;
+    }
+
+    public function getContext(): string
+    {
+        return (string)$this->context;
+    }
+
+    public function setContext(string $context): self
+    {
+        $this->context = $context;
+
+        return $this;
     }
 }

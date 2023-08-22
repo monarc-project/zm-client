@@ -1,47 +1,55 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Exception\Exception;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Model\Entity\Anr;
+use Monarc\Core\Service\InstanceRiskService;
 
-/**
- * Api ANR Instances Risks Controller
- *
- * Class ApiAnrInstancesRisksController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrInstancesRisksController extends ApiAnrAbstractController
+class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHandler
 {
-    protected $dependencies = ['anr', 'amv', 'asset', 'threat', 'vulnerability', 'instance', 'instanceRiskOwner'];
-    protected $name = 'instances-risks';
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    private InstanceRiskService $instanceRiskService;
+
+    public function __construct(InstanceRiskService $instanceRiskService)
+    {
+        $this->instanceRiskService = $instanceRiskService;
+    }
+
+    // TODO: implement create and delete.
+    public function create($data)
+    {
+        //todo creation of a spec risk
+    }
+
     public function update($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $id = $this->getService()->updateFromRiskTable((int)$id, $data);
+        // TODO: update the method to accept the anr param and remove IR.
+        $instanceRisk = $this->instanceRiskService->updateFromRiskTable($anr, (int)$id, $data);
 
-        $entity = $this->getService()->getEntity($id);
+        return $this->getPreparedJsonResponse([
+            'id' => $instanceRisk->getId(),
+            'threatRate' => $instanceRisk->getThreatRate(),
+            'vulnerabilityRate' => $instanceRisk->getVulnerabilityRate(),
+            'reductionAmount' => $instanceRisk->getReductionAmount(),
+            'riskConfidentiality' => $instanceRisk->getRiskConfidentiality(),
+            'riskIntegrity' => $instanceRisk->getRiskIntegrity(),
+            'riskAvailability' => $instanceRisk->getRiskAvailability(),
+        ]);
+    }
 
-        if (count($this->dependencies)) {
-            foreach ($this->dependencies as $d) {
-                unset($entity[$d]);
-            }
-        }
-
-        return new JsonModel($entity);
+    public function delete($id)
+    {
+        // todo removal of spec risk.
     }
 }

@@ -1,11 +1,16 @@
 <?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity as CoreEntity;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOwnerSuperClass;
@@ -19,6 +24,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\InstanceRiskOpService;
 use Monarc\Core\Service\TranslateService;
+use Monarc\FrontOffice\Model\Entity as FrontOfficeEntity;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
@@ -27,7 +33,6 @@ use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Entity\Translation;
-use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
@@ -54,8 +59,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
     protected RecommandationRiskTable $recommendationRiskTable;
 
+    protected InstanceRiskOwnerTable $instanceRiskOwnerTable;
+
     public function __construct(
-        AnrTable $anrTable,
         InstanceTable $instanceTable,
         InstanceRiskOpTable $instanceRiskOpTable,
         OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
@@ -71,8 +77,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         RecommandationTable $recommendationTable,
         RecommandationRiskTable $recommendationRiskTable
     ) {
+        // TODO: InstanceTable is not as expected. Perhaps we need to drop the service inheritance or extend the InstanceTable.
         parent::__construct(
-            $anrTable,
             $instanceTable,
             $instanceRiskOpTable,
             $operationalInstanceRiskScaleTable,
@@ -82,13 +88,103 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             $translateService,
             $operationalRiskScaleTable,
             $operationalRiskScaleTypeTable,
-            $instanceRiskOwnerTable,
             $configService
         );
         $this->recommendationRiskTable = $recommendationRiskTable;
         $this->rolfRiskTable = $rolfRiskTable;
         $this->recommendationTable = $recommendationTable;
+        $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
     }
+
+    /*
+     public function createInstanceRisksOp(Entity\InstanceSuperClass $instance, Entity\ObjectSuperClass $object): void
+    {
+        if ($object->getRolfTag() === null || !$object->getAsset()->isPrimary()) {
+            return;
+        }
+
+        $otherInstance = $this->instanceTable->findOneByAnrAndObjectExcludeInstance(
+            $instance->getAnr(),
+            $object,
+            $instance
+        );
+
+        if ($otherInstance !== null && $object->isScopeGlobal()) {
+            foreach ($this->instanceRiskOpTable->findByInstance($otherInstance) as $instanceRiskOp) {
+                $newInstanceRiskOp = $this->getConstructedFromObjectInstanceRiskOp($instanceRiskOp)
+                    ->setAnr($instance->getAnr())
+                    ->setInstance($instance)
+                    ->setObject($instanceRiskOp->getObject())
+                    ->setRolfRisk($instanceRiskOp->getRolfRisk())
+                    // TODO: this is not set on Core.
+                    ->setInstanceRiskOwner($instanceRiskOp->getInstanceRiskOwner())
+                    ->setCreator($this->connectedUser->getEmail());
+                $this->instanceRiskOpTable->save($newInstanceRiskOp, false);
+
+                $operationalInstanceRiskScales = $this->operationalInstanceRiskScaleTable->findByInstanceRiskOp(
+                    $instanceRiskOp
+                );
+                foreach ($operationalInstanceRiskScales as $operationalInstanceRiskScale) {
+                    $newOperationalInstanceRiskScale = $this
+                        ->getConstructedFromObjectOperationalInstanceRiskScale($operationalInstanceRiskScale)
+                        ->setCreator($this->connectedUser->getEmail());
+                    $this->operationalInstanceRiskScaleTable->save($newOperationalInstanceRiskScale, false);
+                }
+            }
+        } else {
+            $rolfTag = $this->rolfTagTable->findById($object->getRolfTag()->getId());
+            foreach ($rolfTag->getRisks() as $rolfRisk) {
+                $this->createInstanceRiskOpWithScales(
+                    $instance,
+                    $object,
+                    $rolfRisk
+                );
+            }
+        }
+
+        $this->instanceRiskOpTable->flush();
+    }
+
+    public function update(Entity\AnrSuperClass $anr, int $id, array $data): Entity\InstanceRiskOpSuperClass
+    {
+        /** @var Entity\InstanceRiskOpSuperClass $operationalInstanceRisk
+        $operationalInstanceRisk = $this->instanceRiskOpTable->findByIdAndAnr($id, $anr);
+
+        if (isset($data['kindOfMeasure'])) {
+        $operationalInstanceRisk->setKindOfMeasure((int)$data['kindOfMeasure']);
+        }
+        if (isset($data['comment'])) {
+            $operationalInstanceRisk->setComment($data['comment']);
+        }
+        if (isset($data['netProb']) && $operationalInstanceRisk->getNetProb() !== $data['netProb']) {
+            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['netProb']);
+            $operationalInstanceRisk->setNetProb((int)$data['netProb']);
+        }
+        if (isset($data['brutProb']) && $operationalInstanceRisk->getBrutProb() !== $data['brutProb']) {
+            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['brutProb']);
+            $operationalInstanceRisk->setBrutProb((int)$data['brutProb']);
+        }
+        if (isset($data['targetedProb']) && $operationalInstanceRisk->getTargetedProb() !== $data['targetedProb']) {
+            $this->verifyScaleProbabilityValue($operationalInstanceRisk->getAnr(), (int)$data['targetedProb']);
+            $operationalInstanceRisk->setTargetedProb((int)$data['targetedProb']);
+        }
+        // TODO: missing on Core:
+        if (isset($data['owner'])) {
+            $this->processRiskOwnerName((string)$data['owner'], $operationalInstanceRisk);
+        }
+        if (isset($data['context']) && (string)$data['context'] !== $operationalInstanceRisk->getContext()) {
+            $operationalInstanceRisk->setContext($data['context']);
+        }
+
+        $operationalInstanceRisk->setUpdater($this->connectedUser->getEmail());
+
+        $this->updateRiskCacheValues($operationalInstanceRisk);
+
+        $this->instanceRiskOpTable->save($operationalInstanceRisk);
+
+        return $operationalInstanceRisk;
+    }
+     */
 
     public function createSpecificRiskOp(array $data): int
     {
@@ -136,7 +232,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             ])
             ->setCreator($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname());
 
-        $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
+        $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
 
         $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(
             $instance->getAnr(),
@@ -350,22 +446,14 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         return $result;
     }
 
-    /**
-     * @throws EntityNotFoundException
-     * @throws Exception
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function deleteFromAnr(int $id, int $anrId): void
+    public function delete(int $id): void
     {
         $operationalInstanceRisk = $this->instanceRiskOpTable->findById($id);
         if (!$operationalInstanceRisk->isSpecific()) {
             throw new Exception('Only specific risks can be deleted.', 412);
         }
 
-        // TODO: implement Permissions validator and inject it here. similar to \Monarc\Core\Service\AbstractService::deleteFromAnr
-
-        $this->instanceRiskOpTable->deleteEntity($operationalInstanceRisk);
+        $this->instanceRiskOpTable->remove($operationalInstanceRisk);
 
         $this->processRemovedInstanceRiskRecommendationsPositions($operationalInstanceRisk);
     }
@@ -480,5 +568,55 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         }
 
         return implode("\n", $csvData);
+    }
+
+    protected function getConstructedFromObjectInstanceRiskOp(
+        CoreEntity\InstanceRiskOpSuperClass $instanceRiskOp
+    ): CoreEntity\InstanceRiskOpSuperClass {
+        return FrontOfficeEntity\InstanceRiskOp::constructFromObject($instanceRiskOp);
+    }
+
+    protected function getConstructedFromObjectOperationalInstanceRiskScale(
+        CoreEntity\OperationalInstanceRiskScaleSuperClass $operationalInstanceRiskScale
+    ): CoreEntity\OperationalInstanceRiskScaleSuperClass {
+        return FrontOfficeEntity\OperationalInstanceRiskScale::constructFromObject($operationalInstanceRiskScale);
+    }
+
+    private function processRiskOwnerName(
+        string $ownerName,
+        Entity\InstanceRiskOp $operationalInstanceRisk
+    ): void {
+        if (empty($ownerName)) {
+            $operationalInstanceRisk->setInstanceRiskOwner(null);
+        } else {
+            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName(
+                $operationalInstanceRisk->getAnr(),
+                $ownerName
+            );
+            if ($instanceRiskOwner === null) {
+                $instanceRiskOwner = $this->createInstanceRiskOwnerObject(
+                    $operationalInstanceRisk->getAnr(),
+                    $ownerName
+                );
+
+                $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
+
+                $operationalInstanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+            } elseif ($operationalInstanceRisk->getInstanceRiskOwner() === null
+                || $operationalInstanceRisk->getInstanceRiskOwner()->getId() !== $instanceRiskOwner->getId()
+            ) {
+                $operationalInstanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+            }
+        }
+    }
+
+    private function createInstanceRiskOwnerObject(
+        Entity\Anr $anr,
+        string $ownerName
+    ): Entity\InstanceRiskOwner {
+        return (new Entity\InstanceRiskOwner())
+            ->setAnr($anr)
+            ->setName($ownerName)
+            ->setCreator($this->connectedUser->getEmail());
     }
 }

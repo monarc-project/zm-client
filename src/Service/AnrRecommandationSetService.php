@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\OptimisticLockException;
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\RecommandationSetTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;

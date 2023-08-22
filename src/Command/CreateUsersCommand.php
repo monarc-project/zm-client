@@ -14,8 +14,7 @@ class CreateUsersCommand extends Command
 {
     protected static $defaultName = 'monarc:create-users';
 
-    /** @var UserTable */
-    private $userTable;
+    private UserTable $userTable;
 
     public function __construct(UserTable $userTable)
     {

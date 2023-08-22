@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Model\Entity\Model;
 use Monarc\Core\Table\ModelTable;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Table\OperationalInstanceRiskScaleTable;
@@ -63,9 +63,9 @@ class AnrCheckStartedService
         $anr = $this->anrTable->findById($anrId);
 
         $areScalesUpdatable = true;
-        if ($anr->getModel() !== null) {
+        if ($anr->getModelId() !== null) {
             /** @var Model $model */
-            $model = $this->modelTable->findById($anr->getModel());
+            $model = $this->modelTable->findById($anr->getModelId());
             $areScalesUpdatable = $model->areScalesUpdatable();
         }
 

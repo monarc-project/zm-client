@@ -37,7 +37,7 @@ class Snapshot extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $anr;
@@ -47,7 +47,7 @@ class Snapshot extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_reference_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
+     *   @ORM\JoinColumn(name="anr_reference_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
     protected $anrReference;

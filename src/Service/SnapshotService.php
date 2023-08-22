@@ -1,40 +1,39 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\Snapshot;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
 use Monarc\Core\Model\Entity\User;
 use Monarc\FrontOffice\Table\UserAnrTable;
 
-/**
- * This class is the service that handles snapshots. Snapshots are backups of ANRs at a specific point in time, and
- * may be consulted or restored at any time.
- * @package Monarc\FrontOffice\Service
- */
-class SnapshotService extends AbstractService
+// TODO: ...
+class SnapshotService
 {
     protected $dependencies = ['anr', 'anrReference'];
     protected $filterColumns = [];
-    protected $anrTable;
-    /** @var UserAnrTable */
-    protected $userAnrTable;
-    protected $anrService;
 
-    /**
-     * @inheritdoc
-     */
+    private AnrService $anrService;
+
+    private AnrTable $anrTable;
+
+    private SnapshotTable $snapshotTable;
+
+    public function __construct(SnapshotTable $snapshotTable, AnrTable $anrTable, AnrService $anrService)
+    {
+        $this->snapshotTable = $snapshotTable;
+        $this->anrTable = $anrTable;
+        $this->anrService = $anrService;
+    }
+
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         if (is_null($order)) {
@@ -52,39 +51,29 @@ class SnapshotService extends AbstractService
         );
     }
 
-    /**
-     * @throws ORMException
-     * @throws Exception
-     */
-    public function create($data, $last = true): int
+    // TODO: started from this method.
+    public function create(Anr $anr, array $data): Snapshot
     {
-        // duplicate anr and create snapshot record with new id
-        /** @var AnrService $anrService */
-        $anrService = $this->get('anrService');
-        $newAnr = $anrService->duplicateAnr($data['anr'], MonarcObject::SOURCE_CLIENT, null, [], true);
+        $newAnr = $this->anrService->duplicateAnr($anr, [], 'create');
 
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        /** @var SnapshotTable $snapshotTable */
-        $snapshotTable = $this->get('table');
-
-        // TODO: Refactor this service and AnrService to be able to pass snapshot data in the constructor.
         $snapshot = (new Snapshot())
             ->setAnr($newAnr)
-            ->setAnrReference($data['anr'] instanceof Anr ? $data['anr'] : $anrTable->findById($data['anr']))
+            ->setAnrReference($anr)
             ->setCreator($newAnr->getCreator())
             ->setComment($data['comment']);
 
-        $snapshotTable->saveEntity($snapshot);
+        $this->snapshotTable->saveEntity($snapshot);
 
-        // Snapshots should not be visible on global dashboard
-        // and stats not send to the StatsService (but snapshots are ignored anyway).
+        /*
+         * Snapshots should not be visible on global dashboard
+         * and stats not send to the StatsService (but snapshots are ignored anyway).
+         */
         $newAnr->setIsVisibleOnDashboard(0)
             ->setIsStatsCollected(0);
 
-        $anrTable->saveEntity($newAnr);
+        $this->anrTable->save($newAnr);
 
-        return $snapshot->getId();
+        return $snapshot;
     }
 
     /**
@@ -108,19 +97,11 @@ class SnapshotService extends AbstractService
         return $this->patch($id, $data);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
+    public function delete(Anr $anr, int $id): void
     {
-        /** @var SnapshotTable $snapshotTable */
-        $snapshotTable = $this->get('table');
-        $snapshot = $snapshotTable->getEntity($id);
+        $snapshot = $this->snapshotTable->findByIdAndAnr($id, $anr);
 
-        /** @var AnrService $anrService */
-        $anrService = $this->get('anrService');
-
-        return $anrService->delete($snapshot->anr->id);
+        $this->anrService->delete($snapshot->getAnr());
     }
 
     /**
@@ -178,7 +159,7 @@ class SnapshotService extends AbstractService
         $anrReference = $snapshot->getAnrReference();
 
         // duplicate the anr linked to this snapshot
-        $newAnr = $anrService->duplicateAnr($snapshot->getAnr(), MonarcObject::SOURCE_CLIENT, null, [], false, true);
+        $newAnr = $anrService->duplicateAnr($snapshot->getAnr(), [], 'restore');
 
         /** @var Snapshot[] $snapshots */
         $snapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
@@ -205,17 +186,12 @@ class SnapshotService extends AbstractService
          */
         $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
             ->setIsStatsCollected((int)$anrReference->isStatsCollected())
-            ->setLabels([
-                'label1' => $anrReference->getLabelByLanguageIndex(1),
-                'label2' => $anrReference->getLabelByLanguageIndex(2),
-                'label3' => $anrReference->getLabelByLanguageIndex(3),
-                'label4' => $anrReference->getLabelByLanguageIndex(4),
-            ]);
+            ->setLabels($anrReference->getLabels());
         $referenceAnrUuid = $anrReference->getUuid();
 
-        $anrTable->deleteEntity($anrReference);
+        $anrTable->remove($anrReference);
 
-        $anrTable->saveEntity($newAnr->setUuid($referenceAnrUuid));
+        $anrTable->save($newAnr->setUuid($referenceAnrUuid));
 
         return $newAnr->getId();
     }

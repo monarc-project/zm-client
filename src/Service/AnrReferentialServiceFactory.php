@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Referential Service Factory
@@ -20,7 +21,7 @@ class AnrReferentialServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\Referential',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'userAnrTable' => UserAnrTable::class,
         'selfCoreService' => 'Monarc\Core\Service\ReferentialService',
     ];
 }

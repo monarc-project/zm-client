@@ -19,4 +19,22 @@ use Monarc\Core\Model\Entity\OperationalRiskScaleCommentSuperClass;
  */
 class OperationalRiskScaleComment extends OperationalRiskScaleCommentSuperClass
 {
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="comment", type="text", nullable=true)
+     */
+    public $comment = '';
+
+    public function getComment(): string
+    {
+        return $this->comment;
+    }
+
+    public function setComment(string $comment): self
+    {
+        $this->comment = $comment;
+
+        return $this;
+    }
 }

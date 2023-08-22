@@ -8,7 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Entity\Soa;
 use Monarc\FrontOffice\Table\UserAnrTable;
 
@@ -16,8 +17,8 @@ class SoaServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'entity' => Soa::class,
-        'table' => Table\SoaTable::class,
-        'anrTable' => Table\AnrTable::class,
+        'table' => DeprecatedTable\SoaTable::class,
+        'anrTable' => DeprecatedTable\AnrTable::class,
         'userAnrTable' => UserAnrTable::class,
         'soaScaleCommentTable' => Table\SoaScaleCommentTable::class,
     ];

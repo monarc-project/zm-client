@@ -86,7 +86,10 @@ class ApiAnrRisksController extends AbstractRestfulController
 
     public function delete($id)
     {
-        $this->anrInstanceRiskService->deleteInstanceRisk((int)$id, (int)$this->params()->fromRoute('anrid'));
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrInstanceRiskService->deleteInstanceRisk($anr, (int)$id);
 
         return new JsonModel(['status' => 'ok']);
     }

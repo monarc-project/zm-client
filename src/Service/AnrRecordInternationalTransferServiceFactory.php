@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 
 /**
  * Record International Transfer Service Factory
@@ -20,7 +22,7 @@ class AnrRecordInternationalTransferServiceFactory extends AbstractServiceFactor
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\RecordInternationalTransferTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\RecordInternationalTransfer',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
+        'userAnrTable' => UserAnrTable::class,
+        'anrTable' => AnrTable::class,
     ];
 }

@@ -21,7 +21,7 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
+use Monarc\FrontOffice\Model\Entity\AnrInstanceMetadataField;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Model\Entity\Instance;
@@ -139,13 +139,13 @@ class InstanceImportService
 
     private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
 
-    private DeprecatedTable\AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable;
+    private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable;
 
     private Service\AnrThemeService $anrThemeService;
 
-    private DeprecatedTable\InstanceMetadataTable $instanceMetadataTable;
+    private Table\InstanceMetadataTable $instanceMetadataTable;
 
-    private DeprecatedTable\SoaScaleCommentTable $soaScaleCommentTable;
+    private Table\SoaScaleCommentTable $soaScaleCommentTable;
 
     private ImportCacheHelper $importCacheHelper;
 
@@ -189,9 +189,9 @@ class InstanceImportService
         Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
         Table\TranslationTable $translationTable,
-        DeprecatedTable\AnrMetadatasOnInstancesTable $anrMetadatasOnInstancesTable,
-        DeprecatedTable\InstanceMetadataTable $instanceMetadataTable,
-        DeprecatedTable\SoaScaleCommentTable $soaScaleCommentTable,
+        Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
+        Table\InstanceMetadataTable $instanceMetadataTable,
+        Table\SoaScaleCommentTable $soaScaleCommentTable,
         ConfigService $configService,
         ImportCacheHelper $importCacheHelper,
         Service\AnrThemeService $anrThemeService,
@@ -229,7 +229,7 @@ class InstanceImportService
         $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
         $this->operationalRiskScaleTypeTable = $operationalRiskScaleTypeTable;
         $this->translationTable = $translationTable;
-        $this->anrMetadatasOnInstancesTable = $anrMetadatasOnInstancesTable;
+        $this->anrInstanceMetadataFieldTable = $anrInstanceMetadataFieldTable;
         $this->instanceMetadataTable = $instanceMetadataTable;
         $this->soaScaleCommentTable = $soaScaleCommentTable;
         $this->configService = $configService;
@@ -373,7 +373,9 @@ class InstanceImportService
 
         $instance = $this->createInstance($data, $anr, $parentInstance, $monarcObject);
 
-        $this->anrInstanceRiskService->createInstanceRisks($instance, $anr, $monarcObject, $data);
+        // TODO: The instance risks are processed later again and considered that here we save or not...
+        // 1. why do we need to do it twice processInstanceRisks and whet is is going on inside that method...
+        $this->anrInstanceRiskService->createInstanceRisks($instance, $monarcObject, $data, false);
 
         $this->createInstanceMetadata($instance, $data);
 
@@ -430,7 +432,7 @@ class InstanceImportService
                 foreach ($data['method']['steps'] as $key => $v) {
                     if ($anr->get($key) === 0) {
                         $anr->set($key, $v);
-                        $this->anrTable->saveEntity($anr, false);
+                        $this->anrTable->save($anr, false);
                     }
                 }
                 $this->anrTable->getDb()->flush();
@@ -440,7 +442,7 @@ class InstanceImportService
                 foreach ($data['method']['data'] as $key => $v) {
                     if ($anr->get($key) === null) {
                         $anr->set($key, $v);
-                        $this->anrTable->saveEntity($anr, false);
+                        $this->anrTable->save($anr, false);
                     }
                 }
                 $this->anrTable->getDb()->flush();
@@ -462,7 +464,7 @@ class InstanceImportService
             if (!empty($data['method']['thresholds'])) { // Value of thresholds
                 foreach ($data['method']['thresholds'] as $key => $v) {
                     $anr->set($key, $v);
-                    $this->anrTable->saveEntity($anr, false);
+                    $this->anrTable->save($anr, false);
                 }
                 $this->anrTable->getDb()->flush();
             }
@@ -554,8 +556,9 @@ class InstanceImportService
             if (!empty($data['method']['threats'])) {
                 $this->importCacheHelper->prepareThemesCacheData($anr);
                 foreach ($data['method']['threats'] as $threatUuid => $threatData) {
+                    /** @var ?Threat $threat */
                     $threat = $this->importCacheHelper->getItemFromArrayCache('threats', $threatUuid)
-                        ?: $this->threatTable->findByAnrAndUuid($anr, $threatUuid);
+                        ?: $this->threatTable->findByUuidAndAnr($threatUuid, $anr, false);
                     if ($threat === null) {
                         $threatData = $data['method']['threats'][$threatUuid];
                         // TODO: inject and use the threatService->create
@@ -563,7 +566,7 @@ class InstanceImportService
                         /* The code should be unique. */
                         $threatData['code'] = $this->importCacheHelper
                             ->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
-                            || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                            || $this->threatTable->doesCodeAlreadyExist($threatData['code'], $anr)
                                 ? $threatData['code'] . '-' . time()
                                 : $threatData['code'];
 
@@ -605,7 +608,7 @@ class InstanceImportService
                     $threat->setComment((string)$data['method']['threats'][$threatUuid]['comment']);
                     $threat->setQualification((int)$data['method']['threats'][$threatUuid]['qualification']);
 
-                    $this->threatTable->saveEntity($threat, false);
+                    $this->threatTable->save($threat, false);
 
                     $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
                     $this->importCacheHelper
@@ -901,10 +904,11 @@ class InstanceImportService
                     $scalesData['external'][Scale::TYPE_THREAT]['min'],
                     $scalesData['external'][Scale::TYPE_THREAT]['max'],
                 ));
-                $this->threatTable->saveEntity($threat, false);
+                $this->threatTable->save($threat, false);
             }
 
             // Informational Risks
+            /** @var InstanceRisk $instancesRisk */
             foreach ($this->instanceRiskTable->findByAnr($anr) as $instanceRisk) {
                 $instanceRisk->setThreatRate($this->approximate(
                     $instanceRisk->getThreatRate(),
@@ -928,7 +932,7 @@ class InstanceImportService
                         : 0
                 );
 
-                $this->anrInstanceRiskService->updateRisks($instanceRisk);
+                $this->anrInstanceRiskService->recalculateRiskRates($instanceRisk);
             }
 
             /* Adjust the values of operational risks scales. */
@@ -1338,6 +1342,7 @@ class InstanceImportService
             $threatData = $data['threats'][$instanceRiskData['threat']];
             $vulnerabilityData = $data['vuls'][$instanceRiskData['vulnerability']];
 
+            // TODO: why do we need to fetch it if it is not used and redeclared
             $instanceRisk = $this->instanceRiskTable->findByInstanceAssetThreatUuidAndVulnerabilityUuid(
                 $instance,
                 $monarcObject->getAsset(),
@@ -1346,13 +1351,14 @@ class InstanceImportService
             );
 
             if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
+                /** @var ?Threat $threat */
                 $threat = $this->importCacheHelper->getItemFromArrayCache('threats', $threatData['uuid'])
-                    ?: $this->threatTable->findByAnrAndUuid($anr, $threatData['uuid']);
+                    ?: $this->threatTable->findByUuidAndAnr($threatData['uuid'], $anr, false);
                 if ($threat === null) {
                     /* The code should be unique. */
                     $threatData['code'] =
                         $this->importCacheHelper->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
-                        || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                        || $this->threatTable->doesCodeAlreadyExist($threatData['code'], $anr)
                             ? $threatData['code'] . '-' . time()
                             : $threatData['code'];
 // TODO: inject and use the $this->threatService->create();
@@ -1385,25 +1391,25 @@ class InstanceImportService
                      * data when export later on. after we can set it $threat->setTheme($theme);
                      */
 
-                    $this->threatTable->saveEntity($threat, false);
+                    $this->threatTable->save($threat, false);
 
                     $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
                     $this->importCacheHelper
                         ->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
                 }
-// TODO: inject and use $this->vulnerabilityService->create($anr, $vulnerabilityData);
+                /** @var ?Vulnerability $vulnerability */
                 $vulnerability = $this->importCacheHelper
                     ->getItemFromArrayCache('vulnerabilities', $vulnerabilityData['uuid'])
-                    ?: $this->vulnerabilityTable->findByAnrAndUuid($anr, $vulnerabilityData['uuid'], false);
+                    ?: $this->vulnerabilityTable->findByUuidAndAnr($vulnerabilityData['uuid'], $anr, false);
                 if ($vulnerability === null) {
                     /* The code should be unique. */
                     $vulnerabilityData['code'] =
                         $this->importCacheHelper
                             ->getItemFromArrayCache('vulnerabilities_codes', $vulnerabilityData['code']) !== null
-                        || $this->vulnerabilityTable->existsWithAnrAndCode($anr, $vulnerabilityData['code'])
+                        || $this->vulnerabilityTable->doesCodeAlreadyExist($vulnerabilityData['code'], $anr)
                             ? $vulnerabilityData['code'] . '-' . time()
                             : $vulnerabilityData['code'];
-
+// TODO: inject and use $this->vulnerabilityService->create($anr, $vulnerabilityData);
                     $vulnerability = (new Vulnerability())
                         ->setUuid($vulnerabilityData['uuid'])
                         ->setAnr($anr)
@@ -1434,7 +1440,7 @@ class InstanceImportService
                     $vulnerability
                 );
 
-                $this->instanceRiskTable->saveEntity($instanceRisk, false);
+                $this->instanceRiskTable->save($instanceRisk, false);
 
                 /*
                  * Create specific risks linked to the brother instances.
@@ -1450,7 +1456,7 @@ class InstanceImportService
                         $vulnerability
                     );
 
-                    $this->instanceRiskTable->saveEntity($instanceRiskBrother, false);
+                    $this->instanceRiskTable->save($instanceRiskBrother, false);
                 }
             }
 
@@ -1477,7 +1483,7 @@ class InstanceImportService
                             $scalesData['current'][Scale::TYPE_VULNERABILITY]['max']
                         )
                 );
-                $instanceRisk->setMh($instanceRiskData['mh']);
+                $instanceRisk->setIsThreatRateNotSetOrModifiedExternally((bool)$instanceRiskData['mh']);
                 $instanceRisk->setKindOfMeasure($instanceRiskData['kindOfMeasure']);
                 $instanceRisk->setComment($instanceRiskData['comment'] ?? '');
                 $instanceRisk->setCommentAfter($instanceRiskData['commentAfter'] ?? '');
@@ -1498,7 +1504,7 @@ class InstanceImportService
                         )
                         : 0
                 );
-                $this->instanceRiskTable->saveEntity($instanceRisk, false);
+                $this->instanceRiskTable->save($instanceRisk, false);
 
                 // Merge all fields for global assets.
                 if ($modeImport === 'merge'
@@ -1675,16 +1681,19 @@ class InstanceImportService
         // Check recommandations from specific risk of brothers
         $recoToCreate = [];
         // Get all specific risks of instance
-        $specificRisks = $this->instanceRiskTable->findByInstance($instance, true);
-        foreach ($specificRisks as $specificRisk) {
+        foreach ($instance->getInstanceRisks() as $instanceRisk) {
+            if (!$instanceRisk->isSpecific()) {
+                continue;
+            }
+
             // TODO: replace all the queries with QueryBuilder. Review the logic.
-            // Get recommandations of brothers
+            // Get recommendations of brothers
             /** @var RecommandationRisk[] $exitingRecoRisks */
             $exitingRecoRisks = $this->recommendationRiskTable->getEntityByFields([
                 'anr' => $anr->getId(),
-                'asset' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getAsset()->getUuid()],
-                'threat' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getThreat()->getUuid()],
-                'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $specificRisk->getVulnerability()->getUuid()],
+                'asset' => ['anr' => $anr->getId(), 'uuid' => $instanceRisk->getAsset()->getUuid()],
+                'threat' => ['anr' => $anr->getId(), 'uuid' => $instanceRisk->getThreat()->getUuid()],
+                'vulnerability' => ['anr' => $anr->getId(), 'uuid' => $instanceRisk->getVulnerability()->getUuid()],
             ]);
             foreach ($exitingRecoRisks as $exitingRecoRisk) {
                 if ($instance->getId() !== $exitingRecoRisk->getInstance()->getId()) {
@@ -1754,7 +1763,7 @@ class InstanceImportService
         $this->recommendationRiskTable->getDb()->flush();
 
         // on met finalement à jour les risques en cascade
-        $this->anrInstanceService->updateRisks($instance);
+        $this->anrInstanceService->recalculateRiskRates($instance);
     }
 
     private function processOperationalInstanceRisks(
@@ -2012,7 +2021,7 @@ class InstanceImportService
                 $this->anrInstanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk, false);
             }
 
-            $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
+            $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
 
             /* Process recommendations related to the operational risk. */
             if ($includeEval && !empty($data['recosop'][$operationalRiskData['id']])) {
@@ -2317,7 +2326,7 @@ class InstanceImportService
                     );
                 }
 
-                $this->instanceRiskOpTable->saveEntity($operationalInstanceRisk, false);
+                $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
 
                 $this->anrInstanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk);
             }
@@ -2962,7 +2971,7 @@ class InstanceImportService
                 if (in_array($instanceMetadata['label'], $labels)) {
                     $indexMetadata = array_search($instanceMetadata['label'], $labels);
                     $metadata = $this->cachedData['anrMetadataOnInstances'][$indexMetadata]['object'];
-                    $instanceMetadataObject = $this->instanceMetadataTable->findByInstanceAndMetadata(
+                    $instanceMetadataObject = $this->instanceMetadataTable->findByInstanceAndMetadataField(
                         $instance,
                         $metadata
                     );
@@ -2970,7 +2979,7 @@ class InstanceImportService
                         $commentTranslationKey = (string)Uuid::uuid4();
                         $instanceMetadataObject = (new InstanceMetadata())
                             ->setInstance($instance)
-                            ->setMetadata($metadata)
+                            ->setAnrInstanceMetadataField($metadata)
                             ->setCommentTranslationKey($commentTranslationKey)
                             ->setCreator($this->connectedUser->getEmail());
                         $this->instanceMetadataTable->save($instanceMetadataObject, false);
@@ -3008,12 +3017,12 @@ class InstanceImportService
         foreach ($data as $v) {
             if (!\in_array($v['label'], $labels, true)) {
                 $labelTranslationKey = (string)Uuid::uuid4();
-                $metadata = (new AnrMetadatasOnInstances())
+                $metadata = (new AnrInstanceMetadataField())
                     ->setAnr($anr)
                     ->setLabelTranslationKey($labelTranslationKey)
                     ->setCreator($this->connectedUser->getEmail())
                     ->setIsDeletable(true);
-                $this->anrMetadatasOnInstancesTable->save($metadata, false);
+                $this->anrInstanceMetadataFieldTable->save($metadata, false);
 
                 $translation = (new Translation())
                     ->setAnr($anr)
@@ -3032,7 +3041,7 @@ class InstanceImportService
                     ];
             }
         }
-        $this->anrMetadatasOnInstancesTable->flush();
+        $this->anrInstanceMetadataFieldTable->flush();
     }
 
     private function getCurrentAnrMetadataOnInstances(Anr $anr): array
@@ -3044,13 +3053,13 @@ class InstanceImportService
             $this->getAnrLanguageCode($anr)
         );
 
-        $AnrMetadatasOnInstances = $this->anrMetadatasOnInstancesTable->findByAnr($anr);
-        foreach ($AnrMetadatasOnInstances as $metadata) {
-            $translationLabel = $anrMetadatasOnInstancesTranslations[$metadata->getLabelTranslationKey()] ?? null;
+        $anrInstanceMetadataFields = $this->anrInstanceMetadataFieldTable->findByAnr($anr);
+        foreach ($anrInstanceMetadataFields as $metadataField) {
+            $translationLabel = $anrMetadatasOnInstancesTranslations[$metadataField->getLabelTranslationKey()] ?? null;
             $this->cachedData['currentAnrMetadataOnInstances'][] = [
-                'id' => $metadata->getId(),
+                'id' => $metadataField->getId(),
                 'label' => $translationLabel !== null ? $translationLabel->getValue() : '',
-                'object' => $metadata,
+                'object' => $metadataField,
                 'translation' => $translationLabel,
             ];
         }
@@ -3067,15 +3076,15 @@ class InstanceImportService
             if (!empty($instanceBrothers)) {
                 // Update instanceMetadata of $instance. We use only one brother as the instanceMetadatas are the same.
                 $instanceBrother = current($instanceBrothers);
-                $instancesMetadatasFromBrother = $instanceBrother->getInstanceMetadatas();
+                $instancesMetadatasFromBrother = $instanceBrother->getInstanceMetadata();
                 foreach ($instancesMetadatasFromBrother as $instanceMetadataFromBrother) {
-                    $metadata = $instanceMetadataFromBrother->getMetadata();
+                    $metadata = $instanceMetadataFromBrother->getAnrInstanceMetadataFields();
                     $instanceMetadata = $this->instanceMetadataTable
-                        ->findByInstanceAndMetadata($instance, $metadata);
+                        ->findByInstanceAndMetadataField($instance, $metadata);
                     if ($instanceMetadata === null) {
                         $instanceMetadata = (new InstanceMetadata())
                             ->setInstance($instance)
-                            ->setMetadata($metadata)
+                            ->setAnrInstanceMetadataField($metadata)
                             ->setCommentTranslationKey($instanceMetadataFromBrother->getCommentTranslationKey())
                             ->setCreator($this->connectedUser->getEmail());
                         $this->instanceMetadataTable->save($instanceMetadata, false);
@@ -3096,13 +3105,13 @@ class InstanceImportService
             $instanceBrothers = $this->getInstanceBrothers($instance);
             if (!empty($instanceBrothers)) {
                 foreach ($instanceBrothers as $instanceBrother) {
-                    $metadata = $instanceMetadata->getMetadata();
+                    $metadata = $instanceMetadata->getAnrInstanceMetadataFields();
                     $instanceMetadataBrother = $this->instanceMetadataTable
-                        ->findByInstanceAndMetadata($instanceBrother, $metadata);
+                        ->findByInstanceAndMetadataField($instanceBrother, $metadata);
                     if ($instanceMetadataBrother === null) {
                         $instanceMetadataBrother = (new InstanceMetadata())
                             ->setInstance($instanceBrother)
-                            ->setMetadata($metadata)
+                            ->setAnrInstanceMetadataField($metadata)
                             ->setCommentTranslationKey($instanceMetadata->getCommentTranslationKey())
                             ->setCreator($this->connectedUser->getEmail());
                         $this->instanceMetadataTable->save($instanceMetadataBrother, false);
@@ -3115,7 +3124,7 @@ class InstanceImportService
     private function getCurrentSoaScaleCommentData(Anr $anr): array
     {
         if (empty($this->cachedData['currentSoaScaleCommentData'])) {
-            $scales = $this->soaScaleCommentTable->findByAnr($anr);
+            $scales = $this->soaScaleCommentTable->findByAnrOrderByIndex($anr);
             foreach ($scales as $scale) {
                 if (!$scale->isHidden()) {
                     $this->cachedData['currentSoaScaleCommentData'][$scale->getScaleIndex()] = [

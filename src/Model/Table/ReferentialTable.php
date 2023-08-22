@@ -15,10 +15,6 @@ use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Referential;
 
-/**
- * Class ReferentialTable
- * @package Monarc\FrontOffice\Model\Table
- */
 class ReferentialTable extends AbstractEntityTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)

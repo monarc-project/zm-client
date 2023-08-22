@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -13,27 +13,25 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\Threat;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Table\ThemeTable;
-use Monarc\FrontOffice\Table\ThreatTable;
+use Monarc\FrontOffice\Table;
 
 class AnrThreatService
 {
-    private ThreatTable $threatTable;
+    private Table\ThreatTable $threatTable;
 
-    private InstanceRiskTable $instanceRiskTable;
+    private Table\InstanceRiskTable $instanceRiskTable;
 
-    private ThemeTable $themeTable;
+    private Table\ThemeTable $themeTable;
 
     private AnrInstanceRiskService $anrInstanceRiskService;
 
     private UserSuperClass $connectedUser;
 
     public function __construct(
-        ThreatTable $threatTable,
-        InstanceRiskTable $instanceRiskTable,
+        Table\ThreatTable $threatTable,
+        Table\InstanceRiskTable $instanceRiskTable,
         AnrInstanceRiskService $anrInstanceRiskService,
-        ThemeTable $themeTable,
+        Table\ThemeTable $themeTable,
         ConnectedUserService $connectedUserService
     ) {
         $this->threatTable = $threatTable;
@@ -117,7 +115,7 @@ class AnrThreatService
         return $threat;
     }
 
-    public function update(Anr $anr, string $uuid, array $data): void
+    public function update(Anr $anr, string $uuid, array $data): Threat
     {
         /** @var Threat $threat */
         $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr);
@@ -131,9 +129,6 @@ class AnrThreatService
             ->setIntegrity((int)$data['i'])
             ->setAvailability((int)$data['a'])
             ->setUpdater($this->connectedUser->getEmail());
-        if (isset($data['mode'])) {
-            $threat->setMode($data['mode']);
-        }
         if (isset($data['status'])) {
             $threat->setStatus($data['status']);
         }
@@ -143,106 +138,102 @@ class AnrThreatService
         if (isset($data['comment'])) {
             $threat->setComment($data['comment']);
         }
-        if (!empty($data['theme'])
-            && ($threat->getTheme() === null
-                || $threat->getTheme()->getId() !== (int)$data['theme']
-            )
-        ) {
+        if (!empty($data['theme']) && (
+            $threat->getTheme() === null || $threat->getTheme()->getId() !== (int)$data['theme']
+        )) {
             /** @var Theme $theme */
             $theme = $this->themeTable->findById((int)$data['theme']);
             $threat->setTheme($theme);
         }
 
         $this->threatTable->save($threat);
+
+        return $threat;
     }
 
-    public function patch(Anr $anr, string $uuid, array $data): void
+    public function patch(Anr $anr, string $uuid, array $data): Threat
     {
         /** @var Threat $threat */
         $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr);
 
-        $this->manageQualification($threat, $data);
+        if (isset($data['status'])) {
+            $threat->setStatus((int)$data['status'])
+                ->setUpdater($this->connectedUser->getEmail());
 
-        // todo: not only status is updated here.
+            $this->threatTable->save($threat);
+        }
 
-        $this->threatTable->save($threat);
+        return $threat;
+    }
+
+    public function delete(Anr $anr, string $uuid): void
+    {
+        /** @var Threat $threat */
+        $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr);
+
+        $this->threatTable->remove($threat);
+    }
+
+    public function deleteList(Anr $anr, array $data): void
+    {
+        $threats = $this->threatTable->findByUuidsAndAnr($data, $anr);
+
+        $this->threatTable->removeList($threats);
     }
 
     /**
-     * Updates the qualifications for the specified threat whenever they are created or updated. This noticeably
-     * handles qualification values inheritance.
+     * Can be set from 1st step, 2nd sub-step "Threats assessment".
+     * Updates the qualifications for the specified threat whenever they are created or updated.
+     * This noticeably handles qualification values inheritance.
      */
-    public function manageQualification(Threat $threat, array $data): void
+    private function manageQualification(Threat $threat, array $data): void
     {
         if (isset($data['qualification'])) {
-            // todo: how we can set the qualification ???
-            $filter = [
-                'anr' => $threat->getAnr()->getId(),
-                'threat' => $threat->getUuid(),
-            ];
+            $instancesRisks = $this->instanceRiskTable->findByAnrThreatExcludeLocallySetThreatRatesOrNot(
+                $threat->getAnr(),
+                $threat,
+                empty($data['forceQualification'])
+            );
+            foreach ($instancesRisks as $instanceRisk) {
+                $instanceRisk->setThreatRate((int)$data['qualification']);
 
-            // If qualification is not forced, retrieve only inherited instance risksx
-            if (!isset($data['forceQualification']) || $data['forceQualification'] === 0) {
-                $filter['mh'] = 1;
-            }
-
-            /** @var InstanceRiskTable $instanceRiskTable */
-            $instanceRiskTable = $this->get('instanceRiskTable');
-            $instancesRisks = $instanceRiskTable->getEntityByFields($filter);
-
-            /** @var AnrInstanceRiskService $instanceRiskService */
-            $instanceRiskService = $this->get('instanceRiskService');
-
-            foreach ($instancesRisks as $i => $instanceRisk) {
-                $instanceRisk->threatRate = $data['qualification'];
-
-                // If qualification is forced, instances risks become inherited
-                if (isset($data['forceQualification']) && $data['forceQualification'] === 1) {
-                    $instanceRisk->mh = 1;
+                /* If qualification is forced, the instances risks threatRate's value is set from outside. */
+                if (!empty($data['forceQualification'])) {
+                    $instanceRisk->setIsThreatRateNotSetOrModifiedExternally(true);
                 }
 
-                $instanceRiskTable->saveEntity($instanceRisk, false);
+                $this->instanceRiskTable->save($instanceRisk, false);
 
-                $instanceRiskService->updateRisks($instanceRisk);
-                $instanceRiskService->updateInstanceRiskRecommendationsPositions($instanceRisk);
+                $this->anrInstanceRiskService->recalculateRiskRates($instanceRisk, false);
+                $this->anrInstanceRiskService->updateInstanceRiskRecommendationsPositions($instanceRisk);
             }
-
-            $instanceRiskTable->getDb()->flush();
         }
     }
 
     private function prepareThreatDataResult(Threat $threat): array
     {
-        $theme = null;
+        $themeData = null;
         if ($threat->getTheme() !== null) {
-            $theme = [
+            $themeData = array_merge([
                 'id' => $threat->getTheme()->getId(),
-                'label1' => $threat->getTheme()->getLabel(1),
-                'label2' => $threat->getTheme()->getLabel(2),
-                'label3' => $threat->getTheme()->getLabel(3),
-                'label4' => $threat->getTheme()->getLabel(4),
-            ];
+            ], $threat->getTheme()->getLabels());
         }
 
-        return [
+        return array_merge($threat->getLabels(), $threat->getDescriptions(), [
             'uuid' => $threat->getUuid(),
+            'anr' => [
+                'id' => $threat->getAnr()->getId(),
+            ],
             'code' => $threat->getCode(),
-            'label1' => $threat->getLabel(1),
-            'label2' => $threat->getLabel(2),
-            'label3' => $threat->getLabel(3),
-            'label4' => $threat->getLabel(4),
-            'description1' => $threat->getDescription(1),
-            'description2' => $threat->getDescription(2),
-            'description3' => $threat->getDescription(3),
-            'description4' => $threat->getDescription(4),
             'c' => $threat->getConfidentiality(),
             'i' => $threat->getIntegrity(),
             'a' => $threat->getAvailability(),
-            'theme' => $theme,
+            'theme' => $themeData,
             'trend' => $threat->getTrend(),
             'qualification' => $threat->getQualification(),
+            'mode' => $threat->getMode(),
             'comment' => $threat->getComment(),
             'status' => $threat->getStatus(),
-        ];
+        ]);
     }
 }

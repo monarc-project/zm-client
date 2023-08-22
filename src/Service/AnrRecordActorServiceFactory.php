@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Record Actor Service Factory
@@ -20,7 +21,7 @@ class AnrRecordActorServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\RecordActorTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\RecordActor',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'userAnrTable' => UserAnrTable::class,
         'recordTable' => 'Monarc\FrontOffice\Model\Table\RecordTable',
         'processorTable' => 'Monarc\FrontOffice\Model\Table\RecordProcessorTable',
     ];

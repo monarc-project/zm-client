@@ -4,7 +4,7 @@ namespace Monarc\FrontOffice\Stats\Service;
 
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Stats\Exception\StatsGetClientException;
 use Monarc\FrontOffice\Stats\Exception\StatsUpdateClientException;
 use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
@@ -62,7 +62,7 @@ class StatsSettingsService
                 'isStatsCollected' => $anr->isStatsCollected(),
             ];
 
-            $this->anrTable->saveEntity($anr, false);
+            $this->anrTable->save($anr, false);
         }
         $this->anrTable->getDb()->flush();
 

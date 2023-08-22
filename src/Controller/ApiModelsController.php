@@ -30,6 +30,7 @@ class ApiModelsController extends AbstractRestfulController
 
     public function getList()
     {
+        // TODO: instead of ModelService use ModelTable from Core.
         // TODO: support multiple models...
         $formattedParams = (new FormattedInputParams())->addFilter('isGeneric', ['value' => 0]);
         $models = $this->modelService->getList($formattedParams);

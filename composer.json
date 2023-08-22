@@ -41,7 +41,7 @@
         }
     ],
     "require": {
-        "php": "^7.4",
+        "php": "^7.4 || ^8.0",
         "ext-intl": "*",
         "ext-imagick": "*",
         "ext-json": "*",
@@ -49,8 +49,8 @@
         "ext-openssl": "*",
         "ext-posix": "*",
         "doctrine/doctrine-orm-module": "^5.1",
-        "monarc/core": "dev-feature/remove-db-abstract",
-        "robmorgan/phinx": "^0.11.1",
+        "monarc/core": "dev-feature/remove-db-abstract as v2.12.6",
+        "robmorgan/phinx": "^0.13.4",
         "laminas/laminas-di": "^3.1",
         "laminas/laminas-mvc": "^3.1",
         "laminas/laminas-mvc-console": "^1.2",

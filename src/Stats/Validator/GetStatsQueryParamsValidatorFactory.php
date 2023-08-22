@@ -5,7 +5,7 @@ namespace Monarc\FrontOffice\Stats\Validator;
 use Interop\Container\ContainerInterface;
 use Laminas\InputFilter\Factory;
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 
 class GetStatsQueryParamsValidatorFactory implements FactoryInterface
 {

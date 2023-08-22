@@ -11,7 +11,8 @@ use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\Core\Service\TranslateService;
 use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\Core\Service\ConfigService;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Entity\Delivery;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Table\ClientTable;
@@ -24,10 +25,10 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'entity' => Delivery::class,
-        'table' => Table\DeliveryTable::class,
+        'table' => DeprecatedTable\DeliveryTable::class,
         'deliveryModelService' => DeliveriesModelsService::class,
         'clientTable' => ClientTable::class,
-        'anrTable' => Table\AnrTable::class,
+        'anrTable' => DeprecatedTable\AnrTable::class,
         'scaleService' => Service\AnrScaleService::class,
         'scaleTypeService' => Service\AnrScaleTypeService::class,
         'scaleCommentService' => Service\AnrScaleCommentService::class,
@@ -37,11 +38,11 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'interviewService' => Service\AnrInterviewService::class,
         'threatService' => Service\AnrThreatService::class,
         'cartoRiskService' => Service\AnrCartoRiskService::class,
-        'instanceTable' => Table\InstanceTable::class,
-        'instanceRiskTable' => Table\InstanceRiskTable::class,
-        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
+        'instanceTable' => DeprecatedTable\InstanceTable::class,
+        'instanceRiskTable' => DeprecatedTable\InstanceRiskTable::class,
+        'instanceRiskOpTable' => DeprecatedTable\InstanceRiskOpTable::class,
         'soaService' => Service\SoaService::class,
-        'soaScaleCommentTable' => Table\SoaScaleCommentTable::class,
+        'soaScaleCommentTable' => DeprecatedTable\SoaScaleCommentTable::class,
         'measureService' => Service\AnrMeasureService::class,
         'anrInstanceRiskOpService' => Service\AnrInstanceRiskOpService::class,
         'anrInstanceRiskService' => Service\AnrInstanceRiskService::class,
@@ -49,9 +50,9 @@ class DeliverableGenerationServiceFactory extends AbstractServiceFactory
         'anrInstanceConsequenceService' => Service\AnrInstanceConsequenceService::class,
         'translateService' => TranslateService::class,
         'instanceRiskOwnerTable' => Table\InstanceRiskOwnerTable::class,
-        'recommendationRiskTable' => Table\RecommandationRiskTable::class,
-        'recommendationHistoricTable' => Table\RecommendationHistoricTable::class,
-        'metadatasOnInstancesTable' => Table\AnrMetadatasOnInstancesTable::class,
+        'recommendationRiskTable' => DeprecatedTable\RecommandationRiskTable::class,
+        'recommendationHistoricTable' => DeprecatedTable\RecommendationHistoricTable::class,
+        'metadatasOnInstancesTable' => DeprecatedTable\AnrInstanceMetadataFieldTable::class,
         'translationTable' => Table\TranslationTable::class,
         'configService' => ConfigService::class,
 

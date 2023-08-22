@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\ScaleComment;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 
 /**
  * This class is the service that handles comments on scales within an ANR. This is a simple CRUD service.
@@ -22,6 +22,7 @@ class AnrScaleCommentService extends \Monarc\Core\Service\AbstractService
     protected $userAnrTable;
     protected $scaleTable;
     protected $scaleImpactTypeTable;
+    // TODO: the Anr dependency can't be set.
     protected $dependencies = ['anr', 'scale', 'scaleImpactType'];
 
     /**

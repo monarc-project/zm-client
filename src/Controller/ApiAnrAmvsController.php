@@ -1,178 +1,139 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
-use Monarc\Core\Exception\Exception;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Validator\InputValidator\Amv\PostAmvDataInputValidator;
+use Monarc\FrontOffice\InputFormatter\Amv\GetAmvsInputFormatter;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrAmvService;
 
-/**
- * TODO: Refactor the class!!!
- */
-class ApiAnrAmvsController extends ApiAnrAbstractController
+class ApiAnrAmvsController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'amvs';
-    protected $dependencies = ['asset', 'threat', 'vulnerability', 'measures'];
+    use ControllerRequestResponseHandlerTrait;
+
+    private AnrAmvService $anrAmvService;
+
+    private GetAmvsInputFormatter $getAmvsInputFormatter;
+
+    private PostAmvDataInputValidator $postAmvDataInputValidator;
+
+    public function __construct(
+        AnrAmvService $anrAmvService,
+        GetAmvsInputFormatter $getAmvsInputFormatter,
+        PostAmvDataInputValidator $postAmvDataInputValidator
+    ) {
+        $this->anrAmvService = $anrAmvService;
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->getAmvsInputFormatter = $getAmvsInputFormatter;
+        $this->getAmvsInputFormatter->setDefaultLanguageIndex($anr->getLanguage());
+        $this->postAmvDataInputValidator = $postAmvDataInputValidator;
+        $this->postAmvDataInputValidator->setDefaultLanguageIndex($anr->getLanguage());
+    }
 
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $status = $this->params()->fromQuery('status');
-        $asset = $this->params()->fromQuery('asset');
-        $amvid = $this->params()->fromQuery('amvid');
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $formattedParams = $this->getFormattedInputParams($this->getAmvsInputFormatter);
 
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-
-        $filterAnd = ['anr' => $anrId];
-
-        if (is_null($status)) {
-            $status = 1;
-        }
-
-        if ($status != 'all') {
-            $filterAnd['status'] = (int)$status;
-        }
-        if ($asset !=null) {
-            $filterAnd['a.uuid'] = $asset;
-            $filterAnd['a.anr'] = $anrId;
-        }
-
-        if (!empty($amvid)) {
-            $filterAnd['uuid'] = [
-                'op' => '!=',
-                'value' => $amvid,
-            ];
-        }
-        if($order == 'asset')
-          $order = 'a.code';
-        if($order == '-asset')
-          $order = '-a.code';
-        if($order == 'threat')
-          $order = 'th.code';
-        if($order == '-threat')
-          $order = '-th.code';
-        if($order == 'vulnerability')
-          $order = 'v.code';
-        if($order == '-vulnerability')
-          $order = '-v.code';
-
-        $service = $this->getService();
-
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
-                $this->formatDependencies($entities[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Threat', ['theme']);
-            }
-        }
-
-        return new JsonModel([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
+        return $this->getPreparedJsonResponse([
+            'count' => $this->anrAmvService->getCount($formattedParams),
+            'amvs' => $this->anrAmvService->getList($formattedParams)
         ]);
     }
 
     /**
-     * @inheritdoc
+     * @param string $id
      */
     public function get($id)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      if (empty($anrId)) {
-          throw new Exception('Anr id missing', 412);
-      }
-      $id = ['uuid'=>$id, 'anr' => $anrId];
-      $entity = $this->getService()->getEntity($id);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
-        }
-
-        // Find out the entity's implicitPosition and previous
-        if ($entity['position'] == 1) {
-            $entity['implicitPosition'] = 1;
-        } else {
-            // We're not at the beginning, get all AMV links of the same asset, and figure out position and previous
-            $amvsAsset = $this->getService()->getList(1, 0, 'position', null, ['a.anr' => $anrId, 'a.uuid' =>(string)$entity['asset']['uuid']]);
-
-            $i = 0;
-            foreach ($amvsAsset as $amv) {
-                if ((string)$amv['uuid'] == (string)$entity['uuid']) {
-                    if ($i == count($amvsAsset) - 1) {
-                        $entity['implicitPosition'] = 2;
-                    } else {
-                        if ($i == 0) {
-                            $entity['implicitPosition'] = 1;
-                            $entity['previous'] = null;
-                        } else {
-                            $entity['implicitPosition'] = 3;
-                            $entity['previous'] = $amvsAsset[$i - 1];
-                            $this->formatDependencies($entity['previous'], $this->dependencies);
-                        }
-                    }
-
-                    break;
-                }
-
-                ++$i;
-            }
-        }
-
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($this->anrAmvService->getAmvData($anr, $id));
     }
 
+
+    /**
+     * @param array $data
+     */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (!empty($data['measures'])) {
-            $data['measures'] = $this->addAnrId($data['measures']);
-        }
-        unset($data['referential']);
-
-        if (array_keys($data) === range(0, \count($data) - 1)) {
-            /** @var AnrAmvService $anrAmvService */
-            $anrAmvService = $this->getService();
-            $data = $anrAmvService->createAmvItems($anrId, $data);
-
-            if (empty($data)) {
-                throw new Exception('No new information risks to be imported. Already exist in Knowledge Base', 412);
-            }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        if ($this->isBatchData($data)) {
+            $result = $this->anrAmvService->createAmvItems($anr, $data);
+        } else {
+            $this->validatePostParams($this->postAmvDataInputValidator, $data);
+            $result = $this->anrAmvService->create($anr, $data)->getUuid();
         }
 
-        return parent::create($data);
+        return $this->getSuccessfulJsonResponse(['id' => $result]);
     }
 
+    /**
+     * @param string $id
+     * @param array $data
+     */
     public function update($id, $data)
     {
-        if (count($data['measures']) > 0) {
-            $data['measures'] = $this->addAnrId($data['measures']);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        unset($data ['referential']);
+        $this->anrAmvService->update($anr, $id, $data);
 
-        return parent::update($id, $data);
+        return $this->getSuccessfulJsonResponse();
+    }
+
+    /**
+     * @param string $id
+     * @param array $data
+     */
+    public function patch($id, $data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrAmvService->patch($anr, $id, $data);
+
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function patchList($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $service = $this->getService();
-        $data['toReferential'] = $this->addAnrId($data['toReferential']);
-        $service->createLinkedAmvs($data['fromReferential'], $data['toReferential'], $anrId);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return new JsonModel([
-            'status' => 'ok',
-        ]);
+        $this->anrAmvService->createLinkedAmvs($anr, $data['fromReferential'], $data['toReferential']);
+
+        return $this->getSuccessfulJsonResponse();
+    }
+
+    public function delete($id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrAmvService->delete($anr, $id);
+
+        return $this->getSuccessfulJsonResponse();
+    }
+
+    public function deleteList($data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrAmvService->deleteList($anr, $data);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

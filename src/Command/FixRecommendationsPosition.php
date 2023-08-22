@@ -2,7 +2,7 @@
 
 namespace Monarc\FrontOffice\Command;
 
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

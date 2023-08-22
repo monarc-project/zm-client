@@ -26,7 +26,7 @@ class Referential extends ReferentialSuperClass
      * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      */
     protected $anr;

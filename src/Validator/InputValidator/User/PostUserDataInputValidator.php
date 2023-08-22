@@ -12,7 +12,7 @@ use Laminas\InputFilter\InputFilter;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Validator\InputValidator\User\PostUserDataInputValidator as CorePostUserDataInputValidatorAlias;
 use Monarc\FrontOffice\Model\Entity\UserRole;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\UserTable;
 use Monarc\FrontOffice\Validator\FieldValidator\AnrExistenceValidator;
 

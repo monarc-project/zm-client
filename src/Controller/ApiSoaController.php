@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -9,20 +9,15 @@ namespace Monarc\FrontOffice\Controller;
 
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
-use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Measure;
+use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrMeasureService;
 use Monarc\FrontOffice\Service\SoaScaleCommentService;
 use Monarc\FrontOffice\Service\SoaService;
 
-/**
- * Api Anr Soa Controller
- *
- * Class ApiAnrSoaController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiSoaController extends AbstractRestfulController
 {
     private SoaService $soaService;
@@ -59,12 +54,10 @@ class ApiSoaController extends AbstractRestfulController
         $category = (int)$this->params()->fromQuery('category', 0);
         $referential = $this->params()->fromQuery('referential');
 
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $filterAnd = ['anr' => $anrId];
+        $filterAnd = ['anr' => $anr->getId()];
 
         if ($referential) {
             if ($category !== 0) {
@@ -76,7 +69,7 @@ class ApiSoaController extends AbstractRestfulController
                 $filterMeasures['category'] = null;
             }
 
-            $filterMeasures['r.anr'] = $anrId;
+            $filterMeasures['r.anr'] = $anr->getId();
             $filterMeasures['r.uuid'] = $referential;
 
             $measuresFiltered = $this->anrMeasureService->getList(1, 0, null, null, $filterMeasures);
@@ -88,7 +81,7 @@ class ApiSoaController extends AbstractRestfulController
                 'op' => 'IN',
                 'value' => $measuresFilteredId,
             ];
-            $filterAnd['m.anr'] = $anrId;
+            $filterAnd['m.anr'] = $anr->getId();
         }
 
         if ($order === 'measure') {
@@ -96,7 +89,7 @@ class ApiSoaController extends AbstractRestfulController
         } elseif ($order === '-measure') {
             $order = '-m.code';
         }
-        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsDataById($anrId);
+        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsData($anr);
         $entities = $this->soaService->getList($page, $limit, $order, $filter, $filterAnd);
         foreach ($entities as $key => $entity) {
             $amvs = [];
@@ -135,13 +128,16 @@ class ApiSoaController extends AbstractRestfulController
                     'order_direction' => 'desc',
                 ]);
             }
-            $entities[$key]['anr'] = $measure->getAnr()->getJsonArray();
+            $entities[$key]['anr'] = [
+                'id' => $measure->getAnr()->getId(),
+                'label' => $measure->getAnr()->getLabel(),
+            ];
             $entities[$key]['measure'] = $measure->getJsonArray();
             $entities[$key]['measure']['category'] = $measure->getCategory()->getJsonArray();
             $entities[$key]['measure']['referential'] = $measure->getReferential()->getJsonArray();
-            $entities[$key]['measure']['measuresLinked'] = [];
-            foreach ($measure->getMeasuresLinked() as $measureLinked) {
-                $entities[$key]['measure']['measuresLinked'][] = $measureLinked->getUuid();
+            $entities[$key]['measure']['linkedMeasures'] = [];
+            foreach ($measure->getLinkedMeasures() as $linkedMeasure) {
+                $entities[$key]['measure']['linkedMeasures'][] = $linkedMeasure->getUuid();
             }
             if ($soaScaleComment !== null) {
                 $entities[$key]['soaScaleComment'] = $soaScaleCommentsData[$soaScaleComment->getId()];
@@ -158,30 +154,28 @@ class ApiSoaController extends AbstractRestfulController
 
     public function get($id)
     {
-        $entity = $this->soaService->getEntity($id);
+        $entity = $this->soaService->getEntity((int)$id);
         /** @var Measure $measure */
         $measure = $entity['measure'];
         /** @var SoaScaleComment $measure */
         $soaScaleComment = $entity['soaScaleComment'];
 
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('"anrid" param is missing', 412);
-        }
-        if ($measure->getAnr()->getId() !== $anrId) {
-            throw new Exception('Anr IDs are different', 412);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsDataById($anrId);
+        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsData($anr);
 
-        $entity['anr'] = $measure->getAnr()->getJsonArray();
+        $entity['anr'] = [
+            'id' => $measure->getAnr()->getId(),
+            'label' => $measure->getAnr()->getLabel(),
+        ];
         $entity['measure'] = $measure->getJsonArray();
         $entity['measure']['category'] = $measure->getCategory()->getJsonArray();
         $entity['measure']['referential'] = $measure->getReferential()->getJsonArray();
         if ($soaScaleComment !== null) {
-            $entities['soaScaleComment'] = $soaScaleCommentsData[$soaScaleComment->getId()];
+            $entity['soaScaleComment'] = $soaScaleCommentsData[$soaScaleComment->getId()];
         } else {
-            $entities['soaScaleComment'] = null;
+            $entity['soaScaleComment'] = null;
         }
 
         return new JsonModel($entity);
@@ -196,17 +190,15 @@ class ApiSoaController extends AbstractRestfulController
 
     public function patchList($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
         $createdObjects = [];
         foreach ($data as $newData) {
-            $newData['anr'] = $anrId;
-            $newData['measure'] = ['anr' => $anrId, 'uuid' => $newData['measure']['uuid']];
+            $newData['anr'] = $anr->getId();
+            $newData['measure'] = ['anr' => $anr->getId(), 'uuid' => $newData['measure']['uuid']];
             $id = $newData['id'];
-            if (is_array($newData['soaScaleComment'])) {
+            if (\is_array($newData['soaScaleComment'])) {
                 $newData['soaScaleComment'] = $newData['soaScaleComment']['id'];
             }
             $this->soaService->patchSoa($id, $newData);

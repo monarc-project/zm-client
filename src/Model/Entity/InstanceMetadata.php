@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,8 +12,6 @@ use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
- * Instance
- *
  * @ORM\Table(name="instances_metadatas", indexes={
  *      @ORM\Index(name="instance_id", columns={"instance_id"}),
  *      @ORM\Index(name="metadata_id", columns={"metadata_id"}),
@@ -39,32 +37,29 @@ class InstanceMetadata
      *
      * @ORM\ManyToOne(targetEntity="Instance", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=false)
      * })
      */
     protected $instance;
 
     /**
-     * @var AnrMetadatasOnInstances
+     * @var AnrInstanceMetadataField
      *
-     * @ORM\ManyToOne(targetEntity="AnrMetadatasOnInstances", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="AnrInstanceMetadataField", cascade={"persist"})
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="metadata_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="metadata_id", referencedColumnName="id", nullable=false)
      * })
      */
-    protected $metadata;
+    protected $anrInstanceMetadataField;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="comment_translation_key", type="string", length=255, options={"default": ""})
+     * @ORM\Column(name="comment", type="text", nullable=true)
      */
-    protected $commentTranslationKey = '';
+    public $comment = '';
 
-    /**
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -77,30 +72,32 @@ class InstanceMetadata
     public function setInstance(Instance $instance): self
     {
         $this->instance = $instance;
+        $instance->addInstanceMetadata($this);
 
         return $this;
     }
 
-    public function getCommentTranslationKey(): string
+    public function getAnrInstanceMetadataField(): AnrInstanceMetadataField
     {
-        return $this->commentTranslationKey;
+        return $this->anrInstanceMetadataField;
     }
 
-    public function setCommentTranslationKey(string $commentTranslationKey): self
+    public function setAnrInstanceMetadataField(AnrInstanceMetadataField $anrInstanceMetadataField): self
     {
-        $this->commentTranslationKey = $commentTranslationKey;
+        $this->anrInstanceMetadataField = $anrInstanceMetadataField;
+        $anrInstanceMetadataField->addInstanceMetadata($this);
 
         return $this;
     }
 
-    public function getMetadata(): AnrMetadatasOnInstances
+    public function getComment(): string
     {
-        return $this->metadata;
+        return $this->comment;
     }
 
-    public function setMetadata(AnrMetadatasOnInstances $metadata): self
+    public function setComment(string $comment): self
     {
-        $this->metadata = $metadata;
+        $this->comment = $comment;
 
         return $this;
     }

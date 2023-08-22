@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table;
+use Monarc\Core\Table\AmvTable;
 
 /**
  * Factory class attached to AnrAssetCommonService
@@ -17,11 +19,11 @@ class AnrAssetCommonServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'entity' => 'Monarc\Core\Model\Entity\Asset',
-        'table' => 'Monarc\Core\Model\Table\AssetTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'amvTable' => 'Monarc\Core\Model\Table\AmvTable',
+        'table' => Table\AssetTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'amvTable' => Table\AmvTable::class,
         'clientity' => 'Monarc\FrontOffice\Model\Entity\Asset',
-        'clitable' => 'Monarc\FrontOffice\Model\Table\AssetTable',
+        'clitable' => Table\AssetTable::class,
         'coreServiceAsset' => 'Monarc\Core\Service\AssetService',
         'cliServiceAsset' => 'Monarc\FrontOffice\Service\AnrAssetService',
     ];

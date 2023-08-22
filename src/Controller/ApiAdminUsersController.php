@@ -1,20 +1,20 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\User\GetUsersInputFormatter;
 use Monarc\Core\Service\PasswordService;
 use Monarc\FrontOffice\Validator\InputValidator\User\PostUserDataInputValidator;
 use Monarc\FrontOffice\Service\UserService;
-use Laminas\Mvc\Controller\AbstractRestfulController;
 
-class ApiAdminUsersController extends AbstractRestfulController
+class ApiAdminUsersController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
@@ -48,34 +48,37 @@ class ApiAdminUsersController extends AbstractRestfulController
         ]);
     }
 
+    public function get($id)
+    {
+        return $this->getPreparedJsonResponse($this->userService->getCompleteUser((int)$id));
+    }
+
     public function create($data)
     {
+        /** @var array $data */
         $this->validatePostParams($this->postUserDataInputValidator, $data);
 
         $this->userService->create($this->postUserDataInputValidator->getValidData());
 
-        return $this->getPreparedJsonResponse(['status' => 'ok']);
-    }
-
-    public function get($id)
-    {
-        return $this->getPreparedJsonResponse($this->userService->getCompleteUser($id));
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function update($id, $data)
     {
+        /** @var array $data */
         $this->validatePostParams($this->postUserDataInputValidator, $data);
 
-        $this->userService->update($id, $this->postUserDataInputValidator->getValidData());
+        $this->userService->update((int)$id, $this->postUserDataInputValidator->getValidData());
 
-        return $this->getPreparedJsonResponse(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function patch($id, $data)
     {
-        $this->userService->patch($id, $data);
+        /** @var array $data */
+        $this->userService->patch((int)$id, $data);
 
-        return $this->getPreparedJsonResponse(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function resetPasswordAction()
@@ -89,10 +92,10 @@ class ApiAdminUsersController extends AbstractRestfulController
 
     public function delete($id)
     {
-        $this->userService->delete($id);
+        $this->userService->delete((int)$id);
 
         $this->getResponse()->setStatusCode(204);
 
-        return $this->getPreparedJsonResponse([]);
+        return $this->getSuccessfulJsonResponse();
     }
 }

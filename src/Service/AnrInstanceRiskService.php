@@ -1,81 +1,250 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Service;
 
-use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity as CoreEntity;
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskOwnerSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Service\InstanceRiskService;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\TranslateService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
-use Monarc\FrontOffice\Model\Table\AmvTable;
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Entity as FrontOfficeEntity;
+use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
 use Monarc\FrontOffice\Model\Table\RecommandationTable;
-use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
-class AnrInstanceRiskService extends InstanceRiskService
+// TODO: consider to drop the inheritance.
+class AnrInstanceRiskService
 {
     use RecommendationsPositionsUpdateTrait;
 
-    protected RecommandationTable $recommendationTable;
+    private Table\InstanceRiskTable $instanceRiskTable;
 
-    protected RecommandationRiskTable $recommendationRiskTable;
+    private Table\InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
-    protected TranslateService $translateService;
+    private RecommandationTable $recommendationTable;
 
-    public function updateFromRiskTable(int $instanceRiskId, array $data)
-    {
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('table');
-        $instanceRisk = $instanceRiskTable->getEntity($instanceRiskId);
+    private RecommandationRiskTable $recommendationRiskTable;
 
-        //security
-        $data['specific'] = $instanceRisk->get('specific');
+    private Table\AmvTable $amvTable;
 
-        if ($instanceRisk->threatRate != $data['threatRate']) {
-            $data['mh'] = 0;
-        }
+    private TranslateService $translateService;
 
-        return $this->update($instanceRiskId, $data);
+    private CoreEntity\UserSuperClass $connectedUser;
+
+    public function __construct(
+        Table\InstanceRiskTable $instanceRiskTable,
+        Table\InstanceRiskOwnerTable $instanceRiskOwnerTable,
+        Table\AmvTable $amvTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->instanceRiskTable = $instanceRiskTable;
+        $this->instanceRiskOwnerTable = $instanceRiskOwnerTable;
+        $this->amvTable = $amvTable;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    /**
-     * @param int $id
-     *
-     * @return bool
-     *
-     * @throws EntityNotFoundException
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function delete($id)
-    {
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('table');
-        /** @var InstanceRisk $instanceRisk */
-        $instanceRisk = $instanceRiskTable->findById($id);
+    // TODO: Process context and risks owner.
+    public function createInstanceRisks(
+        FrontOfficeEntity\Instance $instance,
+        FrontOfficeEntity\Object $object,
+        array $params = [],
+        bool $saveInDb = true
+    ): void {
+    /*
+        $otherInstance = $this->instanceTable
+            ->findOneByAnrAndObjectExcludeInstance($instance->getAnr(), $object, $instance);
 
-        $instanceRiskTable->deleteEntity($instanceRisk);
+        if ($otherInstance !== null && $object->isScopeGlobal()) {
+            foreach ($otherInstance->getInstanceRisks() as $instanceRisk) {
+                $newInstanceRisk = $this->getConstructedFromObjectInstanceRisk($instanceRisk)
+                    ->setAnr($instance->getAnr())
+                    ->setInstance($instance)
+                    ->setAsset($instanceRisk->getAsset())
+                    ->setThreat($instanceRisk->getThreat())
+                    ->setVulnerability($instanceRisk->getVulnerability())
+                    ->setAmv($instanceRisk->getAmv())
+                    ->setInstanceRiskOwner($instanceRisk->getInstanceRiskOwner())
+                    ->setCreator($this->connectedUser->getEmail());
+
+                $this->recalculateRiskRates($newInstanceRisk, false);
+
+                $this->instanceRiskTable->save($newInstanceRisk, false);
+
+                // TODO: this is mission og BO
+                $this->duplicateRecommendationRisk($instanceRisk, $newInstanceRisk);
+            }
+        } else {
+            foreach ($object->getAsset()->getAmvs() as $amv) {
+                $instanceRisk = $this->createInstanceRiskObject()
+                    ->setAnr($instance->getAnr())
+                    ->setInstance($instance)
+                    ->setAmv($amv)
+                    ->setAsset($amv->getAsset())
+                    ->setThreat($amv->getThreat())
+                    ->setVulnerability($amv->getVulnerability())
+                    ->setCreator($this->connectedUser->getEmail());
+
+                /* Set risk owner and context in case of import.
+                if (!empty($params['risks'])) {
+                    $riskKey = array_search($amv->getUuid(), array_column($params['risks'], 'amv'), true);
+                    if ($riskKey !== false) {
+                        $instanceRiskData = array_values($params['risks'])[$riskKey];
+                        $instanceRisk->setContext($instanceRiskData['context'] ?? '');
+                        if (!empty($instanceRiskData['riskOwner'])) {
+                            $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner(
+                                $instance->getAnr(),
+                                $instanceRiskData['riskOwner']
+                            );
+                            $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+                        }
+                    }
+                }
+
+                $this->instanceRiskTable->save($instanceRisk, false);
+
+                $this->recalculateRiskRates($instanceRisk, false);
+            }
+        }
+
+        if ($saveInDb) {
+            $this->instanceRiskTable->flush();
+        }
+    */
+    }
+
+    public function getInstanceRisks(Entity\AnrSuperClass $anr, ?int $instanceId, array $params = []): array
+    {
+                $result[$key] = $this->addCustomFieldsToInstanceRiskResult($instanceRisk, [
+                    ....
+                    'context' => $instanceRisk->getContext(),
+                    'owner' => $instanceRisk->getInstanceRiskOwner()
+                        ? $instanceRisk->getInstanceRiskOwner()->getName()
+                        : '',
+    }
+
+    private function updateInstanceRiskData(Entity\InstanceRisk $instanceRisk, array $data): void
+    {
+        // TODO: this is missing on Core.
+        if (isset($data['owner'])) {
+            $this->processRiskOwnerName((string)$data['owner'], $instanceRisk);
+        }
+        if (isset($data['context'])) {
+            $instanceRisk->setContext($data['context']);
+        }
+        if (isset($data['reductionAmount'])) {
+            $instanceRisk->setReductionAmount((int)$data['reductionAmount']);
+        }
+        if (isset($data['threatRate'])) {
+            $instanceRisk->setThreatRate((int)$data['threatRate']);
+        }
+        if (isset($data['vulnerabilityRate'])) {
+            $instanceRisk->setVulnerabilityRate((int)$data['vulnerabilityRate']);
+        }
+        if (isset($data['comment'])) {
+            $instanceRisk->setComment($data['comment']);
+        }
+        if (isset($data['kindOfMeasure'])) {
+            $instanceRisk->setKindOfMeasure((int)$data['kindOfMeasure']);
+        }
+
+        $instanceRisk->setUpdater($this->connectedUser->getEmail());
+
+        $this->recalculateRiskRates($instanceRisk, false);
+    }
+    */
+
+
+    private function processRiskOwnerName(
+        string $ownerName,
+        Entity\InstanceRisk $instanceRisk
+    ): void {
+        if (empty($ownerName)) {
+            $instanceRisk->setInstanceRiskOwner(null);
+        } else {
+            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName(
+                $instanceRisk->getAnr(),
+                $ownerName
+            );
+            if ($instanceRiskOwner === null) {
+                $instanceRiskOwner = $this->createInstanceRiskOwnerObject($instanceRisk->getAnr(), $ownerName);
+
+                $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
+
+                $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+            } elseif ($instanceRisk->getInstanceRiskOwner() === null
+                || $instanceRisk->getInstanceRiskOwner()->getId() !== $instanceRiskOwner->getId()
+            ) {
+                $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+            }
+        }
+    }
+
+    private function getOrCreateInstanceRiskOwner(
+        FrontOfficeEntity\Anr $anr,
+        string $ownerName
+    ): FrontOfficeEntity\InstanceRiskOwner {
+        if (!isset($this->cachedData['instanceRiskOwners'][$ownerName])) {
+            $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
+            if ($instanceRiskOwner === null) {
+                $instanceRiskOwner = $this->createInstanceRiskOwnerObject($anr, $ownerName);
+
+                $this->instanceRiskOwnerTable->save($instanceRiskOwner, false);
+            }
+
+            $this->cachedData['instanceRiskOwners'][$ownerName] = $instanceRiskOwner;
+        }
+
+        return $this->cachedData['instanceRiskOwners'][$ownerName];
+    }
+
+    protected function createInstanceRiskOwnerObject(
+        FrontOfficeEntity\Anr $anr,
+        string $ownerName
+    ): FrontOfficeEntity\InstanceRiskOwner {
+        return (new FrontOfficeEntity\InstanceRiskOwner())
+            ->setAnr($anr)
+            ->setName($ownerName)
+            ->setCreator($this->connectedUser->getEmail());
+    }
+
+    public function updateFromRiskTable(
+        FrontOfficeEntity\Anr $anr,
+        int $instanceRiskId,
+        array $data
+    ): FrontOfficeEntity\InstanceRisk {
+        /** @var FrontOfficeEntity\InstanceRisk $instanceRisk */
+        $instanceRisk = $this->instanceRiskTable->findByIdAndAnr($instanceRiskId, $anr);
+
+        if ($instanceRisk->getThreatRate() !== (int)$data['threatRate']) {
+            $instanceRisk->setIsThreatRateNotSetOrModifiedExternally(false);
+        }
+
+        // TODO:
+        // return $this->update($instanceRiskId, $data);
+        return $instanceRisk;
+    }
+
+    public function delete(FrontOfficeEntity\Anr $anr, int $id): void
+    {
+        /** @var FrontOfficeEntity\InstanceRisk $instanceRisk */
+        $instanceRisk = $this->instanceRiskTable->findByIdAndAnr($id, $anr);
+
+        $this->instanceRiskTable->remove($instanceRisk);
 
         $this->processRemovedInstanceRiskRecommendationsPositions($instanceRisk);
 
-        return true;
     }
 
-    public function updateRisks(InstanceRiskSuperClass $instanceRisk, bool $last = true): void
+    public function recalculateRiskRates(InstanceRiskSuperClass $instanceRisk, bool $saveInDb = true): void
     {
-        parent::updateRisks($instanceRisk, $last);
+        parent::recalculateRiskRates($instanceRisk, $saveInDb);
 
         $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
     }
@@ -158,6 +327,18 @@ class AnrInstanceRiskService extends InstanceRiskService
     {
         $data['specific'] = 1;
 
+        /* TODO: check why this was needed in getFilterForService and used in Db::buildFilteredQuery, getList below
+        $filterJoin = [
+            ['as' => 'th', 'rel' => 'threat',],
+            ['as' => 'v', 'rel' => 'vulnerability',],
+            ['as' => 'i', 'rel' => 'instance',],
+        ];
+        $filterLeft = [
+            ['as' => 'th1', 'rel' => 'threat',],
+            ['as' => 'v1', 'rel' => 'vulnerability',],
+
+        ];
+        */
         // Check that we don't already have a risk with this vuln/threat/instance combo
         $instanceRisks = $this->getList(0, 1, null, null, [
             'anr' => $data['anr'],
@@ -185,7 +366,7 @@ class AnrInstanceRiskService extends InstanceRiskService
 
         /** @var InstanceRiskTable $instanceRiskTable */
         $instanceRiskTable = $this->get('table');
-        $instanceRiskTable->saveEntity($instanceRisk);
+        $instanceRiskTable->save($instanceRisk);
 
         //if global object, save risk of all instance of global object for this anr
         if ($instanceRisk->getInstance()->getObject()->isScopeGlobal()) {
@@ -205,7 +386,7 @@ class AnrInstanceRiskService extends InstanceRiskService
             foreach ($brothers as $brother) {
                 $newRisk = clone $instanceRisk;
                 $newRisk->setInstance($brother);
-                $instanceRiskTable->saveEntity($newRisk, $i === $nbBrothers);
+                $instanceRiskTable->save($newRisk, $i === $nbBrothers);
                 $i++;
             }
         }
@@ -216,25 +397,13 @@ class AnrInstanceRiskService extends InstanceRiskService
     /**
      * TODO: review the logic, probably can be merged with self::delete. Moved from AnrRiskService.
      */
-    public function deleteInstanceRisk(int $id, int $anrId)
+    public function deleteInstanceRisk(FrontOfficeEntity\Anr $anr, int $id): void
     {
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('table');
-        $instanceRisk = $instanceRiskTable->findById($id);
+        /** @var FrontOfficeEntity\InstanceRisk $instanceRisk */
+        $instanceRisk = $this->instanceRiskTable->findByIdAndAnr($id, $anr);
 
         if (!$instanceRisk->isSpecific()) {
             throw new Exception('You can not delete a not specific risk', 412);
-        }
-
-        if ($instanceRisk->getAnr()->getId() !== $anrId) {
-            throw new Exception('Anr id error', 412);
-        }
-
-        /** @var UserAnrTable $userAnrTable */
-        $userAnrTable = $this->get('userAnrTable');
-        $userAnr = $userAnrTable->findByAnrAndUser($instanceRisk->getAnr(), $instanceRiskTable->getConnectedUser());
-        if ($userAnr === null || $userAnr->getRwd() === 0) {
-            throw new Exception('You are not authorized to do this action', 412);
         }
 
         // If the object is global, delete all risks link to brothers instances
@@ -270,13 +439,13 @@ class AnrInstanceRiskService extends InstanceRiskService
             foreach ($instancesRisks as $instanceRisk) {
                 foreach ($brothers as $brother) {
                     if ($brother->getId() === $instanceRisk->getInstance()->getId() && $instanceRisk->getId() !== $id) {
-                        $instanceRiskTable->deleteEntity($instanceRisk, false);
+                        $instanceRiskTable->remove($instanceRisk, false);
                     }
                 }
             }
         }
 
-        $instanceRiskTable->deleteEntity($instanceRisk);
+        $instanceRiskTable->remove($instanceRisk);
 
         $this->processRemovedInstanceRiskRecommendationsPositions($instanceRisk);
 
@@ -301,7 +470,18 @@ class AnrInstanceRiskService extends InstanceRiskService
         }
     }
 
-    protected function createInstanceRiskOwnerObject(AnrSuperClass $anr, string $ownerName): InstanceRiskOwnerSuperClass
+    protected function getConstructedFromObjectInstanceRisk(
+        CoreEntity\InstanceRiskSuperClass $instanceRisk
+    ): CoreEntity\InstanceRiskSuperClass {
+        return FrontOfficeEntity\InstanceRisk::constructFromObject($instanceRisk);
+    }
+
+    protected function createInstanceRiskObject(): CoreEntity\InstanceRiskSuperClass
+    {
+        return new FrontOfficeEntity\InstanceRisk();
+    }
+
+    protected function createInstanceRiskOwnerObject(AnrSuperClass $anr, string $ownerName): InstanceRiskOwner
     {
         return (new InstanceRiskOwner())
             ->setAnr($anr)
@@ -350,11 +530,10 @@ class AnrInstanceRiskService extends InstanceRiskService
         return implode("\n", $csvData);
     }
 
-    private function getMeasuresInCsv(AnrSuperClass $anr, string $amvUuid): string
+    private function getMeasuresInCsv(FrontOfficeEntity\Anr $anr, string $amvUuid): string
     {
-        /** @var AmvTable $amvTable */
-        $amvTable = $this->get('amvTable');
-        $amv = $amvTable->findByUuidAndAnrId($amvUuid, $anr->getId());
+        /** @var FrontOfficeEntity\Amv $amv */
+        $amv = $this->amvTable->findByUuidAndAnr($amvUuid, $anr);
         $csvData = [];
         foreach ($amv->getMeasures() as $measure) {
             $csvData[] = "[" . $measure->getReferential()->getLabel($anr->getLanguage()) . "] "

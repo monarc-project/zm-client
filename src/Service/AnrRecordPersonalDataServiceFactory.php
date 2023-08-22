@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Record Personal Data Service Factory
@@ -21,7 +23,7 @@ class AnrRecordPersonalDataServiceFactory extends AbstractServiceFactory
         'table' => 'Monarc\FrontOffice\Model\Table\RecordPersonalDataTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\RecordPersonalData',
         'recordDataCategoryService' => 'Monarc\FrontOffice\Service\AnrRecordDataCategoryService',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
+        'userAnrTable' => UserAnrTable::class,
+        'anrTable' => AnrTable::class,
     ];
 }

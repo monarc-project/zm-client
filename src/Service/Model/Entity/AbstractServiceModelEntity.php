@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Service\Model\Entity;
 
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Laminas\Http\PhpEnvironment\Request;
 use Laminas\Router\Http\TreeRouteStack;
 use Laminas\Router\RouteMatch;

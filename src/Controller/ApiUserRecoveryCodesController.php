@@ -59,7 +59,7 @@ class ApiUserRecoveryCodesController extends AbstractRestfulController
             }
 
             $connectedUser->createRecoveryCodes($recoveryCodes);
-            $this->userTable->saveEntity($connectedUser);
+            $this->userTable->save($connectedUser);
         }
 
         return new JsonModel([

@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Factory class attached to AnrMeasureMeasureService
@@ -18,9 +20,8 @@ class AnrMeasureMeasureServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'entity' => 'Monarc\FrontOffice\Model\Entity\MeasureMeasure',
         'table' => 'Monarc\FrontOffice\Model\Table\MeasureMeasureTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'anrTable' => AnrTable::class,
+        'userAnrTable' => UserAnrTable::class,
         'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
-        // 'category' => 'Monarc\FrontOffice\Model\Entity\Category'
     ];
 }

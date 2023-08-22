@@ -37,7 +37,8 @@ class StatsController extends AbstractRestfulController
         if (!$this->getStatsQueryParamsValidator->isValid($this->params()->fromQuery())) {
             throw new Exception(
                 'Query params validation errors: [ '
-                . json_encode($this->getStatsQueryParamsValidator->getErrorMessages()),
+                . json_encode($this->getStatsQueryParamsValidator->getErrorMessages(), JSON_THROW_ON_ERROR)
+                . ']',
                 400
             );
         }
@@ -59,7 +60,8 @@ class StatsController extends AbstractRestfulController
         if (!$this->getProcessedStatsQueryParamsValidator->isValid($this->params()->fromQuery())) {
             throw new Exception(
                 'Query params validation errors: [ '
-                . json_encode($this->getProcessedStatsQueryParamsValidator->getErrorMessages()),
+                . json_encode($this->getProcessedStatsQueryParamsValidator->getErrorMessages(), JSON_THROW_ON_ERROR)
+                . ']',
                 400
             );
         }

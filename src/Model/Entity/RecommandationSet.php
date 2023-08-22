@@ -43,7 +43,7 @@ class RecommandationSet extends AbstractEntity
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      * @ORM\Id
      */

@@ -249,15 +249,15 @@ class AnrRecommandationRiskService extends AbstractService
         if ($gRisk->getInstance()->getObject()->isScopeGlobal() && !$data['op']) {
             $instances = $this->instanceTable->getEntityByFields([
                 'object' => [
-                    'anr' => $gRisk->anr->id,
+                    'anr' => $gRisk->anr->getId(),
                     'uuid' => $gRisk->getInstance()->getObject()->getUuid()
                 ],
-                'anr' => $gRisk->anr->id,
+                'anr' => $gRisk->anr->getId(),
                 'id' => ['op' => '!=', 'value' => $gRisk->getInstance()->get('id')],
             ]);
             $instanceIds = [];
             foreach ($instances as $i) {
-                $instanceIds[$i->get('id')] = $i->get('id');
+                $instanceIds[$i->getId()] = $i->getId();
             }
 
             if (!empty($instanceIds)) {
@@ -510,7 +510,7 @@ class AnrRecommandationRiskService extends AbstractService
                 $instanceRiskOp->setCacheTargetedRisk(-1);
                 $instanceRiskOp->setKindOfMeasure(InstanceRiskOp::KIND_NOT_TREATED);
 
-                $this->instanceRiskOpTable->saveEntity($instanceRiskOp);
+                $this->instanceRiskOpTable->save($instanceRiskOp);
             }
         } elseif ($recommendationRisk->getInstanceRisk() !== null) { // validate for information risks
             // Verify if recommendation risk is final (are there more recommendations linked to the risk)
@@ -561,21 +561,21 @@ class AnrRecommandationRiskService extends AbstractService
                 $instanceRisk->setVulnerabilityRate($newVulnerabilityRate >= 0 ? $newVulnerabilityRate : 0);
 
                 $instanceRisk->setRiskConfidentiality(
-                    $this->getRiskC(
+                    $this->calculateRiskConfidentiality(
                         $instanceRisk->getInstance()->getConfidentiality(),
                         $instanceRisk->getThreatRate(),
                         $instanceRisk->getVulnerabilityRate()
                     )
                 );
                 $instanceRisk->setRiskIntegrity(
-                    $this->getRiskI(
+                    $this->calculateRiskIntegrity(
                         $instanceRisk->getInstance()->getIntegrity(),
                         $instanceRisk->getThreatRate(),
                         $instanceRisk->getVulnerabilityRate()
                     )
                 );
                 $instanceRisk->setRiskAvailability(
-                    $this->getRiskD(
+                    $this->calculateRiskAvailability(
                         $instanceRisk->getInstance()->getAvailability(),
                         $instanceRisk->getThreatRate(),
                         $instanceRisk->getVulnerabilityRate()
@@ -599,7 +599,7 @@ class AnrRecommandationRiskService extends AbstractService
 
                 $instanceRisk->setCacheMaxRisk(\count($risks) ? max($risks) : -1);
                 $instanceRisk->setCacheTargetedRisk(
-                    $this->getTargetRisk(
+                    $this->calculateTargetRisk(
                         $impacts,
                         $instanceRisk->getThreatRate(),
                         $oldVulRate,
@@ -613,7 +613,7 @@ class AnrRecommandationRiskService extends AbstractService
                 // Change status to NOT_TREATED
                 $instanceRisk->setKindOfMeasure(InstanceRisk::KIND_NOT_TREATED);
 
-                $this->instanceRiskTable->saveEntity($instanceRisk);
+                $this->instanceRiskTable->save($instanceRisk);
 
                 // Impact on brothers
                 if ($recommendationRisk->hasGlobalObjectRelation()) {
@@ -641,7 +641,7 @@ class AnrRecommandationRiskService extends AbstractService
                                 ->setReductionAmount($instanceRisk->getReductionAmount())
                                 ->setKindOfMeasure($instanceRisk->getKindOfMeasure());
 
-                            $this->instanceRiskTable->saveEntity($instanceRisk, false);
+                            $this->instanceRiskTable->save($instanceRisk, false);
                         }
                         $this->instanceRiskTable->getDb()->flush();
                     }

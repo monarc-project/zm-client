@@ -29,7 +29,7 @@ class Measure extends MeasureSuperClass
      * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      */
     protected $anr;
@@ -96,23 +96,17 @@ class Measure extends MeasureSuperClass
      *   }
      * )
      */
-    protected $measuresLinked;
+    protected $linkedMeasures;
 
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param Anr $anr
-     * @return Measure
-     */
-    public function setAnr($anr)
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 }

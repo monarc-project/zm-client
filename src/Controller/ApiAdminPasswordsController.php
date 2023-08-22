@@ -1,52 +1,52 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\PasswordService;
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
 
-/**
- * Api Admin Passwords Controller
- *
- * Class ApiAdminPasswordsController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAdminPasswordsController extends AbstractRestfulController
+class ApiAdminPasswordsController extends AbstractRestfulControllerRequestHandler
 {
-    /** @var PasswordService */
-    private $passwordService;
+    use ControllerRequestResponseHandlerTrait;
+
+    private PasswordService $passwordService;
 
     public function __construct(PasswordService $passwordService)
     {
         $this->passwordService = $passwordService;
     }
 
+    /**
+     * @param array $data
+     */
     public function create($data)
     {
-        //password forgotten
+        /* Password forgotten. */
         if (!empty($data['email']) && empty($data['password'])) {
             try {
                 $this->passwordService->passwordForgotten($data['email']);
             } catch (\Exception $e) {
-                // Ignore the \Exception: We don't want to leak any data
+                // Ignore the \Exception to avoid the data leak.
             }
         }
 
-        //verify token
+        /* Verify token. */
         if (!empty($data['token']) && empty($data['password'])) {
-            $result = $this->passwordService->verifyToken($data['token']);
+            if ($this->passwordService->verifyToken($data['token'])) {
+                return $this->getSuccessfulJsonResponse();
+            }
 
-            return new JsonModel(['status' => $result]);
+            throw new Exception('The token is not valid or there is a Browser cache issue.', 422);
         }
 
-        //change password not logged
+        /* Change password not logged. */
         if (!empty($data['token']) && !empty($data['password']) && !empty($data['confirm'])) {
             if ($data['password'] === $data['confirm']) {
                 $this->passwordService->newPasswordByToken($data['token'], $data['password']);
@@ -55,6 +55,6 @@ class ApiAdminPasswordsController extends AbstractRestfulController
             }
         }
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 }

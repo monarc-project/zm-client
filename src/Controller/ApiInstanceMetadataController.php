@@ -1,25 +1,21 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
-use Monarc\Core\Exception\Exception;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Service\InstanceMetadataService;
 
-/**
- * Api Anr Metadatas On Instances Controller
- *
- * Class ApiAnrMetadatasOnInstancesController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiInstanceMetadataController extends AbstractRestfulController
+class ApiInstanceMetadataController extends AbstractRestfulControllerRequestHandler
 {
+    use ControllerRequestResponseHandlerTrait;
 
     private InstanceMetadataService $instanceMetadataService;
 
@@ -28,48 +24,41 @@ class ApiInstanceMetadataController extends AbstractRestfulController
         $this->instanceMetadataService = $instanceMetadataService;
     }
 
-    public function create($data)
-    {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        $instanceId = (int)$this->params()->fromRoute("instanceid");
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $this->instanceMetadataService->createInstanceMetadata($anrId, $instanceId, $data),
-        ]);
-    }
-
     public function getList()
     {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        $language = $this->params()->fromQuery("language");
-        $instanceId = (int)$this->params()->fromRoute("instanceid");
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $instanceId = (int)$this->params()->fromRoute('instanceid');
 
         return new JsonModel([
-            'data' => $this->instanceMetadataService->getInstancesMetadatas($anrId, $instanceId, $language),
+            'data' => $this->instanceMetadataService->getInstancesMetadata($anr, $instanceId),
         ]);
     }
 
-    public function delete($id)
+    /**
+     * @param array $data
+     */
+    public function create($data)
     {
-        $this->instanceMetadataService->deleteInstanceMetadata($id);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $instanceId = (int)$this->params()->fromRoute('instanceid');
 
-        return new JsonModel(['status' => 'ok']);
-    }
-
-    public function get($id)
-    {
-        $anrId = (int) $this->params()->fromRoute('anrid');
-        return new JsonModel([
-            'data' => $this->instanceMetadataService->getInstanceMetadata($anrId, $id),
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->instanceMetadataService->create($anr, $instanceId, $data)->getId(),
         ]);
     }
 
+    /**
+     * @param array $data
+     */
     public function update($id, $data)
     {
-        if ($this->instanceMetadataService->update((int)$id, $data)) {
-            return new JsonModel(['status' => 'ok']);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return new JsonModel(['status' => 'ko']);
+        $this->instanceMetadataService->update($anr, (int)$id, $data);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

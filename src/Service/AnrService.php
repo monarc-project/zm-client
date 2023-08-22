@@ -1,17 +1,21 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Model\Entity\Anr as AnrCore;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Table;
+
 use DateTime;
-use Doctrine\Common\Collections\ArrayCollection;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\Model;
 use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
@@ -28,29 +32,25 @@ use Monarc\Core\Model\Entity\TranslationSuperClass;
 use Monarc\Core\Model\Entity\User as CoreUser;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Model\Entity\VulnerabilitySuperClass;
-use Monarc\Core\Table\AnrObjectCategoryTable as CoreAnrObjectCategoryTable;
-use Monarc\Core\Model\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
-use Monarc\Core\Model\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
-use Monarc\Core\Model\Table\InstanceRiskTable as CoreInstanceRiskTable;
-use Monarc\Core\Model\Table\InstanceTable as CoreInstanceTable;
-use Monarc\Core\Model\Table\ScaleImpactTypeTable as CoreScaleImpactTypeTableAlias;
+use Monarc\Core\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
+use Monarc\Core\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
+use Monarc\Core\Table\InstanceRiskTable as CoreInstanceRiskTable;
+use Monarc\Core\Table\InstanceTable as CoreInstanceTable;
+use Monarc\Core\Table\ScaleImpactTypeTable as CoreScaleImpactTypeTable;
 use Monarc\Core\Table\ModelTable;
 use Monarc\Core\Table\ObjectCategoryTable as CoreObjectCategoryTable;
 use Monarc\Core\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
-use Monarc\Core\Model\Table\ScaleTable as CoreScaleTable;
-use Monarc\Core\Table\ThemeTable as CoreThemeTable;
-use Monarc\Core\Table\ThreatTable as CoreThreatTable;
+use Monarc\Core\Table\ScaleTable as CoreScaleTable;
+use Monarc\Core\Table\SoaScaleCommentTable;
 use Monarc\Core\Table\TranslationTable as CoreTranslationTable;
-use Monarc\Core\Service\AbstractService;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\Core\Table\VulnerabilityTable as CoreVulnerabilityTable;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\AnrMetadatasOnInstances;
+use Monarc\FrontOffice\Model\Entity\AnrInstanceMetadataField;
 use Monarc\FrontOffice\Model\Entity\CronTask;
 use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
-use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
@@ -80,7 +80,6 @@ use Monarc\FrontOffice\Model\Entity\RolfTag;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
-use Monarc\FrontOffice\Model\Entity\Translation;
 use Monarc\FrontOffice\Model\Entity\ScaleComment;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 use Monarc\FrontOffice\Model\Entity\Soa;
@@ -90,10 +89,9 @@ use Monarc\FrontOffice\Model\Entity\Theme;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserAnr;
 use Monarc\FrontOffice\Model\Entity\UserRole;
-use Monarc\FrontOffice\Model\Table\AnrObjectCategoryTable;
-use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Table\SoaScaleCommentTable as SoaScaleCommentCliTable;
 use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
@@ -103,14 +101,10 @@ use Monarc\FrontOffice\Table\OperationalRiskScaleCommentTable;
 use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Table\OperationalRiskScaleTypeTable;
 use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
 use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
 use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
-use Monarc\FrontOffice\Table\ThemeTable;
-use Monarc\FrontOffice\Table\ThreatTable;
-use Monarc\FrontOffice\Table\TranslationTable;
 use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
@@ -123,15 +117,11 @@ use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Table\VulnerabilityTable;
 use Throwable;
 
-/**
- * This class is the service that handles ANR CRUD operations, and various actions on them.
- * @package Monarc\FrontOffice\Service
- */
-class AnrService extends AbstractService
+class AnrService
 {
+    /*
     protected $amvTable;
     protected $anrTable;
-    protected $anrObjectCategoryTable;
     protected $assetTable;
     protected $instanceTable;
     protected $instanceConsequenceTable;
@@ -215,41 +205,59 @@ class AnrService extends AbstractService
     protected $instanceService;
     protected $recordService;
     protected $recordProcessorService;
+*/
 
-    /** @var StatsAnrService */
-    protected $statsAnrService;
-    /** @var ConfigService */
-    protected $configService;
-    /** @var CronTaskService */
-    protected $cronTaskService;
+    private Table\AnrTable $anrTable;
 
-    /** @var array */
-    private $cachedData;
+    private UserAnrTable $userAnrTable;
 
-    /**
-     * @inheritdoc
-     */
+    private ModelTable $modelTable;
+
+    private StatsAnrService $statsAnrService;
+
+    private CronTaskService $cronTaskService;
+
+    private ConfigService $configService;
+
+    /** @var User */
+    private UserSuperClass $connectedUser;
+
+    private array $cachedData = [];
+
+    public function __construct(
+        Table\AnrTable $anrTable,
+        Table\UserAnrTable $userAnrTable,
+        ModelTable $modelTable,
+        StatsAnrService $statsAnrService,
+        CronTaskService $cronTaskService,
+        ConfigService $configService,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->anrTable = $anrTable;
+        $this->userAnrTable = $userAnrTable;
+        $this->modelTable = $modelTable;
+        $this->statsAnrService = $statsAnrService;
+        $this->cronTaskService = $cronTaskService;
+        $this->configService = $configService;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
+    }
+
     public function getList(
         $page = 1,
         $limit = 25,
         $order = null,
         $filter = null,
-        $filterAnd = null,
-        $filterJoin = null
+        $filterAnd = null
     ) {
-        /** @var UserTable $userCliTable */
-        $userCliTable = $this->get('userCliTable');
-
-        /** @var UserSuperClass $connectedUser */
-        $connectedUser = $userCliTable->getConnectedUser();
-
-        $isSuperAdmin = $connectedUser->hasRole(UserRole::SUPER_ADMIN_FO);
+        $isSuperAdmin = $this->connectedUser->hasRole(UserRole::SUPER_ADMIN_FO);
 
         // Retrieve connected user anrs
         $filterAnd['id'] = [];
         if (!$isSuperAdmin) {
-            $anrs = $this->get('userAnrCliTable')->getEntityByFields(['user' => $connectedUser->getId()]);
-            foreach ($anrs as $a) {
+            // TODO: check if we can avoid the extra db call.
+            $anrs = $this->userAnrTable->findByUser($this->connectedUser);
+            // getEntityByFields(['user' => $connectedUser->getId()]);
+            foreach ($this->anr as $a) {
                 $filterAnd['id'][$a->get('anr')->get('id')] = $a->get('anr')->get('id');
             }
         } else {
@@ -277,17 +285,19 @@ class AnrService extends AbstractService
             $filterAnd
         );
 
-        /** @var User $user */
-        $user = $userCliTable->findById($connectedUser->getId());
+        // TODO: check if it can work without this:
+        // $user = $userCliTable->findById($connectedUser->getId());
         foreach ($anrs as &$anr) {
             //verify if this is the last current user's anr
             $anr['isCurrentAnr'] = 0;
-            if ($user->getCurrentAnr() !== null && $anr['id'] === $user->getCurrentAnr()->getId()) {
+            if ($this->connectedUser->getCurrentAnr() !== null
+                && $anr['id'] === $this->connectedUser->getCurrentAnr()->getId()
+            ) {
                 $anr['isCurrentAnr'] = 1;
             }
 
             $lk = current($this->get('userAnrCliTable')->getEntityByFields([
-                'user' => $connectedUser->getId(),
+                'user' => $this->connectedUser->getId(),
                 'anr' => $anr['id'],
             ]));
             $anr['rwd'] = (empty($lk)) ? -1 : $lk->get('rwd');
@@ -316,26 +326,11 @@ class AnrService extends AbstractService
         return $anrs;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getFilteredCount($filter = null, $filterAnd = null)
     {
         return count($this->getList(1, 0, null, $filter, $filterAnd));
     }
 
-    /**
-     * Returns all ANRs without any filtering
-     * @return array An array of ANRs
-     */
-    public function getAnrs()
-    {
-        return $this->get('anrCliTable')->fetchAll();
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function getEntity($id)
     {
         $anr = $this->get('table')->get($id);
@@ -375,26 +370,10 @@ class AnrService extends AbstractService
         return $anr;
     }
 
-    /**
-     * Creates a new ANR from a model which is located inside the common database.
-     * @param array $data Data coming from the API
-     * @return Anr The newly created Anr object.
-     * @throws Exception If the source model is not found
-     */
-    public function createFromModelToClient($data): Anr
+    public function patch(Anr $anr, array $data): Anr
     {
-        /** @var ModelTable $modelTable */
-        $modelTable = $this->get('modelTable');
-        /** @var Model $model */
-        $model = $modelTable->findById((int)$data['model']);
-
-        unset($data['model']);
-
-        if (!$model->isActive()) {
-            throw new Exception('Model not found', 412);
-        }
-
-        return $this->duplicateAnr($model->getAnr(), MonarcObject::SOURCE_COMMON, $model, $data);
+        // TODO: being able to update all the flags e.g. initDefContext ..., label, description. referentials.
+        // TODO: making anr names unique.
     }
 
     /**
@@ -404,10 +383,6 @@ class AnrService extends AbstractService
      */
     public function updateReferentials($data)
     {
-        // TODO: the goal is to remove such cases. Temporary unlimited.
-        // This may take a lot of time on huge referential.
-        ini_set('max_execution_time', 0);
-
         $anrTable = $this->get('anrCliTable');
         $anr = $anrTable->getEntity($data['id']);
         $uuidArray = array_map(
@@ -468,15 +443,15 @@ class AnrService extends AbstractService
                     ->setAnr($anr)
                     ->setReferential($newReferential)
                     ->setCategory($categoryNewIds[$measure->category->id]);
-                foreach ($newMeasure->getMeasuresLinked() as $measureLinked) {
+                foreach ($newMeasure->getLinkedMeasures() as $linkedMeasure) {
                     $data = [];
                     if (!\count($this->get('measureMeasureCliTable')->getEntityByFields([
                         'anr' => $anr->id,
                         'father' => $measure->getUuid(),
-                        'child' => $measureLinked->getUuid()
+                        'child' => $linkedMeasure->getUuid()
                     ]))) {
                         $data['father'] = $newMeasure->getUuid();
-                        $data['child'] = $measureLinked->getUuid();
+                        $data['child'] = $linkedMeasure->getUuid();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
@@ -484,21 +459,18 @@ class AnrService extends AbstractService
 
                     if (!\count($this->get('measureMeasureCliTable')->getEntityByFields([
                         'anr' => $anr->id,
-                        'father' => $measureLinked->getUuid(),
+                        'father' => $linkedMeasure->getUuid(),
                         'child' => $newMeasure->getUuid()
                     ]))) {
-                        $data['father'] = $measureLinked->getUuid();
+                        $data['father'] = $linkedMeasure->getUuid();
                         $data['child'] = $newMeasure->getUuid();
                         $newMeasureMeasure = new MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                     }
                 }
-                $newMeasure->setMeasuresLinked(new ArrayCollection());
                 $amvs = $newMeasure->getAmvs();
                 $rolfRisks = $newMeasure->getRolfRisks();
-                $newMeasure->amvs = new ArrayCollection;
-                $newMeasure->rolfRisks = new ArrayCollection;
                 // update the amv with the new measures from the current referential
                 foreach ($amvs as $amvCommon) {
                     // match the AMVs from common with AMVS from cli
@@ -544,100 +516,65 @@ class AnrService extends AbstractService
     }
 
     /**
-     * Duplicates either an existing ANR from the client, or an ANR model from the common database.
-     * @param int|AnrSuperClass $anr The ANR to clone, either its ID or the object
-     * @param string $source The source, either MonarcObject::SOURCE_CLIENT or MonarcObject::SOURCE_COMMON
-     * @param Model|null $model The source common model, or null if none
-     * @return Anr The newly created ANR
-     * @throws Exception
+     * Creates a new analysis from a model which is located inside the common database.
      */
-    public function duplicateAnr(
-        $anr,
-        $source = MonarcObject::SOURCE_CLIENT,
-        $model = null,
-        $data = [],
-        $isSnapshot = false,
-        $isSnapshotCloning = false
-    ): Anr {
-        // TODO: the goal is to remove such cases. Temporary unlimited.
-        // This may take a lot of time on huge ANRs.
-        ini_set('max_execution_time', 0);
-
-        // TODO: this const doesn't exist anymore.
-        $isSourceCommon = $source === MonarcObject::SOURCE_COMMON;
-
-        if (\is_int($anr)) {
-            /** @var AnrTable $anrTable */
-            $anrTable = $isSourceCommon ? $this->get('anrTable') : $this->get('anrCliTable');
-            /** @var Anr $anr */
-            $anr = $anrTable->findById($anr);
+    public function createFromModelToClient($data): Anr
+    {
+        /** @var Model $model */
+        $model = $this->modelTable->findById((int)$data['model']);
+        if (!$model->isActive()) {
+            throw new Exception('Model not found', 412);
         }
 
-        if (!$anr instanceof AnrSuperClass) {
-            throw new Exception('Anr missing', 412);
+        return $this->duplicateAnr($model->getAnr(), $data);
+    }
+
+    /**
+     * Duplicates an analysis based on existing one on the client's side or on model's anr in the common database.
+     */
+    public function duplicateAnr(AnrSuperClass $anr, array $data = [], string $snapshotMode = null): Anr
+    {
+        $isSourceCommon = $anr instanceof AnrCore;
+        if ($anr instanceof AnrCore && !$this->verifyLanguage($anr->getModel()->getId())) {
+            throw new Exception('Error during analysis creation. Selected model\'s language is not supported', 412);
         }
-        if ($model === null) {
-            $idModel = $anr->getModel();
-        } else {
-            $idModel = $model->getId();
-        }
 
-        if (!empty($idModel) && !$this->verifyLanguage($idModel)) {
-            throw new Exception('Error during analysis creation', 412);
-        } // if empty($idModel), maybe created from migration tool & model don't match with existing data
-
-        /** @var CoreUser $connectedUser */
-        $connectedUser = $this->getConnectedUser();
-
-        if (!$isSourceCommon && !$isSnapshotCloning && !$connectedUser->hasRole(UserRole::USER_ROLE_SYSTEM)) {
-            /** @var UserAnrTable $userAnrCliTable */
-            $userAnrCliTable = $this->get('userAnrCliTable');
-            $userAnr = $userAnrCliTable->findByAnrAndUser($anr, $connectedUser);
-            if ($userAnr === null) {
+        if ($snapshotMode === null && !$this->connectedUser->hasRole(UserRole::USER_ROLE_SYSTEM)) {
+            if ($this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser) === null) {
                 throw new Exception('You are not authorized to duplicate this analysis', 412);
             }
         }
 
-        try {
-            // duplicate anr
-            $newAnr = (new Anr($anr))
-                ->setId(null)
-                ->generateAndSetUuid()
-                ->setObjects(new ArrayCollection());
-            $newAnr->exchangeArray($data);
-                 set('model', $idModel);
-            $newAnr->setReferentials(null);
-            $newAnr->setStatus(AnrSuperClass::STATUS_ACTIVE);
-            $newAnr->setCreator($connectedUser->getEmail());
-            if (!empty($model) && is_object($model)) {
-                $newAnr->set('cacheModelShowRolfBrut', $model->getShowRolfBrut());
-                $newAnr->set('cacheModelAreScalesUpdatable', $model->areScalesUpdatable());
-            }
-            if ($isSnapshot) { // if snapshot, add the prefix "[SNAP]"
-                for ($i = 1; $i <= 4; $i++) {
-                    $lab = trim($newAnr->get('label' . $i));
-                    if (!empty($lab)) {
-                        $newAnr->set('label' . $i, '[SNAP] ' . $lab);
-                    }
-                }
-            }
+        if ($isSourceCommon) {
+            /* Determine the language code when an analysis is created from a model. */
+            $data['languageCode'] = strtolower($this->configService->getLanguageCodes()[$data['language']]);
+        }
+        $newAnr = Anr::constructFromObjectAndData($anr, $data)
+            ->setCreator($this->connectedUser->getEmail());
+        if ($anr instanceof AnrCore) {
+            $newAnr->setCacheModelShowRolfBrut((int)$anr->getModel()->getShowRolfBrut());
+            $newAnr->setCacheModelAreScalesUpdatable((int)$anr->getModel()->areScalesUpdatable());
+        }
 
-            /** @var AnrTable $anrCliTable */
-            $anrCliTable = $this->get('anrCliTable');
-            $anrCliTable->saveEntity($newAnr);
+        if ($snapshotMode === 'create') {
+            /* The "[SNAP]" prefix is added for snapshots. */
+            $newAnr->setLabel('[SNAP] ' . $newAnr->getLabel());
+        }
 
-            // useless if the user is doing a snapshot or is restoring a snapshot (SnapshotService::restore)
-            if (!$isSnapshot && !$isSnapshotCloning) {
-                $userAnr = (new UserAnr())
-                    ->setUser($connectedUser)
-                    ->setAnr($newAnr)
-                    ->setRwd(1)
-                    ->setCreator($connectedUser->getEmail());
-                /** @var UserAnrTable $userAnrCliTable */
-                $userAnrCliTable = $this->get('userAnrCliTable');
-                $userAnrCliTable->saveEntity($userAnr, false);
-            }
+        $this->anrTable->save($newAnr, false);
 
+        /* Not needed for snapshots creation or restoring. */
+        if ($snapshotMode === null) {
+            $userAnr = (new UserAnr())
+                ->setUser($this->connectedUser)
+                ->setAnr($newAnr)
+                ->setRwd(UserAnr::FULL_PERMISSIONS_RWD)
+                ->setCreator($this->connectedUser->getEmail());
+
+            $this->userAnrTable->save($userAnr, false);
+        }
+
+        // TODO: continue the refactoring from here
             // duplicate themes
             $themesNewIds = [];
             $themes = $isSourceCommon
@@ -750,15 +687,12 @@ class AnrService extends AbstractService
                         // duplicate and link the measures to the current referential
                         $newMeasure = (new Measure($measure))
                             ->setAnr($newAnr)
-                            ->setAmvs(new ArrayCollection())
-                            ->setRolfRisks(new ArrayCollection())
-                            ->setMeasuresLinked(new ArrayCollection())
                             ->setReferential($newReferential)
                             ->setCategory($categoryNewIds[$measure->category->id]);
-                        foreach ($measure->getMeasuresLinked() as $measureLinked) {
+                        foreach ($measure->getLinkedMeasures() as $linkedMeasure) {
                             $newMeasureMeasure = (new MeasureMeasure([
                                 'father' => $measure->getUuid(),
-                                'child' => $measureLinked->getUuid(),
+                                'child' => $linkedMeasure->getUuid(),
                             ]))->setAnr($newAnr);
                             $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                         }
@@ -797,9 +731,6 @@ class AnrService extends AbstractService
                             ->setAnr($newAnr)
                             ->setReferential($newReferential)
                             ->setCategory($categoryNewIds[$measure->category->id])
-                            ->setMeasuresLinked(new ArrayCollection())
-                            ->setAmvs(new ArrayCollection())
-                            ->setRolfRisks(new ArrayCollection());
                         $measuresNewIds[$measure->getUuid()] = $newMeasure;
                         $newMeasures[] = $newMeasure;
                     }
@@ -821,7 +752,7 @@ class AnrService extends AbstractService
             $anrSoaScaleCommentOldIdsToNewObjectsMap = $this->createSoaScaleCommentFromSource(
                 $newAnr,
                 $anr,
-                $source,
+                $isSourceCommon,
                 $connectedUser
             );
 
@@ -901,25 +832,19 @@ class AnrService extends AbstractService
             $rolfRisksNewIds = [];
             $rolfRisks = $isSourceCommon
                 ? $this->get('rolfRiskTable')->fetchAllObject()
-                : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->id]);
+                : $this->get('rolfRiskCliTable')->getEntityByFields(['anr' => $anr->getId()]);
             foreach ($rolfRisks as $rolfRisk) {
                 $newRolfRisk = new RolfRisk($rolfRisk);
-                $newRolfRisk->set('id', null);
+                $newRolfRisk->setId(null);
                 $newRolfRisk->setAnr($newAnr);
-                $newRolfRisk->measures = new ArrayCollection;
                 // Link tags
-                $indexTagRisk = 0;
-                $listTagrisk = [];
-                foreach ($rolfRisk->tags as $key => $tag) {
+                foreach ($rolfRisk->getTags() as $key => $tag) {
                     if (!empty($rolfTagsNewIds[$tag->id])) {
-                        $listTagrisk[$indexTagRisk]=$rolfTagsNewIds[$tag->id];
-                        $indexTagRisk++;
+                        $newRolfRisk->addTag($tag);
                     }
                 }
-                $newRolfRisk->setTags($listTagrisk);
                 //link the measures
-
-                foreach ($rolfRisk->measures as $m) {
+                foreach ($rolfRisk->getMeasures() as $m) {
                     try {
                         $measure = $this->get('measureCliTable')->getEntity([
                             'anr' => $newAnr->getId(),
@@ -930,7 +855,7 @@ class AnrService extends AbstractService
                     } //needed if the measures don't exist in the client ANR
                 }
                 $this->get('rolfRiskCliTable')->save($newRolfRisk, false);
-                $rolfRisksNewIds[$rolfRisk->id] = $newRolfRisk;
+                $rolfRisksNewIds[$rolfRisk->getId()] = $newRolfRisk;
             }
 
             // duplicate objects categories
@@ -1019,25 +944,25 @@ class AnrService extends AbstractService
                 $objectsNewIds[$object->getUuid()] = $newObject;
             }
 
-            // duplicate anrs objects categories
+            // TODO: the table and entity are redundant, we can manage them via links.
             /** @var AnrObjectCategoryTable|CoreAnrObjectCategoryTable $anrObjectCategoryTable */
-            $anrObjectCategoryTable = $isSourceCommon
-                ? $this->get('anrObjectCategoryTable')
-                : $this->get('anrObjectCategoryCliTable');
-            $anrObjectsCategories = $anrObjectCategoryTable->findByAnrOrderedByPosition($anr);
-            foreach ($anrObjectsCategories as $key => $anrObjectCategory) {
-                if (!\in_array($anrObjectCategory->getCategory()->getId(), $objectsRootCategories, true)) {
-                    unset($anrObjectsCategories[$key]);
-                }
-            }
-            foreach ($anrObjectsCategories as $key => $anrObjectCategory) {
-                $newAnrObjectCategory = new AnrObjectCategory($anrObjectCategory);
-                $newAnrObjectCategory->set('id', null);
-                $newAnrObjectCategory->setAnr($newAnr);
-                $newAnrObjectCategory
-                    ->setCategory($objectsCategoriesNewIds[$anrObjectCategory->getCategory()->getId()]);
-                $this->get('anrObjectCategoryCliTable')->save($newAnrObjectCategory, false);
-            }
+//            $anrObjectCategoryTable = $isSourceCommon
+//                ? $this->get('anrObjectCategoryTable')
+//                : $this->get('anrObjectCategoryCliTable');
+//            $anrObjectsCategories = $anrObjectCategoryTable->findByAnrOrderedByPosition($anr);
+//            foreach ($anrObjectsCategories as $key => $anrObjectCategory) {
+//                if (!\in_array($anrObjectCategory->getCategory()->getId(), $objectsRootCategories, true)) {
+//                    unset($anrObjectsCategories[$key]);
+//                }
+//            }
+//            foreach ($anrObjectsCategories as $key => $anrObjectCategory) {
+//                $newAnrObjectCategory = new AnrObjectCategory($anrObjectCategory);
+//                $newAnrObjectCategory->set('id', null);
+//                $newAnrObjectCategory->setAnr($newAnr);
+//                $newAnrObjectCategory
+//                    ->setCategory($objectsCategoriesNewIds[$anrObjectCategory->getCategory()->getId()]);
+//                $this->get('anrObjectCategoryCliTable')->save($newAnrObjectCategory, false);
+//            }
 
             // duplicate objects objects
             $objectsObjects = $isSourceCommon
@@ -1138,6 +1063,7 @@ class AnrService extends AbstractService
             $instanceRiskTable = $isSourceCommon
                 ? $this->get('instanceRiskTable')
                 : $instanceRiskCliTable;
+            /** @var InstanceRiskSuperClass[] $instancesRisks */
             $instancesRisks = $instanceRiskTable->findByAnr($anr);
             $instancesRisksNewIds = [];
             foreach ($instancesRisks as $instanceRisk) {
@@ -1529,18 +1455,18 @@ class AnrService extends AbstractService
                 }
             }
 
-            $this->get('table')->getDb()->flush();
+        $this->get('table')->getDb()->flush();
 
-            if (!$isSnapshot) {
-                $this->setCurrentAnrToConnectedUser($newAnr);
-            }
-        } catch (\Exception $e) {
-            if (!empty($newAnr)) {
-                $anrCliTable->deleteEntity($newAnr);
-            }
-
-            throw $e;
+        if ($snapshotMode !== 'create') {
+            $this->setCurrentAnrToConnectedUser($newAnr);
         }
+//        } catch (\Exception $e) {
+//            if (!empty($newAnr)) {
+//                $anrCliTable->remove($newAnr);
+//            }
+//
+//            throw $e;
+//        }
 
         return $newAnr;
     }
@@ -1605,31 +1531,22 @@ class AnrService extends AbstractService
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
+    public function delete(Anr $anr): void
     {
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('table');
-        //retrieve and delete snapshots associated to anr
+        /* Retrieve and delete snapshots associated to anr. */
+        // todo ... perhaps we can get referenced snapshots from $anr->getReferencedSnapshots();
         $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
-        foreach ($snapshots as $s) {
-            if (!empty($s)) {
-                $anrTable->delete($s->get('anr')->get('id'), false);
-            }
+        foreach ($snapshots as $snapshot) {
+            $this->anrTable->remove($snapshot->getAnr(), false);
         }
 
         // Try to drop the stats.
         try {
-            $anr = $anrTable->findById($id);
-            /** @var StatsAnrService $statsAnrService */
-            $statsAnrService = $this->get('statsAnrService');
-            $statsAnrService->deleteStatsForAnr($anr->getUuid());
+            $this->statsAnrService->deleteStatsForAnr($anr->getUuid());
         } catch (Throwable $e) {
         }
 
-        return $anrTable->delete($id);
+        $this->anrTable->remove($anr);
     }
 
     /**
@@ -1700,7 +1617,7 @@ class AnrService extends AbstractService
         }
 
         //scales impact types
-        /** @var CoreScaleImpactTypeTableAlias $coreScaleImpactTypeTable */
+        /** @var CoreScaleImpactTypeTable $coreScaleImpactTypeTable */
         $coreScaleImpactTypeTable = $this->get('scaleImpactTypeTable');
         $scalesImpactsTypes = $coreScaleImpactTypeTable->getEntityByFields(['anr' => $model->getAnr()->getId()]);
         foreach ($scalesImpactsTypes as $scaleImpactType) {
@@ -2077,14 +1994,6 @@ class AnrService extends AbstractService
         return $this->cachedData['instanceRiskOwners'][$ownerName];
     }
 
-    private function getAnrLanguageCode(AnrSuperClass $anr): string
-    {
-        /** @var ConfigService $configService */
-        $configService = $this->get('configService');
-
-        return strtolower($configService->getLanguageCodes()[$anr->getLanguage()]);
-    }
-
     private function duplicateVulnerabilities(
         AnrSuperClass $anr,
         AnrSuperClass $newAnr,
@@ -2163,7 +2072,7 @@ class AnrService extends AbstractService
 
         $oldAnrMetadatasOnInstances = $anrMetadatasOnInstancesTable->findByAnr($sourceAnr);
         foreach ($oldAnrMetadatasOnInstances as $oldAnrMetadata) {
-            $newAnrMetadataOnInstance = (new AnrMetadatasOnInstances())
+            $newAnrMetadataOnInstance = (new AnrInstanceMetadataField())
                 ->setAnr($newAnr)
                 ->setLabelTranslationKey($oldAnrMetadata->getLabelTranslationKey())
                 ->setIsDeletable($sourceName === MonarcObject::SOURCE_COMMON ? false : $oldAnrMetadata->isDeletable())
@@ -2197,13 +2106,13 @@ class AnrService extends AbstractService
         $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
 
         $sourceTranslationTable = $this->get('translationCliTable');
-        $oldInstanceMetadatas = $oldInstance->getInstanceMetadatas();
+        $oldInstanceMetadatas = $oldInstance->getInstanceMetadata();
         foreach ($oldInstanceMetadatas as $oldInstanceMetadata) {
             $translationKey = $oldInstanceMetadata->getCommentTranslationKey();
             $instanceMetada = (new InstanceMetadata())
                 ->setInstance($instance)
-                ->setMetadata($anrMetadatasOnInstancesOldIdsToNewObjectsMap[
-                              $oldInstanceMetadata->getMetadata()->getId()])
+                ->setAnrInstanceMetadataField($anrMetadatasOnInstancesOldIdsToNewObjectsMap[
+                                              $oldInstanceMetadata->getAnrInstanceMetadataFields()->getId()])
                 ->setCommentTranslationKey($translationKey)
                 ->setCreator($connectedUser->getEmail());
 
@@ -2222,51 +2131,33 @@ class AnrService extends AbstractService
         }
     }
 
-    private function createSoaScaleCommentFromSource(
-        Anr $newAnr,
-        AnrSuperClass $sourceAnr,
-        string $sourceName,
-        UserSuperClass $connectedUser
-    ): array {
-
+    private function createSoaScaleCommentFromSource(Anr $newAnr, AnrSuperClass $sourceAnr, bool $isSourceCommon): array
+    {
         $anrSoaScaleCommentOldIdsToNewObjectsMap = [];
 
         /** @var SoaScaleCommentCliTable $soaScaleCommentCliTable */
         $soaScaleCommentCliTable = $this->get('soaScaleCommentCliTable');
 
-        /** @var SoaScaleCommentCliTable|CoreSoaScaleCommentCliTable $scaleTable */
-        $soaScaleCommentTable = $sourceName === MonarcObject::SOURCE_COMMON
+        /** @var SoaScaleCommentCliTable|SoaScaleCommentTable $scaleTable */
+        $soaScaleCommentTable = $isSourceCommon
             ? $this->get('soaScaleCommentTable')
             : $soaScaleCommentCliTable;
 
-        /** @var TranslationTable|CoreTranslationTable $sourceTranslationTable */
-        $sourceTranslationTable = $sourceName === MonarcObject::SOURCE_COMMON
-            ? $this->get('translationTable')
-            : $this->get('translationCliTable');
-
-        $anrLanguageCode = $this->getAnrLanguageCode($newAnr);
-
-        $oldSoaScaleComments = $soaScaleCommentTable->findByAnr($sourceAnr);
+        $oldSoaScaleComments = $soaScaleCommentTable->findByAnrOrderByIndex($sourceAnr);
         foreach ($oldSoaScaleComments as $oldSoaScaleComment) {
+            // TODO: use the translation key of the Core entity to fetch from the translations + $newAnr->getLanguageCode();
+            $comment = $isSourceCommon
+                ? $oldSoaScaleComment->getComment($newAnr->getLanguage())
+                : $oldSoaScaleComment->getComment();
             $newSoaScaleComment = (new SoaScaleComment())
                 ->setAnr($newAnr)
-                ->setCommentTranslationKey($oldSoaScaleComment->getCommentTranslationKey())
+                ->setComment($comment)
                 ->setScaleIndex($oldSoaScaleComment->getScaleIndex())
                 ->setColour($oldSoaScaleComment->getColour())
                 ->setIsHidden($oldSoaScaleComment->isHidden())
-                ->setCreator($connectedUser->getEmail());
+                ->setCreator($this->connectedUser->getEmail());
             $soaScaleCommentCliTable->save($newSoaScaleComment, false);
             $anrSoaScaleCommentOldIdsToNewObjectsMap[$oldSoaScaleComment->getId()] = $newSoaScaleComment;
-        }
-
-        $sourceTranslations = $sourceTranslationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $sourceAnr,
-            [Translation::SOA_SCALE_COMMENT],
-            $anrLanguageCode
-        );
-
-        foreach ($sourceTranslations as $sourceTranslation) {
-            $this->createTranslationFromSource($newAnr, $sourceTranslation, $connectedUser);
         }
 
         return $anrSoaScaleCommentOldIdsToNewObjectsMap;

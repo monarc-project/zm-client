@@ -124,7 +124,7 @@ class AssetImportService
         }
 
         /* The code should be unique. */
-        if ($this->assetTable->existsWithAnrAndCode($anr, $assetData['code'])) {
+        if ($this->assetTable->doesCodeAlreadyExist($assetData['code'], $anr)) {
             $assetData['code'] .= '-' . time();
         }
 
@@ -169,7 +169,7 @@ class AssetImportService
             } else {
                 /* The code should be unique. */
                 if ($this->importCacheHelper->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
-                   || $this->threatTable->existsWithAnrAndCode($anr, $threatData['code'])
+                   || $this->threatTable->doesCodeAlreadyExist($threatData['code'], $anr)
                 ) {
                     $threatData['code'] .= '-' . time();
                 }
@@ -207,7 +207,7 @@ class AssetImportService
                 /* The code should be unique. */
                 if ($this->importCacheHelper
                     ->getItemFromArrayCache('vulnerabilities_codes', $vulnerabilityData['code']) !== null
-                    || $this->vulnerabilityTable->existsWithAnrAndCode($anr, $vulnerabilityData['code'])
+                    || $this->vulnerabilityTable->doesCodeAlreadyExist($vulnerabilityData['code'], $anr)
                 ) {
                     $vulnerabilityData['code'] .= '-' . time();
                 }
@@ -263,7 +263,7 @@ class AssetImportService
                         ->setVulnerability($vulnerability)
                         ->setCreator($this->connectedUser->getEmail());
 
-                    $this->instanceRiskTable->saveEntity($instanceRisk, false);
+                    $this->instanceRiskTable->save($instanceRisk, false);
                 }
             }
 
@@ -283,7 +283,7 @@ class AssetImportService
                     $instanceRisk->setAmv(null);
                     $instanceRisk->setAnr(null);
                     $instanceRisk->setSpecific(InstanceRisk::TYPE_SPECIFIC);
-                    $this->instanceRiskTable->saveEntity($instanceRisk, false);
+                    $this->instanceRiskTable->save($instanceRisk, false);
                 }
                 $this->instanceRiskTable->getDb()->flush();
 
@@ -291,7 +291,7 @@ class AssetImportService
                     $instanceRisk
                         ->setAnr($anr)
                         ->setUpdater($this->connectedUser->getEmail());
-                    $this->instanceRiskTable->saveEntity($instanceRisk, false);
+                    $this->instanceRiskTable->save($instanceRisk, false);
                 }
                 $this->instanceRiskTable->getDb()->flush();
 

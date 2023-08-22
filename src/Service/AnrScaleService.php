@@ -8,20 +8,20 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Service\ScaleService;
 
-/**
- * This class is the service that handles scales within an ANR. This is a simple CRUD service.
- * Note that the scales are not editable after the ANR has started being evaluated.
- * @see anrCheckStartedService
- * @package Monarc\FrontOffice\Service
- */
+/** TODO:Drop the inheritance of core and implement methods here. */
 class AnrScaleService extends ScaleService
 {
     protected $forbiddenFields = [];
 
     /** @var AnrCheckStartedService */
     protected $anrCheckStartedService;
+
+    public function __construct()
+    {
+    }
 
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
@@ -34,21 +34,7 @@ class AnrScaleService extends ScaleService
         return [$scales, $anrCheckStartedService->canChange($filterAnd['anr'])];
     }
 
-    public function create($data, $last = true)
-    {
-        $this->validateScaleEditable($data['anr']);
-
-        return parent::create($data, $last);
-    }
-
-    public function patch($id, $data)
-    {
-        $this->validateScaleEditable($data['anr']);
-
-        return parent::patch($id, $data);
-    }
-
-    public function update($id, $data)
+    public function update(AnrSuperClass $anr, int $id, array $data)
     {
         $this->validateScaleEditable($data['anr']);
 

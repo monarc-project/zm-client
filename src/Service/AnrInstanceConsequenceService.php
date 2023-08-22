@@ -7,19 +7,21 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\InstanceConsequenceService;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Table;
 
 class AnrInstanceConsequenceService extends InstanceConsequenceService
 {
+    // TODO: check if all the tables inherit the core ones.
     public function __construct(
         Table\InstanceConsequenceTable $instanceConsequenceTable,
         Table\InstanceTable $instanceTable,
-        DeprecatedTable\ScaleTable $scaleTable,
-        DeprecatedTable\ScaleImpactTypeTable $scaleImpactTypeTable,
-        DeprecatedTable\ScaleCommentTable $scaleCommentTable,
+        Table\ScaleTable $scaleTable,
+        Table\ScaleImpactTypeTable $scaleImpactTypeTable,
+        Table\ScaleCommentTable $scaleCommentTable,
         AnrInstanceService $anrInstanceService,
         ConnectedUserService $connectedUserService
     ) {
@@ -32,5 +34,13 @@ class AnrInstanceConsequenceService extends InstanceConsequenceService
             $anrInstanceService,
             $connectedUserService
         );
+    }
+
+    /**
+     * @param Anr $anr
+     */
+    protected function getLanguageIndex(AnrSuperClass $anr): int
+    {
+        return $anr->getLanguage();
     }
 }

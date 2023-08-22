@@ -8,7 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
-use Monarc\FrontOffice\Model\Table;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 
 /**
@@ -20,10 +21,10 @@ use Monarc\FrontOffice\Model\Entity\RecommandationSet;
 class AnrRecommandationSetServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'table' => Table\RecommandationSetTable::class,
+        'table' => DeprecatedTable\RecommandationSetTable::class,
         'entity' => RecommandationSet::class,
         'anrTable' => Table\AnrTable::class,
         'userAnrTable' => Table\UserAnrTable::class,
-        'recommendationTable' => Table\RecommandationTable::class,
+        'recommendationTable' => DeprecatedTable\RecommandationTable::class,
     ];
 }

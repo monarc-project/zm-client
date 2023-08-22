@@ -15,9 +15,9 @@ use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\CronTask;
 use Monarc\FrontOffice\Model\Entity\Snapshot;
-use Monarc\FrontOffice\Model\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceTable;
 use Monarc\FrontOffice\Model\Table\SnapshotTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\UserAnrTable;
 use Laminas\Http\Request;
 use Laminas\Mvc\ModuleRouteListener;
@@ -90,7 +90,15 @@ class Module
         if ($error === 'error-router-no-match') {
             $errorJson['message'] = 'Resource not found.';
         }
-        $model = new JsonModel(['errors' => [$errorJson]]);
+
+        if ($exception->getCode() === 400) {
+            $model = new JsonModel([
+                'errors' => [json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR)],
+            ]);
+        } else {
+            $model = new JsonModel(['errors' => [$errorJson]]);
+        }
+
         $e->setResult($model);
 
         return $model;

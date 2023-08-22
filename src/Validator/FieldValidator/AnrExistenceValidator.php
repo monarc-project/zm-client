@@ -4,7 +4,7 @@ namespace Monarc\FrontOffice\Validator\FieldValidator;
 
 use Doctrine\ORM\EntityNotFoundException;
 use Laminas\Validator\AbstractValidator;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 
 class AnrExistenceValidator extends AbstractValidator
 {

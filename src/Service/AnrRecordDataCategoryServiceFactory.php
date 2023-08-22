@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Record Data Category Service Factory
@@ -20,7 +21,7 @@ class AnrRecordDataCategoryServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\RecordDataCategoryTable',
         'entity' => 'Monarc\FrontOffice\Model\Entity\RecordDataCategory',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'userAnrTable' => UserAnrTable::class,
         'personalDataTable' => 'Monarc\FrontOffice\Model\Table\RecordPersonalDataTable',
     ];
 }

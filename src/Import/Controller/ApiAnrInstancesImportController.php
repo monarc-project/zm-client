@@ -16,7 +16,7 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Model\Entity\CronTask;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 
 class ApiAnrInstancesImportController extends AbstractRestfulController
 {
@@ -94,7 +94,7 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
             );
 
             /* Set Anr status to pending. */
-            $this->anrTable->saveEntity(
+            $this->anrTable->save(
                 $this->anrTable->findById($anrId)->setStatus(AnrSuperClass::STATUS_AWAITING_OF_IMPORT)
             );
 
@@ -134,7 +134,7 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
             $anr = $this->anrTable->findById($anrId);
             if ($importCronTask !== null && !$anr->isActive()) {
                 $anr->setStatus(AnrSuperClass::STATUS_ACTIVE);
-                $this->anrTable->saveEntity($anr, false);
+                $this->anrTable->save($anr, false);
                 $this->cronTaskService->terminateCronTask($importCronTask);
             }
         }

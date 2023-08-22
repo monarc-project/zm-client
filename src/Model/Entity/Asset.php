@@ -33,7 +33,7 @@ class Asset extends AssetSuperClass
      * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      */
     protected $anr;

@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
 
 /**
  * TODO: This service is not really needed. Can be used the table class directly in the controller and AnrService.

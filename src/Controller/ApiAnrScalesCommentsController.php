@@ -60,36 +60,6 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
     /**
      * @inheritdoc
      */
-    public function get($id)
-    {
-        $entity = $this->getService()->getEntity($id);
-
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids diffence', 412);
-        }
-
-        $scaleId = (int)$this->params()->fromRoute('scaleid');
-        if (empty($scaleId)) {
-            throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
-        }
-        if (!$entity['scale'] || $entity['scale']->get('id') != $scaleId) {
-            throw new \Monarc\Core\Exception\Exception('Scale ids diffence', 412);
-        }
-
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
-        }
-
-        return new JsonModel($entity);
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -128,27 +98,6 @@ class ApiAnrScalesCommentsController extends ApiAnrAbstractController
         $data['scale'] = $scaleId;
 
         $this->getService()->update($id, $data);
-
-        return new JsonModel(['status' => 'ok']);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $scaleId = (int)$this->params()->fromRoute('scaleid');
-        if (empty($scaleId)) {
-            throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
-        }
-        $data['scale'] = $scaleId;
-
-        $this->getService()->patch($id, $data);
 
         return new JsonModel(['status' => 'ok']);
     }

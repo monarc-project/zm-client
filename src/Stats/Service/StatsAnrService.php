@@ -16,7 +16,7 @@ use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserRole;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
@@ -114,7 +114,7 @@ class StatsAnrService
         $this->connectedUserService = $connectedUserService;
         $this->userTable = $userTable;
         $this->snapshotTable = $snapshotTable;
-        $this->apiKey = $config['statsApi']['apiKey'];
+        $this->apiKey = $config['statsApi']['apiKey'] ?? '';
     }
 
     /**
@@ -123,6 +123,10 @@ class StatsAnrService
      */
     public function isStatsAvailable(): bool
     {
+        if ($this->apiKey === '') {
+            return false;
+        }
+
         $loggedInUser = $this->getValidatedLoggedInUser();
         if (!$loggedInUser->hasRole(UserRole::USER_ROLE_CEO)) {
             $anrUuids = $this->getAvailableUserAnrsUuids($loggedInUser);
@@ -982,7 +986,7 @@ class StatsAnrService
         $formattedResult = [];
         foreach ($statsData as $data) {
             $anrUuid = $data->getAnr();
-            $anr = $this->anrTable->findByUuid($anrUuid);
+            $anr = $this->anrTable->findOneByUuid($anrUuid);
             if ($anr === null) {
                 continue;
             }
@@ -1058,7 +1062,7 @@ class StatsAnrService
         $formattedResult = [];
         foreach ($statsData as $data) {
             $anrUuid = $data->getAnr();
-            $anr = $this->anrTable->findByUuid($anrUuid);
+            $anr = $this->anrTable->findOneByUuid($anrUuid);
             if ($anr === null) {
                 continue;
             }
@@ -1217,7 +1221,7 @@ class StatsAnrService
         $formattedResult = [];
         foreach ($statsData as $data) {
             $anrUuid = $data->getAnr();
-            $anr = $this->anrTable->findByUuid($anrUuid);
+            $anr = $this->anrTable->findOneByUuid($anrUuid);
             if ($anr === null) {
                 continue;
             }

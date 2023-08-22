@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\UserAnrTable;
+use Monarc\FrontOffice\Table\AnrTable;
 
 /**
  * Factory class attached to AnrCartoRiskService
@@ -18,8 +20,8 @@ class AnrCartoRiskServiceFactory extends AbstractServiceFactory
     protected $ressources = [
         'entity' => 'Monarc\FrontOffice\Model\Entity\Scale',
         'table' => 'Monarc\FrontOffice\Model\Table\ScaleTable',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'anrTable' => AnrTable::class,
+        'userAnrTable' => UserAnrTable::class,
         'instanceTable' => 'Monarc\FrontOffice\Model\Table\InstanceTable',
         'instanceRiskTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskTable',
         'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',

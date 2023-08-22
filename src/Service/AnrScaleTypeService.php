@@ -37,30 +37,17 @@ class AnrScaleTypeService extends AbstractService
         8 => 'P',
     ];
 
-    /**
-     * Returns the types of scales available
-     * @return array [id => type kind string]
-     */
-    public function getTypes()
-    {
-        return $this->types;
-    }
-
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
-        $types = $this->getTypes();
-
         $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
 
         foreach ($scales as $key => $scale) {
-            if (isset($scale['type'])) {
-                if (isset($types[$scale['type']])) {
-                    $scales[$key]['type'] = $types[$scale['type']];
-                } else {
-                    $scales[$key]['type'] = 'CUS'; // Custom user-defined column
-                }
-                $scales[$key]['type_id'] = $scale['type'];
+            if (isset($this->types[$scale['type']])) {
+                $scales[$key]['type'] = $this->types[$scale['type']];
+            } else {
+                $scales[$key]['type'] = 'CUS'; // Custom user-defined column
             }
+            $scales[$key]['type_id'] = $scale['type'];
         }
 
         return $scales;

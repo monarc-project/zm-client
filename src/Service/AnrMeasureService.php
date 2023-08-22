@@ -25,7 +25,7 @@ class AnrMeasureService extends MeasureService
     protected $userAnrTable;
     protected $soaEntity;
     protected $soaTable;
-    protected $dependencies = ['category' ,'anr', 'referential', 'measuresLinked', 'rolfRisks'];
+    protected $dependencies = ['category' ,'anr', 'referential', 'linkedMeasures', 'rolfRisks'];
     protected $forbiddenFields = [];
 
     /**
