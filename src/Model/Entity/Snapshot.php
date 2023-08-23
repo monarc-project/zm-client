@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,13 +12,11 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\Traits;
 
 /**
- * Snapshot
- *
  * @ORM\Table(name="snapshots")
  * @ORM\Entity
  * @ORM\HasLifecycleCallbacks()
  */
-class Snapshot extends AbstractEntity
+class Snapshot
 {
     use Traits\CreateEntityTrait;
     use Traits\UpdateEntityTrait;
@@ -33,6 +31,8 @@ class Snapshot extends AbstractEntity
     protected $id;
 
     /**
+     * Reference to the readonly analysis that contains the state of the snapshot.
+     *
      * @var Anr
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
@@ -43,6 +43,9 @@ class Snapshot extends AbstractEntity
     protected $anr;
 
     /**
+     * Reference to the original analysis, for which the snapshot is created,
+     * and it is going to be replaced if the snapshot is restored.
+     *
      * @var Anr
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})

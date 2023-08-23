@@ -22,8 +22,6 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
  */
 class MonarcObject extends ObjectSuperClass
 {
-    // TODO: implement the same links on Client's entity side with 2 fields rel for parents, children, links... !!!
-
     /**
      * @var Anr
      *
@@ -59,4 +57,25 @@ class MonarcObject extends ObjectSuperClass
      * })
      */
     protected $asset;
+
+    /**
+     * Note: If the property use used, the order has to be performed manually due to Doctrine limitation.
+     *       Ordered list can be retrieved with use $childrenLinks relation.
+     *
+     * @var ArrayCollection|ObjectSuperClass[]
+     *
+     * @ORM\ManyToMany(targetEntity="MonarcObject")
+     * @ORM\JoinTable(name="objects_objects",
+     *  joinColumns={
+     *     @ORM\JoinColumn(name="father_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
+     *  },
+     *  inverseJoinColumns={
+     *     @ORM\JoinColumn(name="child_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
+     *  }
+     * )
+     */
+    protected $children;
+
 }

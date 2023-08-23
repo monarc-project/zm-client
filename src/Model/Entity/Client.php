@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -36,7 +36,7 @@ class Client
      *
      * @ORM\OneToMany(targetEntity="ClientModel", mappedBy="client")
      */
-    protected $models;
+    protected $clientModels;
 
     /**
      * @var int
@@ -87,9 +87,19 @@ class Client
      */
     protected $firstUserEmail;
 
-    public function getModels()
+    public function getClientModels()
     {
-        return $this->models;
+        return $this->clientModels;
+    }
+
+    public function addClientModel(ClientModel $clientModel): self
+    {
+        if (!$this->clientModels->contains($clientModel)) {
+            $this->clientModels->add($clientModel);
+            $clientModel->setClient($this);
+        }
+
+        return $this;
     }
 
     public function getId(): int
@@ -117,6 +127,66 @@ class Client
     public function setContactEmail(string $contactEmail): Client
     {
         $this->contactEmail = $contactEmail;
+
+        return $this;
+    }
+
+    public function getLogoId(): int
+    {
+        return $this->logoId;
+    }
+
+    public function setLogoId(int $logoId): self
+    {
+        $this->logoId = $logoId;
+
+        return $this;
+    }
+
+    public function getProxyAlias(): string
+    {
+        return $this->proxyAlias;
+    }
+
+    public function setProxyAlias(string $proxyAlias): self
+    {
+        $this->proxyAlias = $proxyAlias;
+
+        return $this;
+    }
+
+    public function getFirstUserFirstname(): string
+    {
+        return $this->firstUserFirstname;
+    }
+
+    public function setFirstUserFirstname(string $firstUserFirstname): self
+    {
+        $this->firstUserFirstname = $firstUserFirstname;
+
+        return $this;
+    }
+
+    public function getFirstUserLastname(): string
+    {
+        return $this->firstUserLastname;
+    }
+
+    public function setFirstUserLastname(string $firstUserLastname): self
+    {
+        $this->firstUserLastname = $firstUserLastname;
+
+        return $this;
+    }
+
+    public function getFirstUserEmail(): string
+    {
+        return $this->firstUserEmail;
+    }
+
+    public function setFirstUserEmail(string $firstUserEmail): self
+    {
+        $this->firstUserEmail = $firstUserEmail;
 
         return $this;
     }

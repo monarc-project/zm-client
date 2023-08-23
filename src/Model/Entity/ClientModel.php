@@ -1,30 +1,27 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2019  SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\AbstractEntity;
 use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
- * ClientModel link between clients and models
- *
  * @ORM\Table(name="clients_models")
  * @ORM\Entity
  */
-class ClientModel extends AbstractEntity
+class ClientModel
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -33,21 +30,23 @@ class ClientModel extends AbstractEntity
     protected $id;
 
     /**
-     * @var integer
+     * @var int
      *
-     * @ORM\Column(name="model_id", type="integer", nullable=true)
+     * @ORM\Column(name="model_id", type="integer", nullable=false)
      */
     protected $modelId;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Client")
+     * @var Client
+     *
+     * @ORM\ManyToOne(targetEntity="Client")
      * @ORM\JoinColumns({
-     * @ORM\JoinColumn(name="client_id", referencedColumnName="id")
+     *     @ORM\JoinColumn(name="client_id", referencedColumnName="id")
      * })
      */
     protected $client;
 
-    public function getModelId(): ?int
+    public function getModelId(): int
     {
         return $this->modelId;
     }
@@ -55,6 +54,7 @@ class ClientModel extends AbstractEntity
     public function setModelId(int $modelId): self
     {
         $this->modelId = $modelId;
+
         return $this;
     }
 
@@ -66,6 +66,8 @@ class ClientModel extends AbstractEntity
     public function setClient(Client $client): self
     {
         $this->client = $client;
+        $client->addClientModel($this);
+
         return $this;
     }
 }
