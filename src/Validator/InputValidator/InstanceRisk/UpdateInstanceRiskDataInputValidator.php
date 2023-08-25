@@ -47,6 +47,6 @@ class UpdateInstanceRiskDataInputValidator extends CoreUpdateInstanceRiskDataInp
                 ],
                 'validators' => [],
             ],
-        ];
+        ]);
     }
 }

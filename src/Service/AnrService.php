@@ -8,7 +8,10 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Model\Entity\Anr as AnrCore;
+use Monarc\Core\Model\Entity\Referential as ReferentialCore;
+use Monarc\Core\Model\Table\ReferentialTable as CoreReferentialTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Table\ReferentialTable;
 use Monarc\FrontOffice\Table;
 
 use DateTime;
@@ -213,6 +216,10 @@ class AnrService
 
     private ModelTable $modelTable;
 
+    private ReferentialTable $referentialTable;
+
+    private CoreReferentialTable $coreReferentialTable;
+
     private StatsAnrService $statsAnrService;
 
     private CronTaskService $cronTaskService;
@@ -228,6 +235,8 @@ class AnrService
         Table\AnrTable $anrTable,
         Table\UserAnrTable $userAnrTable,
         ModelTable $modelTable,
+        ReferentialTable $referentialTable,
+        CoreReferentialTable $coreReferentialTable,
         StatsAnrService $statsAnrService,
         CronTaskService $cronTaskService,
         ConfigService $configService,
@@ -236,6 +245,8 @@ class AnrService
         $this->anrTable = $anrTable;
         $this->userAnrTable = $userAnrTable;
         $this->modelTable = $modelTable;
+        $this->referentialTable = $referentialTable;
+        $this->coreReferentialTable = $coreReferentialTable;
         $this->statsAnrService = $statsAnrService;
         $this->cronTaskService = $cronTaskService;
         $this->configService = $configService;
@@ -372,60 +383,49 @@ class AnrService
 
     public function patch(Anr $anr, array $data): Anr
     {
+        if (isset($data['referentials'])) {
+            $this->updateReferential($anr, array_column($data['referentials'], 'uuid'));
+        }
         // TODO: being able to update all the flags e.g. initDefContext ..., label, description. referentials.
+        // TODO: update scales thresholds.
         // TODO: making anr names unique.
+
+        $anr->setUpdater($this->connectedUser->getEmail());
+
+        $this->anrTable->save($anr);
+
+        return $anr;
     }
 
     /**
-     * Add or remove referentials to/from an existing ANR.
-     * @param array $data Data coming from the API
-     * @return int
+     * @param string[] $referentialUuids
      */
-    public function updateReferentials($data)
+    private function updateReferential(Anr $anr, array $referentialUuids): void
     {
-        $anrTable = $this->get('anrCliTable');
-        $anr = $anrTable->getEntity($data['id']);
-        $uuidArray = array_map(
-            function ($referential) {
-                return $referential['uuid'];
-            },
-            $data['referentials']
-        );
-
-        // search for referentials to unlink from the anr
         foreach ($anr->getReferentials() as $referential) {
-            if (!in_array($referential->getUuid(), $uuidArray, true)) {
-                $this->get('referentialCliTable')->delete([
-                    'anr' => $anr->id,
-                    'uuid' => $referential->getUuid()
-                ]);
+            if (\in_array($referential->getUuid(), $referentialUuids, true)) {
+                unset($referentialUuids[$referential->getUuid()]);
+            } else {
+                $anr->removeReferential($referential);
+                $this->referentialTable->deleteEntity($referential, false);
             }
         }
 
-        // link new referentials to an ANR
-        foreach ($uuidArray as $uuid) {
-            // check if referential already linked to the anr
-            $referentials = $this->get('referentialCliTable')->getEntityByFields([
-                'anr' => $anr->id,
-                'uuid' => $uuid
-            ]);
-            if (! empty($referentials)) {
-                // if referential already linked to the anr, go to next iteration
-                continue;
-            }
+        /* Link new referential to the analysis from Core. */
+        foreach ($referentialUuids as $referentialUuid) {
+            $referentialFromCore = $this->coreReferentialTable->findByUuid($referentialUuid);
 
-            $referential = $this->get('referentialTable')->getEntity($uuid);
-            $measures = $referential->getMeasures();
-            $referential->setMeasures(null);
+            /* Recreate the core's referential in the analysis.  */
+            $referential = (new Referential())
+                ->setAnr($anr)
+                ->setLabels($referentialFromCore->getLabels())
+                ->setUuid($referentialFromCore->getUuid())
+                ->setCreator($this->connectedUser->getEmail());
 
-            // duplicate the referential
-            $newReferential = new Referential($referential);
-            $newReferential->setAnr($anr);
 
-            // duplicate categories
             $categoryNewIds = [];
-            $category = $this->get('soaCategoryTable')->getEntityByFields(['referential' => $referential->getUuid()]);
-            foreach ($category as $cat) {
+            foreach ($referentialFromCore->getCategories() as $categoryFromCore) {
+                // TODO: ...
                 $newCategory = new SoaCategory($cat);
                 $newCategory->set('id', null);
                 $newCategory->setAnr($anr);
@@ -518,12 +518,14 @@ class AnrService
     /**
      * Creates a new analysis from a model which is located inside the common database.
      */
-    public function createFromModelToClient($data): Anr
+    public function createFromModelToClient(array $data): Anr
     {
         /** @var Model $model */
         $model = $this->modelTable->findById((int)$data['model']);
-        if (!$model->isActive()) {
-            throw new Exception('Model not found', 412);
+
+        $availableLanguages = $this->getModelAvailableLanguages($model->getId());
+        if (empty($availableLanguages[$data['language']])) {
+            throw new Exception('Selected model\'s language is not supported', 412);
         }
 
         return $this->duplicateAnr($model->getAnr(), $data);
@@ -535,12 +537,11 @@ class AnrService
     public function duplicateAnr(AnrSuperClass $anr, array $data = [], string $snapshotMode = null): Anr
     {
         $isSourceCommon = $anr instanceof AnrCore;
-        if ($anr instanceof AnrCore && !$this->verifyLanguage($anr->getModel()->getId())) {
-            throw new Exception('Error during analysis creation. Selected model\'s language is not supported', 412);
-        }
-
-        if ($snapshotMode === null && !$this->connectedUser->hasRole(UserRole::USER_ROLE_SYSTEM)) {
-            if ($this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser) === null) {
+        if (!$isSourceCommon && $snapshotMode === null) {
+            /* Validate id the duplicated anr accessible for the user. */
+            if (!$this->connectedUser->hasRole(UserRole::USER_ROLE_SYSTEM)
+                && $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser) === null
+            ) {
                 throw new Exception('You are not authorized to duplicate this analysis', 412);
             }
         }
@@ -549,12 +550,9 @@ class AnrService
             /* Determine the language code when an analysis is created from a model. */
             $data['languageCode'] = strtolower($this->configService->getLanguageCodes()[$data['language']]);
         }
+
         $newAnr = Anr::constructFromObjectAndData($anr, $data)
             ->setCreator($this->connectedUser->getEmail());
-        if ($anr instanceof AnrCore) {
-            $newAnr->setCacheModelShowRolfBrut((int)$anr->getModel()->getShowRolfBrut());
-            $newAnr->setCacheModelAreScalesUpdatable((int)$anr->getModel()->areScalesUpdatable());
-        }
 
         if ($snapshotMode === 'create') {
             /* The "[SNAP]" prefix is added for snapshots. */
@@ -1552,9 +1550,10 @@ class AnrService
     /**
      * Returns an array that specifies in which languages the model can be instantiated.
      *
-     * @return array The array of languages that are valid
+     * @return array The array of languages that are available for the model.
+     *                  e.g. [1 => true, 2 => true, 3 => false, 4 => true]
      */
-    public function verifyLanguage(int $modelId): array
+    public function getModelAvailableLanguages(int $modelId): array
     {
         // TODO: Use the list from the config.
         $languages = [1, 2, 3, 4];
@@ -1563,10 +1562,8 @@ class AnrService
             $success[$lang] = true;
         }
 
-        /** @var ModelTable $modelTable */
-        $modelTable = $this->get('modelTable');
         /** @var Model $model */
-        $model = $modelTable->findById($modelId);
+        $model = $this->modelTable->findById($modelId);
         foreach ($languages as $lang) {
             if (empty($model->getLabel($lang))) {
                 $success[$lang] = false;

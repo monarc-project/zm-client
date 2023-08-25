@@ -30,18 +30,12 @@ class ApiAnrAmvsController extends AbstractRestfulControllerRequestHandler
         PostAmvDataInputValidator $postAmvDataInputValidator
     ) {
         $this->anrAmvService = $anrAmvService;
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
         $this->getAmvsInputFormatter = $getAmvsInputFormatter;
-        $this->getAmvsInputFormatter->setDefaultLanguageIndex($anr->getLanguage());
         $this->postAmvDataInputValidator = $postAmvDataInputValidator;
-        $this->postAmvDataInputValidator->setDefaultLanguageIndex($anr->getLanguage());
     }
 
     public function getList()
     {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
         $formattedParams = $this->getFormattedInputParams($this->getAmvsInputFormatter);
 
         return $this->getPreparedJsonResponse([

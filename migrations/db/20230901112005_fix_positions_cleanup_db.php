@@ -303,15 +303,27 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->addColumn('label', 'string', ['null' => false, 'limit' => 255, 'default' => ''])
             ->addColumn('description', 'text', ['null' => true, 'limit' => MysqlAdapter::TEXT_REGULAR])
             ->addColumn('language_code', 'string', ['null' => false, 'limit' => 255, 'default' => 'fr'])
+            /* Make Anr name (label) unique. */
+            ->addIndex(['label'], ['unique' => true])
             ->update();
-        $anrsQuery = $this->query('SELECT id, language FROM anrs');
+        $anrsQuery = $this->query('SELECT id, language, label1, label2, label3, label4,
+            description1, description2, description3, description4, created_at FROM anrs'
+        );
         $languageCodes = [1 => 'fr', 2 => 'en', 3 => 'de', 4 => 'nl'];
+        $uniqueLabels = [];
         foreach ($anrsQuery->fetchAll() as $anrData) {
             $labelName = 'label' . $anrData['language'];
+            if (isset($uniqueLabels[$anrData[$labelName]])) {
+                $uniqueLabels[$anrData[$labelName]] = $anrData[$labelName] .
+                    ' [' . !empty($anrData['created_at']) ? $anrData['created_at'] : date('Y-m-d H:i:s') . ']';
+            } else {
+                $uniqueLabels[$anrData[$labelName]] = $anrData[$labelName];
+            }
             $descriptionName = 'description' . $anrData['language'];
             $languageCode = $languageCodes[$anrData['language']];
-            $this->execute('UPDATE anrs SET label = ' . $labelName . ', description = ' . $descriptionName
-                . ', language_code = "' . $languageCode . '" WHERE id = ' . (int)$anrData['id']);
+            $this->execute('UPDATE anrs SET label = ' . $uniqueLabels[$anrData[$labelName]] .
+                ', description = ' . $anrData[$descriptionName] .
+                ', language_code = "' . $languageCode . '" WHERE id = ' . (int)$anrData['id']);
         }
 
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.

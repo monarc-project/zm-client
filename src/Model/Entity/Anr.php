@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Monarc\Core\Model\Entity\Anr as AnrCore;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Ramsey\Uuid\Uuid;
@@ -107,7 +108,7 @@ class Anr extends AnrSuperClass
     /**
      * @var Referential[]|ArrayCollection
      *
-     * @ORM\OneToMany(targetEntity="Referential", mappedBy="anr", cascade={"persist"})
+     * @ORM\OneToMany(targetEntity="Referential", mappedBy="anr", cascade={"persist", "remove"})
      */
     protected $referentials;
 
@@ -139,15 +140,16 @@ class Anr extends AnrSuperClass
                 ->setIsVisibleOnDashboard((int)$anr->isVisibleOnDashboard())
                 ->setIsStatsCollected((int)$anr->isStatsCollected())
                 ->setModelId($anr->getModelId());
-        } elseif ($anr instanceof \Monarc\Core\Model\Entity\Anr) {
+        } elseif ($anr instanceof AnrCore) {
             /* Creation of an analysis based on a model. */
             $languageIndex = (int)($data['language'] ?? 1);
-            // TODO: define the langCode.
             $newAnr->setLabel((string)$data['label' . $languageIndex])
                 ->setDescription((string)$data['description' . $languageIndex])
                 ->setLanguage($languageIndex)
                 ->setLanguageCode($data['languageCode'] ?? 'fr')
-                ->setModelId($anr->getModel()->getId());
+                ->setModelId($anr->getModel()->getId())
+                ->setCacheModelShowRolfBrut($anr->getModel()->showRolfBrut())
+                ->setCacheModelAreScalesUpdatable($anr->getModel()->areScalesUpdatable());
         } else {
             throw new \LogicException('The analysis can not be created due to the logic error.');
         }
@@ -261,12 +263,12 @@ class Anr extends AnrSuperClass
         return $this;
     }
 
-    public function getCacheModelAreScalesUpdatable(): int
+    public function getCacheModelAreScalesUpdatable(): bool
     {
-        return $this->cacheModelAreScalesUpdatable;
+        return (bool)$this->cacheModelAreScalesUpdatable;
     }
 
-    public function setCacheModelAreScalesUpdatable(int $cacheModelAreScalesUpdatable): self
+    public function setCacheModelAreScalesUpdatable(bool $cacheModelAreScalesUpdatable): self
     {
         $this->cacheModelAreScalesUpdatable = $cacheModelAreScalesUpdatable;
 
@@ -313,6 +315,15 @@ class Anr extends AnrSuperClass
         if (!$this->referentials->contains($referential)) {
             $this->referentials->add($referential);
             $referential->setAnr($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReferential(Referential $referential): self
+    {
+        if ($this->referentials->contains($referential)) {
+            $this->referentials->removeElement($referential);
         }
 
         return $this;

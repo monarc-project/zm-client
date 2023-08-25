@@ -29,12 +29,8 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
         PostVulnerabilityDataInputValidator $postVulnerabilityDataInputValidator,
         AnrVulnerabilityService $anrVulnerabilityService
     ) {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
         $this->getVulnerabilitiesInputFormatter = $getVulnerabilitiesInputFormatter;
-        $this->getVulnerabilitiesInputFormatter->setDefaultLanguageIndex($anr->getLanguage());
         $this->postVulnerabilityDataInputValidator = $postVulnerabilityDataInputValidator;
-        $this->postVulnerabilityDataInputValidator->setDefaultLanguageIndex($anr->getLanguage());
         $this->anrVulnerabilityService = $anrVulnerabilityService;
     }
 
@@ -64,11 +60,11 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
      */
     public function create($data)
     {
-        $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postVulnerabilityDataInputValidator, $data, $isBatchData);
-
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+
+        $isBatchData = $this->isBatchData($data);
+        $this->validatePostParams($this->postVulnerabilityDataInputValidator->setAnr($anr), $data, $isBatchData);
 
         $vulnerabilitiesUuids = [];
         $validatedData = $isBatchData
@@ -98,8 +94,10 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->postVulnerabilityDataInputValidator->setAnr($anr)->setExcludeFilter(['uuid' => $id]);
-        $this->validatePostParams($this->postVulnerabilityDataInputValidator, $data);
+        $this->validatePostParams(
+            $this->postVulnerabilityDataInputValidator->setAnr($anr)->setExcludeFilter(['uuid' => $id]),
+            $data
+        );
 
         $this->anrVulnerabilityService->update($anr, $id, $this->postVulnerabilityDataInputValidator->getValidData());
 
@@ -110,6 +108,7 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+
         $this->anrVulnerabilityService->patch($anr, $id, $data);
 
         return $this->getPreparedJsonResponse(['status' => 'ok']);
@@ -122,6 +121,7 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+
         $this->anrVulnerabilityService->delete($anr, $id);
 
         return $this->getPreparedJsonResponse(['status' => 'ok']);
@@ -131,6 +131,7 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+
         $this->anrVulnerabilityService->deleteList($anr, $data);
 
         return $this->getPreparedJsonResponse(['status' => 'ok']);

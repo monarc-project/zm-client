@@ -29,12 +29,8 @@ class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler
         PostThreatDataInputValidator $postThreatDataInputValidator,
         AnrThreatService $anrThreatService
     ) {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
         $this->getThreatsInputFormatter = $getThreatsInputFormatter;
-        $this->getThreatsInputFormatter->setDefaultLanguageIndex($anr->getLanguage());
         $this->postThreatDataInputValidator = $postThreatDataInputValidator;
-        $this->postThreatDataInputValidator->setDefaultLanguageIndex($anr->getLanguage());
         $this->anrThreatService = $anrThreatService;
     }
 
@@ -68,7 +64,7 @@ class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
 
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postThreatDataInputValidator, $data, $isBatchData);
+        $this->validatePostParams($this->postThreatDataInputValidator->setAnr($anr), $data, $isBatchData);
 
         $threatsUuids = [];
         $validatedData = $isBatchData
@@ -93,7 +89,10 @@ class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->validatePostParams($this->postThreatDataInputValidator->setExcludeFilter(['uuid' => $id]), $data);
+        $this->validatePostParams(
+            $this->postThreatDataInputValidator->setExcludeFilter(['uuid' => $id])->setAnr($anr),
+            $data
+        );
 
         $this->anrThreatService->update($anr, $id, $this->postThreatDataInputValidator->getValidData());
 

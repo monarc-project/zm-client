@@ -59,4 +59,13 @@ class ReferentialTable extends AbstractEntityTable
             $em->flush();
         }
     }
+
+    public function deleteEntity(ReferentialSuperClass $referential, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->remove($referential);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

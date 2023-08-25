@@ -8,8 +8,8 @@
 namespace Monarc\FrontOffice\Validator\InputValidator\User;
 
 use Laminas\InputFilter\ArrayInput;
-use Laminas\InputFilter\InputFilter;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Validator\InputValidator\InputValidationTranslator;
 use Monarc\Core\Validator\InputValidator\User\PostUserDataInputValidator as CorePostUserDataInputValidatorAlias;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Table\AnrTable;
@@ -21,15 +21,16 @@ class PostUserDataInputValidator extends CorePostUserDataInputValidatorAlias
     private AnrTable $anrTable;
 
     public function __construct(
-        InputFilter $inputFilter,
         array $config,
+        InputValidationTranslator $translator,
         UserTable $userTable,
         ConnectedUserService $connectedUserService,
         AnrTable $anrTable
     ) {
-        $this->anrTable = $anrTable;
+        parent::__construct($config, $translator, $userTable, $connectedUserService);
 
-        parent::__construct($inputFilter, $config, $userTable, $connectedUserService);
+        $this->anrTable = $anrTable;
+        $this->userRoles = UserRole::getAvailableRoles();
     }
 
     protected function getRules(): array
@@ -49,10 +50,5 @@ class PostUserDataInputValidator extends CorePostUserDataInputValidatorAlias
                 ],
             ],
         ]);
-    }
-
-    public function validateRoles($value): bool
-    {
-        return \in_array($value, UserRole::getAvailableRoles(), true);
     }
 }

@@ -348,7 +348,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
             'label' => $this->translateService->translate('Risk description', $anrLanguage),
         ];
 
-        if ($anr->getShowRolfBrut() === 1) {
+        if ($anr->showRolfBrut()) {
             $translatedRiskValueDescription = $this->translateService->translate('Inherent risk', $anrLanguage);
             $tableHeaders['brutProb'] = $this->translateService->translate('Prob.', $anrLanguage)
                 . "(" . $translatedRiskValueDescription . ")";
@@ -394,7 +394,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
                 $operationalInstanceRisk->getInstance()->getName($anrLanguage),
                 $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
             ];
-            if ($anr->getShowRolfBrut() === 1) {
+            if ($anr->showRolfBrut()) {
                 $values[] = $operationalInstanceRisk->getBrutProb();
                 foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $instanceRiskScale) {
                     $values[] = $instanceRiskScale->getBrutValue();

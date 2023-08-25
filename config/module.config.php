@@ -57,7 +57,10 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiAdminUsersRolesController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            Controller\ApiAdminUsersRolesController::class,
+                        ),
                     ],
                 ],
             ],
@@ -70,7 +73,10 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiAdminUsersController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            Controller\ApiAdminUsersController::class,
+                        ),
                     ],
                 ],
             ],
@@ -83,8 +89,11 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiAdminUsersController::class,
-                        'action' => 'resetPassword'
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            Controller\ApiAdminUsersController::class,
+                        ),
+                        'action' => 'resetPassword',
                     ],
                 ],
             ],
@@ -168,7 +177,10 @@ return [
                     'route' => '/api/admin/passwords',
                     'constraints' => [],
                     'defaults' => [
-                        'controller' => Controller\ApiAdminPasswordsController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            Controller\ApiAdminPasswordsController::class,
+                        ),
                     ],
                 ],
             ],
@@ -1345,7 +1357,7 @@ return [
             Controller\ApiAdminPasswordsController::class => AutowireFactory::class,
             Controller\ApiAdminUsersController::class => AutowireFactory::class,
             Controller\ApiAdminUsersRolesController::class => AutowireFactory::class,
-            Controller\ApiAnrController::class => Controller\ApiAnrControllerFactory::class,
+            Controller\ApiAnrController::class => AutowireFactory::class,
             Controller\ApiGuidesController::class => Controller\ApiGuidesControllerFactory::class,
             Controller\ApiGuidesItemsController::class => Controller\ApiGuidesItemsControllerFactory::class,
             Controller\ApiSnapshotController::class => Controller\ApiSnapshotControllerFactory::class,
@@ -1359,7 +1371,7 @@ return [
             Controller\ApiUserTwoFAController::class => AutowireFactory::class,
             Controller\ApiUserRecoveryCodesController::class => AutowireFactory::class,
             Controller\ApiUserProfileController::class => AutowireFactory::class,
-            Controller\ApiAnrAssetsController::class => Controller\ApiAnrAssetsControllerFactory::class,
+            Controller\ApiAnrAssetsController::class => AutowireFactory::class,
             Controller\ApiAnrAmvsController::class => AutowireFactory::class,
             Controller\ApiAnrReferentialsController::class => Controller\ApiAnrReferentialsControllerFactory::class,
             Controller\ApiAnrMeasuresController::class => Controller\ApiAnrMeasuresControllerFactory::class,
@@ -1645,6 +1657,7 @@ return [
             GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
             InputValidator\InstanceRisk\UpdateInstanceRiskDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
+            InputValidator\Anr\CreateAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
 
             // Commands
             Import\Command\ImportAnalysesCommand::class => static function (

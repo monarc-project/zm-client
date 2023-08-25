@@ -29,12 +29,8 @@ class ApiAnrAssetsController extends AbstractRestfulControllerRequestHandler
         PostAssetDataInputValidator $postAssetDataInputValidator,
         AnrAssetService $anrAssetService
     ) {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
         $this->getAssetsInputFormatter = $getAssetsInputFormatter;
-        $this->getAssetsInputFormatter->setDefaultLanguageIndex($anr->getLanguage());
         $this->postAssetDataInputValidator = $postAssetDataInputValidator;
-        $this->postAssetDataInputValidator->setDefaultLanguageIndex($anr->getLanguage());
         $this->anrAssetService = $anrAssetService;
     }
 
@@ -64,11 +60,11 @@ class ApiAnrAssetsController extends AbstractRestfulControllerRequestHandler
      */
     public function create($data)
     {
-        $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postAssetDataInputValidator, $data, $isBatchData);
-
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+
+        $isBatchData = $this->isBatchData($data);
+        $this->validatePostParams($this->postAssetDataInputValidator->setAnr($anr), $data, $isBatchData);
 
         $assetsUuids = [];
         $validatedData = $isBatchData
@@ -90,10 +86,12 @@ class ApiAnrAssetsController extends AbstractRestfulControllerRequestHandler
      */
     public function update($id, $data)
     {
-        $this->validatePostParams($this->postAssetDataInputValidator->setExcludeFilter(['uuid' => $id]), $data);
-
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+        $this->validatePostParams(
+            $this->postAssetDataInputValidator->setExcludeFilter(['uuid' => $id])->setAnr($anr),
+            $data
+        );
 
         $this->anrAssetService->update($anr, $id, $this->postAssetDataInputValidator->getValidData());
 
