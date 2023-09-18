@@ -3048,7 +3048,7 @@ class DeliverableGenerationService extends AbstractService
         $global = [];
         $toUnset = [];
         foreach ($recommendationRisks as $recommendationRisk) {
-            if ($recommendationRisk->getInstance()->getObject()->getScope() === MonarcObject::SCOPE_GLOBAL) {
+            if ($recommendationRisk->hasGlobalObjectRelation()) {
                 $key = $recommendationRisk->getRecommandation()->getUuid()
                     . ' - ' . $recommendationRisk->getThreat()->getUuid()
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
