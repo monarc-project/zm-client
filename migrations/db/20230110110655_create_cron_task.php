@@ -11,7 +11,7 @@ class CreateCronTask extends AbstractMigration
             'CREATE TABLE IF NOT EXISTS `cron_tasks` (
                 `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
                 `name` varchar(255) NOT NULL,
-                `params` TEXT NOT NULL default "a:0:{}",
+                `params` varchar(4096) NOT NULL default "a:0:{}",
                 `priority` smallint(3) unsigned NOT NULL DEFAULT 1,
                 `pid` int(11) DEFAULT NULL,
                 `status` smallint(3) unsigned NOT NULL DEFAULT 0,

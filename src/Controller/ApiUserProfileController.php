@@ -7,17 +7,17 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserProfileService;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
-use Monarc\FrontOffice\Model\Entity\User;
 
 class ApiUserProfileController extends AbstractRestfulController
 {
     private UserProfileService $userProfileService;
 
-    private User $connectedUser;
+    private UserSuperClass $connectedUser;
 
     public function __construct(UserProfileService $userProfileService, ConnectedUserService $connectedUserService)
     {
