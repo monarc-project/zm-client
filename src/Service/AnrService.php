@@ -959,15 +959,17 @@ class AnrService extends AbstractService
             $objects = $source === MonarcObject::SOURCE_COMMON
                 ? $this->get('MonarcObjectTable')->fetchAllObject()
                 : $this->get('objectCliTable')->getEntityByFields(['anr' => $anr->getId()]);
-            foreach ($objects as $key => $object) {
-                $existInAnr = false;
-                foreach ($object->getAnrs() as $anrObject) {
-                    if ($anrObject->getId() === $anr->getId()) {
-                        $existInAnr = true;
+            if ($source === MonarcObject::SOURCE_COMMON) {
+                foreach ($objects as $key => $object) {
+                    $existInAnr = false;
+                    foreach ($object->getAnrs() as $anrObject) {
+                        if ($anrObject->getId() === $anr->getId()) {
+                            $existInAnr = true;
+                        }
                     }
-                }
-                if (!$existInAnr) {
-                    unset($objects[$key]);
+                    if (!$existInAnr) {
+                        unset($objects[$key]);
+                    }
                 }
             }
             $categoriesIds = [];
