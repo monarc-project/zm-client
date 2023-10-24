@@ -1056,8 +1056,8 @@ class StatsAnrService
         }
 
         $formattedResult = [];
-        foreach ($statsData as $data) {
-            $anrUuid = $data->getAnr();
+        foreach ($statsData as $dataSet) {
+            $anrUuid = $dataSet->getAnr();
             $anr = $this->anrTable->findByUuid($anrUuid);
             if ($anr === null) {
                 continue;
@@ -1087,16 +1087,16 @@ class StatsAnrService
                 ];
             }
 
-            $data = $data->getData();
-            $maxImpact = max($data['scales']['impact']);
-            $minImpact = min($data['scales']['impact']);
-            $maxLikelihood = max($data['scales']['likelihood']);
-            $minLikelihood = min($data['scales']['likelihood']);
-            $maxProbability = max($data['scales']['probability']);
-            $minProbability = min($data['scales']['probability']);
+            $data = $dataSet->getData();
+            $scalesImpact = !empty($data['scales']['impact']) ? $data['scales']['impact'] : [];
+            $maxImpact = empty($scalesImpact) ? 0 : max($data['scales']['impact']);
+            $minImpact = empty($scalesImpact) ? 0 : min($data['scales']['impact']);
+            $maxLikelihood = empty($data['scales']['likelihood']) ? 0 : max($data['scales']['likelihood']);
+            $minLikelihood = empty($data['scales']['likelihood']) ? 0 : min($data['scales']['likelihood']);
+            $maxProbability = empty($data['scales']['probability']) ? 0 : max($data['scales']['probability']);
+            $minProbability = empty($data['scales']['probability']) ? 0 : min($data['scales']['probability']);
 
-
-            foreach ($data['scales']['impact'] as $impactValue) {
+            foreach ($scalesImpact as $impactValue) {
                 $y = $this->approximate($impactValue, $minImpact, $maxImpact, 0, 4);
                 foreach ($data['scales']['likelihood'] as $likelihoodValue) {
                     $x = $this->approximate($likelihoodValue, $minLikelihood, $maxLikelihood, 0, 20);
