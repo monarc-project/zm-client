@@ -1107,7 +1107,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['informational']['currentInfo']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue] ?? null,
+                            'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['current']['informational'][$impactValue][$likelihoodValue])) {
                         $formattedResult[$anrUuid]['informational']['currentInfo']['series'][$seriesKey]['value'] +=
@@ -1118,7 +1119,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['informational']['residualInfo']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue] ?? null,
+                            'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['residual']['informational'][$impactValue][$likelihoodValue])) {
                         $formattedResult[$anrUuid]['informational']['residualInfo']['series'][$seriesKey]['value'] +=
@@ -1133,7 +1135,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['operational']['currentOp']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['current']['operational'][$impactValue][$probabilityValue] ?? null,
+                            'value' => $data['risks']['current']['operational'][$impactValue][$probabilityValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['current']['operational'][$impactValue][$probabilityValue])) {
                         $formattedResult[$anrUuid]['operational']['currentOp']['series'][$seriesKey]['value']
@@ -1144,7 +1147,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['operational']['residualOp']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['residual']['operational'][$impactValue][$probabilityValue] ?? null,
+                            'value' => $data['risks']['residual']['operational'][$impactValue][$probabilityValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['residual']['operational'][$impactValue][$probabilityValue])) {
                         $formattedResult[$anrUuid]['operational']['residualOp']['series'][$seriesKey]['value'] +=
