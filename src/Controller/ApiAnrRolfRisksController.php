@@ -49,12 +49,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
         $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $tag, $anr);
         foreach ($rolfRisks as $key => $rolfRisk) {
-
-            if (count($this->dependencies)) {
-                $this->formatDependencies(
-                    $rolfRisks[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']
-                );
-            }
+            $this->formatDependencies($rolfRisks[$key], $this->dependencies, Measure::class, ['referential']);
 
             $rolfRisk['tags']->initialize();
             $rolfTags = $rolfRisk['tags']->getSnapshot();
