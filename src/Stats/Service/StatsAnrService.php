@@ -193,9 +193,11 @@ class StatsAnrService
         // TODO: make a response data formatter with passing the aggregation period param.
         if ($requestParams['type'] === StatsDataObject::TYPE_RISK) {
             $statsData = $this->formatRisksStatsData($statsData);
-        } elseif (
-            in_array($requestParams['type'], [StatsDataObject::TYPE_THREAT, StatsDataObject::TYPE_VULNERABILITY], true)
-        ) {
+        } elseif (in_array(
+            $requestParams['type'],
+            [StatsDataObject::TYPE_THREAT, StatsDataObject::TYPE_VULNERABILITY],
+            true
+        )) {
             $statsData = $this->formatThreatsOrVulnerabilitiesStatsData($statsData);
         } elseif ($requestParams['type'] === StatsDataObject::TYPE_CARTOGRAPHY) {
             $statsData = $this->formatCartographyStatsData($statsData);
@@ -1060,8 +1062,8 @@ class StatsAnrService
         }
 
         $formattedResult = [];
-        foreach ($statsData as $data) {
-            $anrUuid = $data->getAnr();
+        foreach ($statsData as $dataSet) {
+            $anrUuid = $dataSet->getAnr();
             $anr = $this->anrTable->findOneByUuid($anrUuid);
             if ($anr === null) {
                 continue;
@@ -1091,16 +1093,16 @@ class StatsAnrService
                 ];
             }
 
-            $data = $data->getData();
-            $maxImpact = max($data['scales']['impact']);
-            $minImpact = min($data['scales']['impact']);
-            $maxLikelihood = max($data['scales']['likelihood']);
-            $minLikelihood = min($data['scales']['likelihood']);
-            $maxProbability = max($data['scales']['probability']);
-            $minProbability = min($data['scales']['probability']);
+            $data = $dataSet->getData();
+            $scalesImpact = !empty($data['scales']['impact']) ? $data['scales']['impact'] : [];
+            $maxImpact = empty($scalesImpact) ? 0 : max($data['scales']['impact']);
+            $minImpact = empty($scalesImpact) ? 0 : min($data['scales']['impact']);
+            $maxLikelihood = empty($data['scales']['likelihood']) ? 0 : max($data['scales']['likelihood']);
+            $minLikelihood = empty($data['scales']['likelihood']) ? 0 : min($data['scales']['likelihood']);
+            $maxProbability = empty($data['scales']['probability']) ? 0 : max($data['scales']['probability']);
+            $minProbability = empty($data['scales']['probability']) ? 0 : min($data['scales']['probability']);
 
-
-            foreach ($data['scales']['impact'] as $impactValue) {
+            foreach ($scalesImpact as $impactValue) {
                 $y = $this->approximate($impactValue, $minImpact, $maxImpact, 0, 4);
                 foreach ($data['scales']['likelihood'] as $likelihoodValue) {
                     $x = $this->approximate($likelihoodValue, $minLikelihood, $maxLikelihood, 0, 20);
@@ -1109,7 +1111,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['informational']['currentInfo']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue] ?? null,
+                            'value' => $data['risks']['current']['informational'][$impactValue][$likelihoodValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['current']['informational'][$impactValue][$likelihoodValue])) {
                         $formattedResult[$anrUuid]['informational']['currentInfo']['series'][$seriesKey]['value'] +=
@@ -1120,7 +1123,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['informational']['residualInfo']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue] ?? null,
+                            'value' => $data['risks']['residual']['informational'][$impactValue][$likelihoodValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['residual']['informational'][$impactValue][$likelihoodValue])) {
                         $formattedResult[$anrUuid]['informational']['residualInfo']['series'][$seriesKey]['value'] +=
@@ -1135,7 +1139,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['operational']['currentOp']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['current']['operational'][$impactValue][$probabilityValue] ?? null,
+                            'value' => $data['risks']['current']['operational'][$impactValue][$probabilityValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['current']['operational'][$impactValue][$probabilityValue])) {
                         $formattedResult[$anrUuid]['operational']['currentOp']['series'][$seriesKey]['value']
@@ -1146,7 +1151,8 @@ class StatsAnrService
                         $formattedResult[$anrUuid]['operational']['residualOp']['series'][$seriesKey] = [
                             'y' => $y,
                             'x' => $x,
-                            'value' => $data['risks']['residual']['operational'][$impactValue][$probabilityValue] ?? null,
+                            'value' => $data['risks']['residual']['operational'][$impactValue][$probabilityValue]
+                                ?? null,
                         ];
                     } elseif (isset($data['risks']['residual']['operational'][$impactValue][$probabilityValue])) {
                         $formattedResult[$anrUuid]['operational']['residualOp']['series'][$seriesKey]['value'] +=
@@ -1155,16 +1161,18 @@ class StatsAnrService
                 }
             }
 
-            $currentInfoSeries = $formattedResult[$anrUuid]['informational']['currentInfo']['series'];
-            $residualInfoSeries = $formattedResult[$anrUuid]['informational']['residualInfo']['series'];
-            $currentOpSeries = $formattedResult[$anrUuid]['operational']['currentOp']['series'];
-            $residualOpSeries = $formattedResult[$anrUuid]['operational']['residualOp']['series'];
-
-            $formattedResult[$anrUuid]['currentInfo']['series'] = is_array($currentInfoSeries) ? array_values($currentInfoSeries): [];
-            $formattedResult[$anrUuid]['residualInfo']['series'] = is_array($residualInfoSeries) ? array_values($residualInfoSeries): [];
-            $formattedResult[$anrUuid]['currentOp']['series'] = is_array($currentOpSeries) ? array_values($currentOpSeries): [];
-            $formattedResult[$anrUuid]['residualOp']['series'] = is_array($residualOpSeries) ? array_values($residualOpSeries): [];
-
+            $formattedResult[$anrUuid]['currentInfo']['series'] = \is_array(
+                $formattedResult[$anrUuid]['informational']['currentInfo']['series']
+            ) ? array_values($formattedResult[$anrUuid]['informational']['currentInfo']['series']) : [];
+            $formattedResult[$anrUuid]['residualInfo']['series'] = \is_array(
+                $formattedResult[$anrUuid]['informational']['residualInfo']['series']
+            ) ? array_values($formattedResult[$anrUuid]['informational']['residualInfo']['series']): [];
+            $formattedResult[$anrUuid]['currentOp']['series'] = \is_array(
+                $formattedResult[$anrUuid]['operational']['currentOp']['series']
+            ) ? array_values($formattedResult[$anrUuid]['operational']['currentOp']['series']): [];
+            $formattedResult[$anrUuid]['residualOp']['series'] = \is_array(
+                $formattedResult[$anrUuid]['operational']['residualOp']['series']
+            )? array_values($formattedResult[$anrUuid]['operational']['residualOp']['series']): [];
         }
 
         if (!empty($formattedResult)) {
@@ -1184,6 +1192,7 @@ class StatsAnrService
                     return $a['category'] <=> $b['category'];
                 });
             }
+            unset($value);
             foreach ($formattedResult['operational'] as $key => &$value) {
                 usort($value, static function ($a, $b) {
                     return $a['category'] <=> $b['category'];

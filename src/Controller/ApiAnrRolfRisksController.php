@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
 use Monarc\FrontOffice\Service\AnrRolfRiskService;
+use Monarc\FrontOffice\Model\Entity\Measure;
 
 /**
  * Api ANR Rolf Risks Controller
@@ -26,12 +27,11 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
     {
         $entity = $this->getService()->getEntity($id);
 
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
-        }
+        $this->formatDependencies($entity, $this->dependencies, Measure::class, ['referential']);
 
         return new JsonModel($entity);
     }
+
     /**
      * @inheritdoc
      */
@@ -49,10 +49,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
         $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $tag, $anr);
         foreach ($rolfRisks as $key => $rolfRisk) {
-
-            if (count($this->dependencies)) {
-                    $this->formatDependencies($rolfRisks[$key], $this->dependencies, 'Monarc\FrontOffice\Model\Entity\Measure', ['referential']);
-            }
+            $this->formatDependencies($rolfRisks[$key], $this->dependencies, Measure::class, ['referential']);
 
             $rolfRisk['tags']->initialize();
             $rolfTags = $rolfRisk['tags']->getSnapshot();
@@ -64,40 +61,46 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
         return new JsonModel([
             'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $tag, $anr),
-            $this->name => $rolfRisks
+            $this->name => $rolfRisks,
         ]);
     }
 
     public function update($id, $data)
     {
-      if(count($data['measures'])>0)
-        $data['measures'] = $this->addAnrId($data['measures']);
-      return parent::update($id, $data);
+        if (!empty($data['measures'])) {
+            $data['measures'] = $this->addAnrId($data['measures']);
+        }
+
+        return parent::update($id, $data);
     }
 
     public function patch($id, $data)
     {
-      if(count($data['measures'])>0)
-        $data['measures'] = $this->addAnrId($data['measures']);
-      return parent::patch($id, $data);
+        if (!empty($data['measures'])) {
+            $data['measures'] = $this->addAnrId($data['measures']);
+        }
+
+        return parent::patch($id, $data);
     }
 
 
     public function patchList($data)
     {
-      $service = $this->getService();
-      $data['toReferential'] = $this->addAnrId($data['toReferential']);
-      $service->createLinkedRisks($data['fromReferential'],$data['toReferential']);
+        $service = $this->getService();
+        $data['toReferential'] = $this->addAnrId($data['toReferential']);
+        $service->createLinkedRisks($data['fromReferential'], $data['toReferential']);
 
-      return new JsonModel([
-          'status' =>  'ok',
-      ]);
+        return new JsonModel([
+            'status' => 'ok',
+        ]);
     }
 
     public function create($data)
     {
-      if(count($data['measures'])>0)
-        $data['measures'] = $this->addAnrId($data['measures']);
-      return parent::create($data);
+        if (!empty($data['measures'])) {
+            $data['measures'] = $this->addAnrId($data['measures']);
+        }
+
+        return parent::create($data);
     }
 }
