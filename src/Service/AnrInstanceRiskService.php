@@ -276,6 +276,15 @@ class AnrInstanceRiskService extends InstanceRiskService
                     }
                 }
             }
+            foreach ($instancesRisks as $siblingInstanceRisk) {
+                foreach ($brothers as $brother) {
+                    if ($siblingInstanceRisk->getId() !== $id
+                        && $brother->getId() === $siblingInstanceRisk->getInstance()->getId()
+                    ) {
+                        $instanceRiskTable->deleteEntity($siblingInstanceRisk, false);
+                    }
+                }
+            }
         }
 
         $instanceRiskTable->deleteEntity($instanceRisk);
