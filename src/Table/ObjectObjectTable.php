@@ -5,13 +5,12 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Table;
+namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
-use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\ObjectObject;
 
@@ -22,21 +21,6 @@ class ObjectObjectTable extends AbstractTable implements PositionUpdatableTableI
     public function __construct(EntityManager $entityManager, string $entityName = ObjectObject::class)
     {
         parent::__construct($entityManager, $entityName);
-    }
-
-    public function findMaxPositionByAnrAndParent(Anr $anr, MonarcObject $parent): int
-    {
-        return (int)$this->getRepository()->createQueryBuilder('oo')
-            ->select('MAX(oo.position)')
-            ->innerJoin('oo.parent', 'parent')
-            ->where('oo.anr = :anr')
-            ->andWhere('parent.uuid = :parentUuid')
-            ->andWhere('parent.anr = :parentAnr')
-            ->setParameter('anr', $anr)
-            ->setParameter('parentUuid', $parent->getUuid())
-            ->setParameter('parentAnr', $anr)
-            ->getQuery()
-            ->getSingleScalarResult();
     }
 
     /**

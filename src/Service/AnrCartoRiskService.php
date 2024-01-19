@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use \Monarc\Core\Model\Entity\Scale;
 use \Monarc\Core\Model\Entity\OperationalRiskScale;
 use \Monarc\Core\Model\Entity\MonarcObject;
@@ -37,7 +39,9 @@ class AnrCartoRiskService extends AbstractService
 
     /**
      * Computes and returns the cartography of real risks
+     *
      * @param int $anrId The ANR ID
+     *
      * @return array An associative array of Impact, MxV, counters and distrib to display as a table
      */
     public function getCartoReal($anrId)
@@ -55,23 +59,25 @@ class AnrCartoRiskService extends AbstractService
             'Likelihood' => $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD],
             'MxV' => $this->headers,
             'riskInfo' => [
-              'counters' => $counters,
-              'distrib' => $distrib,
-              'riskMaxSum' => $riskMaxSum,
-              'byTreatment' => $byTreatment,
+                'counters' => $counters,
+                'distrib' => $distrib,
+                'riskMaxSum' => $riskMaxSum,
+                'byTreatment' => $byTreatment,
             ],
             'riskOp' => [
-              'counters' => $countersRiskOP,
-              'distrib' => $distribRiskOp,
-              'riskOpMaxSum' => $riskOpMaxSum,
-              'byTreatment' => $byTreatmentRiskOp,
+                'counters' => $countersRiskOP,
+                'distrib' => $distribRiskOp,
+                'riskOpMaxSum' => $riskOpMaxSum,
+                'byTreatment' => $byTreatmentRiskOp,
             ],
         ];
     }
 
     /**
      * Computes and returns the cartography of targeted risks
+     *
      * @param int $anrId The ANR ID
+     *
      * @return array An associative array of Impact (rows), MxV (columns), counters and distrib to display as a table
      */
     public function getCartoTargeted($anrId)
@@ -89,22 +95,23 @@ class AnrCartoRiskService extends AbstractService
             'Likelihood' => $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD],
             'MxV' => $this->headers,
             'riskInfo' => [
-              'counters' => $counters,
-              'distrib' => $distrib,
-              'riskMaxSum' => $riskMaxSum,
-              'byTreatment' => $byTreatment,
+                'counters' => $counters,
+                'distrib' => $distrib,
+                'riskMaxSum' => $riskMaxSum,
+                'byTreatment' => $byTreatment,
             ],
             'riskOp' => [
-              'counters' => $countersRiskOP,
-              'distrib' => $distribRiskOp,
-              'riskOpMaxSum' => $riskOpMaxSum,
-              'byTreatment' => $byTreatmentRiskOp,
+                'counters' => $countersRiskOP,
+                'distrib' => $distribRiskOp,
+                'riskOpMaxSum' => $riskOpMaxSum,
+                'byTreatment' => $byTreatmentRiskOp,
             ],
         ];
-      }
+    }
 
     /**
      * Computes and builds the List Scales and headers for the table (Impact and MxV fields)
+     *
      * @param int $anrId The ANR ID
      */
     public function buildListScalesAndHeaders($anrId)
@@ -115,7 +122,8 @@ class AnrCartoRiskService extends AbstractService
         }
 
         // Only compute the listScales and headers fields if we didn't already
-        // TODO: If we reuse the service to build the carto for 2 different ANRs in the same run, this will cause issues!
+        // TODO: If we reuse the service to build the carto for 2 different ANRs in the same run,
+        // this will cause issues!
         if ($this->listScales === null) {
             /** @var ScaleTable $scaleTable */
             $scaleTable = $this->get('table');
@@ -152,6 +160,7 @@ class AnrCartoRiskService extends AbstractService
 
     /**
      * Computes and builds the List Scales for the operational risk table (Impact and likelihood fields)
+     *
      * @param int $anrId The ANR ID
      */
     public function buildListScalesOpRisk($anrId)
@@ -165,8 +174,14 @@ class AnrCartoRiskService extends AbstractService
         if ($this->listOpRiskScales === null) {
             /** @var OperationalRiskScaleTable $operationalRiskScaleTable */
             $operationalRiskScaleTable = $this->get('operationalRiskScaleTable');
-            $likelihoodScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_LIKELIHOOD));
-            $impactsScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_IMPACT));
+            $likelihoodScale = current(
+                $operationalRiskScaleTable->findWithCommentsByAnrAndType(
+                    $this->anr, OperationalRiskScale::TYPE_LIKELIHOOD
+                )
+            );
+            $impactsScale = current(
+                $operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_IMPACT)
+            );
             $impactScaleTypes = $impactsScale->getOperationalRiskScaleTypes();
             $impactScaleComments = $impactScaleTypes[0]->getOperationalRiskScaleComments();
 
@@ -181,13 +196,17 @@ class AnrCartoRiskService extends AbstractService
             });
 
             $this->listOpRiskScales[OperationalRiskScale::TYPE_IMPACT] = $impactScaleValues;
-            $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD] = range($likelihoodScale->getMin(),$likelihoodScale->getMax());
+            $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD] = range(
+                $likelihoodScale->getMin(), $likelihoodScale->getMax()
+            );
         }
     }
 
     /**
      * Calculates the number of risks for each impact/MxV combo
+     *
      * @param string $mode The mode to use, either 'raw' or 'target'
+     *
      * @return array Associative array of values to show in the table
      */
     public function getCountersRisks($mode = 'raw')
@@ -198,10 +217,18 @@ class AnrCartoRiskService extends AbstractService
         $result = $query->select([
             'ir.id as myid',
             'ir.kindOfMeasure as treatment',
-            'IDENTITY(ir.amv) as amv', 'IDENTITY(ir.asset) as asset', 'IDENTITY(ir.threat) as threat', 'IDENTITY(ir.vulnerability) as vulnerability',
+            'IDENTITY(ir.amv) as amv',
+            'IDENTITY(ir.asset) as asset',
+            'IDENTITY(ir.threat) as threat',
+            'IDENTITY(ir.vulnerability) as vulnerability',
             $changeField . ' as maximus',
-            'i.c as ic', 'i.i as ii', 'i.d as id', 'IDENTITY(i.object) as object',
-            'm.c as mc', 'm.i as mi', 'm.a as ma',
+            'i.c as ic',
+            'i.i as ii',
+            'i.d as id',
+            'IDENTITY(i.object) as object',
+            'm.c as mc',
+            'm.i as mi',
+            'm.a as ma',
             'o.scope',
         ])->where('ir.anr = :anrid')
             ->setParameter(':anrid', $this->anr->get('id'))
@@ -224,7 +251,7 @@ class AnrCartoRiskService extends AbstractService
                 'accepted' => [],
                 'shared' => [],
                 'not_treated' => [],
-            ]
+            ],
         ];
 
         foreach ($result as $r) {
@@ -255,7 +282,7 @@ class AnrCartoRiskService extends AbstractService
                 'amv' => $r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability'],
                 'max' => $max,
                 'color' => $this->getColor($max),
-                'treatment' => $r['treatment']
+                'treatment' => $r['treatment'],
             ];
 
             // on est obligé de faire l'algo en deux passes pour pouvoir compter les objets globaux qu'une seule fois
@@ -264,7 +291,8 @@ class AnrCartoRiskService extends AbstractService
                     // dans ce cas pas grand chose à faire on doit stocker le context local
                     $temp[$r['object']][$context['amv']][0] = $context;
                 } else {
-                    // dans ce cas on doit comparer la valeur max qu'on a. Si c'est plus haut alors on remplace par le contexte courant
+                    // dans ce cas on doit comparer la valeur max qu'on a. Si c'est plus haut alors on remplace par le
+                    // contexte courant
                     $cur = $temp[$r['object']][$context['amv']][0];
 
                     // Si on a un max plus grand, on le remplace, sinon on ne fait rien
@@ -274,7 +302,8 @@ class AnrCartoRiskService extends AbstractService
                     }
                 }
             } else {
-                // pour les locaux, l'amv peut exister plusieurs fois sur le même biblio, du coup pour bien les compter plusieurs fois on rajoute
+                // pour les locaux, l'amv peut exister plusieurs fois sur le même biblio, du coup pour bien les
+                // compter plusieurs fois on rajoute
                 $temp[$r['object']][$context['amv']][$r['myid']] = $context;
             }
         }
@@ -317,24 +346,13 @@ class AnrCartoRiskService extends AbstractService
                         $byTreatment['treated'][$context['color']]['sum'] += $context['max'];
                     }
 
-                    switch($context['treatment']) {
-                        case 1:
-                            $kindOfTreatment = 'reduction';
-                            break;
-                        case 2:
-                            $kindOfTreatment = 'denied';
-                            break;
-                        case 3:
-                            $kindOfTreatment = 'accepted';
-                            break;
-                        case 4:
-                            $kindOfTreatment = 'shared';
-                            break;
-                        case 5:
-                            $kindOfTreatment = 'not_treated';
-                            break;
-                    }
-
+                    $kindOfTreatment = match ($context['treatment']) {
+                        InstanceRiskSuperClass::KIND_REDUCTION => 'reduction',
+                        InstanceRiskSuperClass::KIND_REFUSED => 'denied',
+                        InstanceRiskSuperClass::KIND_ACCEPTATION => 'accepted',
+                        InstanceRiskSuperClass::KIND_SHARED => 'shared',
+                        default => 'not_treated',
+                    };
 
                     if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
                         $byTreatment['all'][$kindOfTreatment]['count'] = 0;
@@ -366,17 +384,21 @@ class AnrCartoRiskService extends AbstractService
 
     /**
      * Calculates the number of operational risks for each impact/probabiliy combo
+     *
      * @param string $mode The mode to use, either 'raw' or 'target'
+     *
      * @return array Associative array of values to show in the table
      */
     public function getCountersOpRisks($mode = 'raw')
     {
-        $valuesField = ['IDENTITY(iro.rolfRisk) as id', 'iro.netProb as netProb','iro.targetedProb as targetedProb'];
+        $valuesField = ['IDENTITY(iro.rolfRisk) as id', 'iro.netProb as netProb', 'iro.targetedProb as targetedProb'];
         $query = $this->get('instanceRiskOpTable')->getRepository()->createQueryBuilder('iro');
         $result = $query->select([
-            'iro as instanceRiskOp', 'iro.cacheNetRisk as netRisk', 'iro.cacheTargetedRisk as targetedRisk',
+            'iro as instanceRiskOp',
+            'iro.cacheNetRisk as netRisk',
+            'iro.cacheTargetedRisk as targetedRisk',
             'iro.kindOfMeasure as treatment',
-            implode(',', $valuesField)
+            implode(',', $valuesField),
         ])->where('iro.anr = :anrid')
             ->setParameter(':anrid', $this->anr->get('id'))
             ->andWhere("iro.cacheNetRisk != -1")
@@ -397,7 +419,7 @@ class AnrCartoRiskService extends AbstractService
                 'accepted' => [],
                 'shared' => [],
                 'not_treated' => [],
-            ]
+            ],
         ];
 
         foreach ($result as $r) {
@@ -455,23 +477,13 @@ class AnrCartoRiskService extends AbstractService
                 $byTreatment['treated'][$color]['sum'] += $max;
             }
 
-            switch($treatment) {
-                case 1:
-                    $kindOfTreatment = 'reduction';
-                    break;
-                case 2:
-                    $kindOfTreatment = 'denied';
-                    break;
-                case 3:
-                    $kindOfTreatment = 'accepted';
-                    break;
-                case 4:
-                    $kindOfTreatment = 'shared';
-                    break;
-                case 5:
-                    $kindOfTreatment = 'not_treated';
-                    break;
-            }
+            $kindOfTreatment = match ($treatment) {
+                InstanceRiskOpSuperClass::KIND_REDUCTION => 'reduction',
+                InstanceRiskOpSuperClass::KIND_REFUSED => 'denied',
+                InstanceRiskOpSuperClass::KIND_ACCEPTATION => 'accepted',
+                InstanceRiskOpSuperClass::KIND_SHARED => 'shared',
+                default => 'not_treated',
+            };
 
             if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
                 $byTreatment['all'][$kindOfTreatment]['count'] = 0;
@@ -497,7 +509,6 @@ class AnrCartoRiskService extends AbstractService
         }
 
         return [$countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatment];
-
     }
 
     /**
@@ -516,19 +527,19 @@ class AnrCartoRiskService extends AbstractService
         }
 
         if ($kindOfRisk === 'riskInfo') {
-          if ($val <= $this->anr->getSeuil1()) {
-              return 0;
-          }
-          if ($val <= $this->anr->getSeuil2()) {
-              return 1;
-          }
+            if ($val <= $this->anr->getSeuil1()) {
+                return 0;
+            }
+            if ($val <= $this->anr->getSeuil2()) {
+                return 1;
+            }
         } elseif ($kindOfRisk === 'riskOp') {
-          if ($val <= $this->anr->getSeuilRolf1()) {
-              return 0;
-          }
-          if ($val <= $this->anr->getSeuilRolf2()) {
-              return 1;
-          }
+            if ($val <= $this->anr->getSeuilRolf1()) {
+                return 0;
+            }
+            if ($val <= $this->anr->getSeuilRolf2()) {
+                return 1;
+            }
         }
 
         return 2;
