@@ -33,19 +33,20 @@ use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Model\Entity\Translation;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
+use Monarc\FrontOffice\Table\InstanceTable;
 use Monarc\FrontOffice\Table\OperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Table\OperationalRiskScaleTypeTable;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
-use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
+use Monarc\FrontOffice\Table\RecommendationTable;
+use Monarc\FrontOffice\Table\RecommendationRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfRiskTable;
 use Monarc\FrontOffice\Model\Table\RolfTagTable;
 use Monarc\FrontOffice\Table\TranslationTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
+// TODO: remove the inheritance to avoid coupling and complexity.
 class AnrInstanceRiskOpService extends InstanceRiskOpService
 {
     use RecommendationsPositionsUpdateTrait;
@@ -55,9 +56,9 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
 
     protected RolfRiskTable $rolfRiskTable;
 
-    protected RecommandationTable $recommendationTable;
+    protected RecommendationTable $recommendationTable;
 
-    protected RecommandationRiskTable $recommendationRiskTable;
+    protected RecommendationRiskTable $recommendationRiskTable;
 
     protected InstanceRiskOwnerTable $instanceRiskOwnerTable;
 
@@ -74,8 +75,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         ConfigService $configService,
         TranslateService $translateService,
         InstanceRiskOwnerTable $instanceRiskOwnerTable,
-        RecommandationTable $recommendationTable,
-        RecommandationRiskTable $recommendationRiskTable
+        RecommendationTable $recommendationTable,
+        RecommendationRiskTable $recommendationRiskTable
     ) {
         // TODO: InstanceTable is not as expected. Perhaps we need to drop the service inheritance or extend the InstanceTable.
         parent::__construct(
@@ -273,8 +274,8 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
             $recommendationUuids = [];
             foreach ($operationalInstanceRisk->getRecommendationRisks() as $recommendationRisk) {
-                if ($recommendationRisk->getRecommandation() !== null) {
-                    $recommendationUuids[] = $recommendationRisk->getRecommandation()->getUuid();
+                if ($recommendationRisk->getRecommendation() !== null) {
+                    $recommendationUuids[] = $recommendationRisk->getRecommendation()->getUuid();
                 }
             }
 
@@ -549,7 +550,7 @@ class AnrInstanceRiskOpService extends InstanceRiskOpService
         );
         $csvData = [];
         foreach ($recommendationsRisks as $recommendationRisk) {
-            $recommendation = $recommendationRisk->getRecommandation();
+            $recommendation = $recommendationRisk->getRecommendation();
             $csvData[] = $recommendation->getCode() . " - " . $recommendation->getDescription();
         }
 

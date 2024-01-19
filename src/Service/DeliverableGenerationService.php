@@ -16,15 +16,14 @@ use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
+use Monarc\FrontOffice\Model\Entity\RecommendationRisk;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Model\Table\DeliveryTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
-use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
-use Monarc\FrontOffice\Model\Table\RecommendationHistoricTable;
+use Monarc\FrontOffice\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Table\InstanceRiskTable;
+use Monarc\FrontOffice\Table\InstanceTable;
+use Monarc\FrontOffice\Table\RecommendationRiskTable;
+use Monarc\FrontOffice\Table\RecommendationHistoryTable;
 use Monarc\FrontOffice\Table\AnrInstanceMetadataFieldTable;
 use Monarc\FrontOffice\Table\SoaScaleCommentTable;
 use Monarc\FrontOffice\Table\ClientTable;
@@ -100,10 +99,10 @@ class DeliverableGenerationService extends AbstractService
     protected $translateService;
     /** @var InstanceRiskOwnerTable */
     protected $instanceRiskOwnerTable;
-    /** @var RecommandationRiskTable */
+    /** @var RecommendationRiskTable */
     protected $recommendationRiskTable;
-    /** @var RecommendationHistoricTable */
-    protected $recommendationHistoricTable;
+    /** @var RecommendationHistoryTable */
+    protected $recommendationHistoryTable;
     /** @var AnrInstanceMetadataFieldTable */
     protected $metadatasOnInstancesTable;
     /** @var TranslationTable */
@@ -2964,7 +2963,10 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateRisksPlan()
     {
-        $recommendationRisks = $this->recommendationRiskTable->findByAnr($this->anr, ['r.position' => 'ASC']);
+        $recommendationRisks = $this->recommendationRiskTable->findByAnrOrderByAndCanExcludeNotTreated(
+            $this->anr,
+            ['r.position' => 'ASC']
+        );
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
@@ -3050,7 +3052,7 @@ class DeliverableGenerationService extends AbstractService
         $toUnset = [];
         foreach ($recommendationRisks as $recommendationRisk) {
             if ($recommendationRisk->hasGlobalObjectRelation()) {
-                $key = $recommendationRisk->getRecommandation()->getUuid()
+                $key = $recommendationRisk->getRecommendation()->getUuid()
                     . ' - ' . $recommendationRisk->getThreat()->getUuid()
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
                     . ' - ' . $recommendationRisk->getGlobalObject()->getUuid();
@@ -3087,11 +3089,11 @@ class DeliverableGenerationService extends AbstractService
                 }
 
                 $importance = '';
-                for ($i = 0; $i <= ($recommendationRisk->getRecommandation()->getImportance() - 1); $i++) {
+                for ($i = 0; $i <= ($recommendationRisk->getRecommendation()->getImportance() - 1); $i++) {
                     $importance .= '●';
                 }
 
-                if ($recommendationRisk->getRecommandation()->getUuid() !== $previousRecoId) {
+                if ($recommendationRisk->getRecommendation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
                     $cellReco = $table->addCell(Converter::cmToTwip(5.00), $this->setColSpanCell(9, 'DBE5F1'));
                     $cellRecoRun = $cellReco->addTextRun($this->leftParagraph);
@@ -3100,18 +3102,18 @@ class DeliverableGenerationService extends AbstractService
                         $this->redFont
                     );
                     $cellRecoRun->addText(
-                        _WT($recommendationRisk->getRecommandation()->getCode()),
+                        _WT($recommendationRisk->getRecommendation()->getCode()),
                         $this->boldFont
                     );
                     $cellRecoRun->addText(
-                        ' - ' . _WT($recommendationRisk->getRecommandation()->getDescription()),
+                        ' - ' . _WT($recommendationRisk->getRecommendation()->getDescription()),
                         $this->boldFont
                     );
                 }
 
                 $continue = true;
 
-                $key = $recommendationRisk->getRecommandation()->getUuid()
+                $key = $recommendationRisk->getRecommendation()->getUuid()
                     . ' - ' . $recommendationRisk->getThreat()->getUuid()
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
                     . ' - ' . (
@@ -3193,7 +3195,7 @@ class DeliverableGenerationService extends AbstractService
                         );
                 }
             }
-            $previousRecoId = $recommendationRisk->getRecommandation()->getUuid();
+            $previousRecoId = $recommendationRisk->getRecommendation()->getUuid();
         }
 
         return $table;
@@ -3205,7 +3207,10 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateOperationalRisksPlan()
     {
-        $recommendationRisks = $this->recommendationRiskTable->findByAnr($this->anr, ['r.position' => 'ASC']);
+        $recommendationRisks = $this->recommendationRiskTable->findByAnrOrderByAndCanExcludeNotTreated(
+            $this->anr,
+            ['r.position' => 'ASC']
+        );
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
@@ -3262,11 +3267,11 @@ class DeliverableGenerationService extends AbstractService
                     $cacheNetRisk;
 
                 $importance = '';
-                for ($i = 0; $i <= ($recommendationRisk->getRecommandation()->getImportance() - 1); $i++) {
+                for ($i = 0; $i <= ($recommendationRisk->getRecommendation()->getImportance() - 1); $i++) {
                     $importance .= '●';
                 }
 
-                if ($recommendationRisk->getRecommandation()->getUuid() !== $previousRecoId) {
+                if ($recommendationRisk->getRecommendation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
                     $cellReco = $table->addCell(Converter::cmToTwip(5.00), $this->setColSpanCell(6, 'DBE5F1'));
                     $cellRecoRun = $cellReco->addTextRun($this->leftParagraph);
@@ -3275,11 +3280,11 @@ class DeliverableGenerationService extends AbstractService
                         $this->redFont
                     );
                     $cellRecoRun->addText(
-                        _WT($recommendationRisk->getRecommandation()->getCode()),
+                        _WT($recommendationRisk->getRecommendation()->getCode()),
                         $this->boldFont
                     );
                     $cellRecoRun->addText(
-                        ' - ' . _WT($recommendationRisk->getRecommandation()->getDescription()),
+                        ' - ' . _WT($recommendationRisk->getRecommendation()->getDescription()),
                         $this->boldFont
                     );
                 }
@@ -3325,7 +3330,7 @@ class DeliverableGenerationService extends AbstractService
                         $this->centerParagraph
                     );
 
-                $previousRecoId = $recommendationRisk->getRecommandation()->getUuid();
+                $previousRecoId = $recommendationRisk->getRecommendation()->getUuid();
             }
         }
 
@@ -3338,7 +3343,10 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateTableImplementationPlan()
     {
-        $recommendationRisks = $this->recommendationRiskTable->findByAnr($this->anr, ['r.position' => 'ASC']);
+        $recommendationRisks = $this->recommendationRiskTable->findByAnrOrderByAndCanExcludeNotTreated(
+            $this->anr,
+            ['r.position' => 'ASC']
+        );
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
@@ -3379,7 +3387,7 @@ class DeliverableGenerationService extends AbstractService
         }
 
         foreach ($recommendationRisks as $recommendationRisk) {
-            $recommendation = $recommendationRisk->getRecommandation();
+            $recommendation = $recommendationRisk->getRecommendation();
             $importance = '';
             for ($i = 0; $i <= ($recommendation->getImportance() - 1); $i++) {
                 $importance .= '●';
@@ -3415,7 +3423,7 @@ class DeliverableGenerationService extends AbstractService
                 );
             $table->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($recommendation->getResponsable()),
+                    _WT($recommendation->getResponsible()),
                     $this->normalFont,
                     $this->centerParagraph
                 );
@@ -3436,7 +3444,7 @@ class DeliverableGenerationService extends AbstractService
      */
     protected function generateTableImplementationHistory()
     {
-        $recoRecords = $this->recommendationHistoricTable->findByAnr($this->anr);
+        $recoRecords = $this->recommendationHistoryTable->findByAnr($this->anr);
 
         $tableWord = new PhpWord();
         $section = $tableWord->addSection();
@@ -5862,7 +5870,7 @@ class DeliverableGenerationService extends AbstractService
         }
     }
 
-    private function getObjectInstancePath(RecommandationRisk $recommendationRisk): string
+    private function getObjectInstancePath(RecommendationRisk $recommendationRisk): string
     {
         if ($recommendationRisk->hasGlobalObjectRelation()) {
             return $recommendationRisk->getInstance()->getName($recommendationRisk->getAnr()->getLanguage())

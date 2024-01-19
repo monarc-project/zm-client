@@ -138,20 +138,7 @@ class AnrAmvService implements PositionUpdatableServiceInterface
 
         $this->updatePositions($amv, $this->amvTable, $data);
 
-        foreach ($asset->getObjects() as $object) {
-            foreach ($object->getInstances() as $instance) {
-                $instanceRisk = (new Entity\InstanceRisk())
-                    ->setAnr($anr)
-                    ->setAmv($amv)
-                    ->setAsset($amv->getAsset())
-                    ->setInstance($instance)
-                    ->setThreat($amv->getThreat())
-                    ->setVulnerability($amv->getVulnerability())
-                    ->setCreator($this->connectedUser->getEmail());
-
-                $this->instanceRiskTable->save($instanceRisk, false);
-            }
-        }
+        $this->createInstanceRiskForInstances($asset, $amv);
 
         $this->amvTable->save($amv, $saveInDb);
 
@@ -244,9 +231,10 @@ class AnrAmvService implements PositionUpdatableServiceInterface
                 ->setThreat($threat)
                 ->setVulnerability($vulnerability)
                 ->setCreator($this->connectedUser->getEmail());
-            $this->amvTable->save($amv);
 
-            $this->createInstanceRiskForInstances($asset);
+            $this->createInstanceRiskForInstances($asset, $amv);
+
+            $this->amvTable->save($amv);
 
             $createdAmvsUuids[] = $amv->getUuid();
         }
@@ -343,10 +331,13 @@ class AnrAmvService implements PositionUpdatableServiceInterface
         return $this->anrVulnerabilityService->create($anr, $vulnerabilityData);
     }
 
-    private function createInstanceRiskForInstances(Entity\Asset $asset): void
+    /**
+     * Created instance risks based on the newly created AMV for the instances based on the linked asset.
+     */
+    private function createInstanceRiskForInstances(Entity\Asset $asset, Entity\Amv $amv): void
     {
         foreach ($asset->getInstances() as $instance) {
-            $this->anrInstanceRiskService->createInstanceRisk($instance, $instance->getObject());
+            $this->anrInstanceRiskService->createInstanceRisk($instance, $amv);
         }
     }
 

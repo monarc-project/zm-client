@@ -28,23 +28,11 @@ class ApiSnapshotController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $filterAnd = ['anrReference' => $anrId];
-
-        if (!is_null($status) && $status != 'all') {
-            $filterAnd['status'] = $status;
-        }
-
-        $service = $this->getService();
-
-        // TODO: add required anr data to the getList response.
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        foreach ($entities as $key => $entity) {
-            $this->formatDependencies($entities[$key], ['anr']);
-        }
+        $snapshotsList = $this->snapshotService->getList($anr);
 
         return $this->getPreparedJsonResponse([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            'snapshots' => $entities
+            'count' => \count($snapshotsList),
+            'snapshots' => $snapshotsList,
         ]);
     }
 

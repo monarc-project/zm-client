@@ -11,12 +11,16 @@ use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Entity\AmvSuperClass;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Table\AbstractTable;
+use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
+use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Asset;
 
-class AmvTable extends AbstractTable
+class AmvTable extends AbstractTable implements PositionUpdatableTableInterface
 {
+    use PositionIncrementTableTrait;
+
     public function __construct(EntityManager $entityManager, string $entityName = Amv::class)
     {
         parent::__construct($entityManager, $entityName);

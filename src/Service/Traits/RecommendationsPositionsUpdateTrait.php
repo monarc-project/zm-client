@@ -1,14 +1,18 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Service\Traits;
 
-use Doctrine\ORM\OptimisticLockException;
 use LogicException;
 use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\Recommandation;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Model\Entity\Recommendation;
+use Monarc\FrontOffice\Table\RecommendationTable;
 
 trait RecommendationsPositionsUpdateTrait
 {
@@ -17,7 +21,7 @@ trait RecommendationsPositionsUpdateTrait
      *
      * @param InstanceRisk|InstanceRiskOp $instanceRisk
      */
-    public function updateInstanceRiskRecommendationsPositions($instanceRisk): void
+    public function updateInstanceRiskRecommendationsPositions(InstanceRisk|InstanceRiskOp $instanceRisk): void
     {
         $recommendationRisks = $instanceRisk->getRecommendationRisks();
         if ($recommendationRisks === null) {
@@ -27,7 +31,7 @@ trait RecommendationsPositionsUpdateTrait
         $riskRecommendations = [];
         if ($instanceRisk->isTreated()) {
             foreach ($recommendationRisks as $recommendationRisk) {
-                $recommendation = $recommendationRisk->getRecommandation();
+                $recommendation = $recommendationRisk->getRecommendation();
                 if ($recommendation->isImportanceEmpty() || !$recommendation->isPositionEmpty()) {
                     continue;
                 }
@@ -42,7 +46,7 @@ trait RecommendationsPositionsUpdateTrait
             }
         } else {
             foreach ($recommendationRisks as $recommendationRisk) {
-                $recommendation = $recommendationRisk->getRecommandation();
+                $recommendation = $recommendationRisk->getRecommendation();
                 if ($recommendation->isPositionEmpty()
                     || $recommendation->isImportanceEmpty()
                     || \count($recommendation->getRecommendationRisks()) > 1
@@ -65,8 +69,6 @@ trait RecommendationsPositionsUpdateTrait
      * Resets positions of the recommendations related to the informational/operational risk if not linked anymore.
      *
      * @param InstanceRisk|InstanceRiskOp $instanceRisk
-     *
-     * @throws OptimisticLockException
      */
     protected function processRemovedInstanceRiskRecommendationsPositions($instanceRisk): void
     {
@@ -76,7 +78,7 @@ trait RecommendationsPositionsUpdateTrait
         ) {
             $recommendationsToResetPositions = [];
             foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
-                $linkedRecommendation = $recommendationRisk->getRecommandation();
+                $linkedRecommendation = $recommendationRisk->getRecommendation();
                 if (!$linkedRecommendation->hasLinkedRecommendationRisks()) {
                     $recommendationsToResetPositions[$linkedRecommendation->getUuid()] = $linkedRecommendation;
                 }
@@ -91,8 +93,6 @@ trait RecommendationsPositionsUpdateTrait
      * @param AnrSuperClass $anr
      * @param array $riskRecommendations List of recommendations to reset the positions (set ot 0),
      *                                   Keys of the array are UUIDs, values are Recommendation objects.
-     *
-     * @throws OptimisticLockException
      */
     protected function resetRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
     {
@@ -105,23 +105,23 @@ trait RecommendationsPositionsUpdateTrait
             );
 
         $positionShiftAdjustment = 0;
-        /** @var Recommandation[] $riskRecommendations */
+        /** @var Recommendation[] $riskRecommendations */
         foreach ($riskRecommendations as $riskRecommendation) {
             foreach ($linkedRecommendations as $linkedRecommendation) {
                 if ($linkedRecommendation->isPositionLowerThan(
                     $riskRecommendation->getPosition() + $positionShiftAdjustment
                 )) {
                     $linkedRecommendation->shiftPositionUp();
-                    $recommendationTable->saveEntity($riskRecommendation, false);
+                    $recommendationTable->save($riskRecommendation, false);
                 }
             }
 
             $positionShiftAdjustment--;
             $riskRecommendation->setEmptyPosition();
-            $recommendationTable->saveEntity($riskRecommendation, false);
+            $recommendationTable->save($riskRecommendation, false);
         }
 
-        $recommendationTable->getDb()->flush();
+        $recommendationTable->flush();
     }
 
     private function updateRecommendationsPositions(AnrSuperClass $anr, array $riskRecommendations): void
@@ -136,16 +136,16 @@ trait RecommendationsPositionsUpdateTrait
 
         $maxPositionsPerImportance = $this->getMaxPositionsPerImportance($linkedRecommendations);
 
-        /** @var Recommandation[] $riskRecommendations */
+        /** @var Recommendation[] $riskRecommendations */
         if ($this->isImportanceOrderRespected($linkedRecommendations)) {
             foreach ($riskRecommendations as $riskRecommendation) {
                 $riskRecommendation->setPosition(++$maxPositionsPerImportance[$riskRecommendation->getImportance()]);
-                $recommendationTable->saveEntity($riskRecommendation, false);
+                $recommendationTable->save($riskRecommendation, false);
 
                 foreach ($linkedRecommendations as $linkedRecommendation) {
                     if ($linkedRecommendation->isImportanceLowerThan($riskRecommendation->getImportance())) {
                         $linkedRecommendation->shiftPositionDown();
-                        $recommendationTable->saveEntity($linkedRecommendation, false);
+                        $recommendationTable->save($linkedRecommendation, false);
                     }
                 }
 
@@ -158,22 +158,22 @@ trait RecommendationsPositionsUpdateTrait
             $maxPosition = max($maxPositionsPerImportance);
             foreach ($riskRecommendations as $riskRecommendation) {
                 $riskRecommendation->setPosition(++$maxPosition);
-                $recommendationTable->saveEntity($riskRecommendation, false);
+                $recommendationTable->save($riskRecommendation, false);
             }
         }
 
-        $recommendationTable->getDb()->flush();
+        $recommendationTable->flush();
     }
 
     /**
-     * @param Recommandation[] $linkedRecommendations
+     * @param Recommendation[] $linkedRecommendations
      */
     private function getMaxPositionsPerImportance(array $linkedRecommendations): array
     {
         $maxPositionsPerImportance = [
-            Recommandation::HIGH_IMPORTANCE => 0,
-            Recommandation::MEDIUM_IMPORTANCE => 0,
-            Recommandation::LOW_IMPORTANCE => 0,
+            Recommendation::HIGH_IMPORTANCE => 0,
+            Recommendation::MEDIUM_IMPORTANCE => 0,
+            Recommendation::LOW_IMPORTANCE => 0,
         ];
         foreach ($linkedRecommendations as $linkedRecommendation) {
             $maxPositionsPerImportance[$linkedRecommendation->getImportance()] = $linkedRecommendation->getPosition();
@@ -212,11 +212,11 @@ trait RecommendationsPositionsUpdateTrait
     }
 
     /**
-     * @param Recommandation[] $linkedRecommendations
+     * @param Recommendation[] $linkedRecommendations
      */
     private function isImportanceOrderRespected(array $linkedRecommendations): bool
     {
-        $previousRecommendationImportance = Recommandation::HIGH_IMPORTANCE;
+        $previousRecommendationImportance = Recommendation::HIGH_IMPORTANCE;
         foreach ($linkedRecommendations as $linkedRecommendation) {
             if ($linkedRecommendation->isImportanceHigherThan($previousRecommendationImportance)) {
                 return false;
@@ -227,10 +227,7 @@ trait RecommendationsPositionsUpdateTrait
         return true;
     }
 
-    /**
-     * TODO: remove the method when all the services, that use the trait will use dependencies' injection via constructor.
-     */
-    private function getRecommendationTable(): RecommandationTable
+    private function getRecommendationTable(): RecommendationTable
     {
         if (property_exists(\get_class($this), 'recommendationTable')) {
             return $this->recommendationTable;

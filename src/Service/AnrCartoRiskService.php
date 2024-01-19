@@ -10,6 +10,8 @@ namespace Monarc\FrontOffice\Service;
 use \Monarc\Core\Model\Entity\Scale;
 use \Monarc\Core\Model\Entity\OperationalRiskScale;
 use \Monarc\Core\Model\Entity\MonarcObject;
+use Monarc\Core\Service\AbstractService;
+use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
 use Monarc\FrontOffice\Model\Table\ScaleTable;
 
@@ -17,7 +19,7 @@ use Monarc\FrontOffice\Model\Table\ScaleTable;
  * This class is the service that handles the ANR Cartography of real & targeted risks (as shown on the dashboard)
  * @package Monarc\FrontOffice\Service
  */
-class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
+class AnrCartoRiskService extends AbstractService
 {
     protected $anrTable;
     protected $userAnrTable;
@@ -28,7 +30,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
     protected $operationalRiskScaleTable;
     protected $filterColumns = [];
     protected $dependencies = [];
-    private $anr = null;
+    private Anr|null $anr = null;
     private $listScales = null;
     private $listOpRiskScales = null;
     private $headers = null;
@@ -43,8 +45,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib, $riskMaxSum, $byTreatment) = $this->getCountersRisks('raw');
-        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatmentRiskOp) = $this->getCountersOpRisks('raw');
+        [$counters, $distrib, $riskMaxSum, $byTreatment] = $this->getCountersRisks('raw');
+        [$countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatmentRiskOp] = $this->getCountersOpRisks('raw');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
@@ -77,8 +79,8 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
         $this->buildListScalesAndHeaders($anrId);
         $this->buildListScalesOpRisk($anrId);
 
-        list($counters, $distrib, $riskMaxSum, $byTreatment) = $this->getCountersRisks('target');
-        list($countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatmentRiskOp) = $this->getCountersOpRisks('target');
+        [$counters, $distrib, $riskMaxSum, $byTreatment] = $this->getCountersRisks('target');
+        [$countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatmentRiskOp] = $this->getCountersOpRisks('target');
 
         return [
             'Impact' => $this->listScales[Scale::TYPE_IMPACT],
@@ -252,7 +254,7 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
                 'right' => $right,
                 'amv' => $r['asset'] . ';' . $r['threat'] . ';' . $r['vulnerability'],
                 'max' => $max,
-                'color' => $this->getColor($max,'riskInfo'),
+                'color' => $this->getColor($max),
                 'treatment' => $r['treatment']
             ];
 
@@ -500,30 +502,35 @@ class AnrCartoRiskService extends \Monarc\Core\Service\AbstractService
 
     /**
      * Returns the cell color to display for the provided risk value
-     * @param int $val The risk value
+     *
+     * @param int|null $val The risk value
+     *
      * @return int|string 0, 1, 2 corresponding to low/med/hi risk color, or an empty string in case of invalid value
      */
-    private function getColor($val,$kindOfRisk = 'riskInfo')
+    private function getColor(?int $val, string $kindOfRisk = 'riskInfo')
     {
-        // Provient de l'ancienne version, on ne remonte que les valeurs '' / 0 / 1 / 2, les couleurs seront traitées par le FE
-        if ($val == -1 || is_null($val)) {
+        // Provient de l'ancienne version, on ne remonte que les valeurs '' / 0 / 1 / 2, les couleurs seront traitées
+        // par le FE
+        if ($val === -1 || \is_null($val)) {
             return '';
         }
-        if ($kindOfRisk == 'riskInfo') {
-          if ($val <= $this->anr->get('seuil1')) {
+
+        if ($kindOfRisk === 'riskInfo') {
+          if ($val <= $this->anr->getSeuil1()) {
               return 0;
           }
-          if ($val <= $this->anr->get('seuil2')) {
+          if ($val <= $this->anr->getSeuil2()) {
               return 1;
           }
-        } else {
-          if ($val <= $this->anr->get('seuilRolf1')) {
+        } elseif ($kindOfRisk === 'riskOp') {
+          if ($val <= $this->anr->getSeuilRolf1()) {
               return 0;
           }
-          if ($val <= $this->anr->get('seuilRolf2')) {
+          if ($val <= $this->anr->getSeuilRolf2()) {
               return 1;
           }
         }
+
         return 2;
     }
 }

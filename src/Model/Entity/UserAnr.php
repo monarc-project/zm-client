@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Model\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\Traits;
 
 /**
@@ -75,14 +74,15 @@ class UserAnr
         return $this;
     }
 
-    public function getAnr(): AnrSuperClass
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    public function setAnr(AnrSuperClass $anr): self
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+        $anr->addUserAnrPermission($this);
 
         return $this;
     }

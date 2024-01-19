@@ -321,10 +321,29 @@ class FixPositionsCleanupDb extends AbstractMigration
             }
             $descriptionName = 'description' . $anrData['language'];
             $languageCode = $languageCodes[$anrData['language']];
-            $this->execute('UPDATE anrs SET label = ' . $uniqueLabels[$anrData[$labelName]] .
-                ', description = ' . $anrData[$descriptionName] .
-                ', language_code = "' . $languageCode . '" WHERE id = ' . (int)$anrData['id']);
+            $this->execute('UPDATE anrs SET label = "' . $uniqueLabels[$anrData[$labelName]] .
+                '", description = "' . $anrData[$descriptionName] .
+                '", language_code = "' . $languageCode . '" WHERE id = ' . (int)$anrData['id']);
         }
+
+        /* Replace in recommandations_sets label1,2,3,4 by a single label field. */
+        $this->table('recommandations_sets')
+            ->addColumn('label', 'string', ['null' => false, 'limit' => 255, 'default' => ''])
+            /* Make anr_id and label unique. */
+            ->addIndex(['anr_id', 'label'], ['unique' => true])
+            ->update();
+        $recSetsQuery = $this->query('SELECT rs.id, a.language, rs.label1, rs.label2, rs.label3, rs.label4
+            FROM recommandations_sets rs INNER JOIN anrs a ON a.id = rs.anr_id'
+        );
+        foreach ($recSetsQuery->fetchAll() as $recSetData) {
+            $labelName = 'label' . $recSetData['language'];
+            $this->execute('UPDATE recommandations_sets SET label = "' . $recSetData[$labelName] . '"' .
+                ' WHERE id = ' . (int)$recSetData['id']);
+        }
+
+        $this->table('recommandations')
+            ->removeColumn('token_import')
+            ->update();
 
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.
         $this->table('anr_instance_metadata_fields')->removeColumn('label_translation_key')->update();

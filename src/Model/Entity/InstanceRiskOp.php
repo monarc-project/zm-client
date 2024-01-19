@@ -54,9 +54,9 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     protected $rolfRisk;
 
     /**
-     * @var ArrayCollection|RecommandationRisk[]
+     * @var ArrayCollection|RecommendationRisk[]
      *
-     * @ORM\OneToMany(targetEntity="RecommandationRisk", mappedBy="instanceRiskOp", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="instanceRiskOp", cascade={"persist", "remove"})
      */
     protected $recommendationRisks;
 

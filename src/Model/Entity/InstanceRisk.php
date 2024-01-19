@@ -70,9 +70,9 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $vulnerability;
 
     /**
-     * @var ArrayCollection|RecommandationRisk[]
+     * @var ArrayCollection|RecommendationRisk[]
      *
-     * @ORM\OneToMany(targetEntity="RecommandationRisk", mappedBy="instanceRisk", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="instanceRisk", cascade={"persist", "remove"})
      */
     protected $recommendationRisks;
 
@@ -93,14 +93,26 @@ class InstanceRisk extends InstanceRiskSuperClass
      */
     protected $context;
 
-    public static function constructFromObject(InstanceRiskSuperClass $instanceRisk): InstanceRiskSuperClass
+    public function __construct()
     {
-        return static::constructFromObject($instanceRisk)->setContext($instanceRisk->getContext());
+        $this->recommendationRisks = new ArrayCollection();
     }
 
-    /**
-     * @return ArrayCollection|RecommandationRisk[]
-     */
+    public static function constructFromObject(InstanceRiskSuperClass $instanceRisk): InstanceRiskSuperClass
+    {
+        /** @var InstanceRisk $instanceRisk */
+        $instanceRisk = parent::constructFromObject($instanceRisk);
+        $instanceRisk->setAnr($instanceRisk->getAnr())
+            ->setAsset($instanceRisk->getAsset())
+            ->setThreat($instanceRisk->getThreat())
+            ->setVulnerability($instanceRisk->getVulnerability())
+            ->setAmv($instanceRisk->getAmv())
+            ->setInstanceRiskOwner($instanceRisk->getInstanceRiskOwner())
+            ->setContext($instanceRisk->getContext());
+
+        return $instanceRisk;
+    }
+
     public function getRecommendationRisks()
     {
         return $this->recommendationRisks;

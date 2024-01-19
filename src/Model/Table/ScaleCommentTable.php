@@ -7,14 +7,13 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Table\ScaleCommentTable as CoreScaleCommentTable;
+use Monarc\Core\Table\ScaleCommentTable as CoreScaleCommentTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\ScaleComment;
 
 /**
- * Class ScaleCommentTable
- * @package Monarc\FrontOffice\Model\Table
+ * TODO: refactor... remove the extension.
  */
 class ScaleCommentTable extends CoreScaleCommentTable
 {

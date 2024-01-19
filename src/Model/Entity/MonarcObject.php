@@ -34,20 +34,6 @@ class MonarcObject extends ObjectSuperClass
     protected $anr;
 
     /**
-     * @var ArrayCollection|Anr[]
-     *
-     * @ORM\ManyToMany(targetEntity="Anr", inversedBy="objects", cascade={"persist"})
-     * @ORM\JoinTable(name="anrs_objects",
-     *  joinColumns={
-     *     @ORM\JoinColumn(name="object_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")
-     *  },
-     *  inverseJoinColumns={@ORM\JoinColumn(name="anr_id", referencedColumnName="id")}
-     * )
-     */
-    protected $anrs;
-
-    /**
      * @var Asset
      *
      * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
@@ -78,4 +64,20 @@ class MonarcObject extends ObjectSuperClass
      */
     protected $children;
 
+    public function getImplicitPositionRelationsValues(): array
+    {
+        return array_merge(['anr' => $this->anr], parent::getImplicitPositionRelationsValues());
+    }
+
+    public function setAnr(Anr $anr): self
+    {
+        $this->anr = $anr;
+
+        return $this;
+    }
+
+    public function getAnr(): Anr
+    {
+        return $this->anr;
+    }
 }

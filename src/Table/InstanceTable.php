@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -13,12 +13,10 @@ use Monarc\Core\Model\Entity\AnrSuperClass;
 use Monarc\Core\Model\Entity\AssetSuperClass;
 use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
-use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
+use Monarc\Core\Table\InstanceTable as CoreInstanceTable;
 use Monarc\FrontOffice\Model\Entity\Instance;
 
-class InstanceTable extends AbstractTable
+class InstanceTable extends CoreInstanceTable
 {
     public function __construct(EntityManager $entityManager, string $entityName = Instance::class)
     {
@@ -39,23 +37,6 @@ class InstanceTable extends AbstractTable
             ->setParameter('anr', $anr)
             ->setParameter('objUuid', $object->getUuid())
             ->setParameter('objAnr', $object->getAnr())
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return Instance[]
-     */
-    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('i')
-            ->innerJoin('i.asset', 'a')
-            ->where('i.anr = :anr')
-            ->andWhere('a.uuid = :assetUuid')
-            ->andWhere('a.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->setParameter('assetUuid', $asset->getUuid())
             ->getQuery()
             ->getResult();
     }
@@ -89,23 +70,6 @@ class InstanceTable extends AbstractTable
             ->getResult();
     }
 
-    public function getMaxPositionByAnrAndParent(AnrSuperClass $anr, ?InstanceSuperClass $parentInstance = null): int
-    {
-        $queryBuilder = $this->getRepository()
-            ->createQueryBuilder('i')
-            ->select('MAX(i.position)')
-            ->where('i.anr = :anr')
-            ->setParameter('anr', $anr);
-
-        if ($parentInstance !== null) {
-            $queryBuilder
-                ->andWhere('i.parent = :parent')
-                ->setParameter('parent', $parentInstance);
-        }
-
-        return (int)$queryBuilder->getQuery()->getSingleScalarResult();
-    }
-
     public function countByAnrIdFromDate(int $anrId, DateTime $fromDate): int
     {
         return (int)$this->getRepository()->createQueryBuilder('i')
@@ -130,15 +94,13 @@ class InstanceTable extends AbstractTable
             ->andWhere('o.uuid = :object_uuid')
             ->andWhere('o.anr = :anr')
             ->andWhere('i.id != :id')
-            ->andWhere('o.scope = :scopeMode')
+            ->andWhere('o.scope = ' . ObjectSuperClass::SCOPE_GLOBAL)
             ->setParameter('anr', $anr)
             ->setParameter('id', $instance->getId())
             ->setParameter('object_uuid', $instance->getObject()->getUuid())
-            ->setParameter('scopeMode', ObjectSuperClass::SCOPE_GLOBAL)
             ->getQuery()
             ->getResult();
     }
-
 
     /**
      * @return InstanceSuperClass[]

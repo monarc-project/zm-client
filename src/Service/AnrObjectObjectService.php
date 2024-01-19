@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -13,8 +13,8 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
 use Monarc\FrontOffice\Model\Entity\ObjectObject;
-use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
-use Monarc\FrontOffice\Model\Table\ObjectObjectTable;
+use Monarc\FrontOffice\Table\MonarcObjectTable;
+use Monarc\FrontOffice\Table\ObjectObjectTable;
 
 class AnrObjectObjectService
 {

@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
-use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\Traits;
 
@@ -35,7 +34,7 @@ class Snapshot
      *
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\OneToOne(targetEntity="Anr", cascade={"persist", "remove"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
@@ -62,19 +61,9 @@ class Snapshot
      */
     protected $comment;
 
-    /**
-     * @return int
-     */
     public function getId(): int
     {
         return $this->id;
-    }
-
-    public function setId(int $id): self
-    {
-        $this->id = $id;
-
-        return $this;
     }
 
     public function getAnr(): Anr
@@ -82,33 +71,30 @@ class Snapshot
         return $this->anr;
     }
 
-    /**
-     * @param Anr $anr
-     *
-     * @return Snapshot
-     */
     public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+        $anr->setSnapshot($this);
 
         return $this;
     }
 
-    public function getAnrReference(): ?Anr
+    public function getAnrReference(): Anr
     {
         return $this->anrReference;
     }
 
-    public function setAnrReference($anrReference): self
+    public function setAnrReference(Anr $anrReference): self
     {
         $this->anrReference = $anrReference;
+        $anrReference->addReferencedSnapshot($this);
 
         return $this;
     }
 
-    public function getComment(): ?string
+    public function getComment(): string
     {
-        return $this->comment;
+        return (string)$this->comment;
     }
 
     public function setComment(?string $comment): self

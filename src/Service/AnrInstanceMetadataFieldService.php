@@ -30,10 +30,8 @@ class AnrInstanceMetadataFieldService
     public function getList(Anr $anr): array
     {
         $result = [];
-        /** @var AnrInstanceMetadataField[] $metadataFields */
-        $metadataFields = $this->anrInstanceMetadataFieldTable->findByAnr($anr);
-
-        foreach ($metadataFields as $index => $metadataField) {
+        /** @var AnrInstanceMetadataField $metadataField */
+        foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $index => $metadataField) {
             $result[] = [
                 'id' => $metadataField->getId(),
                 'index' => $index + 1,

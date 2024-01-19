@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -9,33 +9,52 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\Core\Model\Entity\Anr;
-use Monarc\Core\Service\InstanceRiskService;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Service\AnrInstanceRiskService;
+use Monarc\FrontOffice\Validator\InputValidator\InstanceRisk\PostSpecificInstanceRiskDataInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\InstanceRisk\UpdateInstanceRiskDataInputValidator;
 
 class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private InstanceRiskService $instanceRiskService;
+    public function __construct(
+        private AnrInstanceRiskService $anrInstanceRiskService,
+        private PostSpecificInstanceRiskDataInputValidator $postSpecificInstanceRiskDataInputValidator,
+        private UpdateInstanceRiskDataInputValidator $updateInstanceRiskDataInputValidator
+    ) {}
 
-    public function __construct(InstanceRiskService $instanceRiskService)
-    {
-        $this->instanceRiskService = $instanceRiskService;
-    }
-
-    // TODO: implement create and delete.
+    /**
+     * Creation of specific risks.
+     *
+     * @param array $data
+     */
     public function create($data)
     {
-        //todo creation of a spec risk
+        $this->validatePostParams($this->postSpecificInstanceRiskDataInputValidator, $data);
+
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $instanceRisk = $this->anrInstanceRiskService->createSpecificInstanceRisk(
+            $anr,
+            $this->postSpecificInstanceRiskDataInputValidator->getValidData()
+        );
+
+        return $this->getSuccessfulJsonResponse(['id' => $instanceRisk->getId()]);
     }
 
     public function update($id, $data)
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+        /** @var array $data */
+        $this->validatePostParams($this->updateInstanceRiskDataInputValidator, $data);
 
-        // TODO: update the method to accept the anr param and remove IR.
-        $instanceRisk = $this->instanceRiskService->updateFromRiskTable($anr, (int)$id, $data);
+        /** @var array $data */
+        $instanceRisk = $this->anrInstanceRiskService
+            ->update($anr, (int)$id, $this->updateInstanceRiskDataInputValidator->getValidData());
+
 
         return $this->getPreparedJsonResponse([
             'id' => $instanceRisk->getId(),
@@ -50,6 +69,10 @@ class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHan
 
     public function delete($id)
     {
-        // todo removal of spec risk.
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->anrInstanceRiskService->delete($anr, (int)$id);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

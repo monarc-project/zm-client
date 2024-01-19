@@ -7,16 +7,13 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Table\RolfTagTable as CoreRolfTagTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\RolfTag;
 
-/**
- * Class RolfTagTable
- * @package Monarc\FrontOffice\Model\Table
- */
 class RolfTagTable extends CoreRolfTagTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
@@ -37,6 +34,24 @@ class RolfTagTable extends CoreRolfTagTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    public function findByIdAndAnr(int $id, Anr $anr): RolfTag
+    {
+        /** @var RolfTag|null $rolfTag */
+        $rolfTag = $this->getRepository()->createQueryBuilder('rt')
+            ->where('rt.id = :id')
+            ->andWhere('rt.anr = :anr')
+            ->setParameter('id', $id)
+            ->setParameter('anr', $anr)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+        if ($rolfTag === null) {
+            throw EntityNotFoundException::fromClassNameAndIdentifier(\get_class($this), [$id]);
+        }
+
+        return $rolfTag;
     }
 
     public function saveEntity(RolfTag $rolfTag, bool $flushAll = true): void

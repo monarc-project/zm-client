@@ -57,6 +57,20 @@ class Anr extends AnrSuperClass
     protected $objectCategories;
 
     /**
+     * @var ArrayCollection|Snapshot[]
+     *
+     * @ORM\OneToMany(targetEntity="Snapshot", mappedBy="anrReference" cascade={"persist", "remove"})
+     */
+    protected $referencedSnapshots;
+
+    /**
+     * @var Snapshot
+     *
+     * @ORM\OneToMany(targetEntity="Snapshot", mappedBy="anr")
+     */
+    protected $snapshot;
+
+    /**
      * @var int
      *
      * @ORM\Column(name="language", type="integer", options={"unsigned":true, "default":1})
@@ -112,11 +126,20 @@ class Anr extends AnrSuperClass
      */
     protected $referentials;
 
+    /**
+     * @var UserAnr[]|ArrayCollection
+     *
+     * @ORM\OneToMany(targetEntity="UserAnr", mappedBy="anr", cascade={"persist", "remove"})
+     */
+    protected $usersAnrsPermissions;
+
     public function __construct()
     {
         $this->objects = new ArrayCollection();
         $this->objectCategories = new ArrayCollection();
         $this->referentials = new ArrayCollection();
+        $this->referencedSnapshots = new ArrayCollection();
+        $this->usersAnrsPermissions = new ArrayCollection();
     }
 
     /**
@@ -329,6 +352,38 @@ class Anr extends AnrSuperClass
         return $this;
     }
 
+    public function getReferencedSnapshots()
+    {
+        return $this->referencedSnapshots;
+    }
+
+    public function addReferencedSnapshot(Snapshot $snapshot): self
+    {
+        if (!$this->referencedSnapshots->contains($snapshot)) {
+            $this->referencedSnapshots->add($snapshot);
+            $snapshot->setAnrReference($this);
+        }
+
+        return $this;
+    }
+
+    public function isAnrSnapshot(): bool
+    {
+        return $this->snapshot === null;
+    }
+
+    public function getSnapshot(): ?Snapshot
+    {
+        return $this->snapshot;
+    }
+
+    public function setSnapshot(Snapshot $snapshot): self
+    {
+        $this->snapshot = $snapshot;
+
+        return $this;
+    }
+
     public function getLanguageCode(): string
     {
         return $this->languageCode;
@@ -339,5 +394,53 @@ class Anr extends AnrSuperClass
         $this->languageCode = $languageCode;
 
         return $this;
+    }
+
+    public function getUsersAnrsPermissions()
+    {
+        return $this->usersAnrsPermissions;
+    }
+
+    public function addUserAnrPermission(UserAnr $userAnrPermission): self
+    {
+        if (!$this->usersAnrsPermissions->contains($userAnrPermission)) {
+            $this->usersAnrsPermissions->add($userAnrPermission);
+            $userAnrPermission->setAnr($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserAnrPermission(UserAnr $userAnrPermission): self
+    {
+        if ($this->usersAnrsPermissions->contains($userAnrPermission)) {
+            $this->usersAnrsPermissions->removeElement($userAnrPermission);
+        }
+
+        return $this;
+    }
+
+    public function getInformationalRiskLevelColor(int $riskValue): string
+    {
+        if ($riskValue <= $this->seuil1) {
+            return 'green';
+        }
+        if ($riskValue <= $this->seuil2) {
+            return 'orange';
+        }
+
+        return 'alerte';
+    }
+
+    public function getOperationalRiskLevelColor(int $riskValue): string
+    {
+        if ($riskValue <= $this->seuilRolf1) {
+            return 'green';
+        }
+        if ($riskValue <= $this->seuilRolf2) {
+            return 'orange';
+        }
+
+        return 'alerte';
     }
 }

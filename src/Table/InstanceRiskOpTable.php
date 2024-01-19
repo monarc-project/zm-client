@@ -9,6 +9,8 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\Expr\Join;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Model\Entity\RolfRiskSuperClass;
 use Monarc\Core\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Asset;
@@ -170,5 +172,23 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
         }
 
         return $queryBuilder->getQuery()->getResult();
+    }
+
+    /**
+     * @return InstanceRiskOp[]
+     */
+    public function findByObjectAndRolfRisk(ObjectSuperClass $object, RolfRiskSuperClass $rolfRisk): array
+    {
+        return $this->getRepository()->createQueryBuilder('oprisk')
+            ->innerJoin('oprisk.object', 'o')
+            ->where('oprisk.anr = :anr')
+            ->andWhere('o.uuid = :objectUuid')
+            ->andWhere('o.anr = :anr')
+            ->andWhere('oprisk.rolfRisk = :rolfRisk')
+            ->setParameter('objectUuid', $object->getUuid())
+            ->setParameter('anr', $object->getAnr())
+            ->setParameter('rolfRisk', $rolfRisk)
+            ->getQuery()
+            ->getResult();
     }
 }

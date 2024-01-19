@@ -1,23 +1,26 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Table;
 
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Table\AbstractTable;
+use Monarc\Core\Model\Entity\InstanceSuperClass;
+use Monarc\Core\Table\InstanceRiskTable as CoreInstanceRiskTable;
 use Monarc\FrontOffice\Model\Entity\Amv;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\Instance;
 use Monarc\FrontOffice\Model\Entity\InstanceRisk;
 use Monarc\FrontOffice\Model\Entity\Threat;
+use Monarc\FrontOffice\Model\Entity\Vulnerability;
 
-class InstanceRiskTable extends AbstractTable
+class InstanceRiskTable extends CoreInstanceRiskTable
 {
     public function __construct(EntityManager $entityManager, string $entityName = InstanceRisk::class)
     {
@@ -45,8 +48,8 @@ class InstanceRiskTable extends AbstractTable
      * @return InstanceRisk[]
      */
     public function findByInstanceAndInstanceRiskRelations(
-        Instance $instance,
-        InstanceRisk $instanceRisk,
+        InstanceSuperClass $instance,
+        InstanceRiskSuperClass $instanceRisk,
         bool $excludeAmvFilter = false,
         bool $includeAssetFilter = false
     ) {
@@ -235,5 +238,44 @@ class InstanceRiskTable extends AbstractTable
         }
 
         return $queryBuilder->getQuery()->getResult();
+    }
+
+    public function existsInAnrWithInstanceThreatAndVulnerability(
+        Instance $instance,
+        Threat $threat,
+        Vulnerability $vulnerability
+    ) {
+        return (bool)$this->getRepository()->createQueryBuilder('ir')
+            ->where('ir.anr = :anr')
+            ->andWhere('ir.instance = :instance')
+            ->andWhere('ir.threat = :threat')
+            ->andWhere('ir.vulnerability = :vulnerability')
+            ->setParameter('anr', $instance->getAnr())
+            ->setParameter('instance', $instance)
+            ->setParameter('threat', $threat)
+            ->setParameter('vulnerability', $vulnerability)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult(AbstractQuery::HYDRATE_SIMPLEOBJECT);
+    }
+
+    /**
+     * @return InstanceRisk[]
+     */
+    public function findSiblingSpecificInstanceRisks(InstanceRisk $instanceRisk): array
+    {
+        return $this->getRepository()->createQueryBuilder('ir')
+            ->where('ir.anr = :anr')
+            ->andWhere('ir.asset = :asset')
+            ->andWhere('ir.threat = :threat')
+            ->andWhere('ir.vulnerability = :vulnerability')
+            ->andWhere('ir.id != ' . $instanceRisk->getId())
+            ->andWhere('ir.specific = 1')
+            ->setParameter('anr', $instanceRisk->getAnr())
+            ->setParameter('asset', $instanceRisk->getAsset())
+            ->setParameter('threat', $instanceRisk->getThreat())
+            ->setParameter('vulnerability', $instanceRisk->getVulnerability())
+            ->getQuery()
+            ->getResult();
     }
 }

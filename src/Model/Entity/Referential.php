@@ -29,10 +29,7 @@ class Referential extends ReferentialSuperClass
      */
     protected $anr;
 
-    /**
-    * @param Anr $anr
-    */
-    public function setAnr($anr): self
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 
