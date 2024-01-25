@@ -10,6 +10,8 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\InstanceRisk;
+use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 
@@ -52,6 +54,26 @@ class InstanceRiskOwnerService
         }
 
         return $this->cachedData['instanceRiskOwners'][$ownerName];
+    }
+
+    public function processRiskOwnerNameAndAssign(string $ownerName, InstanceRisk|InstanceRiskOp $instanceRisk): void
+    {
+        if (empty($ownerName)) {
+            $instanceRisk->setInstanceRiskOwner(null);
+            return;
+        }
+
+        /** @var Anr $anr */
+        $anr = $instanceRisk->getAnr();
+        $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
+        if ($instanceRiskOwner === null) {
+            $instanceRiskOwner = $this->create($anr, $ownerName);
+            $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+        } elseif ($instanceRisk->getInstanceRiskOwner() === null
+            || $instanceRisk->getInstanceRiskOwner()->getId() !== $instanceRiskOwner->getId()
+        ) {
+            $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+        }
     }
 
     public function getList(Anr $anr, array $params = []): array

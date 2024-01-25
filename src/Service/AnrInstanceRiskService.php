@@ -29,7 +29,6 @@ class AnrInstanceRiskService
 
     public function __construct(
         private Table\InstanceRiskTable $instanceRiskTable,
-        private Table\InstanceRiskOwnerTable $instanceRiskOwnerTable,
         private Table\RecommendationTable $recommendationTable,
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private Table\InstanceTable $instanceTable,
@@ -429,7 +428,7 @@ class AnrInstanceRiskService
     private function updateInstanceRiskData(Entity\InstanceRisk $instanceRisk, array $data): void
     {
         if (isset($data['owner'])) {
-            $this->processRiskOwnerName((string)$data['owner'], $instanceRisk);
+            $this->instanceRiskOwnerService->processRiskOwnerNameAndAssign((string)$data['owner'], $instanceRisk);
         }
         if (isset($data['context'])) {
             $instanceRisk->setContext($data['context']);
@@ -453,26 +452,6 @@ class AnrInstanceRiskService
         $instanceRisk->setUpdater($this->connectedUser->getEmail());
 
         $this->recalculateRiskRates($instanceRisk);
-    }
-
-    private function processRiskOwnerName(string $ownerName, Entity\InstanceRisk $instanceRisk): void
-    {
-        if (empty($ownerName)) {
-            $instanceRisk->setInstanceRiskOwner(null);
-            return;
-        }
-
-        /** @var Entity\Anr $anr */
-        $anr = $instanceRisk->getAnr();
-        $instanceRiskOwner = $this->instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
-        if ($instanceRiskOwner === null) {
-            $instanceRiskOwner = $this->instanceRiskOwnerService->create($anr, $ownerName);
-            $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
-        } elseif ($instanceRisk->getInstanceRiskOwner() === null
-            || $instanceRisk->getInstanceRiskOwner()->getId() !== $instanceRiskOwner->getId()
-        ) {
-            $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
-        }
     }
 
     private function duplicateRecommendationRisks(

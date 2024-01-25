@@ -669,7 +669,7 @@ class DeliverableGenerationService extends AbstractService
                 'CURRENT_RISK_MAP' => $this->generateCurrentRiskMap('real'),
                 'TARGET_RISK_MAP' => $this->generateCurrentRiskMap('targeted'),
                 'TABLE_ASSET_CONTEXT' => $this->generateAssetContextTable(),
-                'RISKS_KIND_OF_TREATMENT' => $this->generateRisksByKindOfTreatment(),
+                'RISKS_KIND_OF_TREATMENT' => $this->generateRisksByKindOfMeasure(),
                 'TABLE_AUDIT_INSTANCES' => $this->generateTableAudit(),
                 'TABLE_AUDIT_RISKS_OP' => $this->generateTableAuditOp(),
             ]]
@@ -2450,7 +2450,7 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Risks by kind of treatment
      * @return mixed|string The WordXml data generated
      */
-    protected function generateRisksByKindOfTreatment()
+    protected function generateRisksByKindOfMeasure()
     {
         $result = null;
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());

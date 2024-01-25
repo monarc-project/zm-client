@@ -18,6 +18,7 @@ class PostSpecificInstanceRiskDataInputValidator extends AbstractInputValidator
             [
                 'name' => 'instance',
                 'required' => true,
+                'allow_empty' => false,
                 'filters' => [
                     ['name' => 'ToInt'],
                 ],
@@ -26,6 +27,7 @@ class PostSpecificInstanceRiskDataInputValidator extends AbstractInputValidator
             [
                 'name' => 'threat',
                 'required' => true,
+                'allow_empty' => false,
                 'filters' => [],
                 'validators' => [
                     [
@@ -40,6 +42,7 @@ class PostSpecificInstanceRiskDataInputValidator extends AbstractInputValidator
             [
                 'name' => 'vulnerability',
                 'required' => true,
+                'allow_empty' => false,
                 'filters' => [],
                 'validators' => [
                     [

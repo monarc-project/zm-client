@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -14,38 +14,20 @@ use Monarc\FrontOffice\Table;
 
 class OperationalRiskScaleService
 {
-    private Table\OperationalRiskScaleTable $operationalRiskScaleTable;
-
-    private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable;
-
-    private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
-
-    private Table\InstanceRiskOpTable $instanceRiskOpTable;
-
-    private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable;
-
-    private AnrInstanceRiskOpService $instanceRiskOpService;
-
     private CoreEntity\UserSuperClass $connectedUser;
 
+    private array $operationalRiskScales = [];
+
     public function __construct(
-        Table\OperationalRiskScaleTable $operationalRiskScaleTable,
-        Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
-        Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
-        AnrInstanceRiskOpService $instanceRiskOpService,
-        Table\InstanceRiskOpTable $instanceRiskOpTable,
-        Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
+        private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
+        private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
+        private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
+        private AnrInstanceRiskOpService $instanceRiskOpService,
+        private Table\InstanceRiskOpTable $instanceRiskOpTable,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
-        $this->operationalRiskScaleTable = $operationalRiskScaleTable;
-        $this->operationalRiskScaleTypeTable = $operationalRiskScaleTypeTable;
-        $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
-        $this->instanceRiskOpService = $instanceRiskOpService;
-        $this->instanceRiskOpTable = $instanceRiskOpTable;
-        $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
     }
-
 
     public function getOperationalRiskScales(Entity\Anr $anr): array
     {
@@ -133,11 +115,10 @@ class OperationalRiskScaleService
         /* Link the new type with all the existed operational risks. */
         /** @var Entity\InstanceRiskOp $operationalInstanceRisk */
         foreach ($this->instanceRiskOpTable->findByAnr($anr) as $operationalInstanceRisk) {
-            $operationalInstanceRiskScale = $this->instanceRiskOpService->createOperationalInstanceRiskScaleObject(
+            $this->instanceRiskOpService->createOperationalInstanceRiskScaleObject(
                 $operationalInstanceRisk,
                 $operationalRiskScaleType
             );
-            $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
         }
 
         $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType);
@@ -302,6 +283,20 @@ class OperationalRiskScaleService
 
             $this->operationalRiskScaleTable->save($operationalRiskScale);
         }
+    }
+
+    public function getFromCacheOrFindLikelihoodScale(Entity\Anr $anr): Entity\OperationalRiskScale
+    {
+        $typeLikelihood = CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD;
+        if (!isset($this->operationalRiskScales[$typeLikelihood])) {
+            $this->operationalRiskScales[$typeLikelihood] = $this->operationalRiskScaleTable->findByAnrAndType(
+                $anr,
+                $typeLikelihood
+            );
+        }
+
+        /* There is only one scale of the TYPE_LIKELIHOOD. */
+        return current($this->operationalRiskScales[$typeLikelihood]);
     }
 
     protected function getCreatedOperationalRiskScaleTypeObject(

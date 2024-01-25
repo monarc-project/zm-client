@@ -1653,9 +1653,13 @@ return [
                 ReflectionBasedAbstractFactory::class,
             InputValidator\RecommendationRisk\PostRecommendationRiskDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
+            InputValidator\InstanceRisk\PostSpecificInstanceRiskDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRisk\UpdateInstanceRiskDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
-            InputValidator\InstanceRisk\PostSpecificInstanceRiskDataInputValidator::class =>
+            InputValidator\InstanceRiskOp\PostSpecificInstanceRiskOpDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
+            InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
 
             // Commands

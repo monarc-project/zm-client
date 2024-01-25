@@ -16,7 +16,9 @@ class ApiAnrTreatmentPlanController extends AbstractRestfulControllerRequestHand
 {
     use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(private AnrRecommendationRiskService $anrRecommendationRiskService) {}
+    public function __construct(private AnrRecommendationRiskService $anrRecommendationRiskService)
+    {
+    }
 
     public function getList()
     {

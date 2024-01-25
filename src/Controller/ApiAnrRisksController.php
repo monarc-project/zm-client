@@ -23,20 +23,21 @@ class ApiAnrRisksController extends AbstractRestfulController
     }
 
     /**
-     * Fetch instance risks by instance ID.
+     * Fetch instance risks by instance ID or for the whole analysis if id is null.
      *
-     * @param int|string $id Instance id.
+     * @param int|string|null $id Instance id.
      */
     public function get($id)
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
         $params = $this->prepareParams();
+        $id = $id === null ? null : (int)$id;
 
         if ($this->params()->fromQuery('csv', false)) {
             /** @var Response $response */
             $response = $this->getResponse();
-            $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
+            $response->getHeaders()?->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
             $response->setContent($this->anrInstanceRiskService->getInstanceRisksInCsv($anr, (int)$id, $params));
 
             return $response;

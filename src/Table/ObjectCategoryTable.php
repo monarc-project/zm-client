@@ -5,16 +5,13 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-
 namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Table\ObjectCategoryTable as CoreObjectCategoryTable;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\ObjectCategory;
 
-// TODO: move me to the right place and refactor all the references!!!
 class ObjectCategoryTable extends CoreObjectCategoryTable
 {
     public function __construct(EntityManager $entityManager, string $entityName = ObjectCategory::class)
@@ -67,14 +64,5 @@ class ObjectCategoryTable extends CoreObjectCategoryTable
             ->setMaxResults(1)
             ->getQuery()
             ->getSingleScalarResult();
-    }
-
-    public function saveEntity(ObjectCategorySuperClass $objectCategory, bool $flushAll = true): void
-    {
-        $em = $this->getDb()->getEntityManager();
-        $em->persist($objectCategory);
-        if ($flushAll) {
-            $em->flush();
-        }
     }
 }

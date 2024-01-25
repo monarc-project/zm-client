@@ -163,22 +163,21 @@ class AnrCartoRiskService extends AbstractService
      *
      * @param int $anrId The ANR ID
      */
-    public function buildListScalesOpRisk($anrId)
+    public function buildListScalesOpRisk(int $anrId)
     {
         // Only load the ANR if we don't have the ANR already loaded, or a different one.
-        if (!$this->anr || $this->anr->get('id') != $anrId) {
-            $this->anr = $this->get('anrTable')->getEntity($anrId);
+        if (!$this->anr || $this->anr->getId() !== $anrId) {
+            $this->anr = $this->get('anrTable')->findById($anrId);
         }
 
         // Only compute the listScales and headers fields if we didn't already
         if ($this->listOpRiskScales === null) {
             /** @var OperationalRiskScaleTable $operationalRiskScaleTable */
             $operationalRiskScaleTable = $this->get('operationalRiskScaleTable');
-            $likelihoodScale = current(
-                $operationalRiskScaleTable->findWithCommentsByAnrAndType(
-                    $this->anr, OperationalRiskScale::TYPE_LIKELIHOOD
-                )
-            );
+            $likelihoodScale = current($operationalRiskScaleTable->findWithCommentsByAnrAndType(
+                $this->anr,
+                OperationalRiskScale::TYPE_LIKELIHOOD
+            ));
             $impactsScale = current(
                 $operationalRiskScaleTable->findWithCommentsByAnrAndType($this->anr, OperationalRiskScale::TYPE_IMPACT)
             );
@@ -197,7 +196,8 @@ class AnrCartoRiskService extends AbstractService
 
             $this->listOpRiskScales[OperationalRiskScale::TYPE_IMPACT] = $impactScaleValues;
             $this->listOpRiskScales[OperationalRiskScale::TYPE_LIKELIHOOD] = range(
-                $likelihoodScale->getMin(), $likelihoodScale->getMax()
+                $likelihoodScale->getMin(),
+                $likelihoodScale->getMax()
             );
         }
     }
@@ -346,7 +346,7 @@ class AnrCartoRiskService extends AbstractService
                         $byTreatment['treated'][$context['color']]['sum'] += $context['max'];
                     }
 
-                    $kindOfTreatment = match ($context['treatment']) {
+                    $kindOfMeasure = match ($context['treatment']) {
                         InstanceRiskSuperClass::KIND_REDUCTION => 'reduction',
                         InstanceRiskSuperClass::KIND_REFUSED => 'denied',
                         InstanceRiskSuperClass::KIND_ACCEPTATION => 'accepted',
@@ -354,27 +354,27 @@ class AnrCartoRiskService extends AbstractService
                         default => 'not_treated',
                     };
 
-                    if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
-                        $byTreatment['all'][$kindOfTreatment]['count'] = 0;
+                    if (!isset($byTreatment['all'][$kindOfMeasure]['count'])) {
+                        $byTreatment['all'][$kindOfMeasure]['count'] = 0;
                     }
 
-                    if (!isset($byTreatment['all'][$kindOfTreatment]['sum'])) {
-                        $byTreatment['all'][$kindOfTreatment]['sum'] = 0;
+                    if (!isset($byTreatment['all'][$kindOfMeasure]['sum'])) {
+                        $byTreatment['all'][$kindOfMeasure]['sum'] = 0;
                     }
 
-                    if (!isset($byTreatment[$kindOfTreatment][$context['color']]['count'])) {
-                        $byTreatment[$kindOfTreatment][$context['color']]['count'] = 0;
+                    if (!isset($byTreatment[$kindOfMeasure][$context['color']]['count'])) {
+                        $byTreatment[$kindOfMeasure][$context['color']]['count'] = 0;
                     }
 
-                    if (!isset($byTreatment[$kindOfTreatment][$context['color']]['sum'])) {
-                        $byTreatment[$kindOfTreatment][$context['color']]['sum'] = 0;
+                    if (!isset($byTreatment[$kindOfMeasure][$context['color']]['sum'])) {
+                        $byTreatment[$kindOfMeasure][$context['color']]['sum'] = 0;
                     }
 
-                    $byTreatment[$kindOfTreatment][$context['color']]['count'] += 1;
-                    $byTreatment[$kindOfTreatment][$context['color']]['sum'] += $context['max'];
+                    $byTreatment[$kindOfMeasure][$context['color']]['count'] += 1;
+                    $byTreatment[$kindOfMeasure][$context['color']]['sum'] += $context['max'];
 
-                    $byTreatment['all'][$kindOfTreatment]['count'] += 1;
-                    $byTreatment['all'][$kindOfTreatment]['sum'] += $context['max'];
+                    $byTreatment['all'][$kindOfMeasure]['count'] += 1;
+                    $byTreatment['all'][$kindOfMeasure]['sum'] += $context['max'];
                 }
             }
         }
@@ -477,7 +477,7 @@ class AnrCartoRiskService extends AbstractService
                 $byTreatment['treated'][$color]['sum'] += $max;
             }
 
-            $kindOfTreatment = match ($treatment) {
+            $kindOfMeasure = match ($treatment) {
                 InstanceRiskOpSuperClass::KIND_REDUCTION => 'reduction',
                 InstanceRiskOpSuperClass::KIND_REFUSED => 'denied',
                 InstanceRiskOpSuperClass::KIND_ACCEPTATION => 'accepted',
@@ -485,27 +485,27 @@ class AnrCartoRiskService extends AbstractService
                 default => 'not_treated',
             };
 
-            if (!isset($byTreatment['all'][$kindOfTreatment]['count'])) {
-                $byTreatment['all'][$kindOfTreatment]['count'] = 0;
+            if (!isset($byTreatment['all'][$kindOfMeasure]['count'])) {
+                $byTreatment['all'][$kindOfMeasure]['count'] = 0;
             }
 
-            if (!isset($byTreatment['all'][$kindOfTreatment]['sum'])) {
-                $byTreatment['all'][$kindOfTreatment]['sum'] = 0;
+            if (!isset($byTreatment['all'][$kindOfMeasure]['sum'])) {
+                $byTreatment['all'][$kindOfMeasure]['sum'] = 0;
             }
 
-            if (!isset($byTreatment[$kindOfTreatment][$color]['count'])) {
-                $byTreatment[$kindOfTreatment][$color]['count'] = 0;
+            if (!isset($byTreatment[$kindOfMeasure][$color]['count'])) {
+                $byTreatment[$kindOfMeasure][$color]['count'] = 0;
             }
 
-            if (!isset($byTreatment[$kindOfTreatment][$color]['sum'])) {
-                $byTreatment[$kindOfTreatment][$color]['sum'] = 0;
+            if (!isset($byTreatment[$kindOfMeasure][$color]['sum'])) {
+                $byTreatment[$kindOfMeasure][$color]['sum'] = 0;
             }
 
-            $byTreatment[$kindOfTreatment][$color]['count'] += 1;
-            $byTreatment[$kindOfTreatment][$color]['sum'] += $max;
+            $byTreatment[$kindOfMeasure][$color]['count'] += 1;
+            $byTreatment[$kindOfMeasure][$color]['sum'] += $max;
 
-            $byTreatment['all'][$kindOfTreatment]['count'] += 1;
-            $byTreatment['all'][$kindOfTreatment]['sum'] += $max;
+            $byTreatment['all'][$kindOfMeasure]['count'] += 1;
+            $byTreatment['all'][$kindOfMeasure]['sum'] += $max;
         }
 
         return [$countersRiskOP, $distribRiskOp, $riskOpMaxSum, $byTreatment];
