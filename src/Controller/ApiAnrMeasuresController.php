@@ -6,18 +6,18 @@
  */
 
 namespace Monarc\FrontOffice\Controller;
-use Laminas\View\Model\JsonModel;
 
-/**
- * Api ANR Measures Controller
- *
- * Class ApiAnrMeasuresController
- * @package Monarc\FrontOffice\Controller
- */
+use Monarc\FrontOffice\Service\AnrMeasureService;
+
 class ApiAnrMeasuresController extends ApiAnrAbstractController
 {
     protected $name = 'measures';
     protected $dependencies = ['anr', 'category', 'referential',  'amvs', 'linkedMeasures', 'rolfRisks'];
+
+    public function __construct(AnrMeasureService $anrMeasureService)
+    {
+        parent::__construct($anrMeasureService);
+    }
 
     public function getList()
     {
@@ -61,10 +61,10 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd, $filterJoin),
             $this->name => $entities
-        ));
+        ]);
     }
 
     public function update($id, $data)

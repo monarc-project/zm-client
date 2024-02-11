@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Exception\Exception;
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrRecordService;
 
 /**
  * TODO: Refactor me.
@@ -17,17 +18,17 @@ use Laminas\View\Model\JsonModel;
  * TODO: Refactor the controller and related Frontend:
  *  - multiple requests
  *  - call backend only when filed is edited (recipients, processors, etc).
- *
- * Api Anr Records Controller
- *
- * Class ApiAnrRecordsController
- * @package Monarc\FrontOffice\Controller
  */
 class ApiAnrRecordsController extends ApiAnrAbstractController
 {
     protected $name = 'records';
     protected $dependencies = [ 'anr', 'controller', 'representative', 'dpo', 'jointControllers',
         'personalData', 'internationalTransfers', 'processors', 'recipients'];
+
+    public function __construct(AnrRecordService $anrRecordService)
+    {
+        parent::__construct($anrRecordService);
+    }
 
     public function getList()
     {
@@ -177,9 +178,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         return new JsonModel(['status' => 'ok']);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');

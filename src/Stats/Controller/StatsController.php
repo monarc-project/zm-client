@@ -1,4 +1,9 @@
 <?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Stats\Controller;
 
@@ -6,30 +11,17 @@ use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Exception\AccessForbiddenException;
-use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
 use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidator;
 
 class StatsController extends AbstractRestfulController
 {
-    /** @var GetStatsQueryParamsValidator */
-    private $getStatsQueryParamsValidator;
-
-    /** @var GetProcessedStatsQueryParamsValidator */
-    private $getProcessedStatsQueryParamsValidator;
-
-    /** @var StatsAnrService */
-    private $statsAnrService;
-
     public function __construct(
-        GetStatsQueryParamsValidator $getStatsQueryParamsValidator,
-        GetProcessedStatsQueryParamsValidator $getProcessedStatsQueryParamsValidator,
-        StatsAnrService $statsAnrService
+        private GetStatsQueryParamsValidator $getStatsQueryParamsValidator,
+        private GetProcessedStatsQueryParamsValidator $getProcessedStatsQueryParamsValidator,
+        private StatsAnrService $statsAnrService
     ) {
-        $this->getStatsQueryParamsValidator = $getStatsQueryParamsValidator;
-        $this->getProcessedStatsQueryParamsValidator = $getProcessedStatsQueryParamsValidator;
-        $this->statsAnrService = $statsAnrService;
     }
 
     public function getList(): JsonModel
@@ -45,7 +37,7 @@ class StatsController extends AbstractRestfulController
 
         try {
             $stats = $this->statsAnrService->getStats($this->getStatsQueryParamsValidator->getValidData());
-        } catch (UserNotAuthorizedException | AccessForbiddenException $e) {
+        } catch (AccessForbiddenException) {
             $stats = [];
             $this->getResponse()->setStatusCode(403);
         }
@@ -67,8 +59,10 @@ class StatsController extends AbstractRestfulController
         }
 
         try {
-            $stats = $this->statsAnrService->getProcessedStats($this->getProcessedStatsQueryParamsValidator->getValidData());
-        } catch (UserNotAuthorizedException | AccessForbiddenException $e) {
+            $stats = $this->statsAnrService->getProcessedStats(
+                $this->getProcessedStatsQueryParamsValidator->getValidData()
+            );
+        } catch (AccessForbiddenException) {
             $stats = [];
             $this->getResponse()->setStatusCode(403);
         }

@@ -7,25 +7,27 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrMeasureMeasureService;
 
-/**
- * Class ApiAnrMeasuresMeasuresController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
 {
+    use ControllerRequestResponseHandlerTrait;
+
     protected $name = 'measuresmeasures';
     protected $dependencies = ['anr', 'father', 'child'];
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(AnrMeasureMeasureService $anrMeasureMeasureService)
+    {
+        parent::__construct($anrMeasureMeasureService);
+    }
+
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $page = $this->params()->fromQuery('page');
@@ -52,10 +54,10 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd),
             $this->name => $entities
-        ));
+        ]);
     }
 
     public function deleteList($data)
@@ -67,7 +69,7 @@ class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
 
             $this->getService()->delete(['anr' => $anrId, 'father' => $fatherId, 'child' => $childId]);
 
-            return new JsonModel(['status' => 'ok']);
+            return $this->getSuccessfulJsonResponse();
         }
 
         return parent::deleteList($data);

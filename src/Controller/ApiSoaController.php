@@ -7,8 +7,8 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Measure;
 use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
@@ -18,8 +18,10 @@ use Monarc\FrontOffice\Service\AnrMeasureService;
 use Monarc\FrontOffice\Service\SoaScaleCommentService;
 use Monarc\FrontOffice\Service\SoaService;
 
-class ApiSoaController extends AbstractRestfulController
+class ApiSoaController extends AbstractRestfulControllerRequestHandler
 {
+    use ControllerRequestResponseHandlerTrait;
+
     private SoaService $soaService;
 
     private AnrMeasureService $anrMeasureService;
@@ -146,7 +148,7 @@ class ApiSoaController extends AbstractRestfulController
             }
         }
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'count' => $this->soaService->getFilteredCount($filter, $filterAnd),
             'soaMeasures' => $entities,
         ]);
@@ -178,14 +180,14 @@ class ApiSoaController extends AbstractRestfulController
             $entity['soaScaleComment'] = null;
         }
 
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($entity);
     }
 
     public function patch($id, $data)
     {
         $this->soaService->patchSoa($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function patchList($data)
@@ -205,8 +207,7 @@ class ApiSoaController extends AbstractRestfulController
             $createdObjects[] = $id;
         }
 
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'id' => $createdObjects,
         ]);
     }

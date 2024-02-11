@@ -7,13 +7,14 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-/**
- * Api ANR Rolf Tags Controller
- *
- * Class ApiAnrRolfTagsController
- * @package Monarc\FrontOffice\Controller
- */
+use Monarc\FrontOffice\Service\AnrRolfTagService;
+
 class ApiAnrRolfTagsController extends ApiAnrAbstractController
 {
     protected $name = 'tags';
+
+    public function __construct(AnrRolfTagService $anrRolfTagService)
+    {
+        parent::__construct($anrRolfTagService);
+    }
 }

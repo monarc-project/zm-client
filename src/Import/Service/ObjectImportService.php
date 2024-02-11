@@ -13,21 +13,15 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\AnrObjectCategory;
-use Monarc\FrontOffice\Model\Entity\Measure;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\ObjectCategory;
-use Monarc\FrontOffice\Model\Entity\ObjectObject;
-use Monarc\FrontOffice\Model\Entity\Referential;
-use Monarc\FrontOffice\Model\Entity\RolfRisk;
-use Monarc\FrontOffice\Model\Entity\RolfTag;
+use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\SoaCategoryService;
 
 class ObjectImportService
 {
+    public const IMPORT_MODE_MERGE = 'merge';
+
     private Table\MonarcObjectTable $monarcObjectTable;
 
     private AssetImportService $assetImportService;
@@ -38,11 +32,11 @@ class ObjectImportService
 
     private DeprecatedTable\MeasureTable $measureTable;
 
-    private DeprecatedTable\ObjectObjectTable $objectObjectTable;
+    private Table\ObjectObjectTable $objectObjectTable;
 
     private DeprecatedTable\ReferentialTable $referentialTable;
 
-    private DeprecatedTable\ObjectCategoryTable $objectCategoryTable;
+    private Table\ObjectCategoryTable $objectCategoryTable;
 
     private UserSuperClass $connectedUser;
 
@@ -52,13 +46,13 @@ class ObjectImportService
 
     public function __construct(
         Table\MonarcObjectTable $monarcObjectTable,
-        DeprecatedTable\ObjectObjectTable $objectObjectTable,
+        Table\ObjectObjectTable $objectObjectTable,
         AssetImportService $assetImportService,
         DeprecatedTable\RolfTagTable $rolfTagTable,
         DeprecatedTable\RolfRiskTable $rolfRiskTable,
         DeprecatedTable\MeasureTable $measureTable,
         DeprecatedTable\ReferentialTable $referentialTable,
-        DeprecatedTable\ObjectCategoryTable $objectCategoryTable,
+        Table\ObjectCategoryTable $objectCategoryTable,
         ConnectedUserService $connectedUserService,
         ImportCacheHelper $importCacheHelper,
         SoaCategoryService $soaCategoryService
@@ -76,8 +70,11 @@ class ObjectImportService
         $this->soaCategoryService = $soaCategoryService;
     }
 
-    public function importFromArray(array $data, Anr $anr, string $modeImport = 'merge'): ?MonarcObject
-    {
+    public function importFromArray(
+        array $data,
+        Entity\Anr $anr,
+        string $modeImport = self::IMPORT_MODE_MERGE
+    ): ?Entity\MonarcObject {
         if (!isset($data['type'], $data['object']) || $data['type'] !== 'object') {
             return null;
         }
@@ -115,7 +112,7 @@ class ObjectImportService
         if ($objectScope === ObjectSuperClass::SCOPE_LOCAL
             || (
                 $objectScope === ObjectSuperClass::SCOPE_GLOBAL
-                && $modeImport === 'merge'
+                && $modeImport === self::IMPORT_MODE_MERGE
             )
         ) {
             $monarcObject = $this->monarcObjectTable->findOneByAnrAssetNameScopeAndCategory(
@@ -133,7 +130,7 @@ class ObjectImportService
 
         if ($monarcObject === null) {
             $labelKey = 'label' . $anr->getLanguage();
-            $monarcObject = (new MonarcObject())
+            $monarcObject = (new Entity\MonarcObject())
                 ->setAnr($anr)
                 ->setAsset($asset)
                 ->setCategory($objectCategory)
@@ -170,15 +167,18 @@ class ObjectImportService
             foreach ($data['children'] as $childObjectData) {
                 $childMonarcObject = $this->importFromArray($childObjectData, $anr, $modeImport);
                 if ($childMonarcObject !== null) {
-                    $maxPosition = $this->objectObjectTable->findMaxPositionByAnrAndParent($anr, $monarcObject);
-                    $objectsRelation = (new ObjectObject())
+                    $maxPosition = $this->objectObjectTable->findMaxPosition([
+                        'anr' => $anr,
+                        'parent' => $monarcObject,
+                    ]);
+                    $objectsRelation = (new Entity\ObjectObject())
                         ->setAnr($anr)
                         ->setParent($monarcObject)
                         ->setChild($childMonarcObject)
                         ->setPosition($maxPosition + 1)
                         ->setCreator($this->connectedUser->getEmail());
 
-                    $this->objectObjectTable->saveEntity($objectsRelation);
+                    $this->objectObjectTable->save($objectsRelation);
                 }
             }
         }
@@ -189,8 +189,8 @@ class ObjectImportService
     private function importObjectCategories(
         array $categories,
         int $categoryId,
-        Anr $anr
-    ): ?ObjectCategory {
+        Entity\Anr $anr
+    ): ?Entity\ObjectCategory {
         if (empty($categories[$categoryId])) {
             return null;
         }
@@ -214,7 +214,7 @@ class ObjectImportService
             if ($parentCategory !== null) {
                 $rootCategory = $parentCategory->getRoot() ?? $parentCategory;
             }
-            $objectCategory = (new ObjectCategory())
+            $objectCategory = (new Entity\ObjectCategory())
                 ->setAnr($anr)
                 ->setRoot($rootCategory)
                 ->setParent($parentCategory)
@@ -225,34 +225,10 @@ class ObjectImportService
             $this->objectCategoryTable->save($objectCategory);
         }
 
-        if ($objectCategory->getParent() === null) {
-            $this->checkAndCreateAnrObjectCategoryLink($objectCategory);
-        }
-
         return $objectCategory;
     }
 
-    private function checkAndCreateAnrObjectCategoryLink(ObjectCategory $objectCategory): void
-    {
-        // TODO: The table doesn't exist anymore and the positions are managed inside of the categories table.
-        $anrObjectCategory = $this->anrObjectCategoryTable->findOneByAnrAndObjectCategory(
-            $objectCategory->getAnr(),
-            $objectCategory
-        );
-        if ($anrObjectCategory === null) {
-            // where anr = $anr and parent === null
-            $maxPosition = $this->anrObjectCategoryTable->findMaxPositionByAnr($objectCategory->getAnr());
-            $this->anrObjectCategoryTable->save(
-                (new AnrObjectCategory())
-                    ->setAnr($objectCategory->getAnr())
-                    ->setCategory($objectCategory)
-                    ->setPosition($maxPosition + 1)
-                    ->setCreator($this->connectedUser->getEmail())
-            );
-        }
-    }
-
-    private function processRolfTagAndRolfRisks(array $data, Anr $anr): ?RolfTag
+    private function processRolfTagAndRolfRisks(array $data, Entity\Anr $anr): ?Entity\RolfTag
     {
         if (empty($data['object']['rolfTag']) || empty($data['rolfTags'][$data['object']['rolfTag']])) {
             return null;
@@ -266,7 +242,7 @@ class ObjectImportService
 
         $rolfTag = $this->rolfTagTable->findByAnrAndCode($anr, $rolfTagData['code']);
         if ($rolfTag === null) {
-            $rolfTag = (new RolfTag())
+            $rolfTag = (new Entity\RolfTag())
                 ->setAnr($anr)
                 ->setCode($rolfTagData['code'])
                 ->setLabels($rolfTagData)
@@ -285,7 +261,7 @@ class ObjectImportService
                 if ($rolfRisk === null) {
                     $rolfRisk = $this->rolfRiskTable->findByAnrAndCode($anr, $rolfRiskCode);
                     if ($rolfRisk === null) {
-                        $rolfRisk = (new RolfRisk())
+                        $rolfRisk = (new Entity\RolfRisk())
                             ->setAnr($anr)
                             ->setCode($rolfRiskCode)
                             ->setLabels($rolfRiskData)
@@ -360,7 +336,7 @@ class ObjectImportService
         }
     }
 
-    private function processMeasuresAndReferentialData(Anr $anr, RolfRisk $rolfRisk, array $measuresData): void
+    private function processMeasuresAndReferentialData(Entity\Anr $anr, Entity\RolfRisk $rolfRisk, array $measuresData): void
     {
         $labelKey = 'label' . $anr->getLanguage();
         foreach ($measuresData as $measureData) {
@@ -375,7 +351,7 @@ class ObjectImportService
                     ?: $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
 
                 if ($referential === null) {
-                    $referential = (new Referential())
+                    $referential = (new Entity\Referential())
                         ->setAnr($anr)
                         ->setUuid($referentialUuid)
                         ->setCreator($this->connectedUser->getEmail())
@@ -393,7 +369,7 @@ class ObjectImportService
                     $measureData['category'][$labelKey] ?? ''
                 );
 
-                $measure = (new Measure())
+                $measure = (new Entity\Measure())
                     ->setAnr($anr)
                     ->setUuid($measureUuid)
                     ->setCategory($soaCategory)
@@ -416,7 +392,7 @@ class ObjectImportService
     // TODO : ...
     /**
      * Imports a previously exported object from an uploaded file into the current ANR. It may be imported using two
-     * different modes: 'merge', which will update the existing objects using the file's data, or 'duplicate' which
+     * different modes: self::IMPORT_MODE_MERGE, which will update the existing objects using the file's data, or 'duplicate' which
      * will create a new object using the data.
      *
      * @param int $anrId The ANR ID
@@ -427,8 +403,8 @@ class ObjectImportService
      */
     public function importFromFile($anrId, $data)
     {
-        // Mode may either be 'merge' or 'duplicate'
-        $mode = empty($data['mode']) ? 'merge' : $data['mode'];
+        // Mode may either be self::IMPORT_MODE_MERGE or 'duplicate'
+        $mode = empty($data['mode']) ? self::IMPORT_MODE_MERGE : $data['mode'];
 
         // We can have multiple files imported with the same password (we'll emit warnings if the password mismatches)
         if (empty($data['file'])) {
@@ -437,7 +413,7 @@ class ObjectImportService
 
         $ids = [];
         $errors = [];
-        /** @var AnrTable $anrTable */
+        /** @var Table\AnrTable $anrTable */
         $anrTable = $this->get('anrTable');
         $anr = $anrTable->findById($anrId);
 
@@ -490,7 +466,7 @@ class ObjectImportService
      *
      * @throws Exception If the ANR is invalid, or the object ID is not found
      */
-    public function importFromCommon($id, $data): ?MonarcObject
+    public function importFromCommon($id, $data): ?Entity\MonarcObject
     {
         if (empty($data['anr'])) {
             throw new Exception('Anr id missing', 412);
@@ -519,33 +495,11 @@ class ObjectImportService
             /** @var ObjectImportService $objectImportService */
             $objectImportService = $this->get('objectImportService');
 
-            return $objectImportService->importFromArray($json, $anr, isset($data['mode']) ? $data['mode'] : 'merge');
+            return $objectImportService->importFromArray($json, $anr, isset($data['mode']) ? $data['mode'] : self::IMPORT_MODE_MERGE);
         }
 
         return null;
     }
-
-    /**
-     * TODO : drop me
-     * @param array $data
-     * @param AnrSuperClass|null $anr The nullable value possibility is to comply with the core definition.
-     *
-     * @return ObjectSuperClass|null
-     *
-     * @throws NonUniqueResultException
-     */
-    private function importFromMosp(array $data, ?AnrSuperClass $anr): ?ObjectSuperClass
-    {
-        if ($anr === null) {
-            return null;
-        }
-
-        /** @var ObjectImportService $objectImportService */
-        $objectImportService = $this->get('objectImportService');
-
-        return $objectImportService->importFromArray($data, $anr, $data['mode'] ?? 'merge');
-    }
-
 
     /**
      * Fetches and returns the list of objects from the common database. This will only return a limited set of fields,

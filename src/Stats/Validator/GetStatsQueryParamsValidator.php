@@ -6,12 +6,12 @@ use DateTime;
 use Laminas\Filter\Boolean;
 use Laminas\Filter\StringTrim;
 use Laminas\InputFilter\ArrayInput;
-use Laminas\InputFilter\InputFilter;
 use Laminas\Validator\Callback;
 use Laminas\Validator\Date;
 use Laminas\Validator\Digits;
 use Laminas\Validator\InArray;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
+use Monarc\Core\Validator\InputValidator\InputValidationTranslator;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
@@ -19,14 +19,9 @@ use Monarc\FrontOffice\Validator\FieldValidator\AnrExistenceValidator;
 
 class GetStatsQueryParamsValidator extends AbstractInputValidator
 {
-    /** @var AnrTable */
-    private $anrTable;
-
-    public function __construct(InputFilter $inputFilter, AnrTable $anrTable)
+    public function __construct(array $config, InputValidationTranslator $translator, private AnrTable $anrTable)
     {
-        $this->anrTable = $anrTable;
-
-        parent::__construct($inputFilter);
+        parent::__construct($config, $translator);
     }
 
     protected function getRules(): array

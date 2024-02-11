@@ -1,12 +1,14 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Model\Entity\User;
 use RobThree\Auth\TwoFactorAuth;
 use RobThree\Auth\Providers\Qr\EndroidQrCodeProvider;
@@ -14,27 +16,23 @@ use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Table\UserTable;
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
 
-class ApiUserTwoFAController extends AbstractRestfulController
+class ApiUserTwoFAController extends AbstractRestfulControllerRequestHandler
 {
-    private ConnectedUserService $connectedUserService;
+    use ControllerRequestResponseHandlerTrait;
 
-    private ConfigService $configService;
-
-    private UserTable $userTable;
+    private User $connectedUser;
 
     private TwoFactorAuth $tfa;
 
     public function __construct(
-        ConfigService $configService,
-        ConnectedUserService $connectedUserService,
-        UserTable $userTable
+        private ConfigService $configService,
+        private UserTable $userTable,
+        ConnectedUserService $connectedUserService
     ) {
-        $this->configService = $configService;
-        $this->connectedUserService = $connectedUserService;
-        $this->userTable = $userTable;
+        /** @var User $connectedUser */
+        $connectedUser = $connectedUserService->getConnectedUser();
+        $this->connectedUser = $connectedUser;
         $qr = new EndroidQrCodeProvider();
         $this->tfa = new TwoFactorAuth('MONARC', 6, 30, 'sha1', $qr);
     }
@@ -45,8 +43,7 @@ class ApiUserTwoFAController extends AbstractRestfulController
      */
     public function get($id)
     {
-        $connectedUser = $this->connectedUserService->getConnectedUser();
-        if ($connectedUser === null) {
+        if ($this->connectedUser === null) {
             throw new Exception('You are not authorized to do this action', 412);
         }
 
@@ -59,8 +56,8 @@ class ApiUserTwoFAController extends AbstractRestfulController
         $secret = $this->tfa->createSecret();
         $qrcode = $this->tfa->getQRCodeImageAsDataUri($label, $secret);
 
-        return new JsonModel([
-            'id' => $connectedUser->getId(),
+        return $this->getPreparedJsonResponse([
+            'id' => $this->connectedUser->getId(),
             'secret' => $secret,
             'qrcode' => $qrcode,
         ]);
@@ -74,19 +71,16 @@ class ApiUserTwoFAController extends AbstractRestfulController
      */
     public function create($data)
     {
-        /** @var User $connectedUser */
-        $connectedUser = $this->connectedUserService->getConnectedUser();
-
         // TODO: move to the service...
         $res = $this->tfa->verifyCode($data['secretKey'], $data['verificationCode']);
 
         if ($res) {
-            $connectedUser->setSecretKey($data['secretKey']);
-            $connectedUser->setTwoFactorAuthEnabled(true);
-            $this->userTable->save($connectedUser);
+            $this->connectedUser->setSecretKey($data['secretKey']);
+            $this->connectedUser->setTwoFactorAuthEnabled(true);
+            $this->userTable->save($this->connectedUser);
         }
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'status' => $res,
         ]);
     }
@@ -97,19 +91,18 @@ class ApiUserTwoFAController extends AbstractRestfulController
      */
     public function delete($id)
     {
-        $connectedUser = $this->connectedUserService->getConnectedUser();
-        if ($connectedUser === null) {
+        if ($this->connectedUser === null) {
             throw new Exception('You are not authorized to do this action', 412);
         }
 
         // TODO: move to the service.
-        $connectedUser->setTwoFactorAuthEnabled(false);
-        $connectedUser->setSecretKey('');
-        $connectedUser->setRecoveryCodes([]);
-        $this->userTable->save($connectedUser);
+        $this->connectedUser->setTwoFactorAuthEnabled(false);
+        $this->connectedUser->setSecretKey('');
+        $this->connectedUser->setRecoveryCodes([]);
+        $this->userTable->save($this->connectedUser);
 
         $this->getResponse()->setStatusCode(204);
 
-        return new JsonModel();
+        return $this->getPreparedJsonResponse();
     }
 }

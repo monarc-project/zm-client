@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
@@ -11,30 +16,20 @@ use Laminas\ServiceManager\Proxy\LazyServiceFactory;
 use Monarc\Core\Adapter\Authentication as AdapterAuthentication;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\Helper\ScalesCacheHelper;
 use Monarc\Core\Storage\Authentication as StorageAuthentication;
 use Monarc\Core\Table\Factory\ClientEntityManagerFactory;
 use Monarc\FrontOffice\Controller;
-use Monarc\FrontOffice\Middleware\AnrValidationMiddleware;
-use Monarc\FrontOffice\CronTask\Service\CronTaskService;
-use Monarc\FrontOffice\CronTask\Table\CronTaskTable;
+use Monarc\FrontOffice\CronTask;
 use Monarc\FrontOffice\Export;
 use Monarc\FrontOffice\Import;
+use Monarc\FrontOffice\Middleware\AnrValidationMiddleware;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
-use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
-use Monarc\FrontOffice\Stats\Controller\StatsAnrsSettingsController;
-use Monarc\FrontOffice\Stats\Controller\StatsController;
-use Monarc\FrontOffice\Stats\Controller\StatsGeneralSettingsController;
-use Monarc\FrontOffice\Stats\Provider\StatsApiProvider;
-use Monarc\FrontOffice\Stats\Service\StatsAnrService;
-use Monarc\FrontOffice\Stats\Service\StatsSettingsService;
-use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidator;
-use Monarc\FrontOffice\Stats\Validator\GetProcessedStatsQueryParamsValidatorFactory;
-use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidator;
-use Monarc\FrontOffice\Stats\Validator\GetStatsQueryParamsValidatorFactory;
+use Monarc\FrontOffice\Stats;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Validator\InputValidator;
 
@@ -58,9 +53,7 @@ return [
                     ],
                     'defaults' => [
                         'controller' => PipeSpec::class,
-                        'middleware' => new PipeSpec(
-                            Controller\ApiAdminUsersRolesController::class,
-                        ),
+                        'middleware' => new PipeSpec(Controller\ApiAdminUsersRolesController::class),
                     ],
                 ],
             ],
@@ -74,9 +67,7 @@ return [
                     ],
                     'defaults' => [
                         'controller' => PipeSpec::class,
-                        'middleware' => new PipeSpec(
-                            Controller\ApiAdminUsersController::class,
-                        ),
+                        'middleware' => new PipeSpec(Controller\ApiAdminUsersController::class),
                     ],
                 ],
             ],
@@ -90,9 +81,7 @@ return [
                     ],
                     'defaults' => [
                         'controller' => PipeSpec::class,
-                        'middleware' => new PipeSpec(
-                            Controller\ApiAdminUsersController::class,
-                        ),
+                        'middleware' => new PipeSpec(Controller\ApiAdminUsersController::class),
                         'action' => 'resetPassword',
                     ],
                 ],
@@ -119,7 +108,8 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiModelsController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(Controller\ApiModelsController::class),
                     ],
                 ],
             ],
@@ -175,9 +165,7 @@ return [
                     'constraints' => [],
                     'defaults' => [
                         'controller' => PipeSpec::class,
-                        'middleware' => new PipeSpec(
-                            Controller\ApiAdminPasswordsController::class,
-                        ),
+                        'middleware' => new PipeSpec(Controller\ApiAdminPasswordsController::class),
                     ],
                 ],
             ],
@@ -207,7 +195,8 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiGuidesController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(Controller\ApiGuidesController::class),
                     ],
                 ],
             ],
@@ -220,7 +209,8 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiGuidesItemsController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(Controller\ApiGuidesItemsController::class),
                     ],
                 ],
             ],
@@ -1232,7 +1222,8 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiDeliveriesModelsController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(Controller\ApiDeliveriesModelsController::class),
                     ],
                 ],
             ],
@@ -1256,7 +1247,10 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiUserTwoFAController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            Controller\ApiUserTwoFAController::class,
+                        ),
                     ],
                 ],
             ],
@@ -1268,7 +1262,8 @@ return [
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
-                        'controller' => Controller\ApiUserRecoveryCodesController::class,
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(Controller\ApiUserRecoveryCodesController::class),
                     ],
                 ],
             ],
@@ -1291,7 +1286,7 @@ return [
                     'route' => '/api/stats[/]',
                     'verb' => 'get',
                     'defaults' => [
-                        'controller' => StatsController::class,
+                        'controller' => Stats\Controller\StatsController::class,
                     ],
                 ],
             ],
@@ -1308,7 +1303,7 @@ return [
                             'route' => 'processed[/]',
                             'verb' => 'get',
                             'defaults' => [
-                                'controller' => StatsController::class,
+                                'controller' => Stats\Controller\StatsController::class,
                                 'action' => 'getProcessedList'
                             ],
                         ],
@@ -1319,7 +1314,7 @@ return [
                             'route' => 'anrs-settings[/]',
                             'verb' => 'get,patch',
                             'defaults' => [
-                                'controller' => StatsAnrsSettingsController::class,
+                                'controller' => Stats\Controller\StatsAnrsSettingsController::class,
                             ],
                         ],
                     ],
@@ -1329,7 +1324,7 @@ return [
                             'route' => 'general-settings[/]',
                             'verb' => 'get,patch',
                             'defaults' => [
-                                'controller' => StatsGeneralSettingsController::class,
+                                'controller' => Stats\Controller\StatsGeneralSettingsController::class,
                             ],
                         ],
                     ],
@@ -1339,7 +1334,7 @@ return [
                             'route' => 'validate-stats-availability[/]',
                             'verb' => 'get',
                             'defaults' => [
-                                'controller' => StatsController::class,
+                                'controller' => Stats\Controller\StatsController::class,
                                 'action' => 'validateStatsAvailability'
                             ],
                         ],
@@ -1351,43 +1346,30 @@ return [
 
     'controllers' => [
         'factories' => [
-            /* Start TODO */
-            Controller\ApiGuidesController::class => Controller\ApiGuidesControllerFactory::class,
-            Controller\ApiGuidesItemsController::class => Controller\ApiGuidesItemsControllerFactory::class,
-            Controller\ApiModelsController::class => Controller\ApiModelsControllerFactory::class,
-            Controller\ApiDuplicateAnrController::class => Controller\ApiDuplicateAnrControllerFactory::class,
-            Controller\ApiAnrReferentialsController::class => Controller\ApiAnrReferentialsControllerFactory::class,
-            Controller\ApiAnrMeasuresController::class => Controller\ApiAnrMeasuresControllerFactory::class,
-            Controller\ApiAnrMeasuresMeasuresController::class
-                => Controller\ApiAnrMeasuresMeasuresControllerFactory::class,
-            Controller\ApiAnrQuestionsController::class => Controller\ApiAnrQuestionsControllerFactory::class,
-            Controller\ApiAnrQuestionsChoicesController::class
-                => Controller\ApiAnrQuestionsChoicesControllerFactory::class,
-            Controller\ApiAnrRolfTagsController::class => Controller\ApiAnrRolfTagsControllerFactory::class,
-            Controller\ApiAnrRolfRisksController::class => Controller\ApiAnrRolfRisksControllerFactory::class,
-            Controller\ApiAnrInterviewsController::class => Controller\ApiAnrInterviewsControllerFactory::class,
-            Controller\ApiAnrRecordActorsController::class => Controller\ApiAnrRecordActorsControllerFactory::class,
-            Controller\ApiAnrRecordDuplicateController::class
-                => Controller\ApiAnrRecordDuplicateControllerFactory::class,
-            Controller\ApiAnrRecordDataCategoriesController::class
-                => Controller\ApiAnrRecordDataCategoriesControllerFactory::class,
-            Controller\ApiAnrRecordInternationalTransfersController::class
-                => Controller\ApiAnrRecordInternationalTransfersControllerFactory::class,
-            Controller\ApiAnrRecordPersonalDataController::class
-                => Controller\ApiAnrRecordPersonalDataControllerFactory::class,
-            Controller\ApiAnrRecordProcessorsController::class
-                => Controller\ApiAnrRecordProcessorsControllerFactory::class,
-            Controller\ApiAnrRecordRecipientsController::class
-                => Controller\ApiAnrRecordRecipientsControllerFactory::class,
-            Controller\ApiAnrRecordsController::class => Controller\ApiAnrRecordsControllerFactory::class,
-            Controller\ApiAnrRecordsExportController::class => Controller\ApiAnrRecordsExportControllerFactory::class,
-            Controller\ApiSoaCategoryController::class => Controller\ApiSoaCategoryControllerFactory::class,
-            Controller\ApiAnrScalesTypesController::class => Controller\ApiAnrScalesTypesControllerFactory::class,
-            Controller\ApiAnrScalesCommentsController::class => Controller\ApiAnrScalesCommentsControllerFactory::class,
-            Controller\ApiDashboardAnrCartoRisksController::class
-                => Controller\ApiDashboardAnrCartoRisksControllerFactory::class,
-            Controller\ApiDeliveriesModelsController::class => Controller\ApiDeliveriesModelsControllerFactory::class,
-            /* END TODO */
+            Controller\ApiGuidesController::class => AutowireFactory::class,
+            Controller\ApiGuidesItemsController::class => AutowireFactory::class,
+            Controller\ApiModelsController::class => AutowireFactory::class,
+            Controller\ApiDuplicateAnrController::class => AutowireFactory::class,
+            Controller\ApiAnrReferentialsController::class => AutowireFactory::class,
+            Controller\ApiAnrMeasuresController::class => AutowireFactory::class,
+            Controller\ApiAnrMeasuresMeasuresController::class => AutowireFactory::class,
+            Controller\ApiAnrQuestionsController::class => AutowireFactory::class,
+            Controller\ApiAnrQuestionsChoicesController::class => AutowireFactory::class,
+            Controller\ApiAnrRolfTagsController::class => AutowireFactory::class,
+            Controller\ApiAnrRolfRisksController::class => AutowireFactory::class,
+            Controller\ApiAnrInterviewsController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordActorsController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordDuplicateController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordDataCategoriesController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordInternationalTransfersController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordPersonalDataController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordProcessorsController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordRecipientsController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordsController::class => AutowireFactory::class,
+            Controller\ApiAnrRecordsExportController::class => AutowireFactory::class,
+            Controller\ApiSoaCategoryController::class => AutowireFactory::class,
+            Controller\ApiDashboardAnrCartoRisksController::class => AutowireFactory::class,
+            Controller\ApiDeliveriesModelsController::class => AutowireFactory::class,
             Controller\ApiAnrTreatmentPlanController::class => AutowireFactory::class,
             Controller\ApiAnrRecommendationsController::class => AutowireFactory::class,
             Controller\ApiAnrRecommendationsHistoryController::class => AutowireFactory::class,
@@ -1417,6 +1399,8 @@ return [
             Controller\ApiAnrRecordsImportController::class => AutowireFactory::class,
             Controller\ApiSoaController::class => AutowireFactory::class,
             Controller\ApiAnrScalesController::class => AutowireFactory::class,
+            Controller\ApiAnrScalesTypesController::class => AutowireFactory::class,
+            Controller\ApiAnrScalesCommentsController::class => AutowireFactory::class,
             Controller\ApiAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrRiskOwnersController::class => AutowireFactory::class,
             Controller\ApiDashboardAnrRisksController::class => AutowireFactory::class,
@@ -1435,9 +1419,9 @@ return [
             Controller\ApiAnrDeliverableController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesConsequencesController::class => AutowireFactory::class,
             Controller\ApiModelVerifyLanguageController::class => AutowireFactory::class,
-            StatsController::class => AutowireFactory::class,
-            StatsAnrsSettingsController::class => AutowireFactory::class,
-            StatsGeneralSettingsController::class => AutowireFactory::class,
+            Stats\Controller\StatsController::class => AutowireFactory::class,
+            Stats\Controller\StatsAnrsSettingsController::class => AutowireFactory::class,
+            Stats\Controller\StatsGeneralSettingsController::class => AutowireFactory::class,
             Controller\ApiOperationalRisksScalesController::class => AutowireFactory::class,
             Controller\ApiOperationalRisksScalesCommentsController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesMetadataFieldsController::class => AutowireFactory::class,
@@ -1473,8 +1457,6 @@ return [
 
             DbCli::class => Service\Model\DbCliFactory::class,
 
-            DeprecatedTable\DeliveryTable::class => AutowireFactory::class,
-            DeprecatedTable\InstanceConsequenceTable::class => AutowireFactory::class,
             DeprecatedTable\InterviewTable::class => AutowireFactory::class,
             DeprecatedTable\MeasureTable::class => AutowireFactory::class,
             DeprecatedTable\MeasureMeasureTable::class => AutowireFactory::class,
@@ -1488,9 +1470,6 @@ return [
             DeprecatedTable\RecordRecipientTable::class => AutowireFactory::class,
             DeprecatedTable\RecordTable::class => AutowireFactory::class,
             DeprecatedTable\ReferentialTable::class => AutowireFactory::class,
-            DeprecatedTable\ScaleTable::class => AutowireFactory::class,
-            DeprecatedTable\ScaleCommentTable::class => AutowireFactory::class,
-            DeprecatedTable\ScaleImpactTypeTable::class => AutowireFactory::class,
             DeprecatedTable\SoaTable::class => AutowireFactory::class,
             DeprecatedTable\SoaCategoryTable::class => AutowireFactory::class,
             DeprecatedTable\QuestionTable::class => AutowireFactory::class,
@@ -1499,11 +1478,16 @@ return [
             Table\AnrInstanceMetadataFieldTable::class => ClientEntityManagerFactory::class,
             Table\AmvTable::class => ClientEntityManagerFactory::class,
             Table\AssetTable::class => ClientEntityManagerFactory::class,
+            Table\DeliveryTable::class => ClientEntityManagerFactory::class,
             Table\InstanceTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskOpTable::class => ClientEntityManagerFactory::class,
             Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
+            Table\InstanceConsequenceTable::class => ClientEntityManagerFactory::class,
+            Table\ScaleTable::class => ClientEntityManagerFactory::class,
+            Table\ScaleCommentTable::class => ClientEntityManagerFactory::class,
+            Table\ScaleImpactTypeTable::class => ClientEntityManagerFactory::class,
             Table\ClientTable::class => ClientEntityManagerFactory::class,
             Table\MonarcObjectTable::class => ClientEntityManagerFactory::class,
             Table\ObjectCategoryTable::class => ClientEntityManagerFactory::class,
@@ -1523,10 +1507,9 @@ return [
             Table\UserTable::class => ClientEntityManagerFactory::class,
             Table\UserAnrTable::class => ClientEntityManagerFactory::class,
             Table\VulnerabilityTable::class => ClientEntityManagerFactory::class,
-            CronTaskTable::class => ClientEntityManagerFactory::class,
+            CronTask\Table\CronTaskTable::class => ClientEntityManagerFactory::class,
 
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
-            Entity\Delivery::class => ModelFactory\DeliveryServiceModelEntity::class,
             Entity\Interview::class => ModelFactory\InterviewServiceModelEntity::class,
             Entity\RecordActor::class => ModelFactory\RecordActorServiceModelEntity::class,
             Entity\RecordDataCategory::class => ModelFactory\RecordDataCategoryServiceModelEntity::class,
@@ -1569,8 +1552,8 @@ return [
             Service\AnrRecommendationHistoryService::class => AutowireFactory::class,
             Service\AnrRecommendationRiskService::class => AutowireFactory::class,
             Service\AnrRecommendationSetService::class => AutowireFactory::class,
-            Service\AnrCartoRiskService::class => Service\AnrCartoRiskServiceFactory::class,
-            Service\DeliverableGenerationService::class => Service\DeliverableGenerationServiceFactory::class,
+            Service\AnrCartoRiskService::class => AutowireFactory::class,
+            Service\DeliverableGenerationService::class => AutowireFactory::class,
             Service\SnapshotService::class => AutowireFactory::class,
             Service\AnrService::class => AutowireFactory::class,
             Service\UserService::class => ReflectionBasedAbstractFactory::class,
@@ -1582,31 +1565,29 @@ return [
             Service\AnrVulnerabilityService::class => AutowireFactory::class,
             Service\ClientService::class => AutowireFactory::class,
             Service\AnrScaleService::class => AutowireFactory::class,
-            Service\AnrScaleTypeService::class => AutowireFactory::class,
+            Service\AnrScaleImpactTypeService::class => AutowireFactory::class,
             Service\AnrScaleCommentService::class => AutowireFactory::class,
-            Service\AnrCheckStartedService::class => AutowireFactory::class,
             Service\AnrObjectService::class => AutowireFactory::class,
             Service\AnrObjectObjectService::class => AutowireFactory::class,
             Service\AnrInstanceConsequenceService::class => AutowireFactory::class,
             Service\AnrInstanceRiskOpService::class => AutowireFactory::class,
             Service\AnrInstanceRiskService::class => AutowireFactory::class,
             Service\AnrInstanceService::class => AutowireFactory::class,
-            StatsAnrService::class => ReflectionBasedAbstractFactory::class,
-            StatsSettingsService::class => AutowireFactory::class,
+            Stats\Service\StatsAnrService::class => ReflectionBasedAbstractFactory::class,
+            Stats\Service\StatsSettingsService::class => AutowireFactory::class,
             Service\OperationalRiskScaleService::class => AutowireFactory::class,
             Service\InstanceRiskOwnerService::class => AutowireFactory::class,
             Service\OperationalRiskScaleCommentService::class => AutowireFactory::class,
             Service\AnrInstanceMetadataFieldService::class => AutowireFactory::class,
             Service\InstanceMetadataService::class => AutowireFactory::class,
             Service\SoaScaleCommentService::class => AutowireFactory::class,
-            CronTaskService::class => AutowireFactory::class,
+            CronTask\Service\CronTaskService::class => AutowireFactory::class,
             /* Export services. */
+            Export\Service\AnrExportService::class => ReflectionBasedAbstractFactory::class,
             Export\Service\AssetExportService::class => AutowireFactory::class,
             Export\Service\AnrObjectExportService::class => AutowireFactory::class,
-            // TODO: If this doesn't work then use ReflectionBasedAbstractFactory::class for the following 3 cases.
             Export\Service\SoaScaleCommentExportService::class => AutowireFactory::class,
             Export\Service\OperationalRiskScalesExportService::class => AutowireFactory::class,
-            Export\Service\AnrInstanceMetadataFieldsExportService::class => AutowireFactory::class,
             /* Import services. */
             Import\Service\ObjectImportService::class => AutowireFactory::class,
             Import\Service\AssetImportService::class => AutowireFactory::class,
@@ -1614,21 +1595,28 @@ return [
 
             // Helpers
             Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
+            ScalesCacheHelper::class => static function (ContainerInterface $container) {
+                return new ScalesCacheHelper(
+                    $container->get(Table\ScaleTable::class),
+                    $container->get(Table\ScaleImpactTypeTable::class),
+                    $container->get(Table\OperationalRiskScaleTable::class),
+                );
+            },
 
             /* Authentication */
-            StorageAuthentication::class => static function (ContainerInterface $container, $serviceName) {
+            StorageAuthentication::class => static function (ContainerInterface $container) {
                 return new StorageAuthentication(
                     $container->get(Table\UserTokenTable::class),
                     $container->get('config')
                 );
             },
-            AdapterAuthentication::class => static function (ContainerInterface $container, $serviceName) {
+            AdapterAuthentication::class => static function (ContainerInterface $container) {
                 return new AdapterAuthentication(
                     $container->get(Table\UserTable::class),
                     $container->get(ConfigService::class)
                 );
             },
-            ConnectedUserService::class => static function (ContainerInterface $container, $serviceName) {
+            ConnectedUserService::class => static function (ContainerInterface $container) {
                 return new ConnectedUserService(
                     $container->get(Request::class),
                     $container->get(Table\UserTokenTable::class)
@@ -1636,12 +1624,12 @@ return [
             },
 
             // Providers
-            StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
+            Stats\Provider\StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
 
             // Validators
             InputValidator\User\PostUserDataInputValidator::class => ReflectionBasedAbstractFactory::class,
-            GetStatsQueryParamsValidator::class => GetStatsQueryParamsValidatorFactory::class,
-            GetProcessedStatsQueryParamsValidator::class => GetProcessedStatsQueryParamsValidatorFactory::class,
+            Stats\Validator\GetStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
+            Stats\Validator\GetProcessedStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Anr\CreateAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Object\PostObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Object\DuplicateObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
@@ -1669,7 +1657,7 @@ return [
             ) {
                 /** @var ConnectedUserService $connectedUserService */
                 $connectedUserService = $container->get(ConnectedUserService::class);
-                $connectedUserService->setConnectedUser(new User([
+                $connectedUserService->setConnectedUser(new Entity\User([
                     'firstname' => 'System',
                     'lastname' => 'System',
                     'email' => 'System',
@@ -1680,7 +1668,7 @@ return [
                 ]));
 
                 return new Import\Command\ImportAnalysesCommand(
-                    $container->get(CronTaskService::class),
+                    $container->get(CronTask\Service\CronTaskService::class),
                     $container->get(Import\Service\InstanceImportService::class),
                     $container->get(Table\AnrTable::class),
                     $container->get(Service\SnapshotService::class)

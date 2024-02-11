@@ -8,17 +8,17 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrRecordPersonalDataService;
 
-/**
- * Api Anr Record Personal Data Controller
- *
- * Class ApiAnrRecordPersonalDataController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
 {
     protected $name = 'record-personal-data';
     protected $dependencies = ['anr', 'record', 'dataCategories'];
+
+    public function __construct(AnrRecordPersonalDataService $anrRecordPersonalDataService)
+    {
+        parent::__construct($anrRecordPersonalDataService);
+    }
 
     public function getList()
     {
@@ -65,9 +65,6 @@ class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
         return new JsonModel($entity);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -82,9 +79,6 @@ class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
         ]);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -98,17 +92,11 @@ class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
         return new JsonModel(['status' => 'ok']);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

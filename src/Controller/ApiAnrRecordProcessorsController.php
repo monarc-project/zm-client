@@ -8,17 +8,17 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrRecordProcessorService;
 
-/**
- * Api Anr Record Processors Controller
- *
- * Class ApiAnrRecordProcessorsController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
 {
     protected $name = 'record-processors';
     protected $dependencies = ['anr', 'representative', 'dpo'];
+
+    public function __construct(AnrRecordProcessorService $anrRecordProcessorService)
+    {
+        parent::__construct($anrRecordProcessorService);
+    }
 
     public function get($id)
     {
@@ -39,9 +39,6 @@ class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
         return new JsonModel($entity);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -54,9 +51,6 @@ class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
         return new JsonModel(['status' => 'ok']);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -73,17 +67,11 @@ class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
         ]);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

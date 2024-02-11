@@ -38,7 +38,7 @@ class AnrInstanceRiskOpService
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private CoreService\ConfigService $configService,
         private CoreService\TranslateService $translateService,
-        private OperationalRiskScaleService $operationalRiskScaleService,
+        private CoreService\Helper\ScalesCacheHelper $scalesCacheHelper,
         private InstanceRiskOwnerService $instanceRiskOwnerService,
         CoreService\ConnectedUserService $connectedUserService
     ) {
@@ -263,8 +263,8 @@ class AnrInstanceRiskOpService
     {
         /** @var Entity\InstanceRiskOp $operationalInstanceRisk */
         $operationalInstanceRisk = $this->instanceRiskOpTable->findByIdAndAnr($id, $anr);
-        $likelihoodScale = $this->operationalRiskScaleService->getFromCacheOrFindLikelihoodScale($anr);
 
+        $likelihoodScale = $this->scalesCacheHelper->getCachedLikelihoodScale($anr);
         if (isset($data['kindOfMeasure'])) {
             $operationalInstanceRisk->setKindOfMeasure((int)$data['kindOfMeasure']);
         }

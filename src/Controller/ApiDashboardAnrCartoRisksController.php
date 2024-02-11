@@ -1,110 +1,49 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Service\AnrCartoRiskService;
 
-/**
- * Api Dashboard ANR Cartography Risks Real & Targeted Controller
- *
- * Class ApiDashboardAnrCartoRisksController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiDashboardAnrCartoRisksController extends ApiAnrAbstractController
+class ApiDashboardAnrCartoRisksController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'carto';
-    protected $dependencies = [];
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(private AnrCartoRiskService $anrCartoRiskService)
+    {
+    }
+
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
         $type = $this->params()->fromRoute('type', 'all'); // real / targeted / all
-        switch ($type) {
-            case 'real':
-                return new JsonModel([
-                    'status' => 'ok',
-                    $this->name => [
-                        'real' => $this->getService()->getCartoReal($anrId),
-                    ]
-                ]);
-                break;
-            case 'targeted':
-                return new JsonModel([
-                    'status' => 'ok',
-                    $this->name => [
-                        'targeted' => $this->getService()->getCartoTargeted($anrId),
-                    ]
-                ]);
-                break;
-            default:
-            case 'all':
-                return new JsonModel([
-                    'status' => 'ok',
-                    $this->name => [
-                        'real' => $this->getService()->getCartoReal($anrId),
-                        'targeted' => $this->getService()->getCartoTargeted($anrId),
-                    ]
-                ]);
-                break;
-        }
-    }
 
-    /**
-     * @inheritdoc
-     */
-    public function get($id)
-    {
-        $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function create($data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function deleteList($data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        $this->methodNotAllowed();
+        return match ($type) {
+            'real' => $this->getSuccessfulJsonResponse([
+                'carto' => [
+                    'real' => $this->anrCartoRiskService->getCartoReal($anr),
+                ]
+            ]),
+            'targeted' => $this->getSuccessfulJsonResponse([
+                'carto' => [
+                    'targeted' => $this->anrCartoRiskService->getCartoTargeted($anr),
+                ]
+            ]),
+            default => $this->getSuccessfulJsonResponse([
+                'carto' => [
+                    'real' => $this->anrCartoRiskService->getCartoReal($anr),
+                    'targeted' => $this->anrCartoRiskService->getCartoTargeted($anr),
+                ]
+            ]),
+        };
     }
 }

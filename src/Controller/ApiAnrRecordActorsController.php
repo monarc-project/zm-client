@@ -7,18 +7,20 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Service\AnrRecordActorService;
 
-/**
- * Api Anr Record Actors Controller
- *
- * Class ApiAnrRecordActorsController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrRecordActorsController extends ApiAnrAbstractController
 {
+    use ControllerRequestResponseHandlerTrait;
+
     protected $name = 'record-actors';
     protected $dependencies = ['anr'];
+
+    public function __construct(AnrRecordActorService $anrRecordActorService)
+    {
+        parent::__construct($anrRecordActorService);
+    }
 
     public function get($id)
     {
@@ -36,7 +38,7 @@ class ApiAnrRecordActorsController extends ApiAnrAbstractController
             $this->formatDependencies($entity, $this->dependencies);
         }
 
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($entity);
     }
 
     /**
@@ -52,10 +54,7 @@ class ApiAnrRecordActorsController extends ApiAnrAbstractController
 
         $id = $this->getService()->create($data);
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $id]);
     }
 
     /**
@@ -71,7 +70,7 @@ class ApiAnrRecordActorsController extends ApiAnrAbstractController
 
         $service = $this->getService()->update($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**

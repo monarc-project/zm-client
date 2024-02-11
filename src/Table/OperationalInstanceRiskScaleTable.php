@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Table;
 
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\OperationalInstanceRiskScaleTable as CoreOperationalInstanceRiskScaleTable;
 use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
@@ -19,10 +20,11 @@ class OperationalInstanceRiskScaleTable extends CoreOperationalInstanceRiskScale
         parent::__construct($entityManager, $entityName);
     }
 
-    public function isRisksEvaluationStartedForAnr(Anr $anr): bool
+    public function isEvaluationStarted(Anr $anr): bool
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('oirs');
-        $result = $queryBuilder
+
+        return $queryBuilder
             ->where('oirs.anr = :anr')
             ->andWhere($queryBuilder->expr()->orX(
                 $queryBuilder->expr()->neq('oirs.brutValue', -1),
@@ -32,8 +34,6 @@ class OperationalInstanceRiskScaleTable extends CoreOperationalInstanceRiskScale
             ->setParameter('anr', $anr)
             ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult();
-
-        return $result !== null;
+            ->getOneOrNullResult(AbstractQuery::HYDRATE_SIMPLEOBJECT) !== null;
     }
 }

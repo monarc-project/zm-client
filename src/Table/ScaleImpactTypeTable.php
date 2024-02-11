@@ -1,26 +1,23 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-namespace Monarc\FrontOffice\Model\Table;
+namespace Monarc\FrontOffice\Table;
 
-use Monarc\Core\Model\Table\ScaleImpactTypeTable as CoreScaleImpactTypeTable;
-use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\DbCli;
+use Doctrine\ORM\EntityManager;
+use Monarc\Core\Table\ScaleImpactTypeTable as CoreScaleImpactTypeTable;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
 
 class ScaleImpactTypeTable extends CoreScaleImpactTypeTable
 {
-    public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
+    public function __construct(EntityManager $entityManager, string $entityName = ScaleImpactType::class)
     {
-        parent::__construct($dbService, $connectedUserService);
-
-        $this->entityClass = ConnectedUserService::class;
+        parent::__construct($entityManager, $entityName);
     }
 
     /**

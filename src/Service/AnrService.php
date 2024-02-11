@@ -7,117 +7,17 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity\Anr as AnrCore;
-use Monarc\Core\Model\Entity\Referential as ReferentialCore;
-use Monarc\Core\Model\Table\ReferentialTable as CoreReferentialTable;
-use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Table\ReferentialTable;
-use Monarc\FrontOffice\Table;
-
 use DateTime;
+use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Model\Table as CoreDeprecatedTable;
+use Monarc\Core\Table as CoreTable;
+use Monarc\Core\Service as CoreService;
+use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Table;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\Model;
-use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
-use Monarc\Core\Model\Entity\OperationalRiskScaleCommentSuperClass;
-use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
-use Monarc\Core\Model\Entity\OperationalRiskScaleTypeSuperClass;
-use Monarc\Core\Model\Entity\QuestionChoiceSuperClass;
-use Monarc\Core\Model\Entity\QuestionSuperClass;
-use Monarc\Core\Model\Entity\ScaleCommentSuperClass;
-use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
-use Monarc\Core\Model\Entity\ScaleSuperClass;
-use Monarc\Core\Model\Entity\ThreatSuperClass;
-use Monarc\Core\Model\Entity\TranslationSuperClass;
-use Monarc\Core\Model\Entity\User as CoreUser;
-use Monarc\Core\Model\Entity\UserSuperClass;
-use Monarc\Core\Model\Entity\VulnerabilitySuperClass;
-use Monarc\Core\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
-use Monarc\Core\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
-use Monarc\Core\Table\InstanceRiskTable as CoreInstanceRiskTable;
-use Monarc\Core\Table\InstanceTable as CoreInstanceTable;
-use Monarc\Core\Table\ScaleImpactTypeTable as CoreScaleImpactTypeTable;
-use Monarc\Core\Table\ModelTable;
-use Monarc\Core\Table\ObjectCategoryTable as CoreObjectCategoryTable;
-use Monarc\Core\Table\OperationalRiskScaleTable as CoreOperationalRiskScaleTable;
-use Monarc\Core\Table\ScaleTable as CoreScaleTable;
-use Monarc\Core\Table\SoaScaleCommentTable;
-use Monarc\Core\Table\TranslationTable as CoreTranslationTable;
-use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
-use Monarc\Core\Table\VulnerabilityTable as CoreVulnerabilityTable;
-use Monarc\FrontOffice\Model\Entity\Amv;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\AnrInstanceMetadataField;
-use Monarc\FrontOffice\Model\Entity\CronTask;
-use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
-use Monarc\FrontOffice\Model\Entity\Interview;
-use Monarc\FrontOffice\Model\Entity\Measure;
-use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
-use Monarc\FrontOffice\Model\Entity\ObjectCategory;
-use Monarc\FrontOffice\Model\Entity\ObjectObject;
-use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
-use Monarc\FrontOffice\Model\Entity\Question;
-use Monarc\FrontOffice\Model\Entity\QuestionChoice;
-use Monarc\FrontOffice\Model\Entity\Recommandation;
-use Monarc\FrontOffice\Model\Entity\RecommandationSet;
-use Monarc\FrontOffice\Model\Entity\RecommandationHistoric;
-use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
-use Monarc\FrontOffice\Model\Entity\RecordActor;
-use Monarc\FrontOffice\Model\Entity\RecordDataCategory;
-use Monarc\FrontOffice\Model\Entity\RecordInternationalTransfer;
-use Monarc\FrontOffice\Model\Entity\RecordPersonalData;
-use Monarc\FrontOffice\Model\Entity\RecordProcessor;
-use Monarc\FrontOffice\Model\Entity\Referential;
-use Monarc\FrontOffice\Model\Entity\RolfRisk;
-use Monarc\FrontOffice\Model\Entity\RolfTag;
-use Monarc\FrontOffice\Model\Entity\Scale;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
-use Monarc\FrontOffice\Model\Entity\ScaleComment;
-use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
-use Monarc\FrontOffice\Model\Entity\Soa;
-use Monarc\FrontOffice\Model\Entity\SoaCategory;
-use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
-use Monarc\FrontOffice\Model\Entity\Theme;
-use Monarc\FrontOffice\Model\Entity\User;
-use Monarc\FrontOffice\Model\Entity\UserAnr;
-use Monarc\FrontOffice\Model\Entity\UserRole;
-use Monarc\FrontOffice\Model\Table\InstanceConsequenceTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Table\SoaScaleCommentTable as SoaScaleCommentCliTable;
-use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
-use Monarc\FrontOffice\Model\Table\ObjectCategoryTable;
-use Monarc\FrontOffice\Table\OperationalInstanceRiskScaleTable;
-use Monarc\FrontOffice\Table\OperationalRiskScaleCommentTable;
-use Monarc\FrontOffice\Table\OperationalRiskScaleTable;
-use Monarc\FrontOffice\Table\OperationalRiskScaleTypeTable;
-use Monarc\FrontOffice\Model\Table\RecommandationRiskTable;
-use Monarc\FrontOffice\Model\Table\ScaleCommentTable;
-use Monarc\FrontOffice\Model\Table\ScaleImpactTypeTable;
-use Monarc\FrontOffice\Model\Table\ScaleTable;
-use Monarc\FrontOffice\Model\Table\SnapshotTable;
-use Monarc\FrontOffice\Table\UserAnrTable;
-use Monarc\FrontOffice\Model\Entity\Asset;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\Threat;
-use Monarc\FrontOffice\Model\Entity\Vulnerability;
-use Monarc\FrontOffice\Table\UserTable;
-use Monarc\FrontOffice\Model\Entity\Record;
-use Monarc\FrontOffice\Model\Entity\RecordRecipient;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
-use Monarc\FrontOffice\Table\VulnerabilityTable;
 use Throwable;
 
 class AnrService
@@ -168,10 +68,10 @@ class AnrService
     protected $objectCliTable;
     protected $objectCategoryCliTable;
     protected $objectObjectCliTable;
-    protected RecommandationTable $recommendationTable;
-    protected $recommandationHistoricCliTable;
-    protected $recommandationRiskCliTable;
-    protected $recommandationSetCliTable;
+    protected RecommendationTable $recommendationTable;
+    protected $recommendationHistoryCliTable;
+    protected $recommendationRiskCliTable;
+    protected $recommendationSetCliTable;
     protected $rolfRiskCliTable;
     protected $rolfTagCliTable;
     protected $scaleCliTable;
@@ -210,46 +110,25 @@ class AnrService
     protected $recordProcessorService;
 */
 
-    private Table\AnrTable $anrTable;
-
-    private UserAnrTable $userAnrTable;
-
-    private ModelTable $modelTable;
-
-    private ReferentialTable $referentialTable;
-
-    private CoreReferentialTable $coreReferentialTable;
-
-    private StatsAnrService $statsAnrService;
-
-    private CronTaskService $cronTaskService;
-
-    private ConfigService $configService;
-
-    /** @var User */
-    private UserSuperClass $connectedUser;
+    /** @var Entity\User */
+    private CoreEntity\UserSuperClass $connectedUser;
 
     private array $cachedData = [];
 
+    // TODO: better to use e.g. anrTable and $coreAnrTable names to distinguish them.
     public function __construct(
-        Table\AnrTable $anrTable,
-        Table\UserAnrTable $userAnrTable,
-        ModelTable $modelTable,
-        ReferentialTable $referentialTable,
-        CoreReferentialTable $coreReferentialTable,
-        StatsAnrService $statsAnrService,
-        CronTaskService $cronTaskService,
-        ConfigService $configService,
-        ConnectedUserService $connectedUserService
+        private Table\AnrTable $anrTable,
+        private Table\UserAnrTable $userAnrTable,
+        private Table\InstanceTable $instanceCliTable,
+        private CoreTable\ModelTable $modelTable,
+        private DeprecatedTable\ReferentialTable $referentialTable,
+        private CoreDeprecatedTable\ReferentialTable $coreReferentialTable,
+        private StatsAnrService $statsAnrService,
+        private CronTaskService $cronTaskService,
+        private CoreService\ConfigService $configService,
+        private InstanceRiskOwnerService $instanceRiskOwnerService,
+        CoreService\ConnectedUserService $connectedUserService
     ) {
-        $this->anrTable = $anrTable;
-        $this->userAnrTable = $userAnrTable;
-        $this->modelTable = $modelTable;
-        $this->referentialTable = $referentialTable;
-        $this->coreReferentialTable = $coreReferentialTable;
-        $this->statsAnrService = $statsAnrService;
-        $this->cronTaskService = $cronTaskService;
-        $this->configService = $configService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
@@ -260,7 +139,7 @@ class AnrService
         $filter = null,
         $filterAnd = null
     ) {
-        $isSuperAdmin = $this->connectedUser->hasRole(UserRole::SUPER_ADMIN_FO);
+        $isSuperAdmin = $this->connectedUser->hasRole(Entity\UserRole::SUPER_ADMIN_FO);
 
         // Retrieve connected user anrs
         $filterAnd['id'] = [];
@@ -279,7 +158,7 @@ class AnrService
         }
 
         // Filter out snapshots, as we don't want to show them unless we explicitly ask for them
-        /** @var SnapshotTable $snapshotCliTable */
+        /** @var Table\SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $snapshots = $snapshotCliTable->getEntityByFields(['anr' => $filterAnd['id']]);
         foreach ($snapshots as $snapshot) {
@@ -315,12 +194,12 @@ class AnrService
 
             /* Check if the Anr is under background import. */
             $anr['importStatus'] = [];
-            if ($anr['status'] === AnrSuperClass::STATUS_UNDER_IMPORT) {
+            if ($anr['status'] === CoreEntity\AnrSuperClass::STATUS_UNDER_IMPORT) {
                 $importCronTask = $this->cronTaskService->getLatestTaskByNameWithParam(
-                    CronTask::NAME_INSTANCE_IMPORT,
+                    Entity\CronTask::NAME_INSTANCE_IMPORT,
                     ['anrId' => $anr['id']]
                 );
-                if ($importCronTask !== null && $importCronTask->getStatus() === CronTask::STATUS_IN_PROGRESS) {
+                if ($importCronTask !== null && $importCronTask->getStatus() === Entity\CronTask::STATUS_IN_PROGRESS) {
                     $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
                     $instancesNumber = $this->instanceCliTable->countByAnrIdFromDate(
                         (int)$anr['id'],
@@ -339,7 +218,7 @@ class AnrService
 
     public function getFilteredCount($filter = null, $filterAnd = null)
     {
-        return count($this->getList(1, 0, null, $filter, $filterAnd));
+        return \count($this->getList(1, 0, null, $filter, $filterAnd));
     }
 
     public function getEntity($id)
@@ -347,7 +226,7 @@ class AnrService
         $anr = $this->get('table')->get($id);
 
         // Retrieve snapshot
-        /** @var SnapshotTable $snapshotCliTable */
+        /** @var Table\SnapshotTable $snapshotCliTable */
         $snapshotCliTable = $this->get('snapshotCliTable');
         $anrSnapshot = current($snapshotCliTable->getEntityByFields(['anr' => $id]));
 
@@ -400,7 +279,7 @@ class AnrService
     /**
      * @param string[] $referentialUuids
      */
-    private function updateReferential(Anr $anr, array $referentialUuids): void
+    private function updateReferential(Entity\Anr $anr, array $referentialUuids): void
     {
         foreach ($anr->getReferentials() as $referential) {
             if (\in_array($referential->getUuid(), $referentialUuids, true)) {
@@ -416,7 +295,7 @@ class AnrService
             $referentialFromCore = $this->coreReferentialTable->findByUuid($referentialUuid);
 
             /* Recreate the core's referential in the analysis.  */
-            $referential = (new Referential())
+            $referential = (new Entity\Referential())
                 ->setAnr($anr)
                 ->setLabels($referentialFromCore->getLabels())
                 ->setUuid($referentialFromCore->getUuid())
@@ -426,7 +305,7 @@ class AnrService
             $categoryNewIds = [];
             foreach ($referentialFromCore->getCategories() as $categoryFromCore) {
                 // TODO: ...
-                $newCategory = new SoaCategory($cat);
+                $newCategory = new Entity\SoaCategory($cat);
                 $newCategory->set('id', null);
                 $newCategory->setAnr($anr);
                 $newCategory->setMeasures(null);
@@ -439,7 +318,7 @@ class AnrService
             $measuresNewIds = [];
             foreach ($measures as $measure) {
                 // duplicate and link the measures to the current referential
-                $newMeasure = (new Measure($measure))
+                $newMeasure = (new Entity\Measure($measure))
                     ->setAnr($anr)
                     ->setReferential($newReferential)
                     ->setCategory($categoryNewIds[$measure->category->id]);
@@ -452,7 +331,7 @@ class AnrService
                     ]))) {
                         $data['father'] = $newMeasure->getUuid();
                         $data['child'] = $linkedMeasure->getUuid();
-                        $newMeasureMeasure = new MeasureMeasure($data);
+                        $newMeasureMeasure = new Entity\MeasureMeasure($data);
                         $newMeasureMeasure->setAnr($anr);
                         $this->get('measureMeasureCliTable')->save($newMeasureMeasure, false);
                     }
@@ -518,9 +397,9 @@ class AnrService
     /**
      * Creates a new analysis from a model which is located inside the common database.
      */
-    public function createFromModelToClient(array $data): Anr
+    public function createFromModelToClient(array $data): Entity\Anr
     {
-        /** @var Model $model */
+        /** @var CoreEntity\Model $model */
         $model = $this->modelTable->findById((int)$data['model']);
 
         $availableLanguages = $this->getModelAvailableLanguages($model->getId());
@@ -534,12 +413,16 @@ class AnrService
     /**
      * Duplicates an analysis based on existing one on the client's side or on model's anr in the common database.
      */
-    public function duplicateAnr(AnrSuperClass $anr, array $data = [], string $snapshotMode = null): Anr
+    public function duplicateAnr(
+        CoreEntity\AnrSuperClass $anr,
+        array $data = [],
+        string $snapshotMode = null
+    ): Entity\Anr
     {
-        $isSourceCommon = $anr instanceof AnrCore;
+        $isSourceCommon = $anr instanceof CoreEntity\Anr;
         if (!$isSourceCommon && $snapshotMode === null) {
             /* Validate id the duplicated anr accessible for the user. */
-            if (!$this->connectedUser->hasRole(UserRole::USER_ROLE_SYSTEM)
+            if (!$this->connectedUser->hasRole(Entity\UserRole::USER_ROLE_SYSTEM)
                 && $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser) === null
             ) {
                 throw new Exception('You are not authorized to duplicate this analysis', 412);
@@ -551,7 +434,7 @@ class AnrService
             $data['languageCode'] = strtolower($this->configService->getLanguageCodes()[$data['language']]);
         }
 
-        $newAnr = Anr::constructFromObjectAndData($anr, $data)
+        $newAnr = Entity\Anr::constructFromObjectAndData($anr, $data)
             ->setCreator($this->connectedUser->getEmail());
 
         if ($snapshotMode === 'create') {
@@ -563,10 +446,10 @@ class AnrService
 
         /* Not needed for snapshots creation or restoring. */
         if ($snapshotMode === null) {
-            $userAnr = (new UserAnr())
+            $userAnr = (new Entity\UserAnr())
                 ->setUser($this->connectedUser)
                 ->setAnr($newAnr)
-                ->setRwd(UserAnr::FULL_PERMISSIONS_RWD)
+                ->setRwd(Entity\UserAnr::FULL_PERMISSIONS_RWD)
                 ->setCreator($this->connectedUser->getEmail());
 
             $this->userAnrTable->save($userAnr, false);
@@ -580,7 +463,7 @@ class AnrService
                 : $this->themeCliTable->findByAnr($anr);
             foreach ($themes as $theme) {
                 // TODO: use service
-                $newTheme = (new Theme())
+                $newTheme = (new Entity\Theme())
                     ->setAnr($newAnr)
                     ->setLabels([
                         'label1' => $theme->getLabel(1),
@@ -1088,16 +971,15 @@ class AnrService
                     $newInstanceRisk->setInstance($instancesNewIds[$instanceRisk->getInstance()->getId()]);
                 }
                 if ($instanceRisk->getInstanceRiskOwner()) {
-                    $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner(
+                    $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                         $newAnr,
                         $instanceRisk->getInstanceRiskOwner()->getName(),
-                        $connectedUser
                     );
                     $newInstanceRisk->setInstanceRiskOwner($instanceRiskOwner);
                 }
                 $newInstanceRisk->setContext($instanceRisk->getContext());
 
-                $instanceRiskCliTable->saveEntity($newInstanceRisk, false);
+                $instanceRiskCliTable->save($newInstanceRisk, false);
                 $instancesRisksNewIds[$instanceRisk->getId()] = $newInstanceRisk;
             }
 
@@ -1146,15 +1028,14 @@ class AnrService
                 }
 
                 if ($instanceRiskOp->getInstanceRiskOwner()) {
-                    $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner(
+                    $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                         $newAnr,
                         $instanceRiskOp->getInstanceRiskOwner()->getName(),
-                        $connectedUser
                     );
                     $newInstanceRiskOp->setInstanceRiskOwner($instanceRiskOwner);
                 }
 
-                $instanceRiskOpCliTable->saveEntity($newInstanceRiskOp, false);
+                $instanceRiskOpCliTable->save($newInstanceRiskOp, false);
 
                 $this->createOperationalInstanceRiskScalesFromSource(
                     $instanceRiskOp,
@@ -1362,83 +1243,85 @@ class AnrService
                 }
 
                 $recommendationsNewIds = [];
-                // duplicate recommandations sets and recommandations
-                /** @var RecommandationSet[] $recommendationsSets */
-                $recommendationsSets = $this->get('recommandationSetCliTable')->getEntityByFields(['anr' => $anr->id]);
+                // duplicate recommendations sets and recommendations
+                /** @var Entity\RecommendationSet[] $recommendationsSets */
+                $recommendationsSets = $this->get('recommendationSetCliTable')->getEntityByFields(['anr' => $anr->id]);
                 foreach ($recommendationsSets as $recommendationSet) {
                     $recommendationSetRecommendations = [];
 
-                    $recommendations = $recommendationSet->getRecommandations();
-                    $recommendationSet->setRecommandations(null);
-                    $newRecommendationSet = new RecommandationSet($recommendationSet);
+                    // TODO: ... can't work like that
+                    $recommendations = $recommendationSet->getRecommendations();
+                    $recommendationSet->setRecommendations(null);
+                    $newRecommendationSet = new Entity\RecommendationSet($recommendationSet);
                     $newRecommendationSet->setAnr($newAnr);
 
-                    foreach ($recommendations as $recommandation) {
-                        $newRecommandation = new Recommandation($recommandation);
-                        $newRecommandation->setAnr($newAnr);
-                        $newRecommandation->setRecommandationSet($newRecommendationSet);
-                        $this->recommendationTable->saveEntity($newRecommandation, false);
-                        $recommendationSetRecommendations[] = $newRecommandation;
-                        $recommendationsNewIds[$recommandation->getUuid()] = $newRecommandation;
+                    foreach ($recommendations as $recommendation) {
+                        // TODO ...
+                        $newRecommendation = new Entity\Recommendation($recommendation);
+                        $newRecommendation->setAnr($newAnr);
+                        $newRecommendation->setRecommendationSet($newRecommendationSet);
+                        $this->recommendationTable->save($newRecommendation, false);
+                        $recommendationSetRecommendations[] = $newRecommendation;
+                        $recommendationsNewIds[$recommendation->getUuid()] = $newRecommendation;
                     }
 
-                    $newRecommendationSet->setRecommandations($recommendationSetRecommendations);
-                    $this->get('recommandationSetCliTable')->save($newRecommendationSet, false);
+                    // TODO use addRecommendation recommendations above
+                    $newRecommendationSet->setRecommendations($recommendationSetRecommendations);
+                    $this->get('recommendationSetCliTable')->save($newRecommendationSet, false);
                 }
 
-                // duplicate recommendations historics
-                $recommandationsHistorics = $this->get('recommandationHistoricCliTable')
+                // duplicate recommendations history
+                $recommendationsHistory = $this->get('recommendationHistoryCliTable')
                     ->getEntityByFields(['anr' => $anr->getId()]);
-                foreach ($recommandationsHistorics as $recommandationHistoric) {
-                    $newRecommandationHistoric = new RecommandationHistoric($recommandationHistoric);
-                    $newRecommandationHistoric->set('id', null);
-                    $newRecommandationHistoric->setAnr($newAnr);
-                    $this->get('recommandationHistoricCliTable')->save($newRecommandationHistoric, false);
+                foreach ($recommendationsHistory as $recommendationHistory) {
+                    // TODO: currently impossible, do a proper createFromObject.
+                    $newRecommendationHistory = new Entity\RecommendationHistory($recommendationHistory);
+                    $newRecommendationHistory->setAnr($newAnr);
+                    $this->get('recommendationHistoryCliTable')->save($newRecommendationHistory, false);
                 }
 
-                //duplicate recommandations risks
-                /** @var RecommandationRiskTable $recommendationRiskTable */
-                $recommendationRiskTable = $this->get('recommandationRiskCliTable');
-                $recommandationsRisks = $recommendationRiskTable->findByAnr($anr);
-                foreach ($recommandationsRisks as $recommandationRisk) {
-                    $newRecommendationRisk = (new RecommandationRisk())
+                //duplicate recommendations risks
+                /** @var Table\RecommendationRiskTable $recommendationRiskTable */
+                $recommendationRiskTable = $this->get('recommendationRiskCliTable');
+                $recommendationsRisks = $recommendationRiskTable->findByAnr($anr);
+                foreach ($recommendationsRisks as $recommendationRisk) {
+                    $newRecommendationRisk = (new Entity\RecommendationRisk())
                         ->setAnr($newAnr)
-                        ->setCommentAfter($recommandationRisk->getCommentAfter())
-                        ->setRecommandation(
-                            $recommendationsNewIds[$recommandationRisk->getRecommandation()->getUuid()]
+                        ->setCommentAfter($recommendationRisk->getCommentAfter())
+                        ->setRecommendation(
+                            $recommendationsNewIds[$recommendationRisk->getRecommendation()->getUuid()]
                         )
-                        ->setInstance($instancesNewIds[$recommandationRisk->getInstance()->getId()]);
+                        ->setInstance($instancesNewIds[$recommendationRisk->getInstance()->getId()]);
 
-                    if ($recommandationRisk->getInstanceRisk()) {
+                    if ($recommendationRisk->getInstanceRisk()) {
                         $newRecommendationRisk->setInstanceRisk(
-                            $instancesRisksNewIds[$recommandationRisk->getInstanceRisk()->getId()]
+                            $instancesRisksNewIds[$recommendationRisk->getInstanceRisk()->getId()]
                         );
-                    }
-                    if ($recommandationRisk->getInstanceRiskOp()) {
+                    } elseif ($recommendationRisk->getInstanceRiskOp()) {
                         $newRecommendationRisk->setInstanceRiskOp(
-                            $instancesRisksOpNewIds[$recommandationRisk->getInstanceRiskOp()->getId()]
+                            $instancesRisksOpNewIds[$recommendationRisk->getInstanceRiskOp()->getId()]
                         );
-                        // TODO: remove when #240 is done.
-                        $newRecommendationRisk->setAnr(null);
+                        // TODO: remove when #240 is done. Test if it works without.
+                        // $newRecommendationRisk->setAnr(null);
                     }
-                    if ($recommandationRisk->getGlobalObject()
-                        && isset($objectsNewIds[$recommandationRisk->getGlobalObject()->getUuid()])
+                    if ($recommendationRisk->getGlobalObject()
+                        && isset($objectsNewIds[$recommendationRisk->getGlobalObject()->getUuid()])
                     ) {
                         $newRecommendationRisk->setGlobalObject(
-                            $objectsNewIds[$recommandationRisk->getGlobalObject()->getUuid()]
+                            $objectsNewIds[$recommendationRisk->getGlobalObject()->getUuid()]
                         );
                     }
-                    if ($recommandationRisk->getAsset()) {
-                        $newRecommendationRisk->setAsset($assetsNewIds[$recommandationRisk->getAsset()->getUuid()]);
+                    if ($recommendationRisk->getAsset()) {
+                        $newRecommendationRisk->setAsset($assetsNewIds[$recommendationRisk->getAsset()->getUuid()]);
                     }
-                    if ($recommandationRisk->getThreat()) {
+                    if ($recommendationRisk->getThreat()) {
                         $newRecommendationRisk->setThreat(
-                            $threatsNewIds[$recommandationRisk->getThreat()->getUuid()]
+                            $threatsNewIds[$recommendationRisk->getThreat()->getUuid()]
                         );
                     }
-                    if ($recommandationRisk->getVulnerability()) {
+                    if ($recommendationRisk->getVulnerability()) {
                         $newRecommendationRisk->setVulnerability(
-                            $vulnerabilitiesNewIds[$recommandationRisk->getVulnerability()->getUuid()]
+                            $vulnerabilitiesNewIds[$recommendationRisk->getVulnerability()->getUuid()]
                         );
                     }
                     /*
@@ -1446,16 +1329,16 @@ class AnrService
                      * in case of operation risks are null and the anr will be force reset to null.
                      * TODO: remove when #240 is done.
                      */
-                    if ($newRecommendationRisk->getAnr() === null) {
-                        $recommendationRiskTable->saveEntity($newRecommendationRisk);
-                        $newRecommendationRisk->setAnr($newAnr);
-                    }
+//                    if ($newRecommendationRisk->getAnr() === null) {
+//                        $recommendationRiskTable->save($newRecommendationRisk);
+//                        $newRecommendationRisk->setAnr($newAnr);
+//                    }
 
-                    $recommendationRiskTable->saveEntity($newRecommendationRisk, false);
+                    $recommendationRiskTable->save($newRecommendationRisk, false);
                 }
             }
 
-        $this->get('table')->getDb()->flush();
+        $this->anrTable->flush();
 
         if ($snapshotMode !== 'create') {
             $this->setCurrentAnrToConnectedUser($newAnr);
@@ -1501,46 +1384,9 @@ class AnrService
         return [];
     }
 
-    /**
-     * Returns the color to apply on the ROLF risks
-     * @param Anr $anr The ANR Object
-     * @param int $value The risk value
-     * @param array $classes The classes name to return for low, med and hi risks
-     * @return mixed One of the value of $classes
-     */
-    public function getColor($anr, $value, $classes = ['green', 'orange', 'alerte'])
+    public function delete(Entity\Anr $anr): void
     {
-        if ($value <= $anr->get('seuil1')) {
-            return $classes[0];
-        } elseif ($value <= $anr->get('seuil2')) {
-            return $classes[1];
-        } else {
-            return $classes[2];
-        }
-    }
-
-
-    public function getColorRiskOp($anr, $value, $classes = ['green', 'orange', 'alerte'])
-    {
-        if ($value <= $anr->get('seuilRolf1')) {
-            return $classes[0];
-        } elseif ($value <= $anr->get('seuilRolf2')) {
-            return $classes[1];
-        } else {
-            return $classes[2];
-        }
-    }
-
-    public function delete(Anr $anr): void
-    {
-        /* Retrieve and delete snapshots associated to anr. */
-        // todo ... perhaps we can get referenced snapshots from $anr->getReferencedSnapshots();
-        $snapshots = $this->get('snapshotCliTable')->getEntityByFields(['anrReference' => $id]);
-        foreach ($snapshots as $snapshot) {
-            $this->anrTable->remove($snapshot->getAnr(), false);
-        }
-
-        // Try to drop the stats.
+        /* Try to drop the stats. */
         try {
             $this->statsAnrService->deleteStatsForAnr($anr->getUuid());
         } catch (Throwable $e) {
@@ -1720,7 +1566,7 @@ class AnrService
                 ->setMax($scale->getMax())
                 ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
 
-            $scaleCliTable->saveEntity($newScale, false);
+            $scaleCliTable->save($newScale, false);
 
             foreach ($scale->getScaleImpactTypes() as $scaleImpactType) {
                 $newScaleImpactType = (new ScaleImpactType())
@@ -1738,7 +1584,7 @@ class AnrService
                     ->setPosition($scaleImpactType->getPosition())
                     ->setCreator($connectedUser->getFirstname() . ' ' . $connectedUser->getLastname());
 
-                $scaleImpactTypeCliTable->saveEntity($newScaleImpactType, false);
+                $scaleImpactTypeCliTable->save($newScaleImpactType, false);
 
                 $scalesImpactTypesOldIdsToNewObjectsMap[$scaleImpactType->getId()] = $newScaleImpactType;
 
@@ -1789,7 +1635,7 @@ class AnrService
             $newScaleComment->setScaleImpactType($newScaleImpactType);
         }
 
-        $scaleCommentCliTable->saveEntity($newScaleComment, false);
+        $scaleCommentCliTable->save($newScaleComment, false);
     }
 
     private function createOperationalRiskScalesFromSourceAnr(
@@ -1967,30 +1813,6 @@ class AnrService
                 ->setCreator($connectedUser->getEmail());
             $operationalInstanceRiskScaleCliTable->save($operationalInstanceRiskScale, false);
         }
-    }
-
-    private function getOrCreateInstanceRiskOwner(
-        AnrSuperClass $anr,
-        string $ownerName,
-        UserSuperClass $connectedUser
-    ): InstanceRiskOwner {
-        if (!isset($this->cachedData['instanceRiskOwners'][$ownerName])) {
-            /** @var InstanceRiskOwnerTable $instanceRiskOwnerTable */
-            $instanceRiskOwnerTable = $this->get('instanceRiskOwnerCliTable');
-            $instanceRiskOwner = $instanceRiskOwnerTable->findByAnrAndName($anr, $ownerName);
-            if ($instanceRiskOwner === null) {
-                $instanceRiskOwner = (new InstanceRiskOwner())
-                    ->setAnr($anr)
-                    ->setName($ownerName)
-                    ->setCreator($connectedUser->getEmail());
-
-                $instanceRiskOwnerTable->save($instanceRiskOwner, false);
-            }
-
-            $this->cachedData['instanceRiskOwners'][$ownerName] = $instanceRiskOwner;
-        }
-
-        return $this->cachedData['instanceRiskOwners'][$ownerName];
     }
 
     private function duplicateVulnerabilities(

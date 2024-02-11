@@ -10,11 +10,12 @@ namespace Monarc\FrontOffice\Table;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\AssetSuperClass;
-use Monarc\Core\Model\Entity\InstanceSuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Table\InstanceTable as CoreInstanceTable;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Model\Entity\MonarcObject;
 
 class InstanceTable extends CoreInstanceTable
 {
@@ -45,10 +46,10 @@ class InstanceTable extends CoreInstanceTable
      * @return Instance[]
      */
     public function findByAnrAssetAndObjectExcludeInstance(
-        AnrSuperClass $anr,
-        AssetSuperClass $asset,
-        ObjectSuperClass $object,
-        InstanceSuperClass $instanceToExclude
+        Anr $anr,
+        Asset $asset,
+        MonarcObject $object,
+        Instance $instanceToExclude
     ): array {
         return $this->getRepository()
             ->createQueryBuilder('i')
@@ -83,9 +84,9 @@ class InstanceTable extends CoreInstanceTable
     }
 
     /**
-     * @return InstanceSuperClass[]
+     * @return Instance[]
      */
-    public function findGlobalSiblingsByAnrAndInstance(AnrSuperClass $anr, InstanceSuperClass $instance): array
+    public function findGlobalSiblingsByAnrAndInstance(Anr $anr, Instance $instance): array
     {
         return $this->getRepository()
             ->createQueryBuilder('i')
@@ -103,14 +104,28 @@ class InstanceTable extends CoreInstanceTable
     }
 
     /**
-     * @return InstanceSuperClass[]
+     * @return Instance[]
      */
-    public function findByAnrAndOrderByParams(AnrSuperClass $anr, array $orderBy = []): array
+    public function findInstancesByAnrWithEvaluationAndNotInheritedOrderBy(Anr $anr, array $orderBy = []): array
     {
-        $queryBuilder = $this->getRepository()
-            ->createQueryBuilder('i')
+        $queryBuilder = $this->getRepository()->createQueryBuilder('i');
+
+        $queryBuilder
             ->where('i.anr = :anr')
-            ->setParameter('anr', $anr);
+            ->andWhere($queryBuilder->expr()->orX(
+                $queryBuilder->expr()->andX(
+                    $queryBuilder->expr()->gt('i.c', -1),
+                    $queryBuilder->expr()->eq('i.ch', 0),
+                ),
+                $queryBuilder->expr()->andX(
+                    $queryBuilder->expr()->gt('i.i', -1),
+                    $queryBuilder->expr()->eq('i.ih', 0),
+                ),
+                $queryBuilder->expr()->andX(
+                    $queryBuilder->expr()->gt('i.d', -1),
+                    $queryBuilder->expr()->eq('i.dh', 0),
+                )
+            ))->setParameter('anr', $anr);
 
         foreach ($orderBy as $fieldName => $order) {
             $queryBuilder->addOrderBy($fieldName, $order);

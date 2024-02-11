@@ -20,7 +20,7 @@ class InstanceMetadataTable extends AbstractTable
         parent::__construct($entityManager, $entityName);
     }
 
-    public function findByInstanceAndMetadata(
+    public function findByInstanceAndMetadataField(
         Instance $instance,
         AnrInstanceMetadataField $anrInstanceMetadataField
     ): ?InstanceMetadata {

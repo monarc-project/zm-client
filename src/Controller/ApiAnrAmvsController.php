@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -18,20 +18,11 @@ class ApiAnrAmvsController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private AnrAmvService $anrAmvService;
-
-    private GetAmvsInputFormatter $getAmvsInputFormatter;
-
-    private PostAmvDataInputValidator $postAmvDataInputValidator;
-
     public function __construct(
-        AnrAmvService $anrAmvService,
-        GetAmvsInputFormatter $getAmvsInputFormatter,
-        PostAmvDataInputValidator $postAmvDataInputValidator
+        private AnrAmvService $anrAmvService,
+        private GetAmvsInputFormatter $getAmvsInputFormatter,
+        private PostAmvDataInputValidator $postAmvDataInputValidator
     ) {
-        $this->anrAmvService = $anrAmvService;
-        $this->getAmvsInputFormatter = $getAmvsInputFormatter;
-        $this->postAmvDataInputValidator = $postAmvDataInputValidator;
     }
 
     public function getList()

@@ -7,21 +7,20 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Service\AnrRolfRiskService;
 use Monarc\FrontOffice\Model\Entity\Measure;
 
-/**
- * Api ANR Rolf Risks Controller
- *
- * Class ApiAnrRolfRisksController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {
-    protected $name = 'risks';
+    use ControllerRequestResponseHandlerTrait;
 
     protected $dependencies = ['tags', 'measures'];
+
+    public function __construct(AnrRolfRiskService $anrRolfRiskService)
+    {
+        parent::__construct($anrRolfRiskService);
+    }
 
     public function get($id)
     {
@@ -29,7 +28,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
 
         $this->formatDependencies($entity, $this->dependencies, Measure::class, ['referential']);
 
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($entity);
     }
 
     /**
@@ -59,9 +58,9 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $tag, $anr),
-            $this->name => $rolfRisks,
+            'risks' => $rolfRisks,
         ]);
     }
 
@@ -90,9 +89,7 @@ class ApiAnrRolfRisksController extends ApiAnrAbstractController
         $data['toReferential'] = $this->addAnrId($data['toReferential']);
         $service->createLinkedRisks($data['fromReferential'], $data['toReferential']);
 
-        return new JsonModel([
-            'status' => 'ok',
-        ]);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function create($data)

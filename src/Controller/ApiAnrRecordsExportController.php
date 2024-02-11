@@ -7,32 +7,23 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-/**
- * Api ANR Records Export Controller
- *
- * Class ApiAnrRecordsExportController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrRecordsExportController extends ApiAnrAbstractController
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrRecordService;
+
+class ApiAnrRecordsExportController extends AbstractRestfulControllerRequestHandler
 {
-    /**
-     * @inheritdoc
-     */
+    use ControllerRequestResponseHandlerTrait;
+
+    public function __construct(private AnrRecordService $anrRecordService)
+    {
+    }
+
     public function create($data)
     {
         if (!empty($data['id'])) {
-            $entity = $this->getService()->getEntity($data['id']);
-
-            $anrId = (int)$this->params()->fromRoute('anrid');
-            if (empty($anrId)) {
-                throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-            }
-
-            if ($entity['anr']->get('id') != $anrId) {
-                throw new \Monarc\Core\Exception\Exception('Anr ids differents', 412);
-            }
-
-            $output = $this->getService()->export($data);
+            $output = $this->anrRecordService->export($data);
 
             if (empty($data['password'])) {
                 $contentType = 'application/json; charset=utf-8';
@@ -53,7 +44,9 @@ class ApiAnrRecordsExportController extends ApiAnrAbstractController
                  ->setContent($output);
 
             return $this->getResponse();
-        } elseif ($data['export'] == "All") {
+        }
+
+        if ($data['export'] === "All") {
             if (empty($data['password'])) {
                 $contentType = 'application/json; charset=utf-8';
                 $extension = '.json';
@@ -63,11 +56,11 @@ class ApiAnrRecordsExportController extends ApiAnrAbstractController
             }
             $anrId = (int)$this->params()->fromRoute('anrid');
             if (empty($anrId)) {
-                throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+                throw new Exception('Anr id missing', 412);
             }
             $data['anr'] = $anrId;
             $data['filename'] = "records_list";
-            $output = $this->getService()->exportAll($data);
+            $output = $this->anrRecordService->exportAll($data);
 
             $this->getResponse()
                  ->getHeaders()
@@ -76,52 +69,11 @@ class ApiAnrRecordsExportController extends ApiAnrAbstractController
                  ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
                                   (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
 
-            $this->getResponse()
-                 ->setContent($output);
+            $this->getResponse()->setContent($output);
 
             return $this->getResponse();
-        } else {
-            throw new \Monarc\Core\Exception\Exception('Record to export is required', 412);
         }
-    }
 
-    /**
-     * @inheritdoc
-     */
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getList()
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
+        throw new Exception('Record to export is required', 412);
     }
 }

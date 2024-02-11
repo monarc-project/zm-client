@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -11,49 +11,12 @@ use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\InstanceSuperClass;
-use Monarc\Core\Model\Entity\TranslationSuperClass;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Model\Entity as CoreEntity;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\AnrInstanceMetadataField;
-use Monarc\FrontOffice\Model\Entity\Asset;
-use Monarc\FrontOffice\Model\Entity\Delivery;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
-use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\Interview;
-use Monarc\FrontOffice\Model\Entity\Measure;
-use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScale;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleType;
-use Monarc\FrontOffice\Model\Entity\Question;
-use Monarc\FrontOffice\Model\Entity\QuestionChoice;
-use Monarc\FrontOffice\Model\Entity\Recommandation;
-use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
-use Monarc\FrontOffice\Model\Entity\RecommandationSet;
-use Monarc\FrontOffice\Model\Entity\Referential;
-use Monarc\FrontOffice\Model\Entity\RolfRisk;
-use Monarc\FrontOffice\Model\Entity\Scale;
-use Monarc\FrontOffice\Model\Entity\ScaleComment;
-use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
-use Monarc\FrontOffice\Model\Entity\Soa;
-use Monarc\FrontOffice\Model\Entity\SoaCategory;
-use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
-use Monarc\FrontOffice\Model\Entity\Theme;
-use Monarc\FrontOffice\Model\Entity\Threat;
-use Monarc\FrontOffice\Model\Entity\Translation;
-use Monarc\FrontOffice\Model\Entity\Vulnerability;
+use Monarc\FrontOffice\Model\Entity;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Service;
@@ -69,175 +32,57 @@ class InstanceImportService
 
     private int $currentMaxInstancePosition;
 
-    private Service\AnrInstanceRiskService $anrInstanceRiskService;
-
-    private Service\AnrInstanceService $anrInstanceService;
-
-    private Service\AnrInstanceConsequenceService $anrInstanceConsequenceService;
-
-    private Service\AnrRecordService $anrRecordService;
-
-    private Service\AnrInstanceRiskOpService $anrInstanceRiskOpService;
-
-    private DeprecatedTable\InstanceTable $instanceTable;
-
-    private DeprecatedTable\AnrTable $anrTable;
-
-    private DeprecatedTable\RecommandationTable $recommendationTable;
-
-    private DeprecatedTable\InstanceConsequenceTable $instanceConsequenceTable;
-
-    private DeprecatedTable\ScaleTable $scaleTable;
-
-    private Table\ThreatTable $threatTable;
-
-    private Table\VulnerabilityTable $vulnerabilityTable;
-
-    private DeprecatedTable\RecommandationSetTable $recommendationSetTable;
-
-    private DeprecatedTable\InstanceRiskTable $instanceRiskTable;
-
-    private DeprecatedTable\InstanceRiskOpTable $instanceRiskOpTable;
-
-    private DeprecatedTable\RecommandationRiskTable $recommendationRiskTable;
-
-    private DeprecatedTable\QuestionTable $questionTable;
-
-    private DeprecatedTable\QuestionChoiceTable $questionChoiceTable;
-
-    private DeprecatedTable\SoaTable $soaTable;
-
-    private DeprecatedTable\MeasureTable $measureTable;
-
-    private DeprecatedTable\MeasureMeasureTable $measureMeasureTable;
-
-    private Table\ThemeTable $themeTable;
-
-    private DeprecatedTable\ReferentialTable $referentialTable;
-
-    private ObjectImportService $objectImportService;
-
-    private DeprecatedTable\InterviewTable $interviewTable;
-
-    private DeprecatedTable\DeliveryTable $deliveryTable;
-
-    private DeprecatedTable\ScaleImpactTypeTable $scaleImpactTypeTable;
-
-    private DeprecatedTable\ScaleCommentTable $scaleCommentTable;
-
-    private Table\OperationalRiskScaleTable $operationalRiskScaleTable;
-
-    private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable;
-
-    private UserSuperClass $connectedUser;
-
-    private Table\TranslationTable $translationTable;
-
-    private ConfigService $configService;
-
-    private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable;
-
-    private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable;
-
-    private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable;
-
-    private Service\AnrThemeService $anrThemeService;
-
-    private Table\InstanceMetadataTable $instanceMetadataTable;
-
-    private Table\SoaScaleCommentTable $soaScaleCommentTable;
-
-    private ImportCacheHelper $importCacheHelper;
-
-    private Service\SoaCategoryService $soaCategoryService;
+    private CoreEntity\UserSuperClass $connectedUser;
 
     private string $importType;
 
     private array $cachedData = [];
 
     public function __construct(
-        Service\AnrInstanceRiskService $anrInstanceRiskService,
-        Service\AnrInstanceService $anrInstanceService,
-        Service\AnrInstanceConsequenceService $anrInstanceConsequenceService,
-        ObjectImportService $objectImportService,
-        Service\AnrRecordService $anrRecordService,
-        Service\AnrInstanceRiskOpService $anrInstanceRiskOpService,
-        DeprecatedTable\InstanceTable $instanceTable,
-        DeprecatedTable\AnrTable $anrTable,
-        DeprecatedTable\InstanceConsequenceTable $instanceConsequenceTable,
-        DeprecatedTable\ScaleTable $scaleTable,
-        Table\ThreatTable $threatTable,
-        Table\VulnerabilityTable $vulnerabilityTable,
-        DeprecatedTable\RecommandationTable $recommendationTable,
-        DeprecatedTable\RecommandationSetTable $recommendationSetTable,
-        DeprecatedTable\InstanceRiskTable $instanceRiskTable,
-        DeprecatedTable\InstanceRiskOpTable $instanceRiskOpTable,
-        DeprecatedTable\RecommandationRiskTable $recommendationRiskTable,
-        DeprecatedTable\QuestionTable $questionTable,
-        DeprecatedTable\QuestionChoiceTable $questionChoiceTable,
-        DeprecatedTable\SoaTable $soaTable,
-        DeprecatedTable\MeasureTable $measureTable,
-        DeprecatedTable\MeasureMeasureTable $measureMeasureTable,
-        Table\ThemeTable $themeTable,
-        DeprecatedTable\ReferentialTable $referentialTable,
-        DeprecatedTable\InterviewTable $interviewTable,
-        DeprecatedTable\DeliveryTable $deliveryTable,
-        DeprecatedTable\ScaleImpactTypeTable $scaleImpactTypeTable,
-        DeprecatedTable\ScaleCommentTable $scaleCommentTable,
-        Table\OperationalRiskScaleTable $operationalRiskScaleTable,
-        Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
-        Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
-        Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
-        Table\TranslationTable $translationTable,
-        Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
-        Table\InstanceMetadataTable $instanceMetadataTable,
-        Table\SoaScaleCommentTable $soaScaleCommentTable,
-        ConfigService $configService,
-        ImportCacheHelper $importCacheHelper,
-        Service\AnrThemeService $anrThemeService,
-        Service\SoaCategoryService $soaCategoryService,
+        private Service\AnrInstanceRiskService $anrInstanceRiskService,
+        private Service\InstanceRiskOwnerService $instanceRiskOwnerService,
+        private Service\AnrInstanceService $anrInstanceService,
+        private Service\AnrInstanceConsequenceService $anrInstanceConsequenceService,
+        private ObjectImportService $objectImportService,
+        private Service\AnrRecordService $anrRecordService,
+        private Service\AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private Table\InstanceTable $instanceTable,
+        private Table\AnrTable $anrTable,
+        private Table\InstanceConsequenceTable $instanceConsequenceTable,
+        private Table\ScaleTable $scaleTable,
+        private Table\ThreatTable $threatTable,
+        private Table\VulnerabilityTable $vulnerabilityTable,
+        private Table\RecommendationTable $recommendationTable,
+        private Table\RecommendationSetTable $recommendationSetTable,
+        private Service\AnrRecommendationSetService $anrRecommendationSetService,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private Table\InstanceRiskOpTable $instanceRiskOpTable,
+        private Table\RecommendationRiskTable $recommendationRiskTable,
+        private DeprecatedTable\QuestionTable $questionTable,
+        private DeprecatedTable\QuestionChoiceTable $questionChoiceTable,
+        private DeprecatedTable\SoaTable $soaTable,
+        private DeprecatedTable\MeasureTable $measureTable,
+        private DeprecatedTable\MeasureMeasureTable $measureMeasureTable,
+        private Table\ThemeTable $themeTable,
+        private DeprecatedTable\ReferentialTable $referentialTable,
+        private DeprecatedTable\InterviewTable $interviewTable,
+        private DeprecatedTable\DeliveryTable $deliveryTable,
+        private Table\ScaleImpactTypeTable $scaleImpactTypeTable,
+        private Table\ScaleCommentTable $scaleCommentTable,
+        private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
+        private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
+        private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
+        private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
+        private Table\TranslationTable $translationTable,
+        private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
+        private Table\InstanceMetadataTable $instanceMetadataTable,
+        private Table\SoaScaleCommentTable $soaScaleCommentTable,
+        private ConfigService $configService,
+        private ImportCacheHelper $importCacheHelper,
+        private Service\AnrThemeService $anrThemeService,
+        private Service\SoaCategoryService $soaCategoryService,
         ConnectedUserService $connectedUserService
     ) {
-        $this->anrInstanceRiskService = $anrInstanceRiskService;
-        $this->anrInstanceService = $anrInstanceService;
-        $this->objectImportService = $objectImportService;
-        $this->anrRecordService = $anrRecordService;
-        $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
-        $this->instanceTable = $instanceTable;
-        $this->anrTable = $anrTable;
-        $this->instanceConsequenceTable = $instanceConsequenceTable;
-        $this->scaleTable = $scaleTable;
-        $this->threatTable = $threatTable;
-        $this->vulnerabilityTable = $vulnerabilityTable;
-        $this->recommendationTable = $recommendationTable;
-        $this->recommendationSetTable = $recommendationSetTable;
-        $this->instanceRiskTable = $instanceRiskTable;
-        $this->instanceRiskOpTable = $instanceRiskOpTable;
-        $this->recommendationRiskTable = $recommendationRiskTable;
-        $this->questionTable = $questionTable;
-        $this->questionChoiceTable = $questionChoiceTable;
-        $this->soaTable = $soaTable;
-        $this->measureTable = $measureTable;
-        $this->measureMeasureTable = $measureMeasureTable;
-        $this->themeTable = $themeTable;
-        $this->referentialTable = $referentialTable;
-        $this->interviewTable = $interviewTable;
-        $this->deliveryTable = $deliveryTable;
-        $this->scaleImpactTypeTable = $scaleImpactTypeTable;
-        $this->scaleCommentTable = $scaleCommentTable;
-        $this->operationalRiskScaleTable = $operationalRiskScaleTable;
-        $this->operationalInstanceRiskScaleTable = $operationalInstanceRiskScaleTable;
-        $this->operationalRiskScaleTypeTable = $operationalRiskScaleTypeTable;
-        $this->translationTable = $translationTable;
-        $this->anrInstanceMetadataFieldTable = $anrInstanceMetadataFieldTable;
-        $this->instanceMetadataTable = $instanceMetadataTable;
-        $this->soaScaleCommentTable = $soaScaleCommentTable;
-        $this->configService = $configService;
-        $this->operationalRiskScaleCommentTable = $operationalRiskScaleCommentTable;
-        $this->importCacheHelper = $importCacheHelper;
-        $this->soaCategoryService = $soaCategoryService;
-        $this->anrThemeService = $anrThemeService;
-        $this->anrInstanceConsequenceService = $anrInstanceConsequenceService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
@@ -311,24 +156,27 @@ class InstanceImportService
      * Imports an instance from an exported data (json) array.
      *
      * @param array $data The instance data
-     * @param Anr $anr The target ANR
-     * @param null|InstanceSuperClass $parentInstance The parent instance, that should be imported, null if it's root.
+     * @param Entity\Anr $anr The target ANR
+     * @param null|CoreEntity\InstanceSuperClass $parentInstance The parent instance, that should be imported,
+     *                                                           null if it's root.
      * @param string $modeImport Import mode, either 'merge' or 'duplicate'
      *
      * @return array|bool An array of created instances IDs, or false in case of error
      */
     public function importFromArray(
         array $data,
-        Anr $anr,
-        ?InstanceSuperClass $parentInstance = null,
+        Entity\Anr $anr,
+        ?CoreEntity\InstanceSuperClass $parentInstance = null,
         string $modeImport = 'merge'
     ) {
         $this->validateIfImportIsPossible($anr, $parentInstance, $data);
 
         $this->setAndValidateMonarcVersion($data);
 
-        $this->currentAnalyseMaxRecommendationPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
-        $this->currentMaxInstancePosition = $this->instanceTable->getMaxPositionByAnrAndParent($anr, $parentInstance);
+        $this->currentAnalyseMaxRecommendationPosition = $this->recommendationTable->findMaxPosition(['anr' => $anr]);
+        $this->currentMaxInstancePosition = $this->instanceTable->findMaxPosition(
+            ['anr' => $anr, 'parent' => $parentInstance]
+        );
 
         $result = false;
 
@@ -354,16 +202,16 @@ class InstanceImportService
 
     /**
      * @param array $data
-     * @param Anr $anr
-     * @param InstanceSuperClass|null $parentInstance
+     * @param Entity\Anr $anr
+     * @param CoreEntity\InstanceSuperClass|null $parentInstance
      * @param string $modeImport
      *
      * @return bool|int
      */
     private function importInstanceFromArray(
         array $data,
-        Anr $anr,
-        ?InstanceSuperClass $parentInstance,
+        Entity\Anr $anr,
+        ?CoreEntity\InstanceSuperClass $parentInstance,
         string $modeImport
     ) {
         $monarcObject = $this->objectImportService->importFromArray($data['object'], $anr, $modeImport);
@@ -374,7 +222,7 @@ class InstanceImportService
         $instance = $this->createInstance($data, $anr, $parentInstance, $monarcObject);
 
         // TODO: The instance risks are processed later again and considered that here we save or not...
-        // 1. why do we need to do it twice processInstanceRisks and whet is is going on inside that method...
+        // 1. why do we need to do it twice processInstanceRisks and what is is going on inside that method...
         $this->anrInstanceRiskService->createInstanceRisks($instance, $monarcObject, $data, false);
 
         $this->createInstanceMetadata($instance, $data);
@@ -420,8 +268,8 @@ class InstanceImportService
      */
     private function importAnrFromArray(
         array $data,
-        Anr $anr,
-        ?InstanceSuperClass $parentInstance,
+        Entity\Anr $anr,
+        ?CoreEntity\InstanceSuperClass $parentInstance,
         string $modeImport
     ): array {
         $labelKey = 'label' . $anr->getLanguage();
@@ -452,7 +300,7 @@ class InstanceImportService
                 foreach ($data['method']['interviews'] as $key => $v) {
                     $toExchange = $data['method']['interviews'][$key];
                     $toExchange['anr'] = $anr->getId();
-                    $newInterview = new Interview();
+                    $newInterview = new Entity\Interview();
                     $newInterview->setLanguage($anr->getLanguage());
                     $newInterview->exchangeArray($toExchange);
                     $newInterview->setAnr($anr);
@@ -473,11 +321,11 @@ class InstanceImportService
                 foreach ($data['method']['deliveries'] as $key => $v) {
                     $toExchange = $data['method']['deliveries'][$key];
                     $toExchange['anr'] = $anr->getId();
-                    $newDelivery = new Delivery();
+                    $newDelivery = new Entity\Delivery();
                     $newDelivery->setLanguage($anr->getLanguage());
                     $newDelivery->exchangeArray($toExchange);
                     $newDelivery->setAnr($anr);
-                    $this->deliveryTable->saveEntity($newDelivery, false);
+                    $this->deliveryTable->save($newDelivery, false);
                 }
                 $this->deliveryTable->getDb()->flush();
             }
@@ -489,7 +337,7 @@ class InstanceImportService
                 }
 
                 foreach ($data['method']['questions'] as $position => $questionData) {
-                    $newQuestion = new Question();
+                    $newQuestion = new Entity\Question();
                     $newQuestion->setLanguage($anr->getLanguage());
                     $newQuestion->exchangeArray($questionData);
                     $newQuestion->setAnr($anr);
@@ -500,7 +348,7 @@ class InstanceImportService
                     if ((int)$questionData['multichoice'] === 1) {
                         foreach ($data['method']['questionChoice'] as $questionChoiceData) {
                             if ($questionChoiceData['question'] === $questionData['id']) {
-                                $newQuestionChoice = new QuestionChoice();
+                                $newQuestionChoice = new Entity\QuestionChoice();
                                 $newQuestionChoice->setLanguage($anr->getLanguage());
                                 $newQuestionChoice->exchangeArray($questionChoiceData);
                                 $newQuestionChoice->setAnr($anr)
@@ -988,7 +836,7 @@ class InstanceImportService
             }
         }
 
-        $this->instanceConsequenceTable->getDb()->flush();
+        $this->instanceConsequenceTable->flush();
 
         return $instanceIds;
     }
@@ -1028,56 +876,34 @@ class InstanceImportService
         return $defaultvalue;
     }
 
-    private function isMonarcVersionLoverThen(string $version): bool
+    private function isMonarcVersionLowerThen(string $version): bool
     {
         return version_compare($this->monarcVersion, $version) < 0;
     }
 
-    private function createSetOfRecommendations(array $data, Anr $anr): void
+    private function createSetOfRecommendations(array $data, Entity\Anr $anr): void
     {
         if (!empty($data['recSets'])) {
             foreach ($data['recSets'] as $recSetUuid => $recommendationSetData) {
                 if (!isset($this->cachedData['recSets'][$recSetUuid])) {
-                    try {
-                        $recommendationsSet = $this->recommendationSetTable->findByAnrAndUuid($anr, $recSetUuid);
-                    } catch (ORM\EntityNotFoundException $e) {
-                        $recommendationsSet = (new RecommandationSet())
-                            ->setUuid($recSetUuid)
-                            ->setAnr($anr)
-                            ->setLabels([
-                                'label1' => $recommendationSetData['label1'],
-                                'label2' => $recommendationSetData['label2'],
-                                'label3' => $recommendationSetData['label3'],
-                                'label4' => $recommendationSetData['label4'],
-                            ])
-                            ->setCreator($this->connectedUser->getEmail());
-
-                        $this->recommendationSetTable->saveEntity($recommendationsSet, false);
+                    $recommendationsSet = $this->recommendationSetTable->findByUuidAndAnr($recSetUuid, $anr, false);
+                    if ($recommendationsSet === null) {
+                        $this->anrRecommendationSetService->create($anr, [
+                            'uuid' => $recSetUuid,
+                            'label' => $recommendationSetData['label']
+                                ?? $recommendationSetData['label' . $anr->getLanguage()],
+                        ], false);
                     }
 
                     $this->cachedData['recSets'][$recSetUuid] = $recommendationsSet;
                 }
             }
-            $this->recommendationSetTable->getDb()->flush();
-        } elseif ($this->isMonarcVersionLoverThen('2.8.4')) {
-            $recommendationsSets = $this->recommendationSetTable->getEntityByFields([
-                'anr' => $anr->getId(),
-                'label1' => 'Recommandations importées'
-            ]);
-            if (!empty($recommendationsSets)) {
-                $recommendationSet = current($recommendationsSets);
-            } else {
-                $recommendationSet = (new RecommandationSet())
-                    ->setAnr($anr)
-                    ->setLabels([
-                        'label1' => 'Recommandations importées',
-                        'label2' => 'Imported recommendations',
-                        'label3' => 'Importierte empfehlungen',
-                        'label4' => 'Geïmporteerde aanbevelingen',
-                    ])
-                    ->setCreator($this->connectedUser->getEmail());
-
-                $this->recommendationSetTable->saveEntity($recommendationSet);
+        } elseif ($this->isMonarcVersionLowerThen('2.8.4')) {
+            /* Recommendation sets did not exist prior the version, so a custom one is created / used. */
+            $label = Entity\RecommendationSet::getCustomImportLabelByLanguageCode($anr->getLanguageCode());
+            $recommendationsSet = $this->recommendationSetTable->findByAnrAndLabel($anr, $label);
+            if ($recommendationsSet === null) {
+                $recommendationSet = $this->anrRecommendationSetService->create($anr, ['label' => $label], false);
             }
 
             $this->cachedData['recSets'][$recommendationSet->getUuid()] = $recommendationSet;
@@ -1088,16 +914,16 @@ class InstanceImportService
             foreach ($data['recs'] as $recUuid => $recommendationData) {
                 if (!isset($this->cachedData['recs'][$recUuid])) {
                     try {
-                        $recommendation = $this->recommendationTable->findByAnrAndUuid($anr, $recUuid);
-                    } catch (ORM\EntityNotFoundException $e) {
-                        $recommendation = (new Recommandation())
+                        $recommendation = $this->recommendationTable->findByUuidAndAnr($recUuid, $anr);
+                    } catch (ORM\EntityNotFoundException) {
+                        $recommendationSetUuid = $recommendationData['recommandationSet']
+                            ?? $recommendationData['recommendationSet'];
+                        $recommendation = (new Entity\Recommendation())
                             ->setUuid($recommendationData['uuid'])
                             ->setAnr($anr)
-                            ->setRecommandationSet(
-                                $this->cachedData['recSets'][$recommendationData['recommandationSet']]
-                            )
+                            ->setRecommendationSet($this->cachedData['recSets'][$recommendationSetUuid])
                             ->setComment($recommendationData['comment'] ?? '')
-                            ->setResponsable($recommendationData['responsable'] ?? '')
+                            ->setResponsible($recommendationData['responsable'] ?? '')
                             ->setStatus($recommendationData['status'])
                             ->setImportance($recommendationData['importance'])
                             ->setCode($recommendationData['code'])
@@ -1109,37 +935,37 @@ class InstanceImportService
                             $recommendation->setDueDate(new DateTime($recommendationData['duedate']['date']));
                         }
 
-                        $this->recommendationTable->saveEntity($recommendation, false);
+                        $this->recommendationTable->save($recommendation, false);
                     }
 
                     $this->cachedData['recs'][$recUuid] = $recommendation;
                 }
             }
-            $this->recommendationTable->getDb()->flush();
+            $this->recommendationTable->flush();
         }
     }
 
     private function processRecommendationDataLinkedToRisk(
-        Anr $anr,
+        Entity\Anr $anr,
         array $recommendationData,
         bool $isRiskTreated
-    ): Recommandation {
+    ): Entity\Recommendation {
         if (isset($this->cachedData['recs'][$recommendationData['uuid']])) {
-            /** @var Recommandation $recommendation */
+            /** @var Entity\Recommendation $recommendation */
             $recommendation = $this->cachedData['recs'][$recommendationData['uuid']];
             if ($isRiskTreated && $recommendation->isPositionEmpty()) {
                 $recommendation->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
-                $this->recommendationTable->saveEntity($recommendation, false);
+                $this->recommendationTable->save($recommendation, false);
             }
 
             return $recommendation;
         }
 
-        if (isset($this->cachedData['recSets'][$recommendationData['recommandationSet']])) {
-            $recommendationSet = $this->cachedData['recSets'][$recommendationData['recommandationSet']];
+        $recommendationSetUuid = $recommendationData['recommandationSet'] ?? $recommendationData['recommendationSet'];
+        if (isset($this->cachedData['recSets'][$recommendationSetUuid])) {
+            $recommendationSet = $this->cachedData['recSets'][$recommendationSetUuid];
         } else {
-            $recommendationSet = $this->recommendationSetTable
-                ->findByAnrAndUuid($anr, $recommendationData['recommandationSet']);
+            $recommendationSet = $this->recommendationSetTable->findByUuidAndAnr($recommendationSetUuid, $anr);
 
             $this->cachedData['recSets'][$recommendationSet->getUuid()] = $recommendationSet;
         }
@@ -1150,16 +976,16 @@ class InstanceImportService
             $recommendationSet
         );
         if ($recommendation === null) {
-            $recommendation = (new Recommandation())->setUuid($recommendationData['uuid'])
+            $recommendation = (new Entity\Recommendation())->setUuid($recommendationData['uuid'])
                 ->setCreator($this->connectedUser->getEmail());
         } else {
             $recommendation->setUpdater($this->connectedUser->getEmail());
         }
 
         $recommendation->setAnr($anr)
-            ->setRecommandationSet($recommendationSet)
+            ->setRecommendationSet($recommendationSet)
             ->setComment($recommendationData['comment'] ?? '')
-            ->setResponsable($recommendationData['responsable'] ?? '')
+            ->setResponsible($recommendationData['responsable'] ?? '')
             ->setStatus($recommendationData['status'])
             ->setImportance($recommendationData['importance'])
             ->setCode($recommendationData['code'])
@@ -1173,7 +999,7 @@ class InstanceImportService
             $recommendation->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
         }
 
-        $this->recommendationTable->saveEntity($recommendation, false);
+        $this->recommendationTable->save($recommendation, false);
 
         $this->cachedData['recs'][$recommendation->getUuid()] = $recommendation;
 
@@ -1261,7 +1087,7 @@ class InstanceImportService
                         ->setPosition(++$scaleImpactTypeMaxPosition)
                         ->setCreator($this->connectedUser->getEmail());
 
-                    $this->scaleImpactTypeTable->saveEntity($scaleImpactType, false);
+                    $this->scaleImpactTypeTable->save($scaleImpactType, false);
 
                     $localScalesImpactTypes[$consequenceData['scaleImpactType'][$labelKey]] = $scaleImpactType;
                 }
@@ -1294,7 +1120,7 @@ class InstanceImportService
                 $this->instanceConsequenceTable->save($instanceConsequence, false);
             }
 
-            $this->instanceConsequenceTable->getDb()->flush();
+            $this->instanceConsequenceTable->flush();
         }
     }
 
@@ -1555,14 +1381,14 @@ class InstanceImportService
                         );
 // TODO: check why do we have it here:
                         foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
-                            if ($recommendationRisk->getRecommandation() !== null
-                                && $recommendationRisk->getRecommandation()->getUuid() === $recommendation->getUuid()
+                            if ($recommendationRisk->getRecommendation() !== null
+                                && $recommendationRisk->getRecommendation()->getUuid() === $recommendation->getUuid()
                             ) {
                                 continue 2;
                             }
                         }
 
-                        $recommendationRisk = (new RecommandationRisk())
+                        $recommendationRisk = (new RecommendationRisk())
                             ->setAnr($anr)
                             ->setInstance($instance)
                             ->setInstanceRisk($instanceRisk)
@@ -1571,10 +1397,10 @@ class InstanceImportService
                             ->setThreat($instanceRisk->getThreat())
                             ->setVulnerability($instanceRisk->getVulnerability())
                             ->setCommentAfter((string)$reco['commentAfter'])
-                            ->setRecommandation($recommendation)
+                            ->setRecommendation($recommendation)
                             ->setCreator($this->connectedUser->getEmail());
 
-                        $this->recommendationRiskTable->saveEntity($recommendationRisk, false);
+                        $this->recommendationRiskTable->save($recommendationRisk, false);
 
                         // Replicate recommendation to brothers.
                         if ($modeImport === 'merge' && $recommendationRisk->hasGlobalObjectRelation()) {
@@ -1600,7 +1426,7 @@ class InstanceImportService
                                         $recommendationRiskBrother = $this->recommendationRiskTable
                                             ->findByInstanceRiskAndRecommendation($brother, $recommendation);
                                         if ($recommendationRiskBrother === null) {
-                                            $recommendationRiskBrother = (new RecommandationRisk())
+                                            $recommendationRiskBrother = (new RecommendationRisk())
                                                 ->setAnr($anr)
                                                 ->setInstance($brotherInstance)
                                                 ->setInstanceRisk($brother)
@@ -1611,19 +1437,19 @@ class InstanceImportService
                                                 ->setThreat($instanceRisk->getThreat())
                                                 ->setVulnerability($instanceRisk->getVulnerability())
                                                 ->setCommentAfter((string)$reco['commentAfter'])
-                                                ->setRecommandation($recommendation)
+                                                ->setRecommendation($recommendation)
                                                 ->setCreator($this->connectedUser->getEmail());
 
                                             $this->recommendationRiskTable
-                                                ->saveEntity($recommendationRiskBrother, false);
+                                                ->save($recommendationRiskBrother, false);
                                         }
                                     }
                                 }
-                                $this->recommendationRiskTable->getDb()->flush();
+                                $this->recommendationRiskTable->flush();
                             }
                         }
                     }
-                    $this->recommendationRiskTable->getDb()->flush();
+                    $this->recommendationRiskTable->flush();
                 }
             }
 
@@ -1636,7 +1462,7 @@ class InstanceImportService
                 );
 
                 foreach ($instanceRiskBrothers as $instanceRiskBrother) {
-                    /** @var RecommandationRisk[] $brotherRecoRisks */
+                    /** @var RecommendationRisk[] $brotherRecoRisks */
                     // Get recommendation of brother
                     $brotherRecoRisks = $this->recommendationRiskTable->getEntityByFields([
                         'anr' => $anr->getId(),
@@ -1652,11 +1478,11 @@ class InstanceImportService
                         foreach ($brotherRecoRisks as $brotherRecoRisk) {
                             $recommendationRisk = $this->recommendationRiskTable->findByInstanceRiskAndRecommendation(
                                 $instanceRisk,
-                                $brotherRecoRisk->getRecommandation()
+                                $brotherRecoRisk->getRecommendation()
                             );
 
                             if ($recommendationRisk === null) {
-                                $recommendationRisk = (new RecommandationRisk())
+                                $recommendationRisk = (new RecommendationRisk())
                                     ->setAnr($anr)
                                     ->setInstance($instance)
                                     ->setInstanceRisk($brotherRecoRisk->getInstanceRisk())
@@ -1665,20 +1491,20 @@ class InstanceImportService
                                     ->setThreat($brotherRecoRisk->getThreat())
                                     ->setVulnerability($brotherRecoRisk->getVulnerability())
                                     ->setCommentAfter($brotherRecoRisk->getCommentAfter())
-                                    ->setRecommandation($brotherRecoRisk->getRecommandation())
+                                    ->setRecommendation($brotherRecoRisk->getRecommendation())
                                     ->setCreator($this->connectedUser->getEmail());
 
-                                $this->recommendationRiskTable->saveEntity($recommendationRisk, false);
+                                $this->recommendationRiskTable->save($recommendationRisk, false);
                             }
                         }
 
-                        $this->recommendationRiskTable->getDb()->flush();
+                        $this->recommendationRiskTable->flush();
                     }
                 }
             }
         }
 
-        // Check recommandations from specific risk of brothers
+        // Check recommendations from specific risk of brothers
         $recoToCreate = [];
         // Get all specific risks of instance
         foreach ($instance->getInstanceRisks() as $instanceRisk) {
@@ -1688,7 +1514,7 @@ class InstanceImportService
 
             // TODO: replace all the queries with QueryBuilder. Review the logic.
             // Get recommendations of brothers
-            /** @var RecommandationRisk[] $exitingRecoRisks */
+            /** @var RecommendationRisk[] $exitingRecoRisks */
             $exitingRecoRisks = $this->recommendationRiskTable->getEntityByFields([
                 'anr' => $anr->getId(),
                 'asset' => ['anr' => $anr->getId(), 'uuid' => $instanceRisk->getAsset()->getUuid()],
@@ -1702,13 +1528,13 @@ class InstanceImportService
             }
         }
 
-        /** @var RecommandationRisk $recommendationRiskToCreate */
+        /** @var RecommendationRisk $recommendationRiskToCreate */
         foreach ($recoToCreate as $recommendationRiskToCreate) {
             // Check if reco-risk link exist
             $recoCreated = $this->recommendationRiskTable->getEntityByFields([
-                'recommandation' => [
+                'recommendation' => [
                     'anr' => $anr->getId(),
-                    'uuid' => $recommendationRiskToCreate->getRecommandation()->getUuid(),
+                    'uuid' => $recommendationRiskToCreate->getRecommendation()->getUuid(),
                 ],
                 'instance' => $instance->getId(),
                 'asset' => [
@@ -1745,7 +1571,7 @@ class InstanceImportService
                     ],
                 ]));
 
-                $recommendationRisk = (new RecommandationRisk())
+                $recommendationRisk = (new RecommendationRisk())
                     ->setAnr($anr)
                     ->setInstance($instance)
                     ->setInstanceRisk($instanceRiskSpecific)
@@ -1754,13 +1580,13 @@ class InstanceImportService
                     ->setThreat($instanceRiskSpecific->getThreat())
                     ->setVulnerability($instanceRiskSpecific->getVulnerability())
                     ->setCommentAfter($recommendationRiskToCreate->getCommentAfter())
-                    ->setRecommandation($recommendationRiskToCreate->getRecommandation())
+                    ->setRecommendation($recommendationRiskToCreate->getRecommendation())
                     ->setCreator($this->connectedUser->getEmail());
 
-                $this->recommendationRiskTable->saveEntity($recommendationRisk, false);
+                $this->recommendationRiskTable->save($recommendationRisk, false);
             }
         }
-        $this->recommendationRiskTable->getDb()->flush();
+        $this->recommendationRiskTable->flush();
 
         // on met finalement à jour les risques en cascade
         $this->anrInstanceService->recalculateRiskRates($instance);
@@ -1839,7 +1665,7 @@ class InstanceImportService
                 ->setCreator($this->connectedUser->getEmail());
 
             if (!empty($operationalRiskData['riskOwner'])) {
-                $instanceRiskOwner = $this->anrInstanceRiskService->getOrCreateInstanceRiskOwner(
+                $instanceRiskOwner = $this->anrInstanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                     $anr,
                     $operationalRiskData['riskOwner']
                 );
@@ -1849,8 +1675,8 @@ class InstanceImportService
             if ($areScalesLevelsOfLikelihoodDifferent) {
                 $this->adjustOperationalRisksProbabilityScales(
                     $operationalInstanceRisk,
-                    $externalOperationalRiskScalesData[OperationalRiskScale::TYPE_LIKELIHOOD],
-                    $operationalRiskScalesData[OperationalRiskScale::TYPE_LIKELIHOOD]
+                    $externalOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD],
+                    $operationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD]
                 );
             }
 
@@ -2032,20 +1858,20 @@ class InstanceImportService
                         $operationalRiskData['kindOfMeasure'] !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
                     );
 
-                    $recommendationRisk = (new RecommandationRisk())
+                    $recommendationRisk = (new RecommendationRisk())
                         ->setInstance($instance)
                         ->setInstanceRiskOp($operationalInstanceRisk)
                         ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
                         ->setCommentAfter($recommendationData['commentAfter'] ?? '')
-                        ->setRecommandation($recommendation);
+                        ->setRecommendation($recommendation);
 
                     // TODO: remove the trick when #240 is done.
-                    $this->recommendationRiskTable->saveEntity($recommendationRisk);
-                    $this->recommendationRiskTable->saveEntity($recommendationRisk->setAnr($anr), false);
+                    $this->recommendationRiskTable->save($recommendationRisk);
+                    $this->recommendationRiskTable->save($recommendationRisk->setAnr($anr), false);
                 }
             }
 
-            $this->recommendationRiskTable->getDb()->flush();
+            $this->recommendationRiskTable->flush();
         }
     }
 
@@ -2176,12 +2002,12 @@ class InstanceImportService
                                 ->setIntegrity($instanceConsequence->getIntegrity())
                                 ->setAvailability($instanceConsequence->getAvailability());
 
-                            $this->instanceConsequenceTable->saveEntity($instanceConsequenceBrother, false);
+                            $this->instanceConsequenceTable->save($instanceConsequenceBrother, false);
                         }
                     }
                 }
 
-                $this->instanceTable->saveEntity($instance);
+                $this->instanceTable->save($instance);
             }
         }
     }
@@ -2235,7 +2061,7 @@ class InstanceImportService
             ->setCreator($this->connectedUser->getEmail());
 
         if (!empty($instanceRiskData['riskOwner'])) {
-            $instanceRiskOwner = $this->anrInstanceRiskService->getOrCreateInstanceRiskOwner(
+            $instanceRiskOwner = $this->anrInstanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                 $anr,
                 $instanceRiskData['riskOwner']
             );
@@ -2247,16 +2073,16 @@ class InstanceImportService
 
     private function createInstance(
         array $data,
-        Anr $anr,
-        ?InstanceSuperClass $parentInstance,
-        MonarcObject $monarcObject
-    ): Instance {
+        Entity\Anr $anr,
+        ?CoreEntity\InstanceSuperClass $parentInstance,
+        Entity\MonarcObject $monarcObject
+    ): Entity\Instance {
         $instanceData = $data['instance'];
-        $instance = (new Instance())
+        $instance = (new Entity\Instance())
             ->setAnr($anr)
             ->setLabels($instanceData)
             ->setNames($instanceData)
-            ->setLevel($parentInstance === null ? Instance::LEVEL_ROOT : $instanceData['level'])
+            ->setLevel($parentInstance === null ? Entity\Instance::LEVEL_ROOT : $instanceData['level'])
             ->setRoot($parentInstance === null ? null : ($parentInstance->getRoot() ?? $parentInstance))
             ->setParent($parentInstance)
             ->setAssetType($instanceData['assetType'])
@@ -2284,7 +2110,7 @@ class InstanceImportService
             $instance->setInheritedAvailability((int)$instanceData['dh']);
         }
 
-        $this->instanceTable->saveEntity($instance);
+        $this->instanceTable->save($instance);
 
         return $instance;
     }
@@ -2298,7 +2124,7 @@ class InstanceImportService
             $this->monarcVersion = strpos($data['monarc_version'], 'master') === false ? $data['monarc_version'] : '99';
         }
 
-        if ($this->isMonarcVersionLoverThen('2.8.2')) {
+        if ($this->isMonarcVersionLowerThen('2.8.2')) {
             throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
                 . ' Please contact us for more details.');
         }
@@ -2554,7 +2380,7 @@ class InstanceImportService
 
                     $scalesByType[$type] = $scale;
 
-                    $this->scaleTable->saveEntity($scale, false);
+                    $this->scaleTable->save($scale, false);
                 }
             }
         }
@@ -2565,10 +2391,10 @@ class InstanceImportService
                 if ($scaleComment->getScaleImpactType() === null
                     || $scaleComment->getScaleImpactType()->isSys()
                 ) {
-                    $this->scaleCommentTable->deleteEntity($scaleComment, false);
+                    $this->scaleCommentTable->remove($scaleComment, false);
                 }
             }
-            $this->scaleCommentTable->getDb()->flush();
+            $this->scaleCommentTable->flush();
 
             $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedAndIndexedByPosition($anr);
             $scaleImpactTypeMaxPosition = $this->scaleImpactTypeTable->findMaxPositionByAnrAndScale(
@@ -2623,7 +2449,7 @@ class InstanceImportService
                             ->setPosition(++$scaleImpactTypeMaxPosition)
                             ->setCreator($this->connectedUser->getEmail());
 
-                        $this->scaleImpactTypeTable->saveEntity($scaleImpactType, false);
+                        $this->scaleImpactTypeTable->save($scaleImpactType, false);
 
                         $scaleImpactTypes[$scaleImpactTypePosition] = $scaleImpactType;
                     }
@@ -2635,9 +2461,9 @@ class InstanceImportService
                     $scaleComment->setScaleImpactType($scaleImpactType);
                 }
 
-                $this->scaleCommentTable->saveEntity($scaleComment, false);
+                $this->scaleCommentTable->save($scaleComment, false);
             }
-            $this->scaleCommentTable->getDb()->flush();
+            $this->scaleCommentTable->flush();
         }
 
         /* Reset the cache */

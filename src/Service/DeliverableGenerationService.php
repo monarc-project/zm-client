@@ -1,316 +1,220 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\DeliveriesModels;
+use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
+use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
-use Monarc\Core\Service\AbstractService;
-use Monarc\Core\Service\DeliveriesModelsService;
-use Monarc\Core\Service\QuestionChoiceService;
-use Monarc\Core\Service\QuestionService;
-use Monarc\Core\Service\ConfigService;
-use Monarc\Core\Service\TranslateService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\RecommendationRisk;
-use Monarc\FrontOffice\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\DeliveryTable;
-use Monarc\FrontOffice\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Table\InstanceTable;
-use Monarc\FrontOffice\Table\RecommendationRiskTable;
-use Monarc\FrontOffice\Table\RecommendationHistoryTable;
-use Monarc\FrontOffice\Table\AnrInstanceMetadataFieldTable;
-use Monarc\FrontOffice\Table\SoaScaleCommentTable;
-use Monarc\FrontOffice\Table\ClientTable;
-use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
-use PhpOffice\PhpWord\Element\Table;
-use PhpOffice\PhpWord\PhpWord;
-use PhpOffice\PhpWord\Shared\Converter;
-use PhpOffice\PhpWord\TemplateProcessor;
-use PhpOffice\PhpWord\Writer\Word2007;
-use PhpOffice\PhpWord\Writer\Word2007\Part\Document;
-use PhpOffice\PhpWord\Shared\Html;
+use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
+use Monarc\Core\Model\Entity\ScaleSuperClass;
+use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Model\Table\DeliveriesModelsTable;
+use Monarc\Core\Service as CoreService;
+use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Model\Table\RecordTable;
+use Monarc\FrontOffice\Table;
+use PhpOffice\PhpWord;
+use function array_key_exists;
+use function count;
+use function in_array;
 
 /**
- * This class is the service that handles the generation of the deliverable Word documents throughout the steps of the
- * risk analysis.
- * @package Monarc\FrontOffice\Service
+ * The service handles generation of the deliverable Word documents throughout the steps of risk analysis.
  */
-class DeliverableGenerationService extends AbstractService
+class DeliverableGenerationService
 {
-    /** @var DeliveryTable */
-    protected $table;
-    protected $entity;
-    protected $dependencies = ['anr'];
+    private UserSuperClass $connectedUser;
 
-    /** @var DeliveriesModelsService */
-    protected $deliveryModelService;
-    /** @var ClientTable */
-    protected $clientTable;
-    /** @var AnrTable */
-    protected $anrTable;
-    /** @var AnrScaleService */
-    protected $scaleService;
-    /** @var AnrScaleTypeService */
-    protected $scaleTypeService;
-    /** @var AnrScaleCommentService */
-    protected $scaleCommentService;
-    /** @var OperationalRiskScaleService */
-    protected $operationalRiskScaleService;
-    /** @var QuestionService */
-    protected $questionService;
-    /** @var QuestionChoiceService */
-    protected $questionChoiceService;
-    /** @var AnrInterviewService */
-    protected $interviewService;
-    /** @var AnrThreatService */
-    protected $threatService;
-    /** @var AnrCartoRiskService */
-    protected $cartoRiskService;
-    /** @var ConfigService */
-    protected $configService;
+    private $currentLangAnrIndex = 1;
 
-    protected AnrInstanceConsequenceService $anrInstanceConsequenceService;
+    /** @var Entity\Anr */
+    private $anr;
 
-    protected InstanceTable $instanceTable;
+    private $noBorderTable;
 
-    /** @var InstanceRiskTable */
-    protected $instanceRiskTable;
-    /** @var InstanceRiskOpTable */
-    protected $instanceRiskOpTable;
-    /** @var SoaService */
-    protected $soaService;
-    /** @var SoaScaleCommentTable */
-    protected $soaScaleCommentTable;
-    /** @var AnrMeasureService */
-    protected $measureService;
-    /** @var AnrInstanceRiskOpService */
-    protected $anrInstanceRiskOpService;
-    /** @var AnrInstanceRiskService */
-    protected $anrInstanceRiskService;
-    /** @var AnrRecordService */
-    protected $recordService;
-    /** @var TranslateService */
-    protected $translateService;
-    /** @var InstanceRiskOwnerTable */
-    protected $instanceRiskOwnerTable;
-    /** @var RecommendationRiskTable */
-    protected $recommendationRiskTable;
-    /** @var RecommendationHistoryTable */
-    protected $recommendationHistoryTable;
-    /** @var AnrInstanceMetadataFieldTable */
-    protected $metadatasOnInstancesTable;
-    /** @var TranslationTable */
-    protected $translationTable;
+    private $borderTable;
+    private $whiteBigBorderTable;
+    private $tblHeader;
+    private $normalFont;
 
-    protected $currentLangAnrIndex = 1;
+    private $boldFont;
+    private $whiteFont;
+    private $redFont;
+    private $titleFont;
+    private $centerParagraph;
 
-    /** @var Anr */
-    protected $anr;
+    private $leftParagraph;
+    private $verticalCenterParagraph;
+    private $grayCell;
 
-    protected $noBorderTable;
-    protected $borderTable;
-    protected $whiteBigBorderTable;
-    protected $tblHeader;
+    private $blackCell;
+    private $customizableCell;
+    private $vAlignCenterCell;
+    private $continueCell;
+    private $colSpanCell;
+    private $rotate90TextCell;
+    private $restartAndGrayCell;
+    private $continueAndGrayCell;
+    private $restartAndBlackCell;
+    private $continueAndBlackCell;
+    private $restartAndCenterCell;
+    private $restartAndTopCell;
+    private $barChart;
 
-    protected $normalFont;
-    protected $boldFont;
-    protected $whiteFont;
-    protected $redFont;
-    protected $titleFont;
-
-    protected $centerParagraph;
-    protected $leftParagraph;
-    protected $verticalCenterParagraph;
-
-    protected $grayCell;
-    protected $blackCell;
-    protected $customizableCell;
-    protected $vAlignCenterCell;
-    protected $continueCell;
-    protected $colSpanCell;
-    protected $rotate90TextCell;
-    protected $restartAndGrayCell;
-    protected $continueAndGrayCell;
-    protected $restartAndBlackCell;
-    protected $continueAndBlackCell;
-    protected $restartAndCenterCell;
-    protected $restartAndTopCell;
-
-    protected $barChart;
-
-    /**
-     * Language field setter
-     * @param string $lang
-     */
-    public function setLanguage($lang)
-    {
-        $this->language = $lang;
+    public function __construct(
+        private Table\DeliveryTable $deliveryTable,
+        private AnrInstanceConsequenceService $anrInstanceConsequenceService,
+        private Table\InstanceTable $instanceTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private Table\InstanceRiskOpTable $instanceRiskOpTable,
+        private Table\SoaScaleCommentTable $soaScaleCommentTable,
+        private Table\RecommendationRiskTable $recommendationRiskTable,
+        private Table\RecommendationHistoryTable $recommendationHistoryTable,
+        private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
+        private Table\InstanceRiskOwnerTable $instanceRiskOwnerTable,
+        private Table\ThreatTable $threatTable,
+        private Table\ClientTable $clientTable,
+        private RecordTable $recordTable,
+        private DeliveriesModelsTable $deliveriesModelsTable,
+        private OperationalRiskScaleService $operationalRiskScaleService,
+        private AnrQuestionService $anrQuestionService,
+        private AnrQuestionChoiceService $anrQuestionChoiceService,
+        private AnrInterviewService $interviewService,
+        private AnrCartoRiskService $cartoRiskService,
+        private SoaService $soaService,
+        private AnrMeasureService $measureService,
+        private AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private AnrInstanceRiskService $anrInstanceRiskService,
+        private CoreService\Helper\ScalesCacheHelper $scalesCacheHelper,
+        private CoreService\TranslateService $translateService,
+        CoreService\ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
     /**
      * Translates the provided input text into the current ANR language
+     *
      * @param string $text The text to translate
+     *
      * @return string THe translated text, or $text if no translation was found
      */
-    public function anrTranslate($text)
+    public function anrTranslate(string $text): string
     {
-        return $this->get('translateService')->translate($text, $this->currentLangAnrIndex);
+        return $this->translateService->translate($text, $this->currentLangAnrIndex);
     }
 
     /**
-     * Returns the list of delivery models.
-     * @return array An array of delivery models
-     * @see DeliveriesModelsService::getList()
+     * Retrieve the previous delivery for the specified type of document.
      */
-    public function getDeliveryModels()
+    public function getLastDelivery(Entity\Anr $anr, int $docType): array
     {
-        return $this->deliveryModelService->getList(1, 0, null, null, null);
+        $lastDelivery = $this->deliveryTable->findLastByAnrAndDocType($anr, $docType);
+
+        return [
+            'id' => $lastDelivery->getId(),
+            'typedoc' => $lastDelivery->getDocType(),
+            'name' => $lastDelivery->getName(),
+            'version' => $lastDelivery->getVersion(),
+            'status' => $lastDelivery->getStatus(),
+            'classification' => $lastDelivery->getClassification(),
+            'respCustomer' => $lastDelivery->getRespCustomer(),
+            'respSmile' => $lastDelivery->getResponsibleManager(),
+            'summaryEvalRisk' => $lastDelivery->getSummaryEvalRisk(),
+        ];
     }
 
     /**
-     * Retrieve the previous delivery for the specified type of document, or all types if none is specified.
-     * @param int $anrId The ANR ID
-     * @param null|int $typeDoc The type of document, or null to retrieve all
-     * @return array The previous deliveries
+     * Generates the deliverable Word file.
+     *
+     * @return string The output file path.
      */
-    public function getLastDeliveries($anrId, $typeDoc = null)
+    public function generateDeliverableWithValues(Entity\Anr $anr, int $docType, array $data): string
     {
-        /** @var DeliveryTable $table */
-        $table = $this->get('table');
+        $delivery = (new Entity\Delivery())
+            ->setAnr($anr)
+            ->setDocType($docType)
+            ->setName($data['docname'] ?? '')
+            ->setRespCustomer($data['consultants'] ?? '')
+            ->setResponsibleManager($data['managers'] ?? '')
+            ->setClassification($data['classification'] ?? '')
+            ->setVersion($data['version'])
+            ->setStatus((int)($data['status'] ?? 0))
+            ->setSummaryEvalRisk($data['summaryEvalRisk'] ?? '')
+            ->setCreator($this->connectedUser->getEmail());
+        $this->deliveryTable->save($delivery);
 
-        // If typedoc is specified, retrieve only the last delivery of typedoc. Else, retrieve last delivery for each
-        // type of document.
-        if (!empty($typeDoc)) {
-            $deliveries = $table->getEntityByFields(['anr' => $anrId, 'typedoc' => $typeDoc], ['createdAt' => 'DESC']);
-            $lastDelivery = null;
-            foreach ($deliveries as $delivery) {
-                $lastDelivery = $delivery->getJsonArray();
-                break;
-            }
+        $this->anr = $anr;
+        $this->currentLangAnrIndex = $anr->getLanguage();
 
-            return $lastDelivery;
-        } else {
-            $deliveries = $table->getEntityByFields(['anr' => $anrId], ['createdAt' => 'DESC']);
-            $lastDelivery = [];
-            foreach ($deliveries as $delivery) {
-                if (empty($lastDelivery[$delivery->get('typedoc')])) {
-                    $lastDelivery[$delivery->get('typedoc')] = $delivery->getJsonArray();
-                }
-                if (count($lastDelivery) == 3) {
-                    break;
-                }
-            }
-
-            return array_values($lastDelivery);
-        }
-    }
-
-    /**
-     * Generates the deliverable Word file
-     * @param int $anrId The ANR ID
-     * @param int $typeDoc The type of document model
-     * @param array $values The values to fill in the document
-     * @param array $data The user-provided data when generating the deliverable
-     * @return string The output file path
-     * @throws \Monarc\Core\Exception\Exception If the model or ANR are not found.
-     */
-    public function generateDeliverableWithValues($anrId, $typeDoc, $values, $data)
-    {
-        $this->anr = $this->anrTable->findById($anrId);
-        $this->currentLangAnrIndex = $this->anr->getLanguage();
-
-        $model = current($this->deliveryModelService->get("table")->getEntityByFields(['id' => $data['template']]));
-        if (!$model) {
-            throw new \Monarc\Core\Exception\Exception("Model `id` not found");
+        /** @var DeliveriesModels $deliveryModel */
+        $deliveryModel = current($this->deliveriesModelsTable->getEntityByFields(['id' => (int)$data['template']]));
+        if (!$deliveryModel) {
+            throw new Exception(sprintf('Delivery template with ID "%s" was not found.', $data['template']));
         }
 
-        $delivery = $this->get('entity');
+        $values = [
+            'txt' => [
+                'VERSION' => htmlspecialchars($delivery->getVersion()),
+                'STATE' => $delivery->getStatus() === 0 ? 'Draft' : 'Final',
+                'CLASSIFICATION' => htmlspecialchars($delivery->getClassification()),
+                'COMPANY' => htmlspecialchars($this->clientTable->findFirstClient()->getName()),
+                'DOCUMENT' => htmlspecialchars($delivery->getName()),
+                'DATE' => date('d/m/Y'),
+                'CLIENT' => htmlspecialchars($delivery->getResponsibleManager()),
+                'SMILE' => htmlspecialchars($delivery->getRespCustomer()),
+                'SUMMARY_EVAL_RISK' => $this->generateWordXmlFromHtml(_WT($delivery->getSummaryEvalRisk())),
+            ],
+        ];
 
-        $data['respCustomer'] = $data['consultants'];
-        $data['respSmile'] = $data['managers'];
-        $data['name'] = $data['docname'];
-
-        $values['txt']['SUMMARY_EVAL_RISK'] = $this->generateWordXmlFromHtml(_WT($values['txt']['SUMMARY_EVAL_RISK']));
-
-        unset($data['id']);
-        $delivery->exchangeArray($data);
-
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($delivery, $dependencies);
-
-        /** @var DeliveryTable $table */
-        $table = $this->get('table');
-        $table->save($delivery);
-
-        //find the right model
-        $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
-        $pathLang = '';
-
-        switch ($this->currentLangAnrIndex) {
-            case 1:
-                $pathLang = $model->path1;
-                break;
-            case 2:
-                $pathLang = $model->path2;
-                break;
-            case 3:
-                $pathLang = $model->path3;
-                break;
-            case 4:
-                $pathLang = $model->path4;
-                break;
-            default:
-                break;
-        }
-        $pathModel .= $pathLang;
+        $pathModel = (getenv('APP_CONF_DIR') ?: '') . $deliveryModel->getPath($this->currentLangAnrIndex);
         if (!file_exists($pathModel)) {
-            // if template not available in the language of the ANR, use the
-            // default template of the category
-            $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
-            $model = current($this->deliveryModelService->get("table")->getEntityByFields(['category' => $typeDoc,
-                'path2' => ['op' => 'IS NOT', 'value' => null]]));
-            $pathModel .= $model->path2;
-            // throw new \Monarc\Core\Exception\Exception("Model not found for the language");
-        }
-
-        if (!file_exists($pathModel)) {
-            throw new \Monarc\Core\Exception\Exception("Model not found " . $pathModel);
+            /* if template not available in the language of the ANR, use the default template of the category. */
+            $pathModel = getenv('APP_CONF_DIR') ?? '';
+            $deliveryModel = current(
+                $this->deliveriesModelsTable->getEntityByFields([
+                    'category' => $docType,
+                    'path2' => ['op' => 'IS NOT', 'value' => null],
+                ])
+            );
+            $pathModel .= $deliveryModel->path2;
+            if (!file_exists($pathModel)) {
+                throw new Exception('Model not found "' . $pathModel . '"');
+            }
         }
 
         $referential = $data['referential'] ?? null;
-
         $risksByControl = $data['risksByControl'] ?? false;
-
         $record = $data['record'] ?? null;
 
-        $values = array_merge_recursive($values, $this->buildValues($typeDoc, $referential, $record, $risksByControl));
+        $values = array_merge_recursive($values, $this->buildValues($docType, $referential, $record, $risksByControl));
 
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
 
     /**
      * Method called by generateDeliverableWithValues to generate the model from its path and values.
-     * @see #generateDeliverableWithValues
+     *
      * @param string $modelPath The file path to the DOCX model to use
      * @param array $values The values to fill in the document
-     * @return string The path to the generated document
-     * @throws \Monarc\Core\Exception\Exception If the model is not found
+     *
+     * @return string The path to the generated temporary document.
      */
-    protected function generateDeliverableWithValuesAndModel($modelPath, $values)
+    private function generateDeliverableWithValuesAndModel(string $modelPath, array $values): string
     {
-        //verify template exist
+        /* Verify the template existence. */
         if (!file_exists($modelPath)) {
-            throw new \Monarc\Core\Exception\Exception("Model path not found: " . $modelPath);
+            throw new Exception("Model path not found: " . $modelPath);
         }
 
-        //create word
-        $word = new TemplateProcessor($modelPath);
+        $word = new PhpWord\TemplateProcessor($modelPath);
 
         if (!empty($values['txt'])) {
             foreach ($values['txt'] as $key => $value) {
@@ -335,82 +239,38 @@ class DeliverableGenerationService extends AbstractService
             }
         }
 
-        $datapath = './data/';
-        $appconfdir = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
-        if (!empty($appconfdir)) {
-            $datapath = $appconfdir . '/data/';
-        }
-        $pathTmp = $datapath . uniqid("", true) . "_" . microtime(true) . ".docx";
-        $word->saveAs($pathTmp);
-
-        // Test export to PDF with DomPDF
-        // $pathTmp1 = $datapath . uniqid("", true) . "_" . microtime(true) . ".pdf";
-        // \PhpOffice\PhpWord\Settings::setPdfRendererPath('vendor/dompdf/dompdf');
-        // \PhpOffice\PhpWord\Settings::setPdfRendererName('DomPDF');
-        // $phpWord = \PhpOffice\PhpWord\IOFactory::load($pathTmp);
-        // //Save it
-        // $xmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'PDF');
-        // $xmlWriter->save($pathTmp1);
-
-        return $pathTmp;
+        return $word->save();
     }
 
     /**
-     * Returns a human-readable string for the provided model type
-     * @param int $modelCategory The model type value
-     * @return string The model type description
-     */
-    protected function getModelType($modelCategory)
-    {
-        switch ($modelCategory) {
-            case 1:
-                return 'Validation du contexte';
-            case 2:
-                return 'Validation du modèle';
-            case 3:
-                return 'Rapport final';
-            case 4:
-                return 'Plan implementation des recommendations';
-            case 5:
-                return 'Statement of applicability';
-            default:
-                return 'N/A';
-        }
-    }
-
-    /**
-     * Builds the values to fill in the word document
+     * Builds the values to fill in the word document.
+     *
      * @param int $modelCategory The model type
+     *
      * @return array The values for the Word document as a key-value array
      */
-    protected function buildValues($modelCategory, $referential = null, $record = null, $risksByControl = false)
+    private function buildValues($modelCategory, $referential = null, $record = null, $risksByControl = false): array
     {
         $this->setStyles();
 
-        switch ($modelCategory) {
-            case 1:
-                return $this->buildContextValidationValues();
-            case 2:
-                return $this->buildContextModelingValues();
-            case 3:
-                return $this->buildRiskAssessmentValues();
-            case 4:
-                return $this->buildImplementationPlanValues();
-            case 5:
-                return $this->buildStatementOfAppplicabilityValues($referential, $risksByControl);
-            case 6:
-                return $this->buildRecordOfProcessingActivitiesValues($record);
-            case 7:
-                return $this->buildAllRecordsValues();
-            default:
-                return [];
-        }
+        return match ($modelCategory) {
+            DeliveriesModels::MODEL_CONTEXT_VALIDATION => $this->buildContextValidationValues(),
+            DeliveriesModels::MODEL_ASSETS_AND_MODELS_VALIDATION => $this->buildContextModelingValues(),
+            DeliveriesModels::MODEL_RISK_ANALYSIS => $this->buildRiskAssessmentValues(),
+            DeliveriesModels::MODEL_IMPLEMENTATION_PLAN => $this->buildImplementationPlanValues(),
+            DeliveriesModels::MODEL_STATEMENT_OF_APPLICABILITY => $this
+                ->buildStatementOfAppplicabilityValues($referential, $risksByControl),
+            DeliveriesModels::MODEL_RECORD_OF_PROCESSING_ACTIVITIES => $this
+                ->buildRecordOfProcessingActivitiesValues($record),
+            DeliveriesModels::MODEL_ALL_RECORD_OF_PROCESSING_ACTIVITIES => $this->buildAllRecordsValues(),
+            default => [],
+        };
     }
 
     /**
      * Set table styles
      */
-    protected function setStyles()
+    private function setStyles()
     {
         //Table Style
         $this->noBorderTable = ['align' => 'center', 'cellMarginRight' => '0'];
@@ -439,7 +299,7 @@ class DeliverableGenerationService extends AbstractService
         $this->colSpanCell = $this->vAlignCenterCell;
         $this->rotate90TextCell = array_merge(
             $this->vAlignCenterCell,
-            ['vMerge' => 'restart','textDirection' => 'btLr']
+            ['vMerge' => 'restart', 'textDirection' => 'btLr']
         );
         $this->restartAndGrayCell = array_merge($this->grayCell, ['vMerge' => 'restart']);
         $this->continueAndGrayCell = array_merge($this->continueCell, $this->grayCell);
@@ -450,10 +310,10 @@ class DeliverableGenerationService extends AbstractService
 
         //Chart styles
         $this->barChart = [
-            'width' => Converter::cmToEmu(17),
-            'height' => Converter::cmToEmu(9.5),
+            'width' => PhpWord\Shared\Converter::cmToEmu(17),
+            'height' => PhpWord\Shared\Converter::cmToEmu(9.5),
             'dataLabelOptions' => ['showCatName' => false],
-            'colors' => ['D6F107','FFBC1C','FD661F'],
+            'colors' => ['D6F107', 'FFBC1C', 'FD661F'],
             'showAxisLabels' => true,
             'showGridY' => true,
         ];
@@ -461,136 +321,100 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Set Span and Color Cell
+     *
      * @param int $nCol number of columns
      * @param string $color HEX color
+     *
      * @return array $this->colSpanCell
      */
-    protected function setColSpanCell($nCol, $color = null)
+    private function setColSpanCell($nCol, $color = null): array
     {
         $this->colSpanCell['gridSpan'] = $nCol;
         $this->colSpanCell['bgcolor'] = $color;
+
         return $this->colSpanCell;
     }
 
     /**
-     * Set bgColor by thresholds value
-     * @param int $nCol number of columns
+     * Set bgColor by thresholds value.
+     *
+     * @param int|string $nCol number of columns
      * @param string $color HEX color
+     *
      * @return array $this->colSpanCell
      */
-    protected function setBgColorCell($value, $infoRisk = true)
+    private function setBgColorCell($value, bool $infoRisk = true): array
     {
 
         if ($infoRisk) {
             $thresholds = [
-                'low' => $this->anr->seuil1,
-                'high' => $this->anr->seuil2,
+                'low' => $this->anr->getSeuil1(),
+                'high' => $this->anr->getSeuil2(),
             ];
         } else {
             $thresholds = [
-                'low' => $this->anr->seuilRolf1,
-                'high' => $this->anr->seuilRolf2,
+                'low' => $this->anr->getSeuilRolf1(),
+                'high' => $this->anr->getSeuilRolf2(),
             ];
         }
 
         if ($value === null) {
             $this->customizableCell['BgColor'] = 'E7E6E6';
+
             return $this->customizableCell;
         }
 
+        $this->customizableCell['BgColor'] = 'FD661F';
         if ($value === '-') {
             $this->customizableCell['BgColor'] = '';
         } elseif ($value <= $thresholds['low']) {
             $this->customizableCell['BgColor'] = 'D6F107';
         } elseif ($value <= $thresholds['high']) {
             $this->customizableCell['BgColor'] = 'FFBC1C';
-        } else {
-            $this->customizableCell['BgColor'] = 'FD661F';
         }
 
         return $this->customizableCell;
     }
 
     /**
-     * Build values for Step 1 deliverable (context validation)
-     * @return array The key-value array
+     * Build values for Step 1 deliverable (context validation).
      */
-    protected function buildContextValidationValues()
+    private function buildContextValidationValues(): array
     {
-        $impactsScale = current(current(
-            $this->scaleService->getList(1, 0, null, null, ['anr' => $this->anr->getId(), 'type' => 1])
-        ));
-        $impactsTypes = $this->scaleTypeService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
-        $impactsComments = $this->scaleCommentService->getList(
-            1,
-            0,
-            null,
-            null,
-            ['anr' => $this->anr->getId(), 'scale' => $impactsScale['id']]
-        );
-        $threatsScale = current(current($this->scaleService->getList(
-            1,
-            0,
-            null,
-            null,
-            ['anr' => $this->anr->getId(), 'type' => 2]
-        )));
-        $threatsComments = $this->scaleCommentService->getList(
-            1,
-            0,
-            null,
-            null,
-            ['anr' => $this->anr->getId(), 'scale' => $threatsScale['id']]
-        );
-        $vulnsScale = current(current($this->scaleService->getList(
-            1,
-            0,
-            null,
-            null,
-            ['anr' => $this->anr->getId(), 'type' => 3]
-        )));
-        $vulnsComments = $this->scaleCommentService->getList(
-            1,
-            0,
-            null,
-            null,
-            ['anr' => $this->anr->getId(), 'scale' => $vulnsScale['id']]
-        );
+        /**
+         * @var Entity\Scale $impactsScale
+         * @var Entity\Scale $threatsScale
+         * @var Entity\Scale $vulnsScale
+         */
+        $impactsScale = $this->scalesCacheHelper->getCachedScaleByType($this->anr, ScaleSuperClass::TYPE_IMPACT);
+        $threatsScale = $this->scalesCacheHelper->getCachedScaleByType($this->anr, ScaleSuperClass::TYPE_THREAT);
+        $vulnsScale = $this->scalesCacheHelper->getCachedScaleByType($this->anr, ScaleSuperClass::TYPE_VULNERABILITY);
 
-        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());
-        $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function ($scale) {
+        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr);
+        $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, static function ($scale) {
             return $scale['type'] === OperationalRiskScaleSuperClass::TYPE_IMPACT;
         }));
         $opRisksImpactsScaleMin = $opRisksImpactsScaleType[0]['min'];
         $opRisksImpactsScaleMax = $opRisksImpactsScaleType[0]['max'];
-        $opRisksImpactsScales = array_values(array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function ($scale) {
-            return $scale['isHidden'] === false;
-        }));
-        $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, function ($scale) {
-            return $scale['type'] == OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD;
+        $opRisksImpactsScales = array_values(
+            array_filter($opRisksImpactsScaleType[0]['scaleTypes'], static function ($scale) {
+                return !$scale['isHidden'];
+            })
+        );
+        $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, static function ($scale) {
+          return $scale['type'] === OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD;
         }))[0];
 
-        // TODO : replace with $anr getters....
-        $values = [
+        return [
             'xml' => [
-                'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml(_WT($this->anr->contextAnaRisk)),
-                'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml(_WT($this->anr->contextGestRisk)),
-                'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml(_WT($this->anr->synthThreat)),
+                'CONTEXT_ANA_RISK' => $this->generateWordXmlFromHtml(_WT($this->anr->getContextAnaRisk())),
+                'CONTEXT_GEST_RISK' => $this->generateWordXmlFromHtml(_WT($this->anr->getContextGestRisk())),
+                'SYNTH_EVAL_THREAT' => $this->generateWordXmlFromHtml(_WT($this->anr->getSynthThreat())),
             ],
             'table' => [
-                'SCALE_IMPACT' => $this->generateInformationalRiskImpactsTable(
-                    $impactsScale,
-                    $impactsTypes,
-                    $impactsComments
-                ),
-                'SCALE_THREAT' => $this->generateThreatOrVulnerabilityScaleTable(
-                    $threatsScale,
-                    $threatsComments
-                ),
-                'SCALE_VULN' => $this->generateThreatOrVulnerabilityScaleTable(
-                    $vulnsScale,
-                    $vulnsComments
-                ),
+                'SCALE_IMPACT' => $this->generateInformationalRiskImpactsTable($impactsScale),
+                'SCALE_THREAT' => $this->generateThreatOrVulnerabilityScaleTable($threatsScale),
+                'SCALE_VULN' => $this->generateThreatOrVulnerabilityScaleTable($vulnsScale),
                 'TABLE_RISKS' => $this->generateInformationalRiskAcceptanceThresholdsTable(
                     $impactsScale,
                     $threatsScale,
@@ -610,26 +434,24 @@ class DeliverableGenerationService extends AbstractService
                     $opRisksImpactsScaleMin,
                     $opRisksImpactsScaleMax
                 ),
-                'TABLE_THREATS' => $this->generateThreatsTable(false),
+                'TABLE_THREATS' => $this->generateThreatsTable(),
                 'TABLE_EVAL_TEND' => $this->generateTrendAssessmentTable(),
                 'TABLE_THREATS_FULL' => $this->generateThreatsTable(true),
                 'TABLE_INTERVIEW' => $this->generateInterviewsTable(),
             ],
         ];
-
-        return $values;
     }
 
     /**
      * Build values for Step 2 deliverable (context modeling)
      * @return array The key-value array
      */
-    protected function buildContextModelingValues()
+    private function buildContextModelingValues()
     {
         // Models are incremental, so use values from level-1 model
         $values = $this->buildContextValidationValues();
 
-        $values['xml']['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml(_WT($this->anr->synthAct));
+        $values['xml']['SYNTH_ACTIF'] = $this->generateWordXmlFromHtml(_WT($this->anr->getSynthAct()));
         $values['table']['IMPACTS_APPRECIATION'] = $this->generateImpactsAppreciation();
 
         return $values;
@@ -639,40 +461,40 @@ class DeliverableGenerationService extends AbstractService
      * Build values for Step 3 deliverable (risk assessment)
      * @return array The key-value array
      */
-    protected function buildRiskAssessmentValues()
+    private function buildRiskAssessmentValues()
     {
         // Models are incremental, so use values from level-2 model
         $values = $this->buildContextModelingValues();
 
-        $values = array_merge_recursive(
-            $values,
-            ['chart' => [
+        $values = array_merge_recursive($values, [
+            'chart' => [
                 'GRAPH_EVAL_RISK' => $this->generateRisksGraph(),
                 'GRAPH_EVAL_OP_RISK' => $this->generateRisksGraph(false),
-            ]]
-        );
+            ]
+        ]);
 
-        $values = array_merge_recursive(
-            $values,
-            ['table' => [
+        $values = array_merge_recursive($values, [
+            'table' => [
                 'RISKS_RECO_FULL' => $this->generateRisksPlan(),
                 'OPRISKS_RECO_FULL' => $this->generateOperationalRisksPlan(),
                 'TABLE_RISK_OWNERS' => $this->generateOwnersTable(),
-            ]]
-        );
+            ]
+        ]);
 
         $values = array_merge_recursive(
             $values,
-            ['xml' => [
-                'DISTRIB_EVAL_RISK' => $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution())),
-                'DISTRIB_EVAL_OP_RISK' => $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution(false))),
-                'CURRENT_RISK_MAP' => $this->generateCurrentRiskMap('real'),
-                'TARGET_RISK_MAP' => $this->generateCurrentRiskMap('targeted'),
-                'TABLE_ASSET_CONTEXT' => $this->generateAssetContextTable(),
-                'RISKS_KIND_OF_TREATMENT' => $this->generateRisksByKindOfMeasure(),
-                'TABLE_AUDIT_INSTANCES' => $this->generateTableAudit(),
-                'TABLE_AUDIT_RISKS_OP' => $this->generateTableAuditOp(),
-            ]]
+            [
+                'xml' => [
+                    'DISTRIB_EVAL_RISK' => $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution())),
+                    'DISTRIB_EVAL_OP_RISK' => $this->generateWordXmlFromHtml(_WT($this->getRisksDistribution(false))),
+                    'CURRENT_RISK_MAP' => $this->generateCurrentRiskMap(),
+                    'TARGET_RISK_MAP' => $this->generateCurrentRiskMap('targeted'),
+                    'TABLE_ASSET_CONTEXT' => $this->generateAssetContextTable(),
+                    'RISKS_KIND_OF_TREATMENT' => $this->generateRisksByKindOfMeasure(),
+                    'TABLE_AUDIT_INSTANCES' => $this->generateTableAudit(),
+                    'TABLE_AUDIT_RISKS_OP' => $this->generateTableAuditOp(),
+                ],
+            ]
         );
 
         return $values;
@@ -682,7 +504,7 @@ class DeliverableGenerationService extends AbstractService
      * Build values for Step 4 deliverable (Implementation plan)
      * @return array The key-value array
      */
-    protected function buildImplementationPlanValues()
+    private function buildImplementationPlanValues()
     {
         $values = [
             'table' => [
@@ -698,29 +520,18 @@ class DeliverableGenerationService extends AbstractService
      * Build values for Step 5 deliverable (Statement Of Applicability)
      * @return array The key-value array
      */
-    protected function buildStatementOfAppplicabilityValues($referential, $risksByControl)
+    private function buildStatementOfAppplicabilityValues($referential, $risksByControl)
     {
-        $values = [];
-        $soaScaleComments = array_filter(
-            $this->soaScaleCommentTable->findByAnrOrderByIndex($this->anr),
-            function ($soaScaleComment) {
-                return !$soaScaleComment->isHidden();
-            }
-        );
-        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $this->anr,
-            [Translation::SOA_SCALE_COMMENT],
-            $this->configService->getActiveLanguageCodes()[$this->anr->getLanguage()]
-        );
-
-        $values['table']['TABLE_STATEMENT_OF_APPLICABILITY_SCALE'] = $this->generateTableStatementOfApplicabilityScale(
-            $soaScaleComments,
-            $translations
-        );
-        $values['table']['TABLE_STATEMENT_OF_APPLICABILITY'] = $this->generateTableStatementOfApplicability(
-            $referential,
-            $translations
-        );
+        /** @var Entity\SoaScaleComment[] $soaScaleComments */
+        $soaScaleComments = $this->soaScaleCommentTable->findByAnrOrderByIndex($this->anr, true);
+        $values = [
+            'table' => [
+                'TABLE_STATEMENT_OF_APPLICABILITY_SCALE' => $this->generateTableStatementOfApplicabilityScale(
+                    $soaScaleComments
+                ),
+                'TABLE_STATEMENT_OF_APPLICABILITY' => $this->generateTableStatementOfApplicability($referential),
+            ],
+        ];
         if ($risksByControl) {
             $values['xml']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($referential);
         } else {
@@ -734,7 +545,7 @@ class DeliverableGenerationService extends AbstractService
      * Build values for Step 5 deliverable (Record of Processing Activities)
      * @return array The key-value array
      */
-    protected function buildRecordOfProcessingActivitiesValues($record)
+    private function buildRecordOfProcessingActivitiesValues($record)
     {
         $values = [
             'xml' => [
@@ -754,7 +565,7 @@ class DeliverableGenerationService extends AbstractService
      * Build values for Step 5 deliverable (All Records of Processing Activities)
      * @return array The key-value array
      */
-    protected function buildAllRecordsValues()
+    private function buildAllRecordsValues()
     {
         $values['xml']['TABLE_ALL_RECORDS'] = $this->generateTableAllRecordsGDPR();
 
@@ -762,143 +573,95 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generate Informational Risk Impacts table
-     * @return Table
+     * Generate Informational Risk Impacts table.
      */
-    protected function generateInformationalRiskImpactsTable($impactsScale, $impactsTypes, $impactsComments)
+    private function generateInformationalRiskImpactsTable(Entity\Scale $impactScale): PhpWord\Element\Table
     {
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         $table->addRow(400, $this->tblHeader);
-        $table->addCell(Converter::cmToTwip(2.00), $this->restartAndGrayCell)
-            ->addText(
-                $this->anrTranslate('Level'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(8.40), $this->setColSpanCell(3, 'DFDFDF'))
-            ->addText(
-                $this->anrTranslate('Impact'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(8.60), $this->restartAndGrayCell)
-            ->addText(
-                $this->anrTranslate('Consequences'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
+            ->addText($this->anrTranslate('Level'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.40), $this->setColSpanCell(3, 'DFDFDF'))
+            ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.60), $this->restartAndGrayCell)
+            ->addText($this->anrTranslate('Consequences'), $this->boldFont, $this->centerParagraph);
 
         // Manually add C/I/D impacts columns
         $table->addRow();
-        $table->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
-        $table->addCell(Converter::cmToTwip(2.80), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Confidentiality'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(2.80), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Integrity'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(2.80), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Availability'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(8.60), $this->continueAndGrayCell);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.80), $this->grayCell)
+            ->addText($this->anrTranslate('Confidentiality'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.80), $this->grayCell)
+            ->addText($this->anrTranslate('Integrity'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.80), $this->grayCell)
+            ->addText($this->anrTranslate('Availability'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.60), $this->continueAndGrayCell);
 
-        // Fill in each row
-        for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
-            $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(2.00), $this->restartAndTopCell)
-                ->addText(
-                    $row,
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
-
-            $impactsTypePerType = [];
-
-            foreach ($impactsTypes as $impactType) {
-                $impactsTypePerType[$impactType['type_id']] = $impactType;
-            }
-
-            // Put C/I/D first
-            for ($i = 1; $i <= 3; ++$i) {
-                $impactType = $impactsTypePerType[$i];
-
-                // Find the appropriate comment
-                $commentText = '';
-                foreach ($impactsComments as $comment) {
-                    if ($comment['scaleImpactType']->id == $impactType['id'] && $comment['scaleIndex'] == $row) {
-                        $commentText = $comment['comment' . $this->currentLangAnrIndex];
-                        break;
-                    }
-                }
-
-                $table->addCell(Converter::cmToTwip(2.80), $this->restartAndTopCell)
-                    ->addText(
-                        _WT($commentText),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-            }
-
-            // Then ROLFP and custom columns as rows
-            $first = true;
-            foreach ($impactsTypes as $impactType) {
-                if ($impactType['type_id'] < 4 || $impactType['isHidden']) {
-                    continue;
-                }
-
-                if ($first) {
-                    $first = false;
-                } else {
-                    $table->addRow(400);
-                    $table->addCell(Converter::cmToTwip(2.15), $this->continueCell);
-                    $table->addCell(Converter::cmToTwip(2.15), $this->continueCell);
-                    $table->addCell(Converter::cmToTwip(2.15), $this->continueCell);
-                    $table->addCell(Converter::cmToTwip(2.15), $this->continueCell);
-                }
-
-                // Find the appropriate comment
-                $commentText = '';
-                foreach ($impactsComments as $comment) {
-                    if ($comment['scaleImpactType']->id == $impactType['id'] && $comment['scaleIndex'] == $row) {
-                        $commentText = $comment['comment' . $this->currentLangAnrIndex];
-                        break;
-                    }
-                }
-
-                $cellConsequences = $table->addCell(Converter::cmToTwip(2.80), $this->vAlignCenterCell);
-                $cellConsequencesRun = $cellConsequences->addTextRun($this->leftParagraph);
-                $cellConsequencesRun->addText(
-                    _WT($this->anrTranslate($impactType['label' . $this->currentLangAnrIndex])) . ' : ',
-                    $this->boldFont
-                );
-                $cellConsequencesRun->addText(
-                    _WT($commentText),
-                    $this->normalFont
-                );
+        // Put C/I/D first
+        $scaleImpactTypesPerType = [];
+        foreach ($impactScale->getScaleImpactTypes() as $scaleImpactType) {
+            if (!$scaleImpactType->isHidden()) {
+                $scaleImpactTypesPerType[$scaleImpactType->getType()] = $scaleImpactType;
             }
         }
+        ksort($scaleImpactTypesPerType);
+
+        // Fill in each row
+        for ($scaleIndex = $impactScale->getMin(); $scaleIndex <= $impactScale->getMax(); ++$scaleIndex) {
+            $table->addRow(400);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndTopCell)
+                ->addText((string)$scaleIndex, $this->normalFont, $this->centerParagraph);
+
+            $first = true;
+            foreach ($scaleImpactTypesPerType as $type => $scaleImpactType) {
+                $commentText = '';
+                foreach ($scaleImpactType->getScaleComments() as $scaleComment) {
+                    if ($scaleComment->getScaleIndex() === $scaleIndex) {
+                        $commentText = $scaleComment->getComment($this->currentLangAnrIndex);
+                        break;
+                    }
+                }
+                if (\in_array($type, ScaleImpactTypeSuperClass::getScaleImpactTypesCid(), true)) {
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.80), $this->restartAndTopCell)
+                        ->addText(_WT($commentText), $this->normalFont, $this->leftParagraph);
+                } else {
+                    // Then ROLFP and custom columns as rows
+                    if (!$first) {
+                        $table->addRow(400);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.15), $this->continueCell);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.15), $this->continueCell);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.15), $this->continueCell);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.15), $this->continueCell);
+                    }
+                    $cellConsequences = $table
+                        ->addCell(PhpWord\Shared\Converter::cmToTwip(2.80), $this->vAlignCenterCell);
+                    $cellConsequencesRun = $cellConsequences->addTextRun($this->leftParagraph);
+                    $cellConsequencesRun->addText(
+                        _WT($this->anrTranslate($scaleImpactType->getLabel($this->currentLangAnrIndex))) . ' : ',
+                        $this->boldFont
+                    );
+                    $cellConsequencesRun->addText(_WT($commentText), $this->normalFont);
+
+                    $first = false;
+                }
+            }
+        }
+
         return $table;
     }
 
     /**
-     * Generate Informational Risk Acceptance thresholds table
-     * @return Table
+     * Generate Informational Risk Acceptance thresholds table.
      */
-    protected function generateInformationalRiskAcceptanceThresholdsTable($impactsScale, $threatsScale, $vulnsScale)
-    {
-        $tableWord = new PhpWord();
+    private function generateInformationalRiskAcceptanceThresholdsTable(
+        $impactsScale,
+        $threatsScale,
+        $vulnsScale
+    ): PhpWord\Element\Table {
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->noBorderTable);
 
@@ -906,7 +669,7 @@ class DeliverableGenerationService extends AbstractService
         for ($t = $threatsScale['min']; $t <= $threatsScale['max']; ++$t) {
             for ($v = $vulnsScale['min']; $v <= $vulnsScale['max']; ++$v) {
                 $prod = $t * $v;
-                if (array_search($prod, $header) === false) {
+                if (!\in_array($prod, $header, true)) {
                     $header[] = $prod;
                 }
             }
@@ -917,48 +680,27 @@ class DeliverableGenerationService extends AbstractService
         $table->addRow();
         $table->addCell(null, $this->setColSpanCell(2));
         $table->addCell(null, $this->setColSpanCell(count($header)))
-            ->addText(
-                $this->anrTranslate('TxV'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+            ->addText($this->anrTranslate('TxV'), $this->boldFont, $this->centerParagraph);
         $table->addRow();
         $table->addCell(null, $this->rotate90TextCell)
-            ->addText(
-                $this->anrTranslate('Impact'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+            ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
         $table->addCell(null, $this->whiteBigBorderTable);
         foreach ($header as $MxV) {
-            $table->addCell(Converter::cmToTwip(1), $this->whiteBigBorderTable)
-                ->addText(
-                    $MxV,
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1), $this->whiteBigBorderTable)
+                ->addText($MxV, $this->boldFont, $this->centerParagraph);
         }
 
         for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
-            $table->addRow(Converter::cmToTwip($size));
+            $table->addRow(PhpWord\Shared\Converter::cmToTwip($size));
             $table->addCell(null, $this->continueCell);
-            $table->addCell(Converter::cmToTwip(1), $this->whiteBigBorderTable)
-                ->addText(
-                    $row,
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1), $this->whiteBigBorderTable)
+                ->addText($row, $this->boldFont, $this->centerParagraph);
 
             foreach ($header as $MxV) {
                 $value = $MxV * $row;
 
                 $style = array_merge($this->whiteBigBorderTable, $this->setBgColorCell($value));
-                $table->addCell(null, $style)
-                    ->addText(
-                        $value,
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
+                $table->addCell(null, $style)->addText((string)$value, $this->boldFont, $this->centerParagraph);
             }
         }
 
@@ -967,50 +709,39 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generate Operational Risk Acceptance thresholds Table
-     * @return Table
      */
-    protected function generateOperationalRiskImpactsTable(
+    private function generateOperationalRiskImpactsTable(
         $opRisksImpactsScales,
         $opRisksImpactsScaleMin,
         $opRisksImpactsScaleMax
-    ) {
-        $tableWord = new PhpWord();
+    ): PhpWord\Element\Table {
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         $sizeColumn = 17 / count($opRisksImpactsScales);
 
         $table->addRow(400, $this->tblHeader);
-        $table->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Level'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+            ->addText($this->anrTranslate('Level'), $this->boldFont, $this->centerParagraph);
         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-            $table->addCell(Converter::cmToTwip($sizeColumn), $this->grayCell)
-                ->addText(
-                    _WT($opRiskImpactScale['label']),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip($sizeColumn), $this->grayCell)
+                ->addText(_WT($opRiskImpactScale['label']), $this->boldFont, $this->centerParagraph);
         }
 
         for ($row = $opRisksImpactsScaleMin; $row <= $opRisksImpactsScaleMax; ++$row) {
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(2.00), $this->restartAndTopCell)
-                ->addText(
-                    $opRisksImpactsScales[0]['comments'][$row]['scaleValue'],
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndTopCell)->addText(
+                $opRisksImpactsScales[0]['comments'][$row]['scaleValue'],
+                $this->normalFont,
+                $this->centerParagraph
+            );
             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                  $table->addCell(Converter::cmToTwip($sizeColumn), $this->restartAndTopCell)
-                    ->addText(
-                        _WT($opRiskImpactScale['comments'][$row]['comment']),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip($sizeColumn), $this->restartAndTopCell)->addText(
+                    _WT($opRiskImpactScale['comments'][$row]['comment']),
+                    $this->normalFont,
+                    $this->leftParagraph
+                );
             }
         }
 
@@ -1018,59 +749,41 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generate Operational Risk Likelihood Table
-     * @return Table
+     * Generate Operational Risk Likelihood Table.
      */
-    protected function generateOperationalRiskLikelihoodTable($opRisksLikelihoodScale)
+    private function generateOperationalRiskLikelihoodTable($opRisksLikelihoodScale): PhpWord\Element\Table
     {
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         $table->addRow(400, $this->tblHeader);
-        $table->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Level'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(16.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Comment'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+            ->addText($this->anrTranslate('Level'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(16.00), $this->grayCell)
+            ->addText($this->anrTranslate('Comment'), $this->boldFont, $this->centerParagraph);
 
         foreach ($opRisksLikelihoodScale['comments'] as $comment) {
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                ->addText(
-                    $comment['scaleValue'],
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(16.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($comment['comment']),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                ->addText($comment['scaleValue'], $this->normalFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(16.00), $this->vAlignCenterCell)
+                ->addText(_WT($comment['comment']), $this->normalFont, $this->leftParagraph);
         }
 
         return $table;
     }
 
     /**
-     * Generate Operational Risk Acceptance thresholds Table
-     * @return Table
+     * Generate Operational Risk Acceptance thresholds table.
      */
-    protected function generateOperationalRiskAcceptanceThresholdsTable(
+    private function generateOperationalRiskAcceptanceThresholdsTable(
         $opRisksImpactsScales,
         $opRisksLikelihoodScale,
         $opRisksImpactsScaleMin,
         $opRisksImpactsScaleMax
-    ) {
-        $tableWord = new PhpWord();
+    ): PhpWord\Element\Table {
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->noBorderTable);
 
@@ -1084,47 +797,26 @@ class DeliverableGenerationService extends AbstractService
         $table->addRow();
         $table->addCell(null, $this->setColSpanCell(2));
         $table->addCell(null, $this->setColSpanCell(count($header)))
-            ->addText(
-                $this->anrTranslate('Probability'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+            ->addText($this->anrTranslate('Probability'), $this->boldFont, $this->centerParagraph);
         $table->addRow();
         $table->addCell(null, $this->rotate90TextCell)
-            ->addText(
-                $this->anrTranslate('Impact'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+            ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
         $table->addCell(null, $this->whiteBigBorderTable);
-        foreach ($header as $Prob) {
-            $table->addCell(Converter::cmToTwip($size), $this->whiteBigBorderTable)
-                ->addText(
-                    $Prob,
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+        foreach ($header as $prob) {
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $this->whiteBigBorderTable)
+                ->addText($prob, $this->boldFont, $this->centerParagraph);
         }
 
         for ($row = $opRisksImpactsScaleMin; $row <= $opRisksImpactsScaleMax; ++$row) {
             $impactValue = $opRisksImpactsScales[0]['comments'][$row]['scaleValue'];
-            $table->addRow(Converter::cmToTwip($size));
+            $table->addRow(PhpWord\Shared\Converter::cmToTwip($size));
             $table->addCell(null, $this->continueCell);
-            $table->addCell(Converter::cmToTwip($size), $this->whiteBigBorderTable)
-                ->addText(
-                    $impactValue,
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            foreach ($header as $Prob) {
-                $value = $Prob * $impactValue;
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $this->whiteBigBorderTable)
+                ->addText($impactValue, $this->boldFont, $this->centerParagraph);
+            foreach ($header as $prob) {
+                $value = $prob * $impactValue;
                 $style = array_merge($this->whiteBigBorderTable, $this->setBgColorCell($value, false));
-                $table->addCell(null, $style)
-                    ->addText(
-                        $value,
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
+                $table->addCell(null, $style)->addText((string)$value, $this->boldFont, $this->centerParagraph);
             }
         }
 
@@ -1132,22 +824,21 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generate Trends Assessment Table
-     * @return Table
+     * Generate Trends Assessment Table.
      */
-    protected function generateTrendAssessmentTable()
+    private function generateTrendAssessmentTable(): PhpWord\Element\Table
     {
-        $questions = $this->questionService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
-        $questionsChoices = $this->questionChoiceService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
+        $questions = $this->anrQuestionService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
+        $questionsChoices = $this->anrQuestionChoiceService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->noBorderTable);
 
         // Fill in each row
         foreach ($questions as $question) {
             $response = null;
-            if ($question['type'] == 1) {
+            if ($question['type'] === 1) {
                 // Simple text
                 $response = $question['response'];
             } else {
@@ -1162,10 +853,10 @@ class DeliverableGenerationService extends AbstractService
                         }
                     }
 
-                    $response = join("\n", $responses);
+                    $response = implode("\n", $responses);
                 } else {
                     foreach ($questionsChoices as $choice) {
-                        if ($choice['id'] == $question['response']) {
+                        if ($choice['id'] === $question['response']) {
                             $response = $choice['label' . $this->currentLangAnrIndex];
                             break;
                         }
@@ -1176,19 +867,15 @@ class DeliverableGenerationService extends AbstractService
             // no display question, if reply is empty
             if (!empty($response)) {
                 $table->addRow(400);
-                $table->addCell(Converter::cmToTwip(18.00), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(18.00), $this->vAlignCenterCell)
                     ->addText(
                         _WT($question['label' . $this->currentLangAnrIndex]),
                         $this->boldFont,
                         $this->leftParagraph
                     );
                 $table->addRow(400);
-                $table->addCell(Converter::cmToTwip(18.00), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($response),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(18.00), $this->vAlignCenterCell)
+                    ->addText(_WT($response), $this->normalFont, $this->leftParagraph);
             }
         }
 
@@ -1196,152 +883,102 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generate Interviews Table
-     * @return Table
+     * Generate Interviews Table.
      */
-    protected function generateInterviewsTable()
+    private function generateInterviewsTable(): PhpWord\Element\Table
     {
         $interviews = $this->interviewService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         if (count($interviews)) {
             $table->addRow(400, $this->tblHeader);
 
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate("Date"),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate("Department / People"),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(9.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate("Contents"),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate("Date"), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate("Department / People"), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(9.00), $this->grayCell)
+                ->addText($this->anrTranslate("Contents"), $this->boldFont, $this->centerParagraph);
         }
 
         // Fill in each row
         foreach ($interviews as $interview) {
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($interview['date']),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($interview['service']),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(9.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($interview['content']),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                ->addText(_WT($interview['date']), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                ->addText(_WT($interview['service']), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(9.00), $this->vAlignCenterCell)
+                ->addText(_WT($interview['content']), $this->normalFont, $this->leftParagraph);
         }
 
         return $table;
     }
 
     /**
-     * Generate Threat or Vulnerability scale table
-     * @param array $scale
-     * @param array $comments
-     * @return Table
+     * Generate Threat or Vulnerability scale table.
      */
-    protected function generateThreatOrVulnerabilityScaleTable($scale, $comments)
+    private function generateThreatOrVulnerabilityScaleTable(Entity\Scale $scale): PhpWord\Element\Table
     {
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         $table->addRow(400, $this->tblHeader);
-        $table->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Level'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(16.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Comment'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+            ->addText($this->anrTranslate('Level'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(16.00), $this->grayCell)
+            ->addText($this->anrTranslate('Comment'), $this->boldFont, $this->centerParagraph);
 
         // Fill in each row
-        for ($row = $scale['min']; $row <= $scale['max']; ++$row) {
+        for ($scaleIndex = $scale->getMin(); $scaleIndex <= $scale->getMax(); ++$scaleIndex) {
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                ->addText(
-                    $row,
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                ->addText($scaleIndex, $this->normalFont, $this->centerParagraph);
 
             // Find the appropriate comment
             $commentText = '';
-            foreach ($comments as $comment) {
-                if ($comment['scaleIndex'] == $row) {
-                    $commentText = $comment['comment' . $this->currentLangAnrIndex];
+            foreach ($scale->getScaleComments() as $scaleComment) {
+                if ($scaleComment->getScaleIndex() === $scaleIndex) {
+                    $commentText = $scaleComment->getComment($this->currentLangAnrIndex);
                     break;
                 }
             }
 
-            $table->addCell(Converter::cmToTwip(16.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($commentText),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(16.00), $this->vAlignCenterCell)
+                ->addText(_WT($commentText), $this->normalFont, $this->leftParagraph);
         }
 
         return $table;
     }
 
     /**
-     * Generate Current Risk Map
-     * @param string $type
-     * @return string
+     * Generate Current Risk Map.
      */
-    protected function generateCurrentRiskMap($type = 'real')
+    private function generateCurrentRiskMap(string $type = 'real'): string
     {
-        $cartoRisk = ($type == 'real') ?
-            $this->cartoRiskService->getCartoReal($this->anr->getId()) :
-            $this->cartoRiskService->getCartoTargeted($this->anr->getId());
+        $cartoRisk = $type === 'real'
+            ? $this->cartoRiskService->getCartoReal($this->anr)
+            : $this->cartoRiskService->getCartoTargeted($this->anr);
 
-            // Generate risks table
-            $tableWord = new PhpWord();
-            $section = $tableWord->addSection();
+        // Generate risks table
+        $tableWord = new PhpWord\PhpWord();
+        $section = $tableWord->addSection();
 
         if (!empty($cartoRisk['riskInfo']['counters'])) {
-            $section->addText(
-                $this->anrTranslate('Information risks'),
-                $this->boldFont,
-                ['indent' => 0.5]
-            );
+            $section->addText($this->anrTranslate('Information risks'), $this->boldFont, ['indent' => 0.5]);
 
-            $params  = [
+            $params = [
                 'riskType' => 'riskInfo',
                 'axisX' => 'MxV',
                 'axisY' => 'Impact',
                 'labelAxisX' => 'TxV',
                 'thresholds' => [
-                    $this->anr->seuil1,
-                    $this->anr->seuil2
+                    $this->anr->getSeuil1(),
+                    $this->anr->getSeuil2(),
                 ],
             ];
             $section = $this->generateCartographyMap($cartoRisk, $section, $params);
@@ -1352,31 +989,32 @@ class DeliverableGenerationService extends AbstractService
                 $this->boldFont,
                 ['indent' => 0.5]
             );
-            $params  = [
+            $params = [
                 'riskType' => 'riskOp',
                 'axisX' => 'Likelihood',
                 'axisY' => 'OpRiskImpact',
                 'labelAxisX' => 'Probability',
                 'thresholds' => [
-                    $this->anr->seuilRolf1,
-                    $this->anr->seuilRolf2
+                    $this->anr->getSeuilRolf1(),
+                    $this->anr->getSeuilRolf2(),
                 ],
             ];
-            $section = $this->generateCartographyMap($cartoRisk, $section, $params);
+            $this->generateCartographyMap($cartoRisk, $section, $params);
         }
 
-            return $this->getWordXmlFromWordObject($tableWord);
+        return $this->getWordXmlFromWordObject($tableWord);
     }
 
     /**
      * Generate Cartography Map
+     *
      * @param $data
      * @param object $section
-     * @param object $params
+     * @param array $params
      *
      * @return object
      */
-    protected function generateCartographyMap($data, $section, $params)
+    private function generateCartographyMap($data, $section, $params)
     {
         $axisX = $data[$params['axisX']];
         $axisY = $data[$params['axisY']];
@@ -1386,30 +1024,18 @@ class DeliverableGenerationService extends AbstractService
         $size = 0.75;
 
         $table = $section->addTable($this->noBorderTable);
-        $table->addRow(Converter::cmToTwip($size));
+        $table->addRow(PhpWord\Shared\Converter::cmToTwip($size));
         $table->addCell(null, $this->setColSpanCell(2));
         $table->addCell(null, $this->setColSpanCell(count($axisX)))
-            ->addText(
-                $this->anrTranslate($labelAxisX),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addRow(Converter::cmToTwip($size));
+            ->addText($this->anrTranslate($labelAxisX), $this->boldFont, $this->centerParagraph);
+        $table->addRow(PhpWord\Shared\Converter::cmToTwip($size));
         $table->addCell(null, $this->rotate90TextCell)
-            ->addText(
-                $this->anrTranslate('Impact'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip($size), $this->whiteBigBorderTable);
+            ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $this->whiteBigBorderTable);
 
         foreach ($axisX as $x) {
-            $table->addCell(Converter::cmToTwip($size), $this->whiteBigBorderTable)
-            ->addText(
-                $x,
-                $this->boldFont,
-                $this->centerParagraph
-            );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $this->whiteBigBorderTable)
+                ->addText($x, $this->boldFont, $this->centerParagraph);
         }
 
         //row
@@ -1417,14 +1043,10 @@ class DeliverableGenerationService extends AbstractService
         $nbMedium = 0;
         $nbHigh = 0;
         foreach ($axisY as $y) {
-            $table->addRow(Converter::cmToTwip($size));
+            $table->addRow(PhpWord\Shared\Converter::cmToTwip($size));
             $table->addCell(null, $this->continueCell);
-            $table->addCell(Converter::cmToTwip($size), $this->whiteBigBorderTable)
-                ->addText(
-                    $y,
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $this->whiteBigBorderTable)
+                ->addText($y, $this->boldFont, $this->centerParagraph);
 
             foreach ($axisX as $x) {
                 $value = $x * $y;
@@ -1443,108 +1065,90 @@ class DeliverableGenerationService extends AbstractService
                     } else {
                         $style['BgColor'] = 'F0F7B2';
                     }
-                } else {
-                    if ($value <= $thresholds[1]) {
-                        $style['BgColor'] = 'FFBC1C';
-                        if ($result) {
-                            $nbMedium += $result;
-                        } else {
-                            $style['BgColor'] = 'FCDD94';
-                        }
+                } else if ($value <= $thresholds[1]) {
+                    $style['BgColor'] = 'FFBC1C';
+                    if ($result) {
+                        $nbMedium += $result;
                     } else {
-                        $style['BgColor'] = 'FD661F';
-                        if ($result) {
-                            $nbHigh += $result;
-                        } else {
-                            $style['BgColor'] = 'FCB28F';
-                        }
+                        $style['BgColor'] = 'FCDD94';
+                    }
+                } else {
+                    $style['BgColor'] = 'FD661F';
+                    if ($result) {
+                        $nbHigh += $result;
+                    } else {
+                        $style['BgColor'] = 'FCB28F';
                     }
                 }
-                $table->addCell(Converter::cmToTwip($size), $style)
-                    ->addText(
-                        $result,
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $style)
+                    ->addText($result, $this->boldFont, $this->centerParagraph);
             }
         }
 
         //legend
         $maxSize = 7;
         $total = $nbLow + $nbMedium + $nbHigh;
-        $lowSize = ($total) ? ($maxSize * $nbLow) / $total : 0;
-        $mediumSize = ($total) ? ($maxSize * $nbMedium) / $total : 0;
-        $highSize = ($total) ? ($maxSize * $nbHigh) / $total : 0;
+        $lowSize = $total ? $maxSize * $nbLow / $total : 0;
+        $mediumSize = $total ? $maxSize * $nbMedium / $total : 0;
+        $highSize = $total ? $maxSize * $nbHigh / $total : 0;
 
         $section->addTextBreak(1);
 
         $tableLegend = $section->addTable();
-        $tableLegend->addRow(Converter::cmToTwip(0.1));
-        $tableLegend->addCell(Converter::cmToTwip(0.5), $this->continueCell);
-        $tableLegend->addCell(Converter::cmToTwip(5), $this->whiteBigBorderTable)
-            ->addText(
-                $nbLow . ' ' . $this->anrTranslate('Low risks'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
+        $tableLegend->addRow(PhpWord\Shared\Converter::cmToTwip(0.1));
+        $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip(0.5), $this->continueCell);
+        $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip(5), $this->whiteBigBorderTable)
+            ->addText($nbLow . ' ' . $this->anrTranslate('Low risks'), $this->boldFont, $this->leftParagraph);
         if ($lowSize > 0) {
             $style = array_merge(
                 $this->whiteBigBorderTable,
                 ['BgColor' => 'D6F107', 'BorderTopSize' => 0, 'BorderBottomSize' => 30]
             );
             unset($style['BorderSize']);
-            $tableLegend->addCell(Converter::cmToTwip($lowSize), $style);
+            $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip($lowSize), $style);
         }
 
-        if (($maxSize - $lowSize) != 0) {
+        if (($maxSize - $lowSize) !== 0) {
             $style['BgColor'] = 'F0F7B2';
-            $tableLegend->addCell(Converter::cmToTwip($maxSize - $lowSize), $style);
+            $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip($maxSize - $lowSize), $style);
         }
 
         $tableLegend = $section->addTable();
-        $tableLegend->addRow(Converter::cmToTwip(0.1));
-        $tableLegend->addCell(Converter::cmToTwip(0.5), $this->continueCell);
-        $tableLegend->addCell(Converter::cmToTwip(5), $this->whiteBigBorderTable)
-            ->addText(
-                $nbMedium . ' ' . $this->anrTranslate('Medium risks'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
+        $tableLegend->addRow(PhpWord\Shared\Converter::cmToTwip(0.1));
+        $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip(0.5), $this->continueCell);
+        $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip(5), $this->whiteBigBorderTable)
+            ->addText($nbMedium . ' ' . $this->anrTranslate('Medium risks'), $this->boldFont, $this->leftParagraph);
         if ($mediumSize > 0) {
             $style = array_merge(
                 $this->whiteBigBorderTable,
                 ['BgColor' => 'FFBC1C', 'BorderTopSize' => 50, 'BorderBottomSize' => 30]
             );
             unset($style['BorderSize']);
-            $tableLegend->addCell(Converter::cmToTwip($mediumSize), $style);
+            $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip($mediumSize), $style);
         }
 
-        if (($maxSize - $mediumSize) != 0) {
+        if (($maxSize - $mediumSize) !== 0) {
             $style['BgColor'] = 'FCDD94';
-            $tableLegend->addCell(Converter::cmToTwip($maxSize - $mediumSize), $style);
+            $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip($maxSize - $mediumSize), $style);
         }
 
         $tableLegend = $section->addTable();
-        $tableLegend->addRow(Converter::cmToTwip(0.1));
-        $tableLegend->addCell(Converter::cmToTwip(0.5), $this->continueCell);
-        $tableLegend->addCell(Converter::cmToTwip(5), $this->whiteBigBorderTable)
-            ->addText(
-                $nbHigh . ' ' . $this->anrTranslate('High risks'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
+        $tableLegend->addRow(PhpWord\Shared\Converter::cmToTwip(0.1));
+        $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip(0.5), $this->continueCell);
+        $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip(5), $this->whiteBigBorderTable)
+            ->addText($nbHigh . ' ' . $this->anrTranslate('High risks'), $this->boldFont, $this->leftParagraph);
         if ($highSize > 0) {
             $style = array_merge(
                 $this->whiteBigBorderTable,
                 ['BgColor' => 'FD661F', 'BorderTopSize' => 50, 'BorderBottomSize' => 30]
             );
             unset($style['BorderSize']);
-            $tableLegend->addCell(Converter::cmToTwip($highSize), $style);
+            $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip($highSize), $style);
         }
 
-        if (($maxSize - $highSize) != 0) {
+        if (($maxSize - $highSize) !== 0) {
             $style['BgColor'] = 'FCB28F';
-            $tableLegend->addCell(Converter::cmToTwip($maxSize - $highSize), $style);
+            $tableLegend->addCell(PhpWord\Shared\Converter::cmToTwip($maxSize - $highSize), $style);
         }
 
         return $section;
@@ -1552,14 +1156,14 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generates the risks graph that is included in the model
-     * @return array An array with the path and details of the generated canvas
+     * @return PhpWord\Element\Chart An array with the path and details of the generated canvas
      */
-    protected function generateRisksGraph($infoRisk = true)
+    private function generateRisksGraph($infoRisk = true): PhpWord\Element\Chart
     {
-        $this->cartoRiskService->buildListScalesAndHeaders($this->anr->getId());
-        [$counters, $distrib] = $infoRisk ?
-            $this->cartoRiskService->getCountersRisks('raw') :
-            $this->cartoRiskService->getCountersOpRisks('raw') ;
+        $this->cartoRiskService->buildListScalesAndHeaders($this->anr);
+        [$counters, $distrib] = $infoRisk
+            ? $this->cartoRiskService->getCountersRisks($this->anr)
+            : $this->cartoRiskService->getCountersOpRisks($this->anr);
 
         $categories = [
             $this->anrTranslate('Low risks'),
@@ -1573,27 +1177,19 @@ class DeliverableGenerationService extends AbstractService
             $distrib[2] ?? 0,
         ];
 
-        $PhpWord = new PhpWord();
-        $section = $PhpWord->addSection();
-        $chart = $section->addChart(
-            'column',
-            $categories,
-            $series,
-            $this->barChart
-        );
-
-        return $chart;
+        return (new PhpWord\PhpWord())->addSection()->addChart('column', $categories, $series, $this->barChart);
     }
 
     /**
      * Generate the audit table data
      * @return mixed|string The generated WordXml data
      */
-    protected function generateTableAudit()
+    private function generateTableAudit()
     {
         $instanceRisks = $this->instanceRiskTable->findByAnrAndOrderByParams($this->anr, ['ir.cacheMaxRisk' => 'DESC']);
 
-        $mem_risks = $globalObject = [];
+        $globalObject = [];
+        $mem_risks = $globalObject;
         $maxLevelDeep = 1;
 
         foreach ($instanceRisks as $instanceRisk) {
@@ -1617,7 +1213,7 @@ class DeliverableGenerationService extends AbstractService
                     $key = "i-" . $instance->getId();
                     if (!isset($mem_risks[$key])) {
                         $asc = $instance->getHierarchyArray();
-                        $levelTree = \count($asc);
+                        $levelTree = count($asc);
                         if ($levelTree > $maxLevelDeep) {
                             $maxLevelDeep = $levelTree;
                         }
@@ -1669,7 +1265,7 @@ class DeliverableGenerationService extends AbstractService
                     'riskA' => $instanceRisk->getThreat()->getAvailability() === 0
                         ? null
                         : $instanceRisk->getRiskAvailability(),
-                    'kindOfMeasure' => $instanceRisk->getKindOfMeasure(),
+                    'treatmentName' => $instanceRisk->getTreatmentName(),
                     'targetRisk' => $instanceRisk->getCacheTargetedRisk(),
                 ];
             }
@@ -1684,179 +1280,103 @@ class DeliverableGenerationService extends AbstractService
             $maxLevelTitle = $maxLevelDeep === 1 ? $maxLevelDeep : $maxLevelDeep - 1;
             $title = array_fill(0, $maxLevelDeep, null);
 
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             for ($i = 0; $i < $maxLevelDeep + 1; $i++) {
                 $tableWord->addTitleStyle($i + 3, $this->titleFont);
             }
 
-            if (in_array('true', $global)) {
-                $section->addTitle(
-                    $this->anrTranslate('Global assets'),
-                    3
-                );
+            if (\in_array('true', $global, true)) {
+                $section->addTitle($this->anrTranslate('Global assets'), 3);
             }
 
             foreach ($mem_risks as $data) {
                 if (empty($data['tree'])) {
-                    $section->addTitle(
-                        _WT($data['ctx']),
-                        4
-                    );
+                    $section->addTitle(_WT($data['ctx']), 4);
                     $table = $section->addTable($this->borderTable);
                     $table->addRow(400, $this->tblHeader);
-                    $table->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3, '444444'))
-                        ->addText(
-                            $this->anrTranslate('Impact'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(5.70), $this->setColSpanCell(2, '444444'))
-                        ->addText(
-                            $this->anrTranslate('Threat'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(10.70), $this->setColSpanCell(3, '444444'))
-                        ->addText(
-                            $this->anrTranslate('Vulnerability'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3, '444444'))
-                        ->addText(
-                            $this->anrTranslate('Current risk'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
-                        ->addText(
-                            $this->anrTranslate('Treatment'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
-                        ->addText(
-                            $this->anrTranslate('Residual risk'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->setColSpanCell(3, '444444'))
+                        ->addText($this->anrTranslate('Impact'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.70), $this->setColSpanCell(2, '444444'))
+                        ->addText($this->anrTranslate('Threat'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.70), $this->setColSpanCell(3, '444444'))
+                        ->addText($this->anrTranslate('Vulnerability'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->setColSpanCell(3, '444444'))
+                        ->addText($this->anrTranslate('Current risk'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                        ->addText($this->anrTranslate('Treatment'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                        ->addText($this->anrTranslate('Residual risk'), $this->whiteFont, $this->centerParagraph);
 
                     $table->addRow(400, $this->tblHeader);
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            'C',
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            'I',
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            $this->anrTranslate('A'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(5.00), $this->blackCell)
-                        ->addText(
-                            $this->anrTranslate('Label'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            $this->anrTranslate('Prob.'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(5.00), $this->blackCell)
-                        ->addText(
-                            $this->anrTranslate('Label'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(5.00), $this->blackCell)
-                        ->addText(
-                            $this->anrTranslate('Existing controls'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            $this->anrTranslate('Qualif.'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            'C',
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            'I',
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                        ->addText(
-                            $this->anrTranslate('A'),
-                            $this->whiteFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
-                    $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText('C', $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText('I', $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText($this->anrTranslate('A'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->blackCell)
+                        ->addText($this->anrTranslate('Label'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText($this->anrTranslate('Prob.'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->blackCell)
+                        ->addText($this->anrTranslate('Label'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->blackCell)
+                        ->addText($this->anrTranslate('Existing controls'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText($this->anrTranslate('Qualif.'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText('C', $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText('I', $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                        ->addText($this->anrTranslate('A'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                 } else {
-                    for ($i = 0; $i < count($data['tree']); $i++) {
-                        if ($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id']) {
-                            $section->addTitle(
-                                _WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),
-                                $i + 3
-                            );
+                    $treeNum = \count($data['tree']);
+                    for ($i = 0; $i < $treeNum; $i++) {
+                        if ($i <= $maxLevelTitle - 1 && $title[$i] !== $data['tree'][$i]['id']) {
+                            $section->addTitle(_WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]), $i + 3);
                             $title[$i] = $data['tree'][$i]['id'];
-                            if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
+                            if ($maxLevelTitle === $treeNum && empty($data['risks'])) {
                                 $data['risks'] = true;
                             }
-                            if ($i == count($data['tree']) - 1 && !empty($data['risks'])) {
+                            if ($i === ($treeNum - 1) && !empty($data['risks'])) {
                                 $section->addTextBreak();
                                 $table = $section->addTable($this->borderTable);
                                 $table->addRow(400, $this->tblHeader);
-                                $table->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3, '444444'))
-                                    ->addText(
-                                        $this->anrTranslate('Impact'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(5.70), $this->setColSpanCell(2, '444444'))
-                                    ->addText(
-                                        $this->anrTranslate('Threat'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(10.70), $this->setColSpanCell(3, '444444'))
-                                    ->addText(
-                                        $this->anrTranslate('Vulnerability'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3, '444444'))
-                                    ->addText(
-                                        $this->anrTranslate('Current risk'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                                $table->addCell(
+                                    PhpWord\Shared\Converter::cmToTwip(2.10),
+                                    $this->setColSpanCell(3, '444444')
+                                )->addText($this->anrTranslate('Impact'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(
+                                    PhpWord\Shared\Converter::cmToTwip(5.70),
+                                    $this->setColSpanCell(2, '444444')
+                                )->addText($this->anrTranslate('Threat'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(
+                                    PhpWord\Shared\Converter::cmToTwip(10.70),
+                                    $this->setColSpanCell(3, '444444')
+                                )->addText(
+                                    $this->anrTranslate('Vulnerability'),
+                                    $this->whiteFont,
+                                    $this->centerParagraph
+                                );
+                                $table->addCell(
+                                    PhpWord\Shared\Converter::cmToTwip(2.10),
+                                    $this->setColSpanCell(3, '444444')
+                                )->addText(
+                                    $this->anrTranslate('Current risk'),
+                                    $this->whiteFont,
+                                    $this->centerParagraph
+                                );
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
                                     ->addText(
                                         $this->anrTranslate('Treatment'),
                                         $this->whiteFont,
                                         $this->centerParagraph
                                     );
-                                $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
                                     ->addText(
                                         $this->anrTranslate('Residual risk'),
                                         $this->whiteFont,
@@ -1864,176 +1384,82 @@ class DeliverableGenerationService extends AbstractService
                                     );
 
                                 $table->addRow(400, $this->tblHeader);
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        'C',
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        'I',
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        $this->anrTranslate('A'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(5.00), $this->blackCell)
-                                    ->addText(
-                                        $this->anrTranslate('Label'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        $this->anrTranslate('Prob.'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(5.00), $this->blackCell)
-                                    ->addText(
-                                        $this->anrTranslate('Label'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(5.00), $this->blackCell)
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText('C', $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText('I', $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText($this->anrTranslate('A'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->blackCell)
+                                    ->addText($this->anrTranslate('Label'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText($this->anrTranslate('Prob.'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->blackCell)
+                                    ->addText($this->anrTranslate('Label'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->blackCell)
                                     ->addText(
                                         $this->anrTranslate('Existing controls'),
                                         $this->whiteFont,
                                         $this->centerParagraph
                                     );
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        $this->anrTranslate('Qualif.'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        'C',
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        'I',
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(0.70), $this->blackCell)
-                                    ->addText(
-                                        $this->anrTranslate('A'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
-                                $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText($this->anrTranslate('Qualif.'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText('C', $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText('I', $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
+                                    ->addText($this->anrTranslate('A'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                             }
                         }
                     }
                 }
 
                 if (!empty($data['risks']) && $data['risks'] !== true) {
-                    if ($data['global'] == false) {
+                    if ($data['global'] === false) {
                         $table = $section->addTable($this->borderTable);
                         $table->addRow(400);
-                        $table->addCell(Converter::cmToTwip(19.00), $this->setColSpanCell(13, 'DFDFDF'))
-                            ->addText(
-                                _WT($data['ctx']),
-                                $this->boldFont,
-                                $this->leftParagraph
-                            );
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(19.00), $this->setColSpanCell(13, 'DFDFDF'))
+                            ->addText(_WT($data['ctx']), $this->boldFont, $this->leftParagraph);
                     }
                     foreach ($data['risks'] as $r) {
                         foreach ($r as $key => $value) {
-                            if ($value == -1) {
+                            if ($value === -1) {
                                 $r[$key] = '-';
                             }
                         }
 
                         $table->addRow(400);
-                        $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['impactC'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['impactI'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['impactA'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($r['threat']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['threatRate'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($r['vulnerability']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($r['comment']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['vulRate'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($r['riskC']))
-                            ->addText(
-                                $r['riskC'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($r['riskI']))
-                            ->addText(
-                                $r['riskI'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($r['riskA']))
-                            ->addText(
-                                $r['riskA'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $this->getKindfofMeasureLabel($r['kindOfMeasure']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['targetRisk']))
-                            ->addText(
-                                $r['targetRisk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['impactC'], $this->normalFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['impactI'], $this->normalFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['impactA'], $this->normalFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['threat']), $this->normalFont, $this->leftParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['threatRate'], $this->normalFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['vulnerability']), $this->normalFont, $this->leftParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['vulRate'], $this->normalFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->setBgColorCell($r['riskC']))
+                            ->addText($r['riskC'], $this->boldFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->setBgColorCell($r['riskI']))
+                            ->addText($r['riskI'], $this->boldFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->setBgColorCell($r['riskA']))
+                            ->addText($r['riskA'], $this->boldFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                            ->addText($r['treatmentName'], $this->normalFont, $this->leftParagraph);
+                        $table->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.00),
+                            $this->setBgColorCell($r['targetRisk'])
+                        )->addText($r['targetRisk'], $this->boldFont, $this->centerParagraph);
                     }
                 }
             }
@@ -2069,7 +1495,7 @@ class DeliverableGenerationService extends AbstractService
                 $lst[$instance->getId()] = [
                     'tree' => $ascendants,
                     'path' => $this->getInstancePathFromHierarchy($ascendants),
-                    'parent' => $parentInstance ? $parentInstance->getId() : null,
+                    'parent' => $parentInstance?->getId(),
                     'position' => $instance->getPosition(),
                     'risks' => [],
                 ];
@@ -2113,7 +1539,7 @@ class DeliverableGenerationService extends AbstractService
                 'scales' => $scalesData,
                 'comment' => $operationalInstanceRisk->getComment(),
                 'targetedRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
-                'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
+                'treatmentName' => $operationalInstanceRisk->getTreatmentName(),
             ];
         }
         $tree = [];
@@ -2127,7 +1553,7 @@ class DeliverableGenerationService extends AbstractService
         }
 
         $lst = [];
-        usort($tree, function ($a, $b) {
+        usort($tree, static function ($a, $b) {
             return $a['position'] <=> $b['position'];
         });
         foreach ($tree as $branch) {
@@ -2137,74 +1563,68 @@ class DeliverableGenerationService extends AbstractService
         }
 
         if (!empty($lst)) {
-            $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());
-            $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function ($scale) {
-                return $scale['type'] == 1;
-            }));
+            $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr);
+            $opRisksImpactsScaleType = array_values(
+                array_filter($opRisksAllScales, function ($scale) {
+                    return $scale['type'] === 1;
+                })
+            );
             $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function ($scale) {
-                return $scale['isHidden'] == false;
+                return $scale['isHidden'] === false;
             });
             $sizeCellImpact = count($opRisksImpactsScales) * 0.70;
 
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $maxLevelDeep = ($maxLevelDeep <= 4 ? $maxLevelDeep : 4);
-            for ($i=0; $i < $maxLevelDeep; $i++) {
+            for ($i = 0; $i < $maxLevelDeep; $i++) {
                 $tableWord->addTitleStyle($i + 3, $this->titleFont);
             }
 
-            $maxLevelTitle = ($maxLevelDeep == 1 ? $maxLevelDeep : $maxLevelDeep - 1);
+            $maxLevelTitle = ($maxLevelDeep === 1 ? $maxLevelDeep : $maxLevelDeep - 1);
 
             $title = array_fill(0, $maxLevelDeep, null);
 
             foreach ($lst as $data) {
-                for ($i = 0; $i < count($data['tree']); $i++) {
-                    if ($i <= $maxLevelTitle - 1 && $title[$i] != $data['tree'][$i]['id']) {
+                $treeElementsNum = count($data['tree']);
+                for ($i = 0; $i < $treeElementsNum; $i++) {
+                    if ($i <= $maxLevelTitle - 1 && $title[$i] !== $data['tree'][$i]['id']) {
                         $section->addTitle(
                             _WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]),
                             $i + 3
                         );
                         $title[$i] = $data['tree'][$i]['id'];
-                        if ($maxLevelTitle == count($data['tree']) && empty($data['risks'])) {
+                        if (empty($data['risks']) && $maxLevelTitle === $treeElementsNum) {
                             $data['risks'] = true;
                         }
-                        if ($i == count($data['tree']) - 1 && !empty($data['risks'])) {
+                        if (!empty($data['risks']) && $i === ($treeElementsNum - 1)) {
                             $section->addTextBreak();
                             $table = $section->addTable($this->borderTable);
                             $table->addRow(400, $this->tblHeader);
-                            $table->addCell(Converter::cmToTwip(10.00), $this->restartAndBlackCell)
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->restartAndBlackCell)
                                 ->addText(
                                     $this->anrTranslate('Risk description'),
                                     $this->whiteFont,
                                     $this->centerParagraph
                                 );
-                            if ($this->anr->showRolfBrut == 1) {
+                            if ($this->anr->showRolfBrut()) {
                                 $table->addCell(
-                                    Converter::cmToTwip(5.50),
+                                    PhpWord\Shared\Converter::cmToTwip(5.50),
                                     $this->setColSpanCell(2 + count($opRisksImpactsScales), '444444')
-                                )
-                                    ->addText(
-                                        $this->anrTranslate('Inherent risk'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
+                                )->addText(
+                                    $this->anrTranslate('Inherent risk'),
+                                    $this->whiteFont,
+                                    $this->centerParagraph
+                                );
                             }
                             $table->addCell(
-                                Converter::cmToTwip(15.00),
+                                PhpWord\Shared\Converter::cmToTwip(15.00),
                                 $this->setColSpanCell(3 + count($opRisksImpactsScales), '444444')
                             )
-                                ->addText(
-                                    $this->anrTranslate('Net risk'),
-                                    $this->whiteFont,
-                                    $this->centerParagraph
-                                );
-                            $table->addCell(Converter::cmToTwip(2.00), $this->restartAndBlackCell)
-                                ->addText(
-                                    $this->anrTranslate('Treatment'),
-                                    $this->whiteFont,
-                                    $this->centerParagraph
-                                );
-                            $table->addCell(Converter::cmToTwip(2.00), $this->restartAndBlackCell)
+                                ->addText($this->anrTranslate('Net risk'), $this->whiteFont, $this->centerParagraph);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndBlackCell)
+                                ->addText($this->anrTranslate('Treatment'), $this->whiteFont, $this->centerParagraph);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndBlackCell)
                                 ->addText(
                                     $this->anrTranslate('Residual risk'),
                                     $this->whiteFont,
@@ -2212,222 +1632,162 @@ class DeliverableGenerationService extends AbstractService
                                 );
 
                             $table->addRow(400, $this->tblHeader);
-                            $table->addCell(Converter::cmToTwip(10.00), $this->continueAndBlackCell);
-                            if ($this->anr->showRolfBrut == 1) {
-                                $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
-                                    ->addText(
-                                        $this->anrTranslate('Prob.'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndBlackCell);
+                            if ($this->anr->showRolfBrut()) {
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                                    ->addText($this->anrTranslate('Prob.'), $this->whiteFont,);
                                 $table->addCell(
-                                    Converter::cmToTwip($sizeCellImpact),
+                                    PhpWord\Shared\Converter::cmToTwip($sizeCellImpact),
                                     $this->setColSpanCell(count($opRisksImpactsScales), '444444')
-                                )
-                                    ->addText(
-                                        $this->anrTranslate('Impact'),
-                                        $this->whiteFont,
-                                        $this->centerParagraph
-                                    );
-                                $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                                )->addText($this->anrTranslate('Impact'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
                                     ->addText(
                                         $this->anrTranslate('Current risk'),
                                         $this->whiteFont,
                                         $this->centerParagraph
                                     );
                             }
-                            $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
-                                ->addText(
-                                    $this->anrTranslate('Prob.'),
-                                    $this->whiteFont,
-                                    $this->centerParagraph
-                                );
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                                ->addText($this->anrTranslate('Prob.'), $this->whiteFont, $this->centerParagraph);
                             $table->addCell(
-                                Converter::cmToTwip($sizeCellImpact),
+                                PhpWord\Shared\Converter::cmToTwip($sizeCellImpact),
                                 $this->setColSpanCell(count($opRisksImpactsScales), '444444')
-                            )
-                                ->addText(
-                                    $this->anrTranslate('Impact'),
-                                    $this->whiteFont,
-                                    $this->centerParagraph
-                                );
-                            $table->addCell(Converter::cmToTwip(1.00), $this->restartAndBlackCell)
+                            )->addText($this->anrTranslate('Impact'), $this->whiteFont, $this->centerParagraph);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
                                 ->addText(
                                     $this->anrTranslate('Current risk'),
                                     $this->whiteFont,
                                     $this->centerParagraph
                                 );
-                            $table->addCell(Converter::cmToTwip(8.00), $this->restartAndBlackCell)
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->restartAndBlackCell)
                                 ->addText(
                                     $this->anrTranslate('Existing controls'),
                                     $this->whiteFont,
                                     $this->centerParagraph
                                 );
-                            $table->addCell(Converter::cmToTwip(2.00), $this->continueAndBlackCell);
-                            $table->addCell(Converter::cmToTwip(2.00), $this->continueAndBlackCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndBlackCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndBlackCell);
 
-                            $table->addRow(Converter::cmToTwip(1.00), $this->tblHeader);
-                            $table->addCell(Converter::cmToTwip(10.00), $this->continueAndBlackCell);
-                            if ($this->anr->showRolfBrut == 1) {
-                                $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                            $table->addRow(PhpWord\Shared\Converter::cmToTwip(1.00), $this->tblHeader);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndBlackCell);
+
+                            if ($this->anr->showRolfBrut()) {
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                                 foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                     $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
                                     $table->addCell(
-                                        Converter::cmToTwip(0.70),
+                                        PhpWord\Shared\Converter::cmToTwip(0.70),
                                         array_merge($this->rotate90TextCell, ['bgcolor' => '444444'])
                                     )
-                                        ->addText(
-                                            $label,
-                                            $this->whiteFont,
-                                            $this->verticalCenterParagraph
-                                        );
+                                        ->addText($label, $this->whiteFont,);
                                 }
-                                $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                             }
-                            $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
                                 $table->addCell(
-                                    Converter::cmToTwip(0.70),
+                                    PhpWord\Shared\Converter::cmToTwip(0.70),
                                     array_merge($this->rotate90TextCell, ['bgcolor' => '444444'])
                                 )
-                                ->addText(
-                                    $label,
-                                    $this->whiteFont,
-                                    $this->verticalCenterParagraph
-                                );
+                                    ->addText($label, $this->whiteFont, $this->verticalCenterParagraph);
                             }
-                            $table->addCell(Converter::cmToTwip(1.00), $this->continueAndBlackCell);
-                            $table->addCell(Converter::cmToTwip(8.00), $this->continueAndBlackCell);
-                            $table->addCell(Converter::cmToTwip(2.00), $this->continueAndBlackCell);
-                            $table->addCell(Converter::cmToTwip(2.00), $this->continueAndBlackCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->continueAndBlackCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndBlackCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndBlackCell);
                         }
                     }
                 }
 
                 if (!empty($data['risks']) && $data['risks'] !== true) {
                     $styleCell = $this->setColSpanCell(6 + count($opRisksImpactsScales), 'DFDFDF');
-                    if ($this->anr->showRolfBrut == 1) {
+                    if ($this->anr->showRolfBrut()) {
                         $styleCell = $this->setColSpanCell(8 + count($opRisksImpactsScales) * 2, 'DFDFDF');
                     }
                     $table = $section->addTable($this->borderTable);
                     $table->addRow(400);
-                    $table->addCell(Converter::cmToTwip(19.00), $styleCell)
-                        ->addText(
-                            _WT($data['path']),
-                            $this->boldFont,
-                            $this->leftParagraph
-                        );
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(19.00), $styleCell)
+                        ->addText(_WT($data['path']), $this->boldFont, $this->leftParagraph);
                     foreach ($data['risks'] as $r) {
-                        if (!empty($data['risks'])) {
-                            foreach ($r as $key => $value) {
-                                if ($value == -1) {
-                                    $r[$key] = '-';
-                                }
+                        foreach ($r as $key => $value) {
+                            if ($value === -1) {
+                                $r[$key] = '-';
                             }
-                            $table->addRow(400);
-                            $table->addCell(Converter::cmToTwip(10.00), $this->vAlignCenterCell)
-                                ->addText(
-                                    _WT($r['label']),
-                                    $this->normalFont,
-                                    $this->leftParagraph
-                                );
-                            if ($this->anr->showRolfBrut == 1) {
-                                $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                                    ->addText(
-                                        $r['brutProb'],
-                                        $this->normalFont,
-                                        $this->centerParagraph
-                                    );
-                                foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                                    $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                        }
+                        $table->addRow(400);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['label']), $this->normalFont, $this->leftParagraph);
+                        if ($this->anr->showRolfBrut()) {
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                                ->addText($r['brutProb'], $this->normalFont, $this->centerParagraph);
+                            foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                     ->addText(
                                         $r['scales'][$opRiskImpactScale['id']]['brutValue'],
                                         $this->normalFont,
                                         $this->centerParagraph
                                     );
-                                }
-                                $table->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['brutRisk'], false))
-                                    ->addText(
-                                        $r['brutRisk'],
-                                        $this->boldFont,
-                                        $this->centerParagraph
-                                    );
                             }
-                            $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                                ->addText(
-                                    $r['netProb'],
-                                    $this->normalFont,
-                                    $this->centerParagraph
-                                );
-                            foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                                $table->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            $table->addCell(
+                                PhpWord\Shared\Converter::cmToTwip(1.00),
+                                $this->setBgColorCell($r['brutRisk'], false)
+                            )->addText($r['brutRisk'], $this->boldFont, $this->centerParagraph);
+                        }
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                            ->addText($r['netProb'], $this->normalFont, $this->centerParagraph);
+                        foreach ($opRisksImpactsScales as $opRiskImpactScale) {
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                 ->addText(
                                     $r['scales'][$opRiskImpactScale['id']]['netValue'],
                                     $this->normalFont,
                                     $this->centerParagraph
                                 );
-                            }
-                            $table->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['netRisk'], false))
-                                ->addText(
-                                    $r['netRisk'],
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
-                            $table->addCell(Converter::cmToTwip(8.00), $this->vAlignCenterCell)
-                                ->addText(
-                                    _WT($r['comment']),
-                                    $this->normalFont,
-                                    $this->leftParagraph
-                                );
-                            $table->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                                ->addText(
-                                    $this->getKindfofMeasureLabel($r['kindOfMeasure']),
-                                    $this->normalFont,
-                                    $this->leftParagraph
-                                );
-                            $targetedRisk = $r['targetedRisk'] == '-' ? $r['netRisk'] : $r['targetedRisk'];
-                            $table->addCell(Converter::cmToTwip(2.00), $this->setBgColorCell($targetedRisk, false))
-                                ->addText(
-                                    $targetedRisk,
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
                         }
+                        $table->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.00),
+                            $this->setBgColorCell($r['netRisk'], false)
+                        )->addText($r['netRisk'], $this->boldFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                            ->addText($r['treatmentName'], $this->normalFont, $this->leftParagraph);
+                        $targetedRisk = $r['targetedRisk'] === '-' ? $r['netRisk'] : $r['targetedRisk'];
+                        $table->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(2.00),
+                            $this->setBgColorCell($targetedRisk, false)
+                        )->addText($targetedRisk, $this->boldFont, $this->centerParagraph);
                     }
                 }
             }
+
             return $this->getWordXmlFromWordObject($tableWord);
         }
     }
 
     /**
-     * Generates Word-compliant HTML for the risks distribution paragraph
+     * Generates Word-compliant HTML for the risks' distribution paragraph.
+     *
      * @return string HTML data that can be converted into WordXml data
      */
-    protected function getRisksDistribution($infoRisk = true)
+    private function getRisksDistribution($infoRisk = true)
     {
-        $this->cartoRiskService->buildListScalesAndHeaders($this->anr->getId());
-        [$counters, $distrib] = $infoRisk ?
-            $this->cartoRiskService->getCountersRisks('raw') :
-            $this->cartoRiskService->getCountersOpRisks('raw') ;
+        $this->cartoRiskService->buildListScalesAndHeaders($this->anr);
+        [$counters, $distrib] = $infoRisk
+            ? $this->cartoRiskService->getCountersRisks($this->anr)
+            : $this->cartoRiskService->getCountersOpRisks($this->anr);
 
-        $colors = array(0, 1, 2);
         $sum = 0;
-
-        foreach ($colors as $c) {
-            if (!isset($distrib[$c])) {
-                $distrib[$c] = 0;
+        foreach ([0, 1, 2] as $color) {
+            if (!isset($distrib[$color])) {
+                $distrib[$color] = 0;
             }
-            $sum += $distrib[$c];
+            $sum += $distrib[$color];
         }
 
-        $intro = sprintf(
-            $this->anrTranslate(
-                "The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"
-            ),
-            $sum
-        );
+        $intro = sprintf($this->anrTranslate(
+            "The list of risks addressed is provided as an attachment. It lists %d risk(s) of which:"
+        ), $sum);
 
         return $intro .
             "<!--block-->&nbsp;&nbsp;- " .
@@ -2447,29 +1807,31 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generates the Risks by kind of treatment
+     * Generates the Risks by kind of treatment.
+     *
      * @return mixed|string The WordXml data generated
      */
-    protected function generateRisksByKindOfMeasure()
+    private function generateRisksByKindOfMeasure()
     {
         $result = null;
-        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());
-        $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function ($scale) {
-            return $scale['type'] == 1;
-        }));
+        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr);
+        $opRisksImpactsScaleType = array_values(
+            array_filter($opRisksAllScales, function ($scale) {
+                return $scale['type'] === 1;
+            })
+        );
         $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function ($scale) {
-            return $scale['isHidden'] == false;
+            return $scale['isHidden'] === false;
         });
         $sizeCellImpact = count($opRisksImpactsScales) * 0.70;
 
-        for ($i = 1; $i <= 4; $i++) {
-            $risksByTreatment = $this->get('anrInstanceRiskService')
-                ->getInstanceRisks(
-                    $this->anr->getId(),
-                    null,
-                    ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]
-                );
-            $risksOpByTreatment = $this->get('anrInstanceRiskOpService')
+        for ($i = InstanceRiskSuperClass::KIND_REDUCTION; $i <= InstanceRiskSuperClass::KIND_SHARED; $i++) {
+            $risksByTreatment = $this->anrInstanceRiskService->getInstanceRisks(
+                $this->anr,
+                null,
+                ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]
+            );
+            $risksOpByTreatment = $this->anrInstanceRiskOpService
                 ->getOperationalRisks(
                     $this->anr,
                     null,
@@ -2477,7 +1839,7 @@ class DeliverableGenerationService extends AbstractService
                 );
 
             //create section
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $title = false;
 
@@ -2485,134 +1847,66 @@ class DeliverableGenerationService extends AbstractService
                 $title = true;
                 $tableTitle = $section->addTable($this->noBorderTable);
                 $tableTitle->addRow(400);
-                $tableTitle->addCell(Converter::cmToTwip(10.00))
-                ->addText(
-                    $this->getKindfofMeasureLabel($i),
+                $tableTitle->addCell(PhpWord\Shared\Converter::cmToTwip(10.00))->addText(
+                    InstanceRiskSuperClass::getTreatmentNameByType($i),
                     $this->titleFont,
                     $this->leftParagraph
                 );
                 $tableRiskInfo = $section->addTable($this->borderTable);
 
                 $tableRiskInfo->addRow(400);
-                $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Asset'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3, 'DFDFDF'))
-                    ->addText(
-                        $this->anrTranslate('Impact'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(5.50), $this->setColSpanCell(2, 'DFDFDF'))
-                    ->addText(
-                        $this->anrTranslate('Threat'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(3, 'DFDFDF'))
-                    ->addText(
-                        $this->anrTranslate('Vulnerability'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->setColSpanCell(3, 'DFDFDF'))
-                    ->addText(
-                        $this->anrTranslate('Current risk'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Residual risk'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->setColSpanCell(3, 'DFDFDF'))
+                    ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(5.50), $this->setColSpanCell(2, 'DFDFDF'))
+                    ->addText($this->anrTranslate('Threat'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(3, 'DFDFDF'))
+                    ->addText($this->anrTranslate('Vulnerability'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->setColSpanCell(3, 'DFDFDF'))
+                    ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addRow(400);
-                $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                    ->addText(
-                        'C',
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                    ->addText(
-                        'I',
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('A'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(3.50), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('Label'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('Prob.'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('Label'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('Existing controls'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('Qualif.'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->grayCell)
-                    ->addText(
-                        'C',
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->grayCell)
-                    ->addText(
-                        'I',
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('A'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                    ->addText('C', $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                    ->addText('I', $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                    ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->grayCell)
+                    ->addText($this->anrTranslate('Label'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Label'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Existing controls'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Qualif.'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                    ->addText('C', $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                    ->addText('I', $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                    ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
 
                 $impacts = ['c', 'i', 'd'];
                 foreach ($risksByTreatment as $r) {
                     foreach ($impacts as $impact) {
-                        if ($r[$impact . '_risk_enabled'] == 0) {
+                        if ($r[$impact . '_risk_enabled'] === 0) {
                             $r[$impact . '_risk'] = null;
                         }
                     }
                     foreach ($r as $key => $value) {
-                        if ($value == -1) {
+                        if ($value === -1) {
                             $r[$key] = '-';
                         }
                     }
-                    $instance = $this->instanceTable->findById($r['instance']);
+                    /** @var Entity\Instance $instance */
+                    $instance = $this->instanceTable->findByIdAndAnr($r['instance'], $this->anr);
                     if (!$instance->getObject()->isScopeGlobal()) {
                         $path = $instance->getHierarchyString();
                     } else {
@@ -2621,84 +1915,44 @@ class DeliverableGenerationService extends AbstractService
                     }
 
                     $tableRiskInfo->addRow(400);
-                    $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                        ->addText(
-                            _WT($path),
-                            $this->normalFont,
-                            $this->leftParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                        ->addText(
-                            $r['c_impact'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                        ->addText(
-                            $r['i_impact'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                        ->addText(
-                            $r['d_impact'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(3.50), $this->vAlignCenterCell)
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                        ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                        ->addText($r['c_impact'], $this->normalFont, $this->centerParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                        ->addText($r['i_impact'], $this->normalFont, $this->centerParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                        ->addText($r['d_impact'], $this->normalFont, $this->centerParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->vAlignCenterCell)
                         ->addText(
                             _WT($r['threatLabel' . $this->currentLangAnrIndex]),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                        ->addText(
-                            $r['threatRate'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                        ->addText($r['threatRate'], $this->normalFont, $this->centerParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                         ->addText(
                             _WT($r['vulnLabel' . $this->currentLangAnrIndex]),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                        ->addText(
-                            _WT($r['comment']),
-                            $this->normalFont,
-                            $this->leftParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                        ->addText(
-                            $r['vulnerabilityRate'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['c_risk']))
-                        ->addText(
-                            $r['c_risk'],
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['i_risk']))
-                        ->addText(
-                            $r['i_risk'],
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['d_risk']))
-                        ->addText(
-                            $r['d_risk'],
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->setBgColorCell($r['target_risk']))
-                        ->addText(
-                            $r['target_risk'],
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                        ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                        ->addText($r['vulnerabilityRate'], $this->normalFont, $this->centerParagraph);
+                    $tableRiskInfo
+                        ->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->setBgColorCell($r['c_risk']))
+                        ->addText($r['c_risk'], $this->boldFont, $this->centerParagraph);
+                    $tableRiskInfo
+                        ->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->setBgColorCell($r['i_risk']))
+                        ->addText($r['i_risk'], $this->boldFont, $this->centerParagraph);
+                    $tableRiskInfo
+                        ->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->setBgColorCell($r['d_risk']))
+                        ->addText($r['d_risk'], $this->boldFont, $this->centerParagraph);
+                    $tableRiskInfo
+                        ->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->setBgColorCell($r['target_risk']))
+                        ->addText($r['target_risk'], $this->boldFont, $this->centerParagraph);
                 }
                 $section->addTextBreak();
             }
@@ -2706,154 +1960,86 @@ class DeliverableGenerationService extends AbstractService
                 if (!$title) {
                     $tableTitle = $section->addTable($this->noBorderTable);
                     $tableTitle->addRow(400);
-                    $tableTitle->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(13))
-                        ->addText(
-                            $this->getKindfofMeasureLabel($i),
-                            $this->titleFont,
-                            $this->leftParagraph
-                        );
+                    $tableTitle->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(13))->addText(
+                        InstanceRiskOpSuperClass::getTreatmentNameByType($i),
+                        $this->titleFont,
+                        $this->leftParagraph
+                    );
                 }
                 $tableRiskOp = $section->addTable($this->borderTable);
 
                 $tableRiskOp->addRow(400);
-                $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Asset'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Risk description'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                if ($this->anr->showRolfBrut == 1) {
-                    $tableRiskOp
-                        ->addCell(
-                            Converter::cmToTwip(5.50),
-                            $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF')
-                        )
-                        ->addText(
-                            $this->anrTranslate('Inherent risk'),
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Risk description'), $this->boldFont, $this->centerParagraph);
+                if ($this->anr->showRolfBrut()) {
+                    $tableRiskOp->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(5.50),
+                        $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF')
+                    )->addText($this->anrTranslate('Inherent risk'), $this->boldFont, $this->centerParagraph);
                 }
-                $tableRiskOp
-                    ->addCell(
-                        Converter::cmToTwip(15.00),
-                        $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF')
-                    )
-                    ->addText(
-                        $this->anrTranslate('Net risk'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Residual risk'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
+                $tableRiskOp->addCell(
+                    PhpWord\Shared\Converter::cmToTwip(15.00),
+                    $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF')
+                )->addText($this->anrTranslate('Net risk'), $this->boldFont, $this->centerParagraph);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
 
                 $tableRiskOp->addRow(400, $this->tblHeader);
-                $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->continueAndGrayCell);
-                if ($this->anr->showRolfBrut == 1) {
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                        ->addText(
-                            $this->anrTranslate('Prob.'),
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskOp
-                        ->addCell(
-                            Converter::cmToTwip($sizeCellImpact),
-                            $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
-                        )
-                        ->addText(
-                            $this->anrTranslate('Impact'),
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                        ->addText(
-                            $this->anrTranslate('Current risk'),
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                }
-                $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Prob.'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskOp
-                    ->addCell(
-                        Converter::cmToTwip($sizeCellImpact),
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndGrayCell);
+                if ($this->anr->showRolfBrut()) {
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                        ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
+                    $tableRiskOp->addCell(
+                        PhpWord\Shared\Converter::cmToTwip($sizeCellImpact),
                         $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
-                    )
-                    ->addText(
-                        $this->anrTranslate('Impact'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Current risk'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskOp->addCell(Converter::cmToTwip(8.00), $this->restartAndGrayCell)
-                    ->addText(
-                        $this->anrTranslate('Existing controls'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                    )->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                        ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+                }
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
+                $tableRiskOp->addCell(
+                    PhpWord\Shared\Converter::cmToTwip($sizeCellImpact),
+                    $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
+                )->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Existing controls'), $this->boldFont, $this->centerParagraph);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
 
-                $tableRiskOp->addRow(Converter::cmToTwip(1.00));
-                $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->continueAndGrayCell);
-                if ($this->anr->showRolfBrut == 1) {
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                $tableRiskOp->addRow(PhpWord\Shared\Converter::cmToTwip(1.00));
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndGrayCell);
+                if ($this->anr->showRolfBrut()) {
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                     foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                         $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                        $tableRiskOp
-                            ->addCell(
-                                Converter::cmToTwip(0.70),
-                                array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
-                            )
-                            ->addText(
-                                $label,
-                                $this->boldFont,
-                                $this->verticalCenterParagraph
-                            );
+                        $tableRiskOp->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(0.70),
+                            array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                        )->addText($label, $this->boldFont, $this->verticalCenterParagraph);
                     }
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                 }
-                $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                 foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                     $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                    $tableRiskOp
-                        ->addCell(
-                            Converter::cmToTwip(0.70),
-                            array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
-                        )
-                        ->addText(
-                            $label,
-                            $this->boldFont,
-                            $this->verticalCenterParagraph
-                        );
+                    $tableRiskOp->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(0.70),
+                        array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                    )->addText($label, $this->boldFont, $this->verticalCenterParagraph);
                 }
-                $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
-                $tableRiskOp->addCell(Converter::cmToTwip(8.00), $this->continueAndGrayCell);
-                $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->continueAndGrayCell);
+                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
 
                 foreach ($risksOpByTreatment as $r) {
-                    $instanceRiskOp = $this->get('instanceRiskOpTable')->findById($r['id']);
+                    /** @var Entity\InstanceRiskOp $instanceRiskOp */
+                    $instanceRiskOp = $this->instanceRiskOpTable->findByIdAndAnr((int)$r['id'], $this->anr);
                     foreach ($instanceRiskOp->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
                         $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
                         $scalesData[$operationalRiskScaleType->getId()] = [
@@ -2867,87 +2053,61 @@ class DeliverableGenerationService extends AbstractService
                     $r['scales'] = $scalesData;
 
                     foreach ($r as $key => $value) {
-                        if ($value == -1) {
+                        if ($value === -1) {
                             $r[$key] = '-';
                         }
                     }
 
-
-                    $instance = $this->instanceTable->findById($r['instanceInfos']['id']);
+                    /** @var Entity\Instance $instance */
+                    $instance = $this->instanceTable->findByIdAndAnr($r['instanceInfos']['id'], $this->anr);
                     $path = $instance->getHierarchyString();
 
                     $tableRiskOp->addRow(400);
-                    $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                        ->addText(
-                            _WT($path),
-                            $this->normalFont,
-                            $this->leftParagraph
-                        );
-                    $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->vAlignCenterCell)
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                        ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
                         ->addText(
                             _WT($r['label' . $this->currentLangAnrIndex]),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    if ($this->anr->showRolfBrut == 1) {
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['brutProb'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
+                    if ($this->anr->showRolfBrut()) {
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                            ->addText($r['brutProb'], $this->normalFont, $this->centerParagraph);
                         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                            $tableRiskOp->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                 ->addText(
                                     $r['scales'][$opRiskImpactScale['id']]['brutValue'],
                                     $this->normalFont,
                                     $this->centerParagraph
                                 );
                         }
-                        $tableRiskOp
-                            ->addCell(
-                                Converter::cmToTwip(1.00),
-                                $this->setBgColorCell($r['cacheBrutRisk'], false)
-                            )
-                            ->addText(
-                                $r['cacheBrutRisk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                        $tableRiskOp->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.00),
+                            $this->setBgColorCell($r['cacheBrutRisk'], false)
+                        )->addText($r['cacheBrutRisk'], $this->boldFont, $this->centerParagraph);
                     }
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                        ->addText(
-                            $r['netProb'],
-                            $this->normalFont,
-                            $this->centerParagraph
-                        );
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                        ->addText($r['netProb'], $this->normalFont, $this->centerParagraph);
                     foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                        $tableRiskOp->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                             ->addText(
                                 $r['scales'][$opRiskImpactScale['id']]['netValue'],
                                 $this->normalFont,
                                 $this->centerParagraph
                             );
                     }
-                    $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['cacheNetRisk'], false))
-                        ->addText(
-                            $r['cacheNetRisk'],
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $tableRiskOp->addCell(Converter::cmToTwip(8.00), $this->vAlignCenterCell)
-                        ->addText(
-                            _WT($r['comment']),
-                            $this->normalFont,
-                            $this->leftParagraph
-                        );
-                    $cacheTargetedRisk = $r['cacheTargetedRisk'] == '-' ? $r['cacheNetRisk'] : $r['cacheTargetedRisk'];
-                    $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->setBgColorCell($cacheTargetedRisk, false))
-                        ->addText(
-                            $cacheTargetedRisk,
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
+                    $tableRiskOp->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(1.00),
+                        $this->setBgColorCell($r['cacheNetRisk'], false)
+                    )->addText($r['cacheNetRisk'], $this->boldFont, $this->centerParagraph);
+                    $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell)
+                        ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                    $cacheTargetedRisk = $r['cacheTargetedRisk'] === '-' ? $r['cacheNetRisk'] : $r['cacheTargetedRisk'];
+                    $tableRiskOp->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(2.00),
+                        $this->setBgColorCell($cacheTargetedRisk, false)
+                    )->addText($cacheTargetedRisk, $this->boldFont, $this->centerParagraph);
                 }
                 $section->addTextBreak();
             }
@@ -2961,150 +2121,104 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Risks Plan data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateRisksPlan()
+    private function generateRisksPlan()
     {
         $recommendationRisks = $this->recommendationRiskTable->findByAnrOrderByAndCanExcludeNotTreated(
             $this->anr,
             ['r.position' => 'ASC']
         );
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         if (!empty($recommendationRisks)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(3.50), $this->restartAndGrayCell)
-                ->addText(
-                    $this->anrTranslate('Asset'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(6.00), $this->restartAndGrayCell)
-                ->addText(
-                    $this->anrTranslate('Threat'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(6.00), $this->restartAndGrayCell)
-                ->addText(
-                    $this->anrTranslate('Vulnerability'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(6.00), $this->restartAndGrayCell)
-                ->addText(
-                    $this->anrTranslate('Existing controls'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3, 'DFDFDF'))
-                ->addText(
-                    $this->anrTranslate('Current risk'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.10), $this->restartAndGrayCell)
-                ->addText(
-                    $this->anrTranslate('Treatment'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.10), $this->restartAndGrayCell)
-                ->addText(
-                    $this->anrTranslate('Residual risk'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->restartAndGrayCell)
+                ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->restartAndGrayCell)
+                ->addText($this->anrTranslate('Threat'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->restartAndGrayCell)
+                ->addText($this->anrTranslate('Vulnerability'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->restartAndGrayCell)
+                ->addText($this->anrTranslate('Existing controls'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->setColSpanCell(3, 'DFDFDF'))
+                ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->restartAndGrayCell)
+                ->addText($this->anrTranslate('Treatment'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->restartAndGrayCell)
+                ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
 
             $table->addRow();
-            $table->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-            $table->addCell(Converter::cmToTwip(6.00), $this->continueAndGrayCell);
-            $table->addCell(Converter::cmToTwip(6.00), $this->continueAndGrayCell);
-            $table->addCell(Converter::cmToTwip(6.00), $this->continueAndGrayCell);
-            $table->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                ->addText(
-                    'C',
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                ->addText(
-                    'I',
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('A'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.10), $this->continueAndGrayCell);
-            $table->addCell(Converter::cmToTwip(2.10), $this->continueAndGrayCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->continueAndGrayCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->continueAndGrayCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->continueAndGrayCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                ->addText('C', $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                ->addText('I', $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->continueAndGrayCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->continueAndGrayCell);
         }
-
-        $previousRecoId = null;
-        $impacts = ['c', 'i', 'd'];
 
         //unset
         $global = [];
         $toUnset = [];
         foreach ($recommendationRisks as $recommendationRisk) {
-            if ($recommendationRisk->hasGlobalObjectRelation()) {
+            $instanceRisk = $recommendationRisk->getInstanceRisk();
+            if ($instanceRisk !== null && $recommendationRisk->hasGlobalObjectRelation()) {
                 $key = $recommendationRisk->getRecommendation()->getUuid()
                     . ' - ' . $recommendationRisk->getThreat()->getUuid()
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
                     . ' - ' . $recommendationRisk->getGlobalObject()->getUuid();
-                if (\array_key_exists($key, $global)) {
-                    if (\array_key_exists($key, $toUnset)
-                        && $recommendationRisk->getInstanceRisk()->getCacheMaxRisk() > $toUnset[$key]
-                    ) {
-                        $toUnset[$key] = $recommendationRisk->getInstanceRisk()->getCacheMaxRisk();
+                if (array_key_exists($key, $global)) {
+                    if (array_key_exists($key, $toUnset) && $instanceRisk->getCacheMaxRisk() > $toUnset[$key]) {
+                        $toUnset[$key] = $instanceRisk->getCacheMaxRisk();
                     } else {
-                        $toUnset[$key] = max($recommendationRisk->getInstanceRisk()->getCacheMaxRisk(), $global[$key]);
+                        $toUnset[$key] = max($instanceRisk->getCacheMaxRisk(), $global[$key]);
                     }
                 }
-                $global[$key] = $recommendationRisk->getInstanceRisk()->getCacheMaxRisk();
+                $global[$key] = $instanceRisk->getCacheMaxRisk();
             }
         }
 
+
+        $previousRecoId = null;
         $alreadySet = [];
         foreach ($recommendationRisks as $recommendationRisk) {
-            if ($recommendationRisk->getInstanceRisk()) {
-                foreach ($impacts as $impact) {
-                    $risk = 'risk' . ucfirst($impact);
-                    if ($impact == 'd') {
-                        $impact = 'a'; // Changed to get threat->a value;
-                    }
-                    ${'risk' . ucfirst($impact)} = $recommendationRisk->getInstanceRisk()->$risk;
-
-                    if ($recommendationRisk->getInstanceRisk()->$risk == -1) {
-                        ${'risk' . ucfirst($impact)} = '-';
-                    }
-
-                    if (!$recommendationRisk->getThreat()->$impact) {
-                        ${'risk' . ucfirst($impact)} = null;
-                    }
+            $instanceRisk = $recommendationRisk->getInstanceRisk();
+            if ($instanceRisk !== null && $recommendationRisk->getThreat() !== null) {
+                $riskConfidentiality = null;
+                $riskAvailability = null;
+                $riskIntegrity = null;
+                if ($recommendationRisk->getThreat()->getConfidentiality()) {
+                    $riskConfidentiality = $instanceRisk->getRiskConfidentiality() === -1
+                        ? '-'
+                        : $instanceRisk->getRiskConfidentiality();
+                }
+                if ($recommendationRisk->getThreat()->getIntegrity()) {
+                    $riskIntegrity = $instanceRisk->getRiskIntegrity() === -1 ? '-' : $instanceRisk->getRiskIntegrity();
+                }
+                if ($recommendationRisk->getThreat()->getAvailability()) {
+                    $riskAvailability = $instanceRisk->getRiskAvailability() === -1
+                        ? '-'
+                        : $instanceRisk->getRiskAvailability();
                 }
 
-                $importance = '';
-                for ($i = 0; $i <= ($recommendationRisk->getRecommendation()->getImportance() - 1); $i++) {
-                    $importance .= '●';
-                }
+                $importance = str_repeat('●', $recommendationRisk->getRecommendation()->getImportance());
 
                 if ($recommendationRisk->getRecommendation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
-                    $cellReco = $table->addCell(Converter::cmToTwip(5.00), $this->setColSpanCell(9, 'DBE5F1'));
+                    $cellReco = $table->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(5.00),
+                        $this->setColSpanCell(9, 'DBE5F1')
+                    );
                     $cellRecoRun = $cellReco->addTextRun($this->leftParagraph);
-                    $cellRecoRun->addText(
-                        $importance . ' ',
-                        $this->redFont
-                    );
-                    $cellRecoRun->addText(
-                        _WT($recommendationRisk->getRecommendation()->getCode()),
-                        $this->boldFont
-                    );
+                    $cellRecoRun->addText($importance . ' ', $this->redFont);
+                    $cellRecoRun->addText(_WT($recommendationRisk->getRecommendation()->getCode()), $this->boldFont);
                     $cellRecoRun->addText(
                         ' - ' . _WT($recommendationRisk->getRecommendation()->getDescription()),
                         $this->boldFont
@@ -3117,13 +2231,13 @@ class DeliverableGenerationService extends AbstractService
                     . ' - ' . $recommendationRisk->getThreat()->getUuid()
                     . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
                     . ' - ' . (
-                        $recommendationRisk->hasGlobalObjectRelation()
-                            ? $recommendationRisk->getGlobalObject()->getUuid()
-                            : ''
+                    $recommendationRisk->hasGlobalObjectRelation()
+                        ? $recommendationRisk->getGlobalObject()->getUuid()
+                        : ''
                     );
                 if (isset($toUnset[$key])) {
-                    if ($recommendationRisk->getInstanceRisk()->getCacheMaxRisk() < $toUnset[$key]
-                        || isset($alreadySet[$key])
+                    if (isset($alreadySet[$key])
+                        || $instanceRisk->getCacheMaxRisk() < $toUnset[$key]
                     ) {
                         $continue = false;
                     } else {
@@ -3135,64 +2249,40 @@ class DeliverableGenerationService extends AbstractService
                     $path = $this->getObjectInstancePath($recommendationRisk);
 
                     $table->addRow(400);
-                    $table->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                        ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                         ->addText(
-                            _WT($path),
+                            _WT($recommendationRisk->getThreat()->getLabel($this->currentLangAnrIndex)),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                         ->addText(
-                            _WT($recommendationRisk->getThreat()->{'label' . $this->currentLangAnrIndex}),
+                            _WT($recommendationRisk->getVulnerability()?->getLabel($this->currentLangAnrIndex)),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                        ->addText(_WT($instanceRisk->getComment()), $this->normalFont, $this->leftParagraph);
+                    $table->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(0.70),
+                        $this->setBgColorCell($riskConfidentiality)
+                    )->addText((string)$riskConfidentiality, $this->boldFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->setBgColorCell($riskIntegrity))
+                        ->addText((string)$riskIntegrity, $this->boldFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->setBgColorCell($riskAvailability))
+                        ->addText((string)$riskAvailability, $this->boldFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->vAlignCenterCell)
                         ->addText(
-                            _WT($recommendationRisk->getVulnerability()->{'label' . $this->currentLangAnrIndex}),
+                            $this->anrTranslate($instanceRisk->getTreatmentName()),
                             $this->normalFont,
                             $this->leftParagraph
                         );
-                    $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-                        ->addText(
-                            _WT($recommendationRisk->getInstanceRisk()->getComment()),
-                            $this->normalFont,
-                            $this->leftParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskC))
-                        ->addText(
-                            $riskC,
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskI))
-                        ->addText(
-                            $riskI,
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(0.70), $this->setBgColorCell($riskA))
-                        ->addText(
-                            $riskA,
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
-                    $table->addCell(Converter::cmToTwip(2.10), $this->vAlignCenterCell)
-                        ->addText(
-                            $this->anrTranslate($recommendationRisk->getInstanceRisk()->getTreatmentName()),
-                            $this->normalFont,
-                            $this->leftParagraph
-                        );
-                    $table
-                        ->addCell(
-                            Converter::cmToTwip(2.10),
-                            $this->setBgColorCell($recommendationRisk->getInstanceRisk()->getCacheTargetedRisk())
-                        )
-                        ->addText(
-                            $recommendationRisk->getInstanceRisk()->getCacheTargetedRisk(),
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
+                    $table->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(2.10),
+                        $this->setBgColorCell($instanceRisk->getCacheTargetedRisk())
+                    )->addText((string)$instanceRisk->getCacheTargetedRisk(), $this->boldFont, $this->centerParagraph);
                 }
             }
             $previousRecoId = $recommendationRisk->getRecommendation()->getUuid();
@@ -3205,66 +2295,42 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Operational Risks Plan data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateOperationalRisksPlan()
+    private function generateOperationalRisksPlan()
     {
         $recommendationRisks = $this->recommendationRiskTable->findByAnrOrderByAndCanExcludeNotTreated(
             $this->anr,
             ['r.position' => 'ASC']
         );
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         if (!empty($recommendationRisks)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(3.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Asset'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(12.20), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Risk description'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Existing controls'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.10), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Current risk'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.10), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Treatment'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.10), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Residual risk'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
+                ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(12.20), $this->grayCell)
+                ->addText($this->anrTranslate('Risk description'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+                ->addText($this->anrTranslate('Existing controls'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->grayCell)
+                ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->grayCell)
+                ->addText($this->anrTranslate('Treatment'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->grayCell)
+                ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
         }
 
         $previousRecoId = null;
         foreach ($recommendationRisks as $recommendationRisk) {
             if ($recommendationRisk->getInstanceRiskOp()) {
-                $cacheNetRisk = $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk() !== -1 ?
-                    $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk() :
-                    '-';
-                $cacheTargetedRisk = $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk() !== -1 ?
-                    $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk() :
-                    $cacheNetRisk;
+                $cacheNetRisk = $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk() !== -1
+                    ? $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk()
+                    : '-';
+                $cacheTargetedRisk = $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk() !== -1
+                    ? $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk()
+                    : $cacheNetRisk;
 
                 $importance = '';
                 for ($i = 0; $i <= ($recommendationRisk->getRecommendation()->getImportance() - 1); $i++) {
@@ -3273,16 +2339,13 @@ class DeliverableGenerationService extends AbstractService
 
                 if ($recommendationRisk->getRecommendation()->getUuid() !== $previousRecoId) {
                     $table->addRow(400);
-                    $cellReco = $table->addCell(Converter::cmToTwip(5.00), $this->setColSpanCell(6, 'DBE5F1'));
+                    $cellReco = $table->addCell(
+                        PhpWord\Shared\Converter::cmToTwip(5.00),
+                        $this->setColSpanCell(6, 'DBE5F1')
+                    );
                     $cellRecoRun = $cellReco->addTextRun($this->leftParagraph);
-                    $cellRecoRun->addText(
-                        $importance . ' ',
-                        $this->redFont
-                    );
-                    $cellRecoRun->addText(
-                        _WT($recommendationRisk->getRecommendation()->getCode()),
-                        $this->boldFont
-                    );
+                    $cellRecoRun->addText($importance . ' ', $this->redFont);
+                    $cellRecoRun->addText(_WT($recommendationRisk->getRecommendation()->getCode()), $this->boldFont);
                     $cellRecoRun->addText(
                         ' - ' . _WT($recommendationRisk->getRecommendation()->getDescription()),
                         $this->boldFont
@@ -3292,43 +2355,33 @@ class DeliverableGenerationService extends AbstractService
                 $path = $this->getObjectInstancePath($recommendationRisk);
 
                 $table->addRow(400);
-                $table->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                    ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(12.20), $this->vAlignCenterCell)
                     ->addText(
-                        _WT($path),
+                        _WT($recommendationRisk->getInstanceRiskOp()->getRiskCacheLabel($this->currentLangAnrIndex)),
                         $this->normalFont,
                         $this->leftParagraph
                     );
-                $table->addCell(Converter::cmToTwip(12.20), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($recommendationRisk->getInstanceRiskOp()->{'riskCacheLabel' . $this->currentLangAnrIndex}),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                     ->addText(
                         _WT($recommendationRisk->getInstanceRiskOp()->getComment()),
                         $this->normalFont,
                         $this->leftParagraph
                     );
-                $table->addCell(Converter::cmToTwip(2.10), $this->setBgColorCell($cacheNetRisk, false))
-                    ->addText(
-                        $cacheNetRisk,
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(2.10), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->setBgColorCell($cacheNetRisk, false))
+                    ->addText($cacheNetRisk, $this->boldFont, $this->centerParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->vAlignCenterCell)
                     ->addText(
                         $this->anrTranslate($recommendationRisk->getInstanceRiskOp()->getTreatmentName()),
                         $this->normalFont,
                         $this->leftParagraph
                     );
 
-                $table->addCell(Converter::cmToTwip(2.10), $this->setBgColorCell($cacheTargetedRisk, false))
-                    ->addText(
-                        $cacheTargetedRisk,
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
+                $table->addCell(
+                    PhpWord\Shared\Converter::cmToTwip(2.10),
+                    $this->setBgColorCell($cacheTargetedRisk, false)
+                )->addText($cacheTargetedRisk, $this->boldFont, $this->centerParagraph);
 
                 $previousRecoId = $recommendationRisk->getRecommendation()->getUuid();
             }
@@ -3341,49 +2394,29 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Implamentation Recommendations Plan data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableImplementationPlan()
+    private function generateTableImplementationPlan()
     {
         $recommendationRisks = $this->recommendationRiskTable->findByAnrOrderByAndCanExcludeNotTreated(
             $this->anr,
             ['r.position' => 'ASC']
         );
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         if (!empty($recommendationRisks)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(10.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Recommendation'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Imp.'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Comment'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Manager'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(3.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Deadline'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->grayCell)
+                ->addText($this->anrTranslate('Recommendation'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+                ->addText($this->anrTranslate('Imp.'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                ->addText($this->anrTranslate('Comment'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Manager'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
+                ->addText($this->anrTranslate('Deadline'), $this->boldFont, $this->centerParagraph);
         }
 
         foreach ($recommendationRisks as $recommendationRisk) {
@@ -3399,40 +2432,18 @@ class DeliverableGenerationService extends AbstractService
             }
 
             $table->addRow(400);
-            $cellRecoName = $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell);
+            $cellRecoName = $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell);
             $cellRecoNameRun = $cellRecoName->addTextRun($this->leftParagraph);
-            $cellRecoNameRun->addText(
-                _WT($recommendation->getCode()) . '<w:br/>',
-                $this->boldFont
-            );
-            $cellRecoNameRun->addText(
-                _WT($recommendation->getDescription()),
-                $this->normalFont
-            );
-            $table->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                ->addText(
-                    $importance,
-                    $this->redFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($recommendation->getComment()),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($recommendation->getResponsible()),
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                ->addText(
-                    $recoDeadline,
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
+            $cellRecoNameRun->addText(_WT($recommendation->getCode()) . '<w:br/>', $this->boldFont);
+            $cellRecoNameRun->addText(_WT($recommendation->getDescription()), $this->normalFont);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                ->addText($importance, $this->redFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
+                ->addText(_WT($recommendation->getComment()), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                ->addText(_WT($recommendation->getResponsible()), $this->normalFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                ->addText($recoDeadline, $this->normalFont, $this->centerParagraph);
         }
 
         return $table;
@@ -3442,363 +2453,191 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Implamentation Recommendations Plan data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableImplementationHistory()
+    private function generateTableImplementationHistory()
     {
+        /** @var Entity\RecommendationHistory[] $recoRecords */
         $recoRecords = $this->recommendationHistoryTable->findByAnr($this->anr);
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         if ($recoRecords) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(3.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('By'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Recommendation'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(8.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Risk'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.50), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Implementation comment'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(1.75), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Risk before'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(1.75), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Risk after'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
+                ->addText($this->anrTranslate('By'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+                ->addText($this->anrTranslate('Recommendation'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->grayCell)
+                ->addText($this->anrTranslate('Risk'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->grayCell)
+                ->addText($this->anrTranslate('Implementation comment'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.75), $this->grayCell)
+                ->addText($this->anrTranslate('Risk before'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.75), $this->grayCell)
+                ->addText($this->anrTranslate('Risk after'), $this->boldFont, $this->centerParagraph);
         }
-
-        $previousRecoId = null;
 
         foreach ($recoRecords as $recoRecord) {
             $importance = '';
-            for ($i = 0; $i <= ($recoRecord->recoImportance - 1); $i++) {
+            for ($i = 0; $i <= ($recoRecord->getRecoImportance() - 1); $i++) {
                 $importance .= '●';
             }
 
-            if ($recoRecord->recoDuedate == null) {
-                $recoDeadline = '';
-            } else {
-                $recoDeadline = $recoRecord->recoDuedate->format('d/m/Y');
-            }
+            $recoDeadline = $recoRecord->getRecoDueDate() === null
+                ? ''
+                : $recoRecord->getRecoDueDate()->format('d/m/Y');
 
-            $recoValidationDate = $recoRecord->createdAt->format('d/m/Y');
+            $recoValidationDate = $recoRecord->getCreatedAt()->format('d/m/Y');
 
-            if ($recoRecord->riskColorBefore == "green") {
+            $riskMaxBefore = $recoRecord->getRiskMaxRiskBefore();
+            $bgcolorRiskBefore = 'FD661F';
+            if ($recoRecord->getRiskColorBefore() === 'green') {
                 $bgcolorRiskBefore = 'D6F107';
-            } else {
-                if ($recoRecord->riskColorBefore == "orange") {
-                    $bgcolorRiskBefore = 'FFBC1C';
-                } else {
-                    if ($recoRecord->riskMaxRiskBefore == -1) {
-                        $recoRecord->riskMaxRiskBefore = '-';
-                        $bgcolorRiskBefore = 'FFFFFF';
-                    } else {
-                        $bgcolorRiskBefore = 'FD661F';
-                    }
-                }
+            } elseif ($recoRecord->getRiskColorBefore() === 'orange') {
+                $bgcolorRiskBefore = 'FFBC1C';
+            } elseif ($riskMaxBefore === -1) {
+                $riskMaxBefore = '-';
+                $bgcolorRiskBefore = 'FFFFFF';
             }
-
             $styleContentCellRiskBefore = ['valign' => 'center', 'bgcolor' => $bgcolorRiskBefore];
 
-            if ($recoRecord->riskColorAfter == "green") {
+            $riskMaxAfter = $recoRecord->getRiskMaxRiskAfter();
+            $bgcolorRiskAfter = 'FD661F';
+            if ($recoRecord->getRiskColorAfter() === 'green') {
                 $bgcolorRiskAfter = 'D6F107';
-            } else {
-                if ($recoRecord->riskColorAfter == "orange") {
-                    $bgcolorRiskAfter = 'FFBC1C';
-                } else {
-                    if ($recoRecord->riskMaxRiskAfter == -1) {
-                        $recoRecord->riskMaxRiskAfter = '-';
-                        $bgcolorRiskAfter = 'FFFFFF';
-                    } else {
-                        $bgcolorRiskBefore = 'FD661F';
-                    }
-                }
+            } elseif ($recoRecord->getRiskColorAfter() === 'orange') {
+                $bgcolorRiskAfter = 'FFBC1C';
+            } elseif ($riskMaxAfter === -1) {
+                $riskMaxAfter = '-';
+                $bgcolorRiskAfter = 'FFFFFF';
             }
-
             $styleContentCellRiskAfter = ['valign' => 'center', 'bgcolor' => $bgcolorRiskAfter];
 
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($recoRecord->creator),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $cellReco = $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                ->addText(_WT($recoRecord->creator), $this->normalFont, $this->leftParagraph);
+            $cellReco = $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell);
             $cellRecoRun = $cellReco->addTextRun($this->leftParagraph);
-            $cellRecoRun->addText(
-                $importance . ' ',
-                $this->redFont
-            );
-            $cellRecoRun->addText(
-                _WT($recoRecord->recoCode) . '<w:br/>',
-                $this->boldFont
-            );
-            $cellRecoRun->addText(
-                _WT($recoRecord->recoDescription) . '<w:br/>' . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRecoRun->addText(
-                $this->anrTranslate('Comment') . ': ',
-                $this->boldFont
-            );
-            $cellRecoRun->addText(
-                _WT($recoRecord->recoComment) . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRecoRun->addText(
-                $this->anrTranslate('Deadline') . ': ',
-                $this->boldFont
-            );
-            $cellRecoRun->addText(
-                $recoDeadline . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRecoRun->addText(
-                $this->anrTranslate('Validation date') . ': ',
-                $this->boldFont
-            );
-            $cellRecoRun->addText(
-                $recoValidationDate . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRecoRun->addText(
-                $this->anrTranslate('Manager') . ': ',
-                $this->boldFont
-            );
-            $cellRecoRun->addText(
-                _WT($recoRecord->recoResponsable),
-                $this->normalFont
-            );
-            $cellRisk = $table->addCell(Converter::cmToTwip(8.00), $this->vAlignCenterCell);
+            $cellRecoRun->addText($importance . ' ', $this->redFont);
+            $cellRecoRun->addText(_WT($recoRecord->getRecoCode()) . '<w:br/>', $this->boldFont);
+            $cellRecoRun->addText(_WT($recoRecord->getRecoDescription()) . '<w:br/>' . '<w:br/>', $this->normalFont);
+            $cellRecoRun->addText($this->anrTranslate('Comment') . ': ', $this->boldFont);
+            $cellRecoRun->addText(_WT($recoRecord->getRecoComment()) . '<w:br/>', $this->normalFont);
+            $cellRecoRun->addText($this->anrTranslate('Deadline') . ': ', $this->boldFont);
+            $cellRecoRun->addText($recoDeadline . '<w:br/>', $this->normalFont);
+            $cellRecoRun->addText($this->anrTranslate('Validation date') . ': ', $this->boldFont);
+            $cellRecoRun->addText($recoValidationDate . '<w:br/>', $this->normalFont);
+            $cellRecoRun->addText($this->anrTranslate('Manager') . ': ', $this->boldFont);
+            $cellRecoRun->addText(_WT($recoRecord->getRecoResponsable()), $this->normalFont);
+            $cellRisk = $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell);
             $cellRiskRun = $cellRisk->addTextRun($this->leftParagraph);
+            $cellRiskRun->addText($this->anrTranslate('Asset type') . ': ', $this->boldFont);
+            $cellRiskRun->addText(_WT($recoRecord->getRiskAsset()) . '<w:br/>', $this->normalFont);
+            $cellRiskRun->addText($this->anrTranslate('Asset') . ': ', $this->boldFont);
+            $cellRiskRun->addText(_WT($recoRecord->getRiskInstance()) . '<w:br/>', $this->normalFont);
+            $cellRiskRun->addText($this->anrTranslate('Threat') . ': ', $this->boldFont);
+            $cellRiskRun->addText(_WT($recoRecord->getRiskThreat()) . '<w:br/>', $this->normalFont);
+            $cellRiskRun->addText($this->anrTranslate('Vulnerability') . ': ', $this->boldFont);
+            $cellRiskRun->addText(_WT($recoRecord->getRiskVul()) . '<w:br/>', $this->normalFont);
+            $cellRiskRun->addText($this->anrTranslate('Treatment type') . ': ', $this->boldFont);
             $cellRiskRun->addText(
-                $this->anrTranslate('Asset type') . ': ',
-                $this->boldFont
-            );
-            $cellRiskRun->addText(
-                _WT($recoRecord->riskAsset) . '<w:br/>',
+                InstanceRiskSuperClass::getTreatmentNameByType($recoRecord->getRiskKindOfMeasure()) . '<w:br/>',
                 $this->normalFont
             );
-            $cellRiskRun->addText(
-                $this->anrTranslate('Asset') . ': ',
-                $this->boldFont
-            );
-            $cellRiskRun->addText(
-                _WT($recoRecord->riskInstance) . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRiskRun->addText(
-                $this->anrTranslate('Threat') . ': ',
-                $this->boldFont
-            );
-            $cellRiskRun->addText(
-                _WT($recoRecord->riskThreat) . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRiskRun->addText(
-                $this->anrTranslate('Vulnerability') . ': ',
-                $this->boldFont
-            );
-            $cellRiskRun->addText(
-                _WT($recoRecord->riskVul) . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRiskRun->addText(
-                $this->anrTranslate('Treatment type') . ': ',
-                $this->boldFont
-            );
-            $cellRiskRun->addText(
-                $this->getKindfofMeasureLabel($recoRecord->riskKindOfMeasure) . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRiskRun->addText(
-                $this->anrTranslate('Existing controls') . ': ',
-                $this->boldFont
-            );
-            $cellRiskRun->addText(
-                _WT($recoRecord->riskCommentBefore) . '<w:br/>',
-                $this->normalFont
-            );
-            $cellRiskRun->addText(
-                $this->anrTranslate('New controls') . ': ',
-                $this->boldFont
-            );
-            $cellRiskRun->addText(
-                _WT($recoRecord->riskCommentAfter) . '<w:br/>',
-                $this->normalFont
-            );
-            $table->addCell(Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($recoRecord->implComment),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(1.75), $styleContentCellRiskBefore)
-                ->addText(
-                    $recoRecord->riskMaxRiskBefore,
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(1.75), $styleContentCellRiskAfter)
-                ->addText(
-                    $recoRecord->riskMaxRiskAfter,
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-
-            $previousRecoRecordId = $recoRecord->id;
+            $cellRiskRun->addText($this->anrTranslate('Existing controls') . ': ', $this->boldFont);
+            $cellRiskRun->addText(_WT($recoRecord->getRiskCommentBefore()) . '<w:br/>', $this->normalFont);
+            $cellRiskRun->addText($this->anrTranslate('New controls') . ': ', $this->boldFont);
+            $cellRiskRun->addText(_WT($recoRecord->getRiskCommentAfter()) . '<w:br/>', $this->normalFont);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                ->addText(_WT($recoRecord->getImplComment()), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.75), $styleContentCellRiskBefore)
+                ->addText($riskMaxBefore, $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.75), $styleContentCellRiskAfter)
+                ->addText($riskMaxAfter, $this->boldFont, $this->centerParagraph);
         }
 
         return $table;
     }
 
     /**
-     * Generates the Statement Of Applicability Scale
-     * @return mixed|string The WordXml data generated
+     * Generates the Statement Of Applicability Scale.
+     *
+     * @param Entity\SoaScaleComment[] $soaScaleComments
      */
-    protected function generateTableStatementOfApplicabilityScale($soaScaleComments, $translations)
+    private function generateTableStatementOfApplicabilityScale(array $soaScaleComments): PhpWord\Element\Table
     {
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
         $noBorderCell = [
             'borderTopColor' => 'FFFFFF',
             'borderTopSize' => 0,
-            'borderLeftColor' =>  'FFFFFF',
+            'borderLeftColor' => 'FFFFFF',
             'borderLeftSize' => 0,
         ];
 
         if (!empty($soaScaleComments)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(2.00), $noBorderCell);
-            $table->addCell(Converter::cmToTwip(8.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Level of compliance'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $noBorderCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->grayCell)
+                ->addText($this->anrTranslate('Level of compliance'), $this->boldFont, $this->centerParagraph);
 
             foreach ($soaScaleComments as $comment) {
                 $table->addRow(400);
-                $translationComment = $translations[$comment->getCommentTranslationKey()] ?? null;
-
-                $table->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                    ->addText(
-                        $comment->getScaleIndex(),
-                        $this->normalFont,
-                        $this->centerParagraph
-                    );
-
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                    ->addText((string)$comment->getScaleIndex(), $this->normalFont, $this->centerParagraph);
                 $this->customizableCell['BgColor'] = $comment->getColour();
-
-                $table->addCell(Converter::cmToTwip(8.00), $this->customizableCell)
-                    ->addText(
-                        _WT($translationComment !== null ? $translationComment->getValue() : ''),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->customizableCell)
+                    ->addText(_WT($comment->getComment()), $this->normalFont, $this->leftParagraph);
             }
         }
+
         return $table;
     }
 
     /**
      * Generates the Statement Of Applicability data
-     * @return mixed|string The WordXml data generated
      */
-    protected function generateTableStatementOfApplicability($referential, $translations)
+    private function generateTableStatementOfApplicability($referential): PhpWord\Element\Table
     {
-        /** @var SoaService $soaService */
-        $soaService = $this->soaService;
         $filterMeasures['r.anr'] = $this->anr->getId();
         $filterMeasures['r.uuid'] = $referential;
         $measureService = $this->measureService;
         $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
         $measuresFilteredId = [];
         foreach ($measuresFiltered as $key) {
-            array_push($measuresFilteredId, $key['uuid']);
+            $measuresFilteredId[] = $key['uuid'];
         }
         $filterAnd['m.uuid'] = [
             'op' => 'IN',
             'value' => $measuresFilteredId,
         ];
         $filterAnd['m.anr'] = $this->anr->getId();
-        $controlSoaList = $soaService->getList(1, 0, 'm.code', null, $filterAnd);
+        $controlSoaList = $this->soaService->getList(1, 0, 'm.code', null, $filterAnd);
 
         //create section
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         //header if array is not empty
         if (count($controlSoaList)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(1.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Code'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Control'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Inclusion/Exclusion'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Remarks/Justification'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Evidences'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Actions'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Level of compliance'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                ->addText($this->anrTranslate('Code'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                ->addText($this->anrTranslate('Control'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Inclusion/Exclusion'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                ->addText($this->anrTranslate('Remarks/Justification'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                ->addText($this->anrTranslate('Evidences'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                ->addText($this->anrTranslate('Actions'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+                ->addText($this->anrTranslate('Level of compliance'), $this->boldFont, $this->centerParagraph);
         }
 
         $inclusions = [
@@ -3807,7 +2646,7 @@ class DeliverableGenerationService extends AbstractService
             'CO' => $this->anrTranslate('Contractual obligations'),
             'BR' => $this->anrTranslate('Business requirements'),
             'BP' => $this->anrTranslate('Best practices'),
-            'RRA' => $this->anrTranslate('Results of risk assessment')
+            'RRA' => $this->anrTranslate('Results of risk assessment'),
         ];
 
         $previousCatId = null;
@@ -3819,17 +2658,16 @@ class DeliverableGenerationService extends AbstractService
                     $getInclusions[] = $value;
                 }
             }
-            $inclusion = join("\n\n", $getInclusions);
+            $inclusion = implode("\n\n", $getInclusions);
 
             $complianceLevel = "";
             $bgcolor = 'FFFFFF';
 
-            if (!is_null($controlSoa['soaScaleComment']) && !$controlSoa['soaScaleComment']->isHidden()) {
-                $translationComment = $translations[
-                    $controlSoa['soaScaleComment']->getCommentTranslationKey()
-                    ] ?? null;
-                $complianceLevel = $translationComment !== null ? $translationComment->getValue() : '';
-                $bgcolor = $controlSoa['soaScaleComment']->getColour();
+            /** @var ?Entity\SoaScaleComment $soaScaleComment */
+            $soaScaleComment = $controlSoa['soaScaleComment'];
+            if ($soaScaleComment !== null && !$soaScaleComment->isHidden()) {
+                $complianceLevel = $soaScaleComment->getComment();
+                $bgcolor = $soaScaleComment->getColour();
             }
 
             if ($controlSoa['EX']) {
@@ -3839,98 +2677,75 @@ class DeliverableGenerationService extends AbstractService
 
             $styleContentCellCompliance = ['valign' => 'center', 'bgcolor' => $bgcolor];
 
-            if ($controlSoa['measure']->category->id != $previousCatId) {
+            if ($controlSoa['measure']->getCategory()->getId() !== $previousCatId) {
                 $table->addRow(400);
-                $table->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(7, 'DBE5F1'))
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(7, 'DBE5F1'))
                     ->addText(
-                        _WT($controlSoa['measure']->category->get('label' . $this->currentLangAnrIndex)),
+                        _WT($controlSoa['measure']->category->getLabel($this->currentLangAnrIndex)),
                         $this->boldFont,
                         $this->leftParagraph
                     );
             }
-            $previousCatId = $controlSoa['measure']->category->id;
+            $previousCatId = $controlSoa['measure']->category->getId();
 
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                ->addText(_WT($controlSoa['measure']->code), $this->normalFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($controlSoa['measure']->code),
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($controlSoa['measure']->get('label' . $this->currentLangAnrIndex)),
+                    _WT($controlSoa['measure']->getLabel($this->currentLangAnrIndex)),
                     $this->normalFont,
                     $this->leftParagraph
                 );
-            $table->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($inclusion),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($controlSoa['remarks']),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($controlSoa['evidences']),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($controlSoa['actions']),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(2.00), $styleContentCellCompliance)
-                ->addText(
-                    _WT($complianceLevel),
-                    $this->normalFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                ->addText(_WT($inclusion), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
+                ->addText(_WT($controlSoa['remarks']), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
+                ->addText(_WT($controlSoa['evidences']), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
+                ->addText(_WT($controlSoa['actions']), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $styleContentCellCompliance)
+                ->addText(_WT($complianceLevel), $this->normalFont, $this->centerParagraph);
         }
 
         return $table;
     }
 
     /**
-     * Generates the table risks by control in SOA
+     * Generates the table risks by control in SOA.
+     *
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableRisksByControl($referential)
+    private function generateTableRisksByControl($referential)
     {
-        /** @var SoaService $soaService */
-        $soaService = $this->soaService;
         $filterMeasures['r.anr'] = $this->anr->getId();
         $filterMeasures['r.uuid'] = $referential;
         $measureService = $this->measureService;
         $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
         $measuresFilteredId = [];
         foreach ($measuresFiltered as $key) {
-            array_push($measuresFilteredId, $key['uuid']);
+            $measuresFilteredId[] = $key['uuid'];
         }
         $filterAnd['m.uuid'] = [
             'op' => 'IN',
             'value' => $measuresFilteredId,
         ];
         $filterAnd['m.anr'] = $this->anr->getId();
-        $controlSoaList = $soaService->getList(1, 0, 'm.code', null, $filterAnd);
-        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr->getId());
-        $opRisksImpactsScaleType = array_values(array_filter($opRisksAllScales, function ($scale) {
-            return $scale['type'] == 1;
-        }));
-        $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function ($scale) {
-            return $scale['isHidden'] == false;
+        $controlSoaList = $this->soaService->getList(1, 0, 'm.code', null, $filterAnd);
+        $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr);
+        $opRisksImpactsScaleType = array_values(
+            array_filter($opRisksAllScales, static function ($scale) {
+                return $scale['type'] === OperationalRiskScaleSuperClass::TYPE_IMPACT;
+            })
+        );
+        $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], static function ($scale) {
+            return !$scale['isHidden'];
         });
         $sizeCellImpact = count($opRisksImpactsScales) * 0.70;
 
         //create section
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
 
         $previousControlId = null;
@@ -3946,306 +2761,166 @@ class DeliverableGenerationService extends AbstractService
             }
             $controlSoa['measure']->rolfRisks = [];
             if (!empty($rolfRisks)) {
-                $controlSoa['measure']->rolfRisks = $this->get('anrInstanceRiskOpService')->getOperationalRisks(
+                $controlSoa['measure']->rolfRisks = $this->anrInstanceRiskOpService->getOperationalRisks(
                     $this->anr,
                     null,
                     ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']
                 );
             }
             if (!empty($amvs)) {
-                $controlSoa['measure']->amvs = $this->get('anrInstanceRiskService')->getInstanceRisks(
-                    $this->anr->getId(),
+                $controlSoa['measure']->amvs = $this->anrInstanceRiskService->getInstanceRisks(
+                    $this->anr,
                     null,
                     ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']
                 );
             }
 
             if (count($controlSoa['measure']->amvs) || count($controlSoa['measure']->rolfRisks)) {
-                if ($controlSoa['measure']->getUuid() != $previousControlId) {
+                if ($controlSoa['measure']->getUuid() !== $previousControlId) {
                     $section->addText(
-                        _WT(
-                            $controlSoa['measure']->code
-                        ) .
-                            ' - ' .
-                            _WT(
-                                $controlSoa['measure']->get('label' .
-                                $this->currentLangAnrIndex)
-                            ),
+                        _WT($controlSoa['measure']->code) . ' - '
+                        . _WT($controlSoa['measure']->getLabel($this->currentLangAnrIndex)),
                         array_merge($this->boldFont, ['size' => 11])
                     );
 
                     if (count($controlSoa['measure']->amvs)) {
-                        $section->addText(
-                            $this->anrTranslate('Information risks'),
-                            $this->boldFont
-                        );
+                        $section->addText($this->anrTranslate('Information risks'), $this->boldFont);
                         $tableRiskInfo = $section->addTable($this->borderTable);
 
                         $tableRiskInfo->addRow(400);
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Asset'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(2.10), $this->setColSpanCell(3, 'DFDFDF'))
-                            ->addText(
-                                $this->anrTranslate('Impact'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(4.50), $this->setColSpanCell(2, 'DFDFDF'))
-                            ->addText(
-                                $this->anrTranslate('Threat'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(3, 'DFDFDF'))
-                            ->addText(
-                                $this->anrTranslate('Vulnerability'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->setColSpanCell(3, 'DFDFDF'))
-                            ->addText(
-                                $this->anrTranslate('Current risk'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Treatment'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.50), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Residual risk'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(2.10),
+                            $this->setColSpanCell(3, 'DFDFDF')
+                        )->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(4.50),
+                            $this->setColSpanCell(2, 'DFDFDF')
+                        )->addText($this->anrTranslate('Threat'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(10.00),
+                            $this->setColSpanCell(3, 'DFDFDF')
+                        )->addText($this->anrTranslate('Vulnerability'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(3.00),
+                            $this->setColSpanCell(3, 'DFDFDF')
+                        )->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Treatment'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addRow(400);
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                        $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                            ->addText(
-                                'C',
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                            ->addText(
-                                'I',
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->grayCell)
-                            ->addText(
-                                $this->anrTranslate('A'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(2.50), $this->grayCell)
-                            ->addText(
-                                $this->anrTranslate('Label'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-                            ->addText(
-                                $this->anrTranslate('Prob.'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->grayCell)
-                            ->addText(
-                                $this->anrTranslate('Label'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(4.00), $this->grayCell)
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                            ->addText('C', $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                            ->addText('I', $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
+                            ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->grayCell)
+                            ->addText($this->anrTranslate('Label'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+                            ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
+                            ->addText($this->anrTranslate('Label'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
                             ->addText(
                                 $this->anrTranslate('Existing controls'),
                                 $this->boldFont,
                                 $this->centerParagraph
                             );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->grayCell)
-                            ->addText(
-                                $this->anrTranslate('Qualif.'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->grayCell)
-                            ->addText(
-                                'C',
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->grayCell)
-                            ->addText(
-                                'I',
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->grayCell)
-                            ->addText(
-                                $this->anrTranslate('A'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.50), $this->continueAndGrayCell);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
+                            ->addText($this->anrTranslate('Qualif.'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                            ->addText('C', $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                            ->addText('I', $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                            ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->continueAndGrayCell);
                     }
                     if (count($controlSoa['measure']->rolfRisks)) {
-                        $section->addText(
-                            $this->anrTranslate('Operational risks'),
-                            $this->boldFont
-                        );
+                        $section->addText($this->anrTranslate('Operational risks'), $this->boldFont);
                         $tableRiskOp = $section->addTable($this->borderTable);
 
                         $tableRiskOp->addRow(400);
-                        $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Asset'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Risk description'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        if ($this->anr->showRolfBrut == 1) {
-                            $tableRiskOp
-                                ->addCell(
-                                    Converter::cmToTwip(5.50),
-                                    $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF')
-                                )
-                                ->addText(
-                                    $this->anrTranslate('Inherent risk'),
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Risk description'), $this->boldFont, $this->centerParagraph);
+                        if ($this->anr->showRolfBrut()) {
+                            $tableRiskOp->addCell(
+                                PhpWord\Shared\Converter::cmToTwip(5.50),
+                                $this->setColSpanCell(2 + count($opRisksImpactsScales), 'DFDFDF')
+                            )->addText($this->anrTranslate('Inherent risk'), $this->boldFont, $this->centerParagraph);
                         }
-                        $tableRiskOp
-                            ->addCell(
-                                Converter::cmToTwip(15.00),
-                                $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF')
-                            )
-                            ->addText(
-                                $this->anrTranslate('Net risk'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Treatment'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Residual risk'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                        $tableRiskOp->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(15.00),
+                            $this->setColSpanCell(3 + count($opRisksImpactsScales), 'DFDFDF')
+                        )->addText($this->anrTranslate('Net risk'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Treatment'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
 
                         $tableRiskOp->addRow(400, $this->tblHeader);
-                        $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->continueAndGrayCell);
-                        if ($this->anr->showRolfBrut == 1) {
-                            $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                                ->addText(
-                                    $this->anrTranslate('Prob.'),
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
-                            $tableRiskOp
-                                ->addCell(
-                                    Converter::cmToTwip($sizeCellImpact),
-                                    $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
-                                )
-                                ->addText(
-                                    $this->anrTranslate('Impact'),
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
-                            $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                                ->addText(
-                                    $this->anrTranslate('Current risk'),
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
-                        }
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Prob.'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskOp
-                            ->addCell(
-                                Converter::cmToTwip($sizeCellImpact),
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndGrayCell);
+                        if ($this->anr->showRolfBrut()) {
+                            $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                                ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
+                            $tableRiskOp->addCell(
+                                PhpWord\Shared\Converter::cmToTwip($sizeCellImpact),
                                 $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
-                            )
-                            ->addText(
-                                $this->anrTranslate('Impact'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->restartAndGrayCell)
-                            ->addText(
-                                $this->anrTranslate('Current risk'),
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskOp->addCell(Converter::cmToTwip(8.00), $this->restartAndGrayCell)
+                            )->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+                            $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                                ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+                        }
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(
+                            PhpWord\Shared\Converter::cmToTwip($sizeCellImpact),
+                            $this->setColSpanCell(count($opRisksImpactsScales), 'DFDFDF')
+                        )->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->restartAndGrayCell)
                             ->addText(
                                 $this->anrTranslate('Existing controls'),
                                 $this->boldFont,
                                 $this->centerParagraph
                             );
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
 
-                        $tableRiskOp->addRow(Converter::cmToTwip(1.00), ['tblHeader' => true]);
-                        $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->continueAndGrayCell);
-                        if ($this->anr->showRolfBrut == 1) {
-                            $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addRow(PhpWord\Shared\Converter::cmToTwip(1.00), ['tblHeader' => true]);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndGrayCell);
+                        if ($this->anr->showRolfBrut()) {
+                            $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                                $tableRiskOp
-                                    ->addCell(
-                                        Converter::cmToTwip(0.70),
-                                        array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
-                                    )
-                                    ->addText(
-                                        $label,
-                                        $this->boldFont,
-                                        $this->verticalCenterParagraph
-                                    );
+                                $tableRiskOp->addCell(
+                                    PhpWord\Shared\Converter::cmToTwip(0.70),
+                                    array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                                )->addText($label, $this->boldFont, $this->verticalCenterParagraph);
                             }
-                            $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                            $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                         }
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                             $label = mb_substr(_WT($opRiskImpactScale['label']), 0, 3) . '.';
-                            $tableRiskOp
-                                ->addCell(
-                                    Converter::cmToTwip(0.70),
-                                    array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
-                                )
-                                ->addText(
-                                    $label,
-                                    $this->boldFont,
-                                    $this->verticalCenterParagraph
-                                );
+                            $tableRiskOp->addCell(
+                                PhpWord\Shared\Converter::cmToTwip(0.70),
+                                array_merge($this->rotate90TextCell, ['bgcolor' => 'DFDFDF'])
+                            )->addText($label, $this->boldFont, $this->verticalCenterParagraph);
                         }
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(Converter::cmToTwip(8.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
                     }
                 }
                 $previousControlId = $controlSoa['measure']->getUuid();
@@ -4254,123 +2929,82 @@ class DeliverableGenerationService extends AbstractService
 
                     foreach ($controlSoa['measure']->amvs as $r) {
                         foreach ($impacts as $impact) {
-                            if ($r[$impact . '_risk_enabled'] == 0) {
+                            if ($r[$impact . '_risk_enabled'] === 0) {
                                 $r[$impact . '_risk'] = null;
                             }
                         }
 
                         foreach ($r as $key => $value) {
-                            if ($value == -1) {
+                            if ($value === -1) {
                                 $r[$key] = '-';
                             }
                         }
 
-                        $instance = $this->instanceTable->findById($r['instance']);
+                        /** @var Entity\Instance $instance */
+                        $instance = $this->instanceTable->findByIdAndAnr($r['instance'], $this->anr);
                         if (!$instance->getObject()->isScopeGlobal()) {
                             $path = $instance->getHierarchyString();
                         } else {
-                            $path = $instance->{
-                                'name' .
-                                $this->currentLangAnrIndex} .
-                                ' (' .
-                                $this->anrTranslate('Global') .
-                                ')';
+                            $path = $instance->getName($this->currentLangAnrIndex)
+                                . ' (' . $this->anrTranslate('Global') . ')';
                         }
 
                         $tableRiskInfo->addRow(400);
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($path),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['c_impact'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['i_impact'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['d_impact'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(2.50), $this->vAlignCenterCell)
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                            ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['c_impact'], $this->normalFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['i_impact'], $this->normalFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            ->addText($r['d_impact'], $this->normalFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->vAlignCenterCell)
                             ->addText(
                                 _WT($r['threatLabel' . $this->currentLangAnrIndex]),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['threatRate'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                            ->addText($r['threatRate'], $this->normalFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(
                                 _WT($r['vulnLabel' . $this->currentLangAnrIndex]),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                            ->addText($r['vulnerabilityRate'], $this->normalFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.00),
+                            $this->setBgColorCell($r['c_risk'])
+                        )->addText($r['c_risk'], $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.00),
+                            $this->setBgColorCell($r['i_risk'])
+                        )->addText($r['i_risk'], $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.00),
+                            $this->setBgColorCell($r['d_risk'])
+                        )->addText($r['d_risk'], $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(
-                                _WT($r['comment']),
+                                InstanceRiskOpSuperClass::getTreatmentNameByType($r['kindOfMeasure']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['vulnerabilityRate'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['c_risk']))
-                            ->addText(
-                                $r['c_risk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['i_risk']))
-                            ->addText(
-                                $r['i_risk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.00), $this->setBgColorCell($r['d_risk']))
-                            ->addText(
-                                $r['d_risk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $this->getKindfofMeasureLabel($r['kindOfMeasure']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $tableRiskInfo->addCell(Converter::cmToTwip(1.50), $this->setBgColorCell($r['target_risk']))
-                            ->addText(
-                                $r['target_risk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                        $tableRiskInfo->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.50),
+                            $this->setBgColorCell($r['target_risk'])
+                        )->addText($r['target_risk'], $this->boldFont, $this->centerParagraph);
                     }
                 }
 
                 if (count($controlSoa['measure']->rolfRisks)) {
-                    $kindOfRisks = ['cacheBrutRisk', 'cacheNetRisk', 'cacheTargetedRisk'];
-
                     foreach ($controlSoa['measure']->rolfRisks as $r) {
                         foreach ($r as $key => $value) {
-                            if ($value == -1) {
+                            if ($value === -1) {
                                 $r[$key] = '-';
                             }
                         }
@@ -4379,27 +3013,19 @@ class DeliverableGenerationService extends AbstractService
                         $path = $instance->getHierarchyString();
 
                         $tableRiskOp->addRow(400);
-                        $tableRiskOp->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($path),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $tableRiskOp->addCell(Converter::cmToTwip(10.00), $this->vAlignCenterCell)
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                            ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
                             ->addText(
                                 _WT($r['label' . $this->currentLangAnrIndex]),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                        if ($this->anr->showRolfBrut == 1) {
-                            $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                                ->addText(
-                                    $r['brutProb'],
-                                    $this->normalFont,
-                                    $this->centerParagraph
-                                );
+                        if ($this->anr->showRolfBrut()) {
+                            $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                                ->addText($r['brutProb'], $this->normalFont, $this->centerParagraph);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                                $tableRiskOp->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                                $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                     ->addText(
                                         $r['scales'][$opRiskImpactScale['id']]['brutValue'] !== -1 ?
                                             $r['scales'][$opRiskImpactScale['id']]['brutValue'] :
@@ -4408,68 +3034,42 @@ class DeliverableGenerationService extends AbstractService
                                         $this->centerParagraph
                                     );
                             }
-                            $tableRiskOp
-                                ->addCell(
-                                    Converter::cmToTwip(1.00),
-                                    $this->setBgColorCell($r['cacheBrutRisk'], false)
-                                )
-                                ->addText(
-                                    $r['cacheBrutRisk'],
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
+                            $tableRiskOp->addCell(
+                                PhpWord\Shared\Converter::cmToTwip(1.00),
+                                $this->setBgColorCell($r['cacheBrutRisk'], false)
+                            )->addText($r['cacheBrutRisk'], $this->boldFont, $this->centerParagraph);
                         }
-                        $tableRiskOp->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $r['netProb'],
-                                $this->normalFont,
-                                $this->centerParagraph
-                            );
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                            ->addText($r['netProb'], $this->normalFont, $this->centerParagraph);
                         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
-                            $tableRiskOp->addCell(Converter::cmToTwip(0.70), $this->vAlignCenterCell)
+                            $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                 ->addText(
-                                    $r['scales'][$opRiskImpactScale['id']]['netValue'] !== -1 ?
-                                        $r['scales'][$opRiskImpactScale['id']]['netValue'] :
-                                        '-',
+                                    $r['scales'][$opRiskImpactScale['id']]['netValue'] !== -1
+                                        ? $r['scales'][$opRiskImpactScale['id']]['netValue']
+                                        : '-',
                                     $this->normalFont,
                                     $this->centerParagraph
                                 );
                         }
-                        $tableRiskOp
-                            ->addCell(
-                                Converter::cmToTwip(1.00),
-                                $this->setBgColorCell($r['cacheNetRisk'], false)
-                            )
+                        $tableRiskOp->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(1.00),
+                            $this->setBgColorCell($r['cacheNetRisk'], false)
+                        )->addText($r['cacheNetRisk'], $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
                             ->addText(
-                                $r['cacheNetRisk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $tableRiskOp->addCell(Converter::cmToTwip(8.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($r['comment']),
+                                InstanceRiskOpSuperClass::getTreatmentNameByType($r['kindOfMeasure']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                        $tableRiskOp->addCell(Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $this->getKindfofMeasureLabel($r['kindOfMeasure']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $cacheTargetedRisk = $r['cacheTargetedRisk'] == '-' ?
-                            $r['cacheNetRisk'] :
-                            $r['cacheTargetedRisk'];
-                        $tableRiskOp
-                            ->addCell(
-                                Converter::cmToTwip(2.00),
-                                $this->setBgColorCell($cacheTargetedRisk, false)
-                            )
-                            ->addText(
-                                $cacheTargetedRisk,
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
+                        $cacheTargetedRisk = $r['cacheTargetedRisk'] === '-'
+                            ? $r['cacheNetRisk']
+                            : $r['cacheTargetedRisk'];
+                        $tableRiskOp->addCell(
+                            PhpWord\Shared\Converter::cmToTwip(2.00),
+                            $this->setBgColorCell($cacheTargetedRisk, false)
+                        )->addText($cacheTargetedRisk, $this->boldFont, $this->centerParagraph);
                     }
                 }
                 $section->addTextBreak();
@@ -4480,287 +3080,187 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generates the Processing Activities Record's General Informations data
+     * Generates the Processing Activities Record's General Information data.
+     *
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableRecordGDPR($recordId)
+    private function generateTableRecordGDPR($recordId)
     {
-        $recordTable = $this->get('recordService')->get('table');
-        $recordEntity = $recordTable->getEntity($recordId);
+        $recordEntity = $this->recordTable->getEntity($recordId);
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $tableWord->getSettings()->setUpdateFields(true);
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Name'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(
-                _WT($recordEntity->get('label')),
-                $this->normalFont,
-                $this->leftParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+            ->addText($this->anrTranslate('Name'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
+            ->addText(_WT($recordEntity->get('label')), $this->normalFont, $this->leftParagraph);
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+            ->addText($this->anrTranslate('Creation date'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
             ->addText(
-                $this->anrTranslate('Creation date'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(
-                ($recordEntity->get('createdAt') ?
-                    strftime("%d-%m-%Y", $recordEntity->get('createdAt')->getTimeStamp()) :
-                    ""
+                ($recordEntity->get('createdAt')
+                    ? strftime("%d-%m-%Y", $recordEntity->get('createdAt')->getTimeStamp())
+                    : ""
                 ),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+            ->addText($this->anrTranslate('Update date'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
             ->addText(
-                $this->anrTranslate('Update date'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(
-                ($recordEntity->get('updatedAt') ?
-                    strftime("%d-%m-%Y", $recordEntity->get('updatedAt')->getTimeStamp()) :
-                    ""
+                ($recordEntity->get('updatedAt')
+                    ? strftime("%d-%m-%Y", $recordEntity->get('updatedAt')->getTimeStamp())
+                    : ""
                 ),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Purpose(s)'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(
-                _WT($recordEntity->get('purposes')),
-                $this->normalFont,
-                $this->leftParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+            ->addText($this->anrTranslate('Purpose(s)'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
+            ->addText(_WT($recordEntity->get('purposes')), $this->normalFont, $this->leftParagraph);
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Security measures'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(
-                _WT($recordEntity->get('secMeasures')),
-                $this->normalFont,
-                $this->leftParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+            ->addText($this->anrTranslate('Security measures'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
+            ->addText(_WT($recordEntity->get('secMeasures')), $this->normalFont, $this->leftParagraph);
 
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
     /**
-     * Generates the Processing Activities Record's Joint Controllers data
+     * Generates the Processing Activities Record's Joint Controllers data.
+     *
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableRecordActors($recordId)
+    private function generateTableRecordActors($recordId)
     {
-        $recordTable = $this->get('recordService')->get('table');
-        $recordEntity = $recordTable->getEntity($recordId);
+        $recordEntity = $this->recordTable->getEntity($recordId);
         $jointControllers = $recordEntity->get('jointControllers');
 
         //create section
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         //header if array is not empty
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Actor'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Name'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
-        $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Contact'),
-                $this->boldFont,
-                $this->centerParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+            ->addText($this->anrTranslate('Actor'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+            ->addText($this->anrTranslate('Name'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+            ->addText($this->anrTranslate('Contact'), $this->boldFont, $this->centerParagraph);
 
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+            ->addText($this->anrTranslate('Controller'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                $this->anrTranslate('Controller'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-            ->addText(
-                _WT($recordEntity->get('controller') ?
-                    $recordEntity->get('controller')->get('label') :
-                    ""),
+                _WT($recordEntity->get('controller') ? $recordEntity->get('controller')->get('label') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
-        $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('controller') ?
-                    $recordEntity->get('controller')->get('contact') :
-                    ""),
+                _WT($recordEntity->get('controller') ? $recordEntity->get('controller')->get('contact') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
 
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+            ->addText($this->anrTranslate('Representative'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                $this->anrTranslate('Representative'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-            ->addText(
-                _WT($recordEntity->get('representative') ?
-                    $recordEntity->get('representative')->get('label') :
-                    ""),
+                _WT($recordEntity->get('representative') ? $recordEntity->get('representative')->get('label') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
-        $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('representative') ?
-                    $recordEntity->get('representative')->get('contact') :
-                    ""),
+                _WT($recordEntity->get('representative') ? $recordEntity->get('representative')->get('contact') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
 
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+            ->addText($this->anrTranslate('Data protection officer'), $this->boldFont, $this->leftParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                $this->anrTranslate('Data protection officer'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
-        $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-            ->addText(
-                _WT($recordEntity->get('dpo') ?
-                    $recordEntity->get('dpo')->get('label') :
-                    ""),
+                _WT($recordEntity->get('dpo') ? $recordEntity->get('dpo')->get('label') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
-        $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('dpo') ?
-                    $recordEntity->get('dpo')->get('contact') :
-                    ""),
+                _WT($recordEntity->get('dpo') ? $recordEntity->get('dpo')->get('contact') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
 
         $table->addRow(400);
-        $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-            ->addText(
-                $this->anrTranslate('Joint controllers'),
-                $this->boldFont,
-                $this->leftParagraph
-            );
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+            ->addText($this->anrTranslate('Joint controllers'), $this->boldFont, $this->leftParagraph);
 
-        if (count($jointControllers)) {
+        if (\count($jointControllers)) {
             $i = 0;
             foreach ($jointControllers as $jc) {
-                $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($jc->get('label')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($jc->get('contact')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                if ($i != count($jointControllers) - 1) {
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    ->addText(_WT($jc->get('label')), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    ->addText(_WT($jc->get('contact')), $this->normalFont, $this->leftParagraph);
+                if ($i !== \count($jointControllers) - 1) {
                     $table->addRow(400);
-                    $table->addCell(Converter::cmToTwip(6.00), $this->grayCell);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell);
                 }
                 ++$i;
             }
         } else {
-            $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell);
-            $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell);
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
     }
 
     /**
-     * Generates the Processing Activities Record's Personal data data
+     * Generates the Processing Activities Record's Personal data.
+     *
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableRecordPersonalData($recordId)
+    private function generateTableRecordPersonalData($recordId)
     {
-        $recordTable = $this->get('recordService')->get('table');
-        $recordEntity = $recordTable->getEntity($recordId);
+        $recordEntity = $this->recordTable->getEntity($recordId);
         $personalData = $recordEntity->get('personalData');
 
         //create section
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
 
-        if (count($personalData)) {
+        if (!empty($personalData)) {
             $table = $section->addTable($this->borderTable);
 
             //header if array is not empty
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(3.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Data subject'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(3.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Personal data categories'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(3.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Description'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(3.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Retention period'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(3.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Retention period description'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->grayCell)
+                ->addText($this->anrTranslate('Data subject'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->grayCell)
+                ->addText($this->anrTranslate('Personal data categories'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->grayCell)
+                ->addText($this->anrTranslate('Description'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->grayCell)
+                ->addText($this->anrTranslate('Retention period'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->grayCell)
+                ->addText($this->anrTranslate('Retention period description'), $this->boldFont, $this->centerParagraph);
 
             foreach ($personalData as $pd) {
                 $table->addRow(400);
@@ -4769,40 +3269,24 @@ class DeliverableGenerationService extends AbstractService
                     $dataCategories .= $dc->get('label') . "\n";
                 }
                 $retentionPeriod = $pd->get('retentionPeriod') . ' ';
-                if ($pd->get('retentionPeriodMode') == 0) {
+                if ($pd->get('retentionPeriodMode') === 0) {
                     $retentionPeriod .= $this->anrTranslate('day(s)');
                 } else {
-                    if ($pd->get('retentionPeriodMode') == 1) {
+                    if ($pd->get('retentionPeriodMode') === 1) {
                         $retentionPeriod .= $this->anrTranslate('month(s)');
                     } else {
                         $retentionPeriod .= $this->anrTranslate('year(s)');
                     }
                 }
-                $table->addCell(Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($pd->get('dataSubject')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($dataCategories),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($pd->get('description')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($retentionPeriod),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(3.60), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
+                    ->addText(_WT($pd->get('dataSubject')), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
+                    ->addText(_WT($dataCategories), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
+                    ->addText(_WT($pd->get('description')), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
+                    ->addText(_WT($retentionPeriod), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
                     ->addText(
                         _WT($pd->get('retentionPeriodDescription')),
                         $this->normalFont,
@@ -4810,7 +3294,7 @@ class DeliverableGenerationService extends AbstractService
                     );
             }
         } else {
-            $table = $section->addText(
+            $section->addText(
                 $this->anrTranslate('No category of personal data'),
                 $this->normalFont,
                 $this->leftParagraph
@@ -4824,69 +3308,42 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Processing Activities Record's Recipients data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableRecordRecipients($recordId)
+    private function generateTableRecordRecipients($recordId)
     {
-        $recordTable = $this->get('recordService')->get('table');
-        $recordEntity = $recordTable->getEntity($recordId);
+        $recordEntity = $this->recordTable->getEntity($recordId);
         $recipients = $recordEntity->get('recipients');
 
         //create section
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
 
-        if (count($recipients)) {
+        if (!empty($recipients)) {
             $table = $section->addTable($this->borderTable);
 
             //header if array is not empty
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Recipient'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Type'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(8.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Description'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+                ->addText($this->anrTranslate('Recipient'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Type'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->grayCell)
+                ->addText($this->anrTranslate('Description'), $this->boldFont, $this->centerParagraph);
 
             foreach ($recipients as $r) {
                 $table->addRow(400);
-                $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                    ->addText(_WT($r->get('label')), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                     ->addText(
-                        _WT($r->get('label')),
+                        $r->getType() === 0 ? $this->anrTranslate('internal') : $this->anrTranslate('external'),
                         $this->normalFont,
                         $this->leftParagraph
                     );
-                $table->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                    ->addText(
-                        $r->get('type') == 0 ?
-                            $this->anrTranslate('internal') :
-                            $this->anrTranslate('external'),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(8.00), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($r->get('description')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell)
+                    ->addText(_WT($r->get('description')), $this->normalFont, $this->leftParagraph);
             }
         } else {
-            $table = $section->addText(
-                $this->anrTranslate('No recipient'),
-                $this->normalFont,
-                $this->leftParagraph
-            );
+            $section->addText($this->anrTranslate('No recipient'), $this->normalFont, $this->leftParagraph);
         }
 
         return $this->getWordXmlFromWordObject($tableWord);
@@ -4896,14 +3353,13 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Processing Activities Record's International Transfers data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableRecordInternationalTransfers($recordId)
+    private function generateTableRecordInternationalTransfers($recordId)
     {
-        $recordTable = $this->get('recordService')->get('table');
-        $recordEntity = $recordTable->getEntity($recordId);
+        $recordEntity = $this->recordTable->getEntity($recordId);
         $internationalTransfers = $recordEntity->get('internationalTransfers');
 
         //create section
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
 
         if (count($internationalTransfers)) {
@@ -4911,60 +3367,28 @@ class DeliverableGenerationService extends AbstractService
 
             //header if array is not empty
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(4.50), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Organisation'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.50), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Description'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.50), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Country'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(4.50), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Documents'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->grayCell)
+                ->addText($this->anrTranslate('Organisation'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->grayCell)
+                ->addText($this->anrTranslate('Description'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->grayCell)
+                ->addText($this->anrTranslate('Country'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->grayCell)
+                ->addText($this->anrTranslate('Documents'), $this->boldFont, $this->centerParagraph);
 
             foreach ($internationalTransfers as $it) {
                 $table->addRow(400);
-                $table->addCell(Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($it->get('organisation')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($it->get('description')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($it->get('country')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
-                $table->addCell(Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($it->get('documents')),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                    ->addText(_WT($it->get('organisation')), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                    ->addText(_WT($it->get('description')), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                    ->addText(_WT($it->get('country')), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                    ->addText(_WT($it->get('documents')), $this->normalFont, $this->leftParagraph);
             }
         } else {
-            $table = $section->addText(
+            $section->addText(
                 $this->anrTranslate('No international transfer'),
                 $this->normalFont,
                 $this->leftParagraph
@@ -4979,154 +3403,87 @@ class DeliverableGenerationService extends AbstractService
      * Generates the Processing Activities Record's Processors data
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableRecordProcessors($recordId)
+    private function generateTableRecordProcessors($recordId)
     {
-        $recordTable = $this->get('recordService')->get('table');
-        $recordEntity = $recordTable->getEntity($recordId);
+        $recordEntity = $this->recordTable->getEntity($recordId);
         $processors = $recordEntity->get('processors');
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         if (count($processors) < 1) {
-            $section->addText(
-                $this->anrTranslate('No processor'),
-                $this->normalFont,
-                $this->leftParagraph
-            );
+            $section->addText($this->anrTranslate('No processor'), $this->normalFont, $this->leftParagraph);
         }
 
         foreach ($processors as $p) {
             //create section
-            $section->addText(
-                _WT($p->get('label')),
-                $this->boldFont
-            );
+            $section->addText(_WT($p->get('label')), $this->boldFont);
             $table = $section->addTable($this->borderTable);
 
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Name'),
-                    $this->boldFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($p->get('label')),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Name'), $this->boldFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
+                ->addText(_WT($p->get('label')), $this->normalFont, $this->leftParagraph);
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Contact'),
-                    $this->boldFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($p->get('contact')),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Contact'), $this->boldFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
+                ->addText(_WT($p->get('contact')), $this->normalFont, $this->leftParagraph);
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Activities'),
-                    $this->boldFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($p->get('activities')),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Activities'), $this->boldFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
+                ->addText(_WT($p->get('activities')), $this->normalFont, $this->leftParagraph);
             $table->addRow(400);
-            $table->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Security measures'),
-                    $this->boldFont,
-                    $this->leftParagraph
-                );
-            $table->addCell(Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($p->get('secMeasures')),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Security measures'), $this->boldFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
+                ->addText(_WT($p->get('secMeasures')), $this->normalFont, $this->leftParagraph);
 
             $section->addTextBreak(1);
-            $section->addText(
-                $this->anrTranslate('Actors'),
-                $this->boldFont
-            );
+            $section->addText($this->anrTranslate('Actors'), $this->boldFont);
             $tableActor = $section->addTable($this->borderTable);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Actor'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Name'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Contact'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->grayCell)
+                ->addText($this->anrTranslate('Actor'), $this->boldFont, $this->centerParagraph);
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->grayCell)
+                ->addText($this->anrTranslate('Name'), $this->boldFont, $this->centerParagraph);
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->grayCell)
+                ->addText($this->anrTranslate('Contact'), $this->boldFont, $this->centerParagraph);
 
             $tableActor->addRow(400);
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->grayCell)
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->grayCell)
                 ->addText(
                     $this->anrTranslate('Representative'),
                     $this->boldFont,
                     $this->leftParagraph
                 );
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->vAlignCenterCell)
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($p->get('representative') ?
-                        $p->get('representative')->get('label') :
-                        ""),
+                    _WT($p->get('representative') ? $p->get('representative')->get('label') : ""),
                     $this->normalFont,
                     $this->leftParagraph
                 );
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->vAlignCenterCell)
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($p->get('representative') ?
-                        $p->get('representative')->get('contact') :
-                        ""),
+                    _WT($p->get('representative') ? $p->get('representative')->get('contact') : ""),
                     $this->normalFont,
                     $this->leftParagraph
                 );
 
             $tableActor->addRow(400);
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->grayCell)
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->grayCell)
+                ->addText($this->anrTranslate('Data protection officer'), $this->boldFont, $this->leftParagraph);
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
                 ->addText(
-                    $this->anrTranslate('Data protection officer'),
-                    $this->boldFont,
-                    $this->leftParagraph
-                );
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($p->get('dpo') ?
-                        $p->get('dpo')->get('label') :
-                        ""),
+                    _WT($p->get('dpo') ? $p->get('dpo')->get('label') : ""),
                     $this->normalFont,
                     $this->leftParagraph
                 );
-            $tableActor->addCell(Converter::cmToTwip(10.00), $this->vAlignCenterCell)
+            $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($p->get('dpo') ?
-                        $p->get('dpo')->get('contact') :
-                        ""),
+                    _WT($p->get('dpo') ? $p->get('dpo')->get('contact') : ""),
                     $this->normalFont,
                     $this->leftParagraph
                 );
@@ -5141,71 +3498,52 @@ class DeliverableGenerationService extends AbstractService
      * Generates all the Processing Activities Record in the anr
      * @return mixed|string The WordXml data generated
      */
-    protected function generateTableAllRecordsGDPR()
+    private function generateTableAllRecordsGDPR()
     {
-        $recordTable = $this->get('recordService')->get('table');
-        $recordEntities = $recordTable->getEntityByFields(['anr' => $this->anr->getId()]);
+        $recordEntities = $this->recordTable->getEntityByFields(['anr' => $this->anr->getId()]);
 
         $result = '';
 
         foreach ($recordEntities as $recordEntity) {
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(1, $this->titleFont);
-            $section->addTitle(
-                _WT($recordEntity->get('label')),
-                1
-            );
+            $section->addTitle(_WT($recordEntity->get('label')), 1);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordGDPR($recordEntity->id);
             //create section
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle(
-                $this->anrTranslate('Actors'),
-                2
-            );
+            $section->addTitle($this->anrTranslate('Actors'), 2);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordActors($recordEntity->id);
             //create section
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle(
-                $this->anrTranslate('Categories of personal data'),
-                2
-            );
+            $section->addTitle($this->anrTranslate('Categories of personal data'), 2);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordPersonalData($recordEntity->id);
             //create section
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle(
-                $this->anrTranslate('Recipients'),
-                2
-            );
+            $section->addTitle($this->anrTranslate('Recipients'), 2);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordRecipients($recordEntity->id);
             //create section
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle(
-                $this->anrTranslate('International transfers'),
-                2
-            );
+            $section->addTitle($this->anrTranslate('International transfers'), 2);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordInternationalTransfers($recordEntity->id);
             //create section
-            $tableWord = new PhpWord();
+            $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(2, $this->titleFont);
-            $section->addTitle(
-                $this->anrTranslate('Processors'),
-                2
-            );
+            $section->addTitle($this->anrTranslate('Processors'), 2);
             $result .= $this->getWordXmlFromWordObject($tableWord);
             $result .= $this->generateTableRecordProcessors($recordEntity->id);
         }
@@ -5217,44 +3555,32 @@ class DeliverableGenerationService extends AbstractService
      * Generate the impacts appreciation table data
      * @return mixed|string The WordXml table data
      */
-    protected function generateImpactsAppreciation()
+    private function generateImpactsAppreciation()
     {
-        // TODO: C'est moche, optimiser
-        $allInstances = $this->instanceTable->findByAnrAndOrderByParams($this->anr, ['i.position' => 'ASC']);
-        /** @var Instance[] $instances */
-        $instances = array_filter($allInstances, function ($ins) {
-            return ($ins->getConfidentiality() > -1 && !$ins->isConfidentialityInherited()) ||
-                ($ins->getIntegrity() > -1 && !$ins->isIntegrityInherited()) ||
-                ($ins->getAvailability() > -1 && !$ins->getAvailabilityInherited());
-        });
+        $instances = $this->instanceTable->findInstancesByAnrWithEvaluationAndNotInheritedOrderBy(
+            $this->anr,
+            ['i.position' => 'ASC']
+        );
         $impacts = ['c', 'i', 'd'];
-        $instanceCriteria = Instance::getAvailableScalesCriteria();
+        $instanceCriteria = Entity\Instance::getAvailableScalesCriteria();
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         //header
-        if (\count($instances)) {
+        if (count($instances)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(9.00), $this->setColSpanCell(3, 'DFDFDF'))
-                ->addText(
-                    $this->anrTranslate('Impact'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(9.00), $this->setColSpanCell(3, 'DFDFDF'))
-                ->addText(
-                    $this->anrTranslate('Consequences'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(9.00), $this->setColSpanCell(3, 'DFDFDF'))
+                ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(9.00), $this->setColSpanCell(3, 'DFDFDF'))
+                ->addText($this->anrTranslate('Consequences'), $this->boldFont, $this->centerParagraph);
         }
 
         $globalObjectsUuids = [];
         foreach ($instances as $instance) {
             /* Check if the global object is already added. */
-            if (\in_array($instance->getObject()->getUuid(), $globalObjectsUuids, true)) {
+            if (in_array($instance->getObject()->getUuid(), $globalObjectsUuids, true)) {
                 continue;
             }
 
@@ -5278,7 +3604,7 @@ class DeliverableGenerationService extends AbstractService
                     if ($instanceConsequence[$impact . '_risk'] >= 0) {
                         if (!$headerImpact && !$headerConsequence) {
                             $table->addRow(400);
-                            $table->addCell(Converter::cmToTwip(16), $this->setColSpanCell(6, 'DBE5F1'))
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(16), $this->setColSpanCell(6, 'DBE5F1'))
                                 ->addText(
                                     _WT($instance->getName($this->currentLangAnrIndex)),
                                     $this->boldFont,
@@ -5293,57 +3619,41 @@ class DeliverableGenerationService extends AbstractService
                         if (!$headerConsequence) {
                             $comment = $impactsConsequences[$keyImpact]['comments'][
                                 $instance->{'get' . $instanceCriteria[$impact]}() !== -1
-                                    ? $instance->{'get' . $instanceCriteria[$impact]}()
-                                    : 0
+                                ? $instance->{'get' . $instanceCriteria[$impact]}()
+                                : 0
                             ];
                             $translatedImpact = ucfirst($impact);
                             if ($impact === 'd') {
                                 $translatedImpact = ucfirst($this->anrTranslate('A'));
                             }
-                            $table->addCell(Converter::cmToTwip(1.00), $this->restartAndCenterCell)
-                                ->addText(
-                                    $translatedImpact,
-                                    $this->boldFont,
-                                    $this->centerParagraph
-                                );
-                            $table->addCell(Converter::cmToTwip(1.00), $this->restartAndCenterCell)
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndCenterCell)
+                                ->addText($translatedImpact, $this->boldFont, $this->centerParagraph);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndCenterCell)
                                 ->addText(
                                     $instance->{'get' . $instanceCriteria[$impact]}(),
                                     $this->boldFont,
                                     $this->centerParagraph
                                 );
-                            $table->addCell(Converter::cmToTwip(5.00), $this->restartAndCenterCell)
-                                ->addText(
-                                    _WT($comment),
-                                    $this->normalFont,
-                                    $this->leftParagraph
-                                );
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->restartAndCenterCell)
+                                ->addText(_WT($comment), $this->normalFont, $this->leftParagraph);
                         } else {
-                            $table->addCell(Converter::cmToTwip(1.00), $this->continueCell);
-                            $table->addCell(Converter::cmToTwip(1.00), $this->continueCell);
-                            $table->addCell(Converter::cmToTwip(5.00), $this->continueCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueCell);
+                            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->continueCell);
                         }
                         $comment = $instanceConsequence['comments'][
                             $instanceConsequence[$impact . '_risk'] !== -1 ? $instanceConsequence[$impact . '_risk'] : 0
                         ];
-                        $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
                             ->addText(
                                 _WT($instanceConsequence['scaleImpactTypeDescription' . $this->currentLangAnrIndex]),
                                 $this->boldFont,
                                 $this->centerParagraph
                             );
-                        $table->addCell(Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                            ->addText(
-                                $instanceConsequence[$impact . '_risk'],
-                                $this->boldFont,
-                                $this->centerParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(7.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($comment),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
+                            ->addText($instanceConsequence[$impact . '_risk'], $this->boldFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(7.00), $this->vAlignCenterCell)
+                            ->addText(_WT($comment), $this->normalFont, $this->leftParagraph);
 
                         $headerConsequence = true;
                     }
@@ -5355,127 +3665,85 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generate the threats table data
-     * @param bool $fullGen Whether or not to generate the full table (all but normal) or just the normal threats
-     * @return mixed|string The WordXml generated data
+     * Generate the threats table data.
+     *
+     * @param bool $fullGen Whether to generate the full table (all but normal) or just the normal threats.
+     *
+     * @return mixed|string The WordXml generated data.
      */
-    protected function generateThreatsTable($fullGen = false)
+    private function generateThreatsTable($fullGen = false)
     {
-        // TODO: use threatTable instead.
-        $threats = $this->threatService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
-
-        $tableWord = new PhpWord();
-        $section = $tableWord->addSection();
-        $table = $section->addTable($this->borderTable);
-
+        /** @var Entity\Threat[] $threats */
+        $threats = $this->threatTable->findByAnr($this->anr);
         $nbThreats = 0;
         foreach ($threats as $threat) {
-            if (($threat['trend'] != 1) || $fullGen) {
+            if ($fullGen || $threat->getTrend() !== 1) {
                 $nbThreats++;
             }
         }
 
+        $tableWord = new PhpWord\PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable($this->borderTable);
+
         if ($nbThreats > 0) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(7.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Threat'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(1.50), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('CIA'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(1.70), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Tend.'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(1.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Prob.'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(6.60), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Comment'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(7.60), $this->grayCell)
+                ->addText($this->anrTranslate('Threat'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->grayCell)
+                ->addText($this->anrTranslate('CIA'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.70), $this->grayCell)
+                ->addText($this->anrTranslate('Tend.'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.60), $this->grayCell)
+                ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.60), $this->grayCell)
+                ->addText($this->anrTranslate('Comment'), $this->boldFont, $this->centerParagraph);
         }
 
         foreach ($threats as $threat) {
-            if (($threat['trend'] != 1) || $fullGen) { // All but normal
+            if ($fullGen || $threat->getTrend() !== 1) {
                 $table->addRow(400);
-                $table->addCell(Converter::cmToTwip(5.85), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.85), $this->vAlignCenterCell)
                     ->addText(
-                        _WT($threat['label' . $this->currentLangAnrIndex]),
+                        _WT($threat->getLabel($this->currentLangAnrIndex)),
                         $this->normalFont,
                         $this->leftParagraph
                     );
 
                 // CID
                 $cid = '';
-                if ($threat['c']) {
+                if ($threat->getConfidentiality()) {
                     $cid .= 'C';
                 }
-                if ($threat['i']) {
+                if ($threat->getIntegrity()) {
                     $cid .= 'I';
                 }
-                if ($threat['a']) {
+                if ($threat->getAvailability()) {
                     $cid .= $this->anrTranslate('A');
                 }
-                $table->addCell(Converter::cmToTwip(1.50), $this->vAlignCenterCell)
-                    ->addText(
-                        $cid,
-                        $this->normalFont,
-                        $this->centerParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->vAlignCenterCell)
+                    ->addText($cid, $this->normalFont, $this->centerParagraph);
 
                 // Trend
-                switch ($threat['trend']) {
-                    case 0:
-                        $trend = '-';
-                        break;
-                    case 1:
-                        $trend = 'n';
-                        break;
-                    case 2:
-                        $trend = '+';
-                        break;
-                    case 3:
-                        $trend = '++';
-                        break;
-                    default:
-                        $trend = '';
-                        break;
-                }
-                $table->addCell(Converter::cmToTwip(1.70), $this->vAlignCenterCell)
-                    ->addText(
-                        $trend,
-                        $this->normalFont,
-                        $this->centerParagraph
-                    );
+                $trend = match ($threat->getTrend()) {
+                    0 => '-',
+                    1 => 'n',
+                    2 => '+',
+                    3 => '++',
+                    default => '',
+                };
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.70), $this->vAlignCenterCell)
+                    ->addText($trend, $this->normalFont, $this->centerParagraph);
 
                 // Pre-Q
-                $qual = $threat['qualification'] >= 0 ? $threat['qualification'] : '';
-                $table->addCell(Converter::cmToTwip(1.60), $this->vAlignCenterCell)
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.60), $this->vAlignCenterCell)
                     ->addText(
-                        $qual,
+                        $threat->getQualification() >= 0 ? $threat->getQualification() : '',
                         $this->normalFont,
                         $this->centerParagraph
                     );
-                $table->addCell(Converter::cmToTwip(6.60), $this->vAlignCenterCell)
-                    ->addText(
-                        _WT($threat['comment']),
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.60), $this->vAlignCenterCell)
+                    ->addText(_WT($threat->getComment()), $this->normalFont, $this->leftParagraph);
             }
         }
 
@@ -5486,7 +3754,7 @@ class DeliverableGenerationService extends AbstractService
      * Generate the owner table data
      * @return mixed|string The WordXml generated data
      */
-    protected function generateOwnersTable()
+    private function generateOwnersTable()
     {
         $allOwners = $this->instanceRiskOwnerTable->findByAnr($this->anr);
         $globalObjectsUuids = [];
@@ -5499,7 +3767,7 @@ class DeliverableGenerationService extends AbstractService
                         . $ir->getThreat()->getUuid()
                         . $ir->getVulnerability()->getUuid();
 
-                    if (\in_array($uniqueKey, $globalObjectsUuids, true)) {
+                    if (in_array($uniqueKey, $globalObjectsUuids, true)) {
                         continue;
                     }
 
@@ -5527,70 +3795,38 @@ class DeliverableGenerationService extends AbstractService
             }
         }
 
-        $tableWord = new PhpWord();
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
         if (!empty($risksByOwner)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(Converter::cmToTwip(2.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Owner'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(6.00), $this->grayCell)
-                ->addText(
-                    $this->anrTranslate('Asset'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
-            $table->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(2, 'DFDFDF'))
-                ->addText(
-                    $this->anrTranslate('Risk'),
-                    $this->boldFont,
-                    $this->centerParagraph
-                );
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+                ->addText($this->anrTranslate('Owner'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+                ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(2, 'DFDFDF'))
+                ->addText($this->anrTranslate('Risk'), $this->boldFont, $this->centerParagraph);
             foreach ($risksByOwner as $owner => $risks) {
                 $isOwnerHeader = true;
                 foreach ($risks as $risk) {
                     $table->addRow(400);
                     if ($isOwnerHeader) {
-                        $table->addCell(Converter::cmToTwip(2.00), $this->restartAndCenterCell)
-                            ->addText(
-                                _WT($owner),
-                                $this->boldFont,
-                                $this->leftParagraph
-                            );
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndCenterCell)
+                            ->addText(_WT($owner), $this->boldFont, $this->leftParagraph);
                     } else {
-                        $table->addCell(Converter::cmToTwip(2.00), $this->continueCell);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueCell);
                     }
-                    $table->addCell(Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-                        ->addText(
-                            _WT($risk['asset']),
-                            $this->normalFont,
-                            $this->leftParagraph
-                        );
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+                        ->addText(_WT($risk['asset']), $this->normalFont, $this->leftParagraph);
                     if (isset($risk['threat'])) {
-                        $table->addCell(Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($risk['threat']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
-                        $table->addCell(Converter::cmToTwip(7.00), $this->vAlignCenterCell)
-                            ->addText(
-                                _WT($risk['vulnerability']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                            ->addText(_WT($risk['threat']), $this->normalFont, $this->leftParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(7.00), $this->vAlignCenterCell)
+                            ->addText(_WT($risk['vulnerability']), $this->normalFont, $this->leftParagraph);
                     } else {
-                        $table->addCell(Converter::cmToTwip(10.00), $this->setColSpanCell(2))
-                            ->addText(
-                                _WT($risk['risk']),
-                                $this->normalFont,
-                                $this->leftParagraph
-                            );
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(2))
+                            ->addText(_WT($risk['risk']), $this->normalFont, $this->leftParagraph);
                     }
                     $isOwnerHeader = false;
                 }
@@ -5601,101 +3837,87 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Generate the asset context table data
+     * Generate the asset context table data.
+     *
      * @return mixed|string The WordXml generated data
      */
-    protected function generateAssetContextTable()
+    private function generateAssetContextTable()
     {
-        $allInstances = $this->instanceTable->findByAnr($this->anr);
-        $allMetadatas = $this->metadatasOnInstancesTable->findByAnr($this->anr);
-        $translations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $this->anr,
-            [Translation::INSTANCE_METADATA, Translation::ANR_METADATAS_ON_INSTANCES],
-            $this->configService->getActiveLanguageCodes()[$this->anr->getLanguage()]
-        );
-        $assetUuids = [];
-        foreach ($allMetadatas as $metadata) {
-            $translationLabel = $translations[$metadata->getLabelTranslationKey()] ?? null;
-            $headersMetadata[] = $translationLabel !== null ? $translationLabel->getValue() : '';
+        /** @var Entity\AnrInstanceMetadataField[] $anrMetadataFields */
+        $anrMetadataFields = $this->anrInstanceMetadataFieldTable->findByAnr($this->anr);
+        $metadataFieldsHeaders = [];
+        foreach ($anrMetadataFields as $anrMetadataField) {
+            $metadataFieldsHeaders[] = $anrMetadataField->getLabel();
         }
-        if (!isset($headersMetadata)) {
-            return;
+        if (empty($metadataFieldsHeaders)) {
+            return null;
         }
-        $sizeColumn = 13 / count($headersMetadata);
 
-        $tableWord = new PhpWord();
+        $sizeColumn = 13 / count($metadataFieldsHeaders);
+
+        $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $tableWord->addTitleStyle(3, $this->titleFont);
 
-        foreach ($allInstances as $instance) {
+        $assetUuids = [];
+        /** @var Entity\Instance[] $instances */
+        $instances = $this->instanceTable->findByAnr($this->anr);
+        foreach ($instances as $instance) {
             $assetUuid = $instance->getAsset()->getUuid();
-            if (\in_array($assetUuid, $assetUuids, true)) {
+            if (in_array($assetUuid, $assetUuids, true)) {
                 continue;
             }
             $assetUuids[] = $assetUuid;
-            $typeAsset = ($instance->getAsset()->getType() == 1) ? 'PrimaryAssets' : 'SecondaryAssets';
-            $assetLabel = $instance->{'getName' . $this->currentLangAnrIndex}();
+            $typeAsset = $instance->getAsset()->isPrimary() ? 'PrimaryAssets' : 'SecondaryAssets';
+            $assetLabel = $instance->getName($this->currentLangAnrIndex);
             if ($instance->getObject()->isScopeGlobal()) {
-                $assetLabel = $assetLabel . ' (' . $this->anrTranslate('Global') . ')';
+                $assetLabel .= ' (' . $this->anrTranslate('Global') . ')';
             }
-            $instanceMetadatas = $instance->getInstanceMetadatas();
 
             if (!isset(${'table' . $typeAsset})) {
                 $section->addTitle(
-                    $this->anrTranslate(
-                        ($instance->getAsset()->getType() == 1) ?
-                            'Primary assets' :
-                            'Secondary assets'
-                    ),
+                    $this->anrTranslate($instance->getAsset()->isPrimary() ? 'Primary assets' : 'Secondary assets'),
                     3
                 );
                 ${'table' . $typeAsset} = $section->addTable($this->borderTable);
                 ${'table' . $typeAsset}->addRow(400, $this->tblHeader);
-                ${'table' . $typeAsset}->addCell(Converter::cmToTwip(4.00), $this->grayCell)
-                    ->addText(
-                        $this->anrTranslate('Asset'),
-                        $this->boldFont,
-                        $this->centerParagraph
-                    );
-                foreach ($headersMetadata as $headerMetadata) {
-                    ${'table' . $typeAsset}->addCell(Converter::cmToTwip($sizeColumn), $this->grayCell)
-                        ->addText(
-                            _WT($headerMetadata),
-                            $this->boldFont,
-                            $this->centerParagraph
-                        );
+                ${'table' . $typeAsset}->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+                foreach ($metadataFieldsHeaders as $headerMetadata) {
+                    ${'table' . $typeAsset}->addCell(PhpWord\Shared\Converter::cmToTwip($sizeColumn), $this->grayCell)
+                        ->addText(_WT($headerMetadata), $this->boldFont, $this->centerParagraph);
                 }
             }
 
             ${'table' . $typeAsset}->addRow(400);
-            ${'table' . $typeAsset}->addCell(Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                ->addText(
-                    _WT($assetLabel),
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+            ${'table' . $typeAsset}->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                ->addText(_WT($assetLabel), $this->normalFont, $this->leftParagraph);
 
-            foreach ($allMetadatas as $metadata) {
-                if ($instanceMetadatas) {
+            $instanceMetadata = $instance->getInstanceMetadata();
+            foreach ($anrMetadataFields as $anrMetadataField) {
+                if (!$instanceMetadata->isEmpty()) {
                     $metadataFiltered = array_filter(
-                        $instanceMetadatas->toArray(),
-                        function ($im) use ($metadata) {
-                            return  $metadata->getId() == $im->getMetadata()->getId();
+                        $instanceMetadata->toArray(),
+                        static function ($im) use ($anrMetadataField) {
+                            /** @var Entity\InstanceMetadata $im */
+                            return $anrMetadataField->getId() === $im->getAnrInstanceMetadataField()->getId();
                         }
                     );
                 }
                 $translationComment = null;
 
-                if (count($metadataFiltered) > 0) {
+                if (!empty($metadataFiltered)) {
                     $translationComment = $translations[reset($metadataFiltered)->getCommentTranslationKey()] ?? null;
                 }
 
-                ${'table' . $typeAsset}->addCell(Converter::cmToTwip($sizeColumn), $this->vAlignCenterCell)
-                    ->addText(
-                        $translationComment !== null ? _WT($translationComment->getValue()) : '',
-                        $this->normalFont,
-                        $this->leftParagraph
-                    );
+                ${'table' . $typeAsset}->addCell(
+                    PhpWord\Shared\Converter::cmToTwip($sizeColumn),
+                    $this->vAlignCenterCell
+                )->addText(
+                    $translationComment !== null ? _WT($translationComment->getValue()) : '',
+                    $this->normalFont,
+                    $this->leftParagraph
+                );
             }
         }
 
@@ -5703,57 +3925,23 @@ class DeliverableGenerationService extends AbstractService
     }
 
     /**
-     * Retrieves the label of kindOfMeasure
-     * @param int $kindOfMeasure value
-     * @return string  kindOfMeasure label
-     */
-    private function getKindfofMeasureLabel($kindOfMeasure)
-    {
-        switch ($kindOfMeasure) {
-            case 1:
-                $kindfofMeasureLabel = "Reduction";
-                break;
-            case 2:
-                $kindfofMeasureLabel = "Denied";
-                break;
-            case 3:
-                $kindfofMeasureLabel = "Accepted";
-                break;
-            case 4:
-                $kindfofMeasureLabel = "Shared";
-                break;
-            default:
-                $kindfofMeasureLabel = "Not treated";
-        }
-
-        return $this->anrTranslate($kindfofMeasureLabel);
-    }
-
-    /**
-     * Retrieves the company name to display within the document
-     * @return string The company name
-     */
-    public function getCompanyName()
-    {
-        return $this->clientTable->findFirstClient()->getName();
-    }
-
-    /**
      * Generates WordXml data from HTML.
+     *
      * @param string $input HTML input
+     *
      * @return string WordXml data
      */
-    protected function generateWordXmlFromHtml($input)
+    private function generateWordXmlFromHtml($input)
     {
         // Process trix caveats
         $input = html_entity_decode($input);
         $input = str_replace(
-            ['&lt;', '&gt;', '&amp;','<br>'],
-            ['[escape_lt]', '[escape_gt]', '[escape_amp]','<!--block-->'],
+            ['&lt;', '&gt;', '&amp;', '<br>'],
+            ['[escape_lt]', '[escape_gt]', '[escape_amp]', '<!--block-->'],
             $input
         );
 
-        while (strpos($input, '<ul>') !== false) {
+        while (str_contains($input, '<ul>')) {
             if (preg_match_all("'<ul>(.*?)</ul>'", $input, $groups)) {
                 foreach ($groups as $group) {
                     $value1 = preg_replace(
@@ -5767,7 +3955,7 @@ class DeliverableGenerationService extends AbstractService
             }
         }
 
-        while (strpos($input, '<ol>') !== false) {
+        while (str_contains($input, '<ol>')) {
             if (preg_match_all("'<ol>(.*?)</ol>'", $input, $groups)) {
                 foreach ($groups as $group) {
                     $index = 0;
@@ -5786,25 +3974,26 @@ class DeliverableGenerationService extends AbstractService
         }
 
         // Turn it into word data
-        $phpWord = new PhpWord();
+        $phpWord = new PhpWord\PhpWord();
         $section = $phpWord->addSection();
-        Html::addHtml($section, $input);
+        PhpWord\Shared\Html::addHtml($section, $input);
 
         return $this->getWordXmlFromWordObject($phpWord);
     }
 
     /**
      * Generates the instances tree
+     *
      * @param array $elements instances risks array
      * @param int $parentId id of parent_Root
      *
      * @return array
      */
-    protected function buildTree($elements, $parentId)
+    private function buildTree($elements, $parentId)
     {
         $branch = [];
         foreach ($elements as $element => $value) {
-            if ($value['parent'] == $parentId) {
+            if ($value['parent'] === $parentId) {
                 $children = $this->buildTree($elements, $element);
                 if ($children) {
                     usort($children, function ($a, $b) {
@@ -5826,10 +4015,12 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Generates a single-level array from multilevel array
+     *
      * @param array $multiLevelArray
+     *
      * @return array
      */
-    protected function singleLevelArray($multiLevelArray)
+    private function singleLevelArray($multiLevelArray)
     {
         $singleLevelArray = [];
         foreach ($multiLevelArray as $a) {
@@ -5849,13 +4040,13 @@ class DeliverableGenerationService extends AbstractService
 
     /**
      * Retrieves the WordXml data from a generated PhpWord Object
-     * @param PhpWord $phpWord The PhpWord Object
+     *
      * @return string The WordXml data
      */
-    protected function getWordXmlFromWordObject($phpWord)
+    private function getWordXmlFromWordObject(PhpWord\PhpWord $phpWord)
     {
-        $part = new Document();
-        $part->setParentWriter(new Word2007($phpWord));
+        $part = new PhpWord\Writer\Word2007\Part\Document();
+        $part->setParentWriter(new PhpWord\Writer\Word2007($phpWord));
         $docXml = $part->write();
         $matches = [];
         $regex = '/<w:body>(.*)<w:sectPr>/is';
@@ -5866,11 +4057,12 @@ class DeliverableGenerationService extends AbstractService
                 ['&lt;', '&gt;', '&amp;'],
                 $matches[1]
             );
+
             return $matches[1];
         }
     }
 
-    private function getObjectInstancePath(RecommendationRisk $recommendationRisk): string
+    private function getObjectInstancePath(Entity\RecommendationRisk $recommendationRisk): string
     {
         if ($recommendationRisk->hasGlobalObjectRelation()) {
             return $recommendationRisk->getInstance()->getName($recommendationRisk->getAnr()->getLanguage())
@@ -5888,6 +4080,7 @@ class DeliverableGenerationService extends AbstractService
 
 function _WT($input)
 {
-    $input = htmlspecialchars(trim($input), ENT_COMPAT, 'UTF-8');
+    $input = htmlspecialchars(trim($input), ENT_COMPAT);
+
     return str_replace("\n", '</w:t><w:br/><w:t>', $input);
 }

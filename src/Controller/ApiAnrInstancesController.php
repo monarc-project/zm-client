@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -10,6 +10,9 @@ namespace Monarc\FrontOffice\Controller;
 use Laminas\Http\Response;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Validator\InputValidator\Instance\CreateInstanceDataInputValidator;
+use Monarc\Core\Validator\InputValidator\Instance\PatchInstanceDataInputValidator;
+use Monarc\Core\Validator\InputValidator\Instance\UpdateInstanceDataInputValidator;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
@@ -19,20 +22,14 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private AnrInstanceService $anrInstanceService;
-
-    private AnrInstanceRiskService $anrInstanceRiskService;
-
-    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
-
     public function __construct(
-        AnrInstanceService $anrInstanceService,
-        AnrInstanceRiskService $anrInstanceRiskService,
-        AnrInstanceRiskOpService $anrInstanceRiskOpService
+        private AnrInstanceService $anrInstanceService,
+        private AnrInstanceRiskService $anrInstanceRiskService,
+        private AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private CreateInstanceDataInputValidator $createInstanceDataInputValidator,
+        private UpdateInstanceDataInputValidator $updateInstanceDataInputValidator,
+        private PatchInstanceDataInputValidator $patchInstanceDataInputValidator
     ) {
-        $this->anrInstanceService = $anrInstanceService;
-        $this->anrInstanceRiskService = $anrInstanceRiskService;
-        $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
     }
 
     public function getList()
@@ -52,16 +49,16 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $params = $this->parseParams();
-
         if ($this->params()->fromQuery('csv', false)) {
             return $this->setCsvResponse(
-                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, $id, $params)
+                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, $id, $this->parseParams())
             );
         }
 
         if ($this->params()->fromQuery('csvInfoInst', false)) {
-            return $this->setCsvResponse($this->anrInstanceRiskService->getInstanceRisksInCsv($anr, $id, $params));
+            return $this->setCsvResponse(
+                $this->anrInstanceRiskService->getInstanceRisksInCsv($anr, $id, $this->parseParams())
+            );
         }
 
         $instanceData = $this->anrInstanceService->getInstanceData($anr, $id);
@@ -69,12 +66,38 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
         return $this->getPreparedJsonResponse($instanceData);
     }
 
+    /**
+     * Instantiation of an object to the analysis.
+     *
+     * @param array $data
+     */
+    public function create($data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->validatePostParams($this->createInstanceDataInputValidator, $data);
+
+        $instance = $this->anrInstanceService
+            ->instantiateObjectToAnr($anr, $this->createInstanceDataInputValidator->getValidData(), true);
+
+        return $this->getSuccessfulJsonResponse(['id' => $instance->getId()]);
+    }
+
+    /**
+     * Is called when instances consequences are set (edit impact).
+     *
+     * @param array $data
+     */
     public function update($id, $data)
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->anrInstanceService->updateInstance($anr, $id, $data);
+        $this->validatePostParams($this->updateInstanceDataInputValidator, $data);
+
+        $this->anrInstanceService
+            ->updateInstance($anr, (int)$id, $this->updateInstanceDataInputValidator->getValidData());
 
         return $this->getSuccessfulJsonResponse();
     }
@@ -84,45 +107,39 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
      */
     public function patch($id, $data)
     {
-        // $data payload anrId (not needed), instId, parent, position
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->anrInstanceService->patchInstance($anr, $id, $data);
+        $this->validatePostParams($this->patchInstanceDataInputValidator, $data);
+
+        $this->anrInstanceService
+            ->patchInstance($anr, (int)$id, $this->patchInstanceDataInputValidator->getValidData());
 
         return $this->getSuccessfulJsonResponse();
     }
 
-    public function create($data)
+    public function delete($id)
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        // TODO: move to a validator and use getValidData.
-        $required = ['object', 'parent', 'position'];
+        $this->anrInstanceService->delete($anr, (int)$id);
 
-        $instance = $this->anrInstanceService->instantiateObjectToAnr($anr, $data, true);
-
-        return $this->getSuccessfulJsonResponse([
-            'id' => $instance->getId(),
-        ]);
+        return $this->getSuccessfulJsonResponse();
     }
 
-    /**
-     * TODO: replace it with a Filter
-     * Helper function to parse query parameters
-     * @return array The sorted parameters
-     */
     private function parseParams(): array
     {
+        $params = $this->params();
+
         return [
-            'keywords' => trim($this->params()->fromQuery('keywords', '')),
-            'kindOfMeasure' => $this->params()->fromQuery('kindOfMeasure'),
-            'order' => $this->params()->fromQuery('order', 'maxRisk'),
-            'order_direction' => $this->params()->fromQuery('order_direction', 'desc'),
-            'thresholds' => $this->params()->fromQuery('thresholds'),
-            'page' => $this->params()->fromQuery('page', 1),
-            'limit' => $this->params()->fromQuery('limit', 50)
+            'keywords' => trim($params->fromQuery('keywords', '')),
+            'kindOfMeasure' => $params->fromQuery('kindOfMeasure'),
+            'order' => $params->fromQuery('order', 'maxRisk'),
+            'order_direction' => $params->fromQuery('order_direction', 'desc'),
+            'thresholds' => $params->fromQuery('thresholds'),
+            'page' => $params->fromQuery('page', 1),
+            'limit' => $params->fromQuery('limit', 0),
         ];
     }
 

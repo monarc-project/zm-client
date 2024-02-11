@@ -13,8 +13,6 @@ use Monarc\Core\Model\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Model\Entity\Traits\UpdateEntityTrait;
 
 /**
- * Interview
- *
  * @ORM\Table(name="interviews")
  * @ORM\Entity
  * @ORM\HasLifecycleCallbacks()
@@ -34,9 +32,9 @@ class Interview extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
      * })

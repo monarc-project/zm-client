@@ -1,29 +1,31 @@
 <?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Stats\Service;
 
 use DateTime;
-use Doctrine\ORM\EntityNotFoundException;
 use Exception;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use LogicException;
+use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Model\Entity\ScaleSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Exception\AccessForbiddenException;
-use Monarc\FrontOffice\Exception\UserNotAuthorizedException;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\Scale;
 use Monarc\FrontOffice\Model\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Entity\User;
 use Monarc\FrontOffice\Model\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\SoaTable;
 use Monarc\FrontOffice\Model\Table\ReferentialTable;
-use Monarc\FrontOffice\Model\Table\ScaleTable;
+use Monarc\FrontOffice\Table\ScaleTable;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Table\SnapshotTable;
-use Monarc\FrontOffice\Table\UserTable;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
@@ -58,78 +60,35 @@ class StatsAnrService
         'vulnerability_average_on_date',
     ];
 
-    /** @var AnrTable */
-    private $anrTable;
-
-    /** @var ScaleTable */
-    private $scaleTable;
-
-    /** @var InstanceRiskTable */
-    private $informationalRiskTable;
-
-    /** @var InstanceRiskOpTable */
-    private $operationalRiskTable;
-
-    /** @var ReferentialTable */
-    private $referentialTable;
-
-    /** @var SoaTable */
-    private $soaTable;
-
-    /** @var StatsApiProvider */
-    private $statsApiProvider;
-
-    /** @var ConnectedUserService */
-    private $connectedUserService;
-
-    /** @var UserTable */
-    private $userTable;
-
-    /** @var SnapshotTable */
-    private $snapshotTable;
+    private User $connectedUser;
 
     /** @var string */
     private $apiKey;
 
     public function __construct(
-        AnrTable $anrTable,
-        ScaleTable $scaleTable,
-        InstanceRiskTable $informationalRiskTable,
-        InstanceRiskOpTable $operationalRiskTable,
-        ReferentialTable $referentialTable,
-        SoaTable $soaTable,
-        StatsApiProvider $statsApiProvider,
+        private AnrTable $anrTable,
+        private ScaleTable $scaleTable,
+        private InstanceRiskTable $informationalRiskTable,
+        private InstanceRiskOpTable $operationalRiskTable,
+        private ReferentialTable $referentialTable,
+        private SoaTable $soaTable,
+        private StatsApiProvider $statsApiProvider,
+        private SnapshotTable $snapshotTable,
         ConnectedUserService $connectedUserService,
-        UserTable $userTable,
-        SnapshotTable $snapshotTable,
         array $config
     ) {
-        $this->anrTable = $anrTable;
-        $this->scaleTable = $scaleTable;
-        $this->informationalRiskTable = $informationalRiskTable;
-        $this->operationalRiskTable = $operationalRiskTable;
-        $this->referentialTable = $referentialTable;
-        $this->soaTable = $soaTable;
-        $this->statsApiProvider = $statsApiProvider;
-        $this->connectedUserService = $connectedUserService;
-        $this->userTable = $userTable;
-        $this->snapshotTable = $snapshotTable;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
         $this->apiKey = $config['statsApi']['apiKey'] ?? '';
     }
 
-    /**
-     * @throws UserNotAuthorizedException
-     * @throws EntityNotFoundException
-     */
     public function isStatsAvailable(): bool
     {
         if ($this->apiKey === '') {
             return false;
         }
 
-        $loggedInUser = $this->getValidatedLoggedInUser();
-        if (!$loggedInUser->hasRole(UserRole::USER_ROLE_CEO)) {
-            $anrUuids = $this->getAvailableUserAnrsUuids($loggedInUser);
+        if (!$this->connectedUser->hasRole(UserRole::USER_ROLE_CEO)) {
+            $anrUuids = $this->getAvailableUserAnrsUuids();
             if (empty($anrUuids)) {
                 return false;
             }
@@ -155,17 +114,14 @@ class StatsAnrService
      *
      * @return array
      *
-     * @throws UserNotAuthorizedException
      * @throws AccessForbiddenException
      * @throws Exception
      * @throws StatsFetchingException
      */
     public function getStats(array $validatedParams): array
     {
-        $loggedInUser = $this->getValidatedLoggedInUser();
-
         if (empty($validatedParams['type'])) {
-            throw new \LogicException("Filter parameter 'type' is mandatory to get the stats.");
+            throw new LogicException("Filter parameter 'type' is mandatory to get the stats.");
         }
         $requestParams['type'] = $validatedParams['type'];
 
@@ -177,7 +133,7 @@ class StatsAnrService
             $requestParams['get_last'] = true;
         }
 
-        $anrUuids = $this->getFilteredAnrUuids($validatedParams, $loggedInUser);
+        $anrUuids = $this->getFilteredAnrUuids($validatedParams);
         if (!empty($anrUuids)) {
             $requestParams['anrs'] = $anrUuids;
         }
@@ -190,7 +146,6 @@ class StatsAnrService
 
         $statsData = $this->statsApiProvider->getStatsData($requestParams);
 
-        // TODO: make a response data formatter with passing the aggregation period param.
         if ($requestParams['type'] === StatsDataObject::TYPE_RISK) {
             $statsData = $this->formatRisksStatsData($statsData);
         } elseif (in_array(
@@ -209,17 +164,12 @@ class StatsAnrService
     }
 
     /**
-     * @throws AccessForbiddenException
-     * @throws StatsFetchingException
-     * @throws UserNotAuthorizedException
-     * @throws WrongResponseFormatException
+     * @throws LogicException|AccessForbiddenException|WrongResponseFormatException|StatsFetchingException
      */
     public function getProcessedStats(array $validatedParams): array
     {
-        $loggedInUser = $this->getValidatedLoggedInUser();
-
         if (empty($validatedParams['processor']) || empty($validatedParams['type'])) {
-            throw new \LogicException("Filter parameters 'processor' and 'type' are mandatory to get the stats.");
+            throw new LogicException("Filter parameters 'processor' and 'type' are mandatory to get the stats.");
         }
         $requestParams['processor'] = $validatedParams['processor'];
         $requestParams['processor_params'] = $validatedParams['processor_params'];
@@ -227,14 +177,15 @@ class StatsAnrService
         $requestParams['date_to'] = $this->getPreparedDateTo($validatedParams);
         $requestParams['type'] = $validatedParams['type'];
 
-        $anrUuids = $this->getFilteredAnrUuids(['anrs' => []], $loggedInUser);
+        $anrUuids = $this->getFilteredAnrUuids(['anrs' => []]);
         if (!empty($anrUuids)) {
             $requestParams['anrs'] = $anrUuids;
         }
 
+        /* Seems not used.
         if (!empty($validatedParams['nbdays'])) {
             $validatedParams['nbdays'];
-        }
+        }*/
 
         return $this->formatProcessedStatsData($this->statsApiProvider->getProcessedStatsData($requestParams));
     }
@@ -243,7 +194,7 @@ class StatsAnrService
      * Collects the statistics for today.
      *
      * @param int[] $anrIds List of Anr IDs to use for the stats collection.
-     * @param bool $forceUpdate Whether or not overwrite the data if already presented for today.
+     * @param bool $forceUpdate Whether overwrite the data if already presented for today.
      *
      * @return array
      *
@@ -251,7 +202,6 @@ class StatsAnrService
      * @throws StatsFetchingException
      * @throws StatsSendingException
      * @throws WrongResponseFormatException
-     * @throws EntityNotFoundException
      */
     public function collectStats(array $anrIds = [], bool $forceUpdate = false): array
     {
@@ -368,8 +318,8 @@ class StatsAnrService
             StatsDataObject::TYPE_VULNERABILITY => $informationalRisksValues[StatsDataObject::TYPE_VULNERABILITY],
             StatsDataObject::TYPE_CARTOGRAPHY => [
                 'scales' => [
-                    'impact' => $scalesRanges[Scale::TYPE_IMPACT],
-                    'probability' => $scalesRanges[Scale::TYPE_THREAT],
+                    'impact' => $scalesRanges[ScaleSuperClass::TYPE_IMPACT],
+                    'probability' => $scalesRanges[ScaleSuperClass::TYPE_THREAT],
                     'likelihood' => $likelihoodScales,
                 ],
                 'risks' => [
@@ -403,17 +353,17 @@ class StatsAnrService
                 }
 
                 $currentCategoryValues = [
-                    'label1' => $soaCategory->getlabel1(),
-                    'label2' => $soaCategory->getlabel2(),
-                    'label3' => $soaCategory->getlabel3(),
-                    'label4' => $soaCategory->getlabel4(),
+                    'label1' => $soaCategory->getlabel(1),
+                    'label2' => $soaCategory->getlabel(2),
+                    'label3' => $soaCategory->getlabel(3),
+                    'label4' => $soaCategory->getlabel(4),
                     'controls' => [],
                 ];
                 $targetCategoryValues = [
-                    'label1' => $soaCategory->getlabel1(),
-                    'label2' => $soaCategory->getlabel2(),
-                    'label3' => $soaCategory->getlabel3(),
-                    'label4' => $soaCategory->getlabel4(),
+                    'label1' => $soaCategory->getlabel(1),
+                    'label2' => $soaCategory->getlabel(2),
+                    'label3' => $soaCategory->getlabel(3),
+                    'label4' => $soaCategory->getlabel(4),
                     'controls' => [],
                 ];
                 $targetSoaCount = 0;
@@ -425,12 +375,12 @@ class StatsAnrService
                     }
                     $currentCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
-                        'measure' => (string)$measure->getUuid(),
+                        'measure' => $measure->getUuid(),
                         'value' => $soa->getEx() === 1 ? '0.00' : bcmul((string)$soa->getCompliance(), '0.20', 2),
                     ];
                     $targetCategoryValues['controls'][] = [
                         'code' => $measure->getCode(),
-                        'measure' => (string)$measure->getUuid(),
+                        'measure' => $measure->getUuid(),
                         'value' => $soa->getEx() === 1 ? '0' : '1',
                     ];
 
@@ -453,9 +403,9 @@ class StatsAnrService
                     ), '0.2', 2);
                     $targetCategoryValues['value'] = bcdiv((string)$targetSoaCount, (string)$currentControlsNumber, 2);
 
-                    if (!isset($complianceStatsValues[(string)$reference->getUuid()])) {
-                        $complianceStatsValues[(string)$reference->getUuid()] = [
-                            'referential' => (string)$reference->getUuid(),
+                    if (!isset($complianceStatsValues[$reference->getUuid()])) {
+                        $complianceStatsValues[$reference->getUuid()] = [
+                            'referential' => $reference->getUuid(),
                             'label1' => $reference->getLabel(1),
                             'label2' => $reference->getLabel(2),
                             'label3' => $reference->getLabel(3),
@@ -464,8 +414,8 @@ class StatsAnrService
                             'target' => [],
                         ];
                     }
-                    $complianceStatsValues[(string)$reference->getUuid()]['current'][] = $currentCategoryValues;
-                    $complianceStatsValues[(string)$reference->getUuid()]['target'][] = $targetCategoryValues;
+                    $complianceStatsValues[$reference->getUuid()]['current'][] = $currentCategoryValues;
+                    $complianceStatsValues[$reference->getUuid()]['target'][] = $targetCategoryValues;
                 }
             }
         }
@@ -476,9 +426,9 @@ class StatsAnrService
     private function prepareScalesRanges(Anr $anr): array
     {
         $scalesRanges = [
-            Scale::TYPE_IMPACT => [],
-            Scale::TYPE_THREAT => [],
-            Scale::TYPE_VULNERABILITY => [],
+            ScaleSuperClass::TYPE_IMPACT => [],
+            ScaleSuperClass::TYPE_THREAT => [],
+            ScaleSuperClass::TYPE_VULNERABILITY => [],
         ];
         $scales = $this->scaleTable->findByAnr($anr);
         foreach ($scales as $scale) {
@@ -491,9 +441,9 @@ class StatsAnrService
     private function calculateScalesColumnValues(array $scalesRanges): array
     {
         $headersResult = [];
-        foreach ($scalesRanges[Scale::TYPE_IMPACT] as $i) {
-            foreach ($scalesRanges[Scale::TYPE_THREAT] as $t) {
-                foreach ($scalesRanges[Scale::TYPE_VULNERABILITY] as $v) {
+        foreach ($scalesRanges[ScaleSuperClass::TYPE_IMPACT] as $i) {
+            foreach ($scalesRanges[ScaleSuperClass::TYPE_THREAT] as $t) {
+                foreach ($scalesRanges[ScaleSuperClass::TYPE_VULNERABILITY] as $v) {
                     $value = -1;
                     if ($i !== -1 && $t !== -1 && $v !== -1) {
                         $value = $t * $v;
@@ -579,7 +529,7 @@ class StatsAnrService
     private function getRiskValues(array $risksValues, array $riskContext, string $amvKey, array $riskData): array
     {
         $objectId = (string)$riskData['objectId'];
-        $isScopeGlobal = $riskData['scope'] === MonarcObject::SCOPE_GLOBAL;
+        $isScopeGlobal = $riskData['scope'] === ObjectSuperClass::SCOPE_GLOBAL;
         $riskKey = $isScopeGlobal ? 0 : $riskData['id'];
         if (!$isScopeGlobal
             || empty($risksValues[$objectId][$amvKey][$riskKey])
@@ -593,7 +543,7 @@ class StatsAnrService
 
     private function getThreatsValues(array $threatsValues, string $key, array $riskData): array
     {
-        $isScopeGlobal = $riskData['scope'] === MonarcObject::SCOPE_GLOBAL;
+        $isScopeGlobal = $riskData['scope'] === ObjectSuperClass::SCOPE_GLOBAL;
         $threatKey = $isScopeGlobal ? 0 : (string)$riskData['threatId'];
         if (!$isScopeGlobal
             || empty($threatsValues[$key][$threatKey])
@@ -616,7 +566,7 @@ class StatsAnrService
 
     private function getVulnerabilitiesValues(array $vulnerabilitiesValues, string $key, array $riskData): array
     {
-        $isScopeGlobal = $riskData['scope'] === MonarcObject::SCOPE_GLOBAL;
+        $isScopeGlobal = $riskData['scope'] === ObjectSuperClass::SCOPE_GLOBAL;
         $vulnerabilityKey = $isScopeGlobal ? 0 : (string)$riskData['vulnerabilityId'];
         if (!$isScopeGlobal
             || empty($vulnerabilitiesValues[$key][$vulnerabilityKey])
@@ -849,13 +799,12 @@ class StatsAnrService
 
     /**
      * @throws AccessForbiddenException
-     * @throws EntityNotFoundException
      */
-    private function getFilteredAnrUuids(array $validatedParams, UserSuperClass $loggedInUser): array
+    private function getFilteredAnrUuids(array $validatedParams): array
     {
         $anrUuids = [];
-        if (!$loggedInUser->hasRole(UserRole::USER_ROLE_CEO)) {
-            $anrUuids = $this->getAvailableUserAnrsUuids($loggedInUser, $validatedParams['anrs']);
+        if (!$this->connectedUser->hasRole(UserRole::USER_ROLE_CEO)) {
+            $anrUuids = $this->getAvailableUserAnrsUuids($validatedParams['anrs']);
             if (empty($anrUuids)) {
                 throw new AccessForbiddenException();
             }
@@ -919,16 +868,17 @@ class StatsAnrService
             if (empty($risksData['risks']['current']) || empty($risksData['risks']['residual'])) {
                 continue;
             }
-            $anrUuids[] = $data->getAnr();
-            $formattedResult[$data->getAnr()] = [
+            $anrUuid = $data->getAnr();
+            $anrUuids[] = $anrUuid;
+            $formattedResult[$anrUuid] = [
                 'current' => [
                     'category' => '',
-                    'uuid' => $data->getAnr(),
+                    'uuid' => $anrUuid,
                     'series' => $this->getSeriesForType('current', $risksData),
                 ],
                 'residual' => [
                     'category' => '',
-                    'uuid' => $data->getAnr(),
+                    'uuid' => $anrUuid,
                     'series' => $this->getSeriesForType('residual', $risksData),
                 ],
             ];
@@ -947,7 +897,7 @@ class StatsAnrService
                     'residual' => array_column($formattedResult, 'residual'),
                 ];
                 foreach ($formattedResult as $key => &$value) {
-                    usort($value, function ($a, $b) {
+                    usort($value, static function ($a, $b) {
                         return $a['category'] <=> $b['category'];
                     });
                 }
@@ -984,7 +934,7 @@ class StatsAnrService
             return [];
         }
 
-        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
+        $userLanguageNumber = $this->connectedUser->getLanguage();
         $formattedResult = [];
         foreach ($statsData as $data) {
             $anrUuid = $data->getAnr();
@@ -1296,7 +1246,7 @@ class StatsAnrService
 
     private function formatProcessedStatsData(array $data): array
     {
-        $userLanguageNumber = $this->connectedUserService->getConnectedUser()->getLanguage();
+        $userLanguageNumber = $this->connectedUser->getLanguage();
         $formattedResponse = [];
         foreach ($data as $processedStats) {
             $dataRow = $processedStats;
@@ -1325,29 +1275,10 @@ class StatsAnrService
         return $formattedResponse;
     }
 
-    /**
-     * @throws UserNotAuthorizedException
-     */
-    private function getValidatedLoggedInUser(): UserSuperClass
-    {
-        $loggedInUser = $this->connectedUserService->getConnectedUser();
-        if ($loggedInUser === null) {
-            throw new UserNotAuthorizedException();
-        }
-
-        return $loggedInUser;
-    }
-
-    /**
-     * @throws EntityNotFoundException
-     */
-    private function getAvailableUserAnrsUuids(UserSuperClass $loggedInUser, array $anrIds = []): array
+    private function getAvailableUserAnrsUuids(array $anrIds = []): array
     {
         $anrUuids = [];
-        // We do this trick to get the User object from FO side instead of Core.
-        /** @var User $user */
-        $user = $this->userTable->findById($loggedInUser->getId());
-        $userAnrs = $user->getUserAnrs();
+        $userAnrs = $this->connectedUser->getUserAnrs();
         $snapshotAnrsIds = [];
         if (!$userAnrs->isEmpty()) {
             $snapshots = $this->snapshotTable->findAll();

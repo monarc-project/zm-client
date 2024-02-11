@@ -27,21 +27,20 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         parent::__construct($entityManager, $entityName);
     }
 
-    /**
-     * @param Anr|int $anrId
-     */
-    public function started($anrId): bool
+    public function isEvaluationStarted(Anr $anr): bool
     {
-        $qb = $this->getRepository()->createQueryBuilder('t');
-        $res = $qb->select('COUNT(t.id)')
-            ->where('t.anr = :anrid')
-            ->setParameter(':anrid', $anrId)
-            ->andWhere($qb->expr()->orX(
-                $qb->expr()->neq('t.threatRate', -1),
-                $qb->expr()->neq('t.vulnerabilityRate', -1)
-            ))->getQuery()->getSingleScalarResult();
+        $queryBuilder = $this->getRepository()->createQueryBuilder('ir');
 
-        return $res > 0;
+        return $queryBuilder
+            ->where('ir.anr = :anr')
+            ->setParameter(':anr', $anr)
+            ->andWhere($queryBuilder->expr()->orX(
+                $queryBuilder->expr()->neq('ir.threatRate', -1),
+                $queryBuilder->expr()->neq('ir.vulnerabilityRate', -1)
+            ))
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult(AbstractQuery::HYDRATE_SIMPLEOBJECT) !== null;
     }
 
     /**
@@ -194,6 +193,35 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->innerJoin('ir.instance', 'i')
             ->innerJoin('ir.threat', 't')
             ->innerJoin('ir.vulnerability', 'v')
+            ->innerJoin('i.object', 'o')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findRisksValuesForCartoStatsByAnr(Anr $anr, $riskValueField): array
+    {
+        return $this->getRepository()->createQueryBuilder('ir')
+            ->select([
+                'ir as instanceRisk',
+                'ir.kindOfMeasure as treatment',
+                'IDENTITY(ir.amv) as amv',
+                'IDENTITY(ir.asset) as asset',
+                'IDENTITY(ir.threat) as threat',
+                'IDENTITY(ir.vulnerability) as vulnerability',
+                $riskValueField . ' as maximus',
+                'i.c as ic',
+                'i.i as ii',
+                'i.d as id',
+                'IDENTITY(i.object) as object',
+                'm.c as mc',
+                'm.i as mi',
+                'm.a as ma',
+                'o.scope',
+            ])->where('ir.anr = :anr')
+            ->setParameter(':anr', $anr)
+            ->andWhere($riskValueField . " != -1")
+            ->innerJoin('ir.instance', 'i')
+            ->innerJoin('ir.threat', 'm')
             ->innerJoin('i.object', 'o')
             ->getQuery()
             ->getResult();

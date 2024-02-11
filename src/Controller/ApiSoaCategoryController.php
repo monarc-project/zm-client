@@ -7,23 +7,19 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
-use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\SoaCategoryService;
 
-/**
- * Api ANR Categories Controller
- *
- * Class ApiAnrCategoriesController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiSoaCategoryController extends ApiAnrAbstractController
 {
-    protected $name = 'categories';
-    protected $dependencies = ['anr', 'referential'];
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(SoaCategoryService $soaCategoryService)
+    {
+        parent::__construct($soaCategoryService);
+    }
+
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -50,15 +46,13 @@ class ApiSoaCategoryController extends ApiAnrAbstractController
         $service = $this->getService();
 
         $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
+        foreach (['anr', 'referential'] as $key => $entity) {
+            $this->formatDependencies($entities[$key], $this->dependencies);
         }
 
-        return new JsonModel(array(
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
-        ));
+            'categories' => $entities,
+        ]);
     }
 }

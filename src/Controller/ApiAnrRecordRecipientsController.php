@@ -8,21 +8,18 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrRecordRecipientService;
 
-/**
- * Api Anr Record Recipients Controller
- *
- * Class ApiAnrRecordRecipientsController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrRecordRecipientsController extends ApiAnrAbstractController
 {
     protected $name = 'record-recipients';
     protected $dependencies = ['anr'];
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(AnrRecordRecipientService $anrRecordRecipientService)
+    {
+        parent::__construct($anrRecordRecipientService);
+    }
+
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -38,9 +35,6 @@ class ApiAnrRecordRecipientsController extends ApiAnrAbstractController
         ]);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -54,17 +48,11 @@ class ApiAnrRecordRecipientsController extends ApiAnrAbstractController
         return new JsonModel(['status' => 'ok']);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

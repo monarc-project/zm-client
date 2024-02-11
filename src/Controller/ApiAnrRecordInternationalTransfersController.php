@@ -8,21 +8,18 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Service\AnrRecordInternationalTransferService;
 
-/**
- * Api Anr Record Interntional Transfers Controller
- *
- * Class ApiAnrRecordInternationalTransfersController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrRecordInternationalTransfersController extends ApiAnrAbstractController
 {
     protected $name = 'record-international-transfers';
     protected $dependencies = ['anr', 'record', 'processor'];
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(AnrRecordInternationalTransferService $anrRecordInternationalTransferService)
+    {
+        parent::__construct($anrRecordInternationalTransferService);
+    }
+
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -39,9 +36,6 @@ class ApiAnrRecordInternationalTransfersController extends ApiAnrAbstractControl
         ]);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -55,17 +49,11 @@ class ApiAnrRecordInternationalTransfersController extends ApiAnrAbstractControl
         return new JsonModel(['status' => 'ok']);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

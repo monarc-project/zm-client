@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Table;
 
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\UniqueCodeTableInterface;
@@ -23,14 +24,14 @@ class ThreatTable extends AbstractTable implements UniqueCodeTableInterface
         parent::__construct($entityManager, $entityName);
     }
 
-    public function isThreatsEvaluationStarted(Anr $anr): bool
+    public function isEvaluationStarted(Anr $anr): bool
     {
-        return (bool)$this->getRepository()->createQueryBuilder('t')
-            ->select('COUNT(t.uuid)')
+        return $this->getRepository()->createQueryBuilder('t')
             ->where('t.anr = :anr')
             ->setParameter(':anr', $anr)
             ->andWhere('t.qualification != -1')
+            ->setMaxResults(1)
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getOneOrNullResult(AbstractQuery::HYDRATE_SIMPLEOBJECT) !== null;
     }
 }

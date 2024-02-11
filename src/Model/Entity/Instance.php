@@ -69,9 +69,6 @@ class Instance extends InstanceSuperClass
         $this->instanceMetadata = new ArrayCollection();
     }
 
-    /**
-     * @return InstanceMetadata[]
-     */
     public function getInstanceMetadata()
     {
         return $this->instanceMetadata;

@@ -8,9 +8,9 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractController;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Ramsey\Uuid\Uuid;
-use Laminas\View\Model\JsonModel;
 use function in_array;
 
 /**
@@ -19,9 +19,8 @@ use function in_array;
  */
 abstract class ApiAnrAbstractController extends AbstractController
 {
-    /**
-     * @inheritdoc
-     */
+    use ControllerRequestResponseHandlerTrait;
+
     public function getList()
     {
         $page = $this->params()->fromQuery('page');
@@ -50,9 +49,9 @@ abstract class ApiAnrAbstractController extends AbstractController
             }
         }
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
+            $this->name => $entities,
         ]);
     }
 
@@ -84,7 +83,7 @@ abstract class ApiAnrAbstractController extends AbstractController
             $this->formatDependencies($entity, $this->dependencies);
         }
 
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($entity);
     }
 
     /**
@@ -130,8 +129,7 @@ abstract class ApiAnrAbstractController extends AbstractController
             $created_objects[] = $id;
         }
 
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'id' => count($created_objects) == 1 ? $created_objects[0] : $created_objects,
         ]);
     }
@@ -159,7 +157,7 @@ abstract class ApiAnrAbstractController extends AbstractController
 
         $this->getService()->update($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**
@@ -186,7 +184,7 @@ abstract class ApiAnrAbstractController extends AbstractController
 
         $this->getService()->patch($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**
@@ -206,11 +204,9 @@ abstract class ApiAnrAbstractController extends AbstractController
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
 
-        if ($this->getService()->deleteFromAnr($id, $anrId)) {
-            return new JsonModel(['status' => 'ok']);
-        }
+        $this->getService()->deleteFromAnr($id, $anrId);
 
-        return new JsonModel(['status' => 'ok']); // Todo : may be add error message
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**
@@ -223,19 +219,17 @@ abstract class ApiAnrAbstractController extends AbstractController
         $class = $this->getService()->get('entity');
         $entity = new $class();
         $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
-        if (count($ids) > 1) {
+        if (\count($ids) > 1) {
             foreach ($data as $key => $value) {
-                if (count($ids) > 1 && in_array('anr', $ids) && in_array('uuid', $ids) && !is_array($value)) {
+                if (in_array('anr', $ids) && in_array('uuid', $ids) && !is_array($value)) {
                     $data[$key] = ['uuid' => $value, 'anr' => $anrId];
                 }
             }
         }
 
-        if ($this->getService()->deleteListFromAnr($data, $anrId)) {
-            return new JsonModel(['status' => 'ok']);
-        }
+        $this->getService()->deleteListFromAnr($data, $anrId);
 
-        return new JsonModel(['status' => 'ok']); // Todo: may be add error message
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**

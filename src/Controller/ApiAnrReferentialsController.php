@@ -7,24 +7,26 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrReferentialService;
 
-/**
- * Api Anr Referentials Controller
- *
- * Class ApiAnrReferentialsController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrReferentialsController extends ApiAnrAbstractController
 {
-    protected $name = 'referentials';
+    use ControllerRequestResponseHandlerTrait;
+
     protected $dependencies = ['anr', 'measures'];
+
+    public function __construct(AnrReferentialService $anrReferentialService)
+    {
+        parent::__construct($anrReferentialService);
+    }
 
     public function getList()
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $page = $this->params()->fromQuery('page');
         $limit = $this->params()->fromQuery('limit');
@@ -41,10 +43,10 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
             }
         }
 
-        return new JsonModel(array(
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
-        ));
+            'referentials' => $entities,
+        ]);
     }
 
     public function get($id)
@@ -53,17 +55,17 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         $entity = $this->getService()->getEntity(['anr' => $anrId, 'uuid' => $id]);
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids diffence', 412);
+            throw new Exception('Anr ids diffence', 412);
         }
 
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
 
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($entity);
     }
 
     public function update($id, $data)
@@ -72,13 +74,13 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         $newId = ['anr'=> $anrId, 'uuid' => $data['uuid']];
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
         $this->getService()->update($newId, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function delete($id)
@@ -87,12 +89,12 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         $newId = ['anr'=> $anrId, 'uuid' => $id];
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
         $this->getService()->delete($newId);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 }

@@ -191,4 +191,23 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             ->getQuery()
             ->getResult();
     }
+
+    public function findRisksValuesForCartoStatsByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('iro')
+            ->select([
+                'iro as instanceRiskOp',
+                'iro.cacheNetRisk as netRisk',
+                'iro.cacheTargetedRisk as targetedRisk',
+                'iro.kindOfMeasure as treatment',
+                'IDENTITY(iro.rolfRisk) as id',
+                'iro.netProb as netProb',
+                'iro.targetedProb as targetedProb',
+            ])
+            ->where('iro.anr = :anr')
+            ->setParameter(':anr', $anr)
+            ->andWhere("iro.cacheNetRisk != -1")
+            ->getQuery()
+            ->getResult();
+    }
 }

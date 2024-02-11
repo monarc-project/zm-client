@@ -1,46 +1,29 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Export\Service;
 
-// TODO: resolve the entanglement of the AnrMetadataOnInstances table, service, entity...
-// TODO: move the service to FrontOffice -> we use here not the right service perhaps, todo check in git history.
-use Monarc\FrontOffice\Export\Service\AnrInstanceMetadataFieldsExportService;
-use Monarc\FrontOffice\Model\Table\SoaTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Table\AnrTable;
-use Monarc\FrontOffice\Table\InstanceTable;
+use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Table;
 
 class AnrExportService
 {
-    private AnrTable $anrTable;
-
-    private InstanceTable $instanceTable;
-
-    private AnrInstanceExportService $anrInstanceExportService;
-
-    private SoaTable $soaTable;
-
     public function __construct(
-        AnrTable $anrTable,
-        InstanceTable $instanceTable,
-        AnrInstanceExportService $anrInstanceExportService,
-        SoaTable $soaTable,
-        // TODO: integrate it here: https://github.com/monarc-project/zm-core/blob/master/src/Service/AnrMetadatasOnInstancesExportService.php
-        InstanceMetadataFieldsExportService $instanceMetadataFieldsExportService
+        private Table\AnrTable $anrTable,
+        private Table\InstanceTable $instanceTable,
+        private DeprecatedTable\SoaTable $soaTable,
+        private Table\DeliveryTable $deliveryTable,
+        private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
+        private AnrInstanceExportService $anrInstanceExportService
     ) {
-
-        $this->anrTable = $anrTable;
-        $this->instanceTable = $instanceTable;
-        $this->anrInstanceExportService = $anrInstanceExportService;
-        $this->soaTable = $soaTable;
     }
 
-    public function export(Anr $anr, array $data): array
+    public function export(Entity\Anr $anr, array $data): array
     {
         $withEval = isset($data['assessments']) && $data['assessments'];
         $withControls = isset($data['controls']) && $data['controls'];
@@ -52,10 +35,14 @@ class AnrExportService
 
         $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $anr->getLabel());
 
+        // TODO: the variable at the end $exportedAnr is the result of the json_encode($return) below.
+        // so we need to move it to a separate method and see how the output can be optimised.
+        // therefore the goal to make the import faster.
+
         $return = [
             'type' => 'anr',
             'monarc_version' => $this->get('configService')->getAppVersion()['appVersion'],
-            'export_datetime' => (new DateTime())->format('Y-m-d H:i:s'),
+            'export_datetime' => (new \DateTime())->format('Y-m-d H:i:s'),
             'instances' => [],
             'with_eval' => $withEval,
         ];
@@ -75,10 +62,8 @@ class AnrExportService
             );
         }
 
-        /** @var InstanceMetadataExportService $instanceMetadataExportService */
-        $instanceMetadataExportService = $this->get('instanceMetadataExportService');
-        // TODO: of FrontOffice side add the backward compatibility to support the 'anrMetadatasOnInstances'
-        $return['instanceMetadataFields'] = $instanceMetadataExportService->generateExportArray($anr);
+        // TODO: add backward compatibility for [now]instanceMetadataFields === [before]anrMetadatasOnInstances
+        $return['instanceMetadataFields'] = $this->generateExportArrayOfAnrInstanceMetadataFields($anr);
 
         if ($withEval) {
             // TODO: Soa functionality is related only to FrontOffice.
@@ -98,7 +83,7 @@ class AnrExportService
                     'label1' => 'label1',
                     'label2' => 'label2',
                     'label3' => 'label3',
-                    'label4' => 'label4'
+                    'label4' => 'label4',
                 ];
                 foreach ($referentials as $r) {
                     $return['referentials'][$r->getUuid()] = $r->getJsonArray($referentialsArray);
@@ -117,7 +102,7 @@ class AnrExportService
                     'label2' => 'label2',
                     'label3' => 'label3',
                     'label4' => 'label4',
-                    'status' => 'status'
+                    'status' => 'status',
                 ];
                 foreach ($measures as $m) {
                     $newMeasure = $m->getJsonArray($measuresArray);
@@ -149,7 +134,7 @@ class AnrExportService
                     'label2' => 'label2',
                     'label3' => 'label3',
                     'label4' => 'label4',
-                    'status' => 'status'
+                    'status' => 'status',
                 ];
                 foreach ($soaCategories as $c) {
                     $newSoaCategory = $c->getJsonArray($soaCategoriesArray);
@@ -216,7 +201,7 @@ class AnrExportService
                     'comment4' => $scaleComment->getComment(4),
                     'scale' => [
                         'id' => $scaleComment->getScale()->getId(),
-                        'type' => $scaleComment->getScale()->getType()
+                        'type' => $scaleComment->getScale()->getType(),
                     ],
                 ];
                 if ($scaleComment->getScaleImpactType() !== null) {
@@ -318,10 +303,10 @@ class AnrExportService
             }
             //import thresholds
             $return['method']['thresholds'] = [
-                'seuil1' => $anr->seuil1,
-                'seuil2' => $anr->seuil2,
-                'seuilRolf1' => $anr->seuilRolf1,
-                'seuilRolf2' => $anr->seuilRolf2,
+                'seuil1' => $anr->getSeuil1(),
+                'seuil2' => $anr->getSeuil2(),
+                'seuilRolf1' => $anr->getSeuilRolf1(),
+                'seuilRolf2' => $anr->getSeuilRolf2(),
             ];
             // manage the interviews
             if ($withInterviews) {
@@ -365,8 +350,9 @@ class AnrExportService
 
 
             foreach ($threats as $threat) {
-                $threatUuid = $t->getUuid();
-                $return['method']['threats'][$threatUuid] = $t->getJsonArray($threatArray);
+                $threatUuid = $threat->getUuid();
+                // TODO: ....
+                $return['method']['threats'][$threatUuid] = $threat->getJsonArray($threatArray);
                 if ($threat->getTheme() !== null) {
                     $return['method']['threats'][$threatUuid]['theme']['id'] = $threat->getTheme()->getId();
                     $return['method']['threats'][$threatUuid]['theme']['label1'] = $threat->getTheme()->getLabel(1);
@@ -388,10 +374,22 @@ class AnrExportService
             }
         }
 
-        if (!empty($data['password'])) {
+        if (!empty(json_encode($data['password'])) {
             $exportedAnr = $this->encrypt($exportedAnr, $data['password']);
         }
 
         return $exportedAnr;
+    }
+
+    private function generateExportArrayOfAnrInstanceMetadataFields(Entity\Anr $anr): array
+    {
+        $result = [];
+        /** @var Entity\AnrInstanceMetadataField $anrInstanceMetadata */
+        foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $anrInstanceMetadata) {
+            $id = $anrInstanceMetadata->getId();
+            $result[$id] = ['id' => $id, 'label' => $anrInstanceMetadata->getLabel()];
+        }
+
+        return $result;
     }
 }
