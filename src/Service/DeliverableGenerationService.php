@@ -402,7 +402,7 @@ class DeliverableGenerationService
             })
         );
         $opRisksLikelihoodScale = array_values(array_filter($opRisksAllScales, static function ($scale) {
-          return $scale['type'] === OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD;
+            return $scale['type'] === OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD;
         }))[0];
 
         return [
@@ -1065,7 +1065,7 @@ class DeliverableGenerationService
                     } else {
                         $style['BgColor'] = 'F0F7B2';
                     }
-                } else if ($value <= $thresholds[1]) {
+                } elseif ($value <= $thresholds[1]) {
                     $style['BgColor'] = 'FFBC1C';
                     if ($result) {
                         $nbMedium += $result;

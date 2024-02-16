@@ -35,10 +35,11 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
             throw new Exception('Anr id missing', 412);
         }
 
+        //make a join because composite key is not supported
         $filterJoin[] = [
             'as' => 'r',
             'rel' => 'referential',
-        ];            //make a join because composite key are not supported
+        ];
 
         if (\is_null($status)) {
             $status = 1;
@@ -85,7 +86,6 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         unset($data['amvs']);
 
         return parent::update($ids, $data);
-
     }
 
     public function patch($id, $data)
@@ -102,9 +102,6 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         return parent::create($data);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -113,9 +110,6 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         return parent::get($ids);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
