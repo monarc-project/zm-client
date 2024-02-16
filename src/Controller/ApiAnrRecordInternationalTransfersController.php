@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrRecordInternationalTransferService;
 
 class ApiAnrRecordInternationalTransfersController extends ApiAnrAbstractController
@@ -24,29 +24,26 @@ class ApiAnrRecordInternationalTransfersController extends ApiAnrAbstractControl
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
         $id = $this->getService()->create($data);
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $id]);
     }
 
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
-        $service = $this->getService()->update($id, $data);
+        $this->getService()->update($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function patch($id, $data)

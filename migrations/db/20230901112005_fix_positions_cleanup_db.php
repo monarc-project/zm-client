@@ -349,6 +349,10 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->renameColumn('resp_smile', 'responsible_manager')
             ->update();
 
+        $this->table('scales_impact_types')
+             ->removeColumn('position')
+             ->update();
+
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.
         $this->table('anr_instance_metadata_fields')->removeColumn('label_translation_key')->update();
         $this->table('instances_metadata')->removeColumn('comment_translation_key')->update();

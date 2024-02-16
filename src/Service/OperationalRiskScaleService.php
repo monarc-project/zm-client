@@ -22,6 +22,7 @@ class OperationalRiskScaleService
         private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
         private AnrInstanceRiskOpService $instanceRiskOpService,
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
+        private AnrScaleService $anrScaleService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -129,9 +130,10 @@ class OperationalRiskScaleService
         /** @var Entity\OperationalRiskScaleType $operationalRiskScaleType */
         $operationalRiskScaleType = $this->operationalRiskScaleTypeTable->findByIdAndAnr($id, $anr);
 
-
         $scaleTypeVisibilityBeforeUpdate = $operationalRiskScaleType->isHidden();
-        if (isset($data['isHidden'])) {
+        if (isset($data['isHidden']) && $scaleTypeVisibilityBeforeUpdate !== (bool)$data['isHidden']) {
+            $this->anrScaleService->validateIfScalesAreEditable($anr);
+
             $operationalRiskScaleType->setIsHidden((bool)$data['isHidden']);
         }
         if (!empty($data['label'])) {
@@ -158,6 +160,8 @@ class OperationalRiskScaleService
 
     public function deleteOperationalRiskScaleTypes(Entity\Anr $anr, array $data): void
     {
+        $this->anrScaleService->validateIfScalesAreEditable($anr);
+
         foreach ($data as $id) {
             /** @var Entity\OperationalRiskScaleType $scaleTypeToDelete */
             $scaleTypeToDelete = $this->operationalRiskScaleTypeTable->findByIdAndAnr((int)$id, $anr);

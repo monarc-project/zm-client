@@ -7,14 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrReferentialService;
 
 class ApiAnrReferentialsController extends ApiAnrAbstractController
 {
-    use ControllerRequestResponseHandlerTrait;
-
     protected $dependencies = ['anr', 'measures'];
 
     public function __construct(AnrReferentialService $anrReferentialService)
@@ -37,10 +34,8 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         $service = $this->getService();
 
         $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
+        foreach ($entities as $key => $entity) {
+            $this->formatDependencies($entities[$key], $this->dependencies);
         }
 
         return $this->getPreparedJsonResponse([
@@ -61,9 +56,7 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
             throw new Exception('Anr ids diffence', 412);
         }
 
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
-        }
+        $this->formatDependencies($entity, $this->dependencies);
 
         return $this->getPreparedJsonResponse($entity);
     }
@@ -91,7 +84,6 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         if (empty($anrId)) {
             throw new Exception('Anr id missing', 412);
         }
-        $data['anr'] = $anrId;
 
         $this->getService()->delete($newId);
 

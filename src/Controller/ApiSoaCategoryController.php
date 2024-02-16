@@ -7,14 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\SoaCategoryService;
 
 class ApiSoaCategoryController extends ApiAnrAbstractController
 {
-    use ControllerRequestResponseHandlerTrait;
-
     public function __construct(SoaCategoryService $soaCategoryService)
     {
         parent::__construct($soaCategoryService);

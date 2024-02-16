@@ -1,60 +1,82 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\FrontOffice\Model\Entity\Scale;
-use Monarc\FrontOffice\Model\Entity\ScaleComment;
-use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Table;
 
-/**
- * This class is the service that handles comments on scales within an ANR. This is a simple CRUD service.
- * @package Monarc\FrontOffice\Service
- */
-class AnrScaleCommentService extends \Monarc\Core\Service\AbstractService
+class AnrScaleCommentService
 {
-    protected $filterColumns = [];
-    protected $anrTable;
-    protected $userAnrTable;
-    protected $scaleTable;
-    protected $scaleImpactTypeTable;
-    // TODO: the Anr dependency can't be set.
-    protected $dependencies = ['anr', 'scale', 'scaleImpactType'];
+    private UserSuperClass $connectedUser;
 
-    /**
-     * @inheritdoc
-     */
-    public function create($data, $last = true)
+    public function __construct(
+        private Table\ScaleCommentTable $scaleCommentTable,
+        private Table\ScaleTable $scaleTable,
+        private Table\ScaleImpactTypeTable $scaleImpactTypeTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
+    }
+
+    public function getList(FormattedInputParams $formattedInputParams): array
     {
-        $class = $this->get('entity');
-
-        /** @var ScaleComment $entity */
-        $entity = new $class();
-        $entity->setLanguage($this->getLanguage());
-        $entity->setDbAdapter($this->get('table')->getDb());
-
-        // If a scale is set, ensure we retrieve the proper scale object
-        if (isset($data['scale'])) {
-            $scale = $this->get('scaleTable')->getEntity($data['scale']);
-            $entity->setScale($scale);
-
-            // If this is not an IMPACT scale, remove the impact type as we won't need it
-            if ($scale->type != Scale::TYPE_IMPACT) {
-                unset($data['scaleImpactType']);
-            }
+        $result = [];
+        /** @var Entity\ScaleComment[] $scaleComments */
+        $scaleComments = $this->scaleCommentTable->findByParams($formattedInputParams);
+        foreach ($scaleComments as $scaleComment) {
+            $result[] = array_merge([
+                'id' => $scaleComment->getId(),
+                'scaleIndex' => $scaleComment->getScaleIndex(),
+                'scaleValue' => $scaleComment->getScaleValue(),
+                'scaleImpactType' => $scaleComment->getScaleImpactType() === null ? null : [
+                    'id' => $scaleComment->getScaleImpactType()->getId(),
+                    'type' => $scaleComment->getScaleImpactType()->getType(),
+                ]
+            ], $scaleComment->getComments());
         }
-        $entity->exchangeArray($data);
 
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($entity, $dependencies);
+        return $result;
+    }
 
-        /** @var AnrTable $table */
-        $table = $this->get('table');
+    public function create(Entity\Anr $anr, array $data): Entity\ScaleComment
+    {
+        /** @var Entity\Scale $scale */
+        $scale = $this->scaleTable->findByIdAndAnr($data['scaleId'], $anr);
 
-        return $table->save($entity, $last);
+        /** @var Entity\ScaleComment $scaleComment */
+        $scaleComment = (new Entity\ScaleComment())
+            ->setAnr($anr)
+            ->setScale($scale)
+            ->setComments($data)
+            ->setScaleIndex($data['scaleIndex'])
+            ->setScaleValue($data['scaleValue'])
+            ->setCreator($this->connectedUser->getEmail());
+
+        if (isset($data['scaleImpactType'])) {
+            /** @var Entity\ScaleImpactType $scaleImpactType */
+            $scaleImpactType = $this->scaleImpactTypeTable->findByIdAndAnr($data['scaleImpactType'], $anr);
+            $scaleComment->setScaleImpactType($scaleImpactType);
+        }
+
+        $this->scaleCommentTable->save($scaleComment);
+
+        return $scaleComment;
+    }
+
+    public function update(Entity\Anr $anr, int $id, array $data): Entity\ScaleComment
+    {
+        /** @var Entity\ScaleComment $scaleComment */
+        $scaleComment = $this->scaleCommentTable->findByIdAndAnr($id, $anr);
+
+        $this->scaleCommentTable->save($scaleComment->setComments($data)->setUpdater($this->connectedUser->getEmail()));
+
+        return $scaleComment;
     }
 }

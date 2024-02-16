@@ -100,18 +100,6 @@ class DeliverableGenerationService
     }
 
     /**
-     * Translates the provided input text into the current ANR language
-     *
-     * @param string $text The text to translate
-     *
-     * @return string THe translated text, or $text if no translation was found
-     */
-    public function anrTranslate(string $text): string
-    {
-        return $this->translateService->translate($text, $this->currentLangAnrIndex);
-    }
-
-    /**
      * Retrieve the previous delivery for the specified type of document.
      */
     public function getLastDelivery(Entity\Anr $anr, int $docType): array
@@ -197,6 +185,18 @@ class DeliverableGenerationService
         $values = array_merge_recursive($values, $this->buildValues($docType, $referential, $record, $risksByControl));
 
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
+    }
+
+    /**
+     * Translates the provided input text into the current ANR language
+     *
+     * @param string $text The text to translate
+     *
+     * @return string THe translated text, or $text if no translation was found
+     */
+    private function anrTranslate(string $text): string
+    {
+        return $this->translateService->translate($text, $this->currentLangAnrIndex);
     }
 
     /**

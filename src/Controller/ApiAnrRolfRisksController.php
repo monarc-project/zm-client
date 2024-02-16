@@ -7,14 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Service\AnrRolfRiskService;
 use Monarc\FrontOffice\Model\Entity\Measure;
 
 class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {
-    use ControllerRequestResponseHandlerTrait;
-
     protected $dependencies = ['tags', 'measures'];
 
     public function __construct(AnrRolfRiskService $anrRolfRiskService)

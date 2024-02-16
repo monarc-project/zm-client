@@ -7,122 +7,107 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\AbstractService;
-use Monarc\Core\Service\InstanceConsequenceService;
-use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
-use Monarc\FrontOffice\Table\InstanceTable;
-use Monarc\FrontOffice\Table\ScaleImpactTypeTable;
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
+use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Table;
 
-class AnrScaleTypeService extends AbstractService
+class AnrScaleImpactTypeService
 {
-    protected $filterColumns = [];
-    protected $dependencies = ['anr', 'scale'];
-    protected $anrTable;
-    protected $scaleTable;
-    protected $instanceTable;
-    protected $instanceConsequenceService;
-    protected $instanceService;
-    protected $types = [
-        1 => 'C',
-        2 => 'I',
-        3 => 'D',
-        4 => 'R',
-        5 => 'O',
-        6 => 'L',
-        7 => 'F',
-        8 => 'P',
-    ];
+    private UserSuperClass $connectedUser;
 
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
-    {
-        $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
-
-        foreach ($scales as $key => $scale) {
-            if (isset($this->types[$scale['type']])) {
-                $scales[$key]['type'] = $this->types[$scale['type']];
-            } else {
-                $scales[$key]['type'] = 'CUS'; // Custom user-defined column
-            }
-            $scales[$key]['type_id'] = $scale['type'];
-        }
-
-        return $scales;
+    public function __construct(
+        private Table\ScaleImpactTypeTable $scaleImpactTypeTable,
+        private Table\ScaleTable $scaleTable,
+        private Table\InstanceTable $instanceTable,
+        private AnrInstanceConsequenceService $instanceConsequenceService,
+        private AnrScaleService $anrScaleService,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function create($data, $last = true)
+    public function getList(Entity\Anr $anr): array
     {
-        $scales = parent::getList(1, 0, null, null, ['anr' => $data['anrId']]);
-
-        if (!isset($data['isSys'])) {
-            $data['isSys'] = 0;
-        }
-        if (!isset($data['isHidden'])) {
-            $data['isSys'] = 0;
-        }
-        if (!isset($data['type'])) {
-            $data['type'] = count($scales) + 1;
-        }
-
-        $anrId = $data['anr'];
-
-        $class = $this->get('entity');
-
-        /** @var ScaleImpactType $entity */
-        $entity = new $class();
-        $entity->setDbAdapter($this->get('table')->getDb());
-
-        $entity->exchangeArray($data);
-
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($entity, $dependencies);
-
-        $entity->setLabels($data['labels']);
-
-        $id = $this->get('table')->save($entity);
-
-        // Retrieve all instances for the current ANR
-        /** @var InstanceTable $instanceTable */
-        $instanceTable = $this->get('instanceTable');
-        $instances = $instanceTable->getEntityByFields(['anr' => $anrId]);
-        $i = 1;
-        $nbInstances = count($instances);
-        foreach ($instances as $instance) {
-            //create instances consequences
-            $dataConsequences = [
-                'anr' => $anrId,
-                'instance' => $instance->id,
-                'object' => $instance->getObject()->getUuid(),
-                'scaleImpactType' => $id,
-            ];
-            /** @var InstanceConsequenceService $instanceConsequenceService */
-            $instanceConsequenceService = $this->get('instanceConsequenceService');
-            $instanceConsequenceService->create($dataConsequences, ($i == $nbInstances));
-            $i++;
+        $result = [];
+        /** @var Entity\ScaleImpactType[] $scaleImpactTypes */
+        $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnr($anr);
+        $scaleImpactTypesShortcuts = ScaleImpactTypeSuperClass::getScaleImpactTypesShortcuts();
+        foreach ($scaleImpactTypes as $scaleImpactType) {
+            $result[] = array_merge([
+                'id' => $scaleImpactType->getId(),
+                'isHidden' => (int)$scaleImpactType->isHidden(),
+                'isSys' => (int)$scaleImpactType->isSys(),
+                'type' => $scaleImpactTypesShortcuts[$scaleImpactType->getType()] ?? 'CUS',
+            ], $scaleImpactType->getLabels());
         }
 
-        return $id;
+        return $result;
+    }
+
+    public function create(Entity\Anr $anr, array $data, bool $saveInTheDb = true): Entity\ScaleImpactType
+    {
+        /** @var Entity\ScaleImpactType $scaleImpactType */
+        $scaleImpactType = (new Entity\ScaleImpactType())
+            ->setAnr($anr)
+            ->setScale(
+                $data['scale'] instanceof Entity\Scale ? $data['scale'] : $this->scaleTable->findById($data['scale'])
+            )
+            ->setLabels($data['labels'])
+            ->setType($data['type'] ?? $this->scaleImpactTypeTable->findMaxTypeValueByAnr($anr) + 1)
+            ->setCreator($this->connectedUser->getEmail());
+
+        /* Create InstanceConsequence for each instance of the current anr. */
+        /** @var Entity\Instance $instance */
+        foreach ($this->instanceTable->findByAnr($scaleImpactType->getAnr()) as $instance) {
+            $this->instanceConsequenceService->createInstanceConsequence($instance, $scaleImpactType);
+        }
+
+        $this->scaleImpactTypeTable->save($scaleImpactType, $saveInTheDb);
+
+        return $scaleImpactType;
     }
 
     /**
-     * Hide / show scales' types on Edit Impacts dialog.
+     * Hide/show or change label of scales impact types on the Evaluation scales page.
      */
-    public function patch($id, $data)
+    public function patch(Entity\Anr $anr, int $id, array $data): Entity\ScaleImpactType
     {
-        $this->filterPatchFields($data);
+        /** @var Entity\ScaleImpactType $scaleImpactType */
+        $scaleImpactType = $this->scaleImpactTypeTable->findByIdAndAnr($id, $anr);
 
-        /** @var ScaleImpactTypeTable $scaleImpactTypeTable */
-        $scaleImpactTypeTable = $this->get('table');
-        $scaleImpactType = $scaleImpactTypeTable->findById((int)$id);
+        if (isset($data['isHidden']) && (bool)$data['isHidden'] !== $scaleImpactType->isHidden()) {
+            /* It's not allowed to change visibility if analysis evaluation is started. */
+            $this->anrScaleService->validateIfScalesAreEditable($anr);
 
-        if (isset($data['isHidden'])) {
-            /** @var AnrInstanceConsequenceService $instanceConsequenceService */
-            $instanceConsequenceService = $this->get('instanceConsequenceService');
-            $instanceConsequenceService->updateConsequencesByScaleImpactType($scaleImpactType, (bool)$data['isHidden']);
-            /** @var AnrInstanceService $instanceService */
-            $instanceService = $this->get('instanceService');
-            $instanceService->refreshAllTheInstancesImpactAndUpdateRisks($scaleImpactType->getAnr());
+            $scaleImpactType->setIsHidden((bool)$data['isHidden']);
+            $this->instanceConsequenceService->updateConsequencesByScaleImpactType(
+                $scaleImpactType,
+                (bool)$data['isHidden']
+            );
         }
 
-        parent::patch($id, $data);
+        $scaleImpactType->setLabels($data)->setUpdater($this->connectedUser->getEmail());
+
+        $this->scaleImpactTypeTable->save($scaleImpactType);
+
+        return $scaleImpactType;
+    }
+
+
+    public function delete(Entity\Anr $anr, int $id): void
+    {
+        /* It's not allowed to delete the scale if analysis evaluation is started. */
+        $this->anrScaleService->validateIfScalesAreEditable($anr);
+
+        /** @var Entity\ScaleImpactType $scaleImpactType */
+        $scaleImpactType = $this->scaleImpactTypeTable->findByIdAndAnr($id, $anr);
+        if ($scaleImpactType->isSys()) {
+            throw new Exception('Default Scale Impact Types can\'t be removed.', '403');
+        }
+
+        $this->scaleImpactTypeTable->remove($scaleImpactType);
     }
 }

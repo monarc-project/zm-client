@@ -30,7 +30,6 @@ class AnrScaleService
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    // TODO: modify calls from DeliverableGenerationService ..., perhaps use cache.
     public function getList(Entity\Anr $anr): array
     {
         $result = [];
@@ -66,8 +65,6 @@ class AnrScaleService
         return $scale;
     }
 
-    // todo: for hiding of Consequences (should be ScaleImpactTypes) the same validation: $this->validateIfScalesAreEditable($anr);
-
     /**
      * Returns whether the ANR sensitive values (scales values) can NOT be changed safely.
      * It is not possible to change the scales thresholds when:
@@ -92,7 +89,7 @@ class AnrScaleService
             || $this->operationalInstanceRiskScaleTable->isEvaluationStarted($anr);
     }
 
-    private function validateIfScalesAreEditable(Entity\Anr $anr): void
+    public function validateIfScalesAreEditable(Entity\Anr $anr): void
     {
         if ($this->areScalesNotEditable($anr)) {
             throw new Exception('Scales are not editable when the risks evaluation is started.', 412);

@@ -7,12 +7,13 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrMeasureService;
 
 class ApiAnrMeasuresController extends ApiAnrAbstractController
 {
     protected $name = 'measures';
-    protected $dependencies = ['anr', 'category', 'referential',  'amvs', 'linkedMeasures', 'rolfRisks'];
+    protected $dependencies = ['anr', 'category', 'referential', 'amvs', 'linkedMeasures', 'rolfRisks'];
 
     public function __construct(AnrMeasureService $anrMeasureService)
     {
@@ -31,31 +32,33 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
-        $filterAnd = [];
-        $filterJoin[] = ['as' => 'r','rel' => 'referential'];            //make a join because composite key are not supported
+        $filterJoin[] = [
+            'as' => 'r',
+            'rel' => 'referential',
+        ];            //make a join because composite key are not supported
 
-        if (is_null($status)) {
+        if (\is_null($status)) {
             $status = 1;
         }
-        $filterAnd = ($status == "all") ? null : ['status' => (int) $status] ;
+        $filterAnd = ($status === "all") ? null : ['status' => (int)$status];
 
-        $filterAnd = ['anr' => $anrId];
+        $filterAnd['anr'] = $anrId;
 
         if ($referential) {
-          $filterAnd['r.anr']=$anrId;
-          $filterAnd['r.uuid']= $referential;
+            $filterAnd['r.anr'] = $anrId;
+            $filterAnd['r.uuid'] = $referential;
         }
         if ($category) {
-          $filterAnd['category'] = (int)$category;
+            $filterAnd['category'] = (int)$category;
         }
 
         $service = $this->getService();
 
         $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
+        if (\count($this->dependencies)) {
             foreach ($entities as $key => $entity) {
                 $this->formatDependencies($entities[$key], $this->dependencies);
             }
@@ -63,36 +66,39 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
 
         return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd, $filterJoin),
-            $this->name => $entities
+            $this->name => $entities,
         ]);
     }
 
     public function update($id, $data)
     {
-      unset($data['rolfRisks']); // not managed for the moement
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      $ids = ['anr'=>$anrId,'uuid'=>$data['uuid']];
-      $data['anr'] = $anrId;
-      $data ['referential'] = ['anr' => $anrId, 'uuid' => $data['referential']]; //all the objects is send but we just need the uuid
-      $data['category'] ['referential'] = $data ['referential'];
-      unset($data['linkedMeasures']);
-      unset($data['amvs']);
-      return parent::update($ids, $data);
+        unset($data['rolfRisks']); // not managed for the moement
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $ids = ['anr' => $anrId, 'uuid' => $data['uuid']];
+        $data['anr'] = $anrId;
+        $data ['referential'] = [
+            'anr' => $anrId,
+            'uuid' => $data['referential'],
+        ]; //all the objects is send but we just need the uuid
+        $data['category'] ['referential'] = $data ['referential'];
+        unset($data['linkedMeasures']);
+        unset($data['amvs']);
+
+        return parent::update($ids, $data);
 
     }
 
     public function patch($id, $data)
     {
-      unset($data['measures']);
-      return parent::patch($id, $data);
+        unset($data['measures']);
+
+        return parent::patch($id, $data);
     }
 
     public function create($data)
     {
-      unset($data['rolfRisks']); // not managed for the moement
+        unset($data['rolfRisks'], $data['linkedMeasures'], $data['amvs']);
 
-        unset($data['linkedMeasures']);
-        unset($data['amvs']);
         return parent::create($data);
     }
 
@@ -102,7 +108,8 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
     public function get($id)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $ids = ['uuid'=>$id,'anr'=>$anrId];
+        $ids = ['uuid' => $id, 'anr' => $anrId];
+
         return parent::get($ids);
     }
 
@@ -111,18 +118,20 @@ class ApiAnrMeasuresController extends ApiAnrAbstractController
      */
     public function delete($id)
     {
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      $ids = ['uuid'=>$id,'anr'=>$anrId];
-      return parent::delete($ids);
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        $ids = ['uuid' => $id, 'anr' => $anrId];
+
+        return parent::delete($ids);
     }
 
     public function deleteList($data)
     {
-      $new_data = [];
-      $anrId = (int)$this->params()->fromRoute('anrid');
-      foreach ($data as $uuid) {
-        $new_data[] = ['uuid' => $uuid, 'anr'=>$anrId];
-      }
-      return parent::deleteList($new_data);
+        $new_data = [];
+        $anrId = (int)$this->params()->fromRoute('anrid');
+        foreach ($data as $uuid) {
+            $new_data[] = ['uuid' => $uuid, 'anr' => $anrId];
+        }
+
+        return parent::deleteList($new_data);
     }
 }

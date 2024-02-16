@@ -7,13 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrRecordActorService;
 
 class ApiAnrRecordActorsController extends ApiAnrAbstractController
 {
-    use ControllerRequestResponseHandlerTrait;
-
     protected $name = 'record-actors';
     protected $dependencies = ['anr'];
 
@@ -28,10 +26,10 @@ class ApiAnrRecordActorsController extends ApiAnrAbstractController
         $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
 
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids are different', 412);
+            throw new Exception('Anr ids are different', 412);
         }
 
         if (count($this->dependencies)) {
@@ -48,7 +46,7 @@ class ApiAnrRecordActorsController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
@@ -64,11 +62,11 @@ class ApiAnrRecordActorsController extends ApiAnrAbstractController
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
-        $service = $this->getService()->update($id, $data);
+        $this->getService()->update($id, $data);
 
         return $this->getSuccessfulJsonResponse();
     }

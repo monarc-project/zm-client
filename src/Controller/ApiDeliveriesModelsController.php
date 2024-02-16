@@ -78,7 +78,7 @@ class ApiDeliveriesModelsController extends AbstractController
         $entity = $this->getService()->getEntity($id);
         if (!empty($entity)) {
             $lang = $this->params()->fromQuery('lang', 1);
-            $pathModel = getenv('APP_CONF_DIR') ? getenv('APP_CONF_DIR') : '';
+            $pathModel = getenv('APP_CONF_DIR') ?: '';
             $currentPath = $pathModel . $entity['path' . $lang];
             if (isset($entity['path' . $lang]) && file_exists($currentPath)) {
                 $name = pathinfo($currentPath)['basename'];
@@ -89,17 +89,18 @@ class ApiDeliveriesModelsController extends AbstractController
                     $response->setContent($fileContents);
 
                     $headers = $response->getHeaders();
-                    $headers->clearHeaders()->addHeaderLine(
-                            'Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                        )->addHeaderLine('Content-Disposition', 'attachment; filename="' . utf8_decode($name) . '"')
+                    $headers->clearHeaders()
+                        ->addHeaderLine(
+                            'Content-Type',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        )
+                        ->addHeaderLine('Content-Disposition', 'attachment; filename="' . utf8_decode($name) . '"')
                         ->addHeaderLine('Content-Length', strlen($fileContents));
 
                     return $this->response;
                 }
-
                 throw new Exception('Document template not found');
             }
-
             throw new Exception('Document template not found');
         }
 

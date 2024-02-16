@@ -7,14 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrQuestionChoiceService;
 
 class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
 {
-    use ControllerRequestResponseHandlerTrait;
-
     protected $name = 'choices';
 
     public function __construct(AnrQuestionChoiceService $anrQuestionChoiceService)

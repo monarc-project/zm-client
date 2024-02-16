@@ -7,14 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrMeasureMeasureService;
 
 class ApiAnrMeasuresMeasuresController extends ApiAnrAbstractController
 {
-    use ControllerRequestResponseHandlerTrait;
-
     protected $name = 'measuresmeasures';
     protected $dependencies = ['anr', 'father', 'child'];
 
