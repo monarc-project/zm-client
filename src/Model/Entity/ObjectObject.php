@@ -21,6 +21,16 @@ use Monarc\Core\Model\Entity\ObjectObjectSuperClass;
 class ObjectObject extends ObjectObjectSuperClass
 {
     /**
+     * @var Anr
+     *
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     * })
+     */
+    protected $anr;
+
+    /**
      * @var MonarcObject
      *
      * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
@@ -41,4 +51,21 @@ class ObjectObject extends ObjectObjectSuperClass
      * })
      */
     protected $child;
+
+    public function getImplicitPositionRelationsValues(): array
+    {
+        return array_merge(['anr' => $this->anr], parent::getImplicitPositionRelationsValues());
+    }
+
+    public function setAnr(Anr $anr): self
+    {
+        $this->anr = $anr;
+
+        return $this;
+    }
+
+    public function getAnr(): Anr
+    {
+        return $this->anr;
+    }
 }

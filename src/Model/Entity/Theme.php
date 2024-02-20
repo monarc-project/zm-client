@@ -18,4 +18,25 @@ use Monarc\Core\Model\Entity\ThemeSuperClass;
  */
 class Theme extends ThemeSuperClass
 {
+    /**
+     * @var Anr
+     *
+     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
+     * })
+     */
+    protected $anr;
+
+    public function getAnr(): Anr
+    {
+        return $this->anr;
+    }
+
+    public function setAnr(Anr $anr): self
+    {
+        $this->anr = $anr;
+
+        return $this;
+    }
 }

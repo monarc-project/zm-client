@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -20,43 +20,19 @@ class AnrObjectService
 {
     use PositionUpdateTrait;
 
-    private Table\MonarcObjectTable $monarcObjectTable;
-
-    private Table\InstanceTable $instanceTable;
-
-    private Table\AssetTable $assetTable;
-
-    private Table\ObjectCategoryTable $objectCategoryTable;
-
-    private Table\ObjectObjectTable $objectObjectTable;
-
-    private DeprecatedTable\RolfTagTable $rolfTagTable;
-
-    private Table\InstanceRiskOpTable $instanceRiskOpTable;
-
-    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
-
     private CoreEntity\UserSuperClass $connectedUser;
 
     public function __construct(
-        Table\MonarcObjectTable $monarcObjectTable,
-        Table\InstanceTable $instanceTable,
-        Table\AssetTable $assetTable,
-        Table\ObjectCategoryTable $objectCategoryTable,
-        Table\ObjectObjectTable $objectObjectTable,
-        DeprecatedTable\RolfTagTable $rolfTagTable,
-        Table\InstanceRiskOpTable $instanceRiskOpTable,
-        AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private Table\MonarcObjectTable $monarcObjectTable,
+        private Table\InstanceTable $instanceTable,
+        private Table\AssetTable $assetTable,
+        private Table\ObjectCategoryTable $objectCategoryTable,
+        private Table\ObjectObjectTable $objectObjectTable,
+        private DeprecatedTable\RolfTagTable $rolfTagTable,
+        private Table\InstanceRiskOpTable $instanceRiskOpTable,
+        private AnrInstanceRiskOpService $anrInstanceRiskOpService,
         ConnectedUserService $connectedUserService
     ) {
-        $this->monarcObjectTable = $monarcObjectTable;
-        $this->instanceTable = $instanceTable;
-        $this->assetTable = $assetTable;
-        $this->objectCategoryTable = $objectCategoryTable;
-        $this->objectObjectTable = $objectObjectTable;
-        $this->rolfTagTable = $rolfTagTable;
-        $this->instanceRiskOpTable = $instanceRiskOpTable;
-        $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
@@ -275,7 +251,6 @@ class AnrObjectService
 
     private function getPreparedObjectData(Entity\MonarcObject $object, bool $objectOnly = false): array
     {
-        /** @var Entity\Anr $anr */
         $anr = $object->getAnr();
         $result = [
             'uuid' => $object->getUuid(),
@@ -326,16 +301,18 @@ class AnrObjectService
     {
         $result = [];
         foreach ($object->getChildrenLinks() as $childLinkObject) {
+            /** @var Entity\MonarcObject $childMonarcObject */
+            $childMonarcObject = $childLinkObject->getChild();
             $result[] = [
-                'uuid' => $childLinkObject->getChild()->getUuid(),
-                'label' . $anrLanguage => $childLinkObject->getChild()->getLabel($anrLanguage),
-                'name' . $anrLanguage => $childLinkObject->getChild()->getName($anrLanguage),
+                'uuid' => $childMonarcObject->getUuid(),
+                'label' . $anrLanguage => $childMonarcObject->getLabel($anrLanguage),
+                'name' . $anrLanguage => $childMonarcObject->getName($anrLanguage),
                 'component_link_id' => $childLinkObject->getId(),
-                'mode' => $childLinkObject->getChild()->getMode(),
-                'scope' => $childLinkObject->getChild()->getScope(),
-                'children' => !$childLinkObject->getChild()->hasChildren()
+                'mode' => $childMonarcObject->getMode(),
+                'scope' => $childMonarcObject->getScope(),
+                'children' => !$childMonarcObject->hasChildren()
                     ? []
-                    : $this->getChildrenTreeList($childLinkObject->getChild()),
+                    : $this->getChildrenTreeList($childMonarcObject, $anrLanguage),
             ];
         }
 
@@ -402,7 +379,6 @@ class AnrObjectService
         if (!empty($data['rolfTag']) && (
             $monarcObject->getRolfTag() === null || (int)$data['rolfTag'] !== $monarcObject->getRolfTag()->getId()
         )) {
-            /** @var Entity\RolfTag $rolfTag */
             $rolfTag = $this->rolfTagTable->findByIdAndAnr((int)$data['rolfTag'], $monarcObject->getAnr());
             $monarcObject->setRolfTag($rolfTag);
 
@@ -528,17 +504,12 @@ class AnrObjectService
         }
     }
 
-    private function getPreparedObjectCategoryData(
-        Entity\ObjectCategory $category,
-        array $objectsData,
-        Entity\Anr $anr
-    ): array {
+    private function getPreparedObjectCategoryData(Entity\ObjectCategory $category, array $objectsData): array
+    {
         $result = [
             'id' => $category->getId(),
             'position' => $category->getPosition(),
-            'child' => !$category->hasChildren()
-                ? []
-                : $this->getCategoriesWithObjectsChildrenTreeList($category, $anr),
+            'child' => !$category->hasChildren() ? [] : $this->getCategoriesWithObjectsChildrenTreeList($category),
             'objects' => $objectsData,
         ];
         if (empty($objectsData) && empty($result['child'])) {
@@ -548,14 +519,12 @@ class AnrObjectService
         return $result;
     }
 
-    private function getCategoriesAndObjectsTreeList(
-        Entity\ObjectCategory $objectCategory,
-        Entity\Anr $anr
-    ): array {
+    private function getCategoriesAndObjectsTreeList(Entity\ObjectCategory $objectCategory): array
+    {
         $result = [];
-        $objectsData = $this->getObjectsDataOfCategoryAndAnr($objectCategory, $anr);
+        $objectsData = $this->getObjectsDataOfCategory($objectCategory);
         if (!empty($objectsData) || $objectCategory->hasChildren()) {
-            $objectCategoryData = $this->getPreparedObjectCategoryData($objectCategory, $objectsData, $anr);
+            $objectCategoryData = $this->getPreparedObjectCategoryData($objectCategory, $objectsData);
             if (!empty($objectsData) || !empty($objectCategoryData)) {
                 $result = $objectCategoryData;
             }
@@ -564,13 +533,11 @@ class AnrObjectService
         return $result;
     }
 
-    private function getCategoriesWithObjectsChildrenTreeList(
-        Entity\ObjectCategory $objectCategory,
-        Entity\Anr $anr
-    ): array {
+    private function getCategoriesWithObjectsChildrenTreeList(Entity\ObjectCategory $objectCategory): array
+    {
         $result = [];
         foreach ($objectCategory->getChildren() as $childCategory) {
-            $categoryData = $this->getCategoriesAndObjectsTreeList($childCategory, $anr);
+            $categoryData = $this->getCategoriesAndObjectsTreeList($childCategory);
             if (!empty($categoryData)) {
                 $result[] = $categoryData;
             }
@@ -579,10 +546,8 @@ class AnrObjectService
         return $result;
     }
 
-    private function getObjectsDataOfCategoryAndAnr(
-        Entity\ObjectCategory $objectCategory,
-        Entity\Anr $anr
-    ): array {
+    private function getObjectsDataOfCategory(Entity\ObjectCategory $objectCategory): array
+    {
         $objectsData = [];
         /** @var Entity\MonarcObject $object */
         foreach ($objectCategory->getObjects() as $object) {

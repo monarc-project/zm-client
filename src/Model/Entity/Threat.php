@@ -31,6 +31,7 @@ class Threat extends ThreatSuperClass
 
     /**
      * @var Anr
+     *
      * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
@@ -38,4 +39,16 @@ class Threat extends ThreatSuperClass
      * })
      */
     protected $anr;
+
+    public function getAnr(): Anr
+    {
+        return $this->anr;
+    }
+
+    public function setAnr(Anr $anr): self
+    {
+        $this->anr = $anr;
+
+        return $this;
+    }
 }

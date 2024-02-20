@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -18,20 +18,11 @@ class ApiAnrAssetsController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private GetAssetsInputFormatter $getAssetsInputFormatter;
-
-    private PostAssetDataInputValidator $postAssetDataInputValidator;
-
-    private AnrAssetService $anrAssetService;
-
     public function __construct(
-        GetAssetsInputFormatter $getAssetsInputFormatter,
-        PostAssetDataInputValidator $postAssetDataInputValidator,
-        AnrAssetService $anrAssetService
+        private GetAssetsInputFormatter $getAssetsInputFormatter,
+        private PostAssetDataInputValidator $postAssetDataInputValidator,
+        private AnrAssetService $anrAssetService
     ) {
-        $this->getAssetsInputFormatter = $getAssetsInputFormatter;
-        $this->postAssetDataInputValidator = $postAssetDataInputValidator;
-        $this->anrAssetService = $anrAssetService;
     }
 
     public function getList()

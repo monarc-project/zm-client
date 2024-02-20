@@ -44,4 +44,19 @@ class ObjectObjectTable extends AbstractTable implements PositionUpdatableTableI
             $this->flush();
         }
     }
+
+    public function findByParentObjectAndPosition(MonarcObject $parentObject, int $position): ?ObjectObject
+    {
+        return $this->getRepository()->createQueryBuilder('oo')
+            ->innerJoin('oo.parent', 'parent')
+            ->where('parent.uuid = :parentUuuid')
+            ->andWhere('parent.anr = :parentAnr')
+            ->andWhere('oo.position = :position')
+            ->setParameter('parentUuuid', $parentObject->getUuid())
+            ->setParameter('parentAnr', $parentObject->getAnr())
+            ->setParameter('position', $position)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

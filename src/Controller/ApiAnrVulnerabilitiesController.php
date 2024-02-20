@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -18,20 +18,11 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private GetVulnerabilitiesInputFormatter $getVulnerabilitiesInputFormatter;
-
-    private AnrVulnerabilityService $anrVulnerabilityService;
-
-    private PostVulnerabilityDataInputValidator $postVulnerabilityDataInputValidator;
-
     public function __construct(
-        GetVulnerabilitiesInputFormatter $getVulnerabilitiesInputFormatter,
-        PostVulnerabilityDataInputValidator $postVulnerabilityDataInputValidator,
-        AnrVulnerabilityService $anrVulnerabilityService
+        private GetVulnerabilitiesInputFormatter $getVulnerabilitiesInputFormatter,
+        private PostVulnerabilityDataInputValidator $postVulnerabilityDataInputValidator,
+        private AnrVulnerabilityService $anrVulnerabilityService
     ) {
-        $this->getVulnerabilitiesInputFormatter = $getVulnerabilitiesInputFormatter;
-        $this->postVulnerabilityDataInputValidator = $postVulnerabilityDataInputValidator;
-        $this->anrVulnerabilityService = $anrVulnerabilityService;
     }
 
     public function getList()

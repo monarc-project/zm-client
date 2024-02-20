@@ -18,20 +18,11 @@ class ApiAnrThemesController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private AnrThemeService $anrThemeService;
-
-    private GetThemesInputFormatter $getThemesInputFormatter;
-
-    private PostThemeDataInputValidator $postThemeDataInputValidator;
-
     public function __construct(
-        GetThemesInputFormatter $getThemesInputFormatter,
-        PostThemeDataInputValidator $postThemeDataInputValidator,
-        AnrThemeService $anrThemeService
+        private GetThemesInputFormatter $getThemesInputFormatter,
+        private PostThemeDataInputValidator $postThemeDataInputValidator,
+        private AnrThemeService $anrThemeService
     ) {
-        $this->anrThemeService = $anrThemeService;
-        $this->getThemesInputFormatter = $getThemesInputFormatter;
-        $this->postThemeDataInputValidator = $postThemeDataInputValidator;
     }
 
     public function getList()
@@ -59,10 +50,7 @@ class ApiAnrThemesController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
         $theme = $this->anrThemeService->create($anr, $data);
 
-        return $this->getPreparedJsonResponse([
-            'status' => 'ok',
-            'id' => $theme->getId(),
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $theme->getId()]);
     }
 
 
@@ -74,9 +62,7 @@ class ApiAnrThemesController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
         $this->anrThemeService->update($anr, $id, $data);
 
-        return $this->getPreparedJsonResponse([
-            'status' => 'ok',
-        ]);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function delete($id)
@@ -85,8 +71,6 @@ class ApiAnrThemesController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
         $this->anrThemeService->delete($anr, $id);
 
-        return $this->getPreparedJsonResponse([
-            'status' => 'ok',
-        ]);
+        return $this->getSuccessfulJsonResponse();
     }
 }

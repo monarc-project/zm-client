@@ -18,20 +18,11 @@ class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private GetThreatsInputFormatter $getThreatsInputFormatter;
-
-    private PostThreatDataInputValidator $postThreatDataInputValidator;
-
-    private AnrThreatService $anrThreatService;
-
     public function __construct(
-        GetThreatsInputFormatter $getThreatsInputFormatter,
-        PostThreatDataInputValidator $postThreatDataInputValidator,
-        AnrThreatService $anrThreatService
+        private GetThreatsInputFormatter $getThreatsInputFormatter,
+        private PostThreatDataInputValidator $postThreatDataInputValidator,
+        private AnrThreatService $anrThreatService
     ) {
-        $this->getThreatsInputFormatter = $getThreatsInputFormatter;
-        $this->postThreatDataInputValidator = $postThreatDataInputValidator;
-        $this->anrThreatService = $anrThreatService;
     }
 
     public function getList()

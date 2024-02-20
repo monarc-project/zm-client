@@ -15,16 +15,13 @@ use Monarc\FrontOffice\Table;
 
 class AnrAssetService
 {
-    private Table\AssetTable $assetTable;
-
     private CoreEntity\UserSuperClass $connectedUser;
 
     public function __construct(
-        Table\AssetTable $assetTable,
+        private Table\AssetTable $assetTable,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
-        $this->assetTable = $assetTable;
     }
 
     public function getList(FormattedInputParams $params): array

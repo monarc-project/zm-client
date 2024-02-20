@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -9,15 +9,20 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\AssetSuperClass;
-use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Model\Entity\ObjectSuperClass;
 use Monarc\Core\Model\Entity\RolfTagSuperClass;
 use Monarc\Core\Table\AbstractTable;
+use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
+use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
+use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Model\Entity\Asset;
 use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Model\Entity\ObjectCategory;
 
-class MonarcObjectTable extends AbstractTable
+class MonarcObjectTable extends AbstractTable implements PositionUpdatableTableInterface
 {
+    use PositionIncrementTableTrait;
+
     public function __construct(EntityManager $entityManager, string $entityName = MonarcObject::class)
     {
         parent::__construct($entityManager, $entityName);
@@ -27,9 +32,9 @@ class MonarcObjectTable extends AbstractTable
         AnrSuperClass $anr,
         string $nameKey,
         string $nameValue,
-        AssetSuperClass $asset,
+        Asset $asset,
         int $scope,
-        ObjectCategorySuperClass $category
+        ObjectCategory $category
     ): ?MonarcObject {
         return $this->getRepository()
             ->createQueryBuilder('mo')
@@ -51,11 +56,8 @@ class MonarcObjectTable extends AbstractTable
             ->getOneOrNullResult();
     }
 
-    public function findOneByAnrAndName(
-        AnrSuperClass $anr,
-        string $nameKey,
-        string $nameValue
-    ): ?MonarcObject {
+    public function findOneByAnrAndName(Anr $anr, string $nameKey, string $nameValue): ?MonarcObject
+    {
         return $this->getRepository()
             ->createQueryBuilder('mo')
             ->where('mo.anr = :anr')
@@ -68,6 +70,7 @@ class MonarcObjectTable extends AbstractTable
     }
 
     /**
+     * TODO: it's called from Core\RolfRiskService, remove when the $rolfTag->getObjects() relation is added.
      * @return ObjectSuperClass[]
      */
     public function findByAnrAndRolfTag(AnrSuperClass $anr, RolfTagSuperClass $rolfTag): array

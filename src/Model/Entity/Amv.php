@@ -73,4 +73,21 @@ class Amv extends AmvSuperClass
      * })
      */
     protected $vulnerability;
+
+    public function getImplicitPositionRelationsValues(): array
+    {
+        return array_merge(['anr' => $this->anr], parent::getImplicitPositionRelationsValues());
+    }
+
+    public function getAnr(): Anr
+    {
+        return $this->anr;
+    }
+
+    public function setAnr(Anr $anr): self
+    {
+        $this->anr = $anr;
+
+        return $this;
+    }
 }
