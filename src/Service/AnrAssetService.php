@@ -54,10 +54,10 @@ class AnrAssetService
     {
         /** @var Entity\Asset $asset */
         $asset = (new Entity\Asset())
+            ->setAnr($anr)
             ->setCode($data['code'])
             ->setLabels($data)
             ->setDescriptions($data)
-            ->setAnr($anr)
             ->setType($data['type'])
             ->setCreator($this->connectedUser->getEmail());
         if (isset($data['uuid'])) {

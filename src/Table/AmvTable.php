@@ -47,8 +47,8 @@ class AmvTable extends AbstractTable implements PositionUpdatableTableInterface
         string $assetUuid,
         string $threatUuid,
         string $vulnerabilityUuid,
-        AnrSuperClass $anr
-    ): ?AmvSuperClass {
+        Anr $anr
+    ): ?Amv {
         return $this->getRepository()
             ->createQueryBuilder('amv')
             ->innerJoin('amv.asset', 'a')

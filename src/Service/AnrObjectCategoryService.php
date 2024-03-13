@@ -102,7 +102,9 @@ class AnrObjectCategoryService
 
         if (!empty($data['parent'])) {
             /** @var Entity\ObjectCategory $parent */
-            $parent = $this->objectCategoryTable->findByIdAndAnr((int)$data['parent'], $anr);
+            $parent = $data['parent'] instanceof Entity\ObjectCategory
+                ? $data['parent']
+                : $this->objectCategoryTable->findByIdAndAnr((int)$data['parent'], $anr);
             $objectCategory->setParent($parent);
             $objectCategory->setRoot($parent->getRootCategory());
         }

@@ -49,7 +49,7 @@ class AnrRecordPersonalDataService extends AbstractService
     public function deletePersonalData($id)
     {
         $personalDataEntity = $this->get('table')->getEntity($id);
-        $anrId = $personalDataEntity->anr->id;
+        $anrId = $personalDataEntity->getAnr()->getId();
         $dataCategoriesToCheck = [];
         foreach($personalDataEntity->dataCategories as $dc) {
             $dataCategoriesToCheck[] = $dc->id;

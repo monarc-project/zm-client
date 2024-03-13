@@ -36,9 +36,9 @@ class RecordProcessor extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr")
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
@@ -75,15 +75,15 @@ class RecordProcessor extends AbstractEntity
     protected $secMeasures;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\RecordActor
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RecordActor", cascade={"persist"})
+     * @var RecordActor
+     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="representative", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $representative;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\RecordActor
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\RecordActor", cascade={"persist"})
+     * @var RecordActor
+     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="dpo", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
     protected $dpo;

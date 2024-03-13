@@ -61,15 +61,39 @@ class AnrRecommendationService
     public function create(Entity\Anr $anr, array $data, bool $saveInDb = true): Entity\Recommendation
     {
         /** @var Entity\RecommendationSet $recommendationSet */
-        $recommendationSet = $this->recommendationSetTable->findByUuidAndAnr($data['recommendationSet'], $anr);
+        $recommendationSet = $data['recommendationSet'] instanceof Entity\RecommendationSet
+            ? $data['recommendationSet']
+            : $this->recommendationSetTable->findByUuidAndAnr($data['recommendationSet'], $anr);
 
         $recommendation = (new Entity\Recommendation())
             ->setAnr($anr)
             ->setRecommendationSet($recommendationSet)
-            ->setImportance($data['importance'])
+            ->setImportance($data['importance'] ?? Entity\Recommendation::EMPTY_IMPORTANCE)
             ->setCode($data['code'])
             ->setDescription($data['description'])
             ->setCreator($this->connectedUser->getEmail());
+        if (!empty($data['uuid'])) {
+            /* The UUID is set only when it's imported from MOSP or duplicated on anr creation. */
+            $recommendation->setUuid($data['uuid']);
+        }
+        if (isset($data['position'])) {
+            $recommendation->setPosition($data['position']);
+        }
+        if (isset($data['comment'])) {
+            $recommendation->setComment($data['comment']);
+        }
+        if (isset($data['status'])) {
+            $recommendation->setStatus($data['status']);
+        }
+        if (isset($data['responsible'])) {
+            $recommendation->setResponsible($data['responsible']);
+        }
+        if (isset($data['duedate'])) {
+            $recommendation->setDueDate($data['duedate']);
+        }
+        if (isset($data['counterTreated'])) {
+            $recommendation->setCounterTreated($data['counterTreated']);
+        }
 
         $this->recommendationTable->save($recommendation, $saveInDb);
 

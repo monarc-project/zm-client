@@ -14,10 +14,6 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\Measure;
 
-/**
- * Class MeasureTable
- * @package Monarc\FrontOffice\Model\Table
- */
 class MeasureTable extends CoreMeasureTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)

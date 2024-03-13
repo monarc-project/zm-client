@@ -144,13 +144,6 @@ class Recommendation implements PositionedEntityInterface
      */
     protected $counterTreated = 0;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="original_code", type="string", length=100, nullable=true)
-     */
-    protected $originalCode;
-
     public function __construct()
     {
         $this->recommendationRisks = new ArrayCollection();

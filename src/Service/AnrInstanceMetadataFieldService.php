@@ -53,15 +53,18 @@ class AnrInstanceMetadataFieldService
         ];
     }
 
-    public function create(Anr $anr, array $data): AnrInstanceMetadataField
+    public function create(Anr $anr, array $data, bool $saveInDb = true): AnrInstanceMetadataField
     {
         $metadataFieldData = current($data);
         $metadataField = (new AnrInstanceMetadataField())
             ->setLabel($metadataFieldData[$anr->getLanguageCode()])
             ->setAnr($anr)
             ->setCreator($this->connectedUser->getEmail());
+        if (isset($metadataFieldData['isDeletable'])) {
+            $metadataField->setIsDeletable((bool)$metadataFieldData['isDeletable']);
+        }
 
-        $this->anrInstanceMetadataFieldTable->save($metadataField);
+        $this->anrInstanceMetadataFieldTable->save($metadataField, $saveInDb);
 
         return $metadataField;
     }

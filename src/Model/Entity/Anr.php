@@ -64,6 +64,13 @@ class Anr extends AnrSuperClass
     protected $referencedSnapshots;
 
     /**
+     * @var ArrayCollection|RecommendationSet[]
+     *
+     * @ORM\OneToMany(targetEntity="RecommendationSet", mappedBy="anr" cascade={"persist", "remove"})
+     */
+    protected $recommendationSets;
+
+    /**
      * @var Snapshot
      *
      * @ORM\OneToMany(targetEntity="Snapshot", mappedBy="anr")
@@ -135,11 +142,14 @@ class Anr extends AnrSuperClass
 
     public function __construct()
     {
+        parent::__construct();
+
         $this->objects = new ArrayCollection();
         $this->objectCategories = new ArrayCollection();
         $this->referentials = new ArrayCollection();
         $this->referencedSnapshots = new ArrayCollection();
         $this->usersAnrsPermissions = new ArrayCollection();
+        $this->recommendationSets = new ArrayCollection();
     }
 
     /**
@@ -362,6 +372,21 @@ class Anr extends AnrSuperClass
         if (!$this->referencedSnapshots->contains($snapshot)) {
             $this->referencedSnapshots->add($snapshot);
             $snapshot->setAnrReference($this);
+        }
+
+        return $this;
+    }
+
+    public function getRecommendationSets()
+    {
+        return $this->recommendationSets;
+    }
+
+    public function addRecommendationSet(RecommendationSet $recommendationSet): self
+    {
+        if (!$this->recommendationSets->contains($recommendationSet)) {
+            $this->recommendationSets->add($recommendationSet);
+            $recommendationSet->setAnr($this);
         }
 
         return $this;

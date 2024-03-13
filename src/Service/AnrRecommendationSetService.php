@@ -54,7 +54,7 @@ class AnrRecommendationSetService
             ->setLabel($data['label'])
             ->setCreator($this->connectedUser->getEmail());
         if (!empty($data['uuid'])) {
-            /* The UUID is set only when it's imported from MOSP. */
+            /* The UUID is set only when it's imported from MOSP or duplicated on anr creation. */
             $recommendationSet->setUuid($data['uuid']);
         }
 

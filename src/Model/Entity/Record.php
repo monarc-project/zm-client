@@ -91,7 +91,7 @@ class Record extends AbstractEntity
 
     /**
      * @var Collection|RecordActor[]
-     * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RecordActor", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinTable(name="records_record_joint_controllers",
      *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="controller_id", referencedColumnName="id")}

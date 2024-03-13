@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\SoaScaleCommentSuperClass;
 
@@ -23,7 +24,19 @@ class SoaScaleComment extends SoaScaleCommentSuperClass
      *
      * @ORM\Column(name="comment", type="text", nullable=true)
      */
-    public $comment = '';
+    protected $comment = '';
+
+    /**
+     * @var ArrayCollection|Soa[]
+     *
+     * @ORM\OneToMany(targetEntity="Soa", mappedBy="soaScaleComment")
+     */
+    protected $soas;
+
+    public function __construct()
+    {
+        $this->soas = new ArrayCollection();
+    }
 
     public function getComment(): string
     {
@@ -33,6 +46,21 @@ class SoaScaleComment extends SoaScaleCommentSuperClass
     public function setComment(string $comment): self
     {
         $this->comment = $comment;
+
+        return $this;
+    }
+
+    public function getSoas()
+    {
+        return $this->soas;
+    }
+
+    public function addSoa(Soa $soa): self
+    {
+        if (!$this->soas->contains($soa)) {
+            $this->soas->add($soa);
+            $soa->setSoaScaleComment($this);
+        }
 
         return $this;
     }

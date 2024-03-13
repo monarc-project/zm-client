@@ -39,6 +39,7 @@ class ObjectCategory extends ObjectCategorySuperClass
     public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+        $anr->addObjectCategory($this);
 
         return $this;
     }

@@ -74,34 +74,25 @@ class AnrRecommendationRiskService
     {
         /** @var Entity\Recommendation $recommendation */
         $recommendation = $this->recommendationTable->findByUuidAndAnr($data['recommendation'], $anr);
-        if (!empty($data['instanceRiskOp'])) {
-            /** @var Entity\InstanceRiskOp $instanceRiskOp */
-            $instanceRiskOp = $this->instanceRiskOpTable->findByIdAndAnr($data['instanceRiskOp'], $anr);
-        } else {
-            /** @var Entity\InstanceRisk $instanceRisk */
-            $instanceRisk = $this->instanceRiskTable->findByIdAndAnr($data['instanceRisk'], $anr);
-        }
+        /** @var Entity\InstanceRiskOp|Entity\InstanceRisk $instanceRisk */
+        $instanceRisk = !empty($data['instanceRiskOp'])
+            ? $this->instanceRiskOpTable->findByIdAndAnr($data['instanceRiskOp'], $anr)
+            : $this->instanceRiskTable->findByIdAndAnr($data['instanceRisk'], $anr);
 
         /* Verify existence. */
-        if ((isset($instanceRisk) && $this->recommendationRiskTable->existsWithAnrRecommendationAndInstanceRisk(
-            $anr,
-            $recommendation,
-            $instanceRisk
-        )) || (isset($instanceRiskOp) && $this->recommendationRiskTable->existsWithAnrRecommendationAndInstanceRiskOp(
-            $anr,
-            $recommendation,
-            $instanceRiskOp
-        ))) {
+        if (($instanceRisk instanceof Entity\InstanceRisk && $this->recommendationRiskTable
+                ->existsWithAnrRecommendationAndInstanceRisk($anr, $recommendation, $instanceRisk)
+            )
+            || ($instanceRisk instanceof Entity\InstanceRiskOp && $this->recommendationRiskTable
+                ->existsWithAnrRecommendationAndInstanceRiskOp($anr, $recommendation, $instanceRisk)
+            )
+        ) {
             throw new Exception('The risk is already linked to this recommendation', 412);
         }
 
-        $recommendationRisk = $this->createRecommendationRisk(
-            $recommendation,
-            $instanceRisk ?? $instanceRiskOp,
-            $saveInDb
-        );
+        $recommendationRisk = $this->createRecommendationRisk($recommendation, $instanceRisk, '', $saveInDb);
 
-        if (isset($instanceRisk)
+        if ($instanceRisk instanceof Entity\InstanceRisk
             && $instanceRisk->getAmv()
             && $instanceRisk->getInstance()->getObject()->isScopeGlobal()
         ) {
@@ -115,13 +106,13 @@ class AnrRecommendationRiskService
                     if ($siblingInstanceRisk->getAmv()
                         && $siblingInstanceRisk->getAmv()->getUuid() === $instanceRisk->getAmv()->getUuid()
                     ) {
-                        $this->createRecommendationRisk($recommendation, $siblingInstanceRisk, $saveInDb);
+                        $this->createRecommendationRisk($recommendation, $siblingInstanceRisk, '', $saveInDb);
                     }
                 }
             }
         }
 
-        $this->updateInstanceRiskRecommendationsPositions($instanceRisk ?? $instanceRiskOp);
+        $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
 
         return $recommendationRisk;
     }
@@ -274,9 +265,10 @@ class AnrRecommendationRiskService
         return $treatmentPlan;
     }
 
-    private function createRecommendationRisk(
+    public function createRecommendationRisk(
         Entity\Recommendation $recommendation,
         Entity\InstanceRisk|Entity\InstanceRiskOp $instanceRisk,
+        string $commentAfter = '',
         bool $saveInDb = true
     ): Entity\RecommendationRisk {
         /** @var Entity\Instance $instance */
@@ -285,6 +277,7 @@ class AnrRecommendationRiskService
             ->setAnr($recommendation->getAnr())
             ->setRecommendation($recommendation)
             ->setInstance($instance)
+            ->setCommentAfter($commentAfter)
             ->setCreator($this->connectedUser->getEmail());
         if ($instanceRisk instanceof Entity\InstanceRiskOp) {
             $recommendationRisk->setInstanceRiskOp($instanceRisk);

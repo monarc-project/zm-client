@@ -1248,9 +1248,7 @@ return [
                     ],
                     'defaults' => [
                         'controller' => PipeSpec::class,
-                        'middleware' => new PipeSpec(
-                            Controller\ApiUserTwoFAController::class,
-                        ),
+                        'middleware' => new PipeSpec(Controller\ApiUserTwoFAController::class),
                     ],
                 ],
             ],

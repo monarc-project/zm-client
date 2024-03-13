@@ -343,6 +343,7 @@ class FixPositionsCleanupDb extends AbstractMigration
 
         $this->table('recommandations')
             ->removeColumn('token_import')
+            ->removeColumn('original_code')
             ->update();
 
         $this->table('deliveries')
@@ -350,8 +351,15 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
 
         $this->table('scales_impact_types')
-             ->removeColumn('position')
-             ->update();
+            ->removeColumn('position')
+            ->update();
+
+        $this->table('objects_categories')
+            ->changeColumn('label1', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
+            ->changeColumn('label2', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
+            ->changeColumn('label3', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
+            ->changeColumn('label4', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
+            ->save();
 
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.
         $this->table('anr_instance_metadata_fields')->removeColumn('label_translation_key')->update();

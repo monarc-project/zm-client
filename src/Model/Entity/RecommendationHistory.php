@@ -243,6 +243,37 @@ class RecommendationHistory
      */
     protected $cacheCommentAfter;
 
+    public static function constructFromObject(RecommendationHistory $recommendationHistory): RecommendationHistory
+    {
+        return (new self())
+            ->setIsFinal($recommendationHistory->isFinal())
+            ->setImplComment($recommendationHistory->getImplComment())
+            ->setRecoCode($recommendationHistory->getRecoCode())
+            ->setRecoDescription($recommendationHistory->getRecoDescription())
+            ->setRecoImportance($recommendationHistory->getRecoImportance())
+            ->setRecoComment($recommendationHistory->getRecoComment())
+            ->setRecoResponsable($recommendationHistory->getRecoResponsable())
+            ->setRecoDueDate($recommendationHistory->getRecoDueDate())
+            ->setRiskInstance($recommendationHistory->getRiskInstance())
+            ->setRiskInstanceContext($recommendationHistory->getRiskInstanceContext())
+            ->setRiskAsset($recommendationHistory->getRiskAsset())
+            ->setRiskThreat($recommendationHistory->getRiskThreat())
+            ->setRiskThreatVal($recommendationHistory->getRiskThreatVal())
+            ->setRiskVul($recommendationHistory->getRiskVul())
+            ->setRiskVulValBefore($recommendationHistory->getRiskVulValBefore())
+            ->setRiskVulValAfter($recommendationHistory->getRiskVulValAfter())
+            ->setRiskKindOfMeasure($recommendationHistory->getRiskKindOfMeasure())
+            ->setRiskColorBefore($recommendationHistory->getRiskColorBefore())
+            ->setRiskColorAfter($recommendationHistory->getRiskColorAfter())
+            ->setCacheCommentAfter($recommendationHistory->getCacheCommentAfter())
+            ->setNetProbBefore($recommendationHistory->getNetProbBefore())
+            ->setRiskOpDescription($recommendationHistory->getRiskOpDescription())
+            ->setRiskCommentBefore($recommendationHistory->getRiskCommentBefore())
+            ->setRiskCommentAfter($recommendationHistory->getRiskCommentAfter())
+            ->setRiskMaxRiskBefore($recommendationHistory->getRiskMaxRiskBefore())
+            ->setRiskMaxRiskAfter($recommendationHistory->getRiskMaxRiskAfter());
+    }
+
     public function getId(): int
     {
         return $this->id;
@@ -260,7 +291,7 @@ class RecommendationHistory
         return $this;
     }
 
-    public function getInstanceRisk(): InstanceRisk
+    public function getInstanceRisk(): ?InstanceRisk
     {
         return $this->instanceRisk;
     }
@@ -272,7 +303,7 @@ class RecommendationHistory
         return $this;
     }
 
-    public function getInstanceRiskOp(): InstanceRiskOp
+    public function getInstanceRiskOp(): ?InstanceRiskOp
     {
         return $this->instanceRiskOp;
     }

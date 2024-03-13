@@ -72,6 +72,7 @@ class MonarcObject extends ObjectSuperClass
     public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+        $anr->addObject($this);
 
         return $this;
     }

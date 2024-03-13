@@ -102,15 +102,19 @@ class InstanceRisk extends InstanceRiskSuperClass
     {
         /** @var InstanceRisk $instanceRisk */
         $instanceRisk = parent::constructFromObject($instanceRisk);
-        $instanceRisk->setAnr($instanceRisk->getAnr())
+
+        return $instanceRisk->setContext($instanceRisk->getContext());
+    }
+
+    public static function constructFromObjectOfTheSameAnr(InstanceRisk $instanceRisk): static
+    {
+        return self::constructFromObject($instanceRisk)
+            ->setAnr($instanceRisk->getAnr())
             ->setAsset($instanceRisk->getAsset())
             ->setThreat($instanceRisk->getThreat())
             ->setVulnerability($instanceRisk->getVulnerability())
             ->setAmv($instanceRisk->getAmv())
-            ->setInstanceRiskOwner($instanceRisk->getInstanceRiskOwner())
-            ->setContext($instanceRisk->getContext());
-
-        return $instanceRisk;
+            ->setInstanceRiskOwner($instanceRisk->getInstanceRiskOwner());
     }
 
     public function getRecommendationRisks()

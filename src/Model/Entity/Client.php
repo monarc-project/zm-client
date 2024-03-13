@@ -87,6 +87,11 @@ class Client
      */
     protected $firstUserEmail;
 
+    public function __construct()
+    {
+        $this->clientModels = new ArrayCollection();
+    }
+
     public function getClientModels()
     {
         return $this->clientModels;

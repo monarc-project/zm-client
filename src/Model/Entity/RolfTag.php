@@ -11,8 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\RolfTagSuperClass;
 
 /**
- * Rolf Tag
- *
  * @ORM\Table(name="rolf_tags", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"})
  * })

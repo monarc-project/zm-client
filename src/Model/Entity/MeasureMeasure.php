@@ -12,8 +12,6 @@ use Monarc\Core\Model\Entity\MeasureMeasureSuperClass;
 use Ramsey\Uuid\Uuid;
 
 /**
- * MeasureMeasure
- *
  * @ORM\Table(name="measures_measures", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  * })

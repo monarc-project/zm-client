@@ -146,7 +146,7 @@ class AnrInstanceRiskService
         bool $saveInDb = false
     ): Entity\InstanceRisk {
         $instanceRisk = $fromInstanceRisk !== null
-            ? Entity\InstanceRisk::constructFromObject($fromInstanceRisk)
+            ? Entity\InstanceRisk::constructFromObjectOfTheSameAnr($fromInstanceRisk)
             : new Entity\InstanceRisk();
 
         /** @var Entity\InstanceRisk $instanceRisk */
@@ -251,7 +251,7 @@ class AnrInstanceRiskService
             $siblingGlobalInstances = $this->instanceTable->findGlobalSiblingsByAnrAndInstance($anr, $instance);
             foreach ($siblingGlobalInstances as $siblingGlobalInstance) {
                 $this->instanceRiskTable->save(
-                    Entity\InstanceRisk::constructFromObject($instanceRisk)
+                    Entity\InstanceRisk::constructFromObjectOfTheSameAnr($instanceRisk)
                         ->setInstance($siblingGlobalInstance)
                         ->setCreator($this->connectedUser->getEmail()),
                     false

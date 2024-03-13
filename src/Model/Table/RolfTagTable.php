@@ -23,10 +23,21 @@ class RolfTagTable extends CoreRolfTagTable
         $this->entityClass = RolfTag::class;
     }
 
+    /**
+     * @return RolfTag[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('rt')
+            ->where('rt.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findByAnrAndCode(Anr $anr, string $code): ?RolfTag
     {
-        return $this->getRepository()
-            ->createQueryBuilder('rt')
+        return $this->getRepository()->createQueryBuilder('rt')
             ->where('rt.anr = :anr')
             ->setParameter('anr', $anr)
             ->andWhere('rt.code = :code')

@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Doctrine\ORM\AbstractQuery;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -24,7 +25,7 @@ class MeasureMeasureTable extends AbstractEntityTable
         parent::__construct($dbService, MeasureMeasure::class, $connectedUserService);
     }
 
-    public function findByAnrFatherUuidAndChildUuid(Anr $anr, string $fatherUuid, string $childUuid): ?MeasureMeasure
+    public function existsWithAnrFatherUuidAndChildUuid(Anr $anr, string $fatherUuid, string $childUuid): bool
     {
         return $this->getRepository()->createQueryBuilder('mm')
             ->where('mm.anr = :anr')
@@ -33,8 +34,9 @@ class MeasureMeasureTable extends AbstractEntityTable
             ->setParameter('anr', $anr)
             ->setParameter('father', $fatherUuid)
             ->setParameter('child', $childUuid)
+            ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult();
+            ->getOneOrNullResult(AbstractQuery::HYDRATE_SIMPLEOBJECT) !== null;
     }
 
     public function saveEntity(MeasureMeasure $measureMeasure, bool $flush = true): void

@@ -45,7 +45,7 @@ class AnrRecordService extends AbstractService
     public function deleteRecord($id)
     {
         $entity = $this->get('table')->getEntity($id);
-        $anrId = $entity->anr->id;
+        $anrId = $entity->getAnr()->getId();
         $actorsToCheck = [];
         $processorsToCheck = [];
         $recipientsToCheck = [];

@@ -9,16 +9,16 @@ namespace Monarc\FrontOffice\Controller;
 
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
-use Monarc\FrontOffice\Service\AnrService;
+use Monarc\FrontOffice\Service\AnrModelService;
 
 class ApiModelVerifyLanguageController extends AbstractRestfulController
 {
-    public function __construct(private AnrService $anrService)
+    public function __construct(private AnrModelService $anrModelService)
     {
     }
 
     public function get($id)
     {
-        return new JsonModel($this->anrService->getModelAvailableLanguages((int)$id));
+        return new JsonModel($this->anrModelService->getAvailableLanguages((int)$id));
     }
 }

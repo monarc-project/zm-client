@@ -128,18 +128,15 @@ class RecommendationRisk
     /**
      * @var string
      *
-     * @ORM\Column(name="comment_after", type="string", length=255, nullable=true)
+     * @ORM\Column(name="comment_after", type="string", length=255, nullable=false)
      */
-    protected $commentAfter;
+    protected $commentAfter = '';
 
     public function getId(): int
     {
         return $this->id;
     }
 
-    // TODO: the nullable value is added for the multi-fields relation issue (when we remove a relation, e.g. asset).
-    // TODO: remove when #240 is done.
-    // TODO: debug if this is still the case with the new code ???
     public function getAnr(): Anr
     {
         return $this->anr;

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -17,23 +17,14 @@ use Monarc\FrontOffice\Table;
 
 class InstanceMetadataService
 {
-    protected Table\InstanceMetadataTable $instanceMetadataTable;
-
-    protected Table\InstanceTable $instanceTable;
-
-    protected Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable;
-
     protected UserSuperClass $connectedUser;
 
     public function __construct(
-        Table\InstanceMetadataTable $instanceMetadataTable,
-        Table\InstanceTable $instanceTable,
-        Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
+        private Table\InstanceMetadataTable $instanceMetadataTable,
+        private Table\InstanceTable $instanceTable,
+        private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
         ConnectedUserService $connectedUserService
     ) {
-        $this->instanceMetadataTable = $instanceMetadataTable;
-        $this->instanceTable = $instanceTable;
-        $this->anrInstanceMetadataFieldTable = $anrInstanceMetadataFieldTable;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 

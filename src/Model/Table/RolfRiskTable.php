@@ -13,10 +13,6 @@ use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Model\Entity\Anr;
 use Monarc\FrontOffice\Model\Entity\RolfRisk;
 
-/**
- * Class RolfRiskTable
- * @package Monarc\FrontOffice\Model\Table
- */
 class RolfRiskTable extends CoreRolfRiskTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
@@ -26,10 +22,21 @@ class RolfRiskTable extends CoreRolfRiskTable
         $this->entityClass = RolfRisk::class;
     }
 
+    /**
+     * @return RolfRisk[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('rr')
+            ->where('rr.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findByAnrAndCode(Anr $anr, string $code): ?RolfRisk
     {
-        return $this->getRepository()
-            ->createQueryBuilder('rr')
+        return $this->getRepository()->createQueryBuilder('rr')
             ->where('rr.anr = :anr')
             ->andWhere('rr.code = :code')
             ->setParameter('anr', $anr)

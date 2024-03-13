@@ -94,20 +94,15 @@ class RecommendationSet
         return $this;
     }
 
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param Anr $anr
-     */
-    public function setAnr($anr): self
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+        $anr->addRecommendationSet($this);
 
         return $this;
     }

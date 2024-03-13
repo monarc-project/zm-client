@@ -11,8 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\AbstractEntity;
 
 /**
- * Soa
- *
  * @ORM\Table(name="soa", indexes={
  *      @ORM\Index(name="measure", columns={"measure_id"}),
  *      @ORM\Index(name="anr", columns={"anr_id"})
@@ -22,7 +20,7 @@ use Monarc\Core\Model\Entity\AbstractEntity;
 class Soa extends AbstractEntity
 {
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -42,6 +40,7 @@ class Soa extends AbstractEntity
 
     /**
      * @var Measure
+     *
      * @ORM\OneToOne(targetEntity="Measure", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid", nullable=true),
@@ -154,55 +153,29 @@ class Soa extends AbstractEntity
         return [$filterJoin, $filterLeft, $filtersCol];
     }
 
-    /**
-     * @return int
-     */
     public function getId()
     {
         return $this->id;
     }
 
-    /**
-     * @param int $id
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
-    }
-
-    /**
-     * @return Measure
-     */
-    public function getMeasure()
+    public function getMeasure(): Measure
     {
         return $this->measure;
     }
 
-    /**
-     * @param Measure $measure
-     *
-     */
-    public function setMeasure($measure): self
+    public function setMeasure(Measure $measure): self
     {
         $this->measure = $measure;
 
         return $this;
     }
 
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param Anr $anr
-     *
-     * @return Soa
-     */
-    public function setAnr($anr)
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 
@@ -389,20 +362,15 @@ class Soa extends AbstractEntity
         return $this;
     }
 
-    /**
-     * @return SoaScaleComment
-     */
     public function getSoaScaleComment(): ?SoaScaleComment
     {
         return $this->soaScaleComment;
     }
 
-    /**
-     * @param SoaScaleComment $RRA
-     */
-    public function setSoaScaleComment($soaScaleComment): self
+    public function setSoaScaleComment(SoaScaleComment $soaScaleComment): self
     {
         $this->soaScaleComment = $soaScaleComment;
+        $soaScaleComment->addSoa($this);
 
         return $this;
     }

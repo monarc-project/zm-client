@@ -82,15 +82,22 @@ class SoaScaleCommentService
         $this->soaScaleCommentTable->save($soaScaleComment->setUpdater($this->connectedUser->getEmail()));
     }
 
-    protected function createSoaScaleComment(Anr $anr, int $scaleIndex): void
-    {
-        $scaleComment = (new SoaScaleComment())
+    public function createSoaScaleComment(
+        Anr $anr,
+        int $scaleIndex,
+        string $colour = '',
+        string $comment = '',
+        bool $isHidden = false
+    ): SoaScaleComment {
+        $soaScaleComment = (new SoaScaleComment())
             ->setAnr($anr)
             ->setScaleIndex($scaleIndex)
-            ->setColour('')
-            ->setIsHidden(false)
+            ->setColour($colour)
+            ->setComment($comment)
+            ->setIsHidden($isHidden)
             ->setCreator($this->connectedUser->getEmail());
+        $this->soaScaleCommentTable->save($soaScaleComment, false);
 
-        $this->soaScaleCommentTable->save($scaleComment, false);
+        return $soaScaleComment;
     }
 }

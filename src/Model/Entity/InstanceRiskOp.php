@@ -90,7 +90,7 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     public static function constructFromObject(
         InstanceRiskOpSuperClass $operationalInstanceRisk
     ): InstanceRiskOpSuperClass {
-        return static::constructFromObject($operationalInstanceRisk)
+        return parent::constructFromObject($operationalInstanceRisk)
             ->setContext($operationalInstanceRisk->getContext());
     }
 

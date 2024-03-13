@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\UserNotLoggedInException;
 use Monarc\Core\Service\UserRoleService as CoreUserRoleService;
+use Monarc\FrontOffice\Model\Entity\UserAnr;
 
 class UserRoleService extends CoreUserRoleService
 {
@@ -20,10 +21,11 @@ class UserRoleService extends CoreUserRoleService
         }
 
         $userAnrs = [];
+        /** @var UserAnr $userAnr */
         foreach ($userToken->getUser()->getUserAnrs() as $userAnr) {
             $userAnrs[] = [
-                'anr' => $userAnr->anr->id,
-                'rwd' => $userAnr->rwd
+                'anr' => $userAnr->getAnr()->getId(),
+                'rwd' => $userAnr->getRwd(),
             ];
         }
 

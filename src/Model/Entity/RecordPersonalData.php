@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Entity;
 
+use Doctrine\Common\Collections\Collection;
 use Monarc\Core\Model\Entity\AbstractEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -38,9 +39,9 @@ class RecordPersonalData extends AbstractEntity
     protected $id;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Anr
+     * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Anr")
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
@@ -48,8 +49,8 @@ class RecordPersonalData extends AbstractEntity
     protected $anr;
 
     /**
-     * @var \Monarc\FrontOffice\Model\Entity\Record
-     * @ORM\ManyToOne(targetEntity="Monarc\FrontOffice\Model\Entity\Record")
+     * @var Record
+     * @ORM\ManyToOne(targetEntity="Record")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
@@ -64,8 +65,8 @@ class RecordPersonalData extends AbstractEntity
     protected $dataSubject;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection
-     * @ORM\ManyToMany(targetEntity="Monarc\FrontOffice\Model\Entity\RecordDataCategory", cascade={"persist"})
+     * @var Collection
+     * @ORM\ManyToMany(targetEntity="RecordDataCategory", cascade={"persist"})
      * @ORM\JoinTable(name="record_personal_data_record_data_categories",
      *  joinColumns={@ORM\JoinColumn(name="personal_data_id", referencedColumnName="id")},
      *  inverseJoinColumns={@ORM\JoinColumn(name="data_category_id", referencedColumnName="id")}

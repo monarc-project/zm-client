@@ -12,8 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\MeasureSuperClass;
 
 /**
- * Measure
- *
  * @ORM\Table(name="measures", indexes={
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  *      @ORM\Index(name="category", columns={"soacategory_id"}),

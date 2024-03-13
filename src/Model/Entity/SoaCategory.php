@@ -11,8 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Model\Entity\SoaCategorySuperClass;
 
 /**
-* Category
-*
 * @ORM\Table(name="soacategory", indexes={
 *      @ORM\Index(name="anr", columns={"anr_id"}),
 *      @ORM\Index(name="referential", columns={"referential_uuid"})

@@ -61,7 +61,7 @@ class User extends UserSuperClass
         return $this;
     }
 
-    public function getUserAnrs(): Collection
+    public function getUserAnrs()
     {
         return $this->userAnrs;
     }
@@ -71,9 +71,10 @@ class User extends UserSuperClass
      */
     public function setUserAnrs(array $userAnrs): self
     {
-        $this->userAnrs = new ArrayCollection();
         foreach ($userAnrs as $userAnr) {
-            $this->addUserAnr($userAnr);
+            if ($userAnr instanceof UserAnr) {
+                $this->addUserAnr($userAnr);
+            }
         }
 
         return $this;

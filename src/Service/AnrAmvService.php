@@ -122,12 +122,27 @@ class AnrAmvService implements PositionUpdatableServiceInterface
         /** @var Entity\Vulnerability $vulnerability */
         $vulnerability = $this->vulnerabilityTable->findByUuidAndAnr($data['vulnerability'], $anr);
 
+        return $this->createAmvFromPreparedData($anr, $asset, $threat, $vulnerability, $data, $saveInDb);
+    }
+
+    public function createAmvFromPreparedData(
+        Entity\Anr $anr,
+        Entity\Asset $asset,
+        Entity\Threat $threat,
+        Entity\Vulnerability $vulnerability,
+        array $data,
+        bool $saveInDb = true,
+        bool $createInstanceRisksForInstances = true
+    ): Entity\Amv {
         $amv = (new Entity\Amv())
             ->setAnr($anr)
             ->setAsset($asset)
             ->setThreat($threat)
             ->setVulnerability($vulnerability)
             ->setCreator($this->connectedUser->getEmail());
+        if (isset($data['uuid'])) {
+            $amv->setUuid($data['uuid']);
+        }
         if (isset($data['status'])) {
             $amv->setStatus($data['status']);
         }
@@ -138,7 +153,9 @@ class AnrAmvService implements PositionUpdatableServiceInterface
 
         $this->updatePositions($amv, $this->amvTable, $data);
 
-        $this->createInstanceRiskForInstances($asset, $amv);
+        if ($createInstanceRisksForInstances) {
+            $this->createInstanceRiskForInstances($asset, $amv);
+        }
 
         $this->amvTable->save($amv, $saveInDb);
 

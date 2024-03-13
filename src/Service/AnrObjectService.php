@@ -93,18 +93,18 @@ class AnrObjectService
     {
         $result = [];
         foreach ($anr->getObjectCategories() as $objectCategory) {
-            $result[] = $this->getCategoriesAndObjectsTreeList($objectCategory, $anr);
+            $result[] = $this->getCategoriesAndObjectsTreeList($objectCategory);
         }
 
         /* Places uncategorized objects. */
-        $objectsData = [];
+        $uncategorizedObjectsData = [];
         foreach ($anr->getObjects() as $object) {
             if (!$object->hasCategory()) {
-                $objectsData[] = $this->getPreparedObjectData($object, true);
+                $uncategorizedObjectsData[] = $this->getPreparedObjectData($object, true);
             }
         }
-        if (!empty($objectsData)) {
-            $result[] = CoreEntity\ObjectCategorySuperClass::getUndefinedCategoryData($objectsData);
+        if (!empty($uncategorizedObjectsData)) {
+            $result[] = CoreEntity\ObjectCategorySuperClass::getUndefinedCategoryData($uncategorizedObjectsData);
         }
 
         return $result;
@@ -121,6 +121,17 @@ class AnrObjectService
             ? $this->rolfTagTable->findByIdAndAnr($data['rolfTag'], $anr)
             : null;
 
+        return $this->createMonarcObject($anr, $asset, $objectCategory, $rolfTag, $data, $saveInDb);
+    }
+
+    public function createMonarcObject(
+        Entity\Anr $anr,
+        Entity\Asset $asset,
+        ?Entity\ObjectCategory $objectCategory,
+        ?Entity\RolfTag $rolfTag,
+        array $data,
+        bool $saveInDb
+    ): Entity\MonarcObject {
         $monarcObject = (new Entity\MonarcObject())
             ->setAnr($anr)
             ->setLabels($data)
@@ -138,7 +149,7 @@ class AnrObjectService
          * The objects positioning inside of categories was dropped from the UI, only kept in the db and passed data.
          * New objects are always placed at the end.
          */
-        $this->updatePositions($monarcObject, $this->monarcObjectTable);
+        $this->updatePositions($monarcObject, $this->monarcObjectTable, $data);
 
         $this->monarcObjectTable->save($monarcObject, $saveInDb);
 
@@ -267,14 +278,7 @@ class AnrObjectService
                     'position' => $object->getCategory()->getPosition(),
                     'label' . $anr->getLanguage() => $object->getCategory()->getLabel($anr->getLanguage()),
                 ]
-                : [
-                    'id' => -1,
-                    'label1' => 'Sans catégorie',
-                    'label2' => 'Uncategorized',
-                    'label3' => 'Keine Kategorie',
-                    'label4' => 'Geen categorie',
-                    'position' => -1,
-                ];
+                : CoreEntity\ObjectCategorySuperClass::getUndefinedCategoryData([]);
             $result['asset'] = [
                 'uuid' => $object->getAsset()->getUuid(),
                 'label' . $anr->getLanguage() => $object->getAsset()->getLabel($anr->getLanguage()),

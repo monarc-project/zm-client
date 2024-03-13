@@ -29,7 +29,7 @@ class AnrRecordProcessorService extends AbstractService
     public function deleteProcessor($id)
     {
         $entity = $this->get('table')->getEntity($id);
-        $anrId = $entity->anr->id;
+        $anrId = $entity->getAnr()->getId();
         $actorsToCheck = array();
         if($entity->dpo) {
             array_push($actorsToCheck, $entity->dpo->id);

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -17,35 +17,28 @@ class ApiAnrController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private CreateAnrDataInputValidator $createAnrDataInputValidator;
-
-    private AnrService $anrService;
-
-    public function __construct(CreateAnrDataInputValidator $createAnrDataInputValidator, AnrService $anrService)
-    {
-        $this->createAnrDataInputValidator = $createAnrDataInputValidator;
-        $this->anrService = $anrService;
+    public function __construct(
+        private CreateAnrDataInputValidator $createAnrDataInputValidator,
+        private AnrService $anrService
+    ) {
     }
 
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-
-        $result = $this->anrService->getList($page, $limit, $order, $filter);
-        // protected $dependencies = ['referentials'];
-        if (count($this->dependencies)) {
-            foreach ($result as $key => $entity) {
-                $this->formatDependencies($result[$key], $this->dependencies);
-            }
-        }
+        $result = $this->anrService->getList();
 
         return $this->getPreparedJsonResponse([
             'count' => \count($result),
             'anrs' => $result,
         ]);
+    }
+
+    public function get($id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        return $this->getSuccessfulJsonResponse($this->anrService->getAnrData($anr));
     }
 
     /**
@@ -55,7 +48,7 @@ class ApiAnrController extends AbstractRestfulControllerRequestHandler
     {
         $this->validatePostParams($this->createAnrDataInputValidator, $data);
 
-        $anr = $this->anrService->createFromModelToClient($this->createAnrDataInputValidator->getValidData());
+        $anr = $this->anrService->createBasedOnModel($this->createAnrDataInputValidator->getValidData());
 
         return $this->getSuccessfulJsonResponse(['id' => $anr->getId()]);
     }
@@ -72,5 +65,15 @@ class ApiAnrController extends AbstractRestfulControllerRequestHandler
         $this->anrService->patch($anr, $data);
 
         return $this->getSuccessfulJsonResponse(['id' => $id]);
+    }
+
+    public function delete(mixed $id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrService->delete($anr);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }
