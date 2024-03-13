@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -262,7 +262,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
 
         $this->execute(
-            'UPDATE anr_metadatas_on_instances aim
+            'UPDATE anr_instance_metadata_fields aim
             INNER JOIN translations t ON aim.label_translation_key = t.translation_key
                 AND t.anr_id = aim.anr_id
                 AND t.type = "anr-metadatas-on-instances"
@@ -270,8 +270,9 @@ class FixPositionsCleanupDb extends AbstractMigration
         );
         $this->execute(
             'UPDATE instances_metadata im
+            INNER JOIN anr_instance_metadata_fields aimf ON im.metadata_id = aimf.id
             INNER JOIN translations t ON im.comment_translation_key = t.translation_key
-                AND t.anr_id = im.anr_id
+                AND t.anr_id = aimf.anr_id
                 AND t.type = "instance-metadata"
             SET im.comment = t.value;'
         );
@@ -304,7 +305,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->addColumn('description', 'text', ['null' => true, 'limit' => MysqlAdapter::TEXT_REGULAR])
             ->addColumn('language_code', 'string', ['null' => false, 'limit' => 255, 'default' => 'fr'])
             /* Make Anr name (label) unique. */
-            ->addIndex(['label'], ['unique' => true])
+            //->addIndex(['label'], ['unique' => true])
             ->update();
         $anrsQuery = $this->query('SELECT id, language, label1, label2, label3, label4,
             description1, description2, description3, description4, created_at FROM anrs'
@@ -314,8 +315,8 @@ class FixPositionsCleanupDb extends AbstractMigration
         foreach ($anrsQuery->fetchAll() as $anrData) {
             $labelName = 'label' . $anrData['language'];
             if (isset($uniqueLabels[$anrData[$labelName]])) {
-                $uniqueLabels[$anrData[$labelName]] = $anrData[$labelName] .
-                    ' [' . !empty($anrData['created_at']) ? $anrData['created_at'] : date('Y-m-d H:i:s') . ']';
+                $uniqueLabels[$anrData[$labelName]] = $anrData[$labelName] . ' ['
+                    . (!empty($anrData['created_at']) ? $anrData['created_at'] : date('Y-m-d H:i:s')) . ']';
             } else {
                 $uniqueLabels[$anrData[$labelName]] = $anrData[$labelName];
             }
@@ -329,17 +330,17 @@ class FixPositionsCleanupDb extends AbstractMigration
         /* Replace in recommandations_sets label1,2,3,4 by a single label field. */
         $this->table('recommandations_sets')
             ->addColumn('label', 'string', ['null' => false, 'limit' => 255, 'default' => ''])
-            /* Make anr_id and label unique. */
-            ->addIndex(['anr_id', 'label'], ['unique' => true])
             ->update();
-        $recSetsQuery = $this->query('SELECT rs.id, a.language, rs.label1, rs.label2, rs.label3, rs.label4
+        $recSetsQuery = $this->query('SELECT rs.uuid, rs.anr_id, a.language, rs.label1, rs.label2, rs.label3, rs.label4
             FROM recommandations_sets rs INNER JOIN anrs a ON a.id = rs.anr_id'
         );
         foreach ($recSetsQuery->fetchAll() as $recSetData) {
             $labelName = 'label' . $recSetData['language'];
             $this->execute('UPDATE recommandations_sets SET label = "' . $recSetData[$labelName] . '"' .
-                ' WHERE id = ' . (int)$recSetData['id']);
+                ' WHERE uuid = "' . $recSetData['uuid'] . '" AND anr_id = ' . (int)$recSetData['anr_id']);
         }
+        /* Make anr_id and label unique. */
+        $this->table('recommandations_sets')->addIndex(['anr_id', 'label'], ['unique' => true]);
 
         $this->table('recommandations')
             ->removeColumn('token_import')
@@ -359,7 +360,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->changeColumn('label2', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
             ->changeColumn('label3', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
             ->changeColumn('label4', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
-            ->save();
+            ->update();
 
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.
         $this->table('anr_instance_metadata_fields')->removeColumn('label_translation_key')->update();
