@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
+
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -16,14 +17,12 @@ use Monarc\FrontOffice\Table\AnrInstanceMetadataFieldTable;
 
 class AnrInstanceMetadataFieldService
 {
-    private AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable;
     private UserSuperClass $connectedUser;
 
     public function __construct(
-        AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
+        private AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
         ConnectedUserService $connectedUserService
     ) {
-        $this->anrInstanceMetadataFieldTable = $anrInstanceMetadataFieldTable;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
@@ -77,13 +76,12 @@ class AnrInstanceMetadataFieldService
             throw new Exception('Predefined instance metadata fields can\'t be modified.', 412);
         }
 
-        $metadataField->setLabel($data[$anr->getLanguageCode()])
-            ->setUpdater($this->connectedUser->getEmail());
+        $metadataField->setLabel($data[$anr->getLanguageCode()])->setUpdater($this->connectedUser->getEmail());
 
         return $metadataField;
     }
 
-    public function delete(Anr $anr,int $id): void
+    public function delete(Anr $anr, int $id): void
     {
         /** @var AnrInstanceMetadataField $metadataField */
         $metadataField = $this->anrInstanceMetadataFieldTable->findByIdAndAnr($id, $anr);
