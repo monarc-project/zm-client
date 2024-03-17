@@ -11,7 +11,7 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\Amv\PostAmvDataInputValidator;
 use Monarc\FrontOffice\InputFormatter\Amv\GetAmvsInputFormatter;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrAmvService;
 
 class ApiAnrAmvsController extends AbstractRestfulControllerRequestHandler

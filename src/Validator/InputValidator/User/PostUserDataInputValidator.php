@@ -11,7 +11,7 @@ use Laminas\InputFilter\ArrayInput;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Validator\InputValidator\InputValidationTranslator;
 use Monarc\Core\Validator\InputValidator\User\PostUserDataInputValidator as CorePostUserDataInputValidatorAlias;
-use Monarc\FrontOffice\Model\Entity\UserRole;
+use Monarc\FrontOffice\Entity\UserRole;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\UserTable;
 use Monarc\FrontOffice\Validator\FieldValidator\AnrExistenceValidator;

@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Table;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\Client;
+use Monarc\FrontOffice\Entity\Client;
 
 class ClientTable extends AbstractTable
 {

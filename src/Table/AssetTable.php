@@ -11,7 +11,7 @@ use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\UniqueCodeTableInterface;
 use Monarc\Core\Table\Traits\CodeExistenceValidationTableTrait;
-use Monarc\FrontOffice\Model\Entity\Asset;
+use Monarc\FrontOffice\Entity\Asset;
 
 class AssetTable extends AbstractTable implements UniqueCodeTableInterface
 {

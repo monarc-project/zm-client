@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\FrontOffice\Model\Entity\Client;
+use Monarc\FrontOffice\Entity\Client;
 use Monarc\FrontOffice\Table\ClientTable;
 
 class ClientService

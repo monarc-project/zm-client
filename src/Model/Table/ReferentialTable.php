@@ -8,12 +8,12 @@
 namespace Monarc\FrontOffice\Model\Table;
 
 use Doctrine\ORM\NonUniqueResultException;
-use Monarc\Core\Model\Entity\ReferentialSuperClass;
+use Monarc\Core\Entity\ReferentialSuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Referential;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Referential;
 
 class ReferentialTable extends AbstractEntityTable
 {

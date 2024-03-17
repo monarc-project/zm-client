@@ -8,11 +8,11 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Theme;
-use Monarc\FrontOffice\Model\Entity\Threat;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Theme;
+use Monarc\FrontOffice\Entity\Threat;
 use Monarc\FrontOffice\Table;
 
 class AnrThreatService

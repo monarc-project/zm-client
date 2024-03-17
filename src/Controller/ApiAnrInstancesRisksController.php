@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRisk\PostSpecificInstanceRiskDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRisk\UpdateInstanceRiskDataInputValidator;

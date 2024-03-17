@@ -11,8 +11,8 @@ use Doctrine\ORM\AbstractQuery;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\MeasureMeasure;
 
 /**
  * Class MeasureMeasureTable

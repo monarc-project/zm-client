@@ -9,11 +9,14 @@ namespace Monarc\FrontOffice\Controller;
 
 use Laminas\View\Model\JsonModel;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Service\AnrRecordService;
 
 class ApiAnrRecordsImportController extends AbstractRestfulControllerRequestHandler
 {
+    use ControllerRequestResponseHandlerTrait;
+
     public function __construct(private AnrRecordService $anrRecordService)
     {
     }
@@ -33,8 +36,7 @@ class ApiAnrRecordsImportController extends AbstractRestfulControllerRequestHand
 
         [$ids, $errors] = $this->anrRecordService->importFromFile($anrId, $data);
 
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'id' => $ids,
             'errors' => $errors,
         ]);

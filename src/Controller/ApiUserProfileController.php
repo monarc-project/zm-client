@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserProfileService;
 use Laminas\Mvc\Controller\AbstractRestfulController;

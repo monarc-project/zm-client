@@ -11,7 +11,7 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\Threat\PostThreatDataInputValidator;
 use Monarc\FrontOffice\InputFormatter\Threat\GetThreatsInputFormatter;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrThreatService;
 
 class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler

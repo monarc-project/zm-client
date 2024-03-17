@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Table;
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\InstanceConsequenceTable as CoreInstanceConsequenceTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\InstanceConsequence;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\InstanceConsequence;
 
 class InstanceConsequenceTable extends CoreInstanceConsequenceTable
 {

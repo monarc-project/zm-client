@@ -9,9 +9,9 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Measure;
-use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Measure;
+use Monarc\FrontOffice\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrMeasureService;
@@ -22,29 +22,13 @@ class ApiSoaController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private SoaService $soaService;
-
-    private AnrMeasureService $anrMeasureService;
-
-    private AnrInstanceRiskService $anrInstanceRiskService;
-
-    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
-
-    private SoaScaleCommentService $soaScaleCommentService;
-
     public function __construct(
-        SoaService $soaService,
-        AnrMeasureService $anrMeasureService,
-        AnrInstanceRiskService $anrInstanceRiskService,
-        AnrInstanceRiskOpService $anrInstanceRiskOpService,
-        SoaScaleCommentService $soaScaleCommentService
+        private SoaService $soaService,
+        private AnrMeasureService $anrMeasureService,
+        private AnrInstanceRiskService $anrInstanceRiskService,
+        private AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private SoaScaleCommentService $soaScaleCommentService
     ) {
-
-        $this->soaService = $soaService;
-        $this->anrMeasureService = $anrMeasureService;
-        $this->anrInstanceRiskService = $anrInstanceRiskService;
-        $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
-        $this->soaScaleCommentService = $soaScaleCommentService;
     }
 
     public function getList()

@@ -18,7 +18,7 @@ use Monarc\FrontOffice\Table\UserAnrTable;
 class AnrRolfTagServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Model\Entity\RolfTag',
+        'entity' => 'Monarc\FrontOffice\Entity\RolfTag',
         'table' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
         'anrTable' => AnrTable::class,
         'userAnrTable' => UserAnrTable::class,

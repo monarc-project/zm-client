@@ -18,7 +18,7 @@ use Monarc\FrontOffice\Table\AnrTable;
 class SoaCategoryServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Model\Entity\SoaCategory',
+        'entity' => 'Monarc\FrontOffice\Entity\SoaCategory',
         'table' => 'Monarc\FrontOffice\Model\Table\SoaCategoryTable',
         'anrTable' => AnrTable::class,
         'userAnrTable' => UserAnrTable::class,

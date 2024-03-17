@@ -9,16 +9,16 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\InstanceSuperClass;
+use Monarc\Core\Entity\InstanceRiskSuperClass;
+use Monarc\Core\Entity\InstanceSuperClass;
 use Monarc\Core\Table\InstanceRiskTable as CoreInstanceRiskTable;
-use Monarc\FrontOffice\Model\Entity\Amv;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\Threat;
-use Monarc\FrontOffice\Model\Entity\Vulnerability;
+use Monarc\FrontOffice\Entity\Amv;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Asset;
+use Monarc\FrontOffice\Entity\Instance;
+use Monarc\FrontOffice\Entity\InstanceRisk;
+use Monarc\FrontOffice\Entity\Threat;
+use Monarc\FrontOffice\Entity\Vulnerability;
 
 class InstanceRiskTable extends CoreInstanceRiskTable
 {

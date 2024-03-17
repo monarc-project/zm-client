@@ -11,9 +11,9 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Snapshot;
-use Monarc\FrontOffice\Model\Entity\UserAnr;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Snapshot;
+use Monarc\FrontOffice\Entity\UserAnr;
 
 class AnrTable extends AbstractTable
 {

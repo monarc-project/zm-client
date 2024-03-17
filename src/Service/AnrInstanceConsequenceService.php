@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Helper\ScalesCacheHelper;
 use Monarc\Core\Service\Traits\ImpactVerificationTrait;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 
 class AnrInstanceConsequenceService

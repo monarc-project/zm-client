@@ -8,12 +8,12 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\ImpactVerificationTrait;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
 use Monarc\Core\Service\TranslateService;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
@@ -174,7 +174,7 @@ class AnrInstanceRiskService
      */
     public function createInstanceRisks(
         Entity\Instance $instance,
-        Entity\Object $object,
+        Entity\MonarcObject $object,
         array $params = [],
         bool $saveInDb = true
     ): void {

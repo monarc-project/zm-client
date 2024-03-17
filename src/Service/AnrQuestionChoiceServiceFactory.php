@@ -21,7 +21,7 @@ class AnrQuestionChoiceServiceFactory extends AbstractServiceFactory
 
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\QuestionChoiceTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\QuestionChoice',
+        'entity' => 'Monarc\FrontOffice\Entity\QuestionChoice',
         'anrTable' => AnrTable::class,
         'userAnrTable' => UserAnrTable::class,
         'questionTable' => 'Monarc\FrontOffice\Model\Table\QuestionTable',

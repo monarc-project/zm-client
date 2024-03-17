@@ -8,13 +8,13 @@
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\Common\Collections\Criteria;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\RecommendationHistory;
-use Monarc\FrontOffice\Model\Entity\RecommendationRisk;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\InstanceRisk;
+use Monarc\FrontOffice\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Entity\RecommendationHistory;
+use Monarc\FrontOffice\Entity\RecommendationRisk;
 use Monarc\FrontOffice\Table\RecommendationHistoryTable;
 
 class AnrRecommendationHistoryService

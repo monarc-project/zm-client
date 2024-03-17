@@ -8,11 +8,11 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
 use Monarc\Core\Service\Traits\PositionUpdateTrait;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 
 class AnrObjectObjectService

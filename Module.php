@@ -153,7 +153,7 @@ class Module
 
         $roles[] = 'guest';
         if ($connectedUser !== null) {
-            $roles = $connectedUser->getRoles();
+            $roles = $connectedUser->getRolesArray();
         }
 
         foreach ($roles as $role) {

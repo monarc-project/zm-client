@@ -11,7 +11,7 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\Asset\PostAssetDataInputValidator;
 use Monarc\FrontOffice\InputFormatter\Asset\GetAssetsInputFormatter;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrAssetService;
 
 class ApiAnrAssetsController extends AbstractRestfulControllerRequestHandler

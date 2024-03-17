@@ -13,10 +13,10 @@ use Fig\Http\Message\StatusCodeInterface;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Http\Request;
 use Laminas\Router\RouteMatch;
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -40,7 +40,6 @@ class AnrValidationMiddleware implements MiddlewareInterface
         $this->connectedUser = $connectedUser;
     }
 
-    /** @throws \JsonException */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         /** @var RouteMatch $routeMatch */
@@ -52,7 +51,9 @@ class AnrValidationMiddleware implements MiddlewareInterface
         }
 
         /* Retrieving anr ID from all the routes where /[:anrid]/ is presented in the route. */
-        $anrId = (int)$routeMatch->getParam('anrid');
+        $anrId = $routeMatch->getMatchedRouteName() === 'monarc_api_client_anr'
+            ? (int)$routeMatch->getParam('id')
+            : (int)$routeMatch->getParam('anrid');
         if ($anrId === 0) {
             /* Anr ID for the route "client-duplicate-anr" is passed in the json body as "anr". */
             $anrId = (int)($request->getParsedBody()['anr'] ?? 0);
@@ -116,7 +117,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
         /* The creation of anr or getList is called without anr ID, route "monarc_api_client_anr". */
         return $route->getMatchedRouteName() === 'monarc_api_client_anr'
             && \in_array($request->getMethod(), [Request::METHOD_GET, Request::METHOD_POST], true)
-            && $route->getParam('anrid') === null;
+            && $route->getParam('id') === null;
     }
 
     /**

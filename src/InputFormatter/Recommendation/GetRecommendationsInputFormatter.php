@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\InputFormatter\Recommendation;
 
 use Monarc\Core\InputFormatter\AbstractInputFormatter;
-use Monarc\FrontOffice\Model\Entity\Recommendation;
+use Monarc\FrontOffice\Entity\Recommendation;
 
 class GetRecommendationsInputFormatter extends AbstractInputFormatter
 {

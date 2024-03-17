@@ -7,9 +7,9 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 
 class OperationalRiskScaleService

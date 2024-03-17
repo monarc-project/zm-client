@@ -9,8 +9,8 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\ObjectCategoryTable as CoreObjectCategoryTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\ObjectCategory;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\ObjectCategory;
 
 class ObjectCategoryTable extends CoreObjectCategoryTable
 {
@@ -19,14 +19,26 @@ class ObjectCategoryTable extends CoreObjectCategoryTable
         parent::__construct($entityManager, $entityName);
     }
 
+    /**
+     * @return ObjectCategory[]
+     */
+    public function findRootCategoriesByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('oc')
+            ->where('oc.anr = :anr')
+            ->andWhere('oc.parent IS NULL')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findByAnrParentAndLabel(
         Anr $anr,
         ?ObjectCategory $parentCategory,
         string $labelKey,
         string $labelValue
     ): ?ObjectCategory {
-        $queryBuilder = $this->getRepository()
-            ->createQueryBuilder('oc')
+        $queryBuilder = $this->getRepository()->createQueryBuilder('oc')
             ->where('oc.anr = :anr')
             ->setParameter('anr', $anr);
 
@@ -46,8 +58,7 @@ class ObjectCategoryTable extends CoreObjectCategoryTable
 
     public function findMaxPositionByAnrAndParent(Anr $anr, ?ObjectCategory $parentObjectCategory): int
     {
-        $queryBuilder = $this->getRepository()
-            ->createQueryBuilder('oc')
+        $queryBuilder = $this->getRepository()->createQueryBuilder('oc')
             ->select('MAX(oc.position)')
             ->where('oc.anr = :anr')
             ->setParameter('anr', $anr);

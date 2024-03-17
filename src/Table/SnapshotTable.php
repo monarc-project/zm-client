@@ -9,8 +9,8 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Snapshot;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Snapshot;
 
 class SnapshotTable extends AbstractTable
 {

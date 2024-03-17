@@ -56,7 +56,7 @@ class AnrRecordInternationalTransferService extends AbstractService
     /**
      * Imports a record international transfer from a data array. This data is generally what has been exported into a file.
      * @param array $data The record international transfer's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @param int $parentId The id of the entity possessing this international transfer
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */

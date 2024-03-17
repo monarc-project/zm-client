@@ -2,8 +2,8 @@
 
 namespace Monarc\FrontOffice\Command;
 
-use Monarc\FrontOffice\Model\Entity\User;
-use Monarc\FrontOffice\Model\Entity\UserRole;
+use Monarc\FrontOffice\Entity\User;
+use Monarc\FrontOffice\Entity\UserRole;
 use Monarc\FrontOffice\Table\UserTable;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

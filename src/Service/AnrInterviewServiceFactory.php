@@ -19,7 +19,7 @@ class AnrInterviewServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\InterviewTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Interview',
+        'entity' => 'Monarc\FrontOffice\Entity\Interview',
         'anrTable' => AnrTable::class,
         'userAnrTable' => UserAnrTable::class,
     ];

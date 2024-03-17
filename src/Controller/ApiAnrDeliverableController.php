@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\DeliverableGenerationService;
 
 class ApiAnrDeliverableController extends AbstractRestfulControllerRequestHandler

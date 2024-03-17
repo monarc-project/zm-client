@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\Interview;
+use Monarc\FrontOffice\Entity\Interview;
 
 /**
  * Class InterviewTable

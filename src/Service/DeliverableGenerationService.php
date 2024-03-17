@@ -8,16 +8,16 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\DeliveriesModels;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\OperationalRiskScaleSuperClass;
-use Monarc\Core\Model\Entity\ScaleImpactTypeSuperClass;
-use Monarc\Core\Model\Entity\ScaleSuperClass;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\DeliveriesModels;
+use Monarc\Core\Entity\InstanceRiskOpSuperClass;
+use Monarc\Core\Entity\InstanceRiskSuperClass;
+use Monarc\Core\Entity\OperationalRiskScaleSuperClass;
+use Monarc\Core\Entity\ScaleImpactTypeSuperClass;
+use Monarc\Core\Entity\ScaleSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Model\Table\DeliveriesModelsTable;
 use Monarc\Core\Service as CoreService;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table\RecordTable;
 use Monarc\FrontOffice\Table;
 use PhpOffice\PhpWord;

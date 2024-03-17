@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
-use Monarc\FrontOffice\Model\Entity\Soa;
+use Monarc\FrontOffice\Entity\Soa;
 use Monarc\FrontOffice\Table\UserAnrTable;
 
 class SoaServiceFactory extends AbstractServiceFactory

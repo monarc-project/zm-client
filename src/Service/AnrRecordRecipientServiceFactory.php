@@ -21,7 +21,7 @@ class AnrRecordRecipientServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\RecordRecipientTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\RecordRecipient',
+        'entity' => 'Monarc\FrontOffice\Entity\RecordRecipient',
         'recordTable' => 'Monarc\FrontOffice\Model\Table\RecordTable',
         'userAnrTable' => UserAnrTable::class,
         'anrTable' => AnrTable::class,

@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\OperationalRiskScaleCommentTable as CoreOperationalRiskScaleCommentTable;
-use Monarc\FrontOffice\Model\Entity\OperationalRiskScaleComment;
+use Monarc\FrontOffice\Entity\OperationalRiskScaleComment;
 
 class OperationalRiskScaleCommentTable extends CoreOperationalRiskScaleCommentTable
 {

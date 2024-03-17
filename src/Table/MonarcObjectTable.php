@@ -8,16 +8,16 @@
 namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
-use Monarc\Core\Model\Entity\RolfTagSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
+use Monarc\Core\Entity\ObjectSuperClass;
+use Monarc\Core\Entity\RolfTagSuperClass;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\ObjectCategory;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Asset;
+use Monarc\FrontOffice\Entity\MonarcObject;
+use Monarc\FrontOffice\Entity\ObjectCategory;
 
 class MonarcObjectTable extends AbstractTable implements PositionUpdatableTableInterface
 {

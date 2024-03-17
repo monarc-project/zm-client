@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\UserTable as CoreUserTable;
-use Monarc\FrontOffice\Model\Entity\User;
+use Monarc\FrontOffice\Entity\User;
 
 class UserTable extends CoreUserTable
 {

@@ -25,7 +25,7 @@ use Monarc\FrontOffice\Export;
 use Monarc\FrontOffice\Import;
 use Monarc\FrontOffice\Middleware\AnrValidationMiddleware;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
@@ -173,9 +173,9 @@ return [
             'monarc_api_client_anr' => [
                 'type' => 'segment',
                 'options' => [
-                    'route' => '/api/client-anr[/:anrid]',
+                    'route' => '/api/client-anr[/:id]',
                     'constraints' => [
-                        'anrid' => '[0-9]+',
+                        'id' => '[0-9]+',
                     ],
                     'defaults' => [
                         'controller' => PipeSpec::class,
@@ -1504,6 +1504,7 @@ return [
             Table\ThreatTable::class => ClientEntityManagerFactory::class,
             Table\UserTable::class => ClientEntityManagerFactory::class,
             Table\UserAnrTable::class => ClientEntityManagerFactory::class,
+            Table\UserTokenTable::class => ClientEntityManagerFactory::class,
             Table\VulnerabilityTable::class => ClientEntityManagerFactory::class,
             CronTask\Table\CronTaskTable::class => ClientEntityManagerFactory::class,
 
@@ -1705,7 +1706,7 @@ return [
             'orm_cli' => [
                 'class' => MappingDriverChain::class,
                 'drivers' => [
-                    'Monarc\FrontOffice\Model\Entity' => 'Monarc_cli_driver',
+                    'Monarc\FrontOffice\Entity' => 'Monarc_cli_driver',
                 ],
             ],
         ],

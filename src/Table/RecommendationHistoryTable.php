@@ -9,9 +9,9 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\RecommendationHistory;
+use Monarc\FrontOffice\Entity\InstanceRisk;
+use Monarc\FrontOffice\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Entity\RecommendationHistory;
 
 class RecommendationHistoryTable extends AbstractTable
 {

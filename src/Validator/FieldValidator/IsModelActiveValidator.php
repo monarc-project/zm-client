@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Validator\FieldValidator;
 
 use Laminas\Validator\AbstractValidator;
-use Monarc\Core\Model\Entity\Model;
+use Monarc\Core\Entity\Model;
 use Monarc\Core\Table\ModelTable;
 
 class IsModelActiveValidator extends AbstractValidator

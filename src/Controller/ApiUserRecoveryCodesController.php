@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\User;
+use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Table\UserTable;
 
 class ApiUserRecoveryCodesController extends AbstractRestfulControllerRequestHandler

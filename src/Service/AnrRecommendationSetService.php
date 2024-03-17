@@ -6,10 +6,10 @@
  */
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\RecommendationSet;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\RecommendationSet;
 use Monarc\FrontOffice\Table\RecommendationSetTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Monarc\FrontOffice\Table\RecommendationTable;

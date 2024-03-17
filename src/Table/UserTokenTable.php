@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\UserTokenTable as CoreUserTokenTable;
-use Monarc\FrontOffice\Model\Entity\UserToken;
+use Monarc\FrontOffice\Entity\UserToken;
 
 class UserTokenTable extends CoreUserTokenTable
 {

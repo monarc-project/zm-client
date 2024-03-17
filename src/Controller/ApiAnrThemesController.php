@@ -11,7 +11,7 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\Theme\GetThemesInputFormatter;
 use Monarc\Core\Validator\InputValidator\Theme\PostThemeDataInputValidator;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrThemeService;
 
 class ApiAnrThemesController extends AbstractRestfulControllerRequestHandler

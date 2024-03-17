@@ -13,7 +13,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\Instance\CreateInstanceDataInputValidator;
 use Monarc\Core\Validator\InputValidator\Instance\PatchInstanceDataInputValidator;
 use Monarc\Core\Validator\InputValidator\Instance\UpdateInstanceDataInputValidator;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrInstanceService;

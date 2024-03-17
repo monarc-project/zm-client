@@ -9,12 +9,12 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\Core\Model\Entity\InstanceRiskOpSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\InstanceRiskOpSuperClass;
+use Monarc\Core\Entity\InstanceRiskSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 

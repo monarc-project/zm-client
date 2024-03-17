@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\SoaScaleCommentTable as CoreSoaScaleCommentTable;
-use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
+use Monarc\FrontOffice\Entity\SoaScaleComment;
 
 class SoaScaleCommentTable extends CoreSoaScaleCommentTable
 {

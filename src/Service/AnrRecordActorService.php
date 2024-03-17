@@ -75,7 +75,7 @@ class AnrRecordActorService extends AbstractService
     /**
      * Imports a record actor from a data array. This data is generally what has been exported into a file.
      * @param array $data The record actor's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr)

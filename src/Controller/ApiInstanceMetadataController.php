@@ -7,10 +7,9 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\InstanceMetadataService;
 
 class ApiInstanceMetadataController extends AbstractRestfulControllerRequestHandler
@@ -30,7 +29,7 @@ class ApiInstanceMetadataController extends AbstractRestfulControllerRequestHand
         $anr = $this->getRequest()->getAttribute('anr');
         $instanceId = (int)$this->params()->fromRoute('instanceid');
 
-        return new JsonModel([
+        return $this->getSuccessfulJsonResponse([
             'data' => $this->instanceMetadataService->getInstancesMetadata($anr, $instanceId),
         ]);
     }

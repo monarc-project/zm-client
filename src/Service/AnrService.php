@@ -8,11 +8,11 @@
 namespace Monarc\FrontOffice\Service;
 
 use DateTime;
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Model\Table as CoreDeprecatedTable;
 use Monarc\Core\Table as CoreTable;
 use Monarc\Core\Service as CoreService;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Table;
@@ -131,12 +131,9 @@ class AnrService
 
     public function getAnrData(Entity\Anr $anr): array
     {
-        $userAnr = null;
-        if ($anr->isAnrSnapshot()) {
-            $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser);
-            if ($userAnr === null) {
-                throw new Exception('There is no access to the snapshot of the analysis.', 412);
-            }
+        $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser);
+        if ($userAnr === null && $anr->isAnrSnapshot()) {
+            throw new Exception('There is no access to the snapshot of the analysis.', 412);
         }
 
         $this->setCurrentAnrToConnectedUser($anr);
@@ -393,6 +390,10 @@ class AnrService
             'referentials' => $referentialData,
             'isCurrentAnr' => (int)($this->connectedUser->getCurrentAnr() !== null
                 && $this->connectedUser->getCurrentAnr()->getId() === $anr->getId()),
+            'status' => $anr->getStatus(),
+            'creator' => $anr->getCreator(),
+            'createdAt' => $anr->getCreatedAt()->format('d/m/Y H:i'),
+            'language' => $anr->getLanguage(),
         ];
 
         /* Check if the Anr is under background import. */

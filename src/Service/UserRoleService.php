@@ -9,10 +9,19 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\UserNotLoggedInException;
 use Monarc\Core\Service\UserRoleService as CoreUserRoleService;
-use Monarc\FrontOffice\Model\Entity\UserAnr;
+use Monarc\FrontOffice\Entity\UserAnr;
+use Monarc\FrontOffice\Table\UserTable;
+use Monarc\FrontOffice\Table\UserTokenTable;
 
 class UserRoleService extends CoreUserRoleService
 {
+    public function __construct(
+        UserTable $userTable,
+        UserTokenTable $userTokenTable
+    ) {
+        parent::__construct($userTable, $userTokenTable);
+    }
+
     public function getUserRolesByToken(string $token): array
     {
         $userToken = $this->userTokenTable->findByToken($token);

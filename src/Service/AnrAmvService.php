@@ -10,13 +10,13 @@ namespace Monarc\FrontOffice\Service;
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\Core\Model\Entity\AmvSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\AmvSuperClass;
+use Monarc\Core\Entity\InstanceRiskSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
 use Monarc\Core\Service\Traits\PositionUpdateTrait;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 
@@ -24,60 +24,23 @@ class AnrAmvService implements PositionUpdatableServiceInterface
 {
     use PositionUpdateTrait;
 
-    private Table\AmvTable $amvTable;
-
-    private Table\AssetTable $assetTable;
-
-    private Table\ThreatTable $threatTable;
-
-    private Table\ThemeTable $themeTable;
-
-    private Table\VulnerabilityTable $vulnerabilityTable;
-
-    private Table\InstanceRiskTable $instanceRiskTable;
-
-    private DeprecatedTable\MeasureTable $measureTable;
-
-    private AnrAssetService $anrAssetService;
-
-    private AnrThreatService $anrThreatService;
-
-    private AnrThemeService $anrThemeService;
-
-    private AnrVulnerabilityService $anrVulnerabilityService;
-
-    private AnrInstanceRiskService $anrInstanceRiskService;
-
     private UserSuperClass $connectedUser;
-    private DeprecatedTable\ReferentialTable $referentialTable;
 
     public function __construct(
-        Table\AmvTable $amvTable,
-        Table\AssetTable $assetTable,
-        Table\ThreatTable $threatTable,
-        Table\ThemeTable $themeTable,
-        Table\VulnerabilityTable $vulnerabilityTable,
-        Table\InstanceRiskTable $instanceRiskTable,
-        DeprecatedTable\MeasureTable $measureTable,
-        DeprecatedTable\ReferentialTable $referentialTable,
-        AnrAssetService $anrAssetService,
-        AnrThreatService $anrThreatService,
-        AnrVulnerabilityService $anrVulnerabilityService,
-        AnrInstanceRiskService $anrInstanceRiskService,
+        private Table\AmvTable $amvTable,
+        private Table\AssetTable $assetTable,
+        private Table\ThreatTable $threatTable,
+        private Table\ThemeTable $themeTable,
+        private Table\VulnerabilityTable $vulnerabilityTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private DeprecatedTable\MeasureTable $measureTable,
+        private DeprecatedTable\ReferentialTable $referentialTable,
+        private AnrAssetService $anrAssetService,
+        private AnrThreatService $anrThreatService,
+        private AnrVulnerabilityService $anrVulnerabilityService,
+        private AnrInstanceRiskService $anrInstanceRiskService,
         ConnectedUserService $connectedUserService
     ) {
-        $this->amvTable = $amvTable;
-        $this->assetTable = $assetTable;
-        $this->threatTable = $threatTable;
-        $this->themeTable = $themeTable;
-        $this->vulnerabilityTable = $vulnerabilityTable;
-        $this->instanceRiskTable = $instanceRiskTable;
-        $this->measureTable = $measureTable;
-        $this->referentialTable = $referentialTable;
-        $this->anrAssetService = $anrAssetService;
-        $this->anrThreatService = $anrThreatService;
-        $this->anrVulnerabilityService = $anrVulnerabilityService;
-        $this->anrInstanceRiskService = $anrInstanceRiskService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 

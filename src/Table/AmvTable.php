@@ -8,14 +8,14 @@
 namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Entity\AmvSuperClass;
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Entity\AmvSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
-use Monarc\FrontOffice\Model\Entity\Amv;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
+use Monarc\FrontOffice\Entity\Amv;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Asset;
 
 class AmvTable extends AbstractTable implements PositionUpdatableTableInterface
 {

@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\InputFormatter\Recommendation\GetRecommendationsInputFormatter;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrRecommendationService;
 use Monarc\FrontOffice\Validator\InputValidator\Recommendation\PostRecommendationDataInputValidator;
 

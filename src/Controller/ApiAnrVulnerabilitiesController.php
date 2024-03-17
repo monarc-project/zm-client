@@ -11,7 +11,7 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\Vulnerability\PostVulnerabilityDataInputValidator;
 use Monarc\FrontOffice\InputFormatter\Vulnerability\GetVulnerabilitiesInputFormatter;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrVulnerabilityService;
 
 class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHandler

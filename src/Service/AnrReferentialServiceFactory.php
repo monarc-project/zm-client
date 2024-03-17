@@ -20,7 +20,7 @@ class AnrReferentialServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Referential',
+        'entity' => 'Monarc\FrontOffice\Entity\Referential',
         'userAnrTable' => UserAnrTable::class,
         'selfCoreService' => 'Monarc\Core\Service\ReferentialService',
     ];

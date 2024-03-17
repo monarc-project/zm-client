@@ -21,7 +21,7 @@ class AnrRecordInternationalTransferServiceFactory extends AbstractServiceFactor
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\RecordInternationalTransferTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\RecordInternationalTransfer',
+        'entity' => 'Monarc\FrontOffice\Entity\RecordInternationalTransfer',
         'userAnrTable' => UserAnrTable::class,
         'anrTable' => AnrTable::class,
     ];

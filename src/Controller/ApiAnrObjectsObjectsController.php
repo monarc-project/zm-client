@@ -11,7 +11,7 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\ObjectComposition\CreateDataInputValidator;
 use Monarc\Core\Validator\InputValidator\ObjectComposition\MovePositionDataInputValidator;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrObjectObjectService;
 
 class ApiAnrObjectsObjectsController extends AbstractRestfulControllerRequestHandler

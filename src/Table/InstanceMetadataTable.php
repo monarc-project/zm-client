@@ -8,10 +8,10 @@
 namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\FrontOffice\Model\Entity\AnrInstanceMetadataField;
-use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
+use Monarc\FrontOffice\Entity\AnrInstanceMetadataField;
+use Monarc\FrontOffice\Entity\InstanceMetadata;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\Instance;
+use Monarc\FrontOffice\Entity\Instance;
 
 class InstanceMetadataTable extends AbstractTable
 {

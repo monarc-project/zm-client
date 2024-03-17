@@ -11,8 +11,8 @@ use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\ObjectObject;
+use Monarc\FrontOffice\Entity\MonarcObject;
+use Monarc\FrontOffice\Entity\ObjectObject;
 
 class ObjectObjectTable extends AbstractTable implements PositionUpdatableTableInterface
 {

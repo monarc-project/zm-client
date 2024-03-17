@@ -141,7 +141,7 @@ class AnrRecordPersonalDataService extends AbstractService
     /**
      * Imports a record personal data from a data array. This data is generally what has been exported into a file.
      * @param array $data The record personal data's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr, $recordId)

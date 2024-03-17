@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Validator\InputValidator\Object;
 
 use Laminas\Validator\InArray;
 use Laminas\Validator\StringLength;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Entity\ObjectSuperClass;
 use Monarc\Core\Validator\InputValidator\Object\PostObjectDataInputValidator as CorePostObjectDataInputValidator;
 
 class PostObjectDataInputValidator extends CorePostObjectDataInputValidator

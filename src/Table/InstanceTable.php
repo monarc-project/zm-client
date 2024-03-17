@@ -9,13 +9,13 @@ namespace Monarc\FrontOffice\Table;
 
 use DateTime;
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
+use Monarc\Core\Entity\ObjectSuperClass;
 use Monarc\Core\Table\InstanceTable as CoreInstanceTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Asset;
+use Monarc\FrontOffice\Entity\Instance;
+use Monarc\FrontOffice\Entity\MonarcObject;
 
 class InstanceTable extends CoreInstanceTable
 {

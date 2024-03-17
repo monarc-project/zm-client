@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Laminas\Http\Response;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 
 /**
@@ -20,11 +20,8 @@ class ApiAnrRisksOpController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    private AnrInstanceRiskOpService $anrInstanceRiskOpService;
-
-    public function __construct(AnrInstanceRiskOpService $anrInstanceRiskOpService)
+    public function __construct(private AnrInstanceRiskOpService $anrInstanceRiskOpService)
     {
-        $this->anrInstanceRiskOpService = $anrInstanceRiskOpService;
     }
 
     /**
@@ -62,7 +59,7 @@ class ApiAnrRisksOpController extends AbstractRestfulControllerRequestHandler
 
     public function getList()
     {
-        $this->get(null);
+        return $this->get(null);
     }
 
     protected function getFilterParams(): array

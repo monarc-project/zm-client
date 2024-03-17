@@ -11,8 +11,8 @@ use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Model\Table\RolfTagTable as CoreRolfTagTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\RolfTag;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\RolfTag;
 
 class RolfTagTable extends CoreRolfTagTable
 {

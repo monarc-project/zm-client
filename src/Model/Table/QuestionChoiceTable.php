@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\QuestionChoice;
+use Monarc\FrontOffice\Entity\QuestionChoice;
 
 /**
  * Class QuestionChoiceTable

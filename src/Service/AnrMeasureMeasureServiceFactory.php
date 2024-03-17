@@ -18,7 +18,7 @@ use Monarc\FrontOffice\Table\UserAnrTable;
 class AnrMeasureMeasureServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Model\Entity\MeasureMeasure',
+        'entity' => 'Monarc\FrontOffice\Entity\MeasureMeasure',
         'table' => 'Monarc\FrontOffice\Model\Table\MeasureMeasureTable',
         'anrTable' => AnrTable::class,
         'userAnrTable' => UserAnrTable::class,

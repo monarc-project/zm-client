@@ -8,12 +8,12 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\ImpactVerificationTrait;
 use Monarc\Core\Service\Traits\InstancePositionDataHelperTrait;
 use Monarc\Core\Service\Traits\PositionUpdateTrait;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Monarc\FrontOffice\Table;
 

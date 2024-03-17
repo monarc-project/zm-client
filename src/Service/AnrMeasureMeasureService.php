@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Entity\MeasureMeasure;
+use Monarc\FrontOffice\Entity\MeasureMeasure;
 
 /**
  * AnrMeasureMeasureService Service

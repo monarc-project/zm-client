@@ -12,7 +12,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\Object\GetObjectInputFormatter;
 use Monarc\FrontOffice\Import\Service\ObjectImportService;
 use Monarc\FrontOffice\InputFormatter\Object\GetObjectsInputFormatter;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrObjectService;
 use Monarc\FrontOffice\Validator\InputValidator\Object\PostObjectDataInputValidator;
 
@@ -71,6 +71,8 @@ class ApiAnrObjectsController extends AbstractRestfulControllerRequestHandler
      */
     public function create($data)
     {
+        // TODO: Validate the 3 import + 1 MOSP cases and 1 manual ...
+
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
         if (!empty($data['mosp'])) {

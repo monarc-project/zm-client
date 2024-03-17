@@ -21,7 +21,7 @@ class AnrRecordPersonalDataServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\RecordPersonalDataTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\RecordPersonalData',
+        'entity' => 'Monarc\FrontOffice\Entity\RecordPersonalData',
         'recordDataCategoryService' => 'Monarc\FrontOffice\Service\AnrRecordDataCategoryService',
         'userAnrTable' => UserAnrTable::class,
         'anrTable' => AnrTable::class,

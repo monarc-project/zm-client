@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Table;
 use Doctrine\Common\Collections\Criteria;
 use Monarc\Core\Table\AbstractTable;
 use Doctrine\ORM\EntityManager;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\InstanceRiskOwner;
 
 class InstanceRiskOwnerTable extends AbstractTable
 {

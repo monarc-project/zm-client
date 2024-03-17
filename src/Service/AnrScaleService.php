@@ -8,10 +8,10 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Table\ModelTable;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 
 class AnrScaleService

@@ -9,9 +9,9 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractService;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Referential;
-use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Referential;
+use Monarc\FrontOffice\Entity\SoaCategory;
 use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
 
 /**

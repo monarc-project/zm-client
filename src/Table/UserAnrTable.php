@@ -8,10 +8,10 @@
 namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\UserAnr;
+use Monarc\FrontOffice\Entity\UserAnr;
 
 class UserAnrTable extends AbstractTable
 {
@@ -22,8 +22,7 @@ class UserAnrTable extends AbstractTable
 
     public function findByAnrAndUser(AnrSuperClass $anr, UserSuperClass $user): ?UserAnr
     {
-        return $this->getRepository()
-            ->createQueryBuilder('ua')
+        return $this->getRepository()->createQueryBuilder('ua')
             ->where('ua.anr = :anr')
             ->andWhere('ua.user = :user')
             ->setParameter('anr', $anr)

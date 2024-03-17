@@ -9,14 +9,14 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\Expr\Join;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
-use Monarc\Core\Model\Entity\RolfRiskSuperClass;
+use Monarc\Core\Entity\ObjectSuperClass;
+use Monarc\Core\Entity\RolfRiskSuperClass;
 use Monarc\Core\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\RolfRisk;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Asset;
+use Monarc\FrontOffice\Entity\Instance;
+use Monarc\FrontOffice\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Entity\RolfRisk;
 
 class InstanceRiskOpTable extends CoreInstanceRiskOpTable
 {

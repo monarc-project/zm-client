@@ -7,13 +7,13 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
-use Monarc\Core\Model\Entity\SoaCategorySuperClass;
+use Monarc\Core\Entity\SoaCategorySuperClass;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Referential;
-use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Referential;
+use Monarc\FrontOffice\Entity\SoaCategory;
 
 /**
  * Class CategoryTable

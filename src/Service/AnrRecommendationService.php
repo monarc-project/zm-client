@@ -9,10 +9,10 @@ namespace Monarc\FrontOffice\Service;
 
 use DateTime;
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table\RecommendationSetTable;
 use Monarc\FrontOffice\Table\RecommendationTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;

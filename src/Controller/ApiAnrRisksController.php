@@ -8,16 +8,18 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Laminas\Http\Response;
-use Laminas\View\Model\JsonModel;
 
 /**
  * The controller is responsible to fetch instance risks for the whole analysis or a single instance.
  */
 class ApiAnrRisksController extends AbstractRestfulControllerRequestHandler
 {
+    use ControllerRequestResponseHandlerTrait;
+
     public function __construct(private AnrInstanceRiskService $anrInstanceRiskService)
     {
     }
@@ -45,7 +47,7 @@ class ApiAnrRisksController extends AbstractRestfulControllerRequestHandler
 
         $risks = $this->anrInstanceRiskService->getInstanceRisks($anr, $id, $params);
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'count' => \count($risks),
             'risks' => $params['limit'] > 0
                 ? \array_slice($risks, ($params['page'] - 1) * $params['limit'], $params['limit'])

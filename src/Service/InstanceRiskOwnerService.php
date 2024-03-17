@@ -7,12 +7,12 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOwner;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\InstanceRisk;
+use Monarc\FrontOffice\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Entity\InstanceRiskOwner;
 use Monarc\FrontOffice\Table\InstanceRiskOwnerTable;
 
 class InstanceRiskOwnerService

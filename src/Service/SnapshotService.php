@@ -9,8 +9,8 @@ namespace Monarc\FrontOffice\Service;
 
 use Doctrine\Common\Collections\Criteria;
 use Monarc\Core\Exception\Exception;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Snapshot;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Snapshot;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\SnapshotTable;
 use Monarc\FrontOffice\Table\UserAnrTable;

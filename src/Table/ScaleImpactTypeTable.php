@@ -9,9 +9,8 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\ScaleImpactTypeTable as CoreScaleImpactTypeTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Scale;
-use Monarc\FrontOffice\Model\Entity\ScaleImpactType;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\ScaleImpactType;
 
 class ScaleImpactTypeTable extends CoreScaleImpactTypeTable
 {
@@ -20,6 +19,7 @@ class ScaleImpactTypeTable extends CoreScaleImpactTypeTable
         parent::__construct($entityManager, $entityName);
     }
 
+    // TODO: there is no position field anymore.
     /**
      * @return ScaleImpactType[]
      */
@@ -46,19 +46,5 @@ class ScaleImpactTypeTable extends CoreScaleImpactTypeTable
             ->addOrderBy('sit.position')
             ->getQuery()
             ->getResult();
-    }
-
-    public function findMaxPositionByAnrAndScale(Anr $anr, Scale $scale): int
-    {
-        return (int)$this->getRepository()
-            ->createQueryBuilder('sit')
-            ->select('MAX(sit.position)')
-            ->where('sit.anr = :anr')
-            ->andWhere('sit.scale = :scale')
-            ->setParameter('anr', $anr)
-            ->setParameter('scale', $scale)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getSingleScalarResult();
     }
 }

@@ -8,10 +8,10 @@
 namespace Monarc\FrontOffice\Service\Traits;
 
 use LogicException;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\InstanceRiskOp;
-use Monarc\FrontOffice\Model\Entity\Recommendation;
+use Monarc\Core\Entity\AnrSuperClass;
+use Monarc\FrontOffice\Entity\InstanceRisk;
+use Monarc\FrontOffice\Entity\InstanceRiskOp;
+use Monarc\FrontOffice\Entity\Recommendation;
 use Monarc\FrontOffice\Table\RecommendationTable;
 
 trait RecommendationsPositionsUpdateTrait

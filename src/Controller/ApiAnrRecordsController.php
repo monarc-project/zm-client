@@ -8,9 +8,9 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\AbstractEntity;
-use Monarc\FrontOffice\Model\Entity\RecordPersonalData;
-use Monarc\FrontOffice\Model\Entity\RecordProcessor;
+use Monarc\Core\Entity\AbstractEntity;
+use Monarc\FrontOffice\Entity\RecordPersonalData;
+use Monarc\FrontOffice\Entity\RecordProcessor;
 use Monarc\FrontOffice\Service\AnrRecordService;
 use Doctrine\ORM\PersistentCollection;
 

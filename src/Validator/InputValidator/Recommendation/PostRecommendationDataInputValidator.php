@@ -14,7 +14,7 @@ use Laminas\Validator\InArray;
 use Laminas\Validator\StringLength;
 use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
-use Monarc\FrontOffice\Model\Entity\Recommendation;
+use Monarc\FrontOffice\Entity\Recommendation;
 
 class PostRecommendationDataInputValidator extends AbstractInputValidator
 {

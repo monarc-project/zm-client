@@ -10,7 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\InstanceRiskOp\PatchInstanceRiskOpDataInputValidator;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\PostSpecificInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator;

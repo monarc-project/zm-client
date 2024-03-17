@@ -10,10 +10,10 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Measure;
-use Monarc\FrontOffice\Model\Entity\Soa;
-use Monarc\FrontOffice\Model\Entity\SoaCategory;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Measure;
+use Monarc\FrontOffice\Entity\Soa;
+use Monarc\FrontOffice\Entity\SoaCategory;
 
 /**
  * Class SoaTable

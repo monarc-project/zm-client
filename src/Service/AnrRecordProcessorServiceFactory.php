@@ -21,7 +21,7 @@ class AnrRecordProcessorServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\RecordProcessorTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\RecordProcessor',
+        'entity' => 'Monarc\FrontOffice\Entity\RecordProcessor',
         'recordActorService' => 'Monarc\FrontOffice\Service\AnrRecordActorService',
         'userAnrTable' => UserAnrTable::class,
         'anrTable' => AnrTable::class,

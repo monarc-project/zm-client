@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Entity\RecordProcessor;
+use Monarc\FrontOffice\Entity\RecordProcessor;
 
 /**
  * AnrRecord Processor Service
@@ -145,7 +145,7 @@ class AnrRecordProcessorService extends AbstractService
     /**
      * Imports a record processor from a data array. This data is generally what has been exported into a file.
      * @param array $data The processor's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr)

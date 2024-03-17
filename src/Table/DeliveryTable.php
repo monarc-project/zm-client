@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Table;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Delivery;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Delivery;
 
 class DeliveryTable extends AbstractTable
 {

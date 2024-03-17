@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\RecommendationSet;
+use Monarc\FrontOffice\Entity\RecommendationSet;
 
 class RecommendationSetTable extends AbstractTable
 {

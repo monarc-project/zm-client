@@ -8,14 +8,14 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\PasswordService;
 use Monarc\Core\Service\UserService as CoreUserService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\User;
-use Monarc\FrontOffice\Model\Entity\UserAnr;
-use Monarc\FrontOffice\Model\Entity\UserRole;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\User;
+use Monarc\FrontOffice\Entity\UserAnr;
+use Monarc\FrontOffice\Entity\UserRole;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\UserTable;
 

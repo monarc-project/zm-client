@@ -8,7 +8,7 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\FrontOffice\Service\AnrRolfRiskService;
-use Monarc\FrontOffice\Model\Entity\Measure;
+use Monarc\FrontOffice\Entity\Measure;
 
 class ApiAnrRolfRisksController extends ApiAnrAbstractController
 {

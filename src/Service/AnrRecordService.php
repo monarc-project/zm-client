@@ -10,10 +10,10 @@ namespace Monarc\FrontOffice\Service;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Record;
-use Monarc\FrontOffice\Model\Entity\RecordInternationalTransfer;
-use Monarc\FrontOffice\Model\Entity\RecordPersonalData;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Record;
+use Monarc\FrontOffice\Entity\RecordInternationalTransfer;
+use Monarc\FrontOffice\Entity\RecordPersonalData;
 
 /**
  * AnrRecord Service

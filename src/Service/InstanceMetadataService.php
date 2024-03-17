@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Entity\UserSuperClass;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\AnrInstanceMetadataField;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\InstanceMetadata;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\AnrInstanceMetadataField;
+use Monarc\FrontOffice\Entity\Instance;
+use Monarc\FrontOffice\Entity\InstanceMetadata;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Table;
 

@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Table;
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\OperationalInstanceRiskScaleTable as CoreOperationalInstanceRiskScaleTable;
-use Monarc\FrontOffice\Model\Entity\OperationalInstanceRiskScale;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\OperationalInstanceRiskScale;
+use Monarc\FrontOffice\Entity\Anr;
 
 class OperationalInstanceRiskScaleTable extends CoreOperationalInstanceRiskScaleTable
 {

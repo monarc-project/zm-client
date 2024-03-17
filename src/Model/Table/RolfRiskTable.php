@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\Core\Model\Table\RolfRiskTable as CoreRolfRiskTable;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Model\DbCli;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\RolfRisk;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\RolfRisk;
 
 class RolfRiskTable extends CoreRolfRiskTable
 {

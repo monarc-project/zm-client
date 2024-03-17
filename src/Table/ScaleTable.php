@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\ScaleTable as CoreScaleTable;
-use Monarc\FrontOffice\Model\Entity\Scale;
+use Monarc\FrontOffice\Entity\Scale;
 
 class ScaleTable extends CoreScaleTable
 {

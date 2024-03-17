@@ -9,10 +9,10 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\PositionUpdateTrait;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 
@@ -92,8 +92,8 @@ class AnrObjectService
     public function getLibraryTreeStructure(Entity\Anr $anr): array
     {
         $result = [];
-        foreach ($anr->getObjectCategories() as $objectCategory) {
-            $result[] = $this->getCategoriesAndObjectsTreeList($objectCategory);
+        foreach ($this->objectCategoryTable->findRootCategoriesByAnr($anr) as $rootObjectCategory) {
+            $result[] = $this->getCategoriesAndObjectsTreeList($rootObjectCategory);
         }
 
         /* Places uncategorized objects. */
@@ -512,6 +512,7 @@ class AnrObjectService
     {
         $result = [
             'id' => $category->getId(),
+            'label' . $category->getAnr()->getLanguage() => $category->getLabel($category->getAnr()->getLanguage()),
             'position' => $category->getPosition(),
             'child' => !$category->hasChildren() ? [] : $this->getCategoriesWithObjectsChildrenTreeList($category),
             'objects' => $objectsData,
