@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Import\Helper;
 
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
 use Monarc\FrontOffice\Table\ThemeTable;
 

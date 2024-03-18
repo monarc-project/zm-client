@@ -19,6 +19,7 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Helper\ScalesCacheHelper;
 use Monarc\Core\Storage\Authentication as StorageAuthentication;
 use Monarc\Core\Table\Factory\ClientEntityManagerFactory;
+use Monarc\Core\Validator\InputValidator as CoreInputValidator;
 use Monarc\FrontOffice\Controller;
 use Monarc\FrontOffice\CronTask;
 use Monarc\FrontOffice\Export;
@@ -1648,6 +1649,33 @@ return [
                 ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
+            CoreInputValidator\Asset\PostAssetDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new CoreInputValidator\Asset\PostAssetDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\AssetTable::class)
+                );
+            },
+            CoreInputValidator\Threat\PostThreatDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new CoreInputValidator\Threat\PostThreatDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\ThreatTable::class)
+                );
+            },
+            CoreInputValidator\Vulnerability\PostVulnerabilityDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new CoreInputValidator\Vulnerability\PostVulnerabilityDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\VulnerabilityTable::class)
+                );
+            },
 
             // Commands
             Import\Command\ImportAnalysesCommand::class => static function (

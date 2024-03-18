@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Export\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Export\Service\AnrObjectExportService;
 
 class ApiAnrObjectsExportController extends AbstractRestfulControllerRequestHandler

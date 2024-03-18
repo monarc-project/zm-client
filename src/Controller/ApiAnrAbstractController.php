@@ -75,10 +75,6 @@ abstract class ApiAnrAbstractController extends AbstractController
 
         $entity = $this->getService()->getEntity($identifier);
 
-        if (!$entity['anr'] || $entity['anr']->get('id') !== $anrId) {
-            throw new Exception('Anr ids diffence', 412);
-        }
-
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }

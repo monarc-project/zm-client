@@ -7,14 +7,13 @@
 
 namespace Monarc\FrontOffice\Export\Service;
 
-use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\ObjectCategorySuperClass;
+use Monarc\Core\Entity\ObjectCategorySuperClass;
 use Monarc\Core\Service\ConfigService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\MonarcObject;
 use Monarc\FrontOffice\Table\MonarcObjectTable;
 
-class ObjectExportService
+class AnrObjectExportService
 {
     private MonarcObjectTable $monarcObjectTable;
 
@@ -30,6 +29,26 @@ class ObjectExportService
         $this->monarcObjectTable = $monarcObjectTable;
         $this->assetExportService = $assetExportService;
         $this->configService = $configService;
+    }
+
+    public function export(Anr $anr, array $data)
+    {
+        $isForMosp = !empty($data['mosp']);
+
+        $prepareObjectData = json_encode(
+            $isForMosp
+                ? $this->generateExportMospArray($data['id'], $anr)
+                : $this->generateExportArray($data['id'], $anr)
+        );
+
+        // TODO ...
+        $data['filename'] = $this->generateExportFileName($data['id'], $anr, $isForMosp);
+
+        if (!empty($data['password'])) {
+            $prepareObjectData = $this->encrypt($prepareObjectData, $data['password']);
+        }
+
+        return $prepareObjectData;
     }
 
     public function generateExportArray(string $uuid, Anr $anr, bool $withEval = false)

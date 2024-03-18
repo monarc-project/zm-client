@@ -25,13 +25,6 @@ class ApiAnrRecordActorsController extends ApiAnrAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
         $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
 
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new Exception('Anr ids are different', 412);
-        }
-
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }

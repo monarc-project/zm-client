@@ -158,7 +158,7 @@ class AnrRecordProcessorService extends AbstractService
         try {
             $processorEntity = $this->get('table')->getEntityByFields(['label' => $newData['label'], 'anr' => $anr]);
             if (count($processorEntity)) {
-                $id = $processorEntity[0]->get('id');
+                $id = $processorEntity[0]->getId();
             } else {
                 $id = $this->create($newData);
             }

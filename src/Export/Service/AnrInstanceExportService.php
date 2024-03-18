@@ -8,8 +8,8 @@
 namespace Monarc\FrontOffice\Export\Service;
 
 use Monarc\Core\Helper\EncryptDecryptHelperTrait;
-use Monarc\FrontOffice\Model\Entity\Instance;
-use Monarc\FrontOffice\Model\Entity\RecommandationRisk;
+use Monarc\FrontOffice\Entity\Instance;
+use Monarc\FrontOffice\Entity\RecommendationRisk;
 use Monarc\FrontOffice\Service\Export\ObjectExportService;
 use Monarc\FrontOffice\Export\Service\OperationalRiskScalesExportService;
 
@@ -56,6 +56,7 @@ class AnrInstanceExportService
         return $exportedInstance;
     }
 
+    //TODO: $id => Instance $instance and so on
     public function generateExportArray(
         $id,
         &$filename = "",
@@ -213,11 +214,11 @@ class AnrInstanceExportService
             $instanceRisk->set('riskC', -1);
             $instanceRisk->set('riskI', -1);
             $instanceRisk->set('riskD', -1);
-            $return['risks'][$instanceRisk->get('id')] = $instanceRisk->getJsonArray($instanceRiskArray);
+            $return['risks'][$instanceRisk->getId()] = $instanceRisk->getJsonArray($instanceRiskArray);
 
             $irAmv = $instanceRisk->get('amv');
-            $return['risks'][$instanceRisk->get('id')]['amv'] = is_null($irAmv) ? null : $irAmv->getUuid();
-            if (!empty($return['risks'][$instanceRisk->get('id')]['amv'])
+            $return['risks'][$instanceRisk->getId()]['amv'] = is_null($irAmv) ? null : $irAmv->getUuid();
+            if (!empty($return['risks'][$instanceRisk->getId()]['amv'])
                 && empty($return['amvs'][$instanceRisk->getAmv()->getUuid()])
             ) {
                 [$amv, $threats, $vulns, $themes, $measures] = $this->amvExportService->generateExportArray(
@@ -247,9 +248,9 @@ class AnrInstanceExportService
                     $return['threats'][$instanceRisk->getThreat()->getUuid()] =
                         $instanceRisk->get('threat')->getJsonArray($treatsObj);
                 }
-                $return['risks'][$instanceRisk->get('id')]['threat'] = $instanceRisk->getThreat()->getUuid();
+                $return['risks'][$instanceRisk->getId()]['threat'] = $instanceRisk->getThreat()->getUuid();
             } else {
-                $return['risks'][$instanceRisk->get('id')]['threat'] = null;
+                $return['risks'][$instanceRisk->getId()]['threat'] = null;
             }
 
             $vulnerability = $instanceRisk->get('vulnerability');
@@ -259,10 +260,10 @@ class AnrInstanceExportService
                     $return['vuls'][$instanceRisk->getVulnerability()->getUuid()] =
                         $instanceRisk->get('vulnerability')->getJsonArray($vulsObj);
                 }
-                $return['risks'][$instanceRisk->get('id')]['vulnerability'] =
+                $return['risks'][$instanceRisk->getId()]['vulnerability'] =
                     $instanceRisk->getVulnerability()->getUuid();
             } else {
-                $return['risks'][$instanceRisk->get('id')]['vulnerability'] = null;
+                $return['risks'][$instanceRisk->getId()]['vulnerability'] = null;
             }
 
             $return['risks'][$instanceRisk->getId()]['context'] = $instanceRisk->getContext();
@@ -308,26 +309,26 @@ class AnrInstanceExportService
             $instanceConseqResults = $instanceConseqTable->getRepository()
                 ->createQueryBuilder('t')
                 ->where("t.instance = :i")
-                ->setParameter(':i', $instance->get('id'))->getQuery()->getResult();
+                ->setParameter(':i', $instance->getId())->getQuery()->getResult();
             foreach ($instanceConseqResults as $ic) {
-                $return['consequences'][$ic->get('id')] = $ic->getJsonArray($instanceConseqArray);
-                $return['consequences'][$ic->get('id')]['scaleImpactType'] =
+                $return['consequences'][$ic->getId()] = $ic->getJsonArray($instanceConseqArray);
+                $return['consequences'][$ic->getId()]['scaleImpactType'] =
                     $ic->get('scaleImpactType')->getJsonArray($scaleTypeArray);
-                $return['consequences'][$ic->get('id')]['scaleImpactType']['scale'] =
-                    $ic->get('scaleImpactType')->get('scale')->get('id');
+                $return['consequences'][$ic->getId()]['scaleImpactType']['scale'] =
+                    $ic->get('scaleImpactType')->getScale()->getId();
             }
         }
 
-        /** @var InstanceSuperClass[] $childrenInstances */
+        /** @var Instance[] $childrenInstances */
         $childrenInstances = $this->instanceTable->getRepository()
             ->createQueryBuilder('t')
             ->where('t.parent = :p')
-            ->setParameter(':p', $instance->get('id'))
+            ->setParameter(':p', $instance->getId())
             ->orderBy('t.position', 'ASC')->getQuery()->getResult();
         $return['children'] = [];
         $f = '';
         foreach ($childrenInstances as $i) {
-            $return['children'][$i->get('id')] = $this->generateExportArray(
+            $return['children'][$i->getId()] = $this->generateExportArray(
                 $i->getId(),
                 $f,
                 $withEval,
@@ -456,10 +457,7 @@ class AnrInstanceExportService
             foreach ($recommendationsSets as $recommendationSet) {
                 $result['recSets'][$recommendationSet->getUuid()] = [
                     'uuid' => $recommendationSet->getUuid(),
-                    'label1' => $recommendationSet->getLabel(1),
-                    'label2' => $recommendationSet->getLabel(2),
-                    'label3' => $recommendationSet->getLabel(3),
-                    'label4' => $recommendationSet->getLabel(4),
+                    'label' => $recommendationSet->getLabel(),
                 ];
             }
         }
@@ -468,7 +466,7 @@ class AnrInstanceExportService
         if ($withEval && $withRecommendations && !empty($riskIds)) {
             $recosObj = [
                 'uuid' => 'uuid',
-                'recommandationSet' => 'recommandationSet',
+                'recommendationSet' => 'recommendationSet',
                 'code' => 'code',
                 'description' => 'description',
                 'importance' => 'importance',
@@ -482,24 +480,26 @@ class AnrInstanceExportService
             if (!$withUnlinkedRecommendations) {
                 $result['recs'] = [];
             }
-            /** @var RecommandationRisk[] $recoRisk */
+
+            // TODO: can't work...
+            /** @var RecommendationRisk[] $recoRisk */
             $recoRisk = $this->recommendationRiskTable->getEntityByFields(
                 ['anr' => $instance->getAnr()->getId(), 'instanceRisk' => $riskIds],
                 ['id' => 'ASC']
             );
             foreach ($recoRisk as $rr) {
-                $recommendation = $rr->getRecommandation();
+                $recommendation = $rr->getRecommendation();
                 if ($recommendation !== null) {
                     $recommendationUuid = $recommendation->getUuid();
                     $instanceRiskId = $rr->getInstanceRisk()->getId();
                     $result['recos'][$instanceRiskId][$recommendationUuid] = $recommendation->getJsonArray($recosObj);
-                    $result['recos'][$instanceRiskId][$recommendationUuid]['recommandationSet'] =
-                        $recommendation->getRecommandationSet()->getUuid();
+                    $result['recos'][$instanceRiskId][$recommendationUuid]['recommendationSet'] =
+                        $recommendation->getRecommendationSet()->getUuid();
                     $result['recos'][$instanceRiskId][$recommendationUuid]['commentAfter'] = $rr->getCommentAfter();
                     if (!$withUnlinkedRecommendations && !isset($recoIds[$recommendationUuid])) {
                         $result['recs'][$recommendationUuid] = $recommendation->getJsonArray($recosObj);
-                        $result['recs'][$recommendationUuid]['recommandationSet'] =
-                            $recommendation->getRecommandationSet()->getUuid();
+                        $result['recs'][$recommendationUuid]['recommendationSet'] =
+                            $recommendation->getRecommendationSet()->getUuid();
                     }
                     $recoIds[$recommendationUuid] = $recommendationUuid;
                 }
@@ -509,7 +509,7 @@ class AnrInstanceExportService
         if ($withEval && $withRecommendations && !empty($riskOpIds)) {
             $recosObj = [
                 'uuid' => 'uuid',
-                'recommandationSet' => 'recommandationSet',
+                'recommendationSet' => 'recommendationSet',
                 'code' => 'code',
                 'description' => 'description',
                 'importance' => 'importance',
@@ -528,31 +528,31 @@ class AnrInstanceExportService
                 ['id' => 'ASC']
             );
             foreach ($recoRisk as $rr) {
-                $recommendation = $rr->getRecommandation();
+                $recommendation = $rr->getRecommendation();
                 if ($recommendation !== null) {
                     $instanceRiskOpId = $rr->getInstanceRiskOp()->getId();
                     $recommendationUuid = $recommendation->getUuid();
                     $result['recosop'][$instanceRiskOpId][$recommendationUuid] =
                         $recommendation->getJsonArray($recosObj);
-                    $result['recosop'][$instanceRiskOpId][$recommendationUuid]['recommandationSet'] =
-                        $recommendation->getRecommandationSet()->getUuid();
+                    $result['recosop'][$instanceRiskOpId][$recommendationUuid]['recommendationSet'] =
+                        $recommendation->getRecommendationSet()->getUuid();
                     $result['recosop'][$instanceRiskOpId][$recommendationUuid]['commentAfter'] =
                         $rr->getCommentAfter();
                     if (!$withUnlinkedRecommendations && !isset($recoIds[$recommendationUuid])) {
                         $result['recs'][$recommendationUuid] = $recommendation->getJsonArray($recosObj);
-                        $result['recs'][$recommendationUuid]['recommandationSet'] =
-                            $recommendation->getRecommandationSet()->getUuid();
+                        $result['recs'][$recommendationUuid]['recommendationSet'] =
+                            $recommendation->getRecommendationSet()->getUuid();
                     }
                     $recoIds[$recommendationUuid] = $recommendationUuid;
                 }
             }
         }
 
-        // Recommendation unlinked to recommandations-risks
+        // Recommendation unlinked to recommendations-risks
         if ($withUnlinkedRecommendations && $withEval && $withRecommendations) {
             $recosObj = [
                 'uuid' => 'uuid',
-                'recommandationSet' => 'recommandationSet',
+                'recommendationSet' => 'recommendationSet',
                 'code' => 'code',
                 'description' => 'description',
                 'importance' => 'importance',
@@ -567,8 +567,8 @@ class AnrInstanceExportService
             foreach ($recommendations as $recommendation) {
                 if (!isset($recoIds[$recommendation->getUuid()])) {
                     $result['recs'][$recommendation->getUuid()] = $recommendation->getJsonArray($recosObj);
-                    $result['recs'][$recommendation->getUuid()]['recommandationSet'] =
-                        $recommendation->getRecommandationSet()->getUuid();
+                    $result['recs'][$recommendation->getUuid()]['recommendationSet'] =
+                        $recommendation->getRecommendationSet()->getUuid();
                     $recoIds[$recommendation->getUuid()] = $recommendation->getUuid();
                 }
             }

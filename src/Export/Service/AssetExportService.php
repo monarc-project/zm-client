@@ -7,10 +7,10 @@
 
 namespace Monarc\FrontOffice\Export\Service;
 
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Table\AssetTable;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 
 class AssetExportService
 {

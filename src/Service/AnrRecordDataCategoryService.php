@@ -29,9 +29,9 @@ class AnrRecordDataCategoryService extends AbstractService
      */
     public function createDataCategory($data)
     {
-        $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->get('id')]);
+        $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->getId()]);
         if(count($dc)) {
-            return $dc[0]->get('id');
+            return $dc[0]->getId();
         }
         return $this->create($data, true);
     }
@@ -77,7 +77,7 @@ class AnrRecordDataCategoryService extends AbstractService
         try {
             $dataCategoryEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
             if (count($dataCategoryEntity)) {
-                $id =  $dataCategoryEntity[0]->get('id');
+                $id =  $dataCategoryEntity[0]->getId();
             } else {
                 $id = $this->create($data);
             }

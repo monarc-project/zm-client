@@ -7,10 +7,10 @@
 
 namespace Monarc\FrontOffice\Import\Command;
 
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
-use Monarc\FrontOffice\Model\Entity\CronTask;
+use Monarc\FrontOffice\Entity\CronTask;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Service\SnapshotService;
 use Symfony\Component\Console\Command\Command;

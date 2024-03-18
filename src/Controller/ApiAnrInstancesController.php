@@ -51,17 +51,17 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
 
         if ($this->params()->fromQuery('csv', false)) {
             return $this->setCsvResponse(
-                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, $id, $this->parseParams())
+                $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, (int)$id, $this->parseParams())
             );
         }
 
         if ($this->params()->fromQuery('csvInfoInst', false)) {
             return $this->setCsvResponse(
-                $this->anrInstanceRiskService->getInstanceRisksInCsv($anr, $id, $this->parseParams())
+                $this->anrInstanceRiskService->getInstanceRisksInCsv($anr, (int)$id, $this->parseParams())
             );
         }
 
-        $instanceData = $this->anrInstanceService->getInstanceData($anr, $id);
+        $instanceData = $this->anrInstanceService->getInstanceData($anr, (int)$id);
 
         return $this->getPreparedJsonResponse($instanceData);
     }
@@ -138,8 +138,8 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
             'order' => $params->fromQuery('order', 'maxRisk'),
             'order_direction' => $params->fromQuery('order_direction', 'desc'),
             'thresholds' => $params->fromQuery('thresholds'),
-            'page' => $params->fromQuery('page', 1),
-            'limit' => $params->fromQuery('limit', 0),
+            'page' => (int)$params->fromQuery('page', 1),
+            'limit' => (int)$params->fromQuery('limit', 0),
         ];
     }
 

@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Export\Service;
 
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 

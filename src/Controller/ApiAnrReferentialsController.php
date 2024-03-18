@@ -49,13 +49,6 @@ class ApiAnrReferentialsController extends ApiAnrAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
         $entity = $this->getService()->getEntity(['anr' => $anrId, 'uuid' => $id]);
 
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new Exception('Anr ids diffence', 412);
-        }
-
         $this->formatDependencies($entity, $this->dependencies);
 
         return $this->getPreparedJsonResponse($entity);

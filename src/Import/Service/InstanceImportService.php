@@ -11,12 +11,12 @@ use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity as CoreEntity;
+use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Service;
@@ -511,7 +511,6 @@ class InstanceImportService
                 $referential = $this->importCacheHelper
                     ->getItemFromArrayCache('referentials', $measureData['referential']);
                 if ($measure === null && $referential !== null) {
-                    /** @var SoaCategory|null $soaCategory */
                     $soaCategory = $this->soaCategoryService->getOrCreateSoaCategory(
                         $this->importCacheHelper,
                         $anr,
@@ -519,25 +518,23 @@ class InstanceImportService
                         $measureData['category']
                     );
 
-                    $measure = (new Measure($measureData))
+                    $measure = (new Entity\Measure())
                         ->setUuid($measureUuid)
                         ->setAnr($anr)
+                        ->setLabels($measureData)
+                        ->setCode($measureData['code'])
+                        ->setStatus((int)$measureData['status'])
                         ->setReferential($referential)
                         ->setCategory($soaCategory)
-                        ->setAmvs(new ArrayCollection()) // need to initialize the amvs link
-                        ->setRolfRisks(new ArrayCollection())
                         ->setCreator($this->connectedUser->getEmail());
-
                     $this->measureTable->saveEntity($measure, false);
 
                     $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measureUuid);
 
                     if (!isset($data['soas'])) {
-                        // if no SOAs in the analysis to import, create new ones
-                        $newSoa = (new Soa())
+                        $newSoa = (new Entity\Soa())
                             ->setAnr($anr)
                             ->setMeasure($measure);
-
                         $this->soaTable->saveEntity($newSoa, false);
                     }
                 }
@@ -548,20 +545,26 @@ class InstanceImportService
         // import the measuresmeasures
         if (isset($data['measuresMeasures'])) {
             foreach ($data['measuresMeasures'] as $measureMeasureData) {
-                $measuresMeasures = $this->measureMeasureTable->findByAnrFatherUuidAndChildUuid(
+                if (!$this->measureMeasureTable->existsWithAnrFatherUuidAndChildUuid(
                     $anr,
                     $measureMeasureData['father'],
                     $measureMeasureData['child']
-                );
-                if ($measuresMeasures === null) {
-                    $measureMeasure = (new MeasureMeasure())
+                )) {
+                    $parentMeasure = $this->importCacheHelper
+                        ->getItemFromArrayCache('measures', $measureMeasureData['father']);
+                    $childMeasure = $this->importCacheHelper
+                        ->getItemFromArrayCache('measures', $measureMeasureData['child']);
+                    $measureMeasure = (new Entity\MeasureMeasure())
                         ->setAnr($anr)
-                        ->setFather($measureMeasureData['father'])
-                        ->setChild($measureMeasureData['child']);
+                        ->setFather($parentMeasure)
+                        ->setChild($childMeasure)
+                        ->setCreator($this->connectedUser->getEmail());
 
                     $this->measureMeasureTable->saveEntity($measureMeasure, false);
                 }
             }
+
+            // TODO: avoid saving here.
             $this->measureMeasureTable->getDb()->flush();
         }
 
@@ -574,7 +577,7 @@ class InstanceImportService
             $maxOrig = \count($data['soaScaleComment']) - 1;
             $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
         } elseif (!isset($data['soaScaleComment']) && isset($data['soas'])) {
-            //old import case
+            // old import case. TODO: move it to the Entity.
             $defaultSoaScaleCommentdatas = [
                 'fr' => [
                     ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Inexistant'],
@@ -1068,23 +1071,18 @@ class InstanceImportService
             foreach ($scalesImpactTypes as $scalesImpactType) {
                 $localScalesImpactTypes[$scalesImpactType->getLabel($anr->getLanguage())] = $scalesImpactType;
             }
-            $scaleImpactTypeMaxPosition = $this->scaleImpactTypeTable->findMaxPositionByAnrAndScale(
-                $anr,
-                $localScaleImpact
-            );
 
             foreach ($data['consequences'] as $consequenceData) {
                 if (!isset($localScalesImpactTypes[$consequenceData['scaleImpactType'][$labelKey]])) {
                     $scaleImpactTypeData = $consequenceData['scaleImpactType'];
 
-                    $scaleImpactType = (new ScaleImpactType())
+                    $scaleImpactType = (new Entity\ScaleImpactType())
                         ->setType($scaleImpactTypeData['type'])
                         ->setLabels($scaleImpactTypeData)
                         ->setIsSys((bool)$scaleImpactTypeData['isSys'])
                         ->setIsHidden((bool)$scaleImpactTypeData['isHidden'])
                         ->setAnr($anr)
                         ->setScale($localScaleImpact)
-                        ->setPosition(++$scaleImpactTypeMaxPosition)
                         ->setCreator($this->connectedUser->getEmail());
 
                     $this->scaleImpactTypeTable->save($scaleImpactType, false);
@@ -1092,7 +1090,7 @@ class InstanceImportService
                     $localScalesImpactTypes[$consequenceData['scaleImpactType'][$labelKey]] = $scaleImpactType;
                 }
 
-                $instanceConsequence = (new InstanceConsequence())
+                $instanceConsequence = (new Entity\InstanceConsequence())
                     ->setAnr($anr)
                     ->setObject($monarcObject)
                     ->setInstance($instance)
@@ -1100,7 +1098,9 @@ class InstanceImportService
                     ->setIsHidden((bool)$consequenceData['isHidden'])
                     ->setCreator($this->connectedUser->getEmail());
 
-                foreach (InstanceConsequence::getAvailableScalesCriteria() as $scaleCriteriaKey => $scaleCriteria) {
+                foreach (Entity\InstanceConsequence::getAvailableScalesCriteria()
+                    as $scaleCriteriaKey => $scaleCriteria
+                ) {
                     if ($instanceConsequence->isHidden()) {
                         $value = -1;
                     } else {
@@ -2368,11 +2368,15 @@ class InstanceImportService
         return $this->cachedData['externalOperationalRiskScalesData'];
     }
 
-    private function updateScalesAndComments(Anr $anr, array $data): void
+    private function updateScalesAndComments(Entity\Anr $anr, array $data): void
     {
         $scalesByType = [];
         $scales = $this->scaleTable->findByAnr($anr);
-        foreach ([Scale::TYPE_IMPACT, Scale::TYPE_THREAT, Scale::TYPE_VULNERABILITY] as $type) {
+        foreach ([
+            CoreEntity\ScaleSuperClass::TYPE_IMPACT,
+            CoreEntity\ScaleSuperClass::TYPE_THREAT,
+            CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY
+        ] as $type) {
             foreach ($scales as $scale) {
                 if ($scale->getType() === $type) {
                     $scale->setMin((int)$data['scales'][$type]['min']);
@@ -2396,11 +2400,8 @@ class InstanceImportService
             }
             $this->scaleCommentTable->flush();
 
+            // TODO: there is no position field anymore.
             $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedAndIndexedByPosition($anr);
-            $scaleImpactTypeMaxPosition = $this->scaleImpactTypeTable->findMaxPositionByAnrAndScale(
-                $anr,
-                $scalesByType[Scale::TYPE_IMPACT]
-            );
             foreach ($data['scalesComments'] as $scalesCommentData) {
                 /*
                  * Comments, which are not matched with a scale impact type, should not be created.
@@ -2414,7 +2415,7 @@ class InstanceImportService
                 }
 
                 $scale = $scalesByType[$scalesCommentData['scale']['type']];
-                $scaleComment = (new ScaleComment())
+                $scaleComment = (new Entity\ScaleComment())
                     ->setAnr($anr)
                     ->setScale($scale)
                     ->setScaleIndex($scalesCommentData['scaleIndex'] ?? $scalesCommentData['val'])
@@ -2439,14 +2440,13 @@ class InstanceImportService
                             !== $scalesCommentData['scaleImpactType']['labels']['label' . $anr->getLanguage()]
                         )
                     ) {
-                        $scaleImpactType = (new ScaleImpactType())
+                        $scaleImpactType = (new Entity\ScaleImpactType())
                             ->setType($scalesCommentData['scaleImpactType']['type'])
                             ->setLabels($scalesCommentData['scaleImpactType']['labels'])
                             ->setIsSys($scalesCommentData['scaleImpactType']['isSys'])
                             ->setIsHidden($scalesCommentData['scaleImpactType']['isHidden'])
                             ->setAnr($anr)
                             ->setScale($scale)
-                            ->setPosition(++$scaleImpactTypeMaxPosition)
                             ->setCreator($this->connectedUser->getEmail());
 
                         $this->scaleImpactTypeTable->save($scaleImpactType, false);

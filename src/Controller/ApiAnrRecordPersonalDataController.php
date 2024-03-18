@@ -50,13 +50,6 @@ class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
         $anrId = (int)$this->params()->fromRoute('anrid');
         $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
 
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new Exception('Anr ids are different', 412);
-        }
-
         $this->formatDependencies($entity, $this->dependencies);
 
         return $this->getPreparedJsonResponse($entity);

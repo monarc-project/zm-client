@@ -87,7 +87,7 @@ class AnrRecordActorService extends AbstractService
         try {
             $actorEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
             if (count($actorEntity)) {
-                $id = $actorEntity[0]->get('id');
+                $id = $actorEntity[0]->getId();
             } else {
                 $id = $this->create($data);
             }

@@ -26,7 +26,7 @@ class ApiAnrScalesCommentsController extends AbstractRestfulControllerRequestHan
     public function getList()
     {
         $formattedParams = $this->getFormattedInputParams($this->getScaleCommentsInputFormatter);
-        $formattedParams->setFilterValueFor('scale', (int)$this->params()->fromRoute('scaleId'));
+        $formattedParams->setFilterValueFor('scale', (int)$this->params()->fromRoute('scaleid'));
 
         $comments = $this->anrScaleCommentService->getList($formattedParams);
 

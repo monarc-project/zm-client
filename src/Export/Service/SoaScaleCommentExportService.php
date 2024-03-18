@@ -7,8 +7,8 @@
 
 namespace Monarc\FrontOffice\Export\Service;
 
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\SoaScaleComment;
 use Monarc\FrontOffice\Table\SoaScaleCommentTable;
 
 class SoaScaleCommentExportService

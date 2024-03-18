@@ -76,7 +76,7 @@ class AnrRecordRecipientService extends AbstractService
                 'anr' => $anr
             ]);
             if (count($recipientEntity)) {
-                $id = $recipientEntity[0]->get('id');
+                $id = $recipientEntity[0]->getId();
             } else {
                 $id = $this->create($data);
             }

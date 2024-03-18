@@ -73,8 +73,8 @@ class ApiAnrRisksController extends AbstractRestfulControllerRequestHandler
             'order' => $params->fromQuery('order', 'maxRisk'),
             'order_direction' => $params->fromQuery('order_direction', 'desc'),
             'thresholds' => $params->fromQuery('thresholds'),
-            'page' => $params->fromQuery('page', 1),
-            'limit' => $params->fromQuery('limit', 50),
+            'page' => (int)$params->fromQuery('page', 1),
+            'limit' => (int)$params->fromQuery('limit', 50),
             'amvs' => $params->fromQuery('amvs')
         ];
     }

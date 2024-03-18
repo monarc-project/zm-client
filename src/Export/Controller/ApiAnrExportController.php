@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Export\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\FrontOffice\Export\Service\AnrExportService;
-use Monarc\FrontOffice\Model\Entity\Anr;
+use Monarc\FrontOffice\Entity\Anr;
 use function strlen;
 
 class ApiAnrExportController extends AbstractRestfulControllerRequestHandler

@@ -11,11 +11,11 @@ use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Helper\FileUploadHelperTrait;
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
-use Monarc\FrontOffice\Model\Entity\CronTask;
+use Monarc\FrontOffice\Entity\CronTask;
 use Monarc\FrontOffice\Table\AnrTable;
 
 class ApiAnrInstancesImportController extends AbstractRestfulController

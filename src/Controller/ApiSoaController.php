@@ -152,8 +152,8 @@ class ApiSoaController extends AbstractRestfulControllerRequestHandler
         $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsData($anr);
 
         $entity['anr'] = [
-            'id' => $measure->getAnr()->getId(),
-            'label' => $measure->getAnr()->getLabel(),
+            'id' => $anr->getId(),
+            'label' => $anr->getLabel(),
         ];
         $entity['measure'] = $measure->getJsonArray();
         $entity['measure']['category'] = $measure->getCategory()->getJsonArray();

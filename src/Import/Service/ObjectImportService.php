@@ -9,11 +9,11 @@ namespace Monarc\FrontOffice\Import\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\ObjectSuperClass;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\ObjectSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\SoaCategoryService;
@@ -382,7 +382,7 @@ class ObjectImportService
             }
 
             if ($measure !== null) {
-                $measure->addOpRisk($rolfRisk);
+                $measure->addRolfRisk($rolfRisk);
 
                 $this->measureTable->saveEntity($measure, false);
             }

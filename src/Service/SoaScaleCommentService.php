@@ -31,9 +31,8 @@ class SoaScaleCommentService
         /** @var SoaScaleComment[] $soaScaleComments */
         $soaScaleComments = $this->soaScaleCommentTable->findByAnrOrderByIndex($anr);
         foreach ($soaScaleComments as $soaScaleComment) {
-            $soaScaleCommentId = $soaScaleComment->getId();
-            $result[$soaScaleCommentId] = [
-                'id' => $soaScaleCommentId,
+            $result[] = [
+                'id' => $soaScaleComment->getId(),
                 'scaleIndex' => $soaScaleComment->getScaleIndex(),
                 'colour' => $soaScaleComment->getColour(),
                 'comment' => $soaScaleComment->getComment(),

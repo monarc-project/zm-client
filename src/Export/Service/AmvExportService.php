@@ -7,7 +7,7 @@
 
 namespace Monarc\FrontOffice\Export\Service;
 
-use Monarc\FrontOffice\Model\Entity;
+use Monarc\FrontOffice\Entity;
 
 class AmvExportService
 {

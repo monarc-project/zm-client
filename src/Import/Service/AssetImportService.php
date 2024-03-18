@@ -8,18 +8,18 @@
 namespace Monarc\FrontOffice\Import\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Model\Entity\Amv;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\Asset;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Entity\Measure;
-use Monarc\FrontOffice\Model\Entity\Referential;
-use Monarc\FrontOffice\Model\Entity\Theme;
-use Monarc\FrontOffice\Model\Entity\Threat;
-use Monarc\FrontOffice\Model\Entity\Vulnerability;
+use Monarc\FrontOffice\Entity\Amv;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Asset;
+use Monarc\FrontOffice\Entity\InstanceRisk;
+use Monarc\FrontOffice\Entity\Measure;
+use Monarc\FrontOffice\Entity\Referential;
+use Monarc\FrontOffice\Entity\Theme;
+use Monarc\FrontOffice\Entity\Threat;
+use Monarc\FrontOffice\Entity\Vulnerability;
 use Monarc\FrontOffice\Service\AnrAssetService;
 use Monarc\FrontOffice\Service\AnrThemeService;
 use Monarc\FrontOffice\Service\AnrThreatService;
@@ -224,7 +224,6 @@ class AssetImportService
     // TODO: use services to create the objects.
     private function processAmvsData(array $amvsData, Anr $anr, Asset $asset): void
     {
-        $instances = null;
         foreach ($amvsData as $amvUuid => $amvData) {
             /** @var Amv|null $amv */
             $amv = $this->amvTable->findByUuidAndAnr($amvUuid, $anr, false);
@@ -250,10 +249,7 @@ class AssetImportService
 
                 $this->amvTable->save($amv, false);
 
-                if ($instances === null) {
-                    $instances = $this->instanceTable->findByAnrAndAsset($anr, $asset);
-                }
-                foreach ($instances as $instance) {
+                foreach ($asset->getInstances() as $instance) {
                     $instanceRisk = (new InstanceRisk())
                         ->setAnr($anr)
                         ->setAmv($amv)
@@ -272,9 +268,10 @@ class AssetImportService
             }
         }
 
+        // TODO: perhaps we can do this before the previous foreach or find another solution.
         foreach ($this->amvTable->findByAnrAndAsset($anr, $asset) as $oldAmv) {
             if (!isset($amvsData[$oldAmv->getUuid()])) {
-                /** Set related instance risks to specific and delete the amvs leter */
+                /** Set related instance risks to specific and delete the amvs later. */
                 $instanceRisks = $oldAmv->getInstanceRisks();
 
                 // TODO: remove the double iteration when #240 is done.
@@ -300,7 +297,7 @@ class AssetImportService
         }
 
         if (!empty($amvsToDelete)) {
-            $this->amvTable->deleteEntities($amvsToDelete);
+            $this->amvTable->removeList($amvsToDelete);
         }
     }
 
