@@ -122,7 +122,7 @@ class AnrRecommendationService
         if (!empty($data['duedate'])) {
             try {
                 $recommendation->setDueDate(new DateTime($data['duedate']));
-            } catch (Throwable $e) {
+            } catch (Throwable) {
             }
         } elseif (isset($data['duedate']) && $data['duedate'] === '') {
             $recommendation->setDueDate(null);
@@ -163,6 +163,8 @@ class AnrRecommendationService
         $this->recommendationTable->save($recommendation->setUpdater($this->connectedUser->getEmail()));
 
         $this->updatePositions($recommendation, $data, $isImportanceChanged);
+
+        return $recommendation;
     }
 
     public function delete(Entity\Anr $anr, string $uuid): void
@@ -267,7 +269,7 @@ class AnrRecommendationService
      */
     private function getDueDateColor(?DateTime $dueDate): string
     {
-        if (empty($dueDate === null)) {
+        if ($dueDate === null) {
             return 'no-date';
         }
 

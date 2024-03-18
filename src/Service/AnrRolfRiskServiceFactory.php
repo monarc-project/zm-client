@@ -8,26 +8,23 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
-use Monarc\FrontOffice\Table\UserAnrTable;
-use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table;
+use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Entity\RolfRisk;
 
-/**
- * Factory class attached to AnrRolfRiskService
- * @package Monarc\FrontOffice\Service
- */
 class AnrRolfRiskServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
-        'entity' => 'Monarc\FrontOffice\Entity\RolfRisk',
-        'table' => 'Monarc\FrontOffice\Model\Table\RolfRiskTable',
-        'anrTable' => AnrTable::class,
-        'tagTable' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
-        'rolfTagTable' => 'Monarc\FrontOffice\Model\Table\RolfTagTable',
-        'MonarcObjectTable' => 'Monarc\FrontOffice\Model\Table\MonarcObjectTable',
-        'measureTable' => 'Monarc\FrontOffice\Model\Table\MeasureTable',
-        'referentialTable' => 'Monarc\FrontOffice\Model\Table\ReferentialTable',
-        'instanceRiskOpTable' => 'Monarc\FrontOffice\Model\Table\InstanceRiskOpTable',
-        'userAnrTable' => UserAnrTable::class,
-        'instanceRiskOpService' => 'Monarc\FrontOffice\Service\AnrInstanceRiskOpService',
+        'entity' => RolfRisk::class,
+        'table' => DeprecatedTable\RolfRiskTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'tagTable' => DeprecatedTable\RolfTagTable::class,
+        'rolfTagTable' => DeprecatedTable\RolfTagTable::class,
+        'MonarcObjectTable' => Table\MonarcObjectTable::class,
+        'measureTable' => DeprecatedTable\MeasureTable::class,
+        'referentialTable' => DeprecatedTable\ReferentialTable::class,
+        'instanceRiskOpTable' => Table\InstanceRiskOpTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
+        'instanceRiskOpService' => AnrInstanceRiskOpService::class,
     ];
 }

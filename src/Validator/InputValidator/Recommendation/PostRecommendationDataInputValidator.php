@@ -95,11 +95,13 @@ class PostRecommendationDataInputValidator extends AbstractInputValidator
                 'filters' => [
                     ['name' => ToInt::class],
                 ],
-                'validators' =>                     [
-                    'name' => InArray::class,
-                    'options' => [
-                        'haystack' => array_keys(Recommendation::getImportances()),
-                    ]
+                'validators' => [
+                    [
+                        'name' => InArray::class,
+                        'options' => [
+                            'haystack' => array_keys(Recommendation::getImportances()),
+                        ]
+                    ],
                 ],
             ],
             [
@@ -108,22 +110,24 @@ class PostRecommendationDataInputValidator extends AbstractInputValidator
                 'filters' => [
                     ['name' => ToInt::class],
                 ],
-                'validators' =>                     [
-                    'name' => InArray::class,
-                    'options' => [
-                        'haystack' => [
-                            PositionUpdatableServiceInterface::IMPLICIT_POSITION_START,
-                            PositionUpdatableServiceInterface::IMPLICIT_POSITION_END,
-                            PositionUpdatableServiceInterface::IMPLICIT_POSITION_AFTER,
+                'validators' => [
+                    [
+                        'name' => InArray::class,
+                        'options' => [
+                            'haystack' => [
+                                PositionUpdatableServiceInterface::IMPLICIT_POSITION_START,
+                                PositionUpdatableServiceInterface::IMPLICIT_POSITION_END,
+                                PositionUpdatableServiceInterface::IMPLICIT_POSITION_AFTER,
+                            ],
                         ],
-                    ]
+                    ],
                 ],
             ],
             [
                 'name' => 'previous',
                 'required' => false,
                 'filters' => [],
-                'validators' =>                     [
+                'validators' => [
                     [
                         'name' => StringLength::class,
                         'options' => [
@@ -155,7 +159,14 @@ class PostRecommendationDataInputValidator extends AbstractInputValidator
                 'filters' => [
                     ['name' => ToInt::class],
                 ],
-                'validators' => [0, 1],
+                'validators' => [
+                    [
+                        'name' => InArray::class,
+                        'options' => [
+                            'haystack' => [0, 1],
+                        ],
+                    ],
+                ],
             ],
         ];
     }
