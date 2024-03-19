@@ -22,7 +22,8 @@ class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHan
         private AnrInstanceRiskService $anrInstanceRiskService,
         private PostSpecificInstanceRiskDataInputValidator $postSpecificInstanceRiskDataInputValidator,
         private UpdateInstanceRiskDataInputValidator $updateInstanceRiskDataInputValidator
-    ) {}
+    ) {
+    }
 
     /**
      * Creation of specific risks.

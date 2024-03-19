@@ -64,9 +64,7 @@ class AnrInstanceRiskService
             $key = $object->isScopeGlobal()
                 ? 'o' . $object->getUuid() . '-' . $threat->getUuid() . '-' . $vulnerability->getUuid()
                 : 'r' . $instanceRisk->getId();
-            if (!$object->isScopeGlobal()
-                || (isset($result[$key]) && $this->areInstanceRiskImpactsHigher($instanceRisk, $result[$key]))
-            ) {
+            if (!isset($result[$key]) || $this->areInstanceRiskImpactsHigher($instanceRisk, $result[$key])) {
                 $recommendationsUuids = [];
                 foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
                     if ($recommendationRisk->getRecommendation() !== null) {

@@ -362,6 +362,12 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->changeColumn('label4', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
             ->update();
 
+        /* The unique relation is not correct as it should be possible to instantiate the same operational risk. */
+        $this->table('operational_instance_risks_scales')
+             ->removeIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'])
+             ->addIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'], ['unique' => false])
+             ->update();
+
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.
         $this->table('anr_instance_metadata_fields')->removeColumn('label_translation_key')->update();
         $this->table('instances_metadata')->removeColumn('comment_translation_key')->update();

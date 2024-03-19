@@ -503,7 +503,8 @@ class AnrRecommendationRiskService
                 ->setResponsible('')
                 ->setComment('');
 
-            $this->resetRecommendationsPositions($recommendation->getAnr(),
+            $this->resetRecommendationsPositions(
+                $recommendation->getAnr(),
                 [$recommendation->getUuid() => $recommendation]
             );
         }
