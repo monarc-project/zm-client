@@ -75,7 +75,6 @@ class ApiSoaController extends AbstractRestfulControllerRequestHandler
         } elseif ($order === '-measure') {
             $order = '-m.code';
         }
-        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsData($anr);
         $entities = $this->soaService->getList($page, $limit, $order, $filter, $filterAnd);
         foreach ($entities as $key => $entity) {
             $amvs = [];
@@ -126,7 +125,8 @@ class ApiSoaController extends AbstractRestfulControllerRequestHandler
                 $entities[$key]['measure']['linkedMeasures'][] = $linkedMeasure->getUuid();
             }
             if ($soaScaleComment !== null) {
-                $entities[$key]['soaScaleComment'] = $soaScaleCommentsData[$soaScaleComment->getId()];
+                $entities[$key]['soaScaleComment'] = $this->soaScaleCommentService
+                    ->getPreparedSoaScaleCommentData($soaScaleComment);
             } else {
                 $entities[$key]['soaScaleComment'] = null;
             }
@@ -149,8 +149,6 @@ class ApiSoaController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $soaScaleCommentsData = $this->soaScaleCommentService->getSoaScaleCommentsData($anr);
-
         $entity['anr'] = [
             'id' => $anr->getId(),
             'label' => $anr->getLabel(),
@@ -159,7 +157,8 @@ class ApiSoaController extends AbstractRestfulControllerRequestHandler
         $entity['measure']['category'] = $measure->getCategory()->getJsonArray();
         $entity['measure']['referential'] = $measure->getReferential()->getJsonArray();
         if ($soaScaleComment !== null) {
-            $entity['soaScaleComment'] = $soaScaleCommentsData[$soaScaleComment->getId()];
+            $entity['soaScaleComment'] = $this->soaScaleCommentService
+                ->getPreparedSoaScaleCommentData($soaScaleComment);
         } else {
             $entity['soaScaleComment'] = null;
         }
@@ -191,8 +190,6 @@ class ApiSoaController extends AbstractRestfulControllerRequestHandler
             $createdObjects[] = $id;
         }
 
-        return $this->getSuccessfulJsonResponse([
-            'id' => $createdObjects,
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $createdObjects]);
     }
 }

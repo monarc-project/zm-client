@@ -9,12 +9,6 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractService;
 
-/**
- * Soa Service
- *
- * Class SoaService
- * @package Monarc\FrontOffice\Service
- */
 class SoaService extends AbstractService
 {
     protected $table;
@@ -24,9 +18,6 @@ class SoaService extends AbstractService
     protected $soaScaleCommentTable;
     protected $dependencies = ['anr', 'measure'];
 
-    /**
-     * @inheritdoc
-     */
     public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
     {
         list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();
@@ -45,11 +36,11 @@ class SoaService extends AbstractService
             $desc = ($order == "-m.code");
             if (!$desc) {
                 uasort($data, function ($a, $b) {
-                    return strnatcmp($a['measure']->get('code'), $b['measure']->get('code'));
+                    return strnatcmp($a['measure']->getCode(), $b['measure']->getCode());
                 });
             } else {
                 uasort($data, function ($a, $b) {
-                    return strnatcmp($b['measure']->get('code'), $a['measure']->get('code'));
+                    return strnatcmp($b['measure']->getCode(), $a['measure']->getCode());
                 });
             }
         }
@@ -60,9 +51,6 @@ class SoaService extends AbstractService
         return $data;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getFilteredCount($filter = null, $filterAnd = null)
     {
         list($filterJoin, $filterLeft, $filtersCol) = $this->get('entity')->getFiltersForService();

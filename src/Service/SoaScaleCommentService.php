@@ -31,16 +31,21 @@ class SoaScaleCommentService
         /** @var SoaScaleComment[] $soaScaleComments */
         $soaScaleComments = $this->soaScaleCommentTable->findByAnrOrderByIndex($anr);
         foreach ($soaScaleComments as $soaScaleComment) {
-            $result[] = [
-                'id' => $soaScaleComment->getId(),
-                'scaleIndex' => $soaScaleComment->getScaleIndex(),
-                'colour' => $soaScaleComment->getColour(),
-                'comment' => $soaScaleComment->getComment(),
-                'isHidden' => $soaScaleComment->isHidden(),
-            ];
+            $result[] = $this->getPreparedSoaScaleCommentData($soaScaleComment);
         }
 
         return $result;
+    }
+
+    public function getPreparedSoaScaleCommentData(SoaScaleComment $soaScaleComment): array
+    {
+        return [
+            'id' => $soaScaleComment->getId(),
+            'scaleIndex' => $soaScaleComment->getScaleIndex(),
+            'colour' => $soaScaleComment->getColour(),
+            'comment' => $soaScaleComment->getComment(),
+            'isHidden' => $soaScaleComment->isHidden(),
+        ];
     }
 
     public function createOrHideSoaScaleComments(Anr $anr, array $data): void

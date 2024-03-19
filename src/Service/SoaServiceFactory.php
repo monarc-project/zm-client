@@ -11,15 +11,14 @@ use Monarc\Core\Service\AbstractServiceFactory;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Entity\Soa;
-use Monarc\FrontOffice\Table\UserAnrTable;
 
 class SoaServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'entity' => Soa::class,
         'table' => DeprecatedTable\SoaTable::class,
-        'anrTable' => DeprecatedTable\AnrTable::class,
-        'userAnrTable' => UserAnrTable::class,
+        'anrTable' => Table\AnrTable::class,
+        'userAnrTable' => Table\UserAnrTable::class,
         'soaScaleCommentTable' => Table\SoaScaleCommentTable::class,
     ];
 }
