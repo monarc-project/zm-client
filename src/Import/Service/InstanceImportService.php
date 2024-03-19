@@ -783,7 +783,7 @@ class InstanceImportService
                         : 0
                 );
 
-                $this->anrInstanceRiskService->recalculateRiskRates($instanceRisk);
+                $this->anrInstanceRiskService->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
             }
 
             /* Adjust the values of operational risks scales. */

@@ -52,7 +52,7 @@ class AnrRecommendationRiskService
                 continue;
             }
 
-            $recommendationRisk[] = $this->getPreparedRecommendationRiskData(
+            $recommendationRisksData[] = $this->getPreparedRecommendationRiskData(
                 $recommendationRisk,
                 $formattedInputParams->hasFilterFor('recommendation')
             );
@@ -524,6 +524,10 @@ class AnrRecommendationRiskService
                 'description' => $recommendation->getDescription(),
                 'importance' => $recommendation->getImportance(),
                 'position' => $recommendation->getPosition(),
+                'recommendationSet' => [
+                    'uuid' => $recommendation->getRecommendationSet()->getUuid(),
+                    'label' => $recommendation->getRecommendationSet()->getLabel(),
+                ],
             ],
             'commentAfter' => $recommendationRisk->getCommentAfter(),
         ];

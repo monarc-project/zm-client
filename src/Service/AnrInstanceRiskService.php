@@ -162,7 +162,7 @@ class AnrInstanceRiskService
                 ->setVulnerability($amv->getVulnerability());
         }
 
-        $this->recalculateRiskRates($instanceRisk);
+        $this->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
 
         $this->instanceRiskTable->save($instanceRisk, $saveInDb);
 
@@ -327,7 +327,7 @@ class AnrInstanceRiskService
         $this->processRemovedInstanceRiskRecommendationsPositions($instanceRisk);
     }
 
-    public function recalculateRiskRates(Entity\InstanceRisk $instanceRisk, bool $saveInDb = true): void
+    public function recalculateRiskRatesAndUpdateRecommendationsPositions(Entity\InstanceRisk $instanceRisk): void
     {
         $this->recalculateRiskRates($instanceRisk);
 
@@ -451,7 +451,7 @@ class AnrInstanceRiskService
 
         $instanceRisk->setUpdater($this->connectedUser->getEmail());
 
-        $this->recalculateRiskRates($instanceRisk);
+        $this->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
     }
 
     private function duplicateRecommendationRisks(

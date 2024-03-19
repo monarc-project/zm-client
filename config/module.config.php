@@ -1641,6 +1641,8 @@ return [
                 ReflectionBasedAbstractFactory::class,
             InputValidator\RecommendationRisk\PostRecommendationRiskDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
+            InputValidator\RecommendationRisk\PatchRecommendationRiskDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRisk\PostSpecificInstanceRiskDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRisk\UpdateInstanceRiskDataInputValidator::class =>

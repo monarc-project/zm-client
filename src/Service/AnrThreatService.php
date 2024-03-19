@@ -192,8 +192,7 @@ class AnrThreatService
 
                 $this->instanceRiskTable->save($instanceRisk, false);
 
-                $this->anrInstanceRiskService->recalculateRiskRates($instanceRisk, false);
-                $this->anrInstanceRiskService->updateInstanceRiskRecommendationsPositions($instanceRisk);
+                $this->anrInstanceRiskService->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
             }
         }
     }

@@ -32,8 +32,7 @@ class RecommendationRiskTable extends AbstractTable
         array $order = [],
         bool $excludeNotTreated = true
     ): array {
-        $queryBuilder = $this->getRepository()
-            ->createQueryBuilder('rr')
+        $queryBuilder = $this->getRepository()->createQueryBuilder('rr')
             ->innerJoin('rr.recommendation', 'r')
             ->andWhere('rr.anr = :anr')
             ->setParameter('anr', $anr);
@@ -58,8 +57,7 @@ class RecommendationRiskTable extends AbstractTable
         InstanceRisk $instanceRisk,
         Recommendation $recommendation
     ): ?RecommendationRisk {
-        return $this->getRepository()
-            ->createQueryBuilder('rr')
+        return $this->getRepository()->createQueryBuilder('rr')
             ->innerJoin('rr.recommendation', 'r')
             ->where('rr.instanceRisk = :instanceRisk')
             ->andWhere('r.uuid = :recommendationUuid')
@@ -77,8 +75,7 @@ class RecommendationRiskTable extends AbstractTable
      */
     public function findAllLinkedByRecommendationGlobalObjectAndAmv(RecommendationRisk $recommendationRisk)
     {
-        return $this->getRepository()
-            ->createQueryBuilder('rr')
+        return $this->getRepository()->createQueryBuilder('rr')
             ->innerJoin('rr.recommendation', 'r')
             ->innerJoin('rr.globalObject', 'go')
             ->innerJoin('rr.asset', 'a')
@@ -115,12 +112,14 @@ class RecommendationRiskTable extends AbstractTable
         Recommendation $recommendation,
         InstanceRisk $instanceRisk
     ): bool {
-        return (bool)$this->getRepository()->createQueryBuilder('ir')
-            ->where('ir.anr = :anr')
-            ->andWhere('ir.recommendation = :recommendation')
-            ->andWhere('ir.instanceRisk = :instanceRisk')
+        return (bool)$this->getRepository()->createQueryBuilder('rr')
+            ->innerJoin('rr.recommendation', 'r')
+            ->where('rr.anr = :anr')
+            ->andWhere('r.uuid = :recommendation_uuid')
+            ->andWhere('r.anr = :anr')
+            ->andWhere('rr.instanceRisk = :instanceRisk')
             ->setParameter('anr', $anr)
-            ->setParameter('recommendation', $recommendation)
+            ->setParameter('recommendation_uuid', $recommendation->getUuid())
             ->setParameter('instanceRisk', $instanceRisk)
             ->setMaxResults(1)
             ->getQuery()
@@ -132,12 +131,14 @@ class RecommendationRiskTable extends AbstractTable
         Recommendation $recommendation,
         InstanceRiskOp $instanceRiskOp
     ): bool {
-        return (bool)$this->getRepository()->createQueryBuilder('ir')
-            ->where('ir.anr = :anr')
-            ->andWhere('ir.recommendation = :recommendation')
-            ->andWhere('ir.instanceRiskOp = :instanceRiskOp')
+        return (bool)$this->getRepository()->createQueryBuilder('rr')
+            ->innerJoin('rr.recommendation', 'r')
+            ->where('rr.anr = :anr')
+            ->andWhere('r.uuid = :recommendation_uuid')
+            ->andWhere('r.anr = :anr')
+            ->andWhere('rr.instanceRiskOp = :instanceRiskOp')
             ->setParameter('anr', $anr)
-            ->setParameter('recommendation', $recommendation)
+            ->setParameter('recommendation_uuid', $recommendation->getUuid())
             ->setParameter('instanceRiskOp', $instanceRiskOp)
             ->setMaxResults(1)
             ->getQuery()

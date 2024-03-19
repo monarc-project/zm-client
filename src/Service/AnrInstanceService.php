@@ -383,7 +383,7 @@ class AnrInstanceService
     private function updateRisks(Entity\Instance $instance): void
     {
         foreach ($instance->getInstanceRisks() as $instanceRisk) {
-            $this->anrInstanceRiskService->recalculateRiskRates($instanceRisk);
+            $this->anrInstanceRiskService->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
             $this->instanceRiskTable->save($instanceRisk, false);
         }
     }

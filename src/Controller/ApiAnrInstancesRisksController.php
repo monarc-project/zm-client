@@ -55,7 +55,6 @@ class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHan
         $instanceRisk = $this->anrInstanceRiskService
             ->update($anr, (int)$id, $this->updateInstanceRiskDataInputValidator->getValidData());
 
-
         return $this->getPreparedJsonResponse([
             'id' => $instanceRisk->getId(),
             'threatRate' => $instanceRisk->getThreatRate(),
