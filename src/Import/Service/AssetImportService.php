@@ -30,67 +30,24 @@ use Monarc\FrontOffice\Service\SoaCategoryService;
 
 class AssetImportService
 {
-    private Table\AssetTable $assetTable;
-
-    private Table\ThreatTable $threatTable;
-
-    private Table\VulnerabilityTable $vulnerabilityTable;
-
-    private DeprecatedTable\MeasureTable $measureTable;
-
-    private Table\AmvTable $amvTable;
-
-    private DeprecatedTable\InstanceTable $instanceTable;
-
-    private DeprecatedTable\InstanceRiskTable $instanceRiskTable;
-
-    private DeprecatedTable\ReferentialTable $referentialTable;
-
     private UserSuperClass $connectedUser;
 
-    private ImportCacheHelper $importCacheHelper;
-
-    private SoaCategoryService $soaCategoryService;
-
-    private AnrAssetService $anrAssetService;
-
-    private AnrThreatService $anrThreatService;
-
-    private AnrThemeService $anrThemeService;
-
-    private AnrVulnerabilityService $anrVulnerabilityService;
-
     public function __construct(
-        Table\AssetTable $assetTable,
-        Table\ThreatTable $threatTable,
-        Table\VulnerabilityTable $vulnerabilityTable,
-        DeprecatedTable\MeasureTable $measureTable,
-        Table\AmvTable $amvTable,
-        DeprecatedTable\InstanceTable $instanceTable,
-        DeprecatedTable\InstanceRiskTable $instanceRiskTable,
-        DeprecatedTable\ReferentialTable $referentialTable,
-        ImportCacheHelper $importCacheHelper,
-        SoaCategoryService $soaCategoryService,
-        AnrAssetService $anrAssetService,
-        AnrThreatService $anrThreatService,
-        AnrThemeService $anrThemeService,
-        AnrVulnerabilityService $anrVulnerabilityService,
+        private Table\AssetTable $assetTable,
+        private Table\ThreatTable $threatTable,
+        private Table\VulnerabilityTable $vulnerabilityTable,
+        private DeprecatedTable\MeasureTable $measureTable,
+        private Table\AmvTable $amvTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private DeprecatedTable\ReferentialTable $referentialTable,
+        private ImportCacheHelper $importCacheHelper,
+        private SoaCategoryService $soaCategoryService,
+        private AnrAssetService $anrAssetService,
+        private AnrThreatService $anrThreatService,
+        private AnrThemeService $anrThemeService,
+        private AnrVulnerabilityService $anrVulnerabilityService,
         ConnectedUserService $connectedUserService
     ) {
-        $this->assetTable = $assetTable;
-        $this->threatTable = $threatTable;
-        $this->vulnerabilityTable = $vulnerabilityTable;
-        $this->measureTable = $measureTable;
-        $this->amvTable = $amvTable;
-        $this->instanceTable = $instanceTable;
-        $this->instanceRiskTable = $instanceRiskTable;
-        $this->referentialTable = $referentialTable;
-        $this->importCacheHelper = $importCacheHelper;
-        $this->soaCategoryService = $soaCategoryService;
-        $this->anrAssetService = $anrAssetService;
-        $this->anrThreatService = $anrThreatService;
-        $this->anrThemeService = $anrThemeService;
-        $this->anrVulnerabilityService = $anrVulnerabilityService;
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 

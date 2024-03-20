@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Service\ClientService;
 
-class ApiClientsController extends AbstractRestfulControllerRequestHandler
+class ApiClientsController extends AbstractRestfulController
 {
     use ControllerRequestResponseHandlerTrait;
 
@@ -22,6 +22,13 @@ class ApiClientsController extends AbstractRestfulControllerRequestHandler
     public function getList()
     {
         return $this->getPreparedJsonResponse($this->clientService->getAll());
+    }
+
+    public function create($data)
+    {
+        $this->clientService->create($data);
+
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function patch($id, $data)

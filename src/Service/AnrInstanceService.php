@@ -76,7 +76,7 @@ class AnrInstanceService
         /** @var Entity\MonarcObject $object */
         $object = $data['object'] instanceof Entity\MonarcObject
             ? $data['object']
-            : $this->monarcObjectTable->findByUuid($data['object']);
+            : $this->monarcObjectTable->findByUuidAndAnr($data['object'], $anr);
 
         $instance = (new Entity\Instance)
             ->setAnr($anr)

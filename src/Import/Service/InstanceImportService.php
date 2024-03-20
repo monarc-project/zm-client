@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Import\Service;
 
 use DateTime;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity as CoreEntity;
@@ -66,14 +65,13 @@ class InstanceImportService
         private Table\ThemeTable $themeTable,
         private DeprecatedTable\ReferentialTable $referentialTable,
         private DeprecatedTable\InterviewTable $interviewTable,
-        private DeprecatedTable\DeliveryTable $deliveryTable,
+        private Table\DeliveryTable $deliveryTable,
         private Table\ScaleImpactTypeTable $scaleImpactTypeTable,
         private Table\ScaleCommentTable $scaleCommentTable,
         private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
         private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
-        private Table\TranslationTable $translationTable,
         private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
         private Table\InstanceMetadataTable $instanceMetadataTable,
         private Table\SoaScaleCommentTable $soaScaleCommentTable,
@@ -1012,13 +1010,10 @@ class InstanceImportService
     /**
      * Validates if the data can be imported into the anr.
      */
-    private function validateIfImportIsPossible(Anr $anr, ?InstanceSuperClass $parent, array $data): void
+    private function validateIfImportIsPossible(Entity\Anr $anr, ?Entity\Instance $parent, array $data): void
     {
         if ($parent !== null
-            && (
-                $parent->getLevel() === InstanceSuperClass::LEVEL_INTER
-                || $parent->getAnr() !== $anr
-            )
+            && ($parent->getLevel() === CoreEntity\InstanceSuperClass::LEVEL_INTER || $parent->getAnr() !== $anr)
         ) {
             throw new Exception('Parent instance should be in the node tree and the analysis IDs are matched', 412);
         }
@@ -1030,9 +1025,9 @@ class InstanceImportService
 
     private function prepareInstanceConsequences(
         array $data,
-        Anr $anr,
-        InstanceSuperClass $instance,
-        MonarcObject $monarcObject,
+        Entity\Anr $anr,
+        Entity\Instance $instance,
+        Entity\MonarcObject $monarcObject,
         bool $includeEval
     ): void {
         $labelKey = 'label' . $anr->getLanguage();
@@ -1044,7 +1039,7 @@ class InstanceImportService
 
         $scalesData = $this->getCurrentAndExternalScalesData($anr, $data);
 
-        foreach (Instance::getAvailableScalesCriteria() as $scaleCriteria) {
+        foreach (Entity\Instance::getAvailableScalesCriteria() as $scaleCriteria) {
             if ($instance->{'getInherited' . $scaleCriteria}()) {
                 $instance->{'setInherited' . $scaleCriteria}(1);
                 $instance->{'set' . $scaleCriteria}(-1);
@@ -1054,10 +1049,10 @@ class InstanceImportService
                     $instance->{'set' . $scaleCriteria}(
                         $this->approximate(
                             $instance->{'get' . $scaleCriteria}(),
-                            $scalesData['external'][Scale::TYPE_IMPACT]['min'],
-                            $scalesData['external'][Scale::TYPE_IMPACT]['max'],
-                            $scalesData['current'][Scale::TYPE_IMPACT]['min'],
-                            $scalesData['current'][Scale::TYPE_IMPACT]['max']
+                            $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
+                            $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max'],
+                            $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
+                            $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max']
                         )
                     );
                 }
@@ -1065,7 +1060,7 @@ class InstanceImportService
         }
 
         if (!empty($data['consequences'])) {
-            $localScaleImpact = $this->scaleTable->findByAnrAndType($anr, Scale::TYPE_IMPACT);
+            $localScaleImpact = $this->scaleTable->findByAnrAndType($anr, CoreEntity\ScaleSuperClass::TYPE_IMPACT);
             $scalesImpactTypes = $this->scaleImpactTypeTable->findByAnr($anr);
             $localScalesImpactTypes = [];
             foreach ($scalesImpactTypes as $scalesImpactType) {
@@ -1098,20 +1093,18 @@ class InstanceImportService
                     ->setIsHidden((bool)$consequenceData['isHidden'])
                     ->setCreator($this->connectedUser->getEmail());
 
-                foreach (Entity\InstanceConsequence::getAvailableScalesCriteria()
-                    as $scaleCriteriaKey => $scaleCriteria
-                ) {
+                foreach (Entity\InstanceConsequence::getAvailableScalesCriteria() as $criteriaKey => $scaleCriteria) {
                     if ($instanceConsequence->isHidden()) {
                         $value = -1;
                     } else {
                         $value = $this->isImportTypeAnr()
-                            ? $consequenceData[$scaleCriteriaKey]
+                            ? $consequenceData[$criteriaKey]
                             : $this->approximate(
-                                $consequenceData[$scaleCriteriaKey],
-                                $scalesData['external'][Scale::TYPE_IMPACT]['min'],
-                                $scalesData['external'][Scale::TYPE_IMPACT]['max'],
-                                $scalesData['current'][Scale::TYPE_IMPACT]['min'],
-                                $scalesData['current'][Scale::TYPE_IMPACT]['max']
+                                $consequenceData[$criteriaKey],
+                                $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
+                                $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max'],
+                                $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
+                                $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max']
                             );
                     }
                     $instanceConsequence->{'set' . $scaleCriteria}($value);
@@ -1129,7 +1122,7 @@ class InstanceImportService
      * from external to current scales (in case of instance(s) import).
      * For ANR import, the current analysis risks' values are converted from current to external scales.
      */
-    private function getCurrentAndExternalScalesData(Anr $anr, array $data): array
+    private function getCurrentAndExternalScalesData(Entity\Anr $anr, array $data): array
     {
         if (empty($this->cachedData['scales'])) {
             $scales = $this->scaleTable->findByAnr($anr);
@@ -1149,9 +1142,9 @@ class InstanceImportService
 
     private function processInstanceRisks(
         array $data,
-        Anr $anr,
-        InstanceSuperClass $instance,
-        MonarcObject $monarcObject,
+        Entity\Anr $anr,
+        Entity\Instance $instance,
+        Entity\MonarcObject $monarcObject,
         bool $includeEval,
         string $modeImport
     ): void {
@@ -1176,8 +1169,8 @@ class InstanceImportService
                 $vulnerabilityData['uuid']
             );
 
-            if ((int)$instanceRiskData['specific'] === InstanceRisk::TYPE_SPECIFIC) {
-                /** @var ?Threat $threat */
+            if ((int)$instanceRiskData['specific'] === Entity\InstanceRisk::TYPE_SPECIFIC) {
+                /** @var ?Entity\Threat $threat */
                 $threat = $this->importCacheHelper->getItemFromArrayCache('threats', $threatData['uuid'])
                     ?: $this->threatTable->findByUuidAndAnr($threatData['uuid'], $anr, false);
                 if ($threat === null) {
@@ -1223,7 +1216,7 @@ class InstanceImportService
                     $this->importCacheHelper
                         ->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
                 }
-                /** @var ?Vulnerability $vulnerability */
+                /** @var ?Entity\Vulnerability $vulnerability */
                 $vulnerability = $this->importCacheHelper
                     ->getItemFromArrayCache('vulnerabilities', $vulnerabilityData['uuid'])
                     ?: $this->vulnerabilityTable->findByUuidAndAnr($vulnerabilityData['uuid'], $anr, false);
@@ -2970,7 +2963,7 @@ class InstanceImportService
     {
         $soaScaleCommentTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
             $anr,
-            [TranslationSuperClass::SOA_SCALE_COMMENT],
+            [CoreEntity\TranslationSuperClass::SOA_SCALE_COMMENT],
             $this->getAnrLanguageCode($anr)
         );
         $scales = $this->soaScaleCommentTable->findByAnrIndexedByScaleIndex($anr);
@@ -2978,18 +2971,19 @@ class InstanceImportService
         if (\count($newScales) > \count($scales)) {
             $anrLanguageCode = $this->getAnrLanguageCode($anr);
             for ($i = \count($scales); $i < \count($newScales); $i++) {
-                $translationKey = (string)Uuid::uuid4();
-                $translation = (new Translation())
-                    ->setAnr($anr)
-                    ->setType(TranslationSuperClass::SOA_SCALE_COMMENT)
-                    ->setKey($translationKey)
-                    ->setValue('')
-                    ->setLang($anrLanguageCode)
-                    ->setCreator($this->connectedUser->getEmail());
-                $this->translationTable->save($translation, false);
-                $soaScaleCommentTranslations[$translationKey]  = $translation;
+                // todo: no translations anymore !
+//                $translationKey = (string)Uuid::uuid4();
+//                $translation = (new Translation())
+//                    ->setAnr($anr)
+//                    ->setType(TranslationSuperClass::SOA_SCALE_COMMENT)
+//                    ->setKey($translationKey)
+//                    ->setValue('')
+//                    ->setLang($anrLanguageCode)
+//                    ->setCreator($this->connectedUser->getEmail());
+//                $this->translationTable->save($translation, false);
+//                $soaScaleCommentTranslations[$translationKey]  = $translation;
 
-                $scales[$i] = (new SoaScaleComment())
+                $scales[$i] = (new Entity\SoaScaleComment())
                     ->setScaleIndex($i)
                     ->setAnr($anr)
                     ->setCommentTranslationKey($translationKey)

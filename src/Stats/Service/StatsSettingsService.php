@@ -76,7 +76,7 @@ class StatsSettingsService
     {
         try {
             $client = $this->statsApiProvider->getClient();
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
         }
 
         return [
@@ -93,8 +93,9 @@ class StatsSettingsService
             throw new StatsUpdateClientException('The option `is_sharing_enabled` is mandatory.');
         }
 
-        $this->statsApiProvider->updateClient([
-            'is_sharing_enabled' => (bool)$data['is_sharing_enabled'],
-        ]);
+        try {
+            $this->statsApiProvider->updateClient(['is_sharing_enabled' => (bool)$data['is_sharing_enabled']]);
+        } catch (\Throwable) {
+        }
     }
 }

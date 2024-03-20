@@ -12,7 +12,7 @@ use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
- * @ORM\Table(name="instances_metadatas", indexes={
+ * @ORM\Table(name="instances_metadata", indexes={
  *      @ORM\Index(name="instance_id", columns={"instance_id"}),
  *      @ORM\Index(name="metadata_id", columns={"metadata_id"}),
  * })
