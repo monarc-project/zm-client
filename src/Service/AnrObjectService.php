@@ -51,7 +51,7 @@ class AnrObjectService
 
     public function getCount(FormattedInputParams $formattedInputParams): int
     {
-        return $this->monarcObjectTable->countByParams($formattedInputParams);
+        return $this->monarcObjectTable->countByParams($formattedInputParams, 'uuid');
     }
 
     public function getObjectData(Entity\Anr $anr, string $uuid, FormattedInputParams $formattedInputParams): array

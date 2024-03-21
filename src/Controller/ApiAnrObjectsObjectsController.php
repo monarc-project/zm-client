@@ -55,7 +55,7 @@ class ApiAnrObjectsObjectsController extends AbstractRestfulControllerRequestHan
 
         $this->anrObjectObjectService->shiftPositionInComposition(
             $anr,
-            $id,
+            (int)$id,
             $this->movePositionDataInputValidator->getValidData()
         );
 

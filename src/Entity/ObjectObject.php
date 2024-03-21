@@ -54,7 +54,13 @@ class ObjectObject extends ObjectObjectSuperClass
 
     public function getImplicitPositionRelationsValues(): array
     {
-        return array_merge(['anr' => $this->anr], parent::getImplicitPositionRelationsValues());
+        return [
+            'anr' => $this->anr,
+            'parent' => [
+                'uuid' => $this->parent->getUuid(),
+                'anr' => $this->anr,
+            ]
+        ];
     }
 
     public function setAnr(Anr $anr): self

@@ -41,9 +41,9 @@ class AnrObjectObjectService
         }
 
         /** @var Entity\MonarcObject $parentObject */
-        $parentObject = $this->monarcObjectTable->findByIdAndAnr($data['parent'], $anr);
+        $parentObject = $this->monarcObjectTable->findByUuidAndAnr($data['parent'], $anr);
         /** @var Entity\MonarcObject $childObject */
-        $childObject = $this->monarcObjectTable->findByIdAndAnr($data['child'], $anr);
+        $childObject = $this->monarcObjectTable->findByUuidAndAnr($data['child'], $anr);
         if ($parentObject->hasChild($childObject)) {
             throw new Exception('The object is already presented in the composition.', 412);
         }
@@ -101,9 +101,16 @@ class AnrObjectObjectService
         );
         /* Some positions are not aligned in the DB, that's why we may have empty result. */
         if ($previousObjectCompositionLink !== null) {
-            $this->objectObjectTable->save($previousObjectCompositionLink->setPosition($objectObject->getPosition()));
+            $this->objectObjectTable->save(
+                $previousObjectCompositionLink->setPosition($objectObject->getPosition())->setUpdater(
+                    $this->connectedUser->getEmail()
+                ),
+                false
+            );
         }
-        $this->objectObjectTable->save($objectObject->setPosition($positionToBeSet));
+        $this->objectObjectTable->save(
+            $objectObject->setPosition($positionToBeSet)->setUpdater($this->connectedUser->getEmail())
+        );
     }
 
     public function delete(Entity\Anr $anr, int $id): void

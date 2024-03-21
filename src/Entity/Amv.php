@@ -76,7 +76,13 @@ class Amv extends AmvSuperClass
 
     public function getImplicitPositionRelationsValues(): array
     {
-        return array_merge(['anr' => $this->anr], parent::getImplicitPositionRelationsValues());
+        return [
+            'anr' => $this->anr,
+            'asset' => [
+                'uuid' => $this->asset->getUuid(),
+                'anr' => $this->anr,
+            ]
+        ];
     }
 
     public function getAnr(): Anr
