@@ -961,7 +961,7 @@ class AnrService
         foreach ($sourceRolfRisks as $sourceRolfRisk) {
             $newRolfRisk = (new Entity\RolfRisk())
                 ->setAnr($newAnr)
-                ->setCode($sourceRolfRisk->getCode)
+                ->setCode($sourceRolfRisk->getCode())
                 ->setLabels($sourceRolfRisk->getLabels())
                 ->setDescriptions($sourceRolfRisk->getDescriptions())
                 ->setCreator($this->connectedUser->getEmail());
@@ -1185,7 +1185,7 @@ class AnrService
         if ($sourceObjectCategory->getParent() !== null
             && !isset($objectCategoryOldIdsToNewObjects[$sourceObjectCategory->getParent()->getId()])
         ) {
-            $objectCategoryOldIdsToNewObjects = $this->duplicateObjectCategoryAndItsParents(
+            $objectCategoryOldIdsToNewObjects += $this->duplicateObjectCategoryAndItsParents(
                 $newAnr,
                 $sourceObjectCategory->getParent(),
                 $objectCategoryOldIdsToNewObjects
@@ -1195,7 +1195,9 @@ class AnrService
         $objectCategoryOldIdsToNewObjects[$sourceObjectCategory->getId()] = $this->anrObjectCategoryService->create(
             $newAnr,
             array_merge([
-                'parent' => $objectCategoryOldIdsToNewObjects[$sourceObjectCategory->getParent()->getId()] ?? null,
+                'parent' => $sourceObjectCategory->getParent() !== null
+                    ? $objectCategoryOldIdsToNewObjects[$sourceObjectCategory->getParent()->getId()]
+                    : null,
                 'setOnlyExactPosition' => true,
                 'position' => $sourceObjectCategory->getPosition(),
             ], $sourceObjectCategory->getLabels()),
@@ -1426,7 +1428,10 @@ class AnrService
             if ($sourceInstanceRisk instanceof Entity\InstanceRisk
                 && $sourceInstanceRisk->getInstanceRiskOwner() !== null
             ) {
+                /** @var Entity\Anr $sourceAnr */
+                $sourceAnr = $sourceInstance->getAnr();
                 $newInstanceRisk->setInstanceRiskOwner($this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
+                    $sourceAnr,
                     $newAnr,
                     $sourceInstanceRisk->getInstanceRiskOwner()->getName(),
                 ));
@@ -1463,7 +1468,10 @@ class AnrService
             if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp
                 && $sourceInstanceRiskOp->getInstanceRiskOwner() !== null
             ) {
+                /** @var Entity\Anr $sourceAnr */
+                $sourceAnr = $sourceInstance->getAnr();
                 $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
+                    $sourceAnr,
                     $newAnr,
                     $sourceInstanceRiskOp->getInstanceRiskOwner()->getName(),
                 );

@@ -202,8 +202,11 @@ class AnrInstanceRiskService
                         $instanceRiskData = array_values($params['risks'])[$riskKey];
                         $instanceRisk->setContext($instanceRiskData['context'] ?? '');
                         if (!empty($instanceRiskData['riskOwner'])) {
+                            /** @var Entity\Anr $anr */
+                            $anr = $instance->getAnr();
                             $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
-                                $instance->getAnr(),
+                                $anr,
+                                $anr,
                                 $instanceRiskData['riskOwner']
                             );
                             $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
