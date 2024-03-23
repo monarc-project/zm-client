@@ -12,6 +12,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\InputFormatter\Recommendation\GetRecommendationsInputFormatter;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrRecommendationService;
+use Monarc\FrontOffice\Validator\InputValidator\Recommendation\PatchRecommendationDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\Recommendation\PostRecommendationDataInputValidator;
 
 class ApiAnrRecommendationsController extends AbstractRestfulControllerRequestHandler
@@ -21,7 +22,8 @@ class ApiAnrRecommendationsController extends AbstractRestfulControllerRequestHa
     public function __construct(
         private AnrRecommendationService $anrRecommendationService,
         private GetRecommendationsInputFormatter $getRecommendationsInputFormatter,
-        private PostRecommendationDataInputValidator $postRecommendationDataInputValidator
+        private PostRecommendationDataInputValidator $postRecommendationDataInputValidator,
+        private PatchRecommendationDataInputValidator $patchRecommendationDataInputValidator
     ) {}
 
     public function getList()
@@ -70,11 +72,11 @@ class ApiAnrRecommendationsController extends AbstractRestfulControllerRequestHa
      */
     public function patch($id, $data)
     {
-        $this->validatePostParams($this->postRecommendationDataInputValidator, $data);
+        $this->validatePostParams($this->patchRecommendationDataInputValidator, $data);
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->anrRecommendationService->patch($anr, $id, $this->postRecommendationDataInputValidator->getValidData());
+        $this->anrRecommendationService->patch($anr, $id, $this->patchRecommendationDataInputValidator->getValidData());
 
         return $this->getSuccessfulJsonResponse();
     }

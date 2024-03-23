@@ -43,10 +43,12 @@ class AnrRecommendationRiskService
         /** @var Entity\RecommendationRisk[] $recommendationRisks */
         $recommendationRisks = $this->recommendationRiskTable->findByParams($formattedInputParams);
 
+        $hasRecommendationFilter = $formattedInputParams->hasFilterFor('recommendation');
         $recommendationRisksData = [];
         $globalObjectsUuids = [];
         foreach ($recommendationRisks as $recommendationRisk) {
-            if ($recommendationRisk->getGlobalObject() !== null
+            if ($hasRecommendationFilter
+                && $recommendationRisk->getGlobalObject() !== null
                 && isset($globalObjectsUuids[$recommendationRisk->getGlobalObject()->getUuid()])
             ) {
                 continue;
@@ -57,7 +59,7 @@ class AnrRecommendationRiskService
                 $formattedInputParams->hasFilterFor('recommendation')
             );
 
-            if ($recommendationRisk->getGlobalObject() !== null) {
+            if ($hasRecommendationFilter && $recommendationRisk->getGlobalObject() !== null) {
                 $globalObjectsUuids[$recommendationRisk->getGlobalObject()->getUuid()] = true;
             }
         }

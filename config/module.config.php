@@ -1635,6 +1635,8 @@ return [
             InputValidator\Object\DuplicateObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Recommendation\PostRecommendationDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
+            InputValidator\Recommendation\PatchRecommendationDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
             InputValidator\RecommendationSet\PostRecommendationSetDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
             InputValidator\RecommendationRisk\ValidateRecommendationRiskDataInputValidator::class =>
