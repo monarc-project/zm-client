@@ -54,7 +54,7 @@ class ApiAnrObjectsCategoriesController extends AbstractRestfulControllerRequest
 
         $category = $this->anrObjectCategoryService->create($anr, $data);
 
-        return $this->getSuccessfulJsonResponse(['categ' => $category->getId()]);
+        return $this->getSuccessfulJsonResponse(['categ' => ['id' => $category->getId()]]);
     }
 
     /**

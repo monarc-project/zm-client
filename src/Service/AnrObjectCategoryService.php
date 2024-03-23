@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\Core\Entity\Anr;
 use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
@@ -116,7 +115,7 @@ class AnrObjectCategoryService
         return $objectCategory;
     }
 
-    public function update(Anr $anr, int $id, array $data): Entity\ObjectCategory
+    public function update(Entity\Anr $anr, int $id, array $data): Entity\ObjectCategory
     {
         /** @var Entity\ObjectCategory $objectCategory */
         $objectCategory = $this->objectCategoryTable->findByIdAndAnr($id, $anr);
@@ -163,7 +162,7 @@ class AnrObjectCategoryService
         return $objectCategory;
     }
 
-    public function delete(Anr $anr, int $id): void
+    public function delete(Entity\Anr $anr, int $id): void
     {
         /** @var Entity\ObjectCategory $objectCategory */
         $objectCategory = $this->objectCategoryTable->findByIdAndAnr($id, $anr);

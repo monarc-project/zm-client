@@ -223,11 +223,11 @@ class AnrInstanceRiskService
     public function createSpecificInstanceRisk(Entity\Anr $anr, array $data): Entity\InstanceRisk
     {
         /** @var Entity\Instance $instance */
-        $instance = $this->instanceRiskTable->findByIdAndAnr($data['instance'], $anr);
+        $instance = $this->instanceTable->findByIdAndAnr($data['instance'], $anr);
         /** @var Entity\Threat $threat */
-        $threat = $this->threatTable->findByIdAndAnr($data['threat'], $anr);
+        $threat = $this->threatTable->findByUuidAndAnr($data['threat'], $anr);
         /** @var Entity\Vulnerability $vulnerability */
-        $vulnerability = $this->vulnerabilityTable->findByIdAndAnr($data['vulnerability'], $anr);
+        $vulnerability = $this->vulnerabilityTable->findByUuidAndAnr($data['vulnerability'], $anr);
 
         if ($this->instanceRiskTable
             ->existsInAnrWithInstanceThreatAndVulnerability($instance, $threat, $vulnerability)

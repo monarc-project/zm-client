@@ -255,12 +255,13 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         Threat $threat,
         bool $excludeLocallySetThreatRates
     ): array {
-        $queryBuilder = $this->getRepository()
-            ->createQueryBuilder('ir')
+        $queryBuilder = $this->getRepository()->createQueryBuilder('ir')
+            ->innerJoin('ir.threat', 't')
             ->where('ir.anr = :anr')
-            ->andWhere('ir.threat = :threat')
+            ->andWhere('t.uuid = :threat_uuid')
+            ->andWhere('t.anr = :anr')
             ->setParameter('anr', $anr)
-            ->setParameter('threat', $threat);
+            ->setParameter('threat_uuid', $threat->getUuid());
         if ($excludeLocallySetThreatRates) {
             $queryBuilder->andWhere('ir.isThreatRateNotSetOrModifiedExternally = 1');
         }
@@ -274,14 +275,18 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         Vulnerability $vulnerability
     ) {
         return (bool)$this->getRepository()->createQueryBuilder('ir')
+            ->innerJoin('ir.threat', 't')
+            ->innerJoin('ir.vulnerability', 'v')
             ->where('ir.anr = :anr')
             ->andWhere('ir.instance = :instance')
-            ->andWhere('ir.threat = :threat')
-            ->andWhere('ir.vulnerability = :vulnerability')
+            ->andWhere('t.uuid = :threat_uuid')
+            ->andWhere('t.anr = :anr')
+            ->andWhere('v.uuid = :vulnerability_uuid')
+            ->andWhere('v.anr = :anr')
             ->setParameter('anr', $instance->getAnr())
             ->setParameter('instance', $instance)
-            ->setParameter('threat', $threat)
-            ->setParameter('vulnerability', $vulnerability)
+            ->setParameter('threat_uuid', $threat->getUuid())
+            ->setParameter('vulnerability_uuid', $vulnerability->getUuid())
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult(AbstractQuery::HYDRATE_SIMPLEOBJECT);
@@ -293,16 +298,22 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     public function findSiblingSpecificInstanceRisks(InstanceRisk $instanceRisk): array
     {
         return $this->getRepository()->createQueryBuilder('ir')
+            ->innerJoin('ir.asset', 'a')
+            ->innerJoin('ir.threat', 't')
+            ->innerJoin('ir.vulnerability', 'v')
             ->where('ir.anr = :anr')
-            ->andWhere('ir.asset = :asset')
-            ->andWhere('ir.threat = :threat')
-            ->andWhere('ir.vulnerability = :vulnerability')
+            ->andWhere('a.uuid = :asset_uuid')
+            ->andWhere('a.anr = :anr')
+            ->andWhere('t.uuid = :threat_uuid')
+            ->andWhere('t.anr = :anr')
+            ->andWhere('v.uuid = :vulnerability_uuid')
+            ->andWhere('v.anr = :anr')
             ->andWhere('ir.id != ' . $instanceRisk->getId())
             ->andWhere('ir.specific = 1')
             ->setParameter('anr', $instanceRisk->getAnr())
-            ->setParameter('asset', $instanceRisk->getAsset())
-            ->setParameter('threat', $instanceRisk->getThreat())
-            ->setParameter('vulnerability', $instanceRisk->getVulnerability())
+            ->setParameter('asset_uuid', $instanceRisk->getAsset()->getUuid())
+            ->setParameter('threat_uuid', $instanceRisk->getThreat()->getUuid())
+            ->setParameter('vulnerability_uuid', $instanceRisk->getVulnerability()->getUuid())
             ->getQuery()
             ->getResult();
     }
