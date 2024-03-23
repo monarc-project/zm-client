@@ -24,7 +24,8 @@ class ApiAnrRecommendationsController extends AbstractRestfulControllerRequestHa
         private GetRecommendationsInputFormatter $getRecommendationsInputFormatter,
         private PostRecommendationDataInputValidator $postRecommendationDataInputValidator,
         private PatchRecommendationDataInputValidator $patchRecommendationDataInputValidator
-    ) {}
+    ) {
+    }
 
     public function getList()
     {

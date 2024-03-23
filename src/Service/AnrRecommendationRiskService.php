@@ -200,7 +200,7 @@ class AnrRecommendationRiskService
                     $instanceRiskData = [
                         'id' => $instanceRisk->getId(),
                         'cacheNetRisk' => $instanceRisk->getCacheNetRisk(),
-                        'cacheTargetRisk' => $instanceRisk->getCacheTargetedRisk(),
+                        'cacheTargetedRisk' => $instanceRisk->getCacheTargetedRisk(),
                         'comment' => $instanceRisk->getComment(),
                     ];
                 } else {
@@ -551,7 +551,7 @@ class AnrRecommendationRiskService
                     'id' => $recommendationRisk->getInstanceRisk()->getId(),
                     'kindOfMeasure' => $recommendationRisk->getInstanceRisk()->getKindOfMeasure(),
                     'cacheMaxRisk' => $recommendationRisk->getInstanceRisk()->getCacheMaxRisk(),
-                    'cacheTargetRisk' => $recommendationRisk->getInstanceRisk()->getCacheTargetedRisk(),
+                    'cacheTargetedRisk' => $recommendationRisk->getInstanceRisk()->getCacheTargetedRisk(),
                 ];
             }
             if ($recommendationRisk->getInstanceRiskOp()) {
@@ -559,7 +559,7 @@ class AnrRecommendationRiskService
                     'id' => $recommendationRisk->getInstanceRiskOp()->getId(),
                     'kindOfMeasure' => $recommendationRisk->getInstanceRiskOp()->getKindOfMeasure(),
                     'cacheNetRisk' => $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk(),
-                    'cacheTargetRisk' => $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk(),
+                    'cacheTargetedRisk' => $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk(),
                 ], $recommendationRisk->getInstanceRiskOp()->getRiskCacheLabels());
             }
         }
