@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\MeasureSuperClass;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @ORM\Table(name="measures", indexes={
@@ -22,13 +23,19 @@ use Monarc\Core\Entity\MeasureSuperClass;
 class Measure extends MeasureSuperClass
 {
     /**
+     * @var UuidInterface|string
+     *
+     * @ORM\Id
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     */
+    protected $uuid;
+
+    /**
      * @var Anr
      *
      * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
+     * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
      */
     protected $anr;
 
@@ -37,12 +44,13 @@ class Measure extends MeasureSuperClass
      *
      * @ORM\ManyToMany(targetEntity="Amv", inversedBy="measures", fetch="EAGER")
      * @ORM\JoinTable(name="measures_amvs",
-     *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
+     *   joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
      *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     * },
-     *  inverseJoinColumns={@ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),
+     *   },
+     *   inverseJoinColumns={
+     *     @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),
      *     @ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")
-     * },
+     *   },
      * )
      */
     protected $amvs;
@@ -52,23 +60,14 @@ class Measure extends MeasureSuperClass
      *
      * @ORM\ManyToMany(targetEntity="RolfRisk", inversedBy="measures", cascade={"persist"})
      * @ORM\JoinTable(name="measures_rolf_risks",
-     *  inverseJoinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
-     *  joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
+     *   inverseJoinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
+     *   joinColumns={
+     *     @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
      *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     * },
+     *   }
      * )
      */
     protected $rolfRisks;
-
-    /**
-     * @var SoaCategory
-     *
-     * @ORM\ManyToOne(targetEntity="SoaCategory", cascade={"persist"}, inversedBy="measures")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="soacategory_id", referencedColumnName="id", nullable=true)
-     * })
-     */
-    protected $category;
 
     /**
      * @var Referential
@@ -76,7 +75,7 @@ class Measure extends MeasureSuperClass
      * @ORM\ManyToOne(targetEntity="Referential", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
-     *    @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
      * })
      */
     protected $referential;
@@ -86,10 +85,12 @@ class Measure extends MeasureSuperClass
      *
      * @ORM\ManyToMany(targetEntity="Measure", inversedBy="measures", cascade={"persist"})
      * @ORM\JoinTable(name="measures_measures",
-     *   joinColumns={@ORM\JoinColumn(name="child_id", referencedColumnName="uuid"),
-     *      @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
+     *   joinColumns={
+     *     @ORM\JoinColumn(name="master_measure_id", referencedColumnName="uuid"),
+     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      *   },
-     *   inverseJoinColumns={@ORM\JoinColumn(name="father_id", referencedColumnName="uuid"),
+     *   inverseJoinColumns={
+     *     @ORM\JoinColumn(name="linked_measure_id", referencedColumnName="uuid"),
      *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      *   }
      * )

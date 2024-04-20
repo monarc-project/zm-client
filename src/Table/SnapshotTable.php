@@ -30,10 +30,10 @@ class SnapshotTable extends AbstractTable
     /**
      * @return Snapshot[]
      */
-    public function findByAnrAndOrderBy(Anr $anr, array $order): array
+    public function findByAnrReferenceAndOrderBy(Anr $anr, array $order): array
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('s')
-            ->where('s.anr = :anr')
+            ->where('s.anrReference = :anr')
             ->setParameter('anr', $anr);
 
         foreach ($order as $field => $direction) {

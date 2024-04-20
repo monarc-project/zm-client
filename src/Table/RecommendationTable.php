@@ -11,14 +11,17 @@ use Doctrine\ORM\EntityManager;
 use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
+use Monarc\Core\Table\Interfaces\UniqueCodeTableInterface;
+use Monarc\Core\Table\Traits\CodeExistenceValidationTableTrait;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\Recommendation;
 use Monarc\FrontOffice\Entity\RecommendationSet;
 
-class RecommendationTable extends AbstractTable implements PositionUpdatableTableInterface
+class RecommendationTable extends AbstractTable implements PositionUpdatableTableInterface, UniqueCodeTableInterface
 {
     use PositionIncrementTableTrait;
+    use CodeExistenceValidationTableTrait;
 
     public function __construct(EntityManager $entityManager, string $entityName = Recommendation::class)
     {

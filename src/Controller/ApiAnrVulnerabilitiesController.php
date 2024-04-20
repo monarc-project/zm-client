@@ -55,24 +55,26 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
         $anr = $this->getRequest()->getAttribute('anr');
 
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postVulnerabilityDataInputValidator->setAnr($anr), $data, $isBatchData);
+        $this->validatePostParams(
+            $this->postVulnerabilityDataInputValidator->setIncludeFilter(['anr' => $anr]),
+            $data,
+            $isBatchData
+        );
 
-        $vulnerabilitiesUuids = [];
-        $validatedData = $isBatchData
-            ? $this->postVulnerabilityDataInputValidator->getValidDataSets()
-            : [$this->postVulnerabilityDataInputValidator->getValidData()];
-        $setsNum = \count($validatedData) - 1;
-        foreach ($validatedData as $setNum => $validatedDataRow) {
-            $vulnerabilitiesUuids[] = $this->anrVulnerabilityService->create(
-                $anr,
-                $validatedDataRow,
-                $setNum === $setsNum
-            )->getUuid();
+        if ($isBatchData) {
+            return $this->getSuccessfulJsonResponse([
+                'id' => $this->anrVulnerabilityService->createList(
+                    $anr,
+                    $this->postVulnerabilityDataInputValidator->getValidDataSets()
+                ),
+            ]);
         }
 
-        return $this->getPreparedJsonResponse([
-            'status' => 'ok',
-            'id' => implode(', ', $vulnerabilitiesUuids),
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->anrVulnerabilityService->create(
+                $anr,
+                $this->postVulnerabilityDataInputValidator->getValidData()
+            )->getUuid(),
         ]);
     }
 
@@ -86,7 +88,9 @@ class ApiAnrVulnerabilitiesController extends AbstractRestfulControllerRequestHa
         $anr = $this->getRequest()->getAttribute('anr');
 
         $this->validatePostParams(
-            $this->postVulnerabilityDataInputValidator->setAnr($anr)->setExcludeFilter(['uuid' => $id]),
+            $this->postVulnerabilityDataInputValidator
+                ->setIncludeFilter(['anr' => $anr])
+                ->setExcludeFilter(['uuid' => $id]),
             $data
         );
 

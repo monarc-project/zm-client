@@ -64,7 +64,7 @@ class StatsSettingsService
 
             $this->anrTable->save($anr, false);
         }
-        $this->anrTable->getDb()->flush();
+        $this->anrTable->flush();
 
         return $updatedAnrsSettings;
     }

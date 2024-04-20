@@ -7,12 +7,12 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception;
 use Monarc\FrontOffice\Service\UserRoleService;
 
-class ApiAdminUsersRolesController extends AbstractRestfulControllerRequestHandler
+class ApiAdminUsersRolesController extends AbstractRestfulController
 {
     use ControllerRequestResponseHandlerTrait;
 

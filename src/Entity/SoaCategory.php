@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 /**
-* @link      https://github.com/monarc-project for the canonical source repository
-* @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
-* @license   MONARC is licensed under GNU Affero General Public License version 3
-*/
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Entity;
 
@@ -23,9 +23,7 @@ class SoaCategory extends SoaCategorySuperClass
     * @var Anr
     *
     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
-    * @ORM\JoinColumns({
-    *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-    * })
+    * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
     */
     protected $anr;
 
@@ -40,18 +38,12 @@ class SoaCategory extends SoaCategorySuperClass
      */
     protected $referential;
 
-    /**
-    * @return Anr
-    */
     public function getAnr()
     {
         return $this->anr;
     }
 
-    /**
-    * @param Anr $anr
-    */
-    public function setAnr($anr): self
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 

@@ -71,9 +71,9 @@ class Anr extends AnrSuperClass
     protected $recommendationSets;
 
     /**
-     * @var Snapshot
+     * @var Snapshot|null
      *
-     * @ORM\OneToMany(targetEntity="Snapshot", mappedBy="anr")
+     * @ORM\OneToOne(targetEntity="Snapshot", mappedBy="anr")
      */
     protected $snapshot;
 
@@ -394,7 +394,7 @@ class Anr extends AnrSuperClass
 
     public function isAnrSnapshot(): bool
     {
-        return $this->snapshot === null;
+        return $this->snapshot !== null;
     }
 
     public function getSnapshot(): ?Snapshot
@@ -405,6 +405,7 @@ class Anr extends AnrSuperClass
     public function setSnapshot(Snapshot $snapshot): self
     {
         $this->snapshot = $snapshot;
+        $snapshot->setAnr($this);
 
         return $this;
     }

@@ -1,100 +1,109 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\RolfRisk\GetRolfRisksInputFormatter;
+use Monarc\Core\Validator\InputValidator\RolfRisk\PostRolfRiskDataInputValidator;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrRolfRiskService;
-use Monarc\FrontOffice\Entity\Measure;
 
-class ApiAnrRolfRisksController extends ApiAnrAbstractController
+class ApiAnrRolfRisksController extends AbstractRestfulControllerRequestHandler
 {
-    protected $dependencies = ['tags', 'measures'];
+    use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(AnrRolfRiskService $anrRolfRiskService)
+    public function __construct(
+        private AnrRolfRiskService $anrRolfRiskService,
+        private GetRolfRisksInputFormatter $rolfRisksInputFormatter,
+        private PostRolfRiskDataInputValidator $postRolfRiskDataInputValidator
+    ) {
+    }
+
+    public function getList()
     {
-        parent::__construct($anrRolfRiskService);
+        $formattedParams = $this->getFormattedInputParams($this->rolfRisksInputFormatter);
+
+        return $this->getPreparedJsonResponse([
+            'count' => $this->anrRolfRiskService->getCount($formattedParams),
+            'risks' => $this->anrRolfRiskService->getList($formattedParams),
+        ]);
     }
 
     public function get($id)
     {
-        $entity = $this->getService()->getEntity($id);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->formatDependencies($entity, $this->dependencies, Measure::class, ['referential']);
-
-        return $this->getPreparedJsonResponse($entity);
+        return $this->getPreparedJsonResponse($this->anrRolfRiskService->getRolfRiskData($anr, (int)$id));
     }
 
     /**
-     * @inheritdoc
+     * @param array $data
      */
-    public function getList()
+    public function create($data)
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $tag = $this->params()->fromQuery('tag');
-        $anr = $this->params()->fromRoute("anrid");
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $isBatchData = $this->isBatchData($data);
+        $this->validatePostParams($this->postRolfRiskDataInputValidator, $data, $isBatchData);
 
-        /** @var AnrRolfRiskService $service */
-        $service = $this->getService();
-
-        $rolfRisks = $service->getListSpecific($page, $limit, $order, $filter, $tag, $anr);
-        foreach ($rolfRisks as $key => $rolfRisk) {
-            $this->formatDependencies($rolfRisks[$key], $this->dependencies, Measure::class, ['referential']);
-
-            $rolfRisk['tags']->initialize();
-            $rolfTags = $rolfRisk['tags']->getSnapshot();
-            $rolfRisks[$key]['tags'] = [];
-            foreach ($rolfTags as $rolfTag) {
-                $rolfRisks[$key]['tags'][] = $rolfTag->getJsonArray();
-            }
+        if ($this->isBatchData($data)) {
+            return $this->getSuccessfulJsonResponse([
+                'id' => $this->anrRolfRiskService
+                    ->createList($anr, $this->postRolfRiskDataInputValidator->getValidDataSets()),
+            ]);
         }
 
-        return $this->getPreparedJsonResponse([
-            'count' => $service->getFilteredSpecificCount($page, $limit, $order, $filter, $tag, $anr),
-            'risks' => $rolfRisks,
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->anrRolfRiskService
+                ->create($anr, $this->postRolfRiskDataInputValidator->getValidData())->getId(),
         ]);
     }
 
+    /**
+     * @param array $data
+     */
     public function update($id, $data)
     {
-        if (!empty($data['measures'])) {
-            $data['measures'] = $this->addAnrId($data['measures']);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->validatePostParams($this->postRolfRiskDataInputValidator->setExcludeFilter(['id' => (int)$id]), $data);
 
-        return parent::update($id, $data);
-    }
-
-    public function patch($id, $data)
-    {
-        if (!empty($data['measures'])) {
-            $data['measures'] = $this->addAnrId($data['measures']);
-        }
-
-        return parent::patch($id, $data);
-    }
-
-
-    public function patchList($data)
-    {
-        $service = $this->getService();
-        $data['toReferential'] = $this->addAnrId($data['toReferential']);
-        $service->createLinkedRisks($data['fromReferential'], $data['toReferential']);
+        $this->anrRolfRiskService->update($anr, (int)$id, $this->postRolfRiskDataInputValidator->getValidData());
 
         return $this->getSuccessfulJsonResponse();
     }
 
-    public function create($data)
+    public function patchList($data)
     {
-        if (!empty($data['measures'])) {
-            $data['measures'] = $this->addAnrId($data['measures']);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->anrRolfRiskService->linkMeasuresToRisks($anr, $data['fromReferential'], $data['toReferential']);
 
-        return parent::create($data);
+        return $this->getSuccessfulJsonResponse();
+    }
+
+    public function delete($id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->anrRolfRiskService->delete($anr, (int)$id);
+
+        return $this->getSuccessfulJsonResponse();
+    }
+
+    public function deleteList($data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->anrRolfRiskService->deleteList($anr, $data);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

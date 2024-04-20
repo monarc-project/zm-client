@@ -13,13 +13,37 @@ use Laminas\Filter\ToInt;
 use Laminas\Validator\InArray;
 use Laminas\Validator\StringLength;
 use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
+use Monarc\Core\Table\Interfaces\UniqueCodeTableInterface;
+use Monarc\Core\Validator\FieldValidator\UniqueCode;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
+use Monarc\Core\Validator\InputValidator\FilterFieldsValidationTrait;
+use Monarc\Core\Validator\InputValidator\InputValidationTranslator;
 use Monarc\FrontOffice\Entity\Recommendation;
 
+/**
+ * Note. For UniqueCode validator $excludeFilter/$includeFilter properties have to be set before calling isValid method.
+ */
 class PostRecommendationDataInputValidator extends AbstractInputValidator
 {
+    use FilterFieldsValidationTrait;
+
+    public function __construct(
+        array $config,
+        InputValidationTranslator $translator,
+        private UniqueCodeTableInterface $recommendationTable
+    ) {
+        parent::__construct($config, $translator);
+    }
+
     protected function getRules(): array
     {
+        if (!empty($this->initialData['recommendationSet']) && !empty($this->includeFilter['anr'])) {
+            $this->includeFilter['recommendationSet'] = [
+                'uuid' => $this->initialData['recommendationSet'],
+                'anr' => $this->includeFilter['anr'],
+            ];
+        }
+
         return [
             [
                 'name' => 'uuid',
@@ -62,6 +86,14 @@ class PostRecommendationDataInputValidator extends AbstractInputValidator
                             'min' => 1,
                             'max' => 100,
                         ]
+                    ],
+                    [
+                        'name' => UniqueCode::class,
+                        'options' => [
+                            'uniqueCodeValidationTable' => $this->recommendationTable,
+                            'includeFilter' => $this->includeFilter,
+                            'excludeFilter' => $this->excludeFilter,
+                        ],
                     ],
                 ],
             ],

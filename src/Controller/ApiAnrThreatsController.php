@@ -55,19 +55,26 @@ class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
 
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postThreatDataInputValidator->setAnr($anr), $data, $isBatchData);
+        $this->validatePostParams(
+            $this->postThreatDataInputValidator->setIncludeFilter(['anr' => $anr]),
+            $data,
+            $isBatchData
+        );
 
-        $threatsUuids = [];
-        $validatedData = $isBatchData
-            ? $this->postThreatDataInputValidator->getValidDataSets()
-            : [$this->postThreatDataInputValidator->getValidData()];
-        $setsNum = \count($validatedData) - 1;
-        foreach ($validatedData as $setNum => $validatedDataSet) {
-            $threatsUuids[] = $this->anrThreatService->create($anr, $validatedDataSet, $setsNum === $setNum)->getUuid();
+        if ($isBatchData) {
+            return $this->getSuccessfulJsonResponse([
+                'id' => $this->anrThreatService->createList(
+                    $anr,
+                    $this->postThreatDataInputValidator->getValidDataSets()
+                ),
+            ]);
         }
 
         return $this->getSuccessfulJsonResponse([
-            'id' => \count($threatsUuids) === 1 && !$isBatchData ? current($threatsUuids) : $threatsUuids,
+            'id' => $this->anrThreatService->create(
+                $anr,
+                $this->postThreatDataInputValidator->getValidData()
+            )->getUuid(),
         ]);
     }
 
@@ -81,7 +88,7 @@ class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
 
         $this->validatePostParams(
-            $this->postThreatDataInputValidator->setExcludeFilter(['uuid' => $id])->setAnr($anr),
+            $this->postThreatDataInputValidator->setIncludeFilter(['anr' => $anr])->setExcludeFilter(['uuid' => $id]),
             $data
         );
 

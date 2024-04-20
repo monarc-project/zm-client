@@ -207,6 +207,51 @@ class FixPositionsCleanupDb extends AbstractMigration
             $this->execute('UPDATE measures SET soacategory_id = ' . $soaCategoryIds[$anrId]
                 . ' WHERE uuid = "' . $measureData['uuid'] . '" and anr_id = ' . $anrId);
         }
+        /* Correct MeasuresMeasures table structure. */
+        $this->table('measures_measures')
+            ->addColumn('id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
+            ->renameColumn('father_id', 'master_measure_id')
+            ->renameColumn('child_id', 'linked_measure_id')
+            ->dropForeignKey(['master_measure_id', 'linked_measure_id', 'anr_id'])
+            ->removeColumn('creator')
+            ->removeColumn('created_at')
+            ->removeColumn('updater')
+            ->removeColumn('updated_at')
+            ->update();
+        $this->execute('SET @a = 0; UPDATE measures_measures SET id = @a := @a + 1 ORDER BY anr_id;');
+        $this->table('measures_measures')
+            ->changePrimaryKey(['id'])
+            ->addIndex(['master_measure_id', 'linked_measure_id', 'anr_id'], ['unique' => true])
+            ->update();
+        $this->table('measures_measures')
+            ->changeColumn('id', 'integer', ['identity' => true, 'signed' => false])
+            ->update();
+        /* Remove unlinked measures links to measures. */
+        $this->execute('DELETE FROM measures_measures WHERE anr_id NOT IN (SELECT id FROM anrs);');
+        $voidMeasuresQuery = $this->query('
+            SELECT id FROM measures_measures WHERE CONCAT(master_measure_id, anr_id) NOT IN
+            (SELECT CONCAT(uuid, anr_id) FROM measures) OR CONCAT(linked_measure_id, anr_id)
+            NOT IN (SELECT CONCAT(uuid, anr_id) FROM measures)
+        ');
+        $voidMeasuresIds = [];
+        foreach ($voidMeasuresQuery->fetchAll() as $voidMeasureData) {
+            $voidMeasuresIds[] = $voidMeasureData['id'];
+        }
+        $this->execute('DELETE FROM measures_measures WHERE id IN (' . implode(',', $voidMeasuresIds) . ');');
+        $this->table('measures_measures')
+            ->addForeignKey(['anr_id'], 'anrs', ['id'], ['delete' => 'CASCADE'])
+            ->addForeignKey(
+                ['master_measure_id', 'anr_id'],
+                'measures',
+                ['uuid', 'anr_id'],
+                ['delete' => 'CASCADE', 'update' => 'RESTRICT']
+            )->addForeignKey(
+                ['linked_measure_id', 'anr_id'],
+                'measures',
+                ['uuid', 'anr_id'],
+                ['delete' => 'CASCADE', 'update' => 'RESTRICT']
+            )->update();
+        $this->table('measures')->addForeignKey(['anr_id'], 'anrs', ['id'], ['delete' => 'CASCADE'])->update();
 
         /* Rename column of owner_id to risk_owner_id. */
         $this->table('instances_risks')->renameColumn('owner_id', 'risk_owner_id')->update();
@@ -367,6 +412,22 @@ class FixPositionsCleanupDb extends AbstractMigration
              ->removeIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'])
              ->addIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'], ['unique' => false])
              ->update();
+
+        /* Note: Temporary change fields types to avoid setting values from the code. Later will be dropped. */
+        $this->table('operational_risks_scales_types')
+            ->changeColumn('label_translation_key', 'string', ['null' => false, 'default' => '', 'limit' => 255])
+            ->update();
+        $this->table('operational_risks_scales_comments')
+            ->changeColumn('comment_translation_key', 'string', ['null' => false, 'default' => '', 'limit' => 255])
+            ->update();
+
+        /* Cleanup the table. */
+        $this->table('rolf_risks_tags')
+            ->removeColumn('creator')
+            ->removeColumn('created_at')
+            ->removeColumn('updater')
+            ->removeColumn('updated_at')
+            ->update();
 
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.
         $this->table('anr_instance_metadata_fields')->removeColumn('label_translation_key')->update();

@@ -22,9 +22,9 @@ class AnrModelService
         private CoreTable\ThreatTable $coreThreatTable,
         private CoreTable\VulnerabilityTable $coreVulnerabilityTable,
         private CoreTable\ScaleImpactTypeTable $coreScaleImpactTypeTable,
-        private CoreDeprecatedTable\MeasureTable $coreMeasureTable,
-        private CoreDeprecatedTable\RolfRiskTable $coreRolfRiskTable,
-        private CoreDeprecatedTable\RolfTagTable $coreRolfTagTable,
+        private CoreTable\MeasureTable $coreMeasureTable,
+        private CoreTable\RolfRiskTable $coreRolfRiskTable,
+        private CoreTable\RolfTagTable $coreRolfTagTable,
         private CoreDeprecatedTable\QuestionTable $coreQuestionTable,
         private CoreDeprecatedTable\QuestionChoiceTable $coreQuestionChoiceTable,
         private ConfigService $configService
@@ -65,15 +65,15 @@ class AnrModelService
 
         /* Validates measures, rolf tags, rolf risks, questions and questions choices. */
         /** @var CoreEntity\Measure $measure */
-        foreach ($this->coreMeasureTable->fetchAllObject() as $measure) {
+        foreach ($this->coreMeasureTable->findAll() as $measure) {
             $this->validateEntityLanguages($measure, $result);
         }
         /** @var CoreEntity\RolfRisk $rolfRisk */
-        foreach ($this->coreRolfRiskTable->fetchAllObject() as $rolfRisk) {
+        foreach ($this->coreRolfRiskTable->findAll() as $rolfRisk) {
             $this->validateEntityLanguages($rolfRisk, $result);
         }
         /** @var CoreEntity\RolfTag $rolfTag */
-        foreach ($this->coreRolfTagTable->fetchAllObject() as $rolfTag) {
+        foreach ($this->coreRolfTagTable->findAll() as $rolfTag) {
             $this->validateEntityLanguages($rolfTag, $result);
         }
         /** @var CoreEntity\Question $question */

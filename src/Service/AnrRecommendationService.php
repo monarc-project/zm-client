@@ -105,13 +105,14 @@ class AnrRecommendationService
      */
     public function createList(Entity\Anr $anr, array $data): array
     {
-        $createdRecommendationsUuids = [];
+        $createdUuids = [];
         foreach ($data as $recommendationData) {
-            $object = $this->create($anr, $recommendationData, false);
-            $createdRecommendationsUuids[] = $object->getUuid();
-        }
+            $createdUuids[] = $this->create($anr, $recommendationData, false)->getUuid();
 
-        return $createdRecommendationsUuids;
+        }
+        $this->recommendationTable->flush();
+
+        return $createdUuids;
     }
 
     public function patch(Entity\Anr $anr, string $uuid, array $data): Entity\Recommendation

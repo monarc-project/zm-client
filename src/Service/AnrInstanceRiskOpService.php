@@ -12,7 +12,6 @@ use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service as CoreService;
 use Monarc\Core\Service\Traits\OperationalRiskScaleVerificationTrait;
 use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Monarc\FrontOffice\Table;
 
@@ -30,8 +29,8 @@ class AnrInstanceRiskOpService
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
         private Table\InstanceTable $instanceTable,
         private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
-        private DeprecatedTable\RolfRiskTable $rolfRiskTable,
-        private DeprecatedTable\RolfTagTable $rolfTagTable,
+        private Table\RolfRiskTable $rolfRiskTable,
+        private Table\RolfTagTable $rolfTagTable,
         private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         private Table\RecommendationTable $recommendationTable,
@@ -128,7 +127,7 @@ class AnrInstanceRiskOpService
                 ->setLabels(['label' . $anr->getLanguage() => $data['label']])
                 ->setDescriptions(['description' . $anr->getLanguage() => $data['description'] ?? ''])
                 ->setCreator($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname());
-            $this->rolfRiskTable->saveEntity($rolfRisk, true);
+            $this->rolfRiskTable->save($rolfRisk, true);
         } else {
             /** @var Entity\RolfRisk $rolfRisk */
             $rolfRisk = $this->rolfRiskTable->findById((int)$data['risk']);

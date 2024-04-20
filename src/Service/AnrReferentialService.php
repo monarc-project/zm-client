@@ -1,57 +1,79 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\AbstractService;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Referential;
+use Monarc\FrontOffice\Table\ReferentialTable;
 
-/**
- * AnrReferential Service
- *
- * Class AnrReferentialService
- * @package Monarc\FrontOffice\Service
- */
-class AnrReferentialService extends AbstractService
+class AnrReferentialService
 {
-    protected $dependencies = ['anr', 'amvs'];
-    protected $filterColumns = ['uuid', 'label1', 'label2', 'label3', 'label4'];
-    protected $forbiddenFields = ['anr'];
-    protected $userAnrTable;
-    protected $selfCoreService;
-
-    /**
-     * @inheritdoc
-     */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null, $filterJoin = null)
+    public function __construct(private ReferentialTable $referentialTable)
     {
-        $data = $this->get('table')->fetchAllFiltered(
-            array_keys($this->get('entity')->getJsonArray()),
-            1,
-            0,
-            $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, $this->filterColumns),
-            $filterAnd
-        );
-
-        return array_slice($data, ($page - 1) * $limit, $limit, false);
     }
 
-    /**
-     * Fetches and returns the list of referentials from the common database.
-     * @param int $filter Keywords to search
-     * @return array An array of available referentials from the common database (knowledge base)
-     */
-    public function getCommonReferentials($filter, $order)
+    public function getList(FormattedInputParams $params): array
     {
+        $result = [];
+        /** @var Referential $referential */
+        foreach ($this->referentialTable->findByParams($params) as $referential) {
+            $result[] = $this->prepareReferentialDataResult($referential);
+        }
 
-        // Fetch the referentials from the common database
-        $selfCoreService = $this->get('selfCoreService');
-        $referentials = $selfCoreService->getList(1, 25, $order, $filter, null);
+        return $result;
+    }
 
-        return $referentials;
+    public function getReferentialData(Anr $anr, string $uuid): array
+    {
+        /** @var Referential $referential */
+        $referential = $this->referentialTable->findByUuidAndAnr($uuid, $anr);
+
+        return $this->prepareReferentialDataResult($referential);
+    }
+
+    public function create(Anr $anr, array $data, bool $saveInDb = true): Referential
+    {
+        /** @var Referential $referential */
+        $referential = (new Referential())->setAnr($anr)->setLabels($data);
+
+        $this->referentialTable->save($referential, $saveInDb);
+
+        return $referential;
+    }
+
+    public function update(Anr $anr, string $uuid, array $data): Referential
+    {
+        /** @var Referential $referential */
+        $referential = $this->referentialTable->findByUuidAndAnr($uuid, $anr);
+
+        $referential->setLabels($data);
+
+        $this->referentialTable->save($referential);
+
+        return $referential;
+    }
+
+    public function delete(Anr $anr, string $uuid): void
+    {
+        /** @var Referential $referential */
+        $referential = $this->referentialTable->findByUuidAndAnr($uuid, $anr);
+
+        $this->referentialTable->remove($referential);
+    }
+
+    private function prepareReferentialDataResult(Referential $referential): array
+    {
+        $measures = [];
+        foreach ($referential->getMeasures() as $measure) {
+            $measures[] = ['uuid' => $measure->getUuid()];
+        }
+
+        return array_merge(['uuid' => $referential->getUuid()], $referential->getLabels(), ['measures' => $measures]);
     }
 }

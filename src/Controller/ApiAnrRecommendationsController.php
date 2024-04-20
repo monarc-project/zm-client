@@ -54,7 +54,11 @@ class ApiAnrRecommendationsController extends AbstractRestfulControllerRequestHa
         $anr = $this->getRequest()->getAttribute('anr');
 
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postRecommendationDataInputValidator, $data, $isBatchData);
+        $this->validatePostParams(
+            $this->postRecommendationDataInputValidator->setIncludeFilter(['anr' => $anr]),
+            $data,
+            $isBatchData
+        );
 
         $result = $isBatchData ? $this->anrRecommendationService->createList(
             $anr,
@@ -73,9 +77,15 @@ class ApiAnrRecommendationsController extends AbstractRestfulControllerRequestHa
      */
     public function patch($id, $data)
     {
-        $this->validatePostParams($this->patchRecommendationDataInputValidator, $data);
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->validatePostParams(
+            $this->patchRecommendationDataInputValidator
+                ->setIncludeFilter(['anr' => $anr])
+                ->setExcludeFilter(['uuid' => $id]),
+            $data
+        );
 
         $this->anrRecommendationService->patch($anr, $id, $this->patchRecommendationDataInputValidator->getValidData());
 

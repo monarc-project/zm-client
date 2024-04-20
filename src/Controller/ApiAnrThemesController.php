@@ -60,7 +60,7 @@ class ApiAnrThemesController extends AbstractRestfulControllerRequestHandler
 
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-        $this->anrThemeService->update($anr, $id, $data);
+        $this->anrThemeService->update($anr, (int)$id, $data);
 
         return $this->getSuccessfulJsonResponse();
     }
@@ -69,7 +69,7 @@ class ApiAnrThemesController extends AbstractRestfulControllerRequestHandler
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-        $this->anrThemeService->delete($anr, $id);
+        $this->anrThemeService->delete($anr, (int)$id);
 
         return $this->getSuccessfulJsonResponse();
     }

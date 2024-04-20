@@ -7,12 +7,12 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\PasswordService;
 
-class ApiAdminPasswordsController extends AbstractRestfulControllerRequestHandler
+class ApiAdminPasswordsController extends AbstractRestfulController
 {
     use ControllerRequestResponseHandlerTrait;
 
@@ -32,7 +32,7 @@ class ApiAdminPasswordsController extends AbstractRestfulControllerRequestHandle
         if (!empty($data['email']) && empty($data['password'])) {
             try {
                 $this->passwordService->passwordForgotten($data['email']);
-            } catch (\Exception $e) {
+            } catch (\Exception) {
                 // Ignore the \Exception to avoid the data leak.
             }
         }

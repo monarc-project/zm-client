@@ -72,6 +72,17 @@ class AnrAssetService
         return $asset;
     }
 
+    public function createList(Entity\Anr $anr, array $data): array
+    {
+        $createdUuids = [];
+        foreach ($data as $row) {
+            $createdUuids[] = $this->create($anr, $row, false)->getUuid();
+        }
+        $this->assetTable->flush();
+
+        return $createdUuids;
+    }
+
     public function update(Entity\Anr $anr, string $uuid, array $data): Entity\Asset
     {
         /** @var Entity\Asset $asset */

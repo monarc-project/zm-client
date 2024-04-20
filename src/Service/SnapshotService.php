@@ -1,14 +1,16 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\Common\Collections\Criteria;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\Snapshot;
 use Monarc\FrontOffice\Table\AnrTable;
@@ -17,30 +19,22 @@ use Monarc\FrontOffice\Table\UserAnrTable;
 
 class SnapshotService
 {
-    private AnrService $anrService;
-
-    private AnrTable $anrTable;
-
-    private SnapshotTable $snapshotTable;
-
-    private UserAnrTable $userAnrTable;
+    private UserSuperClass $connectedUser;
 
     public function __construct(
-        SnapshotTable $snapshotTable,
-        AnrTable $anrTable,
-        AnrService $anrService,
-        UserAnrTable $userAnrTable
+        private SnapshotTable $snapshotTable,
+        private AnrTable $anrTable,
+        private AnrService $anrService,
+        private UserAnrTable $userAnrTable,
+        ConnectedUserService $connectedUserService
     ) {
-        $this->snapshotTable = $snapshotTable;
-        $this->anrTable = $anrTable;
-        $this->anrService = $anrService;
-        $this->userAnrTable = $userAnrTable;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
     public function getList(Anr $anr): array
     {
         $snapshotsList = [];
-        $snapshots = $this->snapshotTable->findByAnrAndOrderBy($anr, ['createdAt' => Criteria::DESC]);
+        $snapshots = $this->snapshotTable->findByAnrReferenceAndOrderBy($anr, ['createdAt' => Criteria::DESC]);
         foreach ($snapshots as $snapshot) {
             $snapshotsList[] = [
                 'id' => $snapshot->getId(),
@@ -49,9 +43,9 @@ class SnapshotService
                 ],
                 'comment' => $snapshot->getComment(),
                 'createdAt' => [
-                    'date' => $snapshot->getCreatedAt()->format('Y-m-d H:i:s'),
+                    'date' => $snapshot->getCreatedAt()->format('Y-m-d H:i:s.u'),
                 ],
-                'author' => $snapshot->getCreator(),
+                'creator' => $snapshot->getCreator(),
             ];
         }
 
@@ -71,7 +65,7 @@ class SnapshotService
         $snapshot = (new Snapshot())
             ->setAnr($newAnr)
             ->setAnrReference($anr)
-            ->setCreator($newAnr->getCreator())
+            ->setCreator($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname())
             ->setComment($data['comment']);
 
         $this->snapshotTable->save($snapshot);

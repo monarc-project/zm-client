@@ -7,30 +7,31 @@
 
 namespace Monarc\FrontOffice\Import\Helper;
 
-use Monarc\FrontOffice\Entity\Anr;
-use Monarc\FrontOffice\Model\Table\SoaCategoryTable;
-use Monarc\FrontOffice\Table\ThemeTable;
+use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Table;
 
 class ImportCacheHelper
 {
     private array $arrayCache = [];
 
-    public function __construct(private ThemeTable $themeTable, private SoaCategoryTable $soaCategoryTable)
+    public function __construct(private Table\ThemeTable $themeTable, private Table\SoaCategoryTable $soaCategoryTable)
     {
     }
 
-    public function prepareThemesCacheData(Anr $anr): void
+    public function prepareThemesCacheData(Entity\Anr $anr): void
     {
         if (!isset($this->arrayCache['themes_by_labels'])) {
+            /** @var Entity\Theme $theme */
             foreach ($this->themeTable->findByAnr($anr) as $theme) {
                 $this->addItemToArrayCache('themes_by_labels', $theme, $theme->getLabel($anr->getLanguage()));
             }
         }
     }
 
-    public function prepareSoaCategoriesCacheData(Anr $anr): void
+    public function prepareSoaCategoriesCacheData(Entity\Anr $anr): void
     {
         if (!isset($this->arrayCache['soa_categories_by_ref_and_label'])) {
+            /** @var Entity\SoaCategory $soaCategory */
             foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
                 $this->addItemToArrayCache(
                     'soa_categories_by_ref_and_label',

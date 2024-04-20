@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Service\AnrModelService;
 
-class ApiModelsController extends AbstractRestfulControllerRequestHandler
+class ApiModelsController extends AbstractRestfulController
 {
     use ControllerRequestResponseHandlerTrait;
 

@@ -55,19 +55,26 @@ class ApiAnrAssetsController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
 
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postAssetDataInputValidator->setAnr($anr), $data, $isBatchData);
+        $this->validatePostParams(
+            $this->postAssetDataInputValidator->setIncludeFilter(['anr' => $anr]),
+            $data,
+            $isBatchData
+        );
 
-        $assetsUuids = [];
-        $validatedData = $isBatchData
-            ? $this->postAssetDataInputValidator->getValidDataSets()
-            : [$this->postAssetDataInputValidator->getValidData()];
-        $setsNum = \count($validatedData) - 1;
-        foreach ($validatedData as $setNum => $validatedDataRow) {
-            $assetsUuids[] = $this->anrAssetService->create($anr, $validatedDataRow, $setNum === $setsNum)->getUuid();
+        if ($isBatchData) {
+            return $this->getSuccessfulJsonResponse([
+                'id' => $this->anrAssetService->createList(
+                    $anr,
+                    $this->postAssetDataInputValidator->getValidDataSets()
+                ),
+            ]);
         }
 
         return $this->getSuccessfulJsonResponse([
-            'id' => \count($assetsUuids) === 1 && !$isBatchData ? current($assetsUuids) : $assetsUuids,
+            'id' => $this->anrAssetService->create(
+                $anr,
+                $this->postAssetDataInputValidator->getValidData()
+            )->getUuid(),
         ]);
     }
 
@@ -80,7 +87,7 @@ class ApiAnrAssetsController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
         $this->validatePostParams(
-            $this->postAssetDataInputValidator->setExcludeFilter(['uuid' => $id])->setAnr($anr),
+            $this->postAssetDataInputValidator->setIncludeFilter(['anr' => $anr])->setExcludeFilter(['uuid' => $id]),
             $data
         );
 

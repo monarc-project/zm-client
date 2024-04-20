@@ -7,14 +7,14 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\User\GetUsersInputFormatter;
 use Monarc\Core\Service\PasswordService;
 use Monarc\FrontOffice\Validator\InputValidator\User\PostUserDataInputValidator;
 use Monarc\FrontOffice\Service\UserService;
 
-class ApiAdminUsersController extends AbstractRestfulControllerRequestHandler
+class ApiAdminUsersController extends AbstractRestfulController
 {
     use ControllerRequestResponseHandlerTrait;
 

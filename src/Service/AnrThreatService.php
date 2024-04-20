@@ -89,6 +89,8 @@ class AnrThreatService
             $threat->setTrend((int)$data['qualification']);
         }
 
+        $this->validateCia($threat);
+
         if (!empty($data['theme'])) {
             /** @var Theme $theme */
             $theme = $data['theme'] instanceof Theme
@@ -101,6 +103,17 @@ class AnrThreatService
         $this->threatTable->save($threat, $saveInDb);
 
         return $threat;
+    }
+
+    public function createList(Anr $anr, array $data): array
+    {
+        $createdUuids = [];
+        foreach ($data as $row) {
+            $createdUuids[] = $this->create($anr, $row, false)->getUuid();
+        }
+        $this->threatTable->flush();
+
+        return $createdUuids;
     }
 
     public function update(Anr $anr, string $uuid, array $data): Threat
@@ -222,5 +235,12 @@ class AnrThreatService
             'comment' => $threat->getComment(),
             'status' => $threat->getStatus(),
         ]);
+    }
+
+    private function validateCia(Threat $threat): void
+    {
+        if ($threat->getConfidentiality() === 0 && $threat->getAvailability() === 0 && $threat->getIntegrity() === 0) {
+            throw new \Exception();
+        }
     }
 }

@@ -11,9 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ReferentialSuperClass;
 
 /**
- * @ORM\Table(name="referentials", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- * })
+ * @ORM\Table(name="referentials", indexes={@ORM\Index(name="anr", columns={"anr_id"})})
  * @ORM\Entity
  */
 class Referential extends ReferentialSuperClass
@@ -23,9 +21,7 @@ class Referential extends ReferentialSuperClass
      *
      * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
+     * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
      */
     protected $anr;
 
@@ -35,5 +31,10 @@ class Referential extends ReferentialSuperClass
         $anr->addReferential($this);
 
         return $this;
+    }
+
+    public function getAnr(): Anr
+    {
+        return $this->anr;
     }
 }

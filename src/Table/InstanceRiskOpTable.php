@@ -43,6 +43,21 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
     /**
      * @return InstanceRiskOp[]
      */
+    public function findByAnrAndRolfRisk(Anr $anr, RolfRisk $rolfRisk): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('oir')
+            ->where('oir.anr = :anr')
+            ->andWhere('oir.rolfRisk = :rolfRisk')
+            ->setParameter('anr', $anr)
+            ->setParameter('rolfRisk', $rolfRisk)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return InstanceRiskOp[]
+     */
     public function findByAnrAndInstance(Anr $anr, Instance $instance)
     {
         return $this->getRepository()

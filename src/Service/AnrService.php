@@ -49,12 +49,11 @@ class AnrService
         private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private Table\RecommendationHistoryTable $recommendationHistoryTable,
-        private DeprecatedTable\ReferentialTable $referentialTable,
-        private DeprecatedTable\SoaCategoryTable $soaCategoryTable,
-        private DeprecatedTable\MeasureTable $measureTable,
-        private DeprecatedTable\MeasureMeasureTable $measureMeasureTable,
-        private DeprecatedTable\RolfRiskTable $rolfRiskTable,
-        private DeprecatedTable\RolfTagTable $rolfTagTable,
+        private Table\ReferentialTable $referentialTable,
+        private Table\SoaCategoryTable $soaCategoryTable,
+        private Table\MeasureTable $measureTable,
+        private Table\RolfRiskTable $rolfRiskTable,
+        private Table\RolfTagTable $rolfTagTable,
         private DeprecatedTable\SoaTable $soaTable,
         private DeprecatedTable\QuestionTable $questionTable,
         private DeprecatedTable\QuestionChoiceTable $questionChoiceTable,
@@ -75,9 +74,9 @@ class AnrService
         private CoreTable\TranslationTable $coreTranslationTable,
         private CoreTable\SoaScaleCommentTable $coreSoaScaleCommentTable,
         private CoreTable\OperationalRiskScaleTable $coreOperationalRiskScaleTable,
-        private CoreDeprecatedTable\ReferentialTable $coreReferentialTable,
-        private CoreDeprecatedTable\RolfRiskTable $coreRolfRiskTable,
-        private CoreDeprecatedTable\RolfTagTable $coreRolfTagTable,
+        private CoreTable\ReferentialTable $coreReferentialTable,
+        private CoreTable\RolfRiskTable $coreRolfRiskTable,
+        private CoreTable\RolfTagTable $coreRolfTagTable,
         private CoreDeprecatedTable\QuestionTable $coreQuestionTable,
         private CoreDeprecatedTable\QuestionChoiceTable $coreQuestionChoiceTable,
         private AnrModelService $anrModelService,
@@ -131,12 +130,15 @@ class AnrService
 
     public function getAnrData(Entity\Anr $anr): array
     {
-        $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser);
-        if ($userAnr === null && $anr->isAnrSnapshot()) {
-            throw new Exception('There is no access to the snapshot of the analysis.', 412);
+        $realAnrInUse = $anr;
+        if ($anr->isAnrSnapshot()) {
+            $realAnrInUse = $anr->getSnapshot()->getAnrReference();
         }
+        $userAnr = $this->userAnrTable->findByAnrAndUser($realAnrInUse, $this->connectedUser);
 
-        $this->setCurrentAnrToConnectedUser($anr);
+        if ($realAnrInUse->getId() !== $this->connectedUser->getCurrentAnr()?->getId()) {
+            $this->setCurrentAnrToConnectedUser($realAnrInUse);
+        }
 
         return $this->getPreparedAnrData($anr, $userAnr, true);
     }
@@ -166,7 +168,7 @@ class AnrService
     public function duplicateAnr(
         CoreEntity\AnrSuperClass $sourceAnr,
         array $data = [],
-        string $snapshotMode = null
+        ?string $snapshotMode = null
     ): Entity\Anr {
         $isSourceCommon = $sourceAnr instanceof CoreEntity\Anr;
         if (!$isSourceCommon && $snapshotMode === null) {
@@ -211,12 +213,18 @@ class AnrService
         $vulnerabilitiesOldIdsToNewObjects = $this->duplicateVulnerabilities($sourceAnr, $newAnr, $isSourceCommon);
 
         /* Recreates Referential, SoaCategories, Measures and links from an existing anr, a snapshot or core. */
+        $referentialsUuidsToCreate = !empty($data['referentials']) ? array_column($data['referentials'], 'uuid') : [];
+        if ($sourceAnr instanceof Entity\Anr) {
+            foreach ($sourceAnr->getReferentials() as $referential) {
+                $referentialsUuidsToCreate[] = $referential->getUuid();
+            }
+        }
         $createdMeasuresUuidsToObjects = [];
-        if (!empty($data['referentials'])) {
+        if (!empty($referentialsUuidsToCreate)) {
             $createdMeasuresUuidsToObjects = $this->updateReferentialsFromSource(
                 $newAnr,
                 $sourceAnr instanceof Entity\Anr ? $sourceAnr : null,
-                array_column($data['referentials'], 'uuid'),
+                $referentialsUuidsToCreate,
                 false
             );
         }
@@ -346,7 +354,7 @@ class AnrService
         }
 
         if (isset($data['referentials'])) {
-            $this->updateReferentialsFromSource($anr, null, array_column($data['referentials'], 'uuid'), true);
+            $this->updateReferentialsFromSource($anr, null, array_column($data['referentials'], 'uuid'));
         }
 
         $anr->setUpdater($this->connectedUser->getEmail());
@@ -478,7 +486,7 @@ class AnrService
             } else {
                 /* The operation of removal is not supported in the UI. */
                 $anr->removeReferential($referential);
-                $this->referentialTable->deleteEntity($referential, false);
+                $this->referentialTable->remove($referential, false);
             }
         }
 
@@ -488,7 +496,7 @@ class AnrService
             if ($sourceAnr === null) {
                 $referentialFromSource = $this->coreReferentialTable->findByUuid($referentialUuid);
             } else {
-                $referentialFromSource = $this->referentialTable->findByAnrAndUuid($sourceAnr, $referentialUuid);
+                $referentialFromSource = $this->referentialTable->findByUuidAndAnr($referentialUuid, $sourceAnr);
             }
 
             /* Recreate the source's or core's referential in the analysis.  */
@@ -499,17 +507,17 @@ class AnrService
                 ->setUuid($referentialFromSource->getUuid())
                 ->setCreator($this->connectedUser->getEmail());
 
-            $this->referentialTable->saveEntity($referential, false);
+            $this->referentialTable->save($referential, false);
             $linkedReferentialUuids[] = $referential->getUuid();
 
             $categoriesBySourceIds = [];
-            foreach ($referentialFromSource->getCategories() as $categoryFromCore) {
+            foreach ($referentialFromSource->getCategories() as $categoryFromSource) {
                 $soaCategory = (new Entity\SoaCategory())
                     ->setAnr($anr)
                     ->setReferential($referential)
-                    ->setLabels($categoryFromCore->getLabels());
-                $this->soaCategoryTable->saveEntity($soaCategory, false);
-                $categoriesBySourceIds[$categoryFromCore->getId()] = $soaCategory;
+                    ->setLabels($categoryFromSource->getLabels());
+                $this->soaCategoryTable->save($soaCategory, false);
+                $categoriesBySourceIds[$categoryFromSource->getId()] = $soaCategory;
             }
 
             /* Recreates the measures in the analysis. */
@@ -527,32 +535,26 @@ class AnrService
                 foreach ($measureFromSource->getLinkedMeasures() as $linkedMeasureFromSource) {
                     /* Validate if the referential of the linked measure is already create,
                     otherwise it will be linked later if the referential is added to the analysis. */
-                    if (
-                        !\in_array($linkedMeasureFromSource->getReferential()->getUuid(), $linkedReferentialUuids, true)
-                    ) {
+                    if (!\in_array(
+                        $linkedMeasureFromSource->getReferential()->getUuid(),
+                        $linkedReferentialUuids,
+                        true
+                    )) {
                         continue;
                     }
+
                     /* Validates if the linked measure from the common DB presented in the client's DB. */
                     $linkedMeasure = $createdMeasuresUuidsToObjects[$linkedMeasureFromSource->getUuid()]
-                        ?? $this->measureTable->findByAnrAndUuid($anr, $linkedMeasureFromSource->getUuid());
+                        ?? $this->measureTable->findByUuidAndAnr($linkedMeasureFromSource->getUuid(), $anr);
                     if ($linkedMeasure === null) {
                         continue;
                     }
                     /* Recreates the bi-directional links that are defined on the BackOffice side / common DB. */
-                    $this->measureMeasureTable->saveEntity((new Entity\MeasureMeasure())
-                        ->setAnr($anr)
-                        ->setFather($measure)
-                        ->setChild($linkedMeasure)
-                        ->setCreator($this->connectedUser->getEmail()), false);
-                    $this->measureMeasureTable->saveEntity((new Entity\MeasureMeasure())
-                        ->setAnr($anr)
-                        ->setFather($linkedMeasure)
-                        ->setChild($measure)
-                        ->setCreator($this->connectedUser->getEmail()), false);
+                    $measure->addLinkedMeasure($linkedMeasure);
                 }
 
                 if ($recreateAmvRolfRiskAndSoaLinks) {
-                    // Recreate links with AMVs (information risks) and rolf risks (operation) from source's controls.
+                    /* Recreate links with AMVs (information risks) and rolf risks (operation) from source's controls */
                     foreach ($measureFromSource->getAmvs() as $amvFromSource) {
                         $amv = $this->amvTable->findByAmvItemsUuidsAndAnr(
                             $amvFromSource->getAsset()->getUuid(),
@@ -578,7 +580,7 @@ class AnrService
                     $this->soaTable->saveEntity((new Entity\Soa())->setAnr($anr)->setMeasure($measure), false);
                 }
 
-                $this->measureTable->saveEntity($measure, false);
+                $this->measureTable->save($measure, false);
                 $createdMeasuresUuidsToObjects[$measure->getUuid()] = $measure;
             }
         }
@@ -931,9 +933,11 @@ class AnrService
     private function duplicateRolfTags(CoreEntity\AnrSuperClass $sourceAnr, Entity\Anr $newAnr): array
     {
         $rolfTagsOldIdsToNewObjects = [];
+
+        /** @var CoreEntity\RolfTagSuperClass $sourceRolfTags */
         $sourceRolfTags = $sourceAnr instanceof Entity\Anr
             ? $this->rolfTagTable->findByAnr($sourceAnr)
-            : $this->coreRolfTagTable->fetchAllObject();
+            : $this->coreRolfTagTable->findAll();
         foreach ($sourceRolfTags as $sourceRolfTag) {
             $newRolfTag = (new Entity\RolfTag())
                 ->setAnr($newAnr)
@@ -941,7 +945,7 @@ class AnrService
                 ->setCode($sourceRolfTag->getCode())
                 ->setCreator($this->connectedUser->getEmail());
 
-            $this->rolfTagTable->saveEntity($newRolfTag, false);
+            $this->rolfTagTable->save($newRolfTag, false);
             $rolfTagsOldIdsToNewObjects[$sourceRolfTag->getId()] = $newRolfTag;
         }
 
@@ -955,9 +959,10 @@ class AnrService
         array $createdMeasuresUuidsToObjects
     ): array {
         $rolfRisksOldIdsToNewObjects = [];
+        /** @var Entity\RolfRisk[] $sourceRolfRisks */
         $sourceRolfRisks = $sourceAnr instanceof Entity\Anr
             ? $this->rolfRiskTable->findByAnr($sourceAnr)
-            : $this->coreRolfRiskTable->fetchAllObject();
+            : $this->coreRolfRiskTable->findAll();
         foreach ($sourceRolfRisks as $sourceRolfRisk) {
             $newRolfRisk = (new Entity\RolfRisk())
                 ->setAnr($newAnr)
@@ -978,7 +983,7 @@ class AnrService
                 }
             }
 
-            $this->rolfRiskTable->saveEntity($newRolfRisk, false);
+            $this->rolfRiskTable->save($newRolfRisk, false);
             $rolfRisksOldIdsToNewObjects[$sourceRolfRisk->getId()] = $newRolfRisk;
         }
 
@@ -1256,7 +1261,7 @@ class AnrService
             $instancesOldIdsToNewObjects[$sourceInstance->getId()] = $newInstance;
 
             /* Recreate InstanceRisks. */
-            $instanceRisksOldIdsToNewObjects = $this->duplicateInstanceRisks(
+            $instanceRisksOldIdsToNewObjects += $this->duplicateInstanceRisks(
                 $sourceInstance,
                 $newInstance,
                 $amvsOldIdsToNewObjects,
@@ -1266,7 +1271,7 @@ class AnrService
             );
 
             /* Recreate OperationalInstanceRisks. */
-            $instanceRisksOpOldIdsToNewObjects = $this->duplicateOperationalInstanceRisks(
+            $instanceRisksOpOldIdsToNewObjects += $this->duplicateOperationalInstanceRisks(
                 $sourceInstance,
                 $newInstance,
                 $rolfRisksOldIdsToNewObjects,
@@ -1291,16 +1296,16 @@ class AnrService
         }
 
         if (!$isSourceCommon) {
-            /* Recreate RecommendationsHistory and RecommendationRisks. */
-            $this->duplicateRecommendationsHistory(
-                $sourceAnr,
-                $newAnr,
-                $instanceRisksOldIdsToNewObjects,
-                $instanceRisksOpOldIdsToNewObjects
-            );
+            /* Recreate RecommendationRisks and RecommendationsHistory. */
             $this->duplicateRecommendationsRisks(
                 $sourceAnr,
                 $recommendationsUuidsToNewObjects,
+                $instanceRisksOldIdsToNewObjects,
+                $instanceRisksOpOldIdsToNewObjects
+            );
+            $this->duplicateRecommendationsHistory(
+                $sourceAnr,
+                $newAnr,
                 $instanceRisksOldIdsToNewObjects,
                 $instanceRisksOpOldIdsToNewObjects
             );

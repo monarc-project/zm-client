@@ -17,7 +17,6 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
 use Monarc\Core\Service\Traits\PositionUpdateTrait;
 use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 
 class AnrAmvService implements PositionUpdatableServiceInterface
@@ -33,8 +32,8 @@ class AnrAmvService implements PositionUpdatableServiceInterface
         private Table\ThemeTable $themeTable,
         private Table\VulnerabilityTable $vulnerabilityTable,
         private Table\InstanceRiskTable $instanceRiskTable,
-        private DeprecatedTable\MeasureTable $measureTable,
-        private DeprecatedTable\ReferentialTable $referentialTable,
+        private Table\MeasureTable $measureTable,
+        private Table\ReferentialTable $referentialTable,
         private AnrAssetService $anrAssetService,
         private AnrThreatService $anrThreatService,
         private AnrVulnerabilityService $anrVulnerabilityService,
@@ -111,7 +110,9 @@ class AnrAmvService implements PositionUpdatableServiceInterface
         }
 
         foreach ($data['measures'] ?? [] as $measureUuid) {
-            $amv->addMeasure($this->measureTable->findByAnrAndUuid($anr, $measureUuid));
+            /** @var Entity\Measure $measure */
+            $measure = $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
+            $amv->addMeasure($measure);
         }
 
         $this->updatePositions($amv, $this->amvTable, $data);
@@ -138,8 +139,10 @@ class AnrAmvService implements PositionUpdatableServiceInterface
                 $amv->removeMeasure($measure);
             }
         }
-        foreach ($data['measures'] as $measure) {
-            $amv->addMeasure($this->measureTable->findByAnrAndUuid($anr, $measure));
+        foreach ($data['measures'] as $measureUuid) {
+            /** @var Entity\Measure $measure */
+            $measure = $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
+            $amv->addMeasure($measure);
         }
 
         $amv->setUpdater($this->connectedUser->getEmail());
@@ -231,7 +234,7 @@ class AnrAmvService implements PositionUpdatableServiceInterface
         string $destinationReferentialUuid
     ): void {
         /** @var Entity\Referential $referential */
-        $referential = $this->referentialTable->findByAnrAndUuid($anr, $destinationReferentialUuid);
+        $referential = $this->referentialTable->findByUuidAndAnr($destinationReferentialUuid, $anr);
         foreach ($referential->getMeasures() as $destinationMeasure) {
             foreach ($destinationMeasure->getLinkedMeasures() as $measureLink) {
                 if ($measureLink->getReferential()->getUuid() === $sourceReferentialUuid) {
@@ -242,7 +245,7 @@ class AnrAmvService implements PositionUpdatableServiceInterface
                 }
             }
         }
-        $this->measureTable->getDb()->flush();
+        $this->measureTable->flush();
     }
 
     public function delete(Entity\Anr $anr, string $uuid): void
