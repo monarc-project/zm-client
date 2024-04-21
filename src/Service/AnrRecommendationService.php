@@ -108,7 +108,6 @@ class AnrRecommendationService
         $createdUuids = [];
         foreach ($data as $recommendationData) {
             $createdUuids[] = $this->create($anr, $recommendationData, false)->getUuid();
-
         }
         $this->recommendationTable->flush();
 
