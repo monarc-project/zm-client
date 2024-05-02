@@ -9,17 +9,27 @@ namespace Monarc\FrontOffice\Model\Table;
 
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Entity\Record;
 
-/**
- * Class RecordTable
- * @package Monarc\FrontOffice\Model\Table
- */
 class RecordTable extends AbstractEntityTable
 {
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Record::class, $connectedUserService);
+    }
+
+    /**
+     * @return Record[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('r')
+            ->where('r.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 }

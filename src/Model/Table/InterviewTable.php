@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Model\Table;
 
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
@@ -30,5 +31,18 @@ class InterviewTable extends AbstractEntityTable
         if ($flushAll) {
             $em->flush();
         }
+    }
+
+    /**
+     * @return Interview[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('i')
+            ->where('i.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 }

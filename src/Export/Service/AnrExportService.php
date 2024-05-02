@@ -7,387 +7,501 @@
 
 namespace Monarc\FrontOffice\Export\Service;
 
+use Monarc\Core\Helper\EncryptDecryptHelperTrait;
+use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Export\Service\Traits as ExportTrait;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Service\AnrRecordService;
 use Monarc\FrontOffice\Table;
 
 class AnrExportService
 {
+    use EncryptDecryptHelperTrait;
+    use ExportTrait\InformationRiskExportTrait;
+    use ExportTrait\OperationalRiskExportTrait;
+    use ExportTrait\ObjectExportTrait;
+    use ExportTrait\InstanceExportTrait;
+    use ExportTrait\AssetExportTrait;
+    use ExportTrait\ThreatExportTrait;
+    use ExportTrait\VulnerabilityExportTrait;
+    use ExportTrait\ScaleExportTrait;
+    use ExportTrait\OperationalRiskScaleExportTrait;
+    use ExportTrait\RecommendationExportTrait;
+
     public function __construct(
         private Table\AnrTable $anrTable,
-        private Table\InstanceTable $instanceTable,
-        private DeprecatedTable\SoaTable $soaTable,
-        private Table\DeliveryTable $deliveryTable,
+        private Table\AssetTable $assetTable,
+        private Table\ThreatTable $threatTable,
+        private Table\VulnerabilityTable $vulnerabilityTable,
+        private Table\AmvTable $amvTable,
+        private Table\RolfTagTable $rolfTagTable,
+        private Table\RolfRiskTable $rolfRiskTable,
+        private Table\ReferentialTable $referentialTable,
+        private Table\RecommendationSetTable $recommendationSetTable,
         private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
-        private AnrInstanceExportService $anrInstanceExportService
+        private Table\ObjectCategoryTable $objectCategoryTable,
+        private Table\InstanceTable $instanceTable,
+        private Table\ScaleTable $scaleTable,
+        private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
+        private Table\SoaScaleCommentTable $soaScaleCommentTable,
+        private Table\DeliveryTable $deliveryTable,
+        private DeprecatedTable\SoaTable $soaTable,
+        private DeprecatedTable\QuestionTable $questionTable,
+        private DeprecatedTable\interviewTable $interviewTable,
+        private DeprecatedTable\RecordTable $recordTable,
+        private AnrRecordService $anrRecordService,
+        private ConfigService $configService
     ) {
     }
 
-    public function export(Entity\Anr $anr, array $data): array
+    /**
+     * @return array Result contains:
+     * [
+     *     'filename' => {the generated filename},
+     *     'content' => {json encoded string, encrypted if password is set}
+     * ]
+     */
+    public function export(Entity\Anr $anr, array $exportParams): array
     {
-        $withEval = isset($data['assessments']) && $data['assessments'];
-        $withControls = isset($data['controls']) && $data['controls'];
-        $withRecommendations = isset($data['recommendations']) && $data['recommendations'];
-        $withMethodSteps = isset($data['methodSteps']) && $data['methodSteps'];
-        $withInterviews = isset($data['interviews']) && $data['interviews'];
-        $withSoas = isset($data['soas']) && $data['soas'];
-        $withRecords = isset($data['records']) && $data['records'];
+        $jsonResult = json_encode($this->prepareExportData($anr, $exportParams), JSON_THROW_ON_ERROR);
 
-        $filename = preg_replace("/[^a-z0-9\._-]+/i", '', $anr->getLabel());
-
-        // TODO: the variable at the end $exportedAnr is the result of the json_encode($return) below.
-        // so we need to move it to a separate method and see how the output can be optimised.
-        // therefore the goal to make the import faster.
-
-        $return = [
-            'type' => 'anr',
-            'monarc_version' => $this->get('configService')->getAppVersion()['appVersion'],
-            'export_datetime' => (new \DateTime())->format('Y-m-d H:i:s'),
-            'instances' => [],
-            'with_eval' => $withEval,
+        return [
+            'filename' => preg_replace("/[^a-z0-9\._-]+/i", '', $anr->getLabel()),
+            'content' => empty($exportParams['password'])
+                ? $jsonResult
+                : $this->encrypt($jsonResult, $exportParams['password']),
         ];
-
-        // TODO: add the method with order prop...
-        $instances = $this->instanceTable->findRootsByAnr($anr, ['position'=>'ASC']);
-        $f = '';
-        foreach ($instances as $instance) {
-            // TODO: Added the InstanceExportService on FO and move there all the exp functionality...
-            $return['instances'][$instance->getId()] = $this->anrInstanceExportService->generateExportArray(
-                $instance->getId(),
-                $f,
-                $withEval,
-                false,
-                $withControls,
-                $withRecommendations
-            );
-        }
-
-        // TODO: add backward compatibility for [now]instanceMetadataFields === [before]anrMetadatasOnInstances
-        $return['instanceMetadataFields'] = $this->generateExportArrayOfAnrInstanceMetadataFields($anr);
-
-        if ($withEval) {
-            // TODO: Soa functionality is related only to FrontOffice.
-            if ($withSoas) {
-                // soaScaleComment
-                $soaScaleCommentExportService = $this->get('soaScaleCommentExportService');
-                $return['soaScaleComment'] = $soaScaleCommentExportService->generateExportArray(
-                    $anr
-                );
-
-                // referentials
-                $return['referentials'] = [];
-                $referentialTable = $this->get('referentialTable');
-                $referentials = $referentialTable->getEntityByFields(['anr' => $anr->getId()]);
-                $referentialsArray = [
-                    'uuid' => 'uuid',
-                    'label1' => 'label1',
-                    'label2' => 'label2',
-                    'label3' => 'label3',
-                    'label4' => 'label4',
-                ];
-                foreach ($referentials as $r) {
-                    $return['referentials'][$r->getUuid()] = $r->getJsonArray($referentialsArray);
-                }
-
-                // measures
-                $return['measures'] = [];
-                $measureTable = $this->get('measureTable');
-                $measures = $measureTable->getEntityByFields(['anr' => $anr->getId()]);
-                $measuresArray = [
-                    'uuid' => 'uuid',
-                    'referential' => 'referential',
-                    'category' => 'category',
-                    'code' => 'code',
-                    'label1' => 'label1',
-                    'label2' => 'label2',
-                    'label3' => 'label3',
-                    'label4' => 'label4',
-                    'status' => 'status',
-                ];
-                foreach ($measures as $m) {
-                    $newMeasure = $m->getJsonArray($measuresArray);
-                    $newMeasure['referential'] = $m->getReferential()->getUuid();
-                    $newMeasure['category'] = $m->getCategory() ?
-                        $m->getCategory()->get('label' . $this->getLanguage())
-                        : '';
-                    $return['measures'][$m->getUuid()] = $newMeasure;
-                }
-
-                // measures-measures
-                $return['measuresMeasures'] = [];
-                $measureMeasureTable = $this->get('measureMeasureTable');
-                $measuresMeasures = $measureMeasureTable->getEntityByFields(['anr' => $anr->getId()]);
-                foreach ($measuresMeasures as $mm) {
-                    $newMeasureMeasure = [];
-                    $newMeasureMeasure['father'] = $mm->getFather();
-                    $newMeasureMeasure['child'] = $mm->getChild();
-                    $return['measuresMeasures'][] = $newMeasureMeasure;
-                }
-
-                // soacategories
-                $return['soacategories'] = [];
-                $soaCategoryTable = $this->get('soaCategoryTable');
-                $soaCategories = $soaCategoryTable->getEntityByFields(['anr' => $anr->getId()]);
-                $soaCategoriesArray = [
-                    'referential' => 'referential',
-                    'label1' => 'label1',
-                    'label2' => 'label2',
-                    'label3' => 'label3',
-                    'label4' => 'label4',
-                    'status' => 'status',
-                ];
-                foreach ($soaCategories as $c) {
-                    $newSoaCategory = $c->getJsonArray($soaCategoriesArray);
-                    $newSoaCategory['referential'] = $c->getReferential()->getUuid();
-                    $return['soacategories'][] = $newSoaCategory;
-                }
-
-                // soas
-                $return['soas'] = [];
-                $soaTable = $this->get('soaTable');
-                $soas = $soaTable->getEntityByFields(['anr' => $anr->getId()]);
-                $soasArray = [
-                    'remarks' => 'remarks',
-                    'evidences' => 'evidences',
-                    'actions' => 'actions',
-                    'EX' => 'EX',
-                    'LR' => 'LR',
-                    'CO' => 'CO',
-                    'BR' => 'BR',
-                    'BP' => 'BP',
-                    'RRA' => 'RRA',
-                ];
-                foreach ($soas as $s) {
-                    $newSoas = $s->getJsonArray($soasArray);
-                    if ($s->getSoaScaleComment() !== null) {
-                        $newSoas['soaScaleComment'] = $s->getSoaScaleComment()->getId();
-                    }
-                    $newSoas['measure_id'] = $s->getMeasure()->getUuid();
-                    $return['soas'][] = $newSoas;
-                }
-            }
-
-            // operational risk scales
-            /** @var OperationalRiskScalesExportService $operationalRiskScalesExportService */
-            $operationalRiskScalesExportService = $this->get('operationalRiskScalesExportService');
-            $return['operationalRiskScales'] = $operationalRiskScalesExportService->generateExportArray($anr);
-
-            // scales
-            $return['scales'] = [];
-            /** @var ScaleTable $scaleTable */
-            $scaleTable = $this->get('scaleTable');
-            $scales = $scaleTable->findByAnr($anr);
-            foreach ($scales as $scale) {
-                $return['scales'][$scale->getType()] = [
-                    'id' => $scale->getId(),
-                    'min' => $scale->getMin(),
-                    'max' => $scale->getMax(),
-                    'type' => $scale->getType(),
-                ];
-            }
-
-            /** @var ScaleCommentTable $scaleCommentTable */
-            $scaleCommentTable = $this->get('scaleCommentTable');
-            $scaleComments = $scaleCommentTable->findByAnr($anr);
-            foreach ($scaleComments as $scaleComment) {
-                $scaleCommentId = $scaleComment->getId();
-                $return['scalesComments'][$scaleCommentId] = [
-                    'id' => $scaleCommentId,
-                    'scaleIndex' => $scaleComment->getScaleIndex(),
-                    'scaleValue' => $scaleComment->getScaleValue(),
-                    'comment1' => $scaleComment->getComment(1),
-                    'comment2' => $scaleComment->getComment(2),
-                    'comment3' => $scaleComment->getComment(3),
-                    'comment4' => $scaleComment->getComment(4),
-                    'scale' => [
-                        'id' => $scaleComment->getScale()->getId(),
-                        'type' => $scaleComment->getScale()->getType(),
-                    ],
-                ];
-                if ($scaleComment->getScaleImpactType() !== null) {
-                    $return['scalesComments'][$scaleCommentId]['scaleImpactType'] = [
-                        'id' => $scaleComment->getScaleImpactType()->getId(),
-                        'type' => $scaleComment->getScaleImpactType()->getType(),
-                        'position' => $scaleComment->getScaleImpactType()->getPosition(),
-                        'labels' => [
-                            'label1' => $scaleComment->getScaleImpactType()->getLabel(1),
-                            'label2' => $scaleComment->getScaleImpactType()->getLabel(2),
-                            'label3' => $scaleComment->getScaleImpactType()->getLabel(3),
-                            'label4' => $scaleComment->getScaleImpactType()->getLabel(4),
-                        ],
-                        'isSys' => $scaleComment->getScaleImpactType()->isSys(),
-                        'isHidden' => $scaleComment->getScaleImpactType()->isHidden(),
-                    ];
-                }
-            }
-
-            if ($withMethodSteps) {
-                //Risks analysis method data
-                $return['method']['steps'] = [
-                    'initAnrContext' => $anr->getInitAnrContext(),
-                    'initEvalContext' => $anr->getInitEvalContext(),
-                    'initRiskContext' => $anr->getInitRiskContext(),
-                    'initDefContext' => $anr->getInitDefContext(),
-                    'modelImpacts' => $anr->getModelImpacts(),
-                    'modelSummary' => $anr->getModelSummary(),
-                    'evalRisks' => $anr->getEvalRisks(),
-                    'evalPlanRisks' => $anr->getEvalPlanRisks(),
-                    'manageRisks' => $anr->getManageRisks(),
-                ];
-
-                $return['method']['data'] = [
-                    'contextAnaRisk' => $anr->getContextAnaRisk(),
-                    'contextGestRisk' => $anr->getContextGestRisk(),
-                    'synthThreat' => $anr->getSynthThreat(),
-                    'synthAct' => $anr->getSynthAct(),
-                ];
-
-
-
-                $deliveryTable = $this->get('deliveryTable');
-                for ($i = 0; $i <= 5; $i++) {
-                    $deliveries = $deliveryTable->getEntityByFields(
-                        ['anr' => $anr->getId(),
-                         'typedoc' => $i ],
-                        ['id'=>'ASC']
-                    );
-                    $deliveryArray = [
-                        'id' => 'id',
-                        'typedoc' => 'typedoc',
-                        'name' => 'name',
-                        'status' => 'status',
-                        'version' => 'version',
-                        'classification' => 'classification',
-                        'respCustomer' => 'respCustomer',
-                        'respSmile' => 'respSmile',
-                        'summaryEvalRisk' => 'summaryEvalRisk',
-                    ];
-                    foreach ($deliveries as $d) {
-                        $return['method']['deliveries'][$d->typedoc] = $d->getJsonArray($deliveryArray);
-                    }
-                }
-                $questionTable = $this->get('questionTable');
-                $questions = $questionTable->getEntityByFields(['anr' => $anr->getId()], ['position'=>'ASC']);
-                $questionArray = [
-                    'id' => 'id',
-                    'mode' => 'mode',
-                    'multichoice' => 'multichoice',
-                    'label1' => 'label1',
-                    'label2' => 'label2',
-                    'label3' => 'label3',
-                    'label4' => 'label4',
-                    'response' => 'response',
-                    'type' => 'type',
-                    'position' => 'position',
-
-                ];
-
-                foreach ($questions as $q) {
-                    $return['method']['questions'][$q->position] = $q->getJsonArray($questionArray);
-                }
-
-                $questionChoiceTable = $this->get('questionChoiceTable');
-                $questionsChoices = $questionChoiceTable->getEntityByFields(['anr' => $anr->getId()]);
-                $questionChoiceArray = [
-                    'question' => 'question',
-                    'position' => 'position',
-                    'label1' => 'label1',
-                    'label2' => 'label2',
-                    'label3' => 'label3',
-                    'label4' => 'label4',
-                ];
-                foreach ($questionsChoices as $qc) {
-                    $return['method']['questionChoice'][$qc->id] = $qc->getJsonArray($questionChoiceArray);
-                    $return['method']['questionChoice'][$qc->id]['question'] = $qc->question->id;
-                }
-            }
-            //import thresholds
-            $return['method']['thresholds'] = [
-                'seuil1' => $anr->getSeuil1(),
-                'seuil2' => $anr->getSeuil2(),
-                'seuilRolf1' => $anr->getSeuilRolf1(),
-                'seuilRolf2' => $anr->getSeuilRolf2(),
-            ];
-            // manage the interviews
-            if ($withInterviews) {
-                $interviewTable = $this->get('interviewTable');
-                $interviews = $interviewTable->getEntityByFields(['anr' => $anr->getId()], ['id'=>'ASC']);
-                $interviewArray = [
-                    'id' => 'id',
-                    'date' => 'date',
-                    'service' => 'service',
-                    'content' => 'content',
-                ];
-
-                foreach ($interviews as $i) {
-                    $return['method']['interviews'][$i->id] = $i->getJsonArray($interviewArray);
-                }
-            }
-
-            // TODO: This is only used on FO side.
-            /** @var ThreatTable $threatTable */
-            $threatTable = $this->get('threatTable');
-            /** @var ThreatSuperClass[] $threats */
-            $threats = $threatTable->findByAnr($anr);
-            $threatArray = [
-                'uuid' => 'uuid',
-                'code' => 'code',
-                'label1' => 'label1',
-                'label2' => 'label2',
-                'label3' => 'label3',
-                'label4' => 'label4',
-                'description1' => 'description1',
-                'description2' => 'description2',
-                'description3' => 'description3',
-                'description4' => 'description4',
-                'c' => 'c',
-                'i' => 'i',
-                'a' => 'a',
-                'trend' => 'trend',
-                'comment' => 'comment',
-                'qualification' => 'qualification',
-            ];
-
-
-            foreach ($threats as $threat) {
-                $threatUuid = $threat->getUuid();
-                // TODO: ....
-                $return['method']['threats'][$threatUuid] = $threat->getJsonArray($threatArray);
-                if ($threat->getTheme() !== null) {
-                    $return['method']['threats'][$threatUuid]['theme']['id'] = $threat->getTheme()->getId();
-                    $return['method']['threats'][$threatUuid]['theme']['label1'] = $threat->getTheme()->getLabel(1);
-                    $return['method']['threats'][$threatUuid]['theme']['label2'] = $threat->getTheme()->getLabel(2);
-                    $return['method']['threats'][$threatUuid]['theme']['label3'] = $threat->getTheme()->getLabel(3);
-                    $return['method']['threats'][$threatUuid]['theme']['label4'] = $threat->getTheme()->getLabel(4);
-                }
-            }
-
-            // manage the GDPR records
-            if ($withRecords) {
-                $recordService = $this->get('recordService');
-                $table = $this->get('recordTable');
-                $records = $table->getEntityByFields(['anr' => $anr->getId()], ['id'=>'ASC']);
-                $f = '';
-                foreach ($records as $r) {
-                    $return['records'][$r->id] = $recordService->generateExportArray($r->id, $f);
-                }
-            }
-        }
-
-        if (!empty(json_encode($data['password'])) {
-            $exportedAnr = $this->encrypt($exportedAnr, $data['password']);
-        }
-
-        return $exportedAnr;
     }
 
-    private function generateExportArrayOfAnrInstanceMetadataFields(Entity\Anr $anr): array
+    private function prepareExportData(Entity\Anr $anr, array $exportParams): array
+    {
+        $withEval = !empty($exportParams['assessments']);
+        $withControls = !empty($exportParams['controls']);
+        $withRecommendations = !empty($exportParams['recommendations']);
+        $withMethodSteps = !empty($exportParams['methodSteps']);
+        $withInterviews = !empty($exportParams['interviews']);
+        $withSoas = !empty($exportParams['soas']);
+        $withRecords = !empty($exportParams['records']);
+        $withLibrary = !empty($exportParams['assetsLibrary']);
+
+        return [
+            'type' => 'anr',
+            'monarc_version' => $this->configService->getAppVersion()['appVersion'],
+            'export_datetime' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'with_eval' => $withEval,
+            'with_controls' => $withControls,
+            'with_recommendations' => $withRecommendations,
+            'with_library' => $withLibrary,
+            'with_method_steps' => $withMethodSteps,
+            'with_interviews' => $withInterviews,
+            'with_soas' => $withSoas,
+            'with_records' => $withRecords,
+            'knowledgeBase' => $this->prepareKnowledgeBaseData($anr, $withEval, $withControls, $withRecommendations),
+            'instances' => $this->prepareInstancesData($anr, !$withLibrary, $withEval, $withControls, $withRecommendations),
+            'library' => $withLibrary ? $this->prepareLibraryData($anr) : [],
+            'anrInstanceMetadataFields' => $this->prepareAnrInstanceMetadataFieldsData($anr),
+            'scales' => $withEval ? $this->prepareScalesData($anr) : [],
+            'operationalRiskScales' => $withEval ? $this->prepareOperationalRiskScalesData($anr) : [],
+            'soaScaleComments' => $withSoas ? $this->prepareSoaScaleCommentsData($anr) : [],
+            'soas' => $withSoas ? $this->prepareSoasData($anr) : [],
+            'method' => $withMethodSteps ? $this->prepareMethodData($anr) : [],
+            'thresholds' => $withEval ? $this->prepareAnrTrashholdsData($anr) : [],
+            'interviews' => $withInterviews ? $this->prepareInterviewsData($anr) : [],
+            'gdprRecords' => $withRecords ? $this->prepareGdprRecordsData($anr) : [],
+        ];
+    }
+
+    private function prepareAnrInstanceMetadataFieldsData(Entity\Anr $anr): array
     {
         $result = [];
         /** @var Entity\AnrInstanceMetadataField $anrInstanceMetadata */
         foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $anrInstanceMetadata) {
-            $id = $anrInstanceMetadata->getId();
-            $result[$id] = ['id' => $id, 'label' => $anrInstanceMetadata->getLabel()];
+            $result[$anrInstanceMetadata->getId()] = ['label' => $anrInstanceMetadata->getLabel()];
+        }
+
+        return $result;
+    }
+
+    private function prepareKnowledgeBaseData(
+        Entity\Anr $anr,
+        bool $withEval,
+        bool $withControls,
+        bool $withRecommendations
+    ): array {
+        return [
+            'assets' => $this->prepareAssetsData($anr),
+            'threats' => $this->prepareThreatsData($anr, $withEval),
+            'vulnerabilities' => $this->prepareVulnerabilitiesData($anr),
+            'informationRisks' => $this->prepareInformationRisksData($anr, $withEval),
+            'referentials' => $withControls ? $this->prepareReferentialsData($anr) : [],
+            'tags' => $this->prepareTagsData($anr),
+            'operationalRisks' => $this->prepareOperationalRisksData($anr),
+            'recommendationSets' => $withRecommendations ? $this->prepareRecommendationSetsData($anr) : [],
+        ];
+    }
+
+    private function prepareAssetsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\Asset $asset */
+        foreach ($this->assetTable->findByAnr($anr) as $asset) {
+            $result[$asset->getUuid()] = $this->prepareAssetData($asset, $languageIndex, false);
+        }
+
+        return $result;
+    }
+
+    private function prepareThreatsData(Entity\Anr $anr, bool $withEval): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\Threat $threat */
+        foreach ($this->threatTable->findByAnr($anr) as $threat) {
+            $result[$threat->getUuid()] = $this->prepareThreatData($threat, $languageIndex, $withEval);
+        }
+
+        return $result;
+    }
+
+    private function prepareVulnerabilitiesData(Entity\Anr $anr): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\Vulnerability $vulnerability */
+        foreach ($this->vulnerabilityTable->findByAnr($anr) as $vulnerability) {
+            $result[$vulnerability->getUuid()] = $this->prepareVulnerabilityData($vulnerability, $languageIndex);
+        }
+
+        return $result;
+    }
+
+    private function prepareInformationRisksData(Entity\Anr $anr, bool $withEval): array
+    {
+        $result = [];
+        /** @var Entity\Amv $amv */
+        foreach ($this->amvTable->findByAnr($anr) as $amv) {
+            $result[$amv->getUuid()] = $this->prepareInformationRiskData($amv);
+        }
+
+        return $result;
+    }
+
+    private function prepareTagsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\RolfTag $rolfTag */
+        foreach ($this->rolfTagTable->findByAnr($anr) as $rolfTag) {
+            $rolfTagId = $rolfTag->getId();
+            $result[$rolfTagId] = [
+                'code' => $rolfTag->getCode(),
+                'label' => $rolfTag->getLabel($languageIndex),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareOperationalRisksData(Entity\Anr $anr): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\RolfRisk $rolfRisk */
+        foreach ($this->rolfRiskTable->findByAnr($anr) as $rolfRisk) {
+            $result[$rolfRisk->getId()] = $this->prepareOperationalRiskData($rolfRisk, $languageIndex);
+        }
+
+        return $result;
+    }
+
+    private function prepareReferentialsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\Referential $referential */
+        foreach ($this->referentialTable->findByAnr($anr) as $referential) {
+            $measuresData = [];
+            foreach ($referential->getMeasures() as $measure) {
+                /* Include linked measures to the prepared result. */
+                $measuresData[$measure->getUuid()] = $this->prepareMeasureData($measure, $languageIndex, true);
+            }
+
+            $referentialUuid = $referential->getUuid();
+            $result[$referentialUuid] = [
+                'uuid' => $referentialUuid,
+                'label' => $referential->getLabel($languageIndex),
+                'measures' => $measuresData,
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareRecommendationSetsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        /** @var Entity\RecommendationSet $recommendationSet */
+        foreach ($this->recommendationSetTable->findByAnr($anr) as $recommendationSet) {
+            $recommendationsData = [];
+            foreach ($recommendationSet->getRecommendations() as $recommendation) {
+                $recommendationsData[$recommendation->getUuid()] = $this->prepareRecommendationData($recommendation);
+            }
+            if (!empty($recommendationsData)) {
+                $result[$recommendationSet->getUuid()] = [
+                    'label' => $recommendationSet->getLabel(),
+                    'recommendations' => $recommendationsData,
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    private function prepareLibraryData(Entity\Anr $anr): array
+    {
+        return [
+            'categories' => $this->prepareCategoriesAndObjects($anr),
+        ];
+    }
+
+    private function prepareCategoriesAndObjects(Entity\Anr $anr): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        foreach ($this->objectCategoryTable->findRootCategoriesByAnrOrderedByPosition($anr) as $objectCategory) {
+            $result[$objectCategory->getId()] = $this->prepareCategoryData($objectCategory, $languageIndex, true);
+        }
+
+        return $result;
+    }
+
+    private function prepareChildrenCategoriesData(Entity\ObjectCategory $objectCategory, int $languageIndex): array
+    {
+        $result = [];
+        foreach ($objectCategory->getChildren() as $childObjectCategory) {
+            $result[$childObjectCategory->getId()] = $this
+                ->prepareCategoryData($childObjectCategory, $languageIndex, false);
+        }
+
+        return $result;
+    }
+
+    private function prepareObjectsDataOfCategory(Entity\ObjectCategory $objectCategory, int $languageIndex): array
+    {
+        $result = [];
+        foreach ($objectCategory->getObjects() as $object) {
+            $result[$object->getUuid()] = $this->prepareObjectData($object, $languageIndex, false);
+        }
+
+        return $result;
+    }
+
+    private function prepareCategoryData(Entity\ObjectCategory $objectCategory, int $languageIndex, bool $isRoot): array
+    {
+        return [
+            'label' => $objectCategory->getLabel($languageIndex),
+            'children' => $this->prepareChildrenCategoriesData($objectCategory, $languageIndex),
+            'objects' => $this->prepareObjectsDataOfCategory($objectCategory, $languageIndex),
+            'isRoot' => $isRoot,
+        ];
+    }
+
+    private function prepareInstancesData(
+        Entity\Anr $anr,
+        bool $includeObjectDataInTheResult,
+        bool $withEval,
+        bool $withControls,
+        bool $withRecommendations
+    ): array {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\Instance $instance */
+        foreach ($this->instanceTable->findRootInstancesByAnrAndOrderByPosition($anr) as $instance) {
+            $result[$instance->getId()] = $this->prepareInstanceData(
+                $instance,
+                $languageIndex,
+                $includeObjectDataInTheResult,
+                false,
+                $withEval,
+                $withControls,
+                $withRecommendations,
+            );
+        }
+
+        return $result;
+    }
+
+    private function prepareScalesData(Entity\Anr $anr): array
+    {
+        $result = [];
+        $languageIndex = $anr->getLanguage();
+        /** @var Entity\Scale $scale */
+        foreach ($this->scaleTable->findByAnr($anr) as $scale) {
+            $result[$scale->getType()] = $this->prepareScaleData($scale, $languageIndex);
+        }
+
+        return $result;
+    }
+
+    private function prepareOperationalRiskScalesData(Entity\Anr $anr): array
+    {
+        $result = [];
+        /** @var Entity\OperationalRiskScale $operationalRiskScale */
+        foreach ($this->operationalRiskScaleTable->findByAnr($anr) as $operationalRiskScale) {
+            $result[$operationalRiskScale->getType()] = $this->prepareOperationalRiskScaleData($operationalRiskScale);
+        }
+
+        return $result;
+    }
+
+    private function prepareSoaScaleCommentsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        /** @var Entity\SoaScaleComment $soaScaleComment */
+        foreach ($this->soaScaleCommentTable->findByAnrOrderByIndex($anr) as $soaScaleComment) {
+            if (!$soaScaleComment->isHidden()) {
+                $result[$soaScaleComment->getId()] = [
+                    'scaleIndex' => $soaScaleComment->getScaleIndex(),
+                    'isHidden' => $soaScaleComment->isHidden(),
+                    'colour' => $soaScaleComment->getColour(),
+                    'comment' => $soaScaleComment->getComment(),
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    private function prepareSoasData(Entity\Anr $anr): array
+    {
+        $result = [];
+        foreach ($this->soaTable->findByAnr($anr) as $soa) {
+            $result = [
+                'remarks' => $soa->getRemarks(),
+                'evidences' => $soa->getEvidences(),
+                'actions' => $soa->getActions(),
+                'EX' => $soa->getEx(),
+                'LR' => $soa->getLr(),
+                'CO' => $soa->getCo(),
+                'BR' => $soa->getBr(),
+                'BP' => $soa->getBp(),
+                'RRA' => $soa->getRra(),
+                'soaScaleCommentId' => $soa->getSoaScaleComment()?->getId(),
+                'measureUuid' => $soa->getMeasure()->getUuid(),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareMethodData(Entity\Anr $anr): array
+    {
+        $languageIndex = $anr->getLanguage();
+        $deliveriesData = [];
+        /** @var Entity\Delivery $delivery */
+        foreach ($this->deliveryTable->findByAnr($anr) as $delivery) {
+            $docType = $delivery->getDocType();
+            if (\in_array($docType, [
+                Entity\Delivery::DOC_TYPE_CONTEXT_VALIDATION,
+                Entity\Delivery::DOC_TYPE_MODEL_VALIDATION,
+                Entity\Delivery::DOC_TYPE_FINAL_REPORT,
+                Entity\Delivery::DOC_TYPE_IMPLEMENTATION_PLAN,
+                Entity\Delivery::DOC_TYPE_SOA
+            ], true)) {
+                $deliveriesData[$docType] = [
+                    'id' => $delivery->getId(),
+                    'typedoc' => $docType,
+                    'name' => $delivery->getName(),
+                    'status' => $delivery->getStatus(),
+                    'version' => $delivery->getVersion(),
+                    'classification' => $delivery->getClassification(),
+                    'respCustomer' => $delivery->getRespCustomer(),
+                    'responsibleManager' => $delivery->getResponsibleManager(),
+                    'summaryEvalRisk' => $delivery->getSummaryEvalRisk(),
+                ];
+            }
+        }
+
+        $questionsData = [];
+        foreach ($this->questionTable->findByAnr($anr) as $question) {
+            $questionChoicesData = [];
+            foreach ($question->getQuestionChoices() as $questionChoice) {
+                $questionChoicesData[] = [
+                    'label' => $questionChoice->getLabel($languageIndex),
+                    'position' => $questionChoice->getPosition(),
+                ];
+            }
+            $questionPosition = $question->getPosition();
+            $questionsData[$questionPosition] = [
+                'id' => $question->getId(),
+                'mode' => $question->getMode(),
+                'isMultiChoice' => $question->isMultiChoice(),
+                'label' => $question->getLabel($languageIndex),
+                'response' => $question->getResponse(),
+                'type' => $question->getType(),
+                'position' => $questionPosition,
+                'questionChoices' => $questionChoicesData,
+            ];
+        }
+        ksort($questionsData);
+
+        return [
+            'steps' => [
+                'initAnrContext' => $anr->getInitAnrContext(),
+                'initEvalContext' => $anr->getInitEvalContext(),
+                'initRiskContext' => $anr->getInitRiskContext(),
+                'initDefContext' => $anr->getInitDefContext(),
+                'modelImpacts' => $anr->getModelImpacts(),
+                'modelSummary' => $anr->getModelSummary(),
+                'evalRisks' => $anr->getEvalRisks(),
+                'evalPlanRisks' => $anr->getEvalPlanRisks(),
+                'manageRisks' => $anr->getManageRisks(),
+            ],
+            'data' => [
+                'contextAnaRisk' => $anr->getContextAnaRisk(),
+                'contextGestRisk' => $anr->getContextGestRisk(),
+                'synthThreat' => $anr->getSynthThreat(),
+                'synthAct' => $anr->getSynthAct(),
+            ],
+            'deliveries' => $deliveriesData,
+            'questions' => $questionsData,
+        ];
+    }
+
+    private function prepareAnrTrashholdsData(Entity\Anr $anr): array
+    {
+        return [
+            'seuil1' => $anr->getSeuil1(),
+            'seuil2' => $anr->getSeuil2(),
+            'seuilRolf1' => $anr->getSeuilRolf1(),
+            'seuilRolf2' => $anr->getSeuilRolf2(),
+        ];
+    }
+
+    private function prepareInterviewsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        foreach ($this->interviewTable->findByAnr($anr) as $interview) {
+            $result[] = [
+                'id' => $interview->getId(),
+                'date' => $interview->getDate(),
+                'service' => $interview->getService(),
+                'content' => $interview->getContent(),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareGdprRecordsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        $filename = '';
+        foreach ($this->recordTable->findByAnr($anr) as $record) {
+            $recordId = $record->getId();
+            $result[$recordId] = $this->anrRecordService->generateExportArray($recordId, $filename);
         }
 
         return $result;

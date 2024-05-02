@@ -1574,7 +1574,7 @@ return [
             /* Export services. */
             Export\Service\AnrExportService::class => ReflectionBasedAbstractFactory::class,
             Export\Service\AssetExportService::class => AutowireFactory::class,
-            Export\Service\AnrObjectExportService::class => AutowireFactory::class,
+            Export\Service\ObjectExportService::class => AutowireFactory::class,
             Export\Service\SoaScaleCommentExportService::class => AutowireFactory::class,
             Export\Service\OperationalRiskScalesExportService::class => AutowireFactory::class,
             /* Import services. */

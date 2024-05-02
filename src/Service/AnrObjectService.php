@@ -92,7 +92,7 @@ class AnrObjectService
     public function getLibraryTreeStructure(Entity\Anr $anr): array
     {
         $result = [];
-        foreach ($this->objectCategoryTable->findRootCategoriesByAnr($anr) as $rootObjectCategory) {
+        foreach ($this->objectCategoryTable->findRootCategoriesByAnrOrderedByPosition($anr) as $rootObjectCategory) {
             $result[] = $this->getCategoriesAndObjectsTreeList($rootObjectCategory);
         }
 

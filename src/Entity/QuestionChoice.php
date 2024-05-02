@@ -8,12 +8,9 @@
 namespace Monarc\FrontOffice\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Entity\QuestionChoiceSuperClass;
 
 /**
- * Question Choice
- *
  * @ORM\Table(name="questions_choices", indexes={
  *      @ORM\Index(name="question_id", columns={"question_id"}),
  *      @ORM\Index(name="anr_id", columns={"anr_id"}),
@@ -23,7 +20,7 @@ use Monarc\Core\Entity\QuestionChoiceSuperClass;
 class QuestionChoice extends QuestionChoiceSuperClass
 {
     /**
-     * @var AnrSuperClass
+     * @var Anr
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -32,16 +29,13 @@ class QuestionChoice extends QuestionChoiceSuperClass
      */
     protected $anr;
 
-    /**
-     * @return AnrSuperClass
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
     /**
-     * @param AnrSuperClass $anr
+     * @param Anr $anr
      */
     public function setAnr($anr): self
     {

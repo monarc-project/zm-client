@@ -8,19 +8,16 @@
 namespace Monarc\FrontOffice\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Entity\QuestionSuperClass;
 
 /**
- * Question
- *
  * @ORM\Table(name="questions")
  * @ORM\Entity
  */
 class Question extends QuestionSuperClass
 {
     /**
-     * @var AnrSuperClass
+     * @var Anr
      *
      * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
      * @ORM\JoinColumns({
@@ -43,17 +40,13 @@ class Question extends QuestionSuperClass
      */
     protected $mode = 0;
 
-
-    /**
-     * @return AnrSuperClass
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
     /**
-     * @param AnrSuperClass $anr
+     * @param Anr $anr
      */
     public function setAnr($anr): self
     {
@@ -70,13 +63,22 @@ class Question extends QuestionSuperClass
         return $this->response;
     }
 
-    /**
-     * @param string $response
-     * @return Question
-     */
-    public function setResponse($response)
+    public function setResponse(string $response): self
     {
         $this->response = $response;
+
+        return $this;
+    }
+
+    public function getMode(): int
+    {
+        return $this->mode;
+    }
+
+    public function setMode(int $mode): self
+    {
+        $this->mode = $mode;
+
         return $this;
     }
 

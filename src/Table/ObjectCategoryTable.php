@@ -22,12 +22,13 @@ class ObjectCategoryTable extends CoreObjectCategoryTable
     /**
      * @return ObjectCategory[]
      */
-    public function findRootCategoriesByAnr(Anr $anr): array
+    public function findRootCategoriesByAnrOrderedByPosition(Anr $anr): array
     {
         return $this->getRepository()->createQueryBuilder('oc')
             ->where('oc.anr = :anr')
             ->andWhere('oc.parent IS NULL')
             ->setParameter('anr', $anr)
+            ->addOrderBy('oc.position')
             ->getQuery()
             ->getResult();
     }
