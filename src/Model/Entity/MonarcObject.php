@@ -21,6 +21,7 @@ use Monarc\Core\Model\Entity\ObjectSuperClass;
  *      @ORM\Index(name="rolf_tag_id", columns={"rolf_tag_id"})
  * })
  * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks()
  */
 class MonarcObject extends ObjectSuperClass
 {
@@ -59,4 +60,16 @@ class MonarcObject extends ObjectSuperClass
      * })
      */
     protected $asset;
+
+    /**
+     * @ORM\PreUpdate
+     */
+    public function validateAndSetMissingAnrLink(): self
+    {
+        if (!$this->anrs->contains($this->anr)) {
+            $this->anrs->add($this->anr);
+        }
+
+        return $this;
+    }
 }
