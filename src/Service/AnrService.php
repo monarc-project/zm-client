@@ -137,7 +137,7 @@ class AnrService
         $userAnr = $this->userAnrTable->findByAnrAndUser($realAnrInUse, $this->connectedUser);
 
         if ($realAnrInUse->getId() !== $this->connectedUser->getCurrentAnr()?->getId()) {
-            $this->setCurrentAnrToConnectedUser($realAnrInUse);
+            $this->setCurrentAnrToConnectedUser($realAnrInUse, true);
         }
 
         return $this->getPreparedAnrData($anr, $userAnr, true);
@@ -588,9 +588,9 @@ class AnrService
         return $createdMeasuresUuidsToObjects;
     }
 
-    private function setCurrentAnrToConnectedUser(Entity\Anr $anr): void
+    private function setCurrentAnrToConnectedUser(Entity\Anr $anr, bool $saveInDb = false): void
     {
-        $this->userTable->save($this->connectedUser->setCurrentAnr($anr));
+        $this->userTable->save($this->connectedUser->setCurrentAnr($anr), $saveInDb);
     }
 
     private function duplicateScales(
@@ -690,7 +690,9 @@ class AnrService
             foreach ($sourceOperationalRiskScale->getOperationalRiskScaleTypes() as $operationalRiskScaleType) {
                 if ($isSourceCommon) {
                     /** @var CoreEntity\OperationalRiskScaleType $operationalRiskScaleType */
-                    $label = $sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()] ?? '';
+                    $label = isset($sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()])
+                        ? $sourceTranslations[$operationalRiskScaleType->getLabelTranslationKey()]->getValue()
+                        : '';
                 } else {
                     /** @var Entity\OperationalRiskScaleType $operationalRiskScaleType */
                     $label = $operationalRiskScaleType->getLabel();
@@ -738,6 +740,9 @@ class AnrService
         return $operationalScaleTypesOldIdsToNewObjects;
     }
 
+    /**
+     * @param CoreEntity\Translation[] $sourceTranslations
+     */
     private function duplicateOperationalRiskScaleComments(
         Entity\Anr $newAnr,
         Entity\OperationalRiskScale $newOperationalRiskScale,
@@ -746,7 +751,9 @@ class AnrService
         array $sourceTranslations
     ): void {
         if ($sourceOperationalRiskScaleComment instanceof CoreEntity\OperationalRiskScaleComment) {
-            $comment = $sourceTranslations[$sourceOperationalRiskScaleComment->getLabelTranslationKey()] ?? '';
+            $comment = isset($sourceTranslations[$sourceOperationalRiskScaleComment->getLabelTranslationKey()])
+                ? $sourceTranslations[$sourceOperationalRiskScaleComment->getLabelTranslationKey()]->getValue()
+                : '';
         } else {
             /** @var Entity\OperationalRiskScaleComment $sourceOperationalRiskScaleComment */
             $comment = $sourceOperationalRiskScaleComment->getComment();
@@ -1066,7 +1073,9 @@ class AnrService
         foreach ($soaScaleCommentTable->findByAnrOrderByIndex($sourceAnr) as $sourceSoaScaleComment) {
             if ($isSourceCommon) {
                 /** @var CoreEntity\SoaScaleComment $sourceSoaScaleComment */
-                $comment = $commonTranslations[$sourceSoaScaleComment->getLabelTranslationKey()] ?? '';
+                $comment = isset($commonTranslations[$sourceSoaScaleComment->getLabelTranslationKey()])
+                    ? $commonTranslations[$sourceSoaScaleComment->getLabelTranslationKey()]->getValue()
+                    : '';
             } else {
                 /** @var Entity\SoaScaleComment $sourceSoaScaleComment */
                 $comment = $sourceSoaScaleComment->getComment();
@@ -1170,14 +1179,6 @@ class AnrService
                 ->setPosition($sourceChildLinkObject->getPosition())
                 ->setCreator($this->connectedUser->getEmail());
             $this->objectObjectTable->save($newObjectObject, false);
-
-            if ($sourceChildLinkObject->getChild()->hasChildren()) {
-                $this->duplicateObjectsCompositions(
-                    $newAnr,
-                    $sourceChildLinkObject->getChild(),
-                    $monarcObjectsUuidsToNewObjects
-                );
-            }
         }
     }
 

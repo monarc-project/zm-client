@@ -29,7 +29,7 @@ trait ObjectExportTrait
         if ($addAmvsToAssetData) {
             $assetData['informationRisks'] = [];
             foreach ($asset->getAmvs() as $amv) {
-                $assetData['informationRisks'][$amv->getUuid()] = $this->prepareInformationRiskData($amv);
+                $assetData['informationRisks'][] = $this->prepareInformationRiskData($amv);
             }
         }
 
@@ -56,20 +56,15 @@ trait ObjectExportTrait
 
     private function prepareCategoryAndParentsData(Entity\ObjectCategory $objectCategory): array
     {
-        $objectCategoryData[$objectCategory->getId()] = [
+        /** @var ?Entity\ObjectCategory $parentCategory */
+        $parentCategory = $objectCategory->getParent();
+
+        return [
+            'id' => $objectCategory->getId(),
             'label' => $objectCategory->getLabel($objectCategory->getAnr()->getLanguage()),
             'position' => $objectCategory->getPosition(),
-            'parent' => null,
+            'parent' => $parentCategory !== null ? $this->prepareCategoryAndParentsData($parentCategory) : null,
         ];
-        if ($objectCategory->getParent() !== null) {
-            /** @var Entity\ObjectCategory $parentCategory */
-            $parentCategory = $objectCategory->getParent();
-            $objectCategoryData[$objectCategory->getId()]['parent'] = $this->prepareCategoryAndParentsData(
-                $parentCategory
-            );
-        }
-
-        return $objectCategoryData;
     }
 
     private function prepareChildrenObjectsData(
@@ -81,7 +76,7 @@ trait ObjectExportTrait
         foreach ($object->getChildrenLinks() as $childLink) {
             /** @var Entity\MonarcObject $childObject */
             $childObject = $childLink->getChild();
-            $result[$childObject->getUuid()] = $this
+            $result[] = $this
                 ->prepareObjectData($childObject, $languageIndex, $addAmvsToAssetData);
         }
 
@@ -93,7 +88,7 @@ trait ObjectExportTrait
         $rolfRisksData = [];
         $languageIndex = $rolfTag->getAnr()->getLanguage();
         foreach ($rolfTag->getRisks() as $rolfRisk) {
-            $rolfRisksData[$rolfRisk->getId()] = $this->prepareOperationalRiskData($rolfRisk, $languageIndex);
+            $rolfRisksData[] = $this->prepareOperationalRiskData($rolfRisk, $languageIndex);
         }
 
         return $rolfRisksData;

@@ -19,13 +19,27 @@ trait ScaleExportTrait
         'max' => "int",
         'type' => "int",
         'scaleImpactTypes' => "array",
+        'scaleComments' => "array",
     ])] private function prepareScaleData(Entity\Scale $scale, int $languageIndex): array
     {
+        /* Prepare comments that are not linked to scaleTypes and directly linked to the scale. */
+        $scaleCommentsData = [];
+        foreach ($scale->getScaleComments() as $scaleComment) {
+            if ($scaleComment->getScaleImpactType() === null) {
+                $scaleCommentsData[] = [
+                    'scaleIndex' => $scaleComment->getScaleIndex(),
+                    'scaleValue' => $scaleComment->getScaleValue(),
+                    'comment' => $scaleComment->getComment($languageIndex),
+                ];
+            }
+        }
+
         return [
             'min' => $scale->getMin(),
             'max' => $scale->getMax(),
             'type' => $scale->getType(),
             'scaleImpactTypes' => $this->prepareScaleImpactTypesData($scale, $languageIndex),
+            'scaleComments' => $scaleCommentsData,
         ];
     }
 
@@ -33,8 +47,7 @@ trait ScaleExportTrait
     {
         $result = [];
         foreach ($scale->getScaleImpactTypes() as $scaleImpactType) {
-            $result[$scaleImpactType->getId()] = $this
-                ->prepareScaleImpactTypeAndCommentsData($scaleImpactType, $languageIndex, true, false);
+            $result[] = $this->prepareScaleImpactTypeAndCommentsData($scaleImpactType, $languageIndex, true, false);
         }
 
         return $result;

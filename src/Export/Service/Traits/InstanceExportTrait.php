@@ -44,7 +44,7 @@ trait InstanceExportTrait
             'confidentialityInherited' => $withEval ? (int)$instance->isConfidentialityInherited() : 1,
             'integrityInherited' => $withEval ? (int)$instance->isIntegrityInherited() : 1,
             'availabilityInherited' => $withEval ? (int)$instance->isAvailabilityInherited() : 1,
-            'asset' => $this->prepareAssetData($asset, $languageIndex, false),
+            'asset' => $this->prepareAssetData($asset, $languageIndex),
             /* For Anr and Instance export instanceRisks are added to the instance, so not needed in asset. */
             'object' => $includeCompleteObjectData
                 ? $this->prepareObjectData($object, $languageIndex, false)
@@ -82,7 +82,7 @@ trait InstanceExportTrait
     {
         $result = [];
         foreach ($instance->getInstanceMetadata() as $instanceMetadata) {
-            $result[$instanceMetadata->getId()] = [
+            $result[] = [
                 'anrInstanceMetadataField' => [
                     'id' => $instanceMetadata->getAnrInstanceMetadataField()->getId(),
                     'label' => $instanceMetadata->getAnrInstanceMetadataField()->getLabel(),
@@ -106,7 +106,7 @@ trait InstanceExportTrait
         $result = [];
         /** @var Entity\Instance $childInstance */
         foreach ($instance->getChildren() as $childInstance) {
-            $result[$childInstance->getId()] = $this->prepareInstanceData(
+            $result[] = $this->prepareInstanceData(
                 $childInstance,
                 $languageIndex,
                 $includeCompleteObjectData,
@@ -131,7 +131,7 @@ trait InstanceExportTrait
         $result = [];
         /** @var Entity\InstanceRisk $operationalInstanceRisk */
         foreach ($instance->getInstanceRisks() as $instanceRisk) {
-            $result[$instanceRisk->getId()] = $this->prepareInformationInstanceRiskData(
+            $result[] = $this->prepareInformationInstanceRiskData(
                 $instanceRisk,
                 $languageIndex,
                 $includeCompleteInformationRisksData,
@@ -154,7 +154,7 @@ trait InstanceExportTrait
         $result = [];
         /** @var Entity\InstanceRiskOp $operationalInstanceRisk */
         foreach ($instance->getOperationalInstanceRisks() as $operationalInstanceRisk) {
-            $result[$operationalInstanceRisk->getId()] = $this->prepareOperationalInstanceRiskData(
+            $result[] = $this->prepareOperationalInstanceRiskData(
                 $operationalInstanceRisk,
                 $languageIndex,
                 $withEval,
@@ -171,7 +171,7 @@ trait InstanceExportTrait
         $result = [];
         /** @var Entity\InstanceConsequence $instanceConsequence */
         foreach ($instance->getInstanceConsequences() as $instanceConsequence) {
-            $result[$instanceConsequence->getId()] = $this->prepareInstanceConsequenceData(
+            $result[] = $this->prepareInstanceConsequenceData(
                 $instanceConsequence,
                 $languageIndex
             );

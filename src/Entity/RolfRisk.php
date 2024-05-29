@@ -23,7 +23,7 @@ class RolfRisk extends RolfRiskSuperClass
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })
@@ -33,13 +33,10 @@ class RolfRisk extends RolfRiskSuperClass
     /**
      * @var Measure[]|ArrayCollection
      *
-     * @ORM\ManyToMany(targetEntity="Measure", mappedBy="rolfRisks", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="Measure", mappedBy="rolfRisks")
      * @ORM\JoinTable(name="measures_rolf_risks",
      *  joinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
-     *  inverseJoinColumns={
-     *     @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id"),
-     *  }
+     *  inverseJoinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="id")}
      * )
      */
     protected $measures;

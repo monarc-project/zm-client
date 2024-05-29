@@ -28,7 +28,7 @@ class InstanceRisk extends InstanceRiskSuperClass
     /**
      * @var Amv
      *
-     * @ORM\ManyToOne(targetEntity="Amv", inversedBy="instanceRisks", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Amv", inversedBy="instanceRisks")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid", nullable=true, onDelete="SET NULL"),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -39,7 +39,7 @@ class InstanceRisk extends InstanceRiskSuperClass
     /**
      * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Asset")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid"),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
@@ -50,7 +50,7 @@ class InstanceRisk extends InstanceRiskSuperClass
     /**
      * @var Threat
      *
-     * @ORM\ManyToOne(targetEntity="Threat", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Threat")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid"),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
@@ -61,7 +61,7 @@ class InstanceRisk extends InstanceRiskSuperClass
     /**
      * @var Vulnerability
      *
-     * @ORM\ManyToOne(targetEntity="Vulnerability", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Vulnerability")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid"),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
@@ -72,14 +72,14 @@ class InstanceRisk extends InstanceRiskSuperClass
     /**
      * @var ArrayCollection|RecommendationRisk[]
      *
-     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="instanceRisk", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="instanceRisk", cascade={"remove"})
      */
     protected $recommendationRisks;
 
     /**
      * @var InstanceRiskOwner|null
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="risk_owner_id", referencedColumnName="id", nullable=true)
      * })
@@ -98,12 +98,16 @@ class InstanceRisk extends InstanceRiskSuperClass
         $this->recommendationRisks = new ArrayCollection();
     }
 
-    public static function constructFromObject(InstanceRiskSuperClass $instanceRisk): InstanceRiskSuperClass
+    public static function constructFromObject(InstanceRiskSuperClass $sourceInstanceRisk): InstanceRiskSuperClass
     {
         /** @var InstanceRisk $instanceRisk */
-        $instanceRisk = parent::constructFromObject($instanceRisk);
+        $instanceRisk = parent::constructFromObject($sourceInstanceRisk);
 
-        return $instanceRisk->setContext($instanceRisk->getContext());
+        if ($sourceInstanceRisk instanceof self) {
+            $instanceRisk->setContext($sourceInstanceRisk->getContext());
+        }
+
+        return $instanceRisk;
     }
 
     public static function constructFromObjectOfTheSameAnr(InstanceRisk $instanceRisk): static

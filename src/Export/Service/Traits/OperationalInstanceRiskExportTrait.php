@@ -27,7 +27,7 @@ trait OperationalInstanceRiskExportTrait
         if ($withRecommendations) {
             foreach ($operationalInstanceRisk->getRecommendationRisks() as $recommendationRisk) {
                 $recommendation = $recommendationRisk->getRecommendation();
-                $recommendationsData[$recommendation->getUuid()] = array_merge(
+                $recommendationsData[] = array_merge(
                     $this->prepareRecommendationData($recommendation),
                     ['commentAfter' => $recommendationRisk->getCommentAfter()]
                 );
@@ -47,6 +47,7 @@ trait OperationalInstanceRiskExportTrait
         }
 
         return [
+            'id' => $operationalInstanceRisk->getId(),
             'operationalRisk' => $operationalRisk !== null
                 ? $this->prepareOperationalRiskData($operationalRisk, $languageIndex, $withControls)
                 : null,
@@ -61,7 +62,7 @@ trait OperationalInstanceRiskExportTrait
             'kindOfMeasure' => $withEval
                 ? $operationalInstanceRisk->getKindOfMeasure()
                 : InstanceRiskOpSuperClass::KIND_NOT_SET,
-            'comment' => $withEval && $withControls ? $operationalInstanceRisk->getComment() : '',
+            'comment' => $withControls ? $operationalInstanceRisk->getComment() : '',
             'mitigation' => $withEval ? $operationalInstanceRisk->getMitigation() : '',
             'specific' => $operationalInstanceRisk->getSpecific(),
             'context' => $withEval ? $operationalInstanceRisk->getContext() : '',

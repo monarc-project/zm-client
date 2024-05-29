@@ -59,8 +59,8 @@ class InstanceExportService
     private function prepareExportData(Entity\Instance $instance, array $exportParams): array
     {
         $withEval = !empty($exportParams['assessments']);
-        $withControls = !empty($exportParams['controls']);
-        $withRecommendations = !empty($exportParams['recommendations']);
+        $withControls = $withEval && !empty($exportParams['controls']);
+        $withRecommendations = $withEval && !empty($exportParams['recommendations']);
         /** @var Entity\Anr $anr */
         $anr = $instance->getAnr();
         $languageIndex = $anr->getLanguage();
@@ -69,6 +69,8 @@ class InstanceExportService
             'type' => 'instance',
             'monarc_version' => $this->configService->getAppVersion()['appVersion'],
             'export_datetime' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'languageCode' => $anr->getLanguageCode(),
+            'languageIndex' => $anr->getLanguage(),
             'with_eval' => $withEval,
             'with_controls' => $withControls,
             'with_recommendations' => $withRecommendations,

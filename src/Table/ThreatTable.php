@@ -34,4 +34,14 @@ class ThreatTable extends AbstractTable implements UniqueCodeTableInterface
             ->getQuery()
             ->getOneOrNullResult(AbstractQuery::HYDRATE_SIMPLEOBJECT) !== null;
     }
+
+    public function findUuidsAndCodesByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('t')
+            ->select('t.uuid', 't.code')
+            ->where('t.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getArrayResult();
+    }
 }

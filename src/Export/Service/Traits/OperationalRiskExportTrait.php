@@ -19,6 +19,7 @@ trait OperationalRiskExportTrait
         'code' => "string",
         'label' => "string",
         'description' => "string",
+        'rolfTags' => "array",
         'measures' => "array"
     ])] private function prepareOperationalRiskData(
         Entity\RolfRisk $rolfRisk,
@@ -28,8 +29,15 @@ trait OperationalRiskExportTrait
         $measuresData = [];
         if ($withControls) {
             foreach ($rolfRisk->getMeasures() as $measure) {
-                $measuresData[$measure->getUuid()] = $this->prepareMeasureData($measure, $languageIndex);
+                $measuresData[] = $this->prepareMeasureData($measure, $languageIndex);
             }
+        }
+        $rolfTagsData = [];
+        foreach ($rolfRisk->getTags() as $rolfTag) {
+            $rolfTagsData[] = [
+                'code' => $rolfTag->getCode(),
+                'label' => $rolfTag->getLabel($languageIndex),
+            ];
         }
 
         return [
@@ -37,6 +45,7 @@ trait OperationalRiskExportTrait
             'code' => $rolfRisk->getCode(),
             'label' => $rolfRisk->getLabel($languageIndex),
             'description' => $rolfRisk->getDescription($languageIndex),
+            'rolfTags' => $rolfTagsData,
             'measures' => $measuresData,
         ];
     }

@@ -13,7 +13,6 @@ use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\PositionUpdateTrait;
 use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 
 class AnrObjectService
@@ -28,7 +27,7 @@ class AnrObjectService
         private Table\AssetTable $assetTable,
         private Table\ObjectCategoryTable $objectCategoryTable,
         private Table\ObjectObjectTable $objectObjectTable,
-        private DeprecatedTable\RolfTagTable $rolfTagTable,
+        private Table\RolfTagTable $rolfTagTable,
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
         ConnectedUserService $connectedUserService

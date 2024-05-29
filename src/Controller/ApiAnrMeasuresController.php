@@ -1,131 +1,110 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Exception\Exception;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\Measure\GetMeasuresInputFormatter;
+use Monarc\Core\Validator\InputValidator\Measure\PostMeasureDataInputValidator;
+use Monarc\Core\Validator\InputValidator\Measure\UpdateMeasureDataInputValidator;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrMeasureService;
 
-class ApiAnrMeasuresController extends ApiAnrAbstractController
+class ApiAnrMeasuresController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'measures';
-    protected $dependencies = ['anr', 'category', 'referential', 'amvs', 'linkedMeasures', 'rolfRisks'];
+    use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(AnrMeasureService $anrMeasureService)
-    {
-        parent::__construct($anrMeasureService);
+    public function __construct(
+        private AnrMeasureService $anrMeasureService,
+        private GetMeasuresInputFormatter $getMeasuresInputFormatter,
+        private PostMeasureDataInputValidator $postMeasureDataInputValidator,
+        private UpdateMeasureDataInputValidator $updateMeasureDataInputValidator
+    ) {
     }
 
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $status = $this->params()->fromQuery('status');
-        $referential = $this->params()->fromQuery('referential');
-        $category = $this->params()->fromQuery('category');
-        $anrId = (int)$this->params()->fromRoute('anrid');
-
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-
-        //make a join because composite key is not supported
-        $filterJoin[] = [
-            'as' => 'r',
-            'rel' => 'referential',
-        ];
-
-        if (\is_null($status)) {
-            $status = 1;
-        }
-        $filterAnd = ($status === "all") ? null : ['status' => (int)$status];
-
-        $filterAnd['anr'] = $anrId;
-
-        if ($referential) {
-            $filterAnd['r.anr'] = $anrId;
-            $filterAnd['r.uuid'] = $referential;
-        }
-        if ($category) {
-            $filterAnd['category'] = (int)$category;
-        }
-
-        $service = $this->getService();
-
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (\count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
+        $formattedParams = $this->getFormattedInputParams($this->getMeasuresInputFormatter);
 
         return $this->getPreparedJsonResponse([
-            'count' => $service->getFilteredCount($filter, $filterAnd, $filterJoin),
-            $this->name => $entities,
+            'count' => $this->anrMeasureService->getCount($formattedParams),
+            'measures' => $this->anrMeasureService->getList($formattedParams),
         ]);
     }
 
-    public function update($id, $data)
+    /**
+     * @param string $id
+     */
+    public function get($id)
     {
-        unset($data['rolfRisks']); // not managed for the moement
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $ids = ['anr' => $anrId, 'uuid' => $data['uuid']];
-        $data['anr'] = $anrId;
-        $data ['referential'] = [
-            'anr' => $anrId,
-            'uuid' => $data['referential'],
-        ]; //all the objects is send but we just need the uuid
-        $data['category'] ['referential'] = $data ['referential'];
-        unset($data['linkedMeasures']);
-        unset($data['amvs']);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return parent::update($ids, $data);
-    }
-
-    public function patch($id, $data)
-    {
-        unset($data['measures']);
-
-        return parent::patch($id, $data);
+        return $this->getPreparedJsonResponse($this->anrMeasureService->getMeasureData($anr, $id));
     }
 
     public function create($data)
     {
-        unset($data['rolfRisks'], $data['linkedMeasures'], $data['amvs']);
+        $isBatchData = $this->isBatchData($data);
+        $this->validatePostParams($this->postMeasureDataInputValidator, $data, $isBatchData);
 
-        return parent::create($data);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        if ($this->isBatchData($data)) {
+            return $this->getSuccessfulJsonResponse([
+                'id' => $this->anrMeasureService
+                    ->createList($anr, $this->postMeasureDataInputValidator->getValidDataSets()),
+            ]);
+        }
+
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->anrMeasureService
+                ->create($anr, $this->postMeasureDataInputValidator->getValidData())->getUuid(),
+        ]);
     }
 
-    public function get($id)
+    /**
+     * @param string $id
+     * @param array $data
+     */
+    public function update($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $ids = ['uuid' => $id, 'anr' => $anrId];
+        $this->validatePostParams($this->updateMeasureDataInputValidator->setExcludeFilter(['uuid' => $id]), $data);
 
-        return parent::get($ids);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrMeasureService->update($anr, $id, $this->updateMeasureDataInputValidator->getValidData());
+
+        return $this->getSuccessfulJsonResponse();
     }
 
+    /**
+     * @param string $id
+     */
     public function delete($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $ids = ['uuid' => $id, 'anr' => $anrId];
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return parent::delete($ids);
+        $this->anrMeasureService->delete($anr, $id);
+
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function deleteList($data)
     {
-        $new_data = [];
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        foreach ($data as $uuid) {
-            $new_data[] = ['uuid' => $uuid, 'anr' => $anrId];
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return parent::deleteList($new_data);
+        $this->anrMeasureService->deleteList($anr, $data);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

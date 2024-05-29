@@ -310,7 +310,7 @@ return [
                                 'controller' => PipeSpec::class,
                                 'middleware' => new PipeSpec(
                                     AnrValidationMiddleware::class,
-                                    Controller\ApiAnrMeasuresMeasuresController::class,
+                                    Controller\ApiAnrMeasuresLinksController::class,
                                 ),
                             ],
                         ],
@@ -1346,7 +1346,7 @@ return [
             Controller\ApiDuplicateAnrController::class => AutowireFactory::class,
             Controller\ApiAnrReferentialsController::class => AutowireFactory::class,
             Controller\ApiAnrMeasuresController::class => AutowireFactory::class,
-            Controller\ApiAnrMeasuresMeasuresController::class => AutowireFactory::class,
+            Controller\ApiAnrMeasuresLinksController::class => AutowireFactory::class,
             Controller\ApiAnrQuestionsController::class => AutowireFactory::class,
             Controller\ApiAnrQuestionsChoicesController::class => AutowireFactory::class,
             Controller\ApiAnrRolfTagsController::class => AutowireFactory::class,
@@ -1479,7 +1479,6 @@ return [
             Table\ClientTable::class => ClientEntityManagerFactory::class,
             Table\MonarcObjectTable::class => ClientEntityManagerFactory::class,
             Table\MeasureTable::class => ClientEntityManagerFactory::class,
-            Table\MeasureMeasureTable::class => ClientEntityManagerFactory::class,
             Table\ObjectCategoryTable::class => ClientEntityManagerFactory::class,
             Table\ObjectObjectTable::class => ClientEntityManagerFactory::class,
             Table\OperationalRiskScaleTable::class => ClientEntityManagerFactory::class,
@@ -1532,7 +1531,7 @@ return [
             Service\AnrQuestionService::class => Service\AnrQuestionServiceFactory::class,
             Service\AnrQuestionChoiceService::class => Service\AnrQuestionChoiceServiceFactory::class,
             Service\AnrMeasureService::class => AutowireFactory::class,
-            Service\AnrMeasureMeasureService::class => AutowireFactory::class,
+            Service\AnrMeasureLinkService::class => AutowireFactory::class,
             Service\AnrReferentialService::class => AutowireFactory::class,
             Service\SoaCategoryService::class => AutowireFactory::class,
             Service\AnrRolfTagService::class => AutowireFactory::class,
@@ -1622,10 +1621,24 @@ return [
             InputValidator\Anr\CreateAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Object\PostObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Object\DuplicateObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
-            InputValidator\Recommendation\PostRecommendationDataInputValidator::class =>
-                ReflectionBasedAbstractFactory::class,
-            InputValidator\Recommendation\PatchRecommendationDataInputValidator::class =>
-                ReflectionBasedAbstractFactory::class,
+            InputValidator\Recommendation\PostRecommendationDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new InputValidator\Recommendation\PostRecommendationDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\RecommendationTable::class)
+                );
+            },
+            InputValidator\Recommendation\PatchRecommendationDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new InputValidator\Recommendation\PatchRecommendationDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\RecommendationTable::class)
+                );
+            },
             InputValidator\RecommendationSet\PostRecommendationSetDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
             InputValidator\RecommendationRisk\ValidateRecommendationRiskDataInputValidator::class =>

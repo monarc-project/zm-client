@@ -14,18 +14,26 @@ use Ramsey\Uuid\UuidInterface;
 
 /**
  * @ORM\Table(name="measures", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
+ *      @ORM\Index(name="uuid_anr_id", columns={"uuid", "anr_id"}),
  *      @ORM\Index(name="category", columns={"soacategory_id"}),
  *      @ORM\Index(name="referential", columns={"referential_uuid"})
-* })
+ * })
  * @ORM\Entity
  */
 class Measure extends MeasureSuperClass
 {
     /**
+     * @var int
+     *
+     * @ORM\Column(name="id", type="integer", nullable=false)
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="IDENTITY")
+     */
+    protected $id;
+
+    /**
      * @var UuidInterface|string
      *
-     * @ORM\Id
      * @ORM\Column(name="uuid", type="uuid", nullable=false)
      */
     protected $uuid;
@@ -33,7 +41,6 @@ class Measure extends MeasureSuperClass
     /**
      * @var Anr
      *
-     * @ORM\Id
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
      */
@@ -44,12 +51,10 @@ class Measure extends MeasureSuperClass
      *
      * @ORM\ManyToMany(targetEntity="Amv", inversedBy="measures", fetch="EAGER")
      * @ORM\JoinTable(name="measures_amvs",
-     *   joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     *   },
+     *   joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="id")},
      *   inverseJoinColumns={
      *     @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id2", referencedColumnName="anr_id")
+     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      *   },
      * )
      */
@@ -58,13 +63,10 @@ class Measure extends MeasureSuperClass
     /**
      * @var ArrayCollection|RolfRisk[]
      *
-     * @ORM\ManyToMany(targetEntity="RolfRisk", inversedBy="measures", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="RolfRisk", inversedBy="measures")
      * @ORM\JoinTable(name="measures_rolf_risks",
      *   inverseJoinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
-     *   joinColumns={
-     *     @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     *   }
+     *   joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="id")}
      * )
      */
     protected $rolfRisks;
@@ -72,7 +74,7 @@ class Measure extends MeasureSuperClass
     /**
      * @var Referential
      *
-     * @ORM\ManyToOne(targetEntity="Referential", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Referential")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -85,17 +87,16 @@ class Measure extends MeasureSuperClass
      *
      * @ORM\ManyToMany(targetEntity="Measure", inversedBy="measures", cascade={"persist"})
      * @ORM\JoinTable(name="measures_measures",
-     *   joinColumns={
-     *     @ORM\JoinColumn(name="master_measure_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     *   },
-     *   inverseJoinColumns={
-     *     @ORM\JoinColumn(name="linked_measure_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     *   }
+     *   joinColumns={@ORM\JoinColumn(name="master_measure_id", referencedColumnName="id")},
+     *   inverseJoinColumns={@ORM\JoinColumn(name="linked_measure_id", referencedColumnName="id")}
      * )
      */
     protected $linkedMeasures;
+
+    public function getId()
+    {
+        return $this->id;
+    }
 
     public function getAnr(): Anr
     {

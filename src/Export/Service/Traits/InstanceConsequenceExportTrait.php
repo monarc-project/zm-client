@@ -15,6 +15,7 @@ trait InstanceConsequenceExportTrait
     use ScaleImpactTypeExportTrait;
 
     #[ArrayShape([
+        'id' => "int",
         'confidentiality' => "int",
         'integrity' => "int",
         'availability' => "int",
@@ -28,6 +29,7 @@ trait InstanceConsequenceExportTrait
         $scaleImpactType = $instanceConsequence->getScaleImpactType();
 
         return [
+            'id' => $instanceConsequence->getId(),
             'confidentiality' => $instanceConsequence->getConfidentiality(),
             'integrity' => $instanceConsequence->getIntegrity(),
             'availability' => $instanceConsequence->getAvailability(),

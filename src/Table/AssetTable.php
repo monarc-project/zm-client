@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\UniqueCodeTableInterface;
 use Monarc\Core\Table\Traits\CodeExistenceValidationTableTrait;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\Asset;
 
 class AssetTable extends AbstractTable implements UniqueCodeTableInterface
@@ -20,5 +21,15 @@ class AssetTable extends AbstractTable implements UniqueCodeTableInterface
     public function __construct(EntityManager $entityManager, string $entityName = Asset::class)
     {
         parent::__construct($entityManager, $entityName);
+    }
+
+    public function findUuidsAndCodesByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('a')
+            ->select('a.uuid', 'a.code')
+            ->where('a.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getArrayResult();
     }
 }

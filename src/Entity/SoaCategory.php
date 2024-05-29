@@ -22,7 +22,7 @@ class SoaCategory extends SoaCategorySuperClass
     /**
     * @var Anr
     *
-    * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+    * @ORM\ManyToOne(targetEntity="Anr")
     * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
     */
     protected $anr;
@@ -30,7 +30,7 @@ class SoaCategory extends SoaCategorySuperClass
     /**
      * @var Referential
      *
-     * @ORM\ManyToOne(targetEntity="Referential", inversedBy="categories", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Referential", inversedBy="categories")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

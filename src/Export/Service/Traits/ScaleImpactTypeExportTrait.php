@@ -29,7 +29,7 @@ trait ScaleImpactTypeExportTrait
         $scaleComments = [];
         if ($includeComments) {
             foreach ($scaleImpactType->getScaleComments() as $scaleComment) {
-                $scaleComments[$scaleComment->getId()] = [
+                $scaleComments[] = [
                     'scaleIndex' => $scaleComment->getScaleIndex(),
                     'scaleValue' => $scaleComment->getScaleValue(),
                     'comment' => $scaleComment->getComment($languageIndex),

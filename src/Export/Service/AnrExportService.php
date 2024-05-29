@@ -77,29 +77,36 @@ class AnrExportService
     private function prepareExportData(Entity\Anr $anr, array $exportParams): array
     {
         $withEval = !empty($exportParams['assessments']);
-        $withControls = !empty($exportParams['controls']);
-        $withRecommendations = !empty($exportParams['recommendations']);
-        $withMethodSteps = !empty($exportParams['methodSteps']);
-        $withInterviews = !empty($exportParams['interviews']);
-        $withSoas = !empty($exportParams['soas']);
-        $withRecords = !empty($exportParams['records']);
+        $withControls = $withEval && !empty($exportParams['controls']);
+        $withRecommendations = $withEval && !empty($exportParams['recommendations']);
+        $withMethodSteps = $withEval && !empty($exportParams['methodSteps']);
+        $withInterviews = $withEval && !empty($exportParams['interviews']);
+        $withSoas = $withEval && !empty($exportParams['soas']);
+        $withRecords = $withEval && !empty($exportParams['records']);
         $withLibrary = !empty($exportParams['assetsLibrary']);
+        $withKnowledgeBase = !empty($exportParams['knowledgeBase']);
 
         return [
             'type' => 'anr',
             'monarc_version' => $this->configService->getAppVersion()['appVersion'],
-            'export_datetime' => (new \DateTime())->format('Y-m-d H:i:s'),
-            'with_eval' => $withEval,
-            'with_controls' => $withControls,
-            'with_recommendations' => $withRecommendations,
-            'with_library' => $withLibrary,
-            'with_method_steps' => $withMethodSteps,
-            'with_interviews' => $withInterviews,
-            'with_soas' => $withSoas,
-            'with_records' => $withRecords,
-            'knowledgeBase' => $this->prepareKnowledgeBaseData($anr, $withEval, $withControls, $withRecommendations),
-            'instances' => $this->prepareInstancesData($anr, !$withLibrary, $withEval, $withControls, $withRecommendations),
+            'exportDatetime' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'withEval' => $withEval,
+            'withControls' => $withControls,
+            'withRecommendations' => $withRecommendations,
+            'withMethodSteps' => $withMethodSteps,
+            'withInterviews' => $withInterviews,
+            'withSoas' => $withSoas,
+            'withRecords' => $withRecords,
+            'withLibrary' => $withLibrary,
+            'withKnowledge' => $withKnowledgeBase,
+            'languageCode' => $anr->getLanguageCode(),
+            'languageIndex' => $anr->getLanguage(),
+            'knowledgeBase' => $withKnowledgeBase
+                ? $this->prepareKnowledgeBaseData($anr, $withEval, $withControls, $withRecommendations)
+                : [],
             'library' => $withLibrary ? $this->prepareLibraryData($anr) : [],
+            'instances' => $this
+                ->prepareInstancesData($anr, !$withLibrary, $withEval, $withControls, $withRecommendations),
             'anrInstanceMetadataFields' => $this->prepareAnrInstanceMetadataFieldsData($anr),
             'scales' => $withEval ? $this->prepareScalesData($anr) : [],
             'operationalRiskScales' => $withEval ? $this->prepareOperationalRiskScalesData($anr) : [],
@@ -117,7 +124,7 @@ class AnrExportService
         $result = [];
         /** @var Entity\AnrInstanceMetadataField $anrInstanceMetadata */
         foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $anrInstanceMetadata) {
-            $result[$anrInstanceMetadata->getId()] = ['label' => $anrInstanceMetadata->getLabel()];
+            $result[] = ['label' => $anrInstanceMetadata->getLabel()];
         }
 
         return $result;
@@ -133,8 +140,8 @@ class AnrExportService
             'assets' => $this->prepareAssetsData($anr),
             'threats' => $this->prepareThreatsData($anr, $withEval),
             'vulnerabilities' => $this->prepareVulnerabilitiesData($anr),
-            'informationRisks' => $this->prepareInformationRisksData($anr, $withEval),
             'referentials' => $withControls ? $this->prepareReferentialsData($anr) : [],
+            'informationRisks' => $this->prepareInformationRisksData($anr, $withEval),
             'tags' => $this->prepareTagsData($anr),
             'operationalRisks' => $this->prepareOperationalRisksData($anr),
             'recommendationSets' => $withRecommendations ? $this->prepareRecommendationSetsData($anr) : [],
@@ -147,7 +154,7 @@ class AnrExportService
         $languageIndex = $anr->getLanguage();
         /** @var Entity\Asset $asset */
         foreach ($this->assetTable->findByAnr($anr) as $asset) {
-            $result[$asset->getUuid()] = $this->prepareAssetData($asset, $languageIndex, false);
+            $result[] = $this->prepareAssetData($asset, $languageIndex);
         }
 
         return $result;
@@ -159,7 +166,7 @@ class AnrExportService
         $languageIndex = $anr->getLanguage();
         /** @var Entity\Threat $threat */
         foreach ($this->threatTable->findByAnr($anr) as $threat) {
-            $result[$threat->getUuid()] = $this->prepareThreatData($threat, $languageIndex, $withEval);
+            $result[] = $this->prepareThreatData($threat, $languageIndex, $withEval);
         }
 
         return $result;
@@ -171,7 +178,7 @@ class AnrExportService
         $languageIndex = $anr->getLanguage();
         /** @var Entity\Vulnerability $vulnerability */
         foreach ($this->vulnerabilityTable->findByAnr($anr) as $vulnerability) {
-            $result[$vulnerability->getUuid()] = $this->prepareVulnerabilityData($vulnerability, $languageIndex);
+            $result[] = $this->prepareVulnerabilityData($vulnerability, $languageIndex);
         }
 
         return $result;
@@ -182,7 +189,7 @@ class AnrExportService
         $result = [];
         /** @var Entity\Amv $amv */
         foreach ($this->amvTable->findByAnr($anr) as $amv) {
-            $result[$amv->getUuid()] = $this->prepareInformationRiskData($amv);
+            $result[] = $this->prepareInformationRiskData($amv);
         }
 
         return $result;
@@ -194,8 +201,8 @@ class AnrExportService
         $languageIndex = $anr->getLanguage();
         /** @var Entity\RolfTag $rolfTag */
         foreach ($this->rolfTagTable->findByAnr($anr) as $rolfTag) {
-            $rolfTagId = $rolfTag->getId();
-            $result[$rolfTagId] = [
+            $result[] = [
+                'id' => $rolfTag->getId(),
                 'code' => $rolfTag->getCode(),
                 'label' => $rolfTag->getLabel($languageIndex),
             ];
@@ -210,7 +217,7 @@ class AnrExportService
         $languageIndex = $anr->getLanguage();
         /** @var Entity\RolfRisk $rolfRisk */
         foreach ($this->rolfRiskTable->findByAnr($anr) as $rolfRisk) {
-            $result[$rolfRisk->getId()] = $this->prepareOperationalRiskData($rolfRisk, $languageIndex);
+            $result[] = $this->prepareOperationalRiskData($rolfRisk, $languageIndex);
         }
 
         return $result;
@@ -225,12 +232,11 @@ class AnrExportService
             $measuresData = [];
             foreach ($referential->getMeasures() as $measure) {
                 /* Include linked measures to the prepared result. */
-                $measuresData[$measure->getUuid()] = $this->prepareMeasureData($measure, $languageIndex, true);
+                $measuresData[] = $this->prepareMeasureData($measure, $languageIndex, true);
             }
 
-            $referentialUuid = $referential->getUuid();
-            $result[$referentialUuid] = [
-                'uuid' => $referentialUuid,
+            $result[] = [
+                'uuid' => $referential->getUuid(),
                 'label' => $referential->getLabel($languageIndex),
                 'measures' => $measuresData,
             ];
@@ -246,10 +252,11 @@ class AnrExportService
         foreach ($this->recommendationSetTable->findByAnr($anr) as $recommendationSet) {
             $recommendationsData = [];
             foreach ($recommendationSet->getRecommendations() as $recommendation) {
-                $recommendationsData[$recommendation->getUuid()] = $this->prepareRecommendationData($recommendation);
+                $recommendationsData[] = $this->prepareRecommendationData($recommendation, false);
             }
             if (!empty($recommendationsData)) {
-                $result[$recommendationSet->getUuid()] = [
+                $result[] = [
+                    'uuid' => $recommendationSet->getUuid(),
                     'label' => $recommendationSet->getLabel(),
                     'recommendations' => $recommendationsData,
                 ];
@@ -271,7 +278,7 @@ class AnrExportService
         $result = [];
         $languageIndex = $anr->getLanguage();
         foreach ($this->objectCategoryTable->findRootCategoriesByAnrOrderedByPosition($anr) as $objectCategory) {
-            $result[$objectCategory->getId()] = $this->prepareCategoryData($objectCategory, $languageIndex, true);
+            $result[] = $this->prepareCategoryData($objectCategory, $languageIndex, true);
         }
 
         return $result;
@@ -281,7 +288,7 @@ class AnrExportService
     {
         $result = [];
         foreach ($objectCategory->getChildren() as $childObjectCategory) {
-            $result[$childObjectCategory->getId()] = $this
+            $result[] = $this
                 ->prepareCategoryData($childObjectCategory, $languageIndex, false);
         }
 
@@ -292,7 +299,7 @@ class AnrExportService
     {
         $result = [];
         foreach ($objectCategory->getObjects() as $object) {
-            $result[$object->getUuid()] = $this->prepareObjectData($object, $languageIndex, false);
+            $result[] = $this->prepareObjectData($object, $languageIndex, false);
         }
 
         return $result;
@@ -319,7 +326,7 @@ class AnrExportService
         $languageIndex = $anr->getLanguage();
         /** @var Entity\Instance $instance */
         foreach ($this->instanceTable->findRootInstancesByAnrAndOrderByPosition($anr) as $instance) {
-            $result[$instance->getId()] = $this->prepareInstanceData(
+            $result[] = $this->prepareInstanceData(
                 $instance,
                 $languageIndex,
                 $includeObjectDataInTheResult,
@@ -362,7 +369,7 @@ class AnrExportService
         /** @var Entity\SoaScaleComment $soaScaleComment */
         foreach ($this->soaScaleCommentTable->findByAnrOrderByIndex($anr) as $soaScaleComment) {
             if (!$soaScaleComment->isHidden()) {
-                $result[$soaScaleComment->getId()] = [
+                $result[] = [
                     'scaleIndex' => $soaScaleComment->getScaleIndex(),
                     'isHidden' => $soaScaleComment->isHidden(),
                     'colour' => $soaScaleComment->getColour(),
@@ -500,8 +507,7 @@ class AnrExportService
         $result = [];
         $filename = '';
         foreach ($this->recordTable->findByAnr($anr) as $record) {
-            $recordId = $record->getId();
-            $result[$recordId] = $this->anrRecordService->generateExportArray($recordId, $filename);
+            $result[] = $this->anrRecordService->generateExportArray($record->getId(), $filename);
         }
 
         return $result;

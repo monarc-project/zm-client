@@ -21,7 +21,7 @@ class User extends UserSuperClass
     /**
      * @var Anr|null
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="current_anr_id", referencedColumnName="id", nullable=true)
      * })

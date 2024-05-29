@@ -34,7 +34,7 @@ class UserAnr
     /**
      * @var User
      *
-     * @ORM\ManyToOne(targetEntity="User", cascade={"persist"}, inversedBy="userAnrs")
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="userAnrs")
      * @ORM\JoinColumn(nullable=false)
      */
     protected $user;
@@ -42,7 +42,7 @@ class UserAnr
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })

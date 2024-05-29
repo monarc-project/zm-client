@@ -33,7 +33,7 @@ class RecommendationRisk
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
@@ -43,7 +43,7 @@ class RecommendationRisk
     /**
      * @var Recommendation
      *
-     * @ORM\ManyToOne(targetEntity="Recommendation", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Recommendation", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -54,7 +54,7 @@ class RecommendationRisk
     /**
      * @var InstanceRisk
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRisk", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRisk")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_id", referencedColumnName="id", nullable=true)
      * })
@@ -64,7 +64,7 @@ class RecommendationRisk
     /**
      * @var InstanceRiskOp
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOp", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOp")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", nullable=true)
      * })
@@ -74,7 +74,7 @@ class RecommendationRisk
     /**
      * @var Instance
      *
-     * @ORM\ManyToOne(targetEntity="Instance", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Instance")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
      * })
@@ -84,7 +84,7 @@ class RecommendationRisk
     /**
      * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcObject")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_global_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -95,7 +95,7 @@ class RecommendationRisk
     /**
      * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Asset")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -106,7 +106,7 @@ class RecommendationRisk
     /**
      * @var Threat
      *
-     * @ORM\ManyToOne(targetEntity="Threat", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Threat")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -117,7 +117,7 @@ class RecommendationRisk
     /**
      * @var Vulnerability
      *
-     * @ORM\ManyToOne(targetEntity="Vulnerability", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Vulnerability")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

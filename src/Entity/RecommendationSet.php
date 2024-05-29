@@ -39,7 +39,7 @@ class RecommendationSet
      /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
@@ -57,7 +57,7 @@ class RecommendationSet
     /**
      * @var Recommendation[]|ArrayCollection
      *
-     * @ORM\OneToMany(targetEntity="Recommendation", mappedBy="recommendationSet", cascade={"persist"})
+     * @ORM\OneToMany(targetEntity="Recommendation", mappedBy="recommendationSet")
      */
     protected $recommendations;
 

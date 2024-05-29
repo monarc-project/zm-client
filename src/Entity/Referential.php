@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ReferentialSuperClass;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @ORM\Table(name="referentials", indexes={@ORM\Index(name="anr", columns={"anr_id"})})
@@ -16,6 +17,14 @@ use Monarc\Core\Entity\ReferentialSuperClass;
  */
 class Referential extends ReferentialSuperClass
 {
+    /**
+     * @var UuidInterface|string
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     * @ORM\Id
+     */
+    protected $uuid;
+
     /**
      * @var Anr
      *

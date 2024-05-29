@@ -78,7 +78,7 @@ class Recommendation implements PositionedEntityInterface, PropertyStateEntityIn
     /**
      * @var ArrayCollection|RecommendationRisk[]
      *
-     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="recommendation", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="recommendation", cascade={"remove"})
      */
     protected $recommendationRisks;
 

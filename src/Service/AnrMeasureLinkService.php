@@ -11,29 +11,28 @@ use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table;
 
-class AnrMeasureMeasureService
+class AnrMeasureLinkService
 {
-    public function __construct(
-        private Table\MeasureMeasureTable $measureMeasureTable,
-        private Table\MeasureTable $measureTable
-    ) {
+    public function __construct(private Table\MeasureTable $measureTable) {
     }
 
     public function getList(Entity\Anr $anr): array
     {
         $result = [];
-        /** @var Entity\MeasureMeasure $measureMeasure */
-        foreach ($this->measureMeasureTable->findByAnr($anr) as $measureMeasure) {
-            $result[] = [
-                'masterMeasure' => array_merge([
-                    'uuid' => $measureMeasure->getMasterMeasure()->getUuid(),
-                    'code' => $measureMeasure->getMasterMeasure()->getCode(),
-                ], $measureMeasure->getMasterMeasure()->getLabels()),
-                'linkedMeasure' => array_merge([
-                    'uuid' => $measureMeasure->getLinkedMeasure()->getUuid(),
-                    'code' => $measureMeasure->getLinkedMeasure()->getCode(),
-                ], $measureMeasure->getLinkedMeasure()->getLabels()),
-            ];
+        /** @var Entity\Measure $masterMeasure */
+        foreach ($this->measureTable->findByAnr($anr) as $masterMeasure) {
+            foreach ($masterMeasure->getLinkedMeasures() as $linkedMeasure) {
+                $result[] = [
+                    'masterMeasure' => array_merge([
+                        'uuid' => $masterMeasure->getUuid(),
+                        'code' => $masterMeasure->getCode(),
+                    ], $masterMeasure->getLabels()),
+                    'linkedMeasure' => array_merge([
+                        'uuid' => $linkedMeasure->getUuid(),
+                        'code' => $linkedMeasure->getCode(),
+                    ], $linkedMeasure->getLabels()),
+                ];
+            }
         }
 
         return $result;
@@ -65,7 +64,7 @@ class AnrMeasureMeasureService
         foreach ($data as $rowData) {
             $createdIds[] = $this->create($anr, $rowData, false)->getUuid();
         }
-        $this->measureMeasureTable->flush();
+        $this->measureTable->flush();
 
         return $createdIds;
     }

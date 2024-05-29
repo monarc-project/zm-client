@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ObjectSuperClass;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @ORM\Table(name="objects", indexes={
@@ -22,6 +23,14 @@ use Monarc\Core\Entity\ObjectSuperClass;
  */
 class MonarcObject extends ObjectSuperClass
 {
+    /**
+     * @var UuidInterface|string
+     *
+     * @ORM\Column(name="uuid", type="uuid", nullable=false)
+     * @ORM\Id
+     */
+    protected $uuid;
+
     /**
      * @var Anr
      *
@@ -36,7 +45,7 @@ class MonarcObject extends ObjectSuperClass
     /**
      * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Asset")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

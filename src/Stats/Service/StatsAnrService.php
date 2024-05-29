@@ -20,7 +20,7 @@ use Monarc\FrontOffice\Entity\SoaCategory;
 use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Entity\UserRole;
 use Monarc\FrontOffice\Model\Table\SoaTable;
-use Monarc\FrontOffice\Model\Table\ReferentialTable;
+use Monarc\FrontOffice\Table\ReferentialTable;
 use Monarc\FrontOffice\Table\ScaleTable;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\InstanceRiskOpTable;

@@ -459,12 +459,16 @@ class AnrInstanceRiskService
         Entity\InstanceRisk $fromInstanceRisk,
         Entity\InstanceRisk $newInstanceRisk
     ): void {
+        /** @var Entity\Anr $anr */
+        $anr = $newInstanceRisk->getAnr();
+        /** @var Entity\Instance $instance */
+        $instance = $newInstanceRisk->getInstance();
         foreach ($fromInstanceRisk->getRecommendationRisks() as $recommendationRiskToDuplicate) {
             $newRecommendationRisk = (new Entity\RecommendationRisk())
-                ->setAnr($newInstanceRisk->getAnr())
+                ->setAnr($anr)
                 ->setCommentAfter($recommendationRiskToDuplicate->getCommentAfter())
                 ->setRecommendation($recommendationRiskToDuplicate->getRecommendation())
-                ->setInstance($newInstanceRisk->getInstance())
+                ->setInstance($instance)
                 ->setGlobalObject($recommendationRiskToDuplicate->getGlobalObject())
                 ->setAsset($recommendationRiskToDuplicate->getAsset())
                 ->setThreat($recommendationRiskToDuplicate->getThreat())

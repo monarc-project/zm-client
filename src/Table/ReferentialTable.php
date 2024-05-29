@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\Referential;
 
 class ReferentialTable extends AbstractTable
@@ -16,5 +17,16 @@ class ReferentialTable extends AbstractTable
     public function __construct(EntityManager $entityManager, string $entityName = Referential::class)
     {
         parent::__construct($entityManager, $entityName);
+    }
+
+    public function findReferentialsUuidsWithMeasuresUuidsAndCodesByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('r')
+            ->innerJoin('r.measures', 'm')
+            ->select('r.uuid, m.uuid as measure_uuid, m.code as measure_code')
+            ->where('r.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getArrayResult();
     }
 }

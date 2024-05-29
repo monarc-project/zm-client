@@ -9,17 +9,17 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\Core\Validator\InputValidator\MeasureMeasure\PostMeasureMeasureDataInputValidator;
+use Monarc\Core\Validator\InputValidator\MeasureLink\PostMeasureLinkDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
-use Monarc\FrontOffice\Service\AnrMeasureMeasureService;
+use Monarc\FrontOffice\Service\AnrMeasureLinkService;
 
-class ApiAnrMeasuresMeasuresController extends AbstractRestfulControllerRequestHandler
+class ApiAnrMeasuresLinksController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
     public function __construct(
-        private AnrMeasureMeasureService $anrMeasureMeasureService,
-        private PostMeasureMeasureDataInputValidator $postMeasureMeasureDataInputValidator
+        private AnrMeasureLinkService $anrMeasureLinkService,
+        private PostMeasureLinkDataInputValidator $postMeasureLinkDataInputValidator
     ) {
     }
 
@@ -27,7 +27,7 @@ class ApiAnrMeasuresMeasuresController extends AbstractRestfulControllerRequestH
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-        $measuresLinksData = $this->anrMeasureMeasureService->getList($anr);
+        $measuresLinksData = $this->anrMeasureLinkService->getList($anr);
 
         return $this->getPreparedJsonResponse([
             'count' => \count($measuresLinksData),
@@ -38,17 +38,17 @@ class ApiAnrMeasuresMeasuresController extends AbstractRestfulControllerRequestH
     public function create($data)
     {
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postMeasureMeasureDataInputValidator, $data, $isBatchData);
+        $this->validatePostParams($this->postMeasureLinkDataInputValidator, $data, $isBatchData);
 
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
         if ($this->isBatchData($data)) {
-            $this->anrMeasureMeasureService->createList(
+            $this->anrMeasureLinkService->createList(
                 $anr,
-                $this->postMeasureMeasureDataInputValidator->getValidDataSets()
+                $this->postMeasureLinkDataInputValidator->getValidDataSets()
             );
         } else {
-            $this->anrMeasureMeasureService->create($anr, $this->postMeasureMeasureDataInputValidator->getValidData());
+            $this->anrMeasureLinkService->create($anr, $this->postMeasureLinkDataInputValidator->getValidData());
         }
 
         return $this->getSuccessfulJsonResponse();
@@ -59,13 +59,13 @@ class ApiAnrMeasuresMeasuresController extends AbstractRestfulControllerRequestH
         $masterMeasureUuid = $this->params()->fromQuery('masterMeasureUuid');
         $linkedMeasureUuid = $this->params()->fromQuery('linkedMeasureUuid');
         $this->validatePostParams(
-            $this->postMeasureMeasureDataInputValidator,
+            $this->postMeasureLinkDataInputValidator,
             compact('masterMeasureUuid', 'linkedMeasureUuid')
         );
 
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-        $this->anrMeasureMeasureService->delete($anr, $masterMeasureUuid, $linkedMeasureUuid);
+        $this->anrMeasureLinkService->delete($anr, $masterMeasureUuid, $linkedMeasureUuid);
 
         return $this->getSuccessfulJsonResponse();
     }

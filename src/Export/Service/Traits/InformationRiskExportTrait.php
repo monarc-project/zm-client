@@ -40,13 +40,13 @@ trait InformationRiskExportTrait
         $measuresData = [];
         if ($withControls) {
             foreach ($amv->getMeasures() as $measure) {
-                $measuresData[$measure->getUuid()] = $this->prepareMeasureData($measure, $languageIndex);
+                $measuresData[] = $this->prepareMeasureData($measure, $languageIndex);
             }
         }
 
         return [
             'uuid' => $amv->getUuid(),
-            'asset' => $this->prepareAssetData($asset, $languageIndex, false),
+            'asset' => $this->prepareAssetData($asset, $languageIndex),
             'threat' => $this->prepareThreatData($threat, $languageIndex, $withEval),
             'vulnerability' => $this->prepareVulnerabilityData($vulnerability, $languageIndex),
             'measures' => $measuresData,

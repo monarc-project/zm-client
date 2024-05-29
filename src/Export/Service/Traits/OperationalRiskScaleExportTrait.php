@@ -25,12 +25,13 @@ trait OperationalRiskScaleExportTrait
         foreach ($operationalRiskScale->getOperationalRiskScaleTypes() as $scaleType) {
             $scaleTypeComments = [];
             foreach ($scaleType->getOperationalRiskScaleComments() as $scaleTypeComment) {
-                $scaleTypeComments[$scaleTypeComment->getId()] = $this->prepareOperationalRiskScaleCommentData(
+                $scaleTypeComments[] = $this->prepareOperationalRiskScaleCommentData(
                     $scaleTypeComment
                 );
             }
 
-            $scaleTypes[$scaleType->getId()] = [
+            $scaleTypes[] = [
+                'id' => $scaleType->getId(),
                 'label' => $scaleType->getLabel(),
                 'isHidden' => $scaleType->isHidden(),
                 'operationalRiskScaleComments' => $scaleTypeComments,
@@ -58,6 +59,7 @@ trait OperationalRiskScaleExportTrait
     private function prepareOperationalRiskScaleCommentData(Entity\OperationalRiskScaleComment $scaleComment): array
     {
         return [
+            'id' => $scaleComment->getId(),
             'scaleIndex' => $scaleComment->getScaleIndex(),
             'scaleValue' => $scaleComment->getScaleValue(),
             'isHidden' => $scaleComment->isHidden(),

@@ -11,14 +11,12 @@ use Monarc\FrontOffice\Entity;
 
 trait RecommendationExportTrait
 {
-    private function prepareRecommendationData(Entity\Recommendation $recommendation): array
-    {
-        return [
+    private function prepareRecommendationData(
+        Entity\Recommendation $recommendation,
+        bool $includeRecommendationSetData = true
+    ): array {
+        $result = [
             'uuid' => $recommendation->getUuid(),
-            'recommendationSet' => [
-                'uuid' => $recommendation->getRecommendationSet()->getUuid(),
-                'lable' => $recommendation->getRecommendationSet()->getLabel(),
-            ],
             'code' => $recommendation->getCode(),
             'description' => $recommendation->getDescription(),
             'importance' => $recommendation->getImportance(),
@@ -26,7 +24,15 @@ trait RecommendationExportTrait
             'status' => $recommendation->getStatus(),
             'responsible' => $recommendation->getResponsible(),
             'duedate' => $recommendation->getDueDate()?->format('Y-m-d'),
-            'counterTreated' => $recommendation->getCode()
+            'counterTreated' => $recommendation->getCode(),
         ];
+        if ($includeRecommendationSetData) {
+            $result['recommendationSet'] = [
+                'uuid' => $recommendation->getRecommendationSet()->getUuid(),
+                'label' => $recommendation->getRecommendationSet()->getLabel(),
+            ];
+        }
+
+        return $result;
     }
 }

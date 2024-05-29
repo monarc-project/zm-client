@@ -18,8 +18,11 @@ trait MeasureExportTrait
         'label' => "string",
         'referential' => "array",
         'category' => "array|null"
-    ])] private function prepareMeasureData(Entity\Measure $measure, int $languageIndex, bool $includeLinks = false): array
-    {
+    ])] private function prepareMeasureData(
+        Entity\Measure $measure,
+        int $languageIndex,
+        bool $includeLinks = false
+    ): array {
         $result = [
             'uuid' => $measure->getUuid(),
             'code' => $measure->getCode(),
@@ -28,19 +31,17 @@ trait MeasureExportTrait
                 'uuid' => $measure->getReferential()->getUuid(),
                 'label' => $measure->getReferential()->getLabel($languageIndex)
             ],
-            'category' => $measure->getCategory() !== null ? [
-                'id' => $measure->getCategory()->getId(),
-                'status' => $measure->getCategory()->getStatus(),
+            'category' => $measure->getCategory() === null ? null : [
                 'label' => $measure->getCategory()->getLabel($languageIndex),
-            ] : null,
+            ],
         ];
 
         if ($includeLinks) {
             foreach ($measure->getLinkedMeasures() as $linkedMeasure) {
-                $result['linkedMeasures'][$linkedMeasure->getUuid()] = $this->prepareMeasureData(
-                    $linkedMeasure,
-                    $languageIndex
-                );
+                $result['linkedMeasures'][] = [
+                    'uuid' => $linkedMeasure->getUuid(),
+                    'referential' => ['uuid' => $linkedMeasure->getReferential()->getUuid()],
+                ];
             }
         }
 

@@ -34,7 +34,7 @@ class RecommendationHistory
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=False)
      * })
@@ -44,7 +44,7 @@ class RecommendationHistory
     /**
      * @var InstanceRisk
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRisk", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRisk")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_id", referencedColumnName="id", nullable=true)
      * })
@@ -54,7 +54,7 @@ class RecommendationHistory
     /**
      * @var InstanceRiskOp
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOp", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOp")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", nullable=true)
      * })

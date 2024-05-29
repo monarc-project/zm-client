@@ -114,6 +114,8 @@ class FixPositionsCleanupDb extends AbstractMigration
             $previousParentObjectId = $compositionObjectsData['father_id'];
             $previousAnrId = $compositionObjectsData['anr_id'];
         }
+        /* Add a unique key for the object composition. */
+        $this->table('objects_objects')->addIndex(['father_id', 'child_id', 'anr_id'], ['unique' => true])->update();
 
         /* Fix the objects categories positions. */
         $objectsCategoriesQuery = $this->query(
@@ -207,12 +209,21 @@ class FixPositionsCleanupDb extends AbstractMigration
             $this->execute('UPDATE measures SET soacategory_id = ' . $soaCategoryIds[$anrId]
                 . ' WHERE uuid = "' . $measureData['uuid'] . '" and anr_id = ' . $anrId);
         }
+
+        /* Replace UUID identifier in measures table to ID. */
+        $this->table('measures')
+            ->addColumn('id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
+            ->update();
+        $this->execute('SET @a = 0; UPDATE measures SET id = @a := @a + 1 ORDER BY anr_id;');
+        $this->table('measures')->changePrimaryKey(['id'])->addIndex(['uuid', 'anr_id'], ['unique' => true])->update();
+        $this->table('measures')->changeColumn('id', 'integer', ['identity' => true, 'signed' => false])->update();
+
         /* Correct MeasuresMeasures table structure. */
         $this->table('measures_measures')
             ->addColumn('id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
-            ->renameColumn('father_id', 'master_measure_id')
-            ->renameColumn('child_id', 'linked_measure_id')
-            ->dropForeignKey(['master_measure_id', 'linked_measure_id', 'anr_id'])
+            ->addColumn('master_measure_id', 'integer', ['signed' => false, 'after' => 'id'])
+            ->addColumn('linked_measure_id', 'integer', ['signed' => false, 'after' => 'master_measure_id'])
+            ->dropForeignKey(['father_id', 'child_id', 'anr_id'])
             ->removeColumn('creator')
             ->removeColumn('created_at')
             ->removeColumn('updater')
@@ -221,37 +232,76 @@ class FixPositionsCleanupDb extends AbstractMigration
         $this->execute('SET @a = 0; UPDATE measures_measures SET id = @a := @a + 1 ORDER BY anr_id;');
         $this->table('measures_measures')
             ->changePrimaryKey(['id'])
-            ->addIndex(['master_measure_id', 'linked_measure_id', 'anr_id'], ['unique' => true])
             ->update();
         $this->table('measures_measures')
             ->changeColumn('id', 'integer', ['identity' => true, 'signed' => false])
             ->update();
-        /* Remove unlinked measures links to measures. */
-        $this->execute('DELETE FROM measures_measures WHERE anr_id NOT IN (SELECT id FROM anrs);');
-        $voidMeasuresQuery = $this->query('
-            SELECT id FROM measures_measures WHERE CONCAT(master_measure_id, anr_id) NOT IN
-            (SELECT CONCAT(uuid, anr_id) FROM measures) OR CONCAT(linked_measure_id, anr_id)
-            NOT IN (SELECT CONCAT(uuid, anr_id) FROM measures)
-        ');
-        $voidMeasuresIds = [];
-        foreach ($voidMeasuresQuery->fetchAll() as $voidMeasureData) {
-            $voidMeasuresIds[] = $voidMeasureData['id'];
-        }
-        $this->execute('DELETE FROM measures_measures WHERE id IN (' . implode(',', $voidMeasuresIds) . ');');
+        /* Remove unlinked measures links with measures and update the new relation field. */
+        $this->execute('UPDATE measures_measures mm INNER JOIN measures m '
+                         . 'ON mm.father_id = m.`uuid` AND mm.anr_id = m.anr_id SET master_measure_id = m.id;');
+        $this->execute('UPDATE measures_measures mm INNER JOIN measures m '
+                        . 'ON mm.child_id = m.`uuid` AND mm.anr_id = m.anr_id SET linked_measure_id = m.id;');
+        $this->execute('DELETE FROM measures_measures WHERE master_measure_id IS NULL OR linked_measure_id IS NULL;');
         $this->table('measures_measures')
-            ->addForeignKey(['anr_id'], 'anrs', ['id'], ['delete' => 'CASCADE'])
-            ->addForeignKey(
-                ['master_measure_id', 'anr_id'],
-                'measures',
-                ['uuid', 'anr_id'],
-                ['delete' => 'CASCADE', 'update' => 'RESTRICT']
-            )->addForeignKey(
-                ['linked_measure_id', 'anr_id'],
-                'measures',
-                ['uuid', 'anr_id'],
-                ['delete' => 'CASCADE', 'update' => 'RESTRICT']
-            )->update();
-        $this->table('measures')->addForeignKey(['anr_id'], 'anrs', ['id'], ['delete' => 'CASCADE'])->update();
+            ->removeColumn('anr_id')
+            ->removeColumn('father_id')
+            ->removeColumn('child_id')
+            ->addForeignKey('master_measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
+            ->addForeignKey('linked_measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
+            ->addIndex(['master_measure_id', 'linked_measure_id'], ['unique' => true])
+            ->update();
+        /* Apply measures relation to soa. */
+        $this->table('soa')
+            ->renameColumn('measure_id', 'measure_uuid')
+            ->dropForeignKey(['measure_uuid', 'anr_id'])
+            ->update();
+        $this->table('soa')
+            ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
+            ->update();
+        $this->execute('UPDATE soa s INNER JOIN measures m '
+            . 'ON s.measure_uuid = m.`uuid` AND s.anr_id = m.anr_id SET s.measure_id = m.id;');
+        $this->table('soa')
+            ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
+            ->removeColumn('measure_uuid')
+            ->update();
+        /* Apply measures relation to measures_amvs. */
+        $this->table('measures_amvs')
+            ->removeColumn('anr_id2')
+            ->removeColumn('creator')
+            ->removeColumn('created_at')
+            ->removeColumn('updater')
+            ->removeColumn('updated_at')
+            ->renameColumn('measure_id', 'measure_uuid')
+            ->dropForeignKey(['measure_uuid', 'anr_id'])
+            ->update();
+        $this->table('measures_amvs')
+            ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
+            ->update();
+        $this->execute('UPDATE measures_amvs ma INNER JOIN measures m '
+            . 'ON ma.measure_uuid = m.`uuid` AND ma.anr_id = m.anr_id SET ma.measure_id = m.id;');
+        $this->table('measures_amvs')
+            ->changePrimaryKey(['measure_id', 'amv_id', 'anr_id'])
+            ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
+            ->update();
+        $this->table('measures_amvs')->removeColumn('measure_uuid')->update();
+        /* Apply measures relation to measures_rolf_risks. */
+        $this->table('measures_rolf_risks')
+            ->removeColumn('creator')
+            ->removeColumn('created_at')
+            ->removeColumn('updater')
+            ->removeColumn('updated_at')
+            ->renameColumn('measure_id', 'measure_uuid')
+            ->dropForeignKey(['measure_uuid', 'anr_id'])
+            ->update();
+        $this->table('measures_rolf_risks')
+            ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => 'id'])
+            ->update();
+        $this->execute('UPDATE measures_rolf_risks mr INNER JOIN measures m '
+            . 'ON mr.measure_uuid = m.`uuid` AND mr.anr_id = m.anr_id SET mr.measure_id = m.id;');
+        $this->table('measures_rolf_risks')
+            ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
+            ->removeColumn('measure_uuid')
+            ->update();
 
         /* Rename column of owner_id to risk_owner_id. */
         $this->table('instances_risks')->renameColumn('owner_id', 'risk_owner_id')->update();
@@ -385,7 +435,7 @@ class FixPositionsCleanupDb extends AbstractMigration
                 ' WHERE uuid = "' . $recSetData['uuid'] . '" AND anr_id = ' . (int)$recSetData['anr_id']);
         }
         /* Make anr_id and label unique. */
-        $this->table('recommandations_sets')->addIndex(['anr_id', 'label'], ['unique' => true]);
+        $this->table('recommandations_sets')->addIndex(['anr_id', 'label'], ['unique' => true])->update();
 
         $this->table('recommandations')
             ->removeColumn('token_import')
@@ -401,10 +451,10 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
 
         $this->table('objects_categories')
-            ->changeColumn('label1', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
-            ->changeColumn('label2', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
-            ->changeColumn('label3', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
-            ->changeColumn('label4', 'string', ['null' => false, 'default' => '', 'limit' => 2048])
+            ->changeColumn('label1', 'string', ['default' => '', 'limit' => 2048])
+            ->changeColumn('label2', 'string', ['default' => '', 'limit' => 2048])
+            ->changeColumn('label3', 'string', ['default' => '', 'limit' => 2048])
+            ->changeColumn('label4', 'string', ['default' => '', 'limit' => 2048])
             ->update();
 
         /* The unique relation is not correct as it should be possible to instantiate the same operational risk. */
@@ -445,7 +495,12 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->removeColumn('description3')
             ->removeColumn('description4')
             ->update();
-
+        $this->table('recommandations_sets')
+            ->removeColumn('label1')
+            ->removeColumn('label2')
+            ->removeColumn('label3')
+            ->removeColumn('label4')
+            ->update();
         $this->table('translations')->drop();
         */
     }

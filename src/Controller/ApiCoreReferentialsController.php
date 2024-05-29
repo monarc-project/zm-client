@@ -9,11 +9,14 @@ namespace Monarc\FrontOffice\Controller;
 
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\Referential\GetReferentialInputFormatter;
 use Monarc\Core\Service\ReferentialService;
 
 class ApiCoreReferentialsController extends AbstractRestfulController
 {
+    use ControllerRequestResponseHandlerTrait;
+
     public function __construct(
         private ReferentialService $referentialService,
         private GetReferentialInputFormatter $getReferentialInputFormatter

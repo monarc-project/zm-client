@@ -53,9 +53,9 @@ class AnrModelService
      */
     public function getAvailableLanguages(int $modelId): array
     {
-        $languages = array_keys($this->configService->getLanguageCodes());
+        $languageIndexes = [1, 2, 3, 4];
         $result = [];
-        foreach ($languages as $languageIndex) {
+        foreach ($languageIndexes as $languageIndex) {
             $result[$languageIndex] = true;
         }
 
@@ -96,7 +96,7 @@ class AnrModelService
         }
         /* Generic threats and themes validation. */
         foreach ($this->coreThreatTable->findByMode(CoreEntity\ThreatSuperClass::MODE_GENERIC) as $threat) {
-            foreach ($languages as $languageIndex) {
+            foreach ($languageIndexes as $languageIndex) {
                 if (empty($threat->getLabel($languageIndex))
                     || ($threat->getTheme() !== null
                         && empty($threat->getTheme()->getLabel($languageIndex))
@@ -117,7 +117,7 @@ class AnrModelService
                 $this->validateEntityLanguages($specificAsset, $result);
             }
             foreach ($model->getThreats() as $specificThreat) {
-                foreach ($languages as $languageIndex) {
+                foreach ($languageIndexes as $languageIndex) {
                     if (empty($specificThreat->getLabel($languageIndex))
                         || ($specificThreat->getTheme() !== null
                             && empty($specificThreat->getTheme()->getLabel($languageIndex))
@@ -135,7 +135,7 @@ class AnrModelService
         /* Validates monarc objects. */
         /** @var CoreEntity\MonarcObject $monarcObject */
         foreach ($model->getAnr() ? $model->getAnr()->getObjects() : [] as $monarcObject) {
-            foreach ($languages as $languageIndex) {
+            foreach ($languageIndexes as $languageIndex) {
                 if (empty($monarcObject->getLabel($languageIndex))
                     || empty($monarcObject->getName($languageIndex))
                     || ($monarcObject->getCategory() !== null

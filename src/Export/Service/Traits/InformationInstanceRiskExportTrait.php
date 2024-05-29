@@ -37,13 +37,14 @@ trait InformationInstanceRiskExportTrait
         if ($withRecommendations) {
             foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
                 $recommendation = $recommendationRisk->getRecommendation();
-                $recommendationsData[$recommendation->getUuid()] = array_merge(
+                $recommendationsData[] = array_merge(
                     $this->prepareRecommendationData($recommendation),
                     ['commentAfter' => $recommendationRisk->getCommentAfter()]);
             }
         }
 
         return [
+            'id' => $instanceRisk->getId(),
             'informationRisk' => $informationRiskData,
             'threat' => $this->prepareThreatData($threat, $languageIndex, $withEval),
             'vulnerability' => $this->prepareVulnerabilityData($vulnerability, $languageIndex),
@@ -55,8 +56,8 @@ trait InformationInstanceRiskExportTrait
             'vulnerabilityRate' => $withEval ? $instanceRisk->getVulnerabilityRate() : -1,
             'kindOfMeasure' => $withEval ? $instanceRisk->getKindOfMeasure() : InstanceRiskSuperClass::KIND_NOT_SET,
             'reductionAmount' => $withEval ? $instanceRisk->getReductionAmount() : 0,
-            'comment' => $withEval && $withControls ? $instanceRisk->getComment() : '',
-            'commentAfter' => $withEval && $withControls ? $instanceRisk->getCommentAfter() : '',
+            'comment' => $withControls ? $instanceRisk->getComment() : '',
+            'commentAfter' => $withControls ? $instanceRisk->getCommentAfter() : '',
             'cacheMaxRisk' => $withEval ? $instanceRisk->getCacheMaxRisk() : -1,
             'cacheTargetedRisk' => $withEval ? $instanceRisk->getCacheTargetedRisk() : -1,
             'context' => $withEval ? $instanceRisk->getContext() : '',

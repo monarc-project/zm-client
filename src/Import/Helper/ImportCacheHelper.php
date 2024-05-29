@@ -7,43 +7,25 @@
 
 namespace Monarc\FrontOffice\Import\Helper;
 
-use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Table;
-
 class ImportCacheHelper
 {
     private array $arrayCache = [];
 
-    public function __construct(private Table\ThemeTable $themeTable, private Table\SoaCategoryTable $soaCategoryTable)
+    public function isCacheKeySet(string $cacheKey): bool
     {
+        return isset($this->arrayCache[$cacheKey]);
     }
 
-    public function prepareThemesCacheData(Entity\Anr $anr): void
+    public function isItemInArrayCache(string $cacheKey, $itemKey): bool
     {
-        if (!isset($this->arrayCache['themes_by_labels'])) {
-            /** @var Entity\Theme $theme */
-            foreach ($this->themeTable->findByAnr($anr) as $theme) {
-                $this->addItemToArrayCache('themes_by_labels', $theme, $theme->getLabel($anr->getLanguage()));
-            }
-        }
+        return isset($this->arrayCache[$cacheKey][$itemKey]);
     }
 
-    public function prepareSoaCategoriesCacheData(Entity\Anr $anr): void
-    {
-        if (!isset($this->arrayCache['soa_categories_by_ref_and_label'])) {
-            /** @var Entity\SoaCategory $soaCategory */
-            foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
-                $this->addItemToArrayCache(
-                    'soa_categories_by_ref_and_label',
-                    $soaCategory,
-                    $soaCategory->getReferential()->getUuid() . '_' . $soaCategory->getLabel($anr->getLanguage())
-                );
-            }
-        }
-    }
-
-    public function addItemToArrayCache(string $cacheKey, $value, $itemKey = null): void
-    {
+    public function addItemToArrayCache(
+        string $cacheKey,
+        $value,
+        $itemKey = null
+    ): void {
         if ($itemKey === null) {
             $this->arrayCache[$cacheKey][] = $value;
         } else {
@@ -52,7 +34,7 @@ class ImportCacheHelper
     }
 
     /**
-     * @return mixed
+     * @return array|null|mixed
      */
     public function getItemFromArrayCache(string $cacheKey, $itemKey = null)
     {

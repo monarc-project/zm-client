@@ -59,14 +59,14 @@ class Anr extends AnrSuperClass
     /**
      * @var ArrayCollection|Snapshot[]
      *
-     * @ORM\OneToMany(targetEntity="Snapshot", mappedBy="anrReference", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="Snapshot", mappedBy="anrReference", cascade={"remove"})
      */
     protected $referencedSnapshots;
 
     /**
      * @var ArrayCollection|RecommendationSet[]
      *
-     * @ORM\OneToMany(targetEntity="RecommendationSet", mappedBy="anr", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="RecommendationSet", mappedBy="anr", cascade={"remove"})
      */
     protected $recommendationSets;
 
@@ -129,14 +129,14 @@ class Anr extends AnrSuperClass
     /**
      * @var Referential[]|ArrayCollection
      *
-     * @ORM\OneToMany(targetEntity="Referential", mappedBy="anr", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="Referential", mappedBy="anr", cascade={"remove"})
      */
     protected $referentials;
 
     /**
      * @var UserAnr[]|ArrayCollection
      *
-     * @ORM\OneToMany(targetEntity="UserAnr", mappedBy="anr", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="UserAnr", mappedBy="anr", cascade={"remove"})
      */
     protected $usersAnrsPermissions;
 
@@ -158,31 +158,31 @@ class Anr extends AnrSuperClass
      *
      * @return Anr
      */
-    public static function constructFromObjectAndData(AnrSuperClass $anr, array $data): AnrSuperClass
+    public static function constructFromObjectAndData(AnrSuperClass $sourceAnr, array $data): AnrSuperClass
     {
         /** @var Anr $newAnr */
-        $newAnr = parent::constructFromObject($anr);
+        $newAnr = parent::constructFromObject($sourceAnr);
 
-        if ($anr instanceof self) {
+        if ($sourceAnr instanceof self) {
             /* Duplication of a FrontOffice analysis, creation of a snapshot or restoring it.
              * For snapshots we use tha same label and description (label [SNAP] prefix will be added later). */
-            $newAnr->setLabel($data['label' . $anr->getLanguage()] ?? $anr->getLabel())
-                ->setDescription($data['description' . $anr->getLanguage()] ?? $anr->getDescription())
-                ->setLanguage($anr->getLanguage())
-                ->setLanguageCode($anr->getLanguageCode())
-                ->setIsVisibleOnDashboard((int)$anr->isVisibleOnDashboard())
-                ->setIsStatsCollected((int)$anr->isStatsCollected())
-                ->setModelId($anr->getModelId());
-        } elseif ($anr instanceof AnrCore) {
+            $newAnr->setLabel($data['label'] ?? $sourceAnr->getLabel())
+                ->setDescription($data['description'] ?? $sourceAnr->getDescription())
+                ->setLanguage($sourceAnr->getLanguage())
+                ->setLanguageCode($sourceAnr->getLanguageCode())
+                ->setIsVisibleOnDashboard((int)$sourceAnr->isVisibleOnDashboard())
+                ->setIsStatsCollected((int)$sourceAnr->isStatsCollected())
+                ->setModelId($sourceAnr->getModelId());
+        } elseif ($sourceAnr instanceof AnrCore) {
             /* Creation of an analysis based on a model. */
             $languageIndex = (int)($data['language'] ?? 1);
-            $newAnr->setLabel((string)$data['label' . $languageIndex])
-                ->setDescription((string)$data['description' . $languageIndex])
+            $newAnr->setLabel((string)$data['label'])
+                ->setDescription((string)$data['description'])
                 ->setLanguage($languageIndex)
                 ->setLanguageCode($data['languageCode'] ?? 'fr')
-                ->setModelId($anr->getModel()->getId())
-                ->setCacheModelShowRolfBrut($anr->getModel()->showRolfBrut())
-                ->setCacheModelAreScalesUpdatable($anr->getModel()->areScalesUpdatable());
+                ->setModelId($sourceAnr->getModel()->getId())
+                ->setCacheModelShowRolfBrut($sourceAnr->getModel()->showRolfBrut())
+                ->setCacheModelAreScalesUpdatable($sourceAnr->getModel()->areScalesUpdatable());
         } else {
             throw new \LogicException('The analysis can not be created due to the logic error.');
         }

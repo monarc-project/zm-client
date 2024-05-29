@@ -60,6 +60,16 @@ class AnrMeasureService
         /** @var Entity\SoaCategory $soaCategory */
         $soaCategory = $this->soaCategoryTable->findByIdAndAnr($data['categoryId'], $anr);
 
+        return $this->createMeasureObject($anr, $referential, $soaCategory, $data, $saveInDb);
+    }
+
+    public function createMeasureObject(
+        Entity\Anr $anr,
+        Entity\Referential $referential,
+        ?Entity\SoaCategory $soaCategory,
+        array $data,
+        bool $saveInDb = true
+    ): Entity\Measure {
         /** @var Entity\Measure $measure */
         $measure = (new Entity\Measure())
             ->setAnr($anr)
@@ -141,8 +151,10 @@ class AnrMeasureService
     {
         $linkedMeasures = [];
         if ($includeLinks) {
+            /** @var Entity\Measure $linkedMeasure */
             foreach ($measure->getLinkedMeasures() as $linkedMeasure) {
                 $linkedMeasures[] = array_merge([
+                    'id' => $linkedMeasure->getId(),
                     'uuid' => $linkedMeasure->getUuid(),
                     'code' => $linkedMeasure->getCode(),
                 ], $linkedMeasure->getLabels());
@@ -150,6 +162,7 @@ class AnrMeasureService
         }
 
         return array_merge([
+            'id' => $measure->getId(),
             'uuid' => $measure->getUuid(),
             'referential' => array_merge([
                 'uuid' => $measure->getReferential()->getUuid(),

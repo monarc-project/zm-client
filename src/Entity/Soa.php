@@ -31,7 +31,7 @@ class Soa extends AbstractEntity
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
@@ -41,11 +41,8 @@ class Soa extends AbstractEntity
     /**
      * @var Measure
      *
-     * @ORM\OneToOne(targetEntity="Measure", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="measure_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true),
-     * })
+     * @ORM\OneToOne(targetEntity="Measure")
+     * @ORM\JoinColumns({@ORM\JoinColumn(name="measure_id", referencedColumnName="id", nullable=true)})
      */
     protected $measure;
 
@@ -122,7 +119,7 @@ class Soa extends AbstractEntity
     /**
      * @var SoaScaleComment
      *
-     * @ORM\ManyToOne(targetEntity="SoaScaleComment", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="SoaScaleComment")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="soa_scale_comment_id", referencedColumnName="id", nullable=true)
      * })

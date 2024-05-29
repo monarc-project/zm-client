@@ -23,19 +23,9 @@ use Monarc\Core\Entity\InstanceRiskOpSuperClass;
 class InstanceRiskOp extends InstanceRiskOpSuperClass
 {
     /**
-     * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr", cascade={"persist"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
-     */
-    protected $anr;
-
-    /**
      * @var Object
      *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MonarcObject")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -46,7 +36,7 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     /**
      * @var RolfRisk
      *
-     * @ORM\ManyToOne(targetEntity="RolfRisk", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="RolfRisk")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id", nullable=true)
      * })
@@ -56,14 +46,14 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     /**
      * @var ArrayCollection|RecommendationRisk[]
      *
-     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="instanceRiskOp", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="instanceRiskOp", cascade={"remove"})
      */
     protected $recommendationRisks;
 
     /**
      * @var InstanceRiskOwner|null
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="risk_owner_id", referencedColumnName="id", nullable=true)
      * })
@@ -84,14 +74,17 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
         $this->recommendationRisks = new ArrayCollection();
     }
 
-    /**
-     * @param InstanceRiskOp $operationalInstanceRisk
-     */
     public static function constructFromObject(
-        InstanceRiskOpSuperClass $operationalInstanceRisk
+        InstanceRiskOpSuperClass $sourceOperationalInstanceRisk
     ): InstanceRiskOpSuperClass {
-        return parent::constructFromObject($operationalInstanceRisk)
-            ->setContext($operationalInstanceRisk->getContext());
+        /** @var InstanceRiskOp $operationalInstanceRisk */
+        $operationalInstanceRisk = parent::constructFromObject($sourceOperationalInstanceRisk);
+
+        if ($sourceOperationalInstanceRisk instanceof self) {
+            $operationalInstanceRisk->setContext($sourceOperationalInstanceRisk->getContext());
+        }
+
+        return $operationalInstanceRisk;
     }
 
     public function getRecommendationRisks()
