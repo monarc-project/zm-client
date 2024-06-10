@@ -49,41 +49,6 @@ class FixPositionsCleanupDb extends AbstractMigration
             $previousAnrId = $amvData['anr_id'];
         }
 
-        /* Fix the objects positions. */
-        $objectsQuery = $this->query(
-            'SELECT uuid, anr_id, object_category_id, position
-            FROM objects
-            ORDER BY anr_id, object_category_id, position'
-        );
-        $previousObjectCategoryId = null;
-        $previousAnrId = null;
-        $expectedObjectPosition = 1;
-        foreach ($objectsQuery->fetchAll() as $objectData) {
-            if ($previousObjectCategoryId === null) {
-                $previousObjectCategoryId = $objectData['object_category_id'];
-                $previousAnrId = $objectData['anr_id'];
-            }
-            if ($objectData['object_category_id'] !== $previousObjectCategoryId
-                || $previousAnrId !== $objectData['anr_id']
-            ) {
-                $expectedObjectPosition = 1;
-            }
-
-            if ($expectedObjectPosition !== $objectData['position']) {
-                $this->execute(
-                    sprintf(
-                        'UPDATE objects SET position = %d WHERE uuid = "%s"',
-                        $expectedObjectPosition,
-                        $objectData['uuid']
-                    )
-                );
-            }
-
-            $expectedObjectPosition++;
-            $previousObjectCategoryId = $objectData['object_category_id'];
-            $previousAnrId = $objectData['anr_id'];
-        }
-
         /* Fix the objects compositions positions. */
         $objectsQuery = $this->query(
             'SELECT id, anr_id, father_id, position FROM objects_objects ORDER BY anr_id, father_id, position'
@@ -183,6 +148,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->removeColumn('disponibility')
             ->removeColumn('token_import')
             ->removeColumn('original_name')
+            ->removeColumn('position')
             ->update();
         $this->table('instances_consequences')->removeColumn('object_id')->removeColumn('locally_touched')->update();
 
@@ -282,6 +248,12 @@ class FixPositionsCleanupDb extends AbstractMigration
         $this->table('measures_amvs')
             ->changePrimaryKey(['measure_id', 'amv_id', 'anr_id'])
             ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
+            ->addForeignKey(
+                ['amv_id', 'anr_id'],
+                'amvs',
+                ['uuid', 'anr_id'],
+                ['delete' => 'CASCADE', 'update' => 'RESTRICT']
+            )
             ->update();
         $this->table('measures_amvs')->removeColumn('measure_uuid')->update();
         /* Apply measures relation to measures_rolf_risks. */

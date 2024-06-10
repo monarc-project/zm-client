@@ -7,19 +7,17 @@
 
 namespace Monarc\FrontOffice\Import\Controller;
 
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Import\Service\ObjectImportService;
 
-class ApiAnrObjectsImportController extends AbstractRestfulController
+class ApiAnrObjectsImportController extends AbstractRestfulControllerRequestHandler
 {
-    private ObjectImportService $objectImportService;
+    use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(ObjectImportService $objectImportService)
+    public function __construct(private ObjectImportService $objectImportService)
     {
-        $this->anrObjectService = $anrObjectService;
-        $this->objectImportService = $objectImportService;
     }
 
     public function getList()
@@ -32,7 +30,7 @@ class ApiAnrObjectsImportController extends AbstractRestfulController
 
         $objects = $this->anrObjectService->getCommonObjects($anrId, $filter);
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'count' => \count($objects),
             'objects' => $objects,
         ]);
@@ -50,7 +48,7 @@ class ApiAnrObjectsImportController extends AbstractRestfulController
         $this->formatDependencies($object, ['asset', 'category', 'rolfTag']);
         unset($object['anrs']);
 
-        return new JsonModel($object);
+        return $this->getPreparedJsonResponse($object);
     }
 
     public function create($data)
@@ -68,8 +66,7 @@ class ApiAnrObjectsImportController extends AbstractRestfulController
 
         [$ids, $errors] = $this->objectImportService->importFromFile($anrId, $data);
 
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'id' => $ids,
             'errors' => $errors,
         ]);
@@ -88,8 +85,7 @@ class ApiAnrObjectsImportController extends AbstractRestfulController
             throw new Exception('An error occurred during the import of the object.', 412);
         }
 
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'id' => $monarcObject->getUuid(),
         ]);
     }

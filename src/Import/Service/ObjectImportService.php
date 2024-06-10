@@ -14,7 +14,6 @@ use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\SoaCategoryService;
 
@@ -26,15 +25,15 @@ class ObjectImportService
 
     private AssetImportService $assetImportService;
 
-    private DeprecatedTable\RolfTagTable $rolfTagTable;
+    private Table\RolfTagTable $rolfTagTable;
 
-    private DeprecatedTable\RolfRiskTable $rolfRiskTable;
+    private Table\RolfRiskTable $rolfRiskTable;
 
-    private DeprecatedTable\MeasureTable $measureTable;
+    private Table\MeasureTable $measureTable;
 
     private Table\ObjectObjectTable $objectObjectTable;
 
-    private DeprecatedTable\ReferentialTable $referentialTable;
+    private Table\ReferentialTable $referentialTable;
 
     private Table\ObjectCategoryTable $objectCategoryTable;
 
@@ -48,10 +47,10 @@ class ObjectImportService
         Table\MonarcObjectTable $monarcObjectTable,
         Table\ObjectObjectTable $objectObjectTable,
         AssetImportService $assetImportService,
-        DeprecatedTable\RolfTagTable $rolfTagTable,
-        DeprecatedTable\RolfRiskTable $rolfRiskTable,
-        DeprecatedTable\MeasureTable $measureTable,
-        DeprecatedTable\ReferentialTable $referentialTable,
+        Table\RolfTagTable $rolfTagTable,
+        Table\RolfRiskTable $rolfRiskTable,
+        Table\MeasureTable $measureTable,
+        Table\ReferentialTable $referentialTable,
         Table\ObjectCategoryTable $objectCategoryTable,
         ConnectedUserService $connectedUserService,
         ImportCacheHelper $importCacheHelper,
@@ -273,7 +272,7 @@ class ObjectImportService
                         $this->processMeasuresAndReferentialData($anr, $rolfRisk, $rolfRiskData['measures']);
                     }
 
-                    $this->rolfRiskTable->saveEntity($rolfRisk, false);
+                    $this->rolfRiskTable->save($rolfRisk, false);
 
                     /* The cache with IDs is required to link them with operational risks in InstanceImportService. */
                     $this->importCacheHelper->addItemToArrayCache('rolf_risks_by_old_ids', $rolfRisk, (int)$riskId);
@@ -283,7 +282,7 @@ class ObjectImportService
             }
         }
 
-        $this->rolfTagTable->saveEntity($rolfTag, false);
+        $this->rolfTagTable->save($rolfTag, false);
 
         $this->importCacheHelper->addItemToArrayCache('rolfTags', $rolfTag, $rolfTagData['code']);
 
@@ -343,12 +342,12 @@ class ObjectImportService
             /* Backward compatibility. Prior v2.10.3 measures data were not exported. */
             $measureUuid = $measureData['uuid'] ?? $measureData;
             $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
-                ?: $this->measureTable->findByAnrAndUuid($anr, $measureUuid);
+                ?: $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
 
             if ($measure === null && isset($measureData['referential'], $measureData['category'])) {
                 $referentialUuid = $measuresData['referential']['uuid'];
                 $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialUuid)
-                    ?: $this->referentialTable->findByAnrAndUuid($anr, $referentialUuid);
+                    ?: $this->referentialTable->findByUuidAndAnr($referentialUuid, $anr);
 
                 if ($referential === null) {
                     $referential = (new Entity\Referential())
@@ -357,7 +356,7 @@ class ObjectImportService
                         ->setCreator($this->connectedUser->getEmail())
                         ->setLabels([$labelKey => $measureData['referential'][$labelKey]]);
 
-                    $this->referentialTable->saveEntity($referential, false);
+                    $this->referentialTable->save($referential, false);
 
                     $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referentialUuid);
                 }
@@ -384,7 +383,7 @@ class ObjectImportService
             if ($measure !== null) {
                 $measure->addRolfRisk($rolfRisk);
 
-                $this->measureTable->saveEntity($measure, false);
+                $this->measureTable->save($measure, false);
             }
         }
     }

@@ -73,7 +73,7 @@ class RecommendationRiskTable extends AbstractTable
     /**
      * @return RecommendationRisk[]
      */
-    public function findAllLinkedByRecommendationGlobalObjectAndAmv(RecommendationRisk $recommendationRisk)
+    public function findAllLinkedByRecommendationGlobalObjectAndAmv(RecommendationRisk $recommendationRisk): array
     {
         return $this->getRepository()->createQueryBuilder('rr')
             ->innerJoin('rr.recommendation', 'r')

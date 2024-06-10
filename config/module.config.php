@@ -1571,15 +1571,23 @@ return [
             Service\SoaScaleCommentService::class => AutowireFactory::class,
             CronTask\Service\CronTaskService::class => AutowireFactory::class,
             /* Export services. */
-            Export\Service\AnrExportService::class => ReflectionBasedAbstractFactory::class,
-            Export\Service\AssetExportService::class => AutowireFactory::class,
+            Export\Service\AnrExportService::class => AutowireFactory::class,
             Export\Service\ObjectExportService::class => AutowireFactory::class,
-            Export\Service\SoaScaleCommentExportService::class => AutowireFactory::class,
-            Export\Service\OperationalRiskScalesExportService::class => AutowireFactory::class,
+            Export\Service\InstanceExportService::class => AutowireFactory::class,
             /* Import services. */
             Import\Service\ObjectImportService::class => AutowireFactory::class,
             Import\Service\AssetImportService::class => AutowireFactory::class,
             Import\Service\InstanceImportService::class => AutowireFactory::class,
+            Import\Processor\AssetImportProcessor::class => AutowireFactory::class,
+            Import\Processor\InformationRiskImportProcessor::class => AutowireFactory::class,
+            Import\Processor\ObjectCategoryImportProcessor::class => AutowireFactory::class,
+            Import\Processor\ObjectImportProcessor::class => AutowireFactory::class,
+            Import\Processor\OperationalRisksImportProcessor::class => AutowireFactory::class,
+            Import\Processor\RecommendationImportProcessor::class => AutowireFactory::class,
+            Import\Processor\ReferentialImportProcessor::class => AutowireFactory::class,
+            Import\Processor\RolfTagImportProcessor::class => AutowireFactory::class,
+            Import\Processor\ThreatImportProcessor::class => AutowireFactory::class,
+            Import\Processor\VulnerabilityImportProcessor::class => AutowireFactory::class,
 
             // Helpers
             Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
@@ -1684,10 +1692,8 @@ return [
             },
 
             // Commands
-            Import\Command\ImportAnalysesCommand::class => static function (
-                ContainerInterface $container,
-                $serviceName
-            ) {
+            Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container)
+            {
                 /** @var ConnectedUserService $connectedUserService */
                 $connectedUserService = $container->get(ConnectedUserService::class);
                 $connectedUserService->setConnectedUser(new Entity\User([
@@ -1711,7 +1717,9 @@ return [
         'lazy_services' => [
             'class_map' => [
                 Table\UserTokenTable::class => Table\UserTokenTable::class,
-                Service\AnrInstanceService::class => Service\AnrInstanceService::class
+                Service\AnrInstanceService::class => Service\AnrInstanceService::class,
+                Import\Processor\ObjectCategoryImportProcessor::class =>
+                    Import\Processor\ObjectCategoryImportProcessor::class,
             ],
             'proxies_target_dir' => $dataPath . '/LazyServices/Proxy',
             'write_proxy_files' => $env === 'production',

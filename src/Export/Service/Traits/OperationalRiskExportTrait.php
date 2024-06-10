@@ -24,12 +24,18 @@ trait OperationalRiskExportTrait
     ])] private function prepareOperationalRiskData(
         Entity\RolfRisk $rolfRisk,
         int $languageIndex,
-        bool $withControls = true
+        bool $withControls = true,
+        bool $includeCompleteRelationData = true
     ): array {
         $measuresData = [];
         if ($withControls) {
             foreach ($rolfRisk->getMeasures() as $measure) {
-                $measuresData[] = $this->prepareMeasureData($measure, $languageIndex);
+                $measuresData[] = $this->prepareMeasureData(
+                    $measure,
+                    $languageIndex,
+                    false,
+                    $includeCompleteRelationData
+                );
             }
         }
         $rolfTagsData = [];

@@ -12,8 +12,16 @@ use Monarc\FrontOffice\Entity;
 
 trait ThreatExportTrait
 {
-    #[Pure] private function prepareThreatData(Entity\Threat $threat, int $languageIndex, bool $withEval): array
-    {
+    #[Pure] private function prepareThreatData(
+        Entity\Threat $threat,
+        int $languageIndex,
+        bool $withEval,
+        bool $includeCompleteData = true
+    ): array {
+        if (!$includeCompleteData) {
+            return ['uuid' => $threat->getUuid()];
+        }
+
         return [
             'uuid' => $threat->getUuid(),
             'label' => $threat->getLabel($languageIndex),

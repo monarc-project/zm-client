@@ -1,45 +1,39 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Import\Controller;
 
-use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Helper\FileUploadHelperTrait;
 use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Entity\CronTask;
 use Monarc\FrontOffice\Table\AnrTable;
 
-class ApiAnrInstancesImportController extends AbstractRestfulController
+class ApiAnrInstancesImportController extends AbstractRestfulControllerRequestHandler
 {
+    use ControllerRequestResponseHandlerTrait;
     use FileUploadHelperTrait;
-
-    private InstanceImportService $instanceImportService;
-
-    private CronTaskService $cronTaskService;
-
-    private AnrTable $anrTable;
 
     private array $importConfig;
 
     public function __construct(
-        InstanceImportService $instanceImportService,
-        ConfigService $configService,
-        CronTaskService $cronTaskService,
-        AnrTable $anrTable
+        private InstanceImportService $instanceImportService,
+        private CronTaskService $cronTaskService,
+        private AnrTable $anrTable,
+        ConfigService $configService
     ) {
-        $this->instanceImportService = $instanceImportService;
         $this->importConfig = $configService->getConfigOption('import') ? : [];
-        $this->cronTaskService = $cronTaskService;
-        $this->anrTable = $anrTable;
     }
 
     /**
@@ -47,25 +41,22 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
      */
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $anr = $this->anrTable->findById($anrId);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'status' => $anr->getStatusName(),
             'messages' => $this->cronTaskService->getResultMessagesByNameWithParam(
                 CronTask::NAME_INSTANCE_IMPORT,
-                ['anrId' => $anrId]
+                ['anrId' => $anr->getId()]
             ),
         ]);
     }
 
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
         $files = $this->params()->fromFiles('file');
         if (empty($files)) {
             throw new Exception('File missing', 412);
@@ -73,7 +64,9 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
         $data['file'] = $files;
 
         if (!empty($this->importConfig['isBackgroundProcessActive'])) {
+            // TODO: move it to a service
             /* Upload file to process it later. */
+            $anrId = $anr->getId();
             $tmpFile = current($files);
             $fileName = $anrId . '-' . $tmpFile['name'];
             $fileNameWithPath = $this->moveTmpFile($tmpFile, $this->importConfig['uploadFolder'], $fileName);
@@ -94,22 +87,18 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
             );
 
             /* Set Anr status to pending. */
-            $this->anrTable->save(
-                $this->anrTable->findById($anrId)->setStatus(AnrSuperClass::STATUS_AWAITING_OF_IMPORT)
-            );
+            $this->anrTable->save($anr->setStatus(AnrSuperClass::STATUS_AWAITING_OF_IMPORT));
 
-            return new JsonModel([
-                'status' => 'ok',
+            return $this->getSuccessfulJsonResponse([
                 'isBackgroundProcess' => true,
                 'id' => [],
                 'errors' => [],
             ]);
         }
 
-        [$ids, $errors] = $this->instanceImportService->importFromFile($anrId, $data);
+        [$ids, $errors] = $this->instanceImportService->importFromFile($anr, $data);
 
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'isBackgroundProcess' => false,
             'id' => $ids,
             'errors' => $errors,
@@ -123,15 +112,12 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
      */
     public function deleteList($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
         if (!empty($this->importConfig['isBackgroundProcessActive'])) {
             $importCronTask = $this->cronTaskService
-                ->getLatestTaskByNameWithParam(CronTask::NAME_INSTANCE_IMPORT, ['anrId' => $anrId]);
-            $anr = $this->anrTable->findById($anrId);
+                ->getLatestTaskByNameWithParam(CronTask::NAME_INSTANCE_IMPORT, ['anrId' => $anr->getId()]);
             if ($importCronTask !== null && !$anr->isActive()) {
                 $anr->setStatus(AnrSuperClass::STATUS_ACTIVE);
                 $this->anrTable->save($anr, false);
@@ -139,6 +125,6 @@ class ApiAnrInstancesImportController extends AbstractRestfulController
             }
         }
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 }

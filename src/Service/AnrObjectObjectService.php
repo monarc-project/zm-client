@@ -55,20 +55,31 @@ class AnrObjectObjectService
         /* Validate if one of the parents is the current child or its children. */
         $this->validateIfObjectOrItsChildrenLinkedToOneOfParents($childObject, $parentObject);
 
-        $objectObject = (new Entity\ObjectObject())
-            ->setAnr($anr)
-            ->setParent($parentObject)
-            ->setChild($childObject)
-            ->setCreator($this->connectedUser->getEmail());
-
-        $this->updatePositions($objectObject, $this->objectObjectTable, $data);
-
-        $this->objectObjectTable->save($objectObject, $saveInDb);
+        $objectObject = $this->createObjectLink($parentObject, $childObject, $data, $saveInDb);
 
         /* Create instances of child object if necessary. */
         if ($parentObject->hasInstances()) {
             $this->createInstances($parentObject, $childObject, $data);
         }
+
+        return $objectObject;
+    }
+
+    public function createObjectLink(
+        Entity\MonarcObject $parentObject,
+        Entity\MonarcObject $childObject,
+        array $positionData,
+        bool $saveInDb
+    ): Entity\ObjectObject {
+        $objectObject = (new Entity\ObjectObject())
+            ->setAnr($parentObject->getAnr())
+            ->setParent($parentObject)
+            ->setChild($childObject)
+            ->setCreator($this->connectedUser->getEmail());
+
+        $this->updatePositions($objectObject, $this->objectObjectTable, $positionData);
+
+        $this->objectObjectTable->save($objectObject, $saveInDb);
 
         return $objectObject;
     }

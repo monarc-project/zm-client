@@ -71,9 +71,9 @@ class InstanceExportService
             'export_datetime' => (new \DateTime())->format('Y-m-d H:i:s'),
             'languageCode' => $anr->getLanguageCode(),
             'languageIndex' => $anr->getLanguage(),
-            'with_eval' => $withEval,
-            'with_controls' => $withControls,
-            'with_recommendations' => $withRecommendations,
+            'withEval' => $withEval,
+            'withControls' => $withControls,
+            'withRecommendations' => $withRecommendations,
             'instance' => $this->prepareInstanceData(
                 $instance,
                 $languageIndex,

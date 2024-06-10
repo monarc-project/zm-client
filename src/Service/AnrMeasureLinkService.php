@@ -13,7 +13,8 @@ use Monarc\FrontOffice\Table;
 
 class AnrMeasureLinkService
 {
-    public function __construct(private Table\MeasureTable $measureTable) {
+    public function __construct(private Table\MeasureTable $measureTable)
+    {
     }
 
     public function getList(Entity\Anr $anr): array

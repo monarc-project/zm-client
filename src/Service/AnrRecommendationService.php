@@ -89,7 +89,11 @@ class AnrRecommendationService
             $recommendation->setResponsible($data['responsible']);
         }
         if (isset($data['duedate'])) {
-            $recommendation->setDueDate($data['duedate']);
+            if (!empty($data['duedate']) && !$data['duedate'] instanceof DateTime) {
+                $recommendation->setDueDateFromString($data['duedate']);
+            } else {
+                $recommendation->setDueDate($data['duedate']);
+            }
         }
         if (isset($data['counterTreated'])) {
             $recommendation->setCounterTreated($data['counterTreated']);

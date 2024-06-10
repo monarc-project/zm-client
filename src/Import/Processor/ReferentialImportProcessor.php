@@ -31,7 +31,7 @@ class ReferentialImportProcessor
 
     public function processReferentialsData(Entity\Anr $anr, array $referentialsData): void
     {
-        $this->prepareReferentialUuidsAndMeasuresUuidsAndCodesCache($anr);
+        $this->prepareReferentialsAndMeasuresCache($anr);
         $this->prepareSoaCategoriesCache($anr);
         foreach ($referentialsData as $referentialData) {
             $this->processReferentialData($anr, $referentialData);
@@ -41,16 +41,6 @@ class ReferentialImportProcessor
     public function processReferentialData(Entity\Anr $anr, array $referentialData): Entity\Referential
     {
         $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialData['uuid']);
-        if ($referential !== null) {
-            return $referential;
-        }
-
-        /* The current anr referential' UUIDs are preloaded, so can be validated first. */
-        if ($this->importCacheHelper->isCacheKeySet('referential_' . $referential['uuid'] . '_measures_uuids')) {
-            /** @var Entity\Referential $referential */
-            $referential = $this->referentialTable->findByUuidAndAnr($referentialData['uuid'], $anr, false);
-        }
-
         if ($referential === null) {
             /* In the new data structure there is only "label" field set. */
             if (isset($referentialData['label'])) {
@@ -75,7 +65,7 @@ class ReferentialImportProcessor
         bool $prepareCache = false
     ): void {
         if ($prepareCache) {
-            $this->prepareReferentialUuidsAndMeasuresUuidsAndCodesCache($anr);
+            $this->prepareReferentialsAndMeasuresCache($anr);
             $this->prepareSoaCategoriesCache($anr);
         }
 
@@ -113,70 +103,53 @@ class ReferentialImportProcessor
         return $soaCategory;
     }
 
-    private function processMeasureData(
+    public function getMeasureFromCache(string $measureUuid): ?Entity\Measure
+    {
+        return $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid);
+    }
+
+    public function processMeasureData(
         Entity\Anr $anr,
         Entity\Referential $referential,
         array $measureData
     ): Entity\Measure {
-        $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureData['uuid']);
-        if ($measure !== null) {
-            return $measure;
-        }
-
-        /* The current anr measures' UUIDs are preloaded, so can be validated first. */
-        if ($this->importCacheHelper->isItemInArrayCache(
-            'referential_' . $referential->getUuid() . '_measures_uuids',
-            $measureData['uuid']
-        )) {
-            /** @var Entity\Measure $measure */
-            $measure = $this->measureTable->findByUuidAndAnr($measureData['uuid'], $anr, false);
-            if ($measure !== null) {
-                return $measure;
+        $measure = $this->getMeasureFromCache($measureData['uuid']);
+        if ($measure === null) {
+            /* The code should be unique. */
+            if (\in_array($measureData['code'], $this->importCacheHelper->getItemFromArrayCache(
+                'measures_codes_by_ref_uuid',
+                $referential->getUuid()
+            ) ?? [], true)) {
+                $measureData['code'] .= '-' . time();
             }
+
+            /* In the new data structure there is only "label" field set. */
+            if (isset($measureData['label'])) {
+                $measureData['label' . $anr->getLanguage()] = $measureData['label'];
+            }
+
+            $soaCategory = $this->processSoaCategoryData($anr, $referential, $measureData);
+
+            $measure = $this->anrMeasureService
+                ->createMeasureObject($anr, $referential, $soaCategory, $measureData, false);
+            $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measure->getUuid());
         }
-
-        /* The code should be unique. */
-        if ($this->importCacheHelper->isItemInArrayCache(
-            'referential_' . $referential->getUuid() . '_measures_codes',
-            $measureData['code']
-        )) {
-            $measureData['code'] .= '-' . time();
-        }
-
-        /* In the new data structure there is only "label" field set. */
-        if (isset($measureData['label'])) {
-            $measureData['label' . $anr->getLanguage()] = $measureData['label'];
-        }
-
-        $soaCategory = $this->processSoaCategoryData($anr, $referential, $measureData);
-
-        $measure = $this->anrMeasureService->createMeasureObject($anr, $referential, $soaCategory, $measureData, false);
-        $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measure->getUuid());
 
         $this->processLinkedMeasures($measure, $measureData);
 
         return $measure;
     }
 
+    // TODO: handle the old structure 'measuresmeasures', it's in a parallel key with measures and consists elements:
+    //  {"father": "3e3e542a-67b2-4a77-b09b-9dc9b977cd8e", "child": "01096bf7-a45e-40d9-851e-72a6b8d7344a"}
     private function processLinkedMeasures(Entity\Measure $measure, array $measureData): void
     {
         if (!empty($measureData['linkedMeasures'])) {
             foreach ($measureData['linkedMeasures'] as $linkedMeasureData) {
-                $linkedMeasure = $this->importCacheHelper
-                    ->getItemFromArrayCache('measures', $linkedMeasureData['uuid']);
-                if ($linkedMeasure === null) {
-                    if ($this->importCacheHelper->isItemInArrayCache(
-                        'referential_' . $linkedMeasureData['referential']['uuid'] . '_measures_uuids',
-                        $linkedMeasureData['uuid']
-                    )) {
-                        /** @var Entity\Measure $linkedMeasure */
-                        $linkedMeasure = $this->measureTable->findByUuidAndAnr(
-                            $linkedMeasureData['uuid'],
-                            $measure->getAnr(),
-                            false
-                        );
-                    }
-                }
+                $linkedMeasure = $this->importCacheHelper->getItemFromArrayCache(
+                    'measures',
+                    $linkedMeasureData['uuid']
+                );
                 if ($linkedMeasure !== null) {
                     $measure->addLinkedMeasure($linkedMeasure);
                     $this->measureTable->save($linkedMeasure, false);
@@ -185,20 +158,21 @@ class ReferentialImportProcessor
         }
     }
 
-    private function prepareReferentialUuidsAndMeasuresUuidsAndCodesCache(Entity\Anr $anr): void
+    private function prepareReferentialsAndMeasuresCache(Entity\Anr $anr): void
     {
-        if (!$this->importCacheHelper->isCacheKeySet('referential_cache')) {
-            $this->importCacheHelper->addItemToArrayCache('referential_cache', true);
-            foreach ($this->referentialTable->findReferentialsUuidsWithMeasuresUuidsAndCodesByAnr($anr) as $data) {
+        if (!$this->importCacheHelper->isCacheKeySet('referentials')) {
+            /** @var Entity\Referential $referential */
+            foreach ($this->referentialTable->findByAnr($anr) as $referential) {
+                $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referential->getUuid());
+                $measuresCodes = [];
+                foreach ($referential->getMeasures() as $measure) {
+                    $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measure->getUuid());
+                    $measuresCodes[] = $measure->getCode();
+                }
                 $this->importCacheHelper->addItemToArrayCache(
-                    'referential_' . $data['uuid'] . '_measures_uuids',
-                    (string)$data['measure_uuid'],
-                    (string)$data['measure_uuid']
-                );
-                $this->importCacheHelper->addItemToArrayCache(
-                    'referential_' . $data['uuid'] . '_measures_codes',
-                    $data['measure_code'],
-                    $data['measure_code']
+                    'measures_codes_by_ref_uuid',
+                    $measuresCodes,
+                    $referential->getUuid()
                 );
             }
         }

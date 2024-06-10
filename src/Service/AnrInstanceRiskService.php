@@ -186,8 +186,9 @@ class AnrInstanceRiskService
             /* In case the object is global and another instance is already presented in the ANR,
             the same risks have to be created (including possible specific ones). */
             foreach ($siblingInstance->getInstanceRisks() as $siblingInstanceRisk) {
-                $newInstanceRisk = $this
-                    ->createInstanceRisk($instance, $siblingInstanceRisk->getAmv(), $siblingInstanceRisk);
+                /** @var Entity\Amv $amv */
+                $amv = $siblingInstanceRisk->getAmv();
+                $newInstanceRisk = $this->createInstanceRisk($instance, $amv, $siblingInstanceRisk);
 
                 $this->duplicateRecommendationRisks($siblingInstanceRisk, $newInstanceRisk);
             }

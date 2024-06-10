@@ -18,16 +18,4 @@ class ThemeTable extends AbstractTable
     {
         parent::__construct($entityManager, $entityName);
     }
-
-    public function findByAnrAndLabel(Anr $anr, string $labelKey, string $labelValue): ?Theme
-    {
-        return $this->getRepository()->createQueryBuilder('t')
-            ->where('t.anr = :anr')
-            ->andWhere('t.' . $labelKey . ' = :' . $labelKey)
-            ->setParameter('anr', $anr)
-            ->setParameter($labelKey, $labelValue)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
 }

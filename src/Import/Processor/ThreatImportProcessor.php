@@ -27,7 +27,7 @@ class ThreatImportProcessor
 
     public function processThreatsData(Entity\Anr $anr, array $threatsData, array $themesData): void
     {
-        $this->prepareThreatUuidsAndCodesCache($anr);
+        $this->prepareThreatsAndCodesCache($anr);
         $this->prepareThemesCache($anr);
 
         foreach ($threatsData as $threatData) {
@@ -37,7 +37,7 @@ class ThreatImportProcessor
 
     public function processThreatData(Entity\Anr $anr, array $threatData, array $themesData): Entity\Threat
     {
-        $threat = $this->getThreatFromCacheOrDb($anr, $threatData['uuid']);
+        $threat = $this->getThreatFromCache($threatData['uuid']);
         if ($threat !== null) {
             return $threat;
         }
@@ -72,25 +72,18 @@ class ThreatImportProcessor
         return $threat;
     }
 
-    public function getThreatFromCacheOrDb(Entity\Anr $anr, string $uuid): ?Entity\Threat
+    public function getThreatFromCache(string $uuid): ?Entity\Threat
     {
-        $threat = $this->importCacheHelper->getItemFromArrayCache('threats', $uuid);
-        /* The current anr threats' UUIDs are preloaded, so can be validated first. */
-        if ($threat === null && $this->importCacheHelper->isItemInArrayCache('threats_uuids', $uuid)) {
-            /** @var ?Entity\Threat $threat */
-            $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr, false);
-        }
-
-        return $threat;
+        return $this->importCacheHelper->getItemFromArrayCache('threats', $uuid);
     }
 
-    public function prepareThreatUuidsAndCodesCache(Entity\Anr $anr): void
+    public function prepareThreatsAndCodesCache(Entity\Anr $anr): void
     {
-        if (!$this->importCacheHelper->isCacheKeySet('threats_uuids')) {
-            foreach ($this->threatTable->findUuidsAndCodesByAnr($anr) as $data) {
-                $this->importCacheHelper
-                    ->addItemToArrayCache('threats_uuids', (string)$data['uuid'], (string)$data['uuid']);
-                $this->importCacheHelper->addItemToArrayCache('threats_codes', $data['code'], $data['code']);
+        if (!$this->importCacheHelper->isCacheKeySet('threats')) {
+            /** @var Entity\Threat $threat */
+            foreach ($this->threatTable->findByAnr($anr) as $threat) {
+                $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
+                $this->importCacheHelper->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
             }
         }
     }

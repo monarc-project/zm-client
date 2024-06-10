@@ -203,6 +203,13 @@ class Recommendation implements PositionedEntityInterface, PropertyStateEntityIn
         return $this;
     }
 
+    public function setDueDateFromString(string $dateString): self
+    {
+        $this->dueDate = new DateTime($dateString);
+
+        return $this;
+    }
+
     public function getRecommendationSet(): RecommendationSet
     {
         return $this->recommendationSet;

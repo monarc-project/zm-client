@@ -24,7 +24,7 @@ trait RecommendationExportTrait
             'status' => $recommendation->getStatus(),
             'responsible' => $recommendation->getResponsible(),
             'duedate' => $recommendation->getDueDate()?->format('Y-m-d'),
-            'counterTreated' => $recommendation->getCode(),
+            'counterTreated' => $recommendation->getCounterTreated(),
         ];
         if ($includeRecommendationSetData) {
             $result['recommendationSet'] = [

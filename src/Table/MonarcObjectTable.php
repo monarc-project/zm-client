@@ -68,20 +68,4 @@ class MonarcObjectTable extends AbstractTable implements PositionUpdatableTableI
             ->getQuery()
             ->getOneOrNullResult();
     }
-
-    /**
-     * TODO: it's called from Core\RolfRiskService, remove when the $rolfTag->getObjects() relation is added.
-     * @return ObjectSuperClass[]
-     */
-    public function findByAnrAndRolfTag(AnrSuperClass $anr, RolfTagSuperClass $rolfTag): array
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('o')
-            ->where('o.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->andWhere('o.rolfTag = :rolfTag')
-            ->setParameter('rolfTag', $rolfTag)
-            ->getQuery()
-            ->getResult();
-    }
 }

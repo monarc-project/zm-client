@@ -181,7 +181,7 @@ class AnrObjectCategoryService
 
             $this->updatePositions($childCategory, $this->objectCategoryTable, ['forcePositionUpdate' => true]);
 
-            $this->objectCategoryTable->save($childCategory, false);
+            $this->objectCategoryTable->save($childCategory);
         }
 
         $this->objectCategoryTable->remove($objectCategory);

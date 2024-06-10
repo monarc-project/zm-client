@@ -8,8 +8,6 @@
 namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Entity\AmvSuperClass;
-use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;

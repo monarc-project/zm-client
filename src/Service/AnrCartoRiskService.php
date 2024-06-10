@@ -17,9 +17,9 @@ use Monarc\FrontOffice\Table;
  */
 class AnrCartoRiskService
 {
-    private array $listScales;
-    private array $listOpRiskScales;
-    private array $headers;
+    private array $listScales = [];
+    private array $listOpRiskScales = [];
+    private array $headers = [];
 
     public function __construct(
         private ScalesCacheHelper $scalesCacheHelper,
@@ -108,15 +108,13 @@ class AnrCartoRiskService
         // Only compute the listScales and headers fields if we didn't already
         // TODO: If we reuse the service to build the carto for 2 different ANRs in the same run,
         // this will cause issues!
-        if ($this->listScales === null) {
-            $this->listScales = [];
+        if ($this->listScales === []) {
             foreach ($this->scalesCacheHelper->getCachedScales($anr) as $scale) {
                 $this->listScales[$scale->getType()] = range($scale->getMin(), $scale->getMax());
             }
         }
 
-        if ($this->headers === null) {
-            $this->headers = [];
+        if ($this->headers === []) {
             foreach ($this->listScales[CoreEntity\ScaleSuperClass::TYPE_IMPACT] as $i) {
                 foreach ($this->listScales[CoreEntity\ScaleSuperClass::TYPE_THREAT] as $m) {
                     foreach ($this->listScales[CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY] as $v) {
@@ -140,7 +138,7 @@ class AnrCartoRiskService
     public function buildListScalesOpRisk(Entity\Anr $anr)
     {
         // Only compute the listScales and headers fields if we didn't already
-        if ($this->listOpRiskScales === null) {
+        if ($this->listOpRiskScales === []) {
             $likelihoodScale = current($this->operationalRiskScaleTable->findWithCommentsByAnrAndType(
                 $anr,
                 CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD

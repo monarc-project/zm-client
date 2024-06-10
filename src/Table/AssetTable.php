@@ -22,14 +22,4 @@ class AssetTable extends AbstractTable implements UniqueCodeTableInterface
     {
         parent::__construct($entityManager, $entityName);
     }
-
-    public function findUuidsAndCodesByAnr(Anr $anr): array
-    {
-        return $this->getRepository()->createQueryBuilder('a')
-            ->select('a.uuid', 'a.code')
-            ->where('a.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getArrayResult();
-    }
 }

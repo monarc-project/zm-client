@@ -54,9 +54,9 @@ class AnrValidationMiddleware implements MiddlewareInterface
         $anrId = $routeMatch->getMatchedRouteName() === 'monarc_api_client_anr'
             ? (int)$routeMatch->getParam('id')
             : (int)$routeMatch->getParam('anrid');
-        if ($anrId === 0) {
-            /* Anr ID for the route "client-duplicate-anr" is passed in the json body as "anr". */
-            $anrId = (int)($request->getParsedBody()['anr'] ?? 0);
+        if ($anrId === 0 && $routeMatch->getMatchedRouteName() === 'monarc_api_duplicate_client_anr') {
+            /* Anr ID for the route 'client-duplicate-anr' is passed in the json body as "anr". */
+            $anrId = (int)(json_decode((string)$request->getBody(), true, 512, JSON_THROW_ON_ERROR)['anr'] ?? 0);
         }
 
         try {

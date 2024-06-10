@@ -1152,7 +1152,6 @@ class AnrService
                     'uuid' => $sourceUuid,
                     'scope' => $sourceObject->getScope(),
                     'setOnlyExactPosition' => true,
-                    'position' => $sourceObject->getPosition(),
                 ], $sourceObject->getLabels(), $sourceObject->getNames()),
                 false
             );

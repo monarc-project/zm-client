@@ -9,11 +9,12 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\Expr\Join;
+use Monarc\Core\Entity\AssetSuperClass;
+use Monarc\Core\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Entity\ObjectSuperClass;
 use Monarc\Core\Entity\RolfRiskSuperClass;
 use Monarc\Core\Table\InstanceRiskOpTable as CoreInstanceRiskOpTable;
 use Monarc\FrontOffice\Entity\Anr;
-use Monarc\FrontOffice\Entity\Asset;
 use Monarc\FrontOffice\Entity\Instance;
 use Monarc\FrontOffice\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Entity\RolfRisk;
@@ -58,7 +59,7 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
     /**
      * @return InstanceRiskOp[]
      */
-    public function findByAnrAndInstance(Anr $anr, Instance $instance)
+    public function findByAnrAndInstance(Anr $anr, Instance $instance): array
     {
         return $this->getRepository()
             ->createQueryBuilder('oprisk')
@@ -109,7 +110,7 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
         $language = $anr->getLanguage();
         $queryBuilder = $this->getRepository()->createQueryBuilder('iro')
             ->innerJoin('iro.instance', 'i')
-            ->innerJoin('i.asset', 'a', Join::WITH, 'a.type = ' . Asset::TYPE_PRIMARY)
+            ->innerJoin('i.asset', 'a', Join::WITH, 'a.type = ' . AssetSuperClass::TYPE_PRIMARY)
             ->where('iro.anr = :anr')
             ->setParameter('anr', $anr);
 
@@ -127,9 +128,9 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
         }
 
         if (isset($filterParams['kindOfMeasure'])) {
-            if ((int)$filterParams['kindOfMeasure'] === InstanceRiskOp::KIND_NOT_TREATED) {
+            if ((int)$filterParams['kindOfMeasure'] === InstanceRiskOpSuperClass::KIND_NOT_TREATED) {
                 $queryBuilder->andWhere(
-                    'iro.kindOfMeasure IS NULL OR iro.kindOfMeasure = ' . InstanceRiskOp::KIND_NOT_TREATED
+                    'iro.kindOfMeasure IS NULL OR iro.kindOfMeasure = ' . InstanceRiskOpSuperClass::KIND_NOT_TREATED
                 );
             } else {
                 $queryBuilder->andWhere('iro.kindOfMeasure = :kindOfMeasure')

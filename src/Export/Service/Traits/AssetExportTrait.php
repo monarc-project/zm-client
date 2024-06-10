@@ -19,8 +19,15 @@ trait AssetExportTrait
         'description' => "string",
         'type' => "int",
         'status' => "int"
-    ])] private function prepareAssetData(Entity\Asset $asset, int $languageIndex): array
-    {
+    ])] private function prepareAssetData(
+        Entity\Asset $asset,
+        int $languageIndex,
+        bool $includeCompleteData = true
+    ): array {
+        if (!$includeCompleteData) {
+            return ['uuid' => $asset->getUuid()];
+        }
+
         return [
             'uuid' => $asset->getUuid(),
             'code' => $asset->getCode(),

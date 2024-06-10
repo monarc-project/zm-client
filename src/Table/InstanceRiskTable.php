@@ -126,7 +126,7 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     /**
      * @return InstanceRisk[]
      */
-    public function findByAmv(Amv $amv)
+    public function findByAmv(Amv $amv): array
     {
         return $this->getRepository()
             ->createQueryBuilder('ir')
@@ -142,7 +142,7 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     /**
      * @return InstanceRisk[]
      */
-    public function findByInstanceAndAmv(Instance $instance, Amv $amv)
+    public function findByInstanceAndAmv(Instance $instance, Amv $amv): array
     {
         return $this->getRepository()
             ->createQueryBuilder('ir')
@@ -273,7 +273,7 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         Instance $instance,
         Threat $threat,
         Vulnerability $vulnerability
-    ) {
+    ): bool {
         return (bool)$this->getRepository()->createQueryBuilder('ir')
             ->innerJoin('ir.threat', 't')
             ->innerJoin('ir.vulnerability', 'v')

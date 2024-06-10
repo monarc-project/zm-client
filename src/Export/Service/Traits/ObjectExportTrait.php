@@ -17,12 +17,12 @@ trait ObjectExportTrait
     private function prepareObjectData(
         Entity\MonarcObject $object,
         int $languageIndex,
-        bool $addAmvsToAssetData
+        bool $addAmvsToAssetData,
+        bool $includeCategory = true,
+        bool $addRolfRisksInObjects = true
     ): array {
         /** @var Entity\ObjectCategory $objectCategory */
         $objectCategory = $object->getCategory();
-        /** @var Entity\RolfTag $rolfTag */
-        $rolfTag = $object->getRolfTag();
         /** @var Entity\Asset $asset */
         $asset = $object->getAsset();
         $assetData = $this->prepareAssetData($asset, $languageIndex);
@@ -32,26 +32,42 @@ trait ObjectExportTrait
                 $assetData['informationRisks'][] = $this->prepareInformationRiskData($amv);
             }
         }
+        $rolfTagData = null;
+        if ($object->getRolfTag() !== null) {
+            /** @var Entity\RolfTag $rolfTag */
+            $rolfTag = $object->getRolfTag();
+            $rolfTagData = [
+                'id' => $rolfTag->getId(),
+                'code' => $rolfTag->getCode(),
+                'label' => $rolfTag->getLabel($languageIndex),
+            ];
+            if ($addRolfRisksInObjects) {
+                $rolfTagData['rolfRisks'] = $this->prepareRolfRisksData($rolfTag);
+            }
+        }
 
-        return [
+        $result = [
             'uuid' => $object->getUuid(),
             'name' => $object->getName($languageIndex),
             'label' => $object->getLabel($languageIndex),
             'mode' => $object->getMode(),
             'scope' => $object->getScope(),
-            'position' => $object->getPosition(),
             'asset' => $assetData,
-            'rolfTag' => $rolfTag !== null ? [
-                'id' => $rolfTag->getId(),
-                'code' => $rolfTag->getCode(),
-                'label' => $rolfTag->getLabel($languageIndex),
-                'rolfRisks' => $this->prepareRolfRisksData($rolfTag),
-            ] : [],
-            'category' => $objectCategory !== null ? $this->prepareCategoryAndParentsData($objectCategory) : null,
-            'children' => $object->hasChildren()
-                ? $this->prepareChildrenObjectsData($object, $languageIndex, $addAmvsToAssetData)
-                : [],
+            'rolfTag' => $rolfTagData,
+            'children' => $object->hasChildren() ? $this->prepareChildrenObjectsData(
+                $object,
+                $languageIndex,
+                $addAmvsToAssetData,
+                $addRolfRisksInObjects
+            ) : [],
         ];
+        if ($includeCategory) {
+            $result['category'] = $objectCategory !== null
+                ? $this->prepareCategoryAndParentsData($objectCategory)
+                : null;
+        }
+
+        return $result;
     }
 
     private function prepareCategoryAndParentsData(Entity\ObjectCategory $objectCategory): array
@@ -70,14 +86,15 @@ trait ObjectExportTrait
     private function prepareChildrenObjectsData(
         Entity\MonarcObject $object,
         int $languageIndex,
-        bool $addAmvsToAssetData
+        bool $addAmvsToAssetData,
+        bool $addRolfRisksInObjects
     ): array {
         $result = [];
         foreach ($object->getChildrenLinks() as $childLink) {
             /** @var Entity\MonarcObject $childObject */
             $childObject = $childLink->getChild();
             $result[] = $this
-                ->prepareObjectData($childObject, $languageIndex, $addAmvsToAssetData);
+                ->prepareObjectData($childObject, $languageIndex, $addAmvsToAssetData, true, $addRolfRisksInObjects);
         }
 
         return $result;

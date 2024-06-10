@@ -98,13 +98,13 @@ class AnrExportService
             'withSoas' => $withSoas,
             'withRecords' => $withRecords,
             'withLibrary' => $withLibrary,
-            'withKnowledge' => $withKnowledgeBase,
+            'withKnowledgeBase' => $withKnowledgeBase,
             'languageCode' => $anr->getLanguageCode(),
             'languageIndex' => $anr->getLanguage(),
             'knowledgeBase' => $withKnowledgeBase
                 ? $this->prepareKnowledgeBaseData($anr, $withEval, $withControls, $withRecommendations)
                 : [],
-            'library' => $withLibrary ? $this->prepareLibraryData($anr) : [],
+            'library' => $withLibrary ? $this->prepareLibraryData($anr, !$withKnowledgeBase) : [],
             'instances' => $this
                 ->prepareInstancesData($anr, !$withLibrary, $withEval, $withControls, $withRecommendations),
             'anrInstanceMetadataFields' => $this->prepareAnrInstanceMetadataFieldsData($anr),
@@ -141,9 +141,9 @@ class AnrExportService
             'threats' => $this->prepareThreatsData($anr, $withEval),
             'vulnerabilities' => $this->prepareVulnerabilitiesData($anr),
             'referentials' => $withControls ? $this->prepareReferentialsData($anr) : [],
-            'informationRisks' => $this->prepareInformationRisksData($anr, $withEval),
-            'tags' => $this->prepareTagsData($anr),
-            'operationalRisks' => $this->prepareOperationalRisksData($anr),
+            'informationRisks' => $this->prepareInformationRisksData($anr, $withEval, $withControls),
+            'rolfTags' => $this->prepareRolfTagsData($anr),
+            'operationalRisks' => $this->prepareOperationalRisksData($anr, $withControls),
             'recommendationSets' => $withRecommendations ? $this->prepareRecommendationSetsData($anr) : [],
         ];
     }
@@ -184,18 +184,18 @@ class AnrExportService
         return $result;
     }
 
-    private function prepareInformationRisksData(Entity\Anr $anr, bool $withEval): array
+    private function prepareInformationRisksData(Entity\Anr $anr, bool $withEval, bool $withControls): array
     {
         $result = [];
         /** @var Entity\Amv $amv */
         foreach ($this->amvTable->findByAnr($anr) as $amv) {
-            $result[] = $this->prepareInformationRiskData($amv);
+            $result[] = $this->prepareInformationRiskData($amv, $withEval, $withControls, false);
         }
 
         return $result;
     }
 
-    private function prepareTagsData(Entity\Anr $anr): array
+    private function prepareRolfTagsData(Entity\Anr $anr): array
     {
         $result = [];
         $languageIndex = $anr->getLanguage();
@@ -211,13 +211,13 @@ class AnrExportService
         return $result;
     }
 
-    private function prepareOperationalRisksData(Entity\Anr $anr): array
+    private function prepareOperationalRisksData(Entity\Anr $anr, bool $withControls): array
     {
         $result = [];
         $languageIndex = $anr->getLanguage();
         /** @var Entity\RolfRisk $rolfRisk */
         foreach ($this->rolfRiskTable->findByAnr($anr) as $rolfRisk) {
-            $result[] = $this->prepareOperationalRiskData($rolfRisk, $languageIndex);
+            $result[] = $this->prepareOperationalRiskData($rolfRisk, $languageIndex, $withControls, false);
         }
 
         return $result;
@@ -266,51 +266,61 @@ class AnrExportService
         return $result;
     }
 
-    private function prepareLibraryData(Entity\Anr $anr): array
+    private function prepareLibraryData(Entity\Anr $anr, bool $addRolfRisksInObjects): array
     {
         return [
-            'categories' => $this->prepareCategoriesAndObjects($anr),
+            'categories' => $this->prepareCategoriesAndObjects($anr, $addRolfRisksInObjects),
         ];
     }
 
-    private function prepareCategoriesAndObjects(Entity\Anr $anr): array
+    private function prepareCategoriesAndObjects(Entity\Anr $anr, bool $addRolfRisksInObjects): array
     {
         $result = [];
         $languageIndex = $anr->getLanguage();
         foreach ($this->objectCategoryTable->findRootCategoriesByAnrOrderedByPosition($anr) as $objectCategory) {
-            $result[] = $this->prepareCategoryData($objectCategory, $languageIndex, true);
+            $result[] = $this->prepareCategoryData($objectCategory, $languageIndex, true, $addRolfRisksInObjects);
         }
 
         return $result;
     }
 
-    private function prepareChildrenCategoriesData(Entity\ObjectCategory $objectCategory, int $languageIndex): array
-    {
+    private function prepareChildrenCategoriesData(
+        Entity\ObjectCategory $objectCategory,
+        int $languageIndex,
+        bool $addRolfRisksInObjects
+    ): array {
         $result = [];
         foreach ($objectCategory->getChildren() as $childObjectCategory) {
-            $result[] = $this
-                ->prepareCategoryData($childObjectCategory, $languageIndex, false);
+            $result[] = $this->prepareCategoryData($childObjectCategory, $languageIndex, false, $addRolfRisksInObjects);
         }
 
         return $result;
     }
 
-    private function prepareObjectsDataOfCategory(Entity\ObjectCategory $objectCategory, int $languageIndex): array
-    {
+    private function prepareObjectsDataOfCategory(
+        Entity\ObjectCategory $objectCategory,
+        int $languageIndex,
+        bool $addRolfRisksInObjects
+    ): array {
         $result = [];
         foreach ($objectCategory->getObjects() as $object) {
-            $result[] = $this->prepareObjectData($object, $languageIndex, false);
+            $result[] = $this->prepareObjectData($object, $languageIndex, false, false, $addRolfRisksInObjects);
         }
 
         return $result;
     }
 
-    private function prepareCategoryData(Entity\ObjectCategory $objectCategory, int $languageIndex, bool $isRoot): array
-    {
+    private function prepareCategoryData(
+        Entity\ObjectCategory $objectCategory,
+        int $languageIndex,
+        bool $isRoot,
+        bool $addRolfRisksInObjects
+    ): array {
         return [
             'label' => $objectCategory->getLabel($languageIndex),
-            'children' => $this->prepareChildrenCategoriesData($objectCategory, $languageIndex),
-            'objects' => $this->prepareObjectsDataOfCategory($objectCategory, $languageIndex),
+            'children' => $this->prepareChildrenCategoriesData($objectCategory, $languageIndex, $addRolfRisksInObjects),
+            'objects' => $this->prepareObjectsDataOfCategory($objectCategory, $languageIndex, $addRolfRisksInObjects),
+            'position' => $objectCategory->getPosition(),
             'isRoot' => $isRoot,
         ];
     }

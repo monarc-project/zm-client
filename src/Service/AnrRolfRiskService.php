@@ -71,12 +71,12 @@ class AnrRolfRiskService
             }
         }
         if (!empty($data['tags'])) {
-            /** @var Entity\RolfTag $tag */
-            foreach ($this->rolfTagTable->findByIdsAndAnr($data['tags'], $anr) as $tag) {
-                $rolfRisk->addTag($tag);
+            /** @var Entity\RolfTag $rolfTag */
+            foreach ($this->rolfTagTable->findByIdsAndAnr($data['tags'], $anr) as $rolfTag) {
+                $rolfRisk->addTag($rolfTag);
                 /* Create operation instance risks for the linked rolf tag. */
                 /** @var Entity\MonarcObject $monarcObject */
-                foreach ($this->monarcObjectTable->findByAnrAndRolfTag($anr, $tag) as $monarcObject) {
+                foreach ($rolfTag->getObjects() as $monarcObject) {
                     foreach ($monarcObject->getInstances() as $instance) {
                         $this->anrInstanceRiskOpService->createInstanceRiskOpWithScales(
                             $instance,
@@ -126,7 +126,7 @@ class AnrRolfRiskService
             } else {
                 $rolfRisk->removeTag($rolfTag);
                 /* Set the related operational risks to specific. */
-                foreach ($this->monarcObjectTable->findByAnrAndRolfTag($anr, $rolfTag) as $monarcObject) {
+                foreach ($rolfTag->getObjects() as $monarcObject) {
                     $instancesRisksOp = $this->instanceRiskOpTable->findByObjectAndRolfRisk($monarcObject, $rolfRisk);
                     foreach ($instancesRisksOp as $instanceRiskOp) {
                         $this->instanceRiskOpTable->save($instanceRiskOp->setIsSpecific(true), false);
@@ -140,7 +140,7 @@ class AnrRolfRiskService
                 $rolfRisk->addTag($rolfTag);
                 /* Create operation instance risks for the linked rolf tag. */
                 /** @var Entity\MonarcObject $monarcObject */
-                foreach ($this->monarcObjectTable->findByAnrAndRolfTag($anr, $rolfTag) as $monarcObject) {
+                foreach ($rolfTag->getObjects() as $monarcObject) {
                     foreach ($monarcObject->getInstances() as $instance) {
                         $this->anrInstanceRiskOpService->createInstanceRiskOpWithScales(
                             $instance,
@@ -156,7 +156,7 @@ class AnrRolfRiskService
             $rolfRisk->setLabels($data)->setDescriptions($data);
             /* If the labels or descriptions changed the operational risks labels have to be updated as well. */
             foreach ($rolfRisk->getTags() as $rolfTag) {
-                foreach ($this->monarcObjectTable->findByAnrAndRolfTag($anr, $rolfTag) as $monarcObject) {
+                foreach ($rolfTag->getObjects() as $monarcObject) {
                     $instancesRisksOp = $this->instanceRiskOpTable->findByObjectAndRolfRisk($monarcObject, $rolfRisk);
                     foreach ($instancesRisksOp as $instanceRiskOp) {
                         $instanceRiskOp->setRiskCacheCode($rolfRisk->getCode())

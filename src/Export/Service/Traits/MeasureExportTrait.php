@@ -21,8 +21,13 @@ trait MeasureExportTrait
     ])] private function prepareMeasureData(
         Entity\Measure $measure,
         int $languageIndex,
-        bool $includeLinks = false
+        bool $includeLinks = false,
+        bool $includeCompleteData = true
     ): array {
+        if (!$includeCompleteData) {
+            return ['uuid' => $measure->getUuid()];
+        }
+
         $result = [
             'uuid' => $measure->getUuid(),
             'code' => $measure->getCode(),

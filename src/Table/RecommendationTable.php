@@ -31,7 +31,7 @@ class RecommendationTable extends AbstractTable implements PositionUpdatableTabl
     /**
      * @return Recommendation[]
      */
-    public function findByAnrWithEmptyPosition(Anr $anr)
+    public function findByAnrWithEmptyPosition(Anr $anr): array
     {
         return $this->getRepository()
             ->createQueryBuilder('r')
@@ -49,7 +49,7 @@ class RecommendationTable extends AbstractTable implements PositionUpdatableTabl
         AnrSuperClass $anr,
         array $excludeRecommendations = [],
         array $order = []
-    ) {
+    ): array {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('r')
             ->innerJoin('r.recommendationRisks', 'rr')
@@ -100,7 +100,7 @@ class RecommendationTable extends AbstractTable implements PositionUpdatableTabl
      *
      * @return Recommendation[]
      */
-    public function findUnlinkedWithNotEmptyPositionByAnr(AnrSuperClass $anr)
+    public function findUnlinkedWithNotEmptyPositionByAnr(AnrSuperClass $anr): array
     {
         $queryBuilderLinked = $this->getRepository()
             ->createQueryBuilder('rec')

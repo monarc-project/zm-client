@@ -116,6 +116,7 @@ class AnrObjectService
         $this->validateAssetAndDataOnCreate($asset, $data);
         /** @var Entity\ObjectCategory $objectCategory */
         $objectCategory = $this->objectCategoryTable->findByIdAndAnr($data['category'], $anr);
+        /** @var ?Entity\RolfTag $rolfTag */
         $rolfTag = !empty($data['rolfTag']) && !$asset->isPrimary()
             ? $this->rolfTagTable->findByIdAndAnr($data['rolfTag'], $anr)
             : null;
@@ -143,12 +144,6 @@ class AnrObjectService
         if (!empty($data['uuid'])) {
             $monarcObject->setUuid($data['uuid']);
         }
-
-        /*
-         * The objects positioning inside of categories was dropped from the UI, only kept in the db and passed data.
-         * New objects are always placed at the end.
-         */
-        $this->updatePositions($monarcObject, $this->monarcObjectTable, $data);
 
         $this->monarcObjectTable->save($monarcObject, $saveInDb);
 
@@ -225,7 +220,6 @@ class AnrObjectService
         }
 
         /* Manage the positions shift for the objects and objects_objects tables. */
-        $this->shiftPositionsForRemovingEntity($monarcObject, $this->monarcObjectTable);
         foreach ($monarcObject->getParentsLinks() as $linkWhereTheObjectIsChild) {
             $this->shiftPositionsForRemovingEntity($linkWhereTheObjectIsChild, $this->objectObjectTable);
         }
@@ -267,7 +261,6 @@ class AnrObjectService
             'label' . $anr->getLanguage() => $object->getLabel($anr->getLanguage()),
             'name' . $anr->getLanguage() => $object->getName($anr->getLanguage()),
             'scope' => $object->getScope(),
-            'position' => $object->getPosition(),
         ];
 
         if (!$objectOnly) {
@@ -466,11 +459,6 @@ class AnrObjectService
         if ($monarcObjectToCopy->hasRolfTag()) {
             $newMonarcObject->setRolfTag($monarcObjectToCopy->getRolfTag());
         }
-        /*
-         * The objects positioning inside of categories was dropped from the UI, only kept in the db and passed data.
-         * The position is always set at the end.
-         */
-        $this->updatePositions($newMonarcObject, $this->monarcObjectTable);
 
         return $newMonarcObject;
     }

@@ -41,7 +41,9 @@ class SoaCategoryService
     public function create(Entity\Anr $anr, array $data, bool $saveInDb = true): Entity\SoaCategory
     {
         /** @var Entity\Referential $referential */
-        $referential = $this->referentialTable->findByUuidAndAnr($data['referential'], $anr);
+        $referential = $data['referential'] instanceof Entity\Referential
+            ? $data['referential']
+            : $this->referentialTable->findByUuidAndAnr($data['referential'], $anr);
 
         /** @var Entity\SoaCategory $soaCategory */
         $soaCategory = (new Entity\SoaCategory())->setAnr($anr)->setLabels($data)->setReferential($referential);
@@ -74,6 +76,7 @@ class SoaCategoryService
         return array_merge(['id' => $soaCategory->getId()], $soaCategory->getLabels());
     }
 
+    // TODO: use the ReferentialImportProcessor::processSoaCategoryData() instead.
     public function getOrCreateSoaCategory(
         ImportCacheHelper $importCacheHelper,
         Entity\Anr $anr,
@@ -83,7 +86,7 @@ class SoaCategoryService
         $languageIndex = $anr->getLanguage();
         $labelKey = 'label' . $languageIndex;
 
-        $importCacheHelper->prepareSoaCategoriesCacheData($anr);
+        $this->prepareSoaCategoriesCacheData($importCacheHelper, $anr);
 
         $cacheKey = $referential->getUuid() . '_' . $labelValue;
         $soaCategory = $importCacheHelper->getItemFromArrayCache('soa_categories_by_ref_and_label', $cacheKey);
@@ -101,5 +104,19 @@ class SoaCategoryService
         $importCacheHelper->addItemToArrayCache('soa_categories_by_ref_and_label', $soaCategory, $cacheKey);
 
         return $soaCategory;
+    }
+
+    public function prepareSoaCategoriesCacheData(ImportCacheHelper $importCacheHelper, Entity\Anr $anr): void
+    {
+        if (!isset($this->arrayCache['soa_categories_by_ref_and_label'])) {
+            /** @var Entity\SoaCategory $soaCategory */
+            foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
+                $importCacheHelper->addItemToArrayCache(
+                    'soa_categories_by_ref_and_label',
+                    $soaCategory,
+                    $soaCategory->getReferential()->getUuid() . '_' . $soaCategory->getLabel($anr->getLanguage())
+                );
+            }
+        }
     }
 }

@@ -27,7 +27,8 @@ trait InformationRiskExportTrait
     ])] private function prepareInformationRiskData(
         Entity\Amv $amv,
         bool $withEval = false,
-        bool $withControls = true
+        bool $withControls = true,
+        bool $includeCompleteRelationData = true
     ): array {
         /** @var Entity\Asset $asset */
         $asset = $amv->getAsset();
@@ -40,15 +41,21 @@ trait InformationRiskExportTrait
         $measuresData = [];
         if ($withControls) {
             foreach ($amv->getMeasures() as $measure) {
-                $measuresData[] = $this->prepareMeasureData($measure, $languageIndex);
+                $measuresData[] = $this->prepareMeasureData(
+                    $measure,
+                    $languageIndex,
+                    false,
+                    $includeCompleteRelationData
+                );
             }
         }
 
         return [
             'uuid' => $amv->getUuid(),
-            'asset' => $this->prepareAssetData($asset, $languageIndex),
-            'threat' => $this->prepareThreatData($threat, $languageIndex, $withEval),
-            'vulnerability' => $this->prepareVulnerabilityData($vulnerability, $languageIndex),
+            'asset' => $this->prepareAssetData($asset, $languageIndex, $includeCompleteRelationData),
+            'threat' => $this->prepareThreatData($threat, $languageIndex, $withEval, $includeCompleteRelationData),
+            'vulnerability' => $this
+                ->prepareVulnerabilityData($vulnerability, $languageIndex, $includeCompleteRelationData),
             'measures' => $measuresData,
             'status' => $amv->getStatus(),
         ];

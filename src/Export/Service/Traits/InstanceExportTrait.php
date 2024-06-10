@@ -45,7 +45,7 @@ trait InstanceExportTrait
             'integrityInherited' => $withEval ? (int)$instance->isIntegrityInherited() : 1,
             'availabilityInherited' => $withEval ? (int)$instance->isAvailabilityInherited() : 1,
             'asset' => $this->prepareAssetData($asset, $languageIndex),
-            /* For Anr and Instance export instanceRisks are added to the instance, so not needed in asset. */
+            /* For Anr and Instance export instanceRisks are added to the instance, so not needed in AMVs in asset. */
             'object' => $includeCompleteObjectData
                 ? $this->prepareObjectData($object, $languageIndex, false)
                 : ['uuid' => $instance->getObject()->getUuid()],

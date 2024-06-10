@@ -18,15 +18,4 @@ class ReferentialTable extends AbstractTable
     {
         parent::__construct($entityManager, $entityName);
     }
-
-    public function findReferentialsUuidsWithMeasuresUuidsAndCodesByAnr(Anr $anr): array
-    {
-        return $this->getRepository()->createQueryBuilder('r')
-            ->innerJoin('r.measures', 'm')
-            ->select('r.uuid, m.uuid as measure_uuid, m.code as measure_code')
-            ->where('r.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->getQuery()
-            ->getArrayResult();
-    }
 }
