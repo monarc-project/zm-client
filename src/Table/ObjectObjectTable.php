@@ -1,12 +1,13 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Table;
 
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
@@ -23,25 +24,25 @@ class ObjectObjectTable extends AbstractTable implements PositionUpdatableTableI
         parent::__construct($entityManager, $entityName);
     }
 
-    /**
-     * @param MonarcObject $monarcObject
-     */
-    public function deleteAllByParent(MonarcObject $monarcObject): void
+    public function deleteLinksByParentObject(MonarcObject $object, bool $saveInDb = false): void
     {
-        $childrenObjects = $this->getRepository()->createQueryBuilder('oo')
+        $childrenObjectsLinks = $this->getRepository()->createQueryBuilder('oo')
             ->innerJoin('oo.parent', 'parent')
-            ->where('parent.uuid = :parentUuuid')
-            ->andWhere('parent.anr = :parentAnr')
-            ->setParameter('parentUuuid', $monarcObject->getUuid())
-            ->setParameter('parentAnr', $monarcObject->getAnr())
+            ->where('parent.uuid = :parentUuid')
+            ->andWhere('parent.anr = :anr')
+            ->setParameter('parentUuid', $object->getUuid())
+            ->setParameter('anr', $object->getAnr())
             ->getQuery()
             ->getResult();
 
-        if (!empty($childrenObjects)) {
-            foreach ($childrenObjects as $childObject) {
-                $this->entityManager->remove($childObject);
+        if (!empty($childrenObjectsLinks)) {
+            foreach ($childrenObjectsLinks as $childObjectLink) {
+                $object->removeChildLink($childObjectLink);
+                $this->entityManager->remove($childObjectLink);
             }
-            $this->flush();
+            if ($saveInDb) {
+                $this->flush();
+            }
         }
     }
 
@@ -49,11 +50,11 @@ class ObjectObjectTable extends AbstractTable implements PositionUpdatableTableI
     {
         return $this->getRepository()->createQueryBuilder('oo')
             ->innerJoin('oo.parent', 'parent')
-            ->where('parent.uuid = :parentUuuid')
-            ->andWhere('parent.anr = :parentAnr')
+            ->where('parent.uuid = :parentUuid')
+            ->andWhere('parent.anr = :anr')
             ->andWhere('oo.position = :position')
-            ->setParameter('parentUuuid', $parentObject->getUuid())
-            ->setParameter('parentAnr', $parentObject->getAnr())
+            ->setParameter('parentUuid', $parentObject->getUuid())
+            ->setParameter('anr', $parentObject->getAnr())
             ->setParameter('position', $position)
             ->setMaxResults(1)
             ->getQuery()

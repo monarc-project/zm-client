@@ -101,11 +101,14 @@ class ThreatImportProcessor
 
     private function processThemeData(Entity\Anr $anr, array $themeData): Entity\Theme
     {
-        $theme = $this->importCacheHelper->getItemFromArrayCache('themes_by_labels', $themeData['label']);
+        if (isset($themeData['label'])) {
+            $themeData['label' . $anr->getLanguage()] = $themeData['label'];
+        }
+        $themeLabel = $themeData['label' . $anr->getLanguage()];
+        $theme = $this->importCacheHelper->getItemFromArrayCache('themes_by_labels', $themeLabel);
         if ($theme === null) {
-            $themeData['label' . $anr->getLanguage()] = $theme['label'];
             $theme = $this->anrThemeService->create($anr, $themeData, false);
-            $this->importCacheHelper->addItemToArrayCache('themes_by_labels', $theme, $themeData['label']);
+            $this->importCacheHelper->addItemToArrayCache('themes_by_labels', $theme, $themeLabel);
         }
 
         return $theme;

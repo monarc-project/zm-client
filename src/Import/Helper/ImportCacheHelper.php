@@ -21,11 +21,6 @@ class ImportCacheHelper
         return isset($this->arrayCache[$cacheKey][$itemKey]);
     }
 
-    public function addItemsToArrayCache(string $cacheKey, array $values): void
-    {
-        $this->arrayCache[$cacheKey] = $values;
-    }
-
     public function addItemToArrayCache(string $cacheKey, $value, $itemKey = null): void
     {
         if ($itemKey === null) {

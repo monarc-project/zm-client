@@ -9,8 +9,6 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Entity\AnrSuperClass;
-use Monarc\Core\Entity\ObjectSuperClass;
-use Monarc\Core\Entity\RolfTagSuperClass;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
@@ -36,15 +34,14 @@ class MonarcObjectTable extends AbstractTable implements PositionUpdatableTableI
         int $scope,
         ObjectCategory $category
     ): ?MonarcObject {
-        return $this->getRepository()
-            ->createQueryBuilder('mo')
-            ->innerJoin('mo.asset', 'a')
-            ->where('mo.anr = :anr')
+        return $this->getRepository()->createQueryBuilder('o')
+            ->innerJoin('o.asset', 'a')
+            ->where('o.anr = :anr')
             ->andWhere('a.uuid = :assetUuid')
             ->andWhere('a.anr = :assetAnr')
-            ->andWhere('mo.' . $nameKey . ' = :name')
-            ->andWhere('mo.scope = :scope')
-            ->andWhere('mo.category = :category')
+            ->andWhere('o.' . $nameKey . ' = :name')
+            ->andWhere('o.scope = :scope')
+            ->andWhere('o.category = :category')
             ->setParameter('anr', $anr)
             ->setParameter('assetUuid', $asset->getUuid())
             ->setParameter('assetAnr', $anr)
@@ -58,10 +55,9 @@ class MonarcObjectTable extends AbstractTable implements PositionUpdatableTableI
 
     public function findOneByAnrAndName(Anr $anr, string $nameKey, string $nameValue): ?MonarcObject
     {
-        return $this->getRepository()
-            ->createQueryBuilder('mo')
-            ->where('mo.anr = :anr')
-            ->andWhere('mo.' . $nameKey . ' = :name')
+        return $this->getRepository()->createQueryBuilder('o')
+            ->where('o.anr = :anr')
+            ->andWhere('o.' . $nameKey . ' = :name')
             ->setParameter('anr', $anr)
             ->setParameter('name', $nameValue)
             ->setMaxResults(1)

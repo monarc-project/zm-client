@@ -47,6 +47,7 @@ class InstanceImportService
         private Processor\RolfTagImportProcessor $rolfTagImportProcessor,
         private Processor\OperationalRisksImportProcessor $operationalRisksImportProcessor,
         private Processor\RecommendationImportProcessor $recommendationImportProcessor,
+        private Processor\ObjectCategoryImportProcessor $objectCategoryImportProcessor,
         private Service\AnrInstanceRiskService $anrInstanceRiskService,
         private Service\InstanceRiskOwnerService $instanceRiskOwnerService,
         private Service\AnrInstanceService $anrInstanceService,
@@ -228,7 +229,7 @@ class InstanceImportService
         $this->assetImportProcessor->processAssetsData($anr, $knowledgeBaseData['assets']);
         $this->threatImportProcessor->processThreatsData($anr, $knowledgeBaseData['threats'], []);
         $this->vulnerabilityImportProcessor->processVulnerabilitiesData($anr, $knowledgeBaseData['vulnerabilities']);
-        $this->referentialImportProcessor->processReferentialsData($anr, $knowledgeBaseData['referentails']);
+        $this->referentialImportProcessor->processReferentialsData($anr, $knowledgeBaseData['referentials']);
         $this->informationRiskImportProcessor->processInformationRisksData(
             $anr,
             $knowledgeBaseData['informationRisks']
@@ -246,10 +247,11 @@ class InstanceImportService
 
     private function processLibraryData(Entity\Anr $anr, array $libraryData, string $importMode): void
     {
-        // TODO: 1. process categories, 2. objects & children, 3. objects compositions. 4. asset,
-        //  5. rolfTag, 6. RolfRisks
-        // TODO: for the export: if the KB is generated then we can reduce data inside the objects: asset (uuid), rolfTag (code) and nothing more.
-        // TODO: for the export: it seems the category is not needed inside of the object for library export as objects are inside of categories.
+        $this->objectCategoryImportProcessor->processObjectCategoriesData(
+            $anr,
+            $libraryData['categories'],
+            $importMode
+        );
     }
 
     private function processInstanceImport(
@@ -289,6 +291,7 @@ class InstanceImportService
             return false;
         }
 
+        // TODO: move it to a processor and use service.
         $instance = $this->createInstance($data, $anr, $parentInstance, $monarcObject);
 
         // TODO: The instance risks are processed later again and considered that here we save or not...
@@ -848,10 +851,10 @@ class InstanceImportService
         usort($data['instances'], function ($a, $b) {
             return $a['instance']['position'] <=> $b['instance']['position'];
         });
-        $this->assetImportProcessor->prepareAssetUuidsAndCodesCache($anr);
-        $this->threatImportProcessor->prepareThreatUuidsAndCodesCache($anr);
+        $this->assetImportProcessor->prepareAssetsAndCodesCache($anr);
+        $this->threatImportProcessor->prepareThreatsAndCodesCache($anr);
         $this->threatImportProcessor->prepareThemesCache($anr);
-        $this->vulnerabilityImportProcessor->prepareVulnerabilityUuidsAndCodesCache($anr);
+        $this->vulnerabilityImportProcessor->prepareVulnerabilitiesAndCodesCache($anr);
         foreach ($data['instances'] as $inst) {
             if ($first) {
                 if ($data['with_eval'] && isset($data['scales'])) {
@@ -2135,7 +2138,8 @@ class InstanceImportService
         array $data,
         Entity\Anr $anr,
         ?CoreEntity\InstanceSuperClass $parentInstance,
-        Entity\MonarcObject $monarcObject
+        Entity\MonarcObject $monarcObject,
+        bool $saveInDb = true
     ): Entity\Instance {
         $instanceData = $data['instance'];
         $instance = (new Entity\Instance())
@@ -2170,7 +2174,7 @@ class InstanceImportService
             $instance->setInheritedAvailability((int)$instanceData['dh']);
         }
 
-        $this->instanceTable->save($instance);
+        $this->instanceTable->save($instance, $saveInDb);
 
         return $instance;
     }

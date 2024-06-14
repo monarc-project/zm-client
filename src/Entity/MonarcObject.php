@@ -73,11 +73,6 @@ class MonarcObject extends ObjectSuperClass
      */
     protected $children;
 
-    public function getImplicitPositionRelationsValues(): array
-    {
-        return array_merge(['anr' => $this->anr], parent::getImplicitPositionRelationsValues());
-    }
-
     public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;

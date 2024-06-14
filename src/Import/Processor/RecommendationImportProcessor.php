@@ -139,7 +139,6 @@ class RecommendationImportProcessor
                     $recommendationsCodes,
                     $recommendationSet->getUuid()
                 );
-
             }
         }
     }

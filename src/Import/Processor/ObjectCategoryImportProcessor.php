@@ -40,9 +40,14 @@ class ObjectCategoryImportProcessor
         array $objectCategoryData,
         string $importMode
     ): Entity\ObjectCategory {
-        $parentCategory = isset(
-            $objectCategoryData['parent']
-        ) && $objectCategoryData['parent'] instanceof Entity\ObjectCategory ? $objectCategoryData['parent'] : null;
+        $parentCategory = null;
+        // TODO: support the old structure where parent is and int ID and the cats are on thr same level in the json.
+        if (isset($objectCategoryData['parent']) && $objectCategoryData['parent'] instanceof Entity\ObjectCategory) {
+            $parentCategory = $objectCategoryData['parent'];
+        } elseif (isset($objectCategoryData['parent']['label'])) {
+            $parentCategory = $this->processObjectCategoryData($anr, $objectCategoryData['parent'], $importMode);
+            $objectCategoryData['parent'] = $parentCategory;
+        }
 
         // TODO: process the categories data when the request comes NOT from the library:
         // - parent and it's parents' data are inside so this method have to be recursively called.
@@ -54,18 +59,19 @@ class ObjectCategoryImportProcessor
             $parentCategoryLabel = $parentCategory->getLabel($anr->getLanguage());
         }
 
+        /* In the new data structure there is only "label" field set. */
+        if (isset($objectCategoryData['label'])) {
+            $objectCategoryData['label' . $anr->getLanguage()] = $objectCategoryData['label'];
+        }
+
         /* If parents are different, a new category is created anyway. */
         /** @var ?Entity\ObjectCategory $objectCategory */
         $objectCategory = $this->importCacheHelper->getItemFromArrayCache(
             'object_categories_by_label',
-            $objectCategoryData['label'] . $parentCategoryLabel
+            $objectCategoryData['label' . $anr->getLanguage()] . $parentCategoryLabel
         );
 
         if ($objectCategory === null) {
-            /* In the new data structure there is only "label" field set. */
-            if (isset($objectCategoryData['label'])) {
-                $objectCategoryData['label' . $anr->getLanguage()] = $objectCategoryData['label'];
-            }
             /* Prepare the position and cache it. */
             if (!isset($this->maxPositionPerCategory[$parentCategoryLabel])) {
                 /* If the parent category in new, there is no need to fetch it from the DB. */

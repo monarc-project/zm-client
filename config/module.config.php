@@ -1692,8 +1692,7 @@ return [
             },
 
             // Commands
-            Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container)
-            {
+            Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container) {
                 /** @var ConnectedUserService $connectedUserService */
                 $connectedUserService = $container->get(ConnectedUserService::class);
                 $connectedUserService->setConnectedUser(new Entity\User([
@@ -1729,6 +1728,9 @@ return [
                 LazyServiceFactory::class,
             ],
             Service\AnrInstanceService::class => [
+                LazyServiceFactory::class,
+            ],
+            Import\Processor\ObjectCategoryImportProcessor::class => [
                 LazyServiceFactory::class,
             ],
         ],

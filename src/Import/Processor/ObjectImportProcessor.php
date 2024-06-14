@@ -18,8 +18,6 @@ use Monarc\FrontOffice\Table\ObjectObjectTable;
 
 class ObjectImportProcessor
 {
-    private array $linksMaxPositions = [];
-
     public function __construct(
         private MonarcObjectTable $monarcObjectTable,
         private ObjectObjectTable $objectObjectTable,
@@ -50,6 +48,11 @@ class ObjectImportProcessor
         array $objectData,
         string $importMode
     ): Entity\MonarcObject {
+        /* Only newly created objects are stored under the cache key 'created_objects_by_old_uuids'. */
+        if ($this->importCacheHelper->isItemInArrayCache('created_objects_by_old_uuids', $objectData['uuid'])) {
+            return $this->importCacheHelper->getItemFromArrayCache('created_objects_by_old_uuids', $objectData['uuid']);
+        }
+
         $assetData = $objectData['asset']['asset'] ?? $objectData['asset'];
         $objectScope = (int)$objectData['scope'];
         $nameFiledKey = 'name' . $anr->getLanguage();
@@ -61,35 +64,33 @@ class ObjectImportProcessor
         if ($objectScope === ObjectSuperClass::SCOPE_LOCAL || (
             $objectScope === ObjectSuperClass::SCOPE_GLOBAL && $importMode === ObjectImportService::IMPORT_MODE_MERGE
         )) {
-            $object = $this->getObjectFromCache(
+            $object = $this->getObjectFromCacheByParams(
                 $objectData[$nameFiledKey],
                 $assetData['uuid'],
                 $objectScope,
                 $objectCategory->getId()
             );
             if ($object !== null) {
-                foreach ($object->getChildren() as $linkedObject) {
-                    $object->removeChild($linkedObject);
-                }
-                $this->monarcObjectTable->save($object, false);
+                $this->objectObjectTable->deleteLinksByParentObject($object);
             }
         }
 
         if ($object === null) {
             $asset = $this->assetImportProcessor->processAssetData($anr, $assetData);
             $rolfTag = null;
-            if (!empty($objectData['rofTag'])) {
-                if (isset($objectData['rofTag']['code'])) {
-                    $rolfTag = $this->rolfTagImportProcessor->processRolfTagData($anr, $objectData['rofTag']);
-                } elseif (isset($objectData['rofTags'][$objectData['rofTag']])) {
+            if (!empty($objectData['rolfTag'])) {
+                if (isset($objectData['rolfTag']['code'])) {
+                    $rolfTag = $this->rolfTagImportProcessor->processRolfTagData($anr, $objectData['rolfTag']);
+                } elseif (isset($objectData['rolfTags'][$objectData['rolfTag']])) {
                     /* Handles the structure prior the version 2.13.1 */
                     $rolfTag = $this->rolfTagImportProcessor
-                        ->processRolfTagData($anr, $objectData['rofTags'][$objectData['rofTag']]);
+                        ->processRolfTagData($anr, $objectData['rolfTags'][$objectData['rolfTag']]);
                 }
             }
 
             /* Avoid the UUID duplication. */
-            if ($this->importCacheHelper->isItemInArrayCache('objects_uuid', $objectData['uuid'])) {
+            $currentObjectUuid = $objectData['uuid'];
+            if ($this->importCacheHelper->isItemInArrayCache('objects_uuids', $objectData['uuid'])) {
                 unset($objectData['uuid']);
             }
             /* In the new data structure there is only "label" field set. */
@@ -106,35 +107,43 @@ class ObjectImportProcessor
                 $object,
                 $objectData[$nameFiledKey] . $asset->getUuid() . $object->getScope() . $objectCategory->getId()
             );
-            $this->importCacheHelper->addItemToArrayCache('objects_names', $objectData[$nameFiledKey]);
+            $this->importCacheHelper->addItemToArrayCache(
+                'objects_names',
+                $objectData[$nameFiledKey],
+                $objectData[$nameFiledKey]
+            );
+            $this->importCacheHelper->addItemToArrayCache('created_objects_by_old_uuids', $object, $currentObjectUuid);
         }
 
         /* Process objects links. */
-        foreach ($objectData['children'] as $childObjectData) {
+        foreach ($objectData['children'] as $positionIndex => $childObjectData) {
             $objectCategory = $this->objectCategoryImportProcessor->processObjectCategoryData(
                 $anr,
                 $childObjectData['category'],
                 $importMode
             );
             $childObject = $this->processObjectData($anr, $objectCategory, $childObjectData, $importMode);
-            /* Determine the max position of the link and store in the cache property. */
-            if (!isset($this->linksMaxPositions[$object->getUuid()])) {
-                $this->linksMaxPositions[$object->getUuid()] = $this->objectObjectTable->findMaxPosition([
-                    'anr' => $anr,
-                    'parent' => $object,
-                ]);
+
+            if (!$object->hasChild($childObject) && !$this->importCacheHelper->isItemInArrayCache(
+                'objects_links_uuids',
+                $object->getUuid() . $childObject->getUuid()
+            )) {
+                $this->anrObjectObjectService->createObjectLink($object, $childObject, [
+                    'position' => $positionIndex + 1,
+                    'forcePositionUpdate' => true,
+                ], false);
+                $this->importCacheHelper->addItemToArrayCache(
+                    'objects_links_uuids',
+                    $object->getUuid() . $childObject->getUuid(),
+                    $object->getUuid() . $childObject->getUuid()
+                );
             }
-            $positionData = [
-                'position' => ++$this->linksMaxPositions[$object->getUuid()],
-                'forcePositionUpdate' => true,
-            ];
-            $this->anrObjectObjectService->createObjectLink($object, $childObject, $positionData, false);
         }
 
         return $object;
     }
 
-    public function getObjectFromCache(
+    public function getObjectFromCacheByParams(
         string $name,
         string $assetUuid,
         int $scope,
@@ -159,7 +168,11 @@ class ObjectImportProcessor
                     $object->getName($languageIndex) . $object->getAsset()->getUuid() . $object->getScope()
                     . $object->getCategory()?->getId()
                 );
-                $this->importCacheHelper->addItemToArrayCache('objects_names', $object->getName($languageIndex));
+                $this->importCacheHelper->addItemToArrayCache(
+                    'objects_names',
+                    $object->getName($languageIndex),
+                    $object->getName($languageIndex)
+                );
             }
         }
     }
