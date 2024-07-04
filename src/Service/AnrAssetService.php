@@ -27,10 +27,8 @@ class AnrAssetService
     public function getList(FormattedInputParams $params): array
     {
         $result = [];
-
-        /** @var Entity\Asset[] $assets */
-        $assets = $this->assetTable->findByParams($params);
-        foreach ($assets as $asset) {
+        /** @var Entity\Asset $asset */
+        foreach ($this->assetTable->findByParams($params) as $asset) {
             $result[] = $this->prepareAssetDataResult($asset);
         }
 

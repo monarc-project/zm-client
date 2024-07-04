@@ -30,10 +30,9 @@ class AnrMeasureService
     {
         $result = [];
 
-        /** @var Entity\Measure[] $measures */
-        $measures = $this->measureTable->findByParams($params);
         $includeLinks = $params->hasFilterFor('includeLinks') && $params->getFilterFor('includeLinks')['value'];
-        foreach ($measures as $measure) {
+        /** @var Entity\Measure $measure */
+        foreach ($this->measureTable->findByParams($params) as $measure) {
             $result[] = $this->prepareMeasureDataResult($measure, $includeLinks);
         }
 

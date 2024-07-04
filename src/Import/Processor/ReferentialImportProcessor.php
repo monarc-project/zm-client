@@ -40,7 +40,7 @@ class ReferentialImportProcessor
 
     public function processReferentialData(Entity\Anr $anr, array $referentialData): Entity\Referential
     {
-        $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialData['uuid']);
+        $referential = $this->getReferentialFromCache($referentialData['uuid']);
         if ($referential === null) {
             /* In the new data structure there is only "label" field set. */
             if (isset($referentialData['label'])) {
@@ -58,6 +58,11 @@ class ReferentialImportProcessor
         return $referential;
     }
 
+    public function getReferentialFromCache(string $referentialUuid): ?Entity\Referential
+    {
+        return $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialUuid);
+    }
+
     public function processMeasuresData(
         Entity\Anr $anr,
         Entity\Referential $referential,
@@ -72,35 +77,6 @@ class ReferentialImportProcessor
         foreach ($measuresData as $measureData) {
             $this->processMeasureData($anr, $referential, $measureData);
         }
-    }
-
-    public function processSoaCategoryData(
-        Entity\Anr $anr,
-        Entity\Referential $referential,
-        array $measureData
-    ): ?Entity\SoaCategory {
-        $soaCategory = null;
-        if (!empty($measureData['category'])) {
-            /* Support the previous structure format. */
-            $soaCategoryLabel = $measureData['category']['label'] ?? $measureData['category'];
-            $soaCategory = $this->importCacheHelper->getItemFromArrayCache(
-                'referential_' . $referential->getUuid() . '_soa_categories_by_labels',
-                $soaCategoryLabel
-            );
-            if ($soaCategory === null) {
-                $soaCategory = $this->soaCategoryService->create($anr, [
-                    'referential' => $referential,
-                    'label' . $anr->getLanguage() => $soaCategoryLabel,
-                ], false);
-                $this->importCacheHelper->addItemToArrayCache(
-                    'referential_' . $referential->getUuid() . '_soa_categories_by_labels',
-                    $soaCategory,
-                    $soaCategoryLabel
-                );
-            }
-        }
-
-        return $soaCategory;
     }
 
     public function getMeasureFromCache(string $measureUuid): ?Entity\Measure
@@ -140,20 +116,58 @@ class ReferentialImportProcessor
         return $measure;
     }
 
-    // TODO: handle the old structure 'measuresmeasures', it's in a parallel key with measures and consists elements:
-    //  {"father": "3e3e542a-67b2-4a77-b09b-9dc9b977cd8e", "child": "01096bf7-a45e-40d9-851e-72a6b8d7344a"}
-    private function processLinkedMeasures(Entity\Measure $measure, array $measureData): void
+    public function processLinkedMeasures(Entity\Measure $measure, array $measureData): void
     {
         if (!empty($measureData['linkedMeasures'])) {
             foreach ($measureData['linkedMeasures'] as $linkedMeasureData) {
-                $linkedMeasure = $this->importCacheHelper->getItemFromArrayCache(
-                    'measures',
-                    $linkedMeasureData['uuid']
-                );
+                $linkedMeasure = $this->getMeasureFromCache($linkedMeasureData['uuid']);
                 if ($linkedMeasure !== null) {
                     $measure->addLinkedMeasure($linkedMeasure);
-                    $this->measureTable->save($linkedMeasure, false);
+                    $this->measureTable->save($measure, false);
                 }
+            }
+        }
+    }
+
+    public function processSoaCategoryData(
+        Entity\Anr $anr,
+        Entity\Referential $referential,
+        array $measureData
+    ): ?Entity\SoaCategory {
+        $soaCategory = null;
+        if (!empty($measureData['category'])) {
+            /* Support the previous structure format. */
+            $soaCategoryLabel = $measureData['category']['label'] ?? $measureData['category'];
+            $soaCategory = $this->importCacheHelper->getItemFromArrayCache(
+                'soa_categories_by_referential_uuid_and_label',
+                $referential->getUuid() . '_' . $soaCategoryLabel
+            );
+            if ($soaCategory === null) {
+                $soaCategory = $this->soaCategoryService->create($anr, [
+                    'referential' => $referential,
+                    'label' . $anr->getLanguage() => $soaCategoryLabel,
+                ], false);
+                $this->importCacheHelper->addItemToArrayCache(
+                    'soa_categories_by_referential_uuid_and_label',
+                    $soaCategory,
+                    $referential->getUuid() . '_' . $soaCategoryLabel
+                );
+            }
+        }
+
+        return $soaCategory;
+    }
+
+    public function prepareSoaCategoriesCache(Entity\Anr $anr): void
+    {
+        if (!$this->importCacheHelper->isCacheKeySet('soa_categories_by_referential_uuid_and_label')) {
+            /** @var Entity\SoaCategory $soaCategory */
+            foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
+                $this->importCacheHelper->addItemToArrayCache(
+                    'soa_categories_by_referential_uuid_and_label',
+                    $soaCategory,
+                    $soaCategory->getReferential()->getUuid() . '_' . $soaCategory->getLabel($anr->getLanguage())
+                );
             }
         }
     }
@@ -173,21 +187,6 @@ class ReferentialImportProcessor
                     'measures_codes_by_ref_uuid',
                     $measuresCodes,
                     $referential->getUuid()
-                );
-            }
-        }
-    }
-
-    private function prepareSoaCategoriesCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('soa_categories_cache')) {
-            $this->importCacheHelper->addItemToArrayCache('soa_categories_cache', true);
-            /** @var Entity\SoaCategory $soaCategory */
-            foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
-                $this->importCacheHelper->addItemToArrayCache(
-                    'referential_' . $soaCategory->getReferential()->getUuid() . '_soa_categories_by_labels',
-                    $soaCategory,
-                    $soaCategory->getLabel($anr->getLanguage())
                 );
             }
         }

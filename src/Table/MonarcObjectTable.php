@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Entity\AnrSuperClass;
+use Monarc\Core\Entity\ObjectSuperClass;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\Core\Table\Interfaces\PositionUpdatableTableInterface;
 use Monarc\Core\Table\Traits\PositionIncrementTableTrait;
@@ -63,5 +64,18 @@ class MonarcObjectTable extends AbstractTable implements PositionUpdatableTableI
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * @return MonarcObject[]
+     */
+    public function findGlobalObjectsByAnr(Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('o')
+            ->where('o.anr = :anr')
+            ->andWhere('o.scope = ' . ObjectSuperClass::SCOPE_GLOBAL)
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 }

@@ -1,14 +1,13 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Monarc\Core\Entity\AbstractEntity;
 
 /**
  * @ORM\Table(name="soa", indexes={
@@ -17,7 +16,7 @@ use Monarc\Core\Entity\AbstractEntity;
  * })
  * @ORM\Entity
  */
-class Soa extends AbstractEntity
+class Soa
 {
     /**
      * @var int
@@ -126,30 +125,6 @@ class Soa extends AbstractEntity
      */
     protected $soaScaleComment;
 
-    public function getFiltersForService()
-    {
-        $filterJoin = [
-            [
-                'as' => 'm',
-                'rel' => 'measure',
-            ],
-        ];
-        $filterLeft = [
-        ];
-        $filtersCol = [
-            'm.label1',
-            'm.label2',
-            'm.label3',
-            'm.label4',
-            'm.code',
-            'remarks',
-            'actions',
-            'evidences'
-        ];
-
-        return [$filterJoin, $filterLeft, $filtersCol];
-    }
-
     public function getId()
     {
         return $this->id;
@@ -179,9 +154,6 @@ class Soa extends AbstractEntity
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getRemarks()
     {
         return $this->remarks;
@@ -233,126 +205,84 @@ class Soa extends AbstractEntity
         return $this;
     }
 
-    /**
-     * @return integer
-     */
     public function getCompliance()
     {
         return $this->compliance;
     }
 
-    /**
-     * @param integer $compliance
-     */
-    public function setCompliance($compliance): self
+    public function setCompliance(int $compliance): self
     {
         $this->compliance = $compliance;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getEx()
+    public function getEx(): int
     {
         return $this->EX;
     }
 
-    /**
-     * @param int $EX
-     */
-    public function setEx($EX): self
+    public function setEx(int $EX): self
     {
         $this->EX = $EX;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getLr()
+    public function getLr(): int
     {
         return $this->LR;
     }
 
-    /**
-     * @param int $LR
-     */
-    public function setLr($LR): self
+    public function setLr(int $LR): self
     {
         $this->LR = $LR;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getCo()
+    public function getCo(): int
     {
         return $this->CO;
     }
 
-    /**
-     * @param int $CO
-     */
-    public function setCo($CO): self
+    public function setCo(int $CO): self
     {
         $this->CO = $CO;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getBr()
+    public function getBr(): int
     {
         return $this->BR;
     }
 
-    /**
-     * @param int $BR
-     */
-    public function setBr($BR): self
+    public function setBr(int $BR): self
     {
         $this->BR = $BR;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getBp()
+    public function getBp(): int
     {
         return $this->BP;
     }
 
-    /**
-     * @param int $BP
-     */
-    public function setBp($BP): self
+    public function setBp(int $BP): self
     {
         $this->BP = $BP;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getRra()
+    public function getRra(): int
     {
         return $this->RRA;
     }
 
-    /**
-     * @param int $RRA
-     */
-    public function setRra($RRA): self
+    public function setRra(int $RRA): self
     {
         $this->RRA = $RRA;
 

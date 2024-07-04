@@ -34,16 +34,14 @@ trait InstanceExportTrait
         return [
             'name' => $instance->getName($languageIndex),
             'label' => $instance->getLabel($languageIndex),
-            'assetType' => $instance->getAssetType(),
-            'exportable' => $instance->getExportable(),
             'level' => $instance->getLevel(),
             'position' => $instance->getPosition(),
             'confidentiality' => $withEval ? $instance->getConfidentiality() : -1,
             'integrity' => $withEval ? $instance->getIntegrity() : -1,
             'availability' => $withEval ? $instance->getAvailability() : -1,
-            'confidentialityInherited' => $withEval ? (int)$instance->isConfidentialityInherited() : 1,
-            'integrityInherited' => $withEval ? (int)$instance->isIntegrityInherited() : 1,
-            'availabilityInherited' => $withEval ? (int)$instance->isAvailabilityInherited() : 1,
+            'isConfidentialityInherited' => $withEval ? (int)$instance->isConfidentialityInherited() : 1,
+            'isIntegrityInherited' => $withEval ? (int)$instance->isIntegrityInherited() : 1,
+            'isAvailabilityInherited' => $withEval ? (int)$instance->isAvailabilityInherited() : 1,
             'asset' => $this->prepareAssetData($asset, $languageIndex),
             /* For Anr and Instance export instanceRisks are added to the instance, so not needed in AMVs in asset. */
             'object' => $includeCompleteObjectData
@@ -84,8 +82,7 @@ trait InstanceExportTrait
         foreach ($instance->getInstanceMetadata() as $instanceMetadata) {
             $result[] = [
                 'anrInstanceMetadataField' => [
-                    'id' => $instanceMetadata->getAnrInstanceMetadataField()->getId(),
-                    'label' => $instanceMetadata->getAnrInstanceMetadataField()->getLabel(),
+                    'label' => $instanceMetadata->getAnrInstanceMetadataField()->getLbel(),
                 ],
                 'comment' => $instanceMetadata->getComment(),
             ];

@@ -69,9 +69,7 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
 
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
         $entity = $this->getService()->getEntity(['id' => $id]);
-
 
         $this->formatDependencies($entity, $this->dependencies);
 
@@ -101,11 +99,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
                         } else {
                             $entity[$dependency] = $entity[$dependency]->getJsonArray();
                         }
-                        unset(
-                            $entity[$dependency][$value]['__initializer__'],
-                            $entity[$dependency][$value]['__cloner__'],
-                            $entity[$dependency][$value]['__isInitialized__']
-                        );
                     } elseif ($entity[$dependency] instanceof PersistentCollection) {
                         $entity[$dependency]->initialize();
                         if ($entity[$dependency]->count()) {

@@ -33,9 +33,8 @@ class AnrThreatService
     {
         $result = [];
 
-        /** @var Threat[] $threats */
-        $threats = $this->threatTable->findByParams($params);
-        foreach ($threats as $threat) {
+        /** @var Threat $threat */
+        foreach ($this->threatTable->findByParams($params) as $threat) {
             $result[] = $this->prepareThreatDataResult($threat);
         }
 

@@ -44,7 +44,7 @@ class ObjectImportProcessor
 
     public function processObjectData(
         Entity\Anr $anr,
-        Entity\ObjectCategory $objectCategory,
+        ?Entity\ObjectCategory $objectCategory,
         array $objectData,
         string $importMode
     ): Entity\MonarcObject {
@@ -68,7 +68,7 @@ class ObjectImportProcessor
                 $objectData[$nameFiledKey],
                 $assetData['uuid'],
                 $objectScope,
-                $objectCategory->getId()
+                $objectCategory?->getId()
             );
             if ($object !== null) {
                 $this->objectObjectTable->deleteLinksByParentObject($object);
@@ -105,7 +105,7 @@ class ObjectImportProcessor
             $this->importCacheHelper->addItemToArrayCache(
                 'objects_by_name_asset_scope_category',
                 $object,
-                $objectData[$nameFiledKey] . $asset->getUuid() . $object->getScope() . $objectCategory->getId()
+                $objectData[$nameFiledKey] . $asset->getUuid() . $object->getScope() . $objectCategory?->getId()
             );
             $this->importCacheHelper->addItemToArrayCache(
                 'objects_names',

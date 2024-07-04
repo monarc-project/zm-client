@@ -84,6 +84,17 @@ class Instance extends InstanceSuperClass
         return $this;
     }
 
+    public function getInstanceMetadataByMetadataFieldLink(AnrInstanceMetadataField $metadataField): ?InstanceMetadata
+    {
+        foreach ($this->instanceMetadata as $instanceMetadata) {
+            if ($instanceMetadata->getAnrInstanceMetadataField()->getLabel() === $metadataField->getLabel()) {
+                return $instanceMetadata->getAnrInstanceMetadataField();
+            }
+        }
+
+        return null;
+    }
+
     public function getHierarchyString(): string
     {
         return implode(' > ', array_column($this->getHierarchyArray(), 'name' . $this->anr->getLanguage()));

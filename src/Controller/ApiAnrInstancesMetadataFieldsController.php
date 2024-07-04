@@ -23,26 +23,6 @@ class ApiAnrInstancesMetadataFieldsController extends AbstractRestfulControllerR
         $this->anrInstanceMetadataFieldService = $anrInstanceMetadataFieldService;
     }
 
-    public function getList()
-    {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
-
-        return $this->getPreparedJsonResponse([
-            'data' => $this->anrInstanceMetadataFieldService->getList($anr),
-        ]);
-    }
-
-    public function get($id)
-    {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
-
-        return $this->getPreparedJsonResponse([
-            'data' => $this->anrInstanceMetadataFieldService->getAnrInstanceMetadataFieldData($anr, (int)$id),
-        ]);
-    }
-
     /**
      * @param array $data
      */

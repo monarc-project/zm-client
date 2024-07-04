@@ -19,7 +19,6 @@ use Monarc\FrontOffice\Entity\Measure;
 use Monarc\FrontOffice\Entity\Referential;
 use Monarc\FrontOffice\Import\Processor;
 use Monarc\FrontOffice\Table;
-use Monarc\FrontOffice\Service\SoaCategoryService;
 
 class AssetImportService
 {
@@ -29,12 +28,12 @@ class AssetImportService
         private Processor\AssetImportProcessor $assetImportProcessor,
         private Processor\ThreatImportProcessor $threatImportProcessor,
         private Processor\VulnerabilityImportProcessor $vulnerabilityImportProcessor,
+        private Processor\ReferentialImportProcessor $referentialImportProcessor,
         private Table\MeasureTable $measureTable,
         private Table\AmvTable $amvTable,
         private Table\InstanceRiskTable $instanceRiskTable,
         private Table\ReferentialTable $referentialTable,
         private ImportCacheHelper $importCacheHelper,
-        private SoaCategoryService $soaCategoryService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -143,10 +142,12 @@ class AssetImportService
         }
     }
 
+    // TODO: use the ReferentialImportProcessor.
     private function processMeasuresAndReferentialData(array $measuresData, Anr $anr, Amv $amv): void
     {
         $languageIndex = $anr->getLanguage();
         $labelKey = 'label' . $languageIndex;
+        $this->referentialImportProcessor->prepareSoaCategoriesCache($anr);
         foreach ($measuresData as $measureUuid) {
             $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
                 ?: $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
@@ -178,12 +179,16 @@ class AssetImportService
                     continue;
                 }
 
-                $soaCategory = $this->soaCategoryService->getOrCreateSoaCategory(
-                    $this->importCacheHelper,
-                    $anr,
-                    $referential,
-                    $data['measures'][$measureUuid]['category'][$labelKey] ?? ''
-                );
+                $soaCategory = null;
+                if (!empty($data['measures'][$measureUuid]['category'][$labelKey])) {
+                    $soaCategory = $this->referentialImportProcessor->processSoaCategoryData(
+                        $anr,
+                        $referential,
+                        [
+                            'category' => ['label' => $data['measures'][$measureUuid]['category'][$labelKey]],
+                        ]
+                    );
+                }
 
                 $measure = (new Measure())
                     ->setAnr($anr)

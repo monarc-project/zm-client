@@ -8,10 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Entity\UserSuperClass;
-use Monarc\FrontOffice\Entity\Anr;
-use Monarc\FrontOffice\Entity\AnrInstanceMetadataField;
-use Monarc\FrontOffice\Entity\Instance;
-use Monarc\FrontOffice\Entity\InstanceMetadata;
+use Monarc\FrontOffice\Entity;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Table;
 
@@ -28,38 +25,44 @@ class InstanceMetadataService
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function getInstancesMetadata(Anr $anr, int $instanceId): array
+    public function getInstancesMetadata(Entity\Anr $anr, int $instanceId): array
     {
         $result = [];
-        /** @var Instance $instance */
+        /** @var Entity\Instance $instance */
         $instance = $this->instanceTable->findByIdAndAnr($instanceId, $anr);
 
+        $instanceMetadataByMetadataFieldId = [];
         foreach ($instance->getInstanceMetadata() as $instanceMetadata) {
-            $metadataField = $instanceMetadata->getAnrInstanceMetadataField();
+            $metadataFieldId = $instanceMetadata->getAnrInstanceMetadataField()->getId();
+            $instanceMetadataByMetadataFieldId[$metadataFieldId] = [
+                'id' => $instanceMetadata->getId(),
+                'metadataId' => $metadataFieldId,
+                $anr->getLanguageCode() => $instanceMetadata->getComment(),
+            ];
+        }
+
+        foreach ($anr->getAnrInstanceMetadataFields() as $metadataField) {
             $metadataFieldId = $metadataField->getId();
             $result[$metadataFieldId] = [
                 'id' => $metadataFieldId,
-                $anr->getLanguage() => $metadataField->getLabel(),
+                $anr->getLanguageCode() => $metadataField->getLabel(),
                 'isDeletable' => $metadataField->isDeletable(),
-                'instanceMetadata' => [
-                    'id' => $instanceMetadata->getId(),
-                    'metadataId' => $metadataFieldId,
-                    $anr->getLanguage() => $instanceMetadata->getComment(),
-                ],
+                'instanceMetadata' => $instanceMetadataByMetadataFieldId[$metadataFieldId] ?? [],
             ];
         }
 
         return $result;
     }
 
-    public function create(Anr $anr, int $instanceId, array $data): InstanceMetadata
+    public function create(Entity\Anr $anr, int $instanceId, array $data): Entity\InstanceMetadata
     {
+        /** @var Entity\Instance $instance */
         $instance = $this->instanceTable->findById($instanceId);
         $metadataFieldData = current($data['metadata']);
         $instanceMetadataComment = $metadataFieldData['instanceMetadata'][$anr->getLanguageCode()] ?? '';
-        /** @var AnrInstanceMetadataField $metadataField */
+        /** @var Entity\AnrInstanceMetadataField $metadataField */
         $metadataField = $this->anrInstanceMetadataFieldTable->findByIdAndAnr((int)$metadataFieldData['id'], $anr);
-        $instanceMetadata = (new InstanceMetadata())
+        $instanceMetadata = (new Entity\InstanceMetadata())
             ->setInstance($instance)
             ->setAnrInstanceMetadataField($metadataField)
             ->setComment($instanceMetadataComment)
@@ -68,7 +71,7 @@ class InstanceMetadataService
         /* Create the same context instance metadata records for the global instance's siblings. */
         $siblingInstances = $this->instanceTable->findGlobalSiblingsByAnrAndInstance($anr, $instance);
         foreach ($siblingInstances as $siblingInstance) {
-            $siblingInstanceMetadata = (new InstanceMetadata())
+            $siblingInstanceMetadata = (new Entity\InstanceMetadata())
                 ->setInstance($siblingInstance)
                 ->setAnrInstanceMetadataField($metadataField)
                 ->setComment($instanceMetadataComment)
@@ -82,9 +85,9 @@ class InstanceMetadataService
         return $instanceMetadata;
     }
 
-    public function update(Anr $anr, int $id, array $data): InstanceMetadata
+    public function update(Entity\Anr $anr, int $id, array $data): Entity\InstanceMetadata
     {
-        /** @var InstanceMetadata $instanceMetadata */
+        /** @var Entity\InstanceMetadata $instanceMetadata */
         $instanceMetadata = $this->instanceMetadataTable->findByIdAndAnr($id, $anr);
 
         $commentValue = $data[$anr->getLanguageCode()] ?? '';

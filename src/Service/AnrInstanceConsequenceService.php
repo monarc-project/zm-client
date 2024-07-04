@@ -83,9 +83,11 @@ class AnrInstanceConsequenceService
         if ($siblingInstance !== null) {
             $instancesConsequences = $this->instanceConsequenceTable->findByAnrAndInstance($anr, $siblingInstance);
             foreach ($instancesConsequences as $instanceConsequence) {
+                /** @var Entity\ScaleImpactType $scalesImpactType */
+                $scalesImpactType = $instanceConsequence->getScaleImpactType();
                 $this->createInstanceConsequence(
                     $instance,
-                    $instanceConsequence->getScaleImpactType(),
+                    $scalesImpactType,
                     $instanceConsequence->isHidden(),
                     [
                         'confidentiality' => $instanceConsequence->getConfidentiality(),
@@ -95,6 +97,7 @@ class AnrInstanceConsequenceService
                 );
             }
         } else {
+            /** @var Entity\ScaleImpactType $scalesImpactType */
             foreach ($this->scalesCacheHelper->getCachedScaleImpactTypes($anr) as $scalesImpactType) {
                 if (!\in_array(
                     $scalesImpactType->getType(),
@@ -118,7 +121,6 @@ class AnrInstanceConsequenceService
         array $evaluationCriteria = [],
         bool $saveInTheDb = false
     ): Entity\InstanceConsequence {
-        /** @var Entity\InstanceConsequence $instanceConsequence */
         $instanceConsequence = (new Entity\InstanceConsequence())
             ->setAnr($instance->getAnr())
             ->setInstance($instance)

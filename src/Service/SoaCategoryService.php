@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table\ReferentialTable;
 use Monarc\FrontOffice\Table\SoaCategoryTable;
@@ -74,49 +73,5 @@ class SoaCategoryService
     private function prepareSoaCategoryDataResult(Entity\SoaCategory $soaCategory): array
     {
         return array_merge(['id' => $soaCategory->getId()], $soaCategory->getLabels());
-    }
-
-    // TODO: use the ReferentialImportProcessor::processSoaCategoryData() instead.
-    public function getOrCreateSoaCategory(
-        ImportCacheHelper $importCacheHelper,
-        Entity\Anr $anr,
-        Entity\Referential $referential,
-        string $labelValue
-    ): Entity\SoaCategory {
-        $languageIndex = $anr->getLanguage();
-        $labelKey = 'label' . $languageIndex;
-
-        $this->prepareSoaCategoriesCacheData($importCacheHelper, $anr);
-
-        $cacheKey = $referential->getUuid() . '_' . $labelValue;
-        $soaCategory = $importCacheHelper->getItemFromArrayCache('soa_categories_by_ref_and_label', $cacheKey);
-        if ($soaCategory !== null) {
-            return $soaCategory;
-        }
-
-        $soaCategory = (new Entity\SoaCategory())
-            ->setAnr($anr)
-            ->setReferential($referential)
-            ->setLabels([$labelKey => $labelValue]);
-
-        $this->soaCategoryTable->save($soaCategory, false);
-
-        $importCacheHelper->addItemToArrayCache('soa_categories_by_ref_and_label', $soaCategory, $cacheKey);
-
-        return $soaCategory;
-    }
-
-    public function prepareSoaCategoriesCacheData(ImportCacheHelper $importCacheHelper, Entity\Anr $anr): void
-    {
-        if (!isset($this->arrayCache['soa_categories_by_ref_and_label'])) {
-            /** @var Entity\SoaCategory $soaCategory */
-            foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
-                $importCacheHelper->addItemToArrayCache(
-                    'soa_categories_by_ref_and_label',
-                    $soaCategory,
-                    $soaCategory->getReferential()->getUuid() . '_' . $soaCategory->getLabel($anr->getLanguage())
-                );
-            }
-        }
     }
 }

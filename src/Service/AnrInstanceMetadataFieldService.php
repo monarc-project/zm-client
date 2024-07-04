@@ -26,41 +26,30 @@ class AnrInstanceMetadataFieldService
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function getList(Anr $anr): array
-    {
-        $result = [];
-        /** @var AnrInstanceMetadataField $metadataField */
-        foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $index => $metadataField) {
-            $result[] = [
-                'id' => $metadataField->getId(),
-                'index' => $index + 1,
-                $anr->getLanguageCode() => $metadataField->getLabel(),
-            ];
-        }
-
-        return $result;
-    }
-
-    public function getAnrInstanceMetadataFieldData(Anr $anr, int $id): array
-    {
-        /** @var AnrInstanceMetadataField $metadataField */
-        $metadataField = $this->anrInstanceMetadataFieldTable->findByIdAndAnr($id, $anr);
-
-        return [
-            'id' => $metadataField->getId(),
-            $anr->getLanguageCode() => $metadataField->getLabel(),
-        ];
-    }
-
     public function create(Anr $anr, array $data, bool $saveInDb = true): AnrInstanceMetadataField
     {
         $metadataFieldData = current($data);
+
+        return $this->createAnrInstanceMetadataField(
+            $anr,
+            $metadataFieldData[$anr->getLanguageCode()],
+            isset($metadataFieldData['isDeletable']) ? (bool)$metadataFieldData['isDeletable'] : null,
+            $saveInDb
+        );
+    }
+
+    public function createAnrInstanceMetadataField(
+        Anr $anr,
+        string $label,
+        ?bool $isDeletable,
+        bool $saveInDb
+    ): AnrInstanceMetadataField {
         $metadataField = (new AnrInstanceMetadataField())
-            ->setLabel($metadataFieldData[$anr->getLanguageCode()])
+            ->setLabel($label)
             ->setAnr($anr)
             ->setCreator($this->connectedUser->getEmail());
-        if (isset($metadataFieldData['isDeletable'])) {
-            $metadataField->setIsDeletable((bool)$metadataFieldData['isDeletable']);
+        if ($isDeletable !== null) {
+            $metadataField->setIsDeletable($isDeletable);
         }
 
         $this->anrInstanceMetadataFieldTable->save($metadataField, $saveInDb);

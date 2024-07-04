@@ -29,6 +29,7 @@ class InstanceMetadataTable extends AbstractTable
             ->andWhere('im.anrInstanceMetadataField = :anrInstanceMetadataField')
             ->setParameter('instance', $instance)
             ->setParameter('anrInstanceMetadataField', $anrInstanceMetadataField)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHL.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHL.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -14,65 +14,36 @@ use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Import\Processor;
 use Monarc\FrontOffice\Table;
-use Monarc\FrontOffice\Service\SoaCategoryService;
 
 class ObjectImportService
 {
     public const IMPORT_MODE_MERGE = 'merge';
-
-    private Table\MonarcObjectTable $monarcObjectTable;
-
-    private AssetImportService $assetImportService;
-
-    private Table\RolfTagTable $rolfTagTable;
-
-    private Table\RolfRiskTable $rolfRiskTable;
-
-    private Table\MeasureTable $measureTable;
-
-    private Table\ObjectObjectTable $objectObjectTable;
-
-    private Table\ReferentialTable $referentialTable;
-
-    private Table\ObjectCategoryTable $objectCategoryTable;
+    public const IMPORT_MODE_DUPLICATE = 'duplicate';
 
     private UserSuperClass $connectedUser;
 
-    private ImportCacheHelper $importCacheHelper;
-
-    private SoaCategoryService $soaCategoryService;
-
     public function __construct(
-        Table\MonarcObjectTable $monarcObjectTable,
-        Table\ObjectObjectTable $objectObjectTable,
-        AssetImportService $assetImportService,
-        Table\RolfTagTable $rolfTagTable,
-        Table\RolfRiskTable $rolfRiskTable,
-        Table\MeasureTable $measureTable,
-        Table\ReferentialTable $referentialTable,
-        Table\ObjectCategoryTable $objectCategoryTable,
-        ConnectedUserService $connectedUserService,
-        ImportCacheHelper $importCacheHelper,
-        SoaCategoryService $soaCategoryService
+        private Processor\ReferentialImportProcessor $referentialImportProcessor,
+        private Table\MonarcObjectTable $monarcObjectTable,
+        private Table\ObjectObjectTable $objectObjectTable,
+        private AssetImportService $assetImportService,
+        private Table\RolfTagTable $rolfTagTable,
+        private Table\RolfRiskTable $rolfRiskTable,
+        private Table\MeasureTable $measureTable,
+        private Table\ReferentialTable $referentialTable,
+        private Table\ObjectCategoryTable $objectCategoryTable,
+        private ImportCacheHelper $importCacheHelper,
+        ConnectedUserService $connectedUserService
     ) {
-        $this->monarcObjectTable = $monarcObjectTable;
-        $this->objectObjectTable = $objectObjectTable;
-        $this->assetImportService = $assetImportService;
-        $this->rolfTagTable = $rolfTagTable;
-        $this->rolfRiskTable = $rolfRiskTable;
-        $this->measureTable = $measureTable;
-        $this->referentialTable = $referentialTable;
-        $this->objectCategoryTable = $objectCategoryTable;
         $this->connectedUser = $connectedUserService->getConnectedUser();
-        $this->importCacheHelper = $importCacheHelper;
-        $this->soaCategoryService = $soaCategoryService;
     }
 
     public function importFromArray(
         array $data,
         Entity\Anr $anr,
-        string $modeImport = self::IMPORT_MODE_MERGE
+        string $importMode = self::IMPORT_MODE_MERGE
     ): ?Entity\MonarcObject {
         if (!isset($data['type'], $data['object']) || $data['type'] !== 'object') {
             return null;
@@ -108,12 +79,9 @@ class ObjectImportService
         $objectScope = (int)$objectData['scope'];
         $nameFiledKey = 'name' . $anr->getLanguage();
         $monarcObject = null;
-        if ($objectScope === ObjectSuperClass::SCOPE_LOCAL
-            || (
-                $objectScope === ObjectSuperClass::SCOPE_GLOBAL
-                && $modeImport === self::IMPORT_MODE_MERGE
-            )
-        ) {
+        if ($objectScope === ObjectSuperClass::SCOPE_LOCAL || (
+            $objectScope === ObjectSuperClass::SCOPE_GLOBAL && $importMode === self::IMPORT_MODE_MERGE
+        )) {
             $monarcObject = $this->monarcObjectTable->findOneByAnrAssetNameScopeAndCategory(
                 $anr,
                 $nameFiledKey,
@@ -123,7 +91,8 @@ class ObjectImportService
                 $objectCategory
             );
             if ($monarcObject !== null) {
-                $this->objectObjectTable->deleteAllByParent($monarcObject);
+                // TODO: should be dropped and replaced by the use of the processor.
+                $this->objectObjectTable->deleteLinksByParentObject($monarcObject);
             }
         }
 
@@ -137,34 +106,23 @@ class ObjectImportService
                 ->setMode($objectData['mode'] ?? 1)
                 ->setScope($objectData['scope'])
                 ->setLabels([$labelKey => $objectData[$labelKey]])
-                ->setPosition((int)$objectData['position'])
                 ->setCreator($this->connectedUser->getEmail());
             try {
-                $this->monarcObjectTable->find($anr, $objectData['uuid']);
-            } catch (EntityNotFoundException $e) {
+                $this->monarcObjectTable->findByUuidAndAnr($objectData['uuid'], $anr);
+            } catch (EntityNotFoundException) {
                 $monarcObject->setUuid($objectData['uuid']);
             }
 
             $this->setMonarcObjectName($monarcObject, $objectData, $nameFiledKey);
         }
 
-        $monarcObject->addAnr($anr);
-
         $this->monarcObjectTable->save($monarcObject);
 
         $this->importCacheHelper->addItemToArrayCache('objects', $monarcObject, $monarcObject->getUuid());
 
         if (!empty($data['children'])) {
-            usort($data['children'], static function ($a, $b) {
-                if (isset($a['object']['position'], $b['object']['position'])) {
-                    return $a['object']['position'] <=> $b['object']['position'];
-                }
-
-                return 0;
-            });
-
             foreach ($data['children'] as $childObjectData) {
-                $childMonarcObject = $this->importFromArray($childObjectData, $anr, $modeImport);
+                $childMonarcObject = $this->importFromArray($childObjectData, $anr, $importMode);
                 if ($childMonarcObject !== null) {
                     $maxPosition = $this->objectObjectTable->findMaxPosition([
                         'anr' => $anr,
@@ -211,7 +169,7 @@ class ObjectImportService
             $maxPosition = $this->objectCategoryTable->findMaxPositionByAnrAndParent($anr, $parentCategory);
             $rootCategory = null;
             if ($parentCategory !== null) {
-                $rootCategory = $parentCategory->getRoot() ?? $parentCategory;
+                $rootCategory = $parentCategory->getRootCategory();
             }
             $objectCategory = (new Entity\ObjectCategory())
                 ->setAnr($anr)
@@ -301,7 +259,7 @@ class ObjectImportService
             $objectData[$nameFiledKey]
         );
         if ($existedObject !== null) {
-            if (strpos($objectData[$nameFiledKey], ' - Imp. #') !== false) {
+            if (str_contains($objectData[$nameFiledKey], ' - Imp. #')) {
                 $objectData[$nameFiledKey] = preg_replace('/#\d+/', '#' . $index, $objectData[$nameFiledKey]);
             } else {
                 $objectData[$nameFiledKey] .= ' - Imp. #' . $index;
@@ -316,7 +274,7 @@ class ObjectImportService
     private function getMonarcVersion(array $data): string
     {
         if (isset($data['monarc_version'])) {
-            return strpos($data['monarc_version'], 'master') === false ? $data['monarc_version'] : '99';
+            return str_contains($data['monarc_version'], 'master') ? '999' : $data['monarc_version'];
         }
 
         return '1';
@@ -335,9 +293,11 @@ class ObjectImportService
         }
     }
 
+    // TODO: use the ReferentialImportProcessor.
     private function processMeasuresAndReferentialData(Entity\Anr $anr, Entity\RolfRisk $rolfRisk, array $measuresData): void
     {
         $labelKey = 'label' . $anr->getLanguage();
+        $this->referentialImportProcessor->prepareSoaCategoriesCache($anr);
         foreach ($measuresData as $measureData) {
             /* Backward compatibility. Prior v2.10.3 measures data were not exported. */
             $measureUuid = $measureData['uuid'] ?? $measureData;
@@ -361,12 +321,16 @@ class ObjectImportService
                     $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referentialUuid);
                 }
 
-                $soaCategory = $this->soaCategoryService->getOrCreateSoaCategory(
-                    $this->importCacheHelper,
-                    $anr,
-                    $referential,
-                    $measureData['category'][$labelKey] ?? ''
-                );
+                $soaCategory = null;
+                if (!empty($measureData['category'][$labelKey])) {
+                    $soaCategory = $this->referentialImportProcessor->processSoaCategoryData(
+                        $anr,
+                        $referential,
+                        [
+                            'category' => ['label' => $measureData['category'][$labelKey]],
+                        ]
+                    );
+                }
 
                 $measure = (new Entity\Measure())
                     ->setAnr($anr)

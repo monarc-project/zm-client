@@ -26,10 +26,8 @@ class AnrThemeService
     public function getList(FormattedInputParams $params): array
     {
         $result = [];
-
-        /** @var Theme[] $themes */
-        $themes = $this->themeTable->findByParams($params);
-        foreach ($themes as $theme) {
+        /** @var Theme $theme */
+        foreach ($this->themeTable->findByParams($params) as $theme) {
             $result[] = $this->prepareThemeDataResult($theme);
         }
 

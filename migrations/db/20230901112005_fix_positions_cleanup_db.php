@@ -143,7 +143,11 @@ class FixPositionsCleanupDb extends AbstractMigration
 
         /* Clean up unused columns. */
         $this->table('clients')->removeColumn('model_id')->update();
-        $this->table('instances')->removeColumn('disponibility')->update();
+        $this->table('instances')
+            ->removeColumn('disponibility')
+            ->removeColumn('asset_type')
+            ->removeColumn('exportable')
+            ->update();
         $this->table('objects')
             ->removeColumn('disponibility')
             ->removeColumn('token_import')
@@ -222,7 +226,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->dropForeignKey(['measure_uuid', 'anr_id'])
             ->update();
         $this->table('soa')
-            ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
+            ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => 'id'])
             ->update();
         $this->execute('UPDATE soa s INNER JOIN measures m '
             . 'ON s.measure_uuid = m.`uuid` AND s.anr_id = m.anr_id SET s.measure_id = m.id;');

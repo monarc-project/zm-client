@@ -46,7 +46,7 @@ class AnrExportService
         private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
         private Table\SoaScaleCommentTable $soaScaleCommentTable,
         private Table\DeliveryTable $deliveryTable,
-        private DeprecatedTable\SoaTable $soaTable,
+        private Table\SoaTable $soaTable,
         private DeprecatedTable\QuestionTable $questionTable,
         private DeprecatedTable\interviewTable $interviewTable,
         private DeprecatedTable\RecordTable $recordTable,
@@ -112,7 +112,7 @@ class AnrExportService
             'operationalRiskScales' => $withEval ? $this->prepareOperationalRiskScalesData($anr) : [],
             'soaScaleComments' => $withSoas ? $this->prepareSoaScaleCommentsData($anr) : [],
             'soas' => $withSoas ? $this->prepareSoasData($anr) : [],
-            'method' => $withMethodSteps ? $this->prepareMethodData($anr) : [],
+            'method' => $withMethodSteps ? $this->prepareMethodData($anr, !$withKnowledgeBase) : [],
             'thresholds' => $withEval ? $this->prepareAnrTrashholdsData($anr) : [],
             'interviews' => $withInterviews ? $this->prepareInterviewsData($anr) : [],
             'gdprRecords' => $withRecords ? $this->prepareGdprRecordsData($anr) : [],
@@ -124,7 +124,10 @@ class AnrExportService
         $result = [];
         /** @var Entity\AnrInstanceMetadataField $anrInstanceMetadata */
         foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $anrInstanceMetadata) {
-            $result[] = ['label' => $anrInstanceMetadata->getLabel()];
+            $result[] = [
+                'label' => $anrInstanceMetadata->getLabel(),
+                'isDeletable' => $anrInstanceMetadata->isDeletable(),
+            ];
         }
 
         return $result;
@@ -394,6 +397,7 @@ class AnrExportService
     private function prepareSoasData(Entity\Anr $anr): array
     {
         $result = [];
+        /** @var Entity\Soa $soa */
         foreach ($this->soaTable->findByAnr($anr) as $soa) {
             $result = [
                 'remarks' => $soa->getRemarks(),
@@ -405,7 +409,7 @@ class AnrExportService
                 'BR' => $soa->getBr(),
                 'BP' => $soa->getBp(),
                 'RRA' => $soa->getRra(),
-                'soaScaleCommentId' => $soa->getSoaScaleComment()?->getId(),
+                'soaScaleCommentIndex' => $soa->getSoaScaleComment()?->getScaleIndex(),
                 'measureUuid' => $soa->getMeasure()->getUuid(),
             ];
         }
@@ -413,7 +417,8 @@ class AnrExportService
         return $result;
     }
 
-    private function prepareMethodData(Entity\Anr $anr): array
+    /** The threats' data is only needed when the Knowledge Base is not exported. */
+    private function prepareMethodData(Entity\Anr $anr, bool $includeThreats): array
     {
         $languageIndex = $anr->getLanguage();
         $deliveriesData = [];
@@ -425,7 +430,7 @@ class AnrExportService
                 Entity\Delivery::DOC_TYPE_MODEL_VALIDATION,
                 Entity\Delivery::DOC_TYPE_FINAL_REPORT,
                 Entity\Delivery::DOC_TYPE_IMPLEMENTATION_PLAN,
-                Entity\Delivery::DOC_TYPE_SOA
+                Entity\Delivery::DOC_TYPE_SOA,
             ], true)) {
                 $deliveriesData[$docType] = [
                     'id' => $delivery->getId(),
@@ -446,6 +451,7 @@ class AnrExportService
             $questionChoicesData = [];
             foreach ($question->getQuestionChoices() as $questionChoice) {
                 $questionChoicesData[] = [
+                    'id' => $questionChoice->getId(),
                     'label' => $questionChoice->getLabel($languageIndex),
                     'position' => $questionChoice->getPosition(),
                 ];
@@ -484,6 +490,7 @@ class AnrExportService
             ],
             'deliveries' => $deliveriesData,
             'questions' => $questionsData,
+            'threats' => $includeThreats ? $this->prepareThreatsData($anr, true) : [],
         ];
     }
 

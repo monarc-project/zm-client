@@ -33,11 +33,9 @@ class AnrScaleService
     public function getList(Entity\Anr $anr): array
     {
         $result = [];
-        /** @var Entity\Scale[] $scales */
-        $scales = $this->scaleTable->findByAnr($anr);
         $availableTypes = CoreEntity\ScaleSuperClass::getAvailableTypes();
-
-        foreach ($scales as $scale) {
+        /** @var Entity\Scale $scale */
+        foreach ($this->scaleTable->findByAnr($anr) as $scale) {
             $result[] = [
                 'id' => $scale->getId(),
                 'type' => $availableTypes[$scale->getType()],

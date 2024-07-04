@@ -19,13 +19,7 @@ use Monarc\FrontOffice\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Entity\SoaCategory;
 use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Entity\UserRole;
-use Monarc\FrontOffice\Model\Table\SoaTable;
-use Monarc\FrontOffice\Table\ReferentialTable;
-use Monarc\FrontOffice\Table\ScaleTable;
-use Monarc\FrontOffice\Table\AnrTable;
-use Monarc\FrontOffice\Table\InstanceRiskOpTable;
-use Monarc\FrontOffice\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Table\SnapshotTable;
+use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
 use Monarc\FrontOffice\Stats\Exception\StatsFetchingException;
@@ -66,14 +60,14 @@ class StatsAnrService
     private $apiKey;
 
     public function __construct(
-        private AnrTable $anrTable,
-        private ScaleTable $scaleTable,
-        private InstanceRiskTable $informationalRiskTable,
-        private InstanceRiskOpTable $operationalRiskTable,
-        private ReferentialTable $referentialTable,
-        private SoaTable $soaTable,
+        private Table\AnrTable $anrTable,
+        private Table\ScaleTable $scaleTable,
+        private Table\InstanceRiskTable $informationalRiskTable,
+        private Table\InstanceRiskOpTable $operationalRiskTable,
+        private Table\ReferentialTable $referentialTable,
+        private Table\SoaTable $soaTable,
         private StatsApiProvider $statsApiProvider,
-        private SnapshotTable $snapshotTable,
+        private Table\SnapshotTable $snapshotTable,
         ConnectedUserService $connectedUserService,
         array $config
     ) {

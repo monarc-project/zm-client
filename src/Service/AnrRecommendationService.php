@@ -34,11 +34,9 @@ class AnrRecommendationService
 
     public function getList(FormattedInputParams $formattedInputParams): array
     {
-        /** @var Entity\Recommendation[] $recommendations */
-        $recommendations = $this->recommendationTable->findByParams($formattedInputParams);
-
         $recommendationsData = [];
-        foreach ($recommendations as $recommendation) {
+        /** @var Entity\Recommendation $recommendation */
+        foreach ($this->recommendationTable->findByParams($formattedInputParams) as $recommendation) {
             $recommendationsData[] = $this->getPreparedRecommendationData($recommendation);
         }
 

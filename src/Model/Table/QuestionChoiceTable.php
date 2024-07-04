@@ -22,4 +22,13 @@ class QuestionChoiceTable extends AbstractEntityTable
     {
         parent::__construct($dbService, QuestionChoice::class, $connectedUserService);
     }
+
+    public function saveEntity(QuestionChoice $question, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($question);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
 }

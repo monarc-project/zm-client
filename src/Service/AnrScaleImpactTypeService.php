@@ -32,10 +32,9 @@ class AnrScaleImpactTypeService
     public function getList(Entity\Anr $anr): array
     {
         $result = [];
-        /** @var Entity\ScaleImpactType[] $scaleImpactTypes */
-        $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnr($anr);
         $scaleImpactTypesShortcuts = ScaleImpactTypeSuperClass::getScaleImpactTypesShortcuts();
-        foreach ($scaleImpactTypes as $scaleImpactType) {
+        /** @var Entity\ScaleImpactType $scaleImpactType */
+        foreach ($this->scaleImpactTypeTable->findByAnr($anr) as $scaleImpactType) {
             $result[] = array_merge([
                 'id' => $scaleImpactType->getId(),
                 'isHidden' => (int)$scaleImpactType->isHidden(),
@@ -49,7 +48,6 @@ class AnrScaleImpactTypeService
 
     public function create(Entity\Anr $anr, array $data, bool $saveInTheDb = true): Entity\ScaleImpactType
     {
-        /** @var Entity\ScaleImpactType $scaleImpactType */
         $scaleImpactType = (new Entity\ScaleImpactType())
             ->setAnr($anr)
             ->setScale(
@@ -58,11 +56,18 @@ class AnrScaleImpactTypeService
             ->setLabels($data['labels'])
             ->setType($data['type'] ?? $this->scaleImpactTypeTable->findMaxTypeValueByAnr($anr) + 1)
             ->setCreator($this->connectedUser->getEmail());
+        if (isset($data['isHidden'])) {
+            $scaleImpactType->setIsHidden((bool)$data['isHidden']);
+        }
 
         /* Create InstanceConsequence for each instance of the current anr. */
         /** @var Entity\Instance $instance */
         foreach ($this->instanceTable->findByAnr($scaleImpactType->getAnr()) as $instance) {
-            $this->instanceConsequenceService->createInstanceConsequence($instance, $scaleImpactType);
+            $this->instanceConsequenceService->createInstanceConsequence(
+                $instance,
+                $scaleImpactType,
+                $scaleImpactType->isHidden()
+            );
         }
 
         $this->scaleImpactTypeTable->save($scaleImpactType, $saveInTheDb);

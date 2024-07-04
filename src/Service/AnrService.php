@@ -54,7 +54,7 @@ class AnrService
         private Table\MeasureTable $measureTable,
         private Table\RolfRiskTable $rolfRiskTable,
         private Table\RolfTagTable $rolfTagTable,
-        private DeprecatedTable\SoaTable $soaTable,
+        private Table\SoaTable $soaTable,
         private DeprecatedTable\QuestionTable $questionTable,
         private DeprecatedTable\QuestionChoiceTable $questionChoiceTable,
         private DeprecatedTable\InterviewTable $interviewTable,
@@ -577,7 +577,7 @@ class AnrService
                     }
 
                     /* Recreate SOA link with measure. */
-                    $this->soaTable->saveEntity((new Entity\Soa())->setAnr($anr)->setMeasure($measure), false);
+                    $this->soaTable->save((new Entity\Soa())->setAnr($anr)->setMeasure($measure), false);
                 }
 
                 $this->measureTable->save($measure, false);
@@ -1092,10 +1092,10 @@ class AnrService
 
         if ($isSourceCommon) {
             foreach ($createdMeasuresUuidsToObjects as $measure) {
-                $this->soaTable->saveEntity((new Entity\Soa())->setAnr($newAnr)->setMeasure($measure), false);
+                $this->soaTable->save((new Entity\Soa())->setAnr($newAnr)->setMeasure($measure), false);
             }
         } else {
-            /** @var Entity\Anr $sourceAnr */
+            /** @var Entity\Soa $sourceSoa */
             foreach ($this->soaTable->findByAnr($sourceAnr) as $sourceSoa) {
                 $measure = $createdMeasuresUuidsToObjects[$sourceSoa->getMeasure()->getUuid()] ?? null;
                 if ($measure === null) {
@@ -1109,7 +1109,7 @@ class AnrService
                         $anrSoaScaleCommentOldIdsToNewObjects[$sourceSoa->getSoaScaleComment()->getId()]
                     );
                 }
-                $this->soaTable->saveEntity($newSoa, false);
+                $this->soaTable->save($newSoa, false);
             }
         }
     }

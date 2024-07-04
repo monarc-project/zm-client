@@ -46,10 +46,8 @@ class AnrAmvService implements PositionUpdatableServiceInterface
     public function getList(FormattedInputParams $params): array
     {
         $result = [];
-
-        /** @var Entity\Amv[] $amvs */
-        $amvs = $this->amvTable->findByParams($params);
-        foreach ($amvs as $amv) {
+        /** @var Entity\Amv $amv */
+        foreach ($this->amvTable->findByParams($params) as $amv) {
             $result[] = $this->prepareAmvDataResult($amv);
         }
 

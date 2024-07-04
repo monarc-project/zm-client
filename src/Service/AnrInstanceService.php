@@ -73,40 +73,12 @@ class AnrInstanceService
 
     public function instantiateObjectToAnr(Entity\Anr $anr, array $data, bool $isRootLevel = false): Entity\Instance
     {
-        /** @var Entity\MonarcObject $object */
-        $object = $data['object'] instanceof Entity\MonarcObject
-            ? $data['object']
-            : $this->monarcObjectTable->findByUuidAndAnr($data['object'], $anr);
-
-        $instance = (new Entity\Instance)
-            ->setAnr($anr)
-            ->setObject($object)
-            ->setAsset($object->getAsset())
-            ->setNames($object->getNames())
-            ->setLabels($object->getLabels())
-            ->setCreator($this->connectedUser->getEmail());
-
-        if (!empty($data['parent'])) {
-            /** @var Entity\Instance $parentInstance */
-            $parentInstance = $data['parent'] instanceof Entity\Instance
-                ? $data['parent']
-                : $this->instanceTable->findByIdAndAnr($data['parent'], $anr);
-
-            $instance->setParent($parentInstance)->setRoot($parentInstance->getRootInstance());
-        }
-
-        $this->updateInstanceLevels($isRootLevel, $instance);
-
-        $this->updatePositions(
-            $instance,
-            $this->instanceTable,
-            $this->getPreparedPositionData($this->instanceTable, $instance, $data)
-        );
-
-        $this->instanceTable->save($instance);
+        $instance = $this->createInstance($anr, $data, $isRootLevel);
 
         $this->createInstanceMetadataFromGlobalSibling($instance);
 
+        /** @var Entity\MonarcObject $object */
+        $object = $instance->getObject();
         $this->anrInstanceConsequenceService->createInstanceConsequences($instance, $anr, $object, false);
         $instance->updateImpactBasedOnConsequences()->refreshInheritedImpact();
 
@@ -124,6 +96,71 @@ class AnrInstanceService
         ) {
             $this->createChildren($instance);
         }
+
+        return $instance;
+    }
+
+    public function createInstance(
+        Entity\Anr $anr,
+        array $data,
+        bool $isRootLevel,
+        bool $saveInDb = true
+    ): Entity\Instance {
+        /** @var Entity\MonarcObject $object */
+        $object = $data['object'] instanceof Entity\MonarcObject
+            ? $data['object']
+            : $this->monarcObjectTable->findByUuidAndAnr($data['object'], $anr);
+
+        $instance = (new Entity\Instance)
+            ->setAnr($anr)
+            ->setObject($object)
+            ->setAsset($object->getAsset())
+            ->setNames($object->getNames())
+            ->setLabels($object->getLabels())
+            ->setCreator($this->connectedUser->getEmail());
+        if (isset($instanceData['c']) || isset($instanceData['confidentiality'])) {
+            $instance->setConfidentiality((int)($instanceData['c'] ?? $instanceData['confidentiality']));
+        }
+        if (isset($instanceData['i']) || isset($instanceData['integrity'])) {
+            $instance->setIntegrity((int)($instanceData['i'] ?? $instanceData['integrity']));
+        }
+        if (isset($instanceData['d']) || isset($instanceData['availability'])) {
+            $instance->setAvailability((int)($instanceData['d'] ?? $instanceData['availability']));
+        }
+        if (isset($instanceData['ch']) || isset($instanceData['isConfidentialityInherited'])) {
+            $instance->setInheritedConfidentiality(
+                (int)($instanceData['ch'] ?? $instanceData['isConfidentialityInherited'])
+            );
+        }
+        if (isset($instanceData['ih']) || isset($instanceData['isIntegrityInherited'])) {
+            $instance->setInheritedIntegrity((int)($instanceData['ih'] ?? $instanceData['isIntegrityInherited']));
+        }
+        if (isset($instanceData['dh']) || isset($instanceData['isAvailabilityInherited'])) {
+            $instance->setInheritedAvailability((int)($instanceData['dh'] ?? $instanceData['isAvailabilityInherited']));
+        }
+
+        if (!empty($data['parent'])) {
+            /** @var Entity\Instance $parentInstance */
+            $parentInstance = $data['parent'] instanceof Entity\Instance
+                ? $data['parent']
+                : $this->instanceTable->findByIdAndAnr($data['parent'], $anr);
+
+            $instance->setParent($parentInstance)->setRoot($parentInstance->getRootInstance());
+        }
+
+        if (!$isRootLevel && isset($data['level'])) {
+            $instance->setLevel($data['level']);
+        } else {
+            $this->updateInstanceLevels($isRootLevel, $instance);
+        }
+
+        $this->updatePositions(
+            $instance,
+            $this->instanceTable,
+            $this->getPreparedPositionData($this->instanceTable, $instance, $data)
+        );
+
+        $this->instanceTable->save($instance, $saveInDb);
 
         return $instance;
     }
@@ -340,8 +377,6 @@ class AnrInstanceService
             'root' => $instance->isRoot() ? null : $instance->getRootInstance(),
             'parent' => $instance->hasParent() ? $instance->getParent() : null,
             'level' => $instance->getLevel(),
-            'assetType' => $instance->getAssetType(),
-            'exportable' => $instance->getExportable(),
             'c' => $instance->getConfidentiality(),
             'i' => $instance->getIntegrity(),
             'd' => $instance->getAvailability(),

@@ -21,7 +21,6 @@ class AnrRolfRiskService
         private Table\RolfRiskTable $rolfRiskTable,
         private Table\RolfTagTable $rolfTagTable,
         private Table\MeasureTable $measureTable,
-        private Table\MonarcObjectTable $monarcObjectTable,
         private Table\ReferentialTable $referentialTable,
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,

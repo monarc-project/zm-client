@@ -25,7 +25,7 @@ class ThreatImportProcessor
     ) {
     }
 
-    public function processThreatsData(Entity\Anr $anr, array $threatsData, array $themesData): void
+    public function processThreatsData(Entity\Anr $anr, array $threatsData, array $themesData = []): void
     {
         $this->prepareThreatsAndCodesCache($anr);
         $this->prepareThemesCache($anr);

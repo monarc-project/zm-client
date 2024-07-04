@@ -29,9 +29,8 @@ class AnrScaleCommentService
     public function getList(FormattedInputParams $formattedInputParams): array
     {
         $result = [];
-        /** @var Entity\ScaleComment[] $scaleComments */
-        $scaleComments = $this->scaleCommentTable->findByParams($formattedInputParams);
-        foreach ($scaleComments as $scaleComment) {
+        /** @var Entity\ScaleComment $scaleComment */
+        foreach ($this->scaleCommentTable->findByParams($formattedInputParams) as $scaleComment) {
             $result[] = array_merge([
                 'id' => $scaleComment->getId(),
                 'scaleIndex' => $scaleComment->getScaleIndex(),
@@ -46,10 +45,12 @@ class AnrScaleCommentService
         return $result;
     }
 
-    public function create(Entity\Anr $anr, array $data): Entity\ScaleComment
+    public function create(Entity\Anr $anr, array $data, bool $saveInDb = true): Entity\ScaleComment
     {
         /** @var Entity\Scale $scale */
-        $scale = $this->scaleTable->findByIdAndAnr($data['scaleId'], $anr);
+        $scale = isset($data['scale']) && $data['scale'] instanceof Entity\Scale
+            ? $data['scale']
+            : $this->scaleTable->findByIdAndAnr($data['scaleId'], $anr);
 
         /** @var Entity\ScaleComment $scaleComment */
         $scaleComment = (new Entity\ScaleComment())
@@ -60,13 +61,15 @@ class AnrScaleCommentService
             ->setScaleValue($data['scaleValue'])
             ->setCreator($this->connectedUser->getEmail());
 
-        if (isset($data['scaleImpactType'])) {
+        if (!empty($data['scaleImpactType'])) {
             /** @var Entity\ScaleImpactType $scaleImpactType */
-            $scaleImpactType = $this->scaleImpactTypeTable->findByIdAndAnr($data['scaleImpactType'], $anr);
+            $scaleImpactType = $data['scaleImpactType'] instanceof Entity\ScaleImpactType
+                ? $data['scaleImpactType']
+                : $this->scaleImpactTypeTable->findByIdAndAnr($data['scaleImpactType'], $anr);
             $scaleComment->setScaleImpactType($scaleImpactType);
         }
 
-        $this->scaleCommentTable->save($scaleComment);
+        $this->scaleCommentTable->save($scaleComment, $saveInDb);
 
         return $scaleComment;
     }

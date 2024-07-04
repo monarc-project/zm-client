@@ -37,11 +37,9 @@ class AnrObjectService
 
     public function getList(FormattedInputParams $formattedInputParams): array
     {
-        /** @var Entity\MonarcObject[] $objects */
-        $objects = $this->monarcObjectTable->findByParams($formattedInputParams);
-
         $result = [];
-        foreach ($objects as $object) {
+        /** @var Entity\MonarcObject $object */
+        foreach ($this->monarcObjectTable->findByParams($formattedInputParams) as $object) {
             $result[] = $this->getPreparedObjectData($object);
         }
 

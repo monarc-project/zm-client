@@ -144,6 +144,7 @@ class OperationalRiskScaleService
         if ($scaleTypeVisibilityBeforeUpdate !== $operationalRiskScaleType->isHidden()) {
             $updatedInstanceRiskIds = [];
             foreach ($operationalRiskScaleType->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+                /** @var Entity\InstanceRiskOp $operationalInstanceRisk */
                 $operationalInstanceRisk = $operationalInstanceRiskScale->getOperationalInstanceRisk();
                 if (!\in_array($operationalInstanceRisk->getId(), $updatedInstanceRiskIds, true)) {
                     $this->instanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk);

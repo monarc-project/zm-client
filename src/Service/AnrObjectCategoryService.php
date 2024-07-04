@@ -78,9 +78,8 @@ class AnrObjectCategoryService
         }
 
         $categoriesData = [];
-        /** @var Entity\ObjectCategory[] $objectCategories */
-        $objectCategories = $this->objectCategoryTable->findByParams($formattedInputParams);
-        foreach ($objectCategories as $objectCategory) {
+        /** @var Entity\ObjectCategory $objectCategory */
+        foreach ($this->objectCategoryTable->findByParams($formattedInputParams) as $objectCategory) {
             $categoriesData[] = $this->getPreparedObjectCategoryData($objectCategory, $includeChildren);
         }
 

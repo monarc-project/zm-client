@@ -40,13 +40,11 @@ class AnrRecommendationRiskService
 
     public function getList(FormattedInputParams $formattedInputParams): array
     {
-        /** @var Entity\RecommendationRisk[] $recommendationRisks */
-        $recommendationRisks = $this->recommendationRiskTable->findByParams($formattedInputParams);
-
         $hasRecommendationFilter = $formattedInputParams->hasFilterFor('recommendation');
         $recommendationRisksData = [];
         $globalObjectsUuids = [];
-        foreach ($recommendationRisks as $recommendationRisk) {
+        /** @var Entity\RecommendationRisk $recommendationRisk */
+        foreach ($this->recommendationRiskTable->findByParams($formattedInputParams) as $recommendationRisk) {
             if ($hasRecommendationFilter
                 && $recommendationRisk->getGlobalObject() !== null
                 && isset($globalObjectsUuids[$recommendationRisk->getGlobalObject()->getUuid()])
@@ -56,7 +54,7 @@ class AnrRecommendationRiskService
 
             $recommendationRisksData[] = $this->getPreparedRecommendationRiskData(
                 $recommendationRisk,
-                $formattedInputParams->hasFilterFor('recommendation')
+                $hasRecommendationFilter
             );
 
             if ($hasRecommendationFilter && $recommendationRisk->getGlobalObject() !== null) {

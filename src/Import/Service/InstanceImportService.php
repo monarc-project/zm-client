@@ -14,17 +14,20 @@ use Monarc\Core\Entity as CoreEntity;
 use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Helper\EncryptDecryptHelperTrait;
+use Monarc\Core\Service\Traits\RiskCalculationTrait;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Processor;
+use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Service;
-use Ramsey\Uuid\Uuid;
 
 class InstanceImportService
 {
     use EncryptDecryptHelperTrait;
+    use EvaluationConverterTrait;
+    use RiskCalculationTrait;
 
     private string $monarcVersion;
 
@@ -48,6 +51,13 @@ class InstanceImportService
         private Processor\OperationalRisksImportProcessor $operationalRisksImportProcessor,
         private Processor\RecommendationImportProcessor $recommendationImportProcessor,
         private Processor\ObjectCategoryImportProcessor $objectCategoryImportProcessor,
+        private Processor\AnrInstanceMetadataFieldImportProcessor $anrInstanceMetadataFieldImportProcessor,
+        private Processor\AnrMethodStepImportProcessor $anrMethodStepImportProcessor,
+        private Processor\InstanceImportProcessor $instanceImportProcessor,
+        private Processor\ScaleImportProcessor $scaleImportProcessor,
+        private Processor\OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor,
+        private Processor\OperationalInstanceRiskImportProcessor $operationalInstanceRiskImportProcessor,
+        private Processor\SoaScaleCommentImportProcessor $soaScaleCommentImportProcessor,
         private Service\AnrInstanceRiskService $anrInstanceRiskService,
         private Service\InstanceRiskOwnerService $instanceRiskOwnerService,
         private Service\AnrInstanceService $anrInstanceService,
@@ -69,7 +79,7 @@ class InstanceImportService
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private DeprecatedTable\QuestionTable $questionTable,
         private DeprecatedTable\QuestionChoiceTable $questionChoiceTable,
-        private DeprecatedTable\SoaTable $soaTable,
+        private Table\SoaTable $soaTable,
         private Table\MeasureTable $measureTable,
         private Table\ThemeTable $themeTable,
         private Table\ReferentialTable $referentialTable,
@@ -88,6 +98,7 @@ class InstanceImportService
         private ImportCacheHelper $importCacheHelper,
         private Service\AnrThemeService $anrThemeService,
         private Service\SoaCategoryService $soaCategoryService,
+        private Service\AnrRecommendationRiskService $anrRecommendationRiskService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -183,10 +194,12 @@ class InstanceImportService
                 $result = $this->processInstanceImport($anr, $data, $parentInstance, $importMode);
             }
 
+            // TODO: remove the temporary test case
+            $this->anrTable->flush();
+
             return $result;
         }
 
-        $this->currentAnalyseMaxRecommendationPosition = $this->recommendationTable->findMaxPosition(['anr' => $anr]);
         $this->currentMaxInstancePosition = $this->instanceTable->findMaxPosition(
             ['anr' => $anr, 'parent' => $parentInstance]
         );
@@ -211,15 +224,50 @@ class InstanceImportService
         string $importMode
     ): array {
         $result = [];
+        if ($data['withMethodSteps']) {
+            /* Process all the method's steps. */
+            $this->anrMethodStepImportProcessor->processAnrMethodStepsData($anr, $data['method']);
+        }
+        if ($data['withEval']) {
+            /* Process all the analysis' thresholds. */
+            $this->anrMethodStepImportProcessor->processThresholdsData($anr, $data['thresholds']);
+
+            /* Apply the importing information risks scales. */
+            $this->scaleImportProcessor->applyNewScalesFromData($anr, $data['scales']);
+
+            /* Apply the importing operational risks scales. */
+            $this->operationalRiskScaleImportProcessor->adjustOperationalRisksScaleValuesBasedOnNewScales($anr, $data);
+
+        }
+        if ($data['withInterviews']) {
+            /* Process the interviews' data. */
+            $this->anrMethodStepImportProcessor->processInterviewsData($anr, $data['interviews']);
+        }
         if ($data['withKnowledgeBase']) {
+            /* Process the Knowledge Base data. */
             $this->processKnowledgeBaseData($anr, $data['knowledgeBase']);
         }
         if ($data['withLibrary']) {
+            /* Process the Assets Library data. */
             $this->processLibraryData($anr, $data['library'], $importMode);
         }
-        // $this->processAnrInstanceMetadataFields($anr, $data['anrInstanceMetadataFields']);
-        // TODO: not sure if 'scales' and 'operationalRiskScales' have to be processed before or after the instances.
+        /* Process the analysis metadata fields data. */
+        $this->anrInstanceMetadataFieldImportProcessor->processAnrInstanceMetadataFields(
+            $anr,
+            $data['anrInstanceMetadataFields']
+        );
+
+        /* Process the Instances, Instance Risks, Consequences and evaluations data. */
+        $this->instanceImportProcessor
+            ->processInstancesData($anr, $data['instances'], $parentInstance, $importMode, $data['withEval']);
+
+        // TODO: check if 'scales' and 'operationalRiskScales' have to be processed before or after the instances.
         // perhaps they have to be cached first to be able to compare or the old ones preloaded.
+        // TODO: If we update the scales later, then the post update or right during the process have to be done.
+
+        // TODO: soaScaleComments & SOAs
+
+        // TODO: process RoPA.
 
         return $result;
     }
@@ -227,7 +275,7 @@ class InstanceImportService
     private function processKnowledgeBaseData(Entity\Anr $anr, array $knowledgeBaseData): void
     {
         $this->assetImportProcessor->processAssetsData($anr, $knowledgeBaseData['assets']);
-        $this->threatImportProcessor->processThreatsData($anr, $knowledgeBaseData['threats'], []);
+        $this->threatImportProcessor->processThreatsData($anr, $knowledgeBaseData['threats']);
         $this->vulnerabilityImportProcessor->processVulnerabilitiesData($anr, $knowledgeBaseData['vulnerabilities']);
         $this->referentialImportProcessor->processReferentialsData($anr, $knowledgeBaseData['referentials']);
         $this->informationRiskImportProcessor->processInformationRisksData(
@@ -291,14 +339,13 @@ class InstanceImportService
             return false;
         }
 
-        // TODO: move it to a processor and use service.
         $instance = $this->createInstance($data, $anr, $parentInstance, $monarcObject);
 
         // TODO: The instance risks are processed later again and considered that here we save or not...
-        // 1. why do we need to do it twice processInstanceRisks and what is is going on inside that method...
+        // 1. why do we need to do it twice processInstanceRisks and what is going on inside that method...
         $this->anrInstanceRiskService->createInstanceRisks($instance, $monarcObject, $data, false);
 
-        $this->createInstanceMetadata($instance, $data);
+        $this->instanceImportProcessor->processInstanceMetadata($anr, $instance, $data['instancesMetadatas']);
 
         $includeEval = !empty($data['with_eval']);
 
@@ -312,7 +359,14 @@ class InstanceImportService
 
         $this->processInstanceRisks($data, $anr, $instance, $monarcObject, $includeEval, $importMode);
 
-        $this->processOperationalInstanceRisks($data, $anr, $instance, $monarcObject, $includeEval);
+        $this->operationalInstanceRiskImportProcessor->processOperationalInstanceRisks(
+            $data,
+            $anr,
+            $instance,
+            $monarcObject,
+            $includeEval,
+            $this->isImportTypeAnr()
+        );
 
         if (!empty($data['children'])) {
             usort($data['children'], function ($a, $b) {
@@ -336,372 +390,78 @@ class InstanceImportService
         return $instance->getId();
     }
 
-    /**
-     * TODO: refactor the method entirely.
-     */
     private function importAnrFromArray(
         array $data,
         Entity\Anr $anr,
         ?CoreEntity\InstanceSuperClass $parentInstance,
         string $modeImport
     ): array {
-        $labelKey = 'label' . $anr->getLanguage();
-
-        // Method information
-        if (!empty($data['method'])) { //Steps checkboxes
-            if (!empty($data['method']['steps'])) {
-                foreach ($data['method']['steps'] as $key => $v) {
-                    if ($anr->get($key) === 0) {
-                        $anr->set($key, $v);
-                        $this->anrTable->save($anr, false);
-                    }
-                }
-                $this->anrTable->flush();
-            }
-
-            if (!empty($data['method']['data'])) { //Data of textboxes
-                foreach ($data['method']['data'] as $key => $v) {
-                    if ($anr->get($key) === null) {
-                        $anr->set($key, $v);
-                        $this->anrTable->save($anr, false);
-                    }
-                }
-                $this->anrTable->flush();
-            }
-
-            if (!empty($data['method']['interviews'])) { //Data of interviews
-                foreach ($data['method']['interviews'] as $key => $v) {
-                    $toExchange = $data['method']['interviews'][$key];
-                    $toExchange['anr'] = $anr->getId();
-                    $newInterview = new Entity\Interview();
-                    $newInterview->setLanguage($anr->getLanguage());
-                    $newInterview->exchangeArray($toExchange);
-                    $newInterview->setAnr($anr);
-                    $this->interviewTable->saveEntity($newInterview, false);
-                }
-                $this->interviewTable->getDb()->flush();
-            }
-
-            if (!empty($data['method']['thresholds'])) { // Value of thresholds
-                foreach ($data['method']['thresholds'] as $key => $v) {
-                    $anr->set($key, $v);
-                    $this->anrTable->save($anr, false);
-                }
-                $this->anrTable->flush();
-            }
-
-            if (!empty($data['method']['deliveries'])) { // Data of deliveries generation
-                foreach ($data['method']['deliveries'] as $key => $v) {
-                    $toExchange = $data['method']['deliveries'][$key];
-                    $toExchange['anr'] = $anr->getId();
-                    $newDelivery = new Entity\Delivery();
-                    $newDelivery->setLanguage($anr->getLanguage());
-                    $newDelivery->exchangeArray($toExchange);
-                    $newDelivery->setAnr($anr);
-                    $this->deliveryTable->save($newDelivery, false);
-                }
-                $this->deliveryTable->getDb()->flush();
-            }
-
-            if (!empty($data['method']['questions'])) { // Questions of trends evaluation
-                $questions = $this->questionTable->findByAnr($anr);
-                foreach ($questions as $question) {
-                    $this->questionTable->deleteEntity($question);
-                }
-
-                foreach ($data['method']['questions'] as $position => $questionData) {
-                    $newQuestion = new Entity\Question();
-                    $newQuestion->setLanguage($anr->getLanguage());
-                    $newQuestion->exchangeArray($questionData);
-                    $newQuestion->setAnr($anr);
-                    // TODO: use setter.
-                    $newQuestion->set('position', $position);
-                    $this->questionTable->saveEntity($newQuestion, false);
-
-                    if ((int)$questionData['multichoice'] === 1) {
-                        foreach ($data['method']['questionChoice'] as $questionChoiceData) {
-                            if ($questionChoiceData['question'] === $questionData['id']) {
-                                $newQuestionChoice = new Entity\QuestionChoice();
-                                $newQuestionChoice->setLanguage($anr->getLanguage());
-                                $newQuestionChoice->exchangeArray($questionChoiceData);
-                                $newQuestionChoice->setAnr($anr)
-                                    ->setQuestion($newQuestion);
-                                $this->questionChoiceTable->save($newQuestionChoice, false);
-                            }
-                        }
-                    }
-                }
-
-                $this->questionTable->getDb()->flush();
-
-                /** @var Entity\Question[] $questions */
-                // TODO: findByAnr or better use the saved questions before, we don't need to query the db.
-                $questions = $this->questionTable->getEntityByFields(['anr' => $anr->getId()]);
-
-                /** @var Entity\QuestionChoice[] $questionChoices */
-                // TODO: findByAnr or better use the saved questions before, we don't need to query the db.
-                $questionChoices = $this->questionChoiceTable->getEntityByFields(['anr' => $anr->getId()]);
-
-                foreach ($data['method']['questions'] as $questionAnswerData) {
-                    foreach ($questions as $question) {
-                        if ($question->get($labelKey) === $questionAnswerData[$labelKey]) {
-                            if ($question->isMultiChoice()) {
-                                $originQuestionChoices = [];
-                                $response = $questionAnswerData['response'] ?? '';
-                                if (trim($response, '[]')) {
-                                    $originQuestionChoices = explode(',', trim($response, '[]'));
-                                }
-                                $questionChoicesIds = [];
-                                foreach ($originQuestionChoices as $originQuestionChoice) {
-                                    $chosenQuestionLabel =
-                                        $data['method']['questionChoice'][$originQuestionChoice][$labelKey] ?? '';
-                                    foreach ($questionChoices as $questionChoice) {
-                                        if ($questionChoice->get($labelKey) === $chosenQuestionLabel) {
-                                            $questionChoicesIds[] = $questionChoice->getId();
-                                        }
-                                    }
-                                }
-                                $question->response = '[' . implode(',', $questionChoicesIds) . ']';
-                            } else {
-                                $question->response = $questionAnswerData['response'];
-                            }
-                            $this->questionTable->saveEntity($question, false);
-                        }
-                    }
-                }
-
-                $this->questionTable->getDb()->flush();
-            }
-
-            /* Process the evaluation of threats. */
-            if (!empty($data['method']['threats'])) {
-                $this->threatImportProcessor->prepareThemesCache($anr);
-                foreach ($data['method']['threats'] as $threatUuid => $threatData) {
-                    /** @var ?Entity\Threat $threat */
-                    $threat = $this->importCacheHelper->getItemFromArrayCache('threats', $threatUuid)
-                        ?: $this->threatTable->findByUuidAndAnr($threatUuid, $anr, false);
-                    if ($threat === null) {
-                        $threatData = $data['method']['threats'][$threatUuid];
-                        // TODO: inject and use the threatService->create
-                        // TODO: implement the same way as in AssetImpSrv
-                        /* The code should be unique. */
-                        $threatData['code'] = $this->importCacheHelper
-                            ->getItemFromArrayCache('threats_codes', $threatData['code']) !== null
-                            || $this->threatTable->doesCodeAlreadyExist($threatData['code'], $anr)
-                                ? $threatData['code'] . '-' . time()
-                                : $threatData['code'];
-
-                        $threat = (new Entity\Threat())
-                            ->setUuid($threatData['uuid'])
-                            ->setAnr($anr)
-                            ->setCode($threatData['code'])
-                            ->setLabels($threatData)
-                            ->setDescriptions($threatData);
-                        if (isset($threatData['c'])) {
-                            $threat->setConfidentiality((int)$threatData['c']);
-                        }
-                        if (isset($threatData['i'])) {
-                            $threat->setIntegrity((int)$threatData['i']);
-                        }
-                        if (isset($threatData['a'])) {
-                            $threat->setAvailability((int)$threatData['a']);
-                        }
-
-                        if (!empty($data['method']['threats'][$threatUuid]['theme'])) {
-                            $themeData = $data['method']['threats'][$threatUuid]['theme'];
-                            $labelValue = $themeData[$labelKey];
-                            $theme = $this->importCacheHelper->getItemFromArrayCache('themes_by_labels', $labelValue);
-                            if ($theme === null) {
-                                $theme = (new Entity\Theme())
-                                    ->setAnr($anr)
-                                    ->setLabels($themeData)
-                                    ->setCreator($this->connectedUser->getEmail());
-
-                                $this->themeTable->save($theme, false);
-                                $this->importCacheHelper->addItemToArrayCache('themes_by_labels', $theme, $labelValue);
-                            }
-
-                            $threat->setTheme($theme);
-                        }
-                    }
-
-                    $threat->setTrend((int)$data['method']['threats'][$threatUuid]['trend']);
-                    $threat->setComment((string)$data['method']['threats'][$threatUuid]['comment']);
-                    $threat->setQualification((int)$data['method']['threats'][$threatUuid]['qualification']);
-
-                    $this->threatTable->save($threat, false);
-
-                    $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
-                    $this->importCacheHelper
-                        ->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
-                }
-            }
+        if (!empty($data['method'])) {
+            $this->anrMethodStepImportProcessor->processAnrMethodStepsData($anr, $data['method']);
         }
 
-        /* Import the referentials. */
         if (!empty($data['referentials'])) {
-            foreach ($data['referentials'] as $referentialUuid => $referentialData) {
-                $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialUuid)
-                    ?: $this->referentialTable->findByUuidAndAnr($referentialUuid, $anr);
-                if ($referential === null) {
-                    // TODO: remove the instantiation with obj passing ... use the service
-                    $referential = (new Entity\Referential($referentialData))
-                        ->setUuid($referentialUuid)
-                        ->setAnr($anr)
-                        ->setCreator($this->connectedUser->getEmail());
-
-                    $this->referentialTable->save($referential, false);
-                }
-
-                $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referentialUuid);
-            }
+            $this->referentialImportProcessor->processReferentialsData($anr, $data['referentials']);
         }
 
         /*
-         * Import the soa categories.
+         * Import measures and soa categories.
          */
-        if (!empty($data['soacategories'])) {
-            foreach ($data['soacategories'] as $soaCategoryData) {
-                $referential = $this->importCacheHelper
-                    ->getItemFromArrayCache('referentials', $soaCategoryData['referential']);
-                if ($referential !== null) {
-                    $this->soaCategoryService->getOrCreateSoaCategory(
-                        $this->importCacheHelper,
-                        $anr,
-                        $referential,
-                        $soaCategoryData[$labelKey]
-                    );
+        foreach ($data['measures'] ?? [] as $measureData) {
+            $referential = $this->referentialImportProcessor->getReferentialFromCache($measureData['referential']);
+            if ($referential !== null) {
+                $measure = $this->referentialImportProcessor->processMeasureData($anr, $referential, $measureData);
+                if (!isset($data['soas'])) {
+                    $this->soaTable->save((new Entity\Soa())->setAnr($anr)->setMeasure($measure), false);
                 }
             }
         }
 
-        /*
-         * Import the measures.
-         */
-        // TODO: use the ReferentialImportProcessor.
-        if (isset($data['measures'])) {
-            foreach ($data['measures'] ?? [] as $measureUuid => $measureData) {
-                $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
-                    ?: $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
-                $referential = $this->importCacheHelper
-                    ->getItemFromArrayCache('referentials', $measureData['referential']);
-                if ($measure === null && $referential !== null) {
-                    $soaCategory = $this->soaCategoryService->getOrCreateSoaCategory(
-                        $this->importCacheHelper,
-                        $anr,
-                        $referential,
-                        $measureData['category']
-                    );
-
-                    $measure = (new Entity\Measure())
-                        ->setUuid($measureUuid)
-                        ->setAnr($anr)
-                        ->setLabels($measureData)
-                        ->setCode($measureData['code'])
-                        ->setStatus((int)$measureData['status'])
-                        ->setReferential($referential)
-                        ->setCategory($soaCategory)
-                        ->setCreator($this->connectedUser->getEmail());
-                    $this->measureTable->save($measure, false);
-
-                    $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measureUuid);
-
-                    if (!isset($data['soas'])) {
-                        $newSoa = (new Entity\Soa())
-                            ->setAnr($anr)
-                            ->setMeasure($measure);
-                        $this->soaTable->saveEntity($newSoa, false);
-                    }
-                }
+        foreach ($data['measuresMeasures'] ?? [] as $measureMeasureData) {
+            $measure = $this->referentialImportProcessor->getMeasureFromCache($measureMeasureData['father']);
+            if ($measure !== null) {
+                $this->referentialImportProcessor->processLinkedMeasures(
+                    $measure,
+                    ['linkedMeasures' => [['uuid' => $measureMeasureData['child']]]]
+                );
             }
-
-            $this->measureTable->flush();
         }
 
-        $this->importMeasuresLinks($anr, $data);
-
-        // import soaScaleComment
-        $maxOrig = null; //used below for soas
-        $maxDest = null; //used below for soas
+        /* Import SOA Scale Comments if they are passed. Only in the new structure, when the functionality exists. */
         if (isset($data['soaScaleComment'])) {
-            $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
-            $maxDest = \count($oldSoaScaleCommentData) - 1;
-            $maxOrig = \count($data['soaScaleComment']) - 1;
-            $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
-        } elseif (!isset($data['soaScaleComment']) && isset($data['soas'])) {
-            // old import case. TODO: move it to the Entity.
-            $defaultSoaScaleCommentdatas = [
-                'fr' => [
-                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Inexistant'],
-                    ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initialisé'],
-                    ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Reproductible'],
-                    ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Défini'],
-                    ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
-                     'comment' => 'Géré quantitativement'],
-                    ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimisé'],
-                ],
-                'en' => [
-                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Non-existent'],
-                    ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initial'],
-                    ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Managed'],
-                    ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Defined'],
-                    ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
-                     'comment' => 'Quantitatively managed'],
-                    ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimized'],
-                ],
-                'de' => [
-                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Nicht vorhanden'],
-                    ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initial'],
-                    ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Reproduzierbar'],
-                    ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Definiert'],
-                    ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
-                     'comment' => 'Quantitativ verwaltet'],
-                     ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimiert'],
-                ],
-                'nl' => [
-                    ['scaleIndex' => 0, 'colour' => '#FFFFFF', 'isHidden' => false, 'comment' => 'Onbestaand'],
-                     ['scaleIndex' => 1, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Initieel'],
-                     ['scaleIndex' => 2, 'colour' => '#FD661F', 'isHidden' => false, 'comment' => 'Beheerst'],
-                     ['scaleIndex' => 3, 'colour' => '#FFBC1C', 'isHidden' => false, 'comment' => 'Gedefinieerd'],
-                     ['scaleIndex' => 4, 'colour' => '#FFBC1C', 'isHidden' => false,
-                      'comment' => 'Kwantitatief beheerst'],
-                     ['scaleIndex' => 5, 'colour' => '#D6F107', 'isHidden' => false, 'comment' => 'Optimaliserend'],
-                ],
-            ];
-            $data['soaScaleComment'] =
-                $defaultSoaScaleCommentdatas[$this->getAnrLanguageCode($anr)] ?? $defaultSoaScaleCommentdatas['en'];
-            $oldSoaScaleCommentData = $this->getCurrentSoaScaleCommentData($anr);
-            $this->mergeSoaScaleComment($data['soaScaleComment'], $anr);
-            $maxOrig = 5; // default value for old import
-            $maxDest = \count($oldSoaScaleCommentData) - 1;
-        }
-        // manage the current SOA
-        if ($maxDest !== null && $maxOrig !== null) {
-            $existedSoas = $this->soaTable->findByAnr($anr);
-            foreach ($existedSoas as $existedSoa) {
-                $soaComment = $existedSoa->getSoaScaleComment();
-                if ($soaComment !== null) {
-                    $valueToApprox = $soaComment->getScaleIndex();
-                    $newScaleIndex = $this->approximate(
-                        $valueToApprox,
-                        0,
-                        $maxDest,
-                        0,
-                        $maxOrig,
-                        0
-                    );
-                    $soaScaleComment = $this->importCacheHelper
-                        ->getItemFromArrayCache('newSoaScaleCommentIndexedByScale', $newScaleIndex);
-                    if ($soaScaleComment !== null) {
-                        $existedSoa->setSoaScaleComment($soaScaleComment);
+            $currentSoaScaleCommentData = $this->soaScaleCommentImportProcessor
+                ->prepareCacheAndGetCurrentSoaScaleCommentsData($anr);
+            $maxSoaScaleCommentDestination = \count($currentSoaScaleCommentData) - 1;
+            $maxSoaScaleCommentOrigin = \count($data['soaScaleComment']) - 1;
+            $this->soaScaleCommentImportProcessor->mergeSoaScaleComment($anr, $data['soaScaleComment']);
+            if ($maxSoaScaleCommentDestination !== $maxSoaScaleCommentOrigin) {
+                /** @var Entity\Soa $existedSoa */
+                foreach ($this->soaTable->findByAnr($anr) as $existedSoa) {
+                    $soaComment = $existedSoa->getSoaScaleComment();
+                    if ($soaComment !== null) {
+                        $newScaleIndex = $this->scaleImportProcessor->convertValueWithinNewScalesRange(
+                            $soaComment->getScaleIndex(),
+                            0,
+                            $maxSoaScaleCommentDestination,
+                            0,
+                            $maxSoaScaleCommentOrigin,
+                            0
+                        );
+                        $soaScaleComment = $this->importCacheHelper->getItemFromArrayCache(
+                            'newSoaScaleCommentIndexedByScale',
+                            $newScaleIndex
+                        );
+                        if ($soaScaleComment !== null) {
+                            $existedSoa->setSoaScaleComment($soaScaleComment);
+                        }
+                        $this->soaTable->save($existedSoa, false);
                     }
-                    $this->soaTable->saveEntity($existedSoa, false);
                 }
             }
         }
 
         // import the SOAs
-        if (isset($data['soas'])) {
+        if (!empty($data['soas'])) {
             foreach ($data['soas'] as $soaData) {
                 $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $soaData['measure_id'])
                     ?: $this->measureTable->findByUuidAndAnr($soaData['measure_id'], $anr);
@@ -731,11 +491,9 @@ class InstanceImportService
                             $soa->setSoaScaleComment($soaScaleComment);
                         }
                     }
-                    $this->soaTable->saveEntity($soa, false);
+                    $this->soaTable->save($soa, false);
                 }
             }
-
-            $this->soaTable->getDb()->flush();
         }
 
         // import the GDPR records
@@ -746,18 +504,21 @@ class InstanceImportService
         }
 
         /*
-         * Import AnrMetadatasOnInstances
+         * Import AnrInstanceMetadataFields.
          */
-        if (!empty($data['anrMetadataOnInstances'])) {
-            $this->cachedData['anrMetadataOnInstances'] = $this->getCurrentAnrMetadataOnInstances($anr);
-            $this->createAnrMetadataOnInstances($anr, $data['anrMetadataOnInstances']);
+        if (!empty($data['anrMetadatasOnInstances'])) {
+            $this->anrInstanceMetadataFieldImportProcessor->processAnrInstanceMetadataFields(
+                $anr,
+                $data['anrMetadatasOnInstances']
+            );
         }
 
         /*
          * Import scales.
+         * TODO: use the processor!!!
          */
         if (!empty($data['scales'])) {
-            /* Approximate values based on the scales from the destination analysis */
+            /* Approximate values based on the scales from the destination/importing analysis. */
 
             $scalesData = $this->getCurrentAndExternalScalesData($anr, $data);
 
@@ -774,7 +535,7 @@ class InstanceImportService
                         $instance->set($t, -1);
                     } else {
                         $instance->set($t . 'h', 0);
-                        $instance->set($t, $this->approximate(
+                        $instance->set($t, $this->convertValueWithinNewScalesRange(
                             $instance->get($t),
                             $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
                             $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max'],
@@ -787,7 +548,7 @@ class InstanceImportService
                 }
                 // Impacts & Consequences.
                 foreach ($consequences as $conseq) {
-                    $conseq->set($t, $conseq->isHidden() ? -1 : $this->approximate(
+                    $conseq->set($t, $conseq->isHidden() ? -1 : $this->convertValueWithinNewScalesRange(
                         $conseq->get($t),
                         $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
                         $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max'],
@@ -800,7 +561,7 @@ class InstanceImportService
 
             /* Threats qualification. */
             foreach ($this->threatTable->findByAnr($anr) as $threat) {
-                $threat->setQualification($this->approximate(
+                $threat->setQualification($this->convertValueWithinNewScalesRange(
                     $threat->getQualification(),
                     $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['min'],
                     $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['max'],
@@ -810,10 +571,9 @@ class InstanceImportService
                 $this->threatTable->save($threat, false);
             }
 
-            // Informational Risks
             /** @var Entity\InstanceRisk $instancesRisk */
             foreach ($this->instanceRiskTable->findByAnr($anr) as $instanceRisk) {
-                $instanceRisk->setThreatRate($this->approximate(
+                $instanceRisk->setThreatRate($this->convertValueWithinNewScalesRange(
                     $instanceRisk->getThreatRate(),
                     $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['min'],
                     $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['max'],
@@ -821,29 +581,35 @@ class InstanceImportService
                     $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['max'],
                 ));
                 $oldVulRate = $instanceRisk->getVulnerabilityRate();
-                $instanceRisk->setVulnerabilityRate($this->approximate(
+                $instanceRisk->setVulnerabilityRate($this->convertValueWithinNewScalesRange(
                     $instanceRisk->getVulnerabilityRate(),
                     $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY]['min'],
                     $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY]['max'],
                     $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY]['min'],
                     $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY]['max'],
                 ));
-                $newVulRate = $instanceRisk->getVulnerabilityRate();
-                $instanceRisk->setReductionAmount(
-                    $instanceRisk->getReductionAmount() !== 0
-                        ? $this->approximate($instanceRisk->getReductionAmount(), 0, $oldVulRate, 0, $newVulRate, 0)
-                        : 0
-                );
+                if ($instanceRisk->getReductionAmount() !== 0) {
+                    $newVulRate = $instanceRisk->getVulnerabilityRate();
+                    $instanceRisk->setReductionAmount($this->convertValueWithinNewScalesRange(
+                        $instanceRisk->getReductionAmount(),
+                        0,
+                        $oldVulRate,
+                        0,
+                        $newVulRate,
+                        0
+                    ));
+                }
 
-                $this->anrInstanceRiskService->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
+                $this->recalculateRiskRates($instanceRisk);
+                $this->instanceRiskTable->save($instanceRisk, false);
             }
 
             /* Adjust the values of operational risks scales. */
-            $this->adjustOperationalRisksScaleValuesBasedOnNewScales($anr, $data);
+            $this->operationalRiskScaleImportProcessor->adjustOperationalRisksScaleValuesBasedOnNewScales($anr, $data);
 
-            $this->updateScalesAndComments($anr, $data);
+            $this->scaleImportProcessor->updateScalesAndComments($anr, $data);
 
-            $this->updateOperationalRisksScalesAndRelatedInstances($anr, $data);
+            $this->operationalRiskScaleImportProcessor->updateOperationalRisksScalesAndRelatedInstances($anr, $data);
         }
 
         $first = true;
@@ -880,13 +646,12 @@ class InstanceImportService
                 $instanceConsequence = $this->instanceConsequenceTable->getEntityByFields([
                     'anr' => $anr->getId(),
                     'instance' => $instance->getId(),
-                    'scaleImpactType' => $siType->getId()
+                    'scaleImpactType' => $siType->getId(),
                 ]);
                 if (empty($instanceConsequence)) {
                     $consequence = (new Entity\InstanceConsequence())
                         ->setAnr($anr)
                         ->setInstance($instance)
-                        ->setObject($instance->getObject())
                         ->setScaleImpactType($siType)
                         ->setCreator($this->connectedUser->getEmail());
 
@@ -900,46 +665,7 @@ class InstanceImportService
         return $instanceIds;
     }
 
-    /**
-     * Method to approximate the value within new bounds, typically when the exported object had a min/max bound
-     * bigger than the target's ANR bounds.
-     *
-     * @param int $value The value to approximate
-     * @param int $minorig The source min bound
-     * @param int $maxorig The source max bound
-     * @param int $mindest The target min bound
-     * @param int $maxdest The target max bound
-     * @param int $defaultvalue
-     *
-     * @return int The approximated value
-     */
-    private function approximate(
-        int $value,
-        int $minorig,
-        int $maxorig,
-        int $mindest,
-        int $maxdest,
-        int $defaultvalue = -1
-    ): int {
-        if ($value === $maxorig) {
-            return $maxdest;
-        }
-
-        if ($value !== -1 && ($maxorig - $minorig) !== -1) {
-            return (int)min(max(
-                round(($value / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)),
-                $mindest
-            ), $maxdest);
-        }
-
-        return $defaultvalue;
-    }
-
-    private function isMonarcVersionLowerThen(string $version): bool
-    {
-        return version_compare($this->monarcVersion, $version) < 0;
-    }
-
+    // TODO: use the processor.
     private function createSetOfRecommendations(array $data, Entity\Anr $anr): void
     {
         if (!empty($data['recSets'])) {
@@ -1004,91 +730,6 @@ class InstanceImportService
         }
     }
 
-    private function processRecommendationDataLinkedToRisk(
-        Entity\Anr $anr,
-        array $recommendationData,
-        bool $isRiskTreated
-    ): Entity\Recommendation {
-        if (isset($this->cachedData['recs'][$recommendationData['uuid']])) {
-            /** @var Entity\Recommendation $recommendation */
-            $recommendation = $this->cachedData['recs'][$recommendationData['uuid']];
-            if ($isRiskTreated && $recommendation->isPositionEmpty()) {
-                $recommendation->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
-                $this->recommendationTable->save($recommendation, false);
-            }
-
-            return $recommendation;
-        }
-
-        $recommendationSetUuid = $recommendationData['recommandationSet'] ?? $recommendationData['recommendationSet'];
-        if (isset($this->cachedData['recSets'][$recommendationSetUuid])) {
-            $recommendationSet = $this->cachedData['recSets'][$recommendationSetUuid];
-        } else {
-            $recommendationSet = $this->recommendationSetTable->findByUuidAndAnr($recommendationSetUuid, $anr);
-
-            $this->cachedData['recSets'][$recommendationSet->getUuid()] = $recommendationSet;
-        }
-
-        $recommendation = $this->recommendationTable->findByAnrCodeAndRecommendationSet(
-            $anr,
-            $recommendationData['code'],
-            $recommendationSet
-        );
-        if ($recommendation === null) {
-            $recommendation = (new Entity\Recommendation())->setUuid($recommendationData['uuid'])
-                ->setCreator($this->connectedUser->getEmail());
-        } else {
-            $recommendation->setUpdater($this->connectedUser->getEmail());
-        }
-
-        $recommendation->setAnr($anr)
-            ->setRecommendationSet($recommendationSet)
-            ->setComment($recommendationData['comment'] ?? '')
-            ->setResponsible($recommendationData['responsable'] ?? '')
-            ->setStatus($recommendationData['status'])
-            ->setImportance($recommendationData['importance'])
-            ->setCode($recommendationData['code'])
-            ->setDescription($recommendationData['description'])
-            ->setCounterTreated($recommendationData['counterTreated']);
-        if (!empty($recommendationData['duedate']['date'])) {
-            $recommendation->setDueDate(new DateTime($recommendationData['duedate']['date']));
-        }
-
-        if ($isRiskTreated && $recommendation->isPositionEmpty()) {
-            $recommendation->setPosition(++$this->currentAnalyseMaxRecommendationPosition);
-        }
-
-        $this->recommendationTable->save($recommendation, false);
-
-        $this->cachedData['recs'][$recommendation->getUuid()] = $recommendation;
-
-        return $recommendation;
-    }
-
-    /**
-     * Validates if the data can be imported into the anr.
-     */
-    private function validateIfImportIsPossible(Entity\Anr $anr, ?Entity\Instance $parent, array $data): void
-    {
-        if ($parent !== null
-            && ($parent->getLevel() === CoreEntity\InstanceSuperClass::LEVEL_INTER || $parent->getAnr() !== $anr)
-        ) {
-            throw new Exception('Parent instance should be in the node tree and the analysis IDs are matched', 412);
-        }
-
-        if ((!empty($data['with_eval']) || !empty($data['withEval'])) && empty($data['scales'])) {
-            throw new Exception('The importing file should include evaluation scales.', 412);
-        }
-
-        if (!$this->isMonarcVersionLowerThen('2.13.1') && $anr->getLanguageCode() !== $data['languageCode']) {
-            throw new Exception(sprintf(
-                'The current analysis language "%s" should be the same as importing one "%s"',
-                $anr->getLanguageCode(),
-                $data['languageCode']
-            ), 412);
-        }
-    }
-
     private function prepareInstanceConsequences(
         array $data,
         Entity\Anr $anr,
@@ -1107,21 +748,15 @@ class InstanceImportService
 
         foreach (Entity\Instance::getAvailableScalesCriteria() as $scaleCriteria) {
             if ($instance->{'getInherited' . $scaleCriteria}()) {
-                $instance->{'setInherited' . $scaleCriteria}(1);
                 $instance->{'set' . $scaleCriteria}(-1);
-            } else {
-                $instance->{'setInherited' . $scaleCriteria}(0);
-                if (!$this->isImportTypeAnr()) {
-                    $instance->{'set' . $scaleCriteria}(
-                        $this->approximate(
-                            $instance->{'get' . $scaleCriteria}(),
-                            $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
-                            $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max'],
-                            $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
-                            $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max']
-                        )
-                    );
-                }
+            } elseif (!$this->isImportTypeAnr()) {
+                $instance->{'set' . $scaleCriteria}($this->convertValueWithinNewScalesRange(
+                    $instance->{'get' . $scaleCriteria}(),
+                    $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
+                    $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max'],
+                    $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
+                    $scalesData['current'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max']
+                ));
             }
         }
 
@@ -1153,7 +788,6 @@ class InstanceImportService
 
                 $instanceConsequence = (new Entity\InstanceConsequence())
                     ->setAnr($anr)
-                    ->setObject($monarcObject)
                     ->setInstance($instance)
                     ->setScaleImpactType($localScalesImpactTypes[$consequenceData['scaleImpactType'][$labelKey]])
                     ->setIsHidden((bool)$consequenceData['isHidden'])
@@ -1165,7 +799,7 @@ class InstanceImportService
                     } else {
                         $value = $this->isImportTypeAnr()
                             ? $consequenceData[$criteriaKey]
-                            : $this->approximate(
+                            : $this->convertValueWithinNewScalesRange(
                                 $consequenceData[$criteriaKey],
                                 $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
                                 $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max'],
@@ -1184,26 +818,26 @@ class InstanceImportService
     }
 
     /**
-     * The prepared cachedData['scales'] are used to convert(approximate) the risks' values of importing instance(s),
+     * The prepared scales cache data is used to convert(approximate) the risks' values of importing instance(s),
      * from external to current scales (in case of instance(s) import).
      * For ANR import, the current analysis risks' values are converted from current to external scales.
      */
     private function getCurrentAndExternalScalesData(Entity\Anr $anr, array $data): array
     {
-        if (empty($this->cachedData['scales'])) {
-            $scales = $this->scaleTable->findByAnr($anr);
-            $this->cachedData['scales']['current'] = [];
-            $this->cachedData['scales']['external'] = $data['scales'];
-
-            foreach ($scales as $scale) {
-                $this->cachedData['scales']['current'][$scale->getType()] = [
+        if (!$this->importCacheHelper->isCacheKeySet('scales_for_old_structure')) {
+            $this->importCacheHelper->addItemToArrayCache('scales_for_old_structure', $data['scales'], 'external');
+            $currentScalesData = [];
+            /** @var Entity\Scale $scale */
+            foreach ($this->scaleTable->findByAnr($anr) as $scale) {
+                $currentScalesData[$scale->getType()] = [
                     'min' => $scale->getMin(),
                     'max' => $scale->getMax(),
                 ];
             }
+            $this->importCacheHelper->addItemToArrayCache('scales_for_old_structure', $currentScalesData, 'current');
         }
 
-        return $this->cachedData['scales'];
+        return $this->importCacheHelper->getItemFromArrayCache('scales_for_old_structure');
     }
 
     private function processInstanceRisks(
@@ -1349,7 +983,7 @@ class InstanceImportService
                 $instanceRisk->setThreatRate(
                     $this->isImportTypeAnr()
                         ? $instanceRiskData['threatRate']
-                        : $this->approximate(
+                        : $this->convertValueWithinNewScalesRange(
                             $instanceRiskData['threatRate'],
                             $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['min'],
                             $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['max'],
@@ -1360,7 +994,7 @@ class InstanceImportService
                 $instanceRisk->setVulnerabilityRate(
                     $this->isImportTypeAnr()
                         ? $instanceRiskData['vulnerabilityRate']
-                        : $this->approximate(
+                        : $this->convertValueWithinNewScalesRange(
                             $instanceRiskData['vulnerabilityRate'],
                             $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY]['min'],
                             $scalesData['external'][CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY]['max'],
@@ -1379,7 +1013,7 @@ class InstanceImportService
                 // 1 - 7 vers 1 - 3 on peut pas avoir une réduction de 4, 5, 6 ou 7
                 $instanceRisk->setReductionAmount(
                     $instanceRiskData['reductionAmount'] !== -1
-                        ? $this->approximate(
+                        ? $this->convertValueWithinNewScalesRange(
                             $instanceRiskData['reductionAmount'],
                             0,
                             $instanceRiskData['vulnerabilityRate'],
@@ -1406,7 +1040,7 @@ class InstanceImportService
                         'amv' => [
                             'anr' => $anr->getId(),
                             'uuid' => $instanceRisk->getAmv()->getUuid(),
-                        ]
+                        ],
                     ]));
 
                     if ($instanceRiskBrothers !== null) {
@@ -1433,13 +1067,16 @@ class InstanceImportService
 
                 // Process recommendations.
                 if (!empty($data['recos'][$instanceRiskData['id']])) {
+                    $this->recommendationImportProcessor->prepareRecommendationsCache($anr);
                     foreach ($data['recos'][$instanceRiskData['id']] as $reco) {
-                        $recommendation = $this->processRecommendationDataLinkedToRisk(
+                        $recommendation = $this->recommendationImportProcessor->processRecommendationDataLinkedToRisk(
                             $anr,
                             $reco,
+                            $data['recSets'],
                             $instanceRiskData['kindOfMeasure'] !== CoreEntity\InstanceRiskSuperClass::KIND_NOT_TREATED
                         );
-// TODO: check why do we have it here:
+
+                        /* Avoid linking the recommendation 2 times. */
                         foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
                             if ($recommendationRisk->getRecommendation() !== null
                                 && $recommendationRisk->getRecommendation()->getUuid() === $recommendation->getUuid()
@@ -1448,19 +1085,12 @@ class InstanceImportService
                             }
                         }
 
-                        $recommendationRisk = (new Entity\RecommendationRisk())
-                            ->setAnr($anr)
-                            ->setInstance($instance)
-                            ->setInstanceRisk($instanceRisk)
-                            ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
-                            ->setAsset($instanceRisk->getAsset())
-                            ->setThreat($instanceRisk->getThreat())
-                            ->setVulnerability($instanceRisk->getVulnerability())
-                            ->setCommentAfter((string)$reco['commentAfter'])
-                            ->setRecommendation($recommendation)
-                            ->setCreator($this->connectedUser->getEmail());
-
-                        $this->recommendationRiskTable->save($recommendationRisk, false);
+                        $recommendationRisk = $this->anrRecommendationRiskService->createRecommendationRisk(
+                            $recommendation,
+                            $instanceRisk,
+                            $reco['commentAfter'] ?? '',
+                            false
+                        );
 
                         // Replicate recommendation to brothers.
                         if ($modeImport === 'merge' && $recommendationRisk->hasGlobalObjectRelation()) {
@@ -1531,7 +1161,7 @@ class InstanceImportService
                         'globalObject' => [
                             'anr' => $anr->getId(),
                             'uuid' => $monarcObject->getUuid(),
-                        ]
+                        ],
                     ]);
 
                     if (!empty($brotherRecoRisks)) {
@@ -1568,6 +1198,10 @@ class InstanceImportService
         $recoToCreate = [];
         // Get all specific risks of instance
         foreach ($instance->getInstanceRisks() as $instanceRisk) {
+
+            $this->recalculateRiskRates($instanceRisk);
+            $this->instanceRiskTable->save($instanceRisk, false);
+
             if (!$instanceRisk->isSpecific()) {
                 continue;
             }
@@ -1608,7 +1242,7 @@ class InstanceImportService
                 'vulnerability' => [
                     'anr' => $anr->getId(),
                     'uuid' => $recommendationRiskToCreate->getVulnerability()->getUuid(),
-                ]
+                ],
             ]);
 
             if (empty($recoCreated)) {
@@ -1646,385 +1280,8 @@ class InstanceImportService
                 $this->recommendationRiskTable->save($recommendationRisk, false);
             }
         }
+
         $this->recommendationRiskTable->flush();
-
-        // on met finalement à jour les risques en cascade
-        $this->anrInstanceService->recalculateRiskRates($instance);
-    }
-
-    private function processOperationalInstanceRisks(
-        array $data,
-        Entity\Anr $anr,
-        Entity\Instance $instance,
-        Entity\MonarcObject $monarcObject,
-        bool $includeEval
-    ): void {
-        if (empty($data['risksop'])) {
-            return;
-        }
-
-        $operationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
-        $externalOperationalRiskScalesData = [];
-        $areScalesLevelsOfLikelihoodDifferent = false;
-        $areImpactScaleTypesValuesDifferent = false;
-        $matchedScaleTypesMap = [];
-        if ($includeEval && !$this->isImportTypeAnr()) {
-            $externalOperationalRiskScalesData = $this->getExternalOperationalRiskScalesData($anr, $data);
-            $areScalesLevelsOfLikelihoodDifferent = $this->areScalesLevelsOfTypeDifferent(
-                CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD,
-                $operationalRiskScalesData,
-                $externalOperationalRiskScalesData
-            );
-            $areImpactScaleTypesValuesDifferent = $this->areScaleTypeValuesDifferent(
-                CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT,
-                $operationalRiskScalesData,
-                $externalOperationalRiskScalesData
-            );
-            $matchedScaleTypesMap = $this->matchAndGetOperationalRiskScaleTypesMap(
-                $anr,
-                $operationalRiskScalesData,
-                $externalOperationalRiskScalesData
-            );
-        }
-        $oldInstanceRiskFieldsMapToScaleTypesFields = [
-            ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetedR' => 'TargetedValue'],
-            ['brutO' => 'BrutValue', 'netO' => 'NetValue', 'targetedO' => 'TargetedValue'],
-            ['brutL' => 'BrutValue', 'netL' => 'NetValue', 'targetedL' => 'TargetedValue'],
-            ['brutF' => 'BrutValue', 'netF' => 'NetValue', 'targetedF' => 'TargetedValue'],
-            ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetedP' => 'TargetedValue'],
-        ];
-
-        foreach ($data['risksop'] as $operationalRiskData) {
-            $operationalInstanceRisk = (new Entity\InstanceRiskOp())
-                ->setAnr($anr)
-                ->setInstance($instance)
-                ->setObject($monarcObject)
-                ->setRiskCacheLabels([
-                    'riskCacheLabel1' => $operationalRiskData['riskCacheLabel1'],
-                    'riskCacheLabel2' => $operationalRiskData['riskCacheLabel2'],
-                    'riskCacheLabel3' => $operationalRiskData['riskCacheLabel3'],
-                    'riskCacheLabel4' => $operationalRiskData['riskCacheLabel4'],
-                ])
-                ->setRiskCacheDescriptions([
-                    'riskCacheDescription1' => $operationalRiskData['riskCacheDescription1'],
-                    'riskCacheDescription2' => $operationalRiskData['riskCacheDescription2'],
-                    'riskCacheDescription3' => $operationalRiskData['riskCacheDescription3'],
-                    'riskCacheDescription4' => $operationalRiskData['riskCacheDescription4'],
-                ])
-                ->setBrutProb((int)$operationalRiskData['brutProb'])
-                ->setNetProb((int)$operationalRiskData['netProb'])
-                ->setTargetedProb((int)$operationalRiskData['targetedProb'])
-                ->setCacheBrutRisk((int)$operationalRiskData['cacheBrutRisk'])
-                ->setCacheNetRisk((int)$operationalRiskData['cacheNetRisk'])
-                ->setCacheTargetedRisk((int)$operationalRiskData['cacheTargetedRisk'])
-                ->setKindOfMeasure((int)$operationalRiskData['kindOfMeasure'])
-                ->setComment($operationalRiskData['comment'] ?? '')
-                ->setMitigation($operationalRiskData['mitigation'] ?? '')
-                ->setIsSpecific((bool)$operationalRiskData['specific'])
-                ->setContext($operationalRiskData['context'] ?? '')
-                ->setCreator($this->connectedUser->getEmail());
-
-            if (!empty($operationalRiskData['riskOwner'])) {
-                $instanceRiskOwner = $this->anrInstanceRiskOwnerService->getOrCreateInstanceRiskOwner(
-                    $anr,
-                    $operationalRiskData['riskOwner']
-                );
-                $operationalInstanceRisk->setInstanceRiskOwner($instanceRiskOwner);
-            }
-
-            if ($areScalesLevelsOfLikelihoodDifferent) {
-                $this->adjustOperationalRisksProbabilityScales(
-                    $operationalInstanceRisk,
-                    $externalOperationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD],
-                    $operationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD]
-                );
-            }
-
-            if (!empty($operationalRiskData['rolfRisk']) && $monarcObject->getRolfTag() !== null) {
-                /** @var RolfRisk|null $rolfRisk */
-                $rolfRisk = $this->importCacheHelper
-                    ->getItemFromArrayCache('rolf_risks_by_old_ids', (int)$operationalRiskData['rolfRisk']);
-                if ($rolfRisk !== null) {
-                    $operationalInstanceRisk
-                        ->setRolfRisk($rolfRisk)
-                        ->setRiskCacheCode($rolfRisk->getCode());
-                }
-            }
-
-            $impactScale = $operationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT];
-            foreach ($impactScale['operationalRiskScaleTypes'] as $index => $scaleType) {
-                /** @var Entity\OperationalRiskScaleType $operationalRiskScaleType */
-                $operationalRiskScaleType = $scaleType['object'];
-                $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
-                    ->setAnr($anr)
-                    ->setOperationalRiskScaleType($operationalRiskScaleType)
-                    ->setOperationalInstanceRisk($operationalInstanceRisk)
-                    ->setCreator($this->connectedUser->getEmail());
-
-                if ($includeEval) {
-                    /* The format is since v2.11.0 */
-                    if (isset($operationalRiskData['scalesValues'])) {
-                        $externalScaleTypeId = null;
-                        if ($this->isImportTypeAnr()) {
-                            /* For anr import, match current scale type translation key with external ids. */
-                            $externalScaleTypeId = $this->getExternalScaleTypeIdByCurrentScaleLabelTranslationKey(
-                                $operationalRiskScaleType->getLabelTranslationKey()
-                            );
-                        } elseif (isset($matchedScaleTypesMap['currentScaleTypeKeysToExternalIds']
-                            [$operationalRiskScaleType->getLabelTranslationKey()])
-                        ) {
-                            /* For instance import, match current scale type translation key with external ids. */
-                            $externalScaleTypeId = $matchedScaleTypesMap['currentScaleTypeKeysToExternalIds']
-                            [$operationalRiskScaleType->getLabelTranslationKey()];
-                        }
-                        if ($externalScaleTypeId !== null
-                            && isset($operationalRiskData['scalesValues'][$externalScaleTypeId])
-                        ) {
-                            $scalesValueData = $operationalRiskData['scalesValues'][$externalScaleTypeId];
-                            $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
-                            $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
-                            $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetedValue']);
-                            if ($areImpactScaleTypesValuesDifferent) {
-                                /* We convert from the importing new scales to the current anr scales. */
-                                $this->adjustOperationalInstanceRisksScales(
-                                    $operationalInstanceRiskScale,
-                                    $externalOperationalRiskScalesData[
-                                        CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT
-                                    ],
-                                    $impactScale
-                                );
-                            }
-                        }
-                        /* The format before v2.11.0. Update only first 5 scales (ROLFP if not changed by user). */
-                    } elseif ($index < 5) {
-                        foreach ($oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
-                            $operationalInstanceRiskScale->{'set' . $typeField}($operationalRiskData[$oldFiled]);
-                        }
-                        if ($areImpactScaleTypesValuesDifferent) {
-                            /* We convert from the importing new scales to the current anr scales. */
-                            $this->adjustOperationalInstanceRisksScales(
-                                $operationalInstanceRiskScale,
-                                $externalOperationalRiskScalesData[
-                                    CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT
-                                ],
-                                $impactScale
-                            );
-                        }
-                    }
-                }
-
-                $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
-            }
-
-            if (!empty($matchedScaleTypesMap['notMatchedScaleTypes']) && !$this->isImportTypeAnr()) {
-                /* In case of instance import, there is a need to create external scale types in case if
-                    the linked values are set for at least one operational instance risk.
-                    The new created type has to be linked with all the existed risks. */
-                $anrLanguageCode = $this->getAnrLanguageCode($anr);
-                foreach ($matchedScaleTypesMap['notMatchedScaleTypes'] as $extScaleTypeId => $extScaleTypeData) {
-                    if (isset($operationalRiskData['scalesValues'][$extScaleTypeId])) {
-                        $scalesValueData = $operationalRiskData['scalesValues'][$extScaleTypeId];
-                        if ($scalesValueData['netValue'] !== -1
-                            || $scalesValueData['brutValue'] !== -1
-                            || $scalesValueData['targetedValue'] !== -1
-                        ) {
-                            $labelTranslationKey = (string)Uuid::uuid4();
-                            $operationalRiskScaleType = (new Entity\OperationalRiskScaleType())
-                                ->setAnr($anr)
-                                ->setOperationalRiskScale($impactScale['object'])
-                                ->setLabelTranslationKey($labelTranslationKey)
-                                ->setCreator($this->connectedUser->getEmail());
-                            $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
-
-                            $translation = (new Translation())
-                                ->setAnr($anr)
-                                ->setType(Translation::OPERATIONAL_RISK_SCALE_TYPE)
-                                ->setKey($labelTranslationKey)
-                                ->setValue($extScaleTypeData['translation']['value'])
-                                ->setLang($anrLanguageCode)
-                                ->setCreator($this->connectedUser->getEmail());
-                            $this->translationTable->save($translation, false);
-
-                            foreach ($extScaleTypeData['operationalRiskScaleComments'] as $scaleCommentData) {
-                                $this->createOrUpdateOperationalRiskScaleComment(
-                                    $anr,
-                                    false,
-                                    $impactScale['object'],
-                                    $scaleCommentData,
-                                    [],
-                                    [],
-                                    $operationalRiskScaleType
-                                );
-                            }
-
-                            $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
-                                ->setAnr($anr)
-                                ->setOperationalInstanceRisk($operationalInstanceRisk)
-                                ->setOperationalRiskScaleType($operationalRiskScaleType)
-                                ->setBrutValue($scalesValueData['brutValue'])
-                                ->setNetValue($scalesValueData['netValue'])
-                                ->setTargetedValue($scalesValueData['targetedValue'])
-                                ->setCreator($this->connectedUser->getEmail());
-                            $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale);
-
-                            $this->adjustOperationalInstanceRisksScales(
-                                $operationalInstanceRiskScale,
-                                $externalOperationalRiskScalesData[
-                                    CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT
-                                ],
-                                $impactScale
-                            );
-
-                            /* To swap the scale risk between the to keys in the map as it is already matched. */
-                            unset($matchedScaleTypesMap['notMatchedScaleTypes'][$extScaleTypeId]);
-                            $matchedScaleTypesMap['currentScaleTypeKeysToExternalIds']
-                            [$operationalRiskScaleType->getLabelTranslationKey()] = $extScaleTypeId;
-
-                            /* Due to the new scale type and related comments the cache has to be reset. */
-                            $this->cachedData['currentOperationalRiskScalesData'] = [];
-                            $operationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
-                            $areImpactScaleTypesValuesDifferent = true;
-
-                            /* Link the newly created scale type to all the existed operational risks. */
-                            $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrAndInstance(
-                                $anr,
-                                $instance
-                            );
-                            foreach ($operationalInstanceRisks as $operationalInstanceRiskToUpdate) {
-                                if ($operationalInstanceRiskToUpdate->getId() !== $operationalInstanceRisk->getId()) {
-                                    $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
-                                        ->setAnr($anr)
-                                        ->setOperationalInstanceRisk($operationalInstanceRiskToUpdate)
-                                        ->setOperationalRiskScaleType($operationalRiskScaleType)
-                                        ->setCreator($this->connectedUser->getEmail());
-                                    $this->operationalInstanceRiskScaleTable->save(
-                                        $operationalInstanceRiskScale,
-                                        false
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if ($includeEval) {
-                /* recalculate the cached risk values */
-                $this->anrInstanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk, false);
-            }
-
-            $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
-
-            /* Process recommendations related to the operational risk. */
-            if ($includeEval && !empty($data['recosop'][$operationalRiskData['id']])) {
-                foreach ($data['recosop'][$operationalRiskData['id']] as $recommendationData) {
-                    $recommendation = $this->processRecommendationDataLinkedToRisk(
-                        $anr,
-                        $recommendationData,
-                        $operationalRiskData['kindOfMeasure'] !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
-                    );
-
-                    $recommendationRisk = (new RecommendationRisk())
-                        ->setInstance($instance)
-                        ->setInstanceRiskOp($operationalInstanceRisk)
-                        ->setGlobalObject($monarcObject->isScopeGlobal() ? $monarcObject : null)
-                        ->setCommentAfter($recommendationData['commentAfter'] ?? '')
-                        ->setRecommendation($recommendation);
-
-                    // TODO: remove the trick when #240 is done.
-                    $this->recommendationRiskTable->save($recommendationRisk);
-                    $this->recommendationRiskTable->save($recommendationRisk->setAnr($anr), false);
-                }
-            }
-
-            $this->recommendationRiskTable->flush();
-        }
-    }
-
-    private function matchAndGetOperationalRiskScaleTypesMap(
-        Entity\Anr $anr,
-        array $operationalRiskScalesData,
-        array $externalOperationalRiskScalesData
-    ): array {
-        $matchedScaleTypesMap = [
-            'currentScaleTypeKeysToExternalIds' => [],
-            'notMatchedScaleTypes' => [],
-        ];
-        $anrLanguageCode = $this->getAnrLanguageCode($anr);
-        $scaleTypesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $anr,
-            [Translation::OPERATIONAL_RISK_SCALE_TYPE],
-            $anrLanguageCode
-        );
-        $scaleTypesData = $operationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT]
-        ['operationalRiskScaleTypes'];
-        $externalScaleTypesData = $externalOperationalRiskScalesData
-                                  [CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT]['operationalRiskScaleTypes'];
-        foreach ($externalScaleTypesData as $externalScaleTypeData) {
-            $isMatched = false;
-            foreach ($scaleTypesData as $scaleTypeData) {
-                /** @var Entity\OperationalRiskScaleType $scaleType */
-                $scaleType = $scaleTypeData['object'];
-                $scaleTypeTranslation = $scaleTypesTranslations[$scaleType->getLabelTranslationKey()];
-                if ($externalScaleTypeData['translation']['value'] === $scaleTypeTranslation->getValue()) {
-                    $matchedScaleTypesMap['currentScaleTypeKeysToExternalIds'][$scaleType->getLabelTranslationKey()]
-                        = $externalScaleTypeData['id'];
-                    $isMatched = true;
-                    break;
-                }
-            }
-            if (!$isMatched) {
-                $matchedScaleTypesMap['notMatchedScaleTypes'][$externalScaleTypeData['id']] = $externalScaleTypeData;
-            }
-        }
-
-        return $matchedScaleTypesMap;
-    }
-
-    private function getExternalScaleTypeIdByCurrentScaleLabelTranslationKey(string $labelTranslationKey): ?int
-    {
-        return $this->cachedData['operationalRiskScaleTypes']['currentScaleTypeLabelTranslationKeyToExternalIds']
-            [$labelTranslationKey] ?? null;
-    }
-
-    private function areScalesLevelsOfTypeDifferent(
-        int $type,
-        array $operationalRiskScales,
-        array $externalOperationalRiskScalesData
-    ): bool {
-        foreach ($operationalRiskScales as $scaleType => $operationalRiskScale) {
-            if ($scaleType === $type) {
-                $externalScaleDataOfType = $externalOperationalRiskScalesData[$type];
-                if ($operationalRiskScale['min'] !== $externalScaleDataOfType['min']
-                    || $operationalRiskScale['max'] !== $externalScaleDataOfType['max']) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Checks if any of the scale comments values related to the scale types have different scaleValue
-     * then in the new operational scale data.
-     */
-    public function areScaleTypeValuesDifferent(
-        int $type,
-        array $operationalRiskScales,
-        array $extOperationalRiskScalesData
-    ): bool {
-        foreach ($operationalRiskScales[$type]['commentsIndexToValueMap'] as $scaleIndex => $scaleValue) {
-            if (!isset($extOperationalRiskScalesData[$type]['commentsIndexToValueMap'][$scaleIndex])) {
-                return true;
-            }
-            $extScaleValue = $extOperationalRiskScalesData[$type]['commentsIndexToValueMap'][$scaleIndex];
-            if ($scaleValue !== $extScaleValue) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -2076,9 +1333,9 @@ class InstanceImportService
     }
 
     /**
-     * @return Instance[]
+     * @return Entity\Instance[]
      */
-    private function getInstanceBrothers(InstanceSuperClass $instance): array
+    private function getInstanceBrothers(Entity\Instance $instance): array
     {
         if (!isset($this->cachedData['instanceBrothers'][$instance->getId()])) {
             $this->cachedData['instanceBrothers'][$instance->getId()] = $this->instanceTable
@@ -2108,7 +1365,7 @@ class InstanceImportService
             ->setThreat($threat)
             ->setVulnerability($vulnerability)
             ->setSpecific($instanceRiskData['specific'])
-            ->setMh((int)$instanceRiskData['mh'])
+            ->setIsThreatRateNotSetOrModifiedExternally((bool)$instanceRiskData['mh'])
             ->setThreatRate((int)$instanceRiskData['threatRate'])
             ->setVulnerabilityRate((int)$instanceRiskData['vulnerabilityRate'])
             ->setKindOfMeasure($instanceRiskData['kindOfMeasure'])
@@ -2124,7 +1381,8 @@ class InstanceImportService
             ->setCreator($this->connectedUser->getEmail());
 
         if (!empty($instanceRiskData['riskOwner'])) {
-            $instanceRiskOwner = $this->anrInstanceRiskOwnerService->getOrCreateInstanceRiskOwner(
+            $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
+                $anr,
                 $anr,
                 $instanceRiskData['riskOwner']
             );
@@ -2138,45 +1396,38 @@ class InstanceImportService
         array $data,
         Entity\Anr $anr,
         ?CoreEntity\InstanceSuperClass $parentInstance,
-        Entity\MonarcObject $monarcObject,
-        bool $saveInDb = true
+        Entity\MonarcObject $monarcObject
     ): Entity\Instance {
         $instanceData = $data['instance'];
-        $instance = (new Entity\Instance())
-            ->setAnr($anr)
-            ->setLabels($instanceData)
-            ->setNames($instanceData)
-            ->setLevel($parentInstance === null ? Entity\Instance::LEVEL_ROOT : $instanceData['level'])
-            ->setRoot($parentInstance === null ? null : ($parentInstance->getRoot() ?? $parentInstance))
-            ->setParent($parentInstance)
-            ->setAssetType($instanceData['assetType'])
-            ->setExportable($instanceData['exportable'])
-            ->setPosition(++$this->currentMaxInstancePosition)
-            ->setObject($monarcObject)
-            ->setAsset($monarcObject->getAsset())
-            ->setCreator($this->connectedUser->getEmail());
-        if (isset($instanceData['c'])) {
-            $instance->setConfidentiality((int)$instanceData['c']);
-        }
-        if (isset($instanceData['i'])) {
-            $instance->setIntegrity((int)$instanceData['i']);
-        }
-        if (isset($instanceData['d'])) {
-            $instance->setAvailability((int)$instanceData['d']);
-        }
-        if (isset($instanceData['ch'])) {
-            $instance->setInheritedConfidentiality((int)$instanceData['ch']);
-        }
-        if (isset($instanceData['ih'])) {
-            $instance->setInheritedIntegrity((int)$instanceData['ih']);
-        }
-        if (isset($instanceData['dh'])) {
-            $instance->setInheritedAvailability((int)$instanceData['dh']);
+        $instanceData['object'] = $monarcObject;
+        $instanceData['position'] = ++$this->currentMaxInstancePosition;
+        $instanceData['setOnlyExactPosition'] = true;
+
+        return $this->anrInstanceService->createInstance($anr, $instanceData, $parentInstance === null);
+    }
+
+    /**
+     * Validates if the data can be imported into the anr.
+     */
+    private function validateIfImportIsPossible(Entity\Anr $anr, ?Entity\Instance $parent, array $data): void
+    {
+        if ($parent !== null
+            && ($parent->getLevel() === CoreEntity\InstanceSuperClass::LEVEL_INTER || $parent->getAnr() !== $anr)
+        ) {
+            throw new Exception('Parent instance should be in the node tree and the analysis IDs are matched', 412);
         }
 
-        $this->instanceTable->save($instance, $saveInDb);
+        if ((!empty($data['with_eval']) || !empty($data['withEval'])) && empty($data['scales'])) {
+            throw new Exception('The importing file should include evaluation scales.', 412);
+        }
 
-        return $instance;
+        if (!$this->isMonarcVersionLowerThen('2.13.1') && $anr->getLanguageCode() !== $data['languageCode']) {
+            throw new Exception(sprintf(
+                'The current analysis language "%s" should be the same as importing one "%s"',
+                $anr->getLanguageCode(),
+                $data['languageCode']
+            ), 412);
+        }
     }
 
     /**
@@ -2194,926 +1445,8 @@ class InstanceImportService
         }
     }
 
-    private function adjustOperationalRisksScaleValuesBasedOnNewScales(Entity\Anr $anr, array $data): void
+    private function isMonarcVersionLowerThen(string $version): bool
     {
-        $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnr($anr);
-        if (!empty($operationalInstanceRisks)) {
-            $currentOperationalRiskScalesData = $this->getCurrentOperationalRiskScalesData($anr);
-            $externalOperationalRiskScalesData = $this->getExternalOperationalRiskScalesData($anr, $data);
-
-            foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
-                $this->adjustOperationalRisksProbabilityScales(
-                    $operationalInstanceRisk,
-                    $currentOperationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD],
-                    $externalOperationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD]
-                );
-
-                foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $instanceRiskScale) {
-                    $this->adjustOperationalInstanceRisksScales(
-                        $instanceRiskScale,
-                        $currentOperationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT],
-                        $externalOperationalRiskScalesData[CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT]
-                    );
-                }
-
-                $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
-
-                $this->anrInstanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk);
-            }
-
-            $this->instanceRiskOpTable->flush();
-        }
-    }
-
-    private function adjustOperationalRisksProbabilityScales(
-        Entity\InstanceRiskOp $operationalInstanceRisk,
-        array $fromOperationalRiskScalesData,
-        array $toOperationalRiskScalesData
-    ): void {
-        foreach (['NetProb', 'BrutProb', 'TargetedProb'] as $likelihoodScaleName) {
-            $operationalInstanceRisk->{'set' . $likelihoodScaleName}($this->approximate(
-                $operationalInstanceRisk->{'get' . $likelihoodScaleName}(),
-                $fromOperationalRiskScalesData['min'],
-                $fromOperationalRiskScalesData['max'],
-                $toOperationalRiskScalesData['min'],
-                $toOperationalRiskScalesData['max']
-            ));
-        }
-    }
-
-    private function adjustOperationalInstanceRisksScales(
-        Entity\OperationalInstanceRiskScale $instanceRiskScale,
-        array $fromOperationalRiskScalesData,
-        array $toOperationalRiskScalesData
-    ): void {
-        foreach (['NetValue', 'BrutValue', 'TargetedValue'] as $impactScaleName) {
-            $scaleImpactValue = $instanceRiskScale->{'get' . $impactScaleName}();
-            if ($scaleImpactValue === -1) {
-                continue;
-            }
-            $scaleImpactIndex = array_search(
-                $scaleImpactValue,
-                $fromOperationalRiskScalesData['commentsIndexToValueMap'],
-                true
-            );
-            if ($scaleImpactIndex === false) {
-                continue;
-            }
-
-            $approximatedIndex = $this->approximate(
-                $scaleImpactIndex,
-                $fromOperationalRiskScalesData['min'],
-                $fromOperationalRiskScalesData['max'],
-                $toOperationalRiskScalesData['min'],
-                $toOperationalRiskScalesData['max']
-            );
-
-            $approximatedValueToNewScales = $toOperationalRiskScalesData['commentsIndexToValueMap'][$approximatedIndex]
-                ?? $scaleImpactValue;
-            $instanceRiskScale->{'set' . $impactScaleName}($approximatedValueToNewScales);
-
-            $this->operationalInstanceRiskScaleTable->save($instanceRiskScale, false);
-        }
-    }
-
-    private function getCurrentOperationalRiskScalesData(Anr $anr): array
-    {
-        if (empty($this->cachedData['currentOperationalRiskScalesData'])) {
-            $operationalRisksScales = $this->operationalRiskScaleTable->findByAnr($anr);
-            foreach ($operationalRisksScales as $operationalRisksScale) {
-                $scaleTypesData = [];
-                $commentsIndexToValueMap = [];
-                /* Build the map of the comments index <=> values relation. */
-                foreach ($operationalRisksScale->getOperationalRiskScaleTypes() as $typeIndex => $scaleType) {
-                    /* The operational risk scale types object is used to recreate operational instance risk scales. */
-                    $scaleTypesData[$typeIndex]['object'] = $scaleType;
-                    /* All the scale comment have the same index -> value corresponding values, so populating once. */
-                    if (empty($commentsIndexToValueMap)) {
-                        foreach ($scaleType->getOperationalRiskScaleComments() as $scaleTypeComment) {
-                            if (!$scaleTypeComment->isHidden()) {
-                                $commentsIndexToValueMap[$scaleTypeComment->getScaleIndex()] =
-                                    $scaleTypeComment->getScaleValue();
-                            }
-                        }
-                    }
-                }
-
-                $this->cachedData['currentOperationalRiskScalesData'][$operationalRisksScale->getType()] = [
-                    'min' => $operationalRisksScale->getMin(),
-                    'max' => $operationalRisksScale->getMax(),
-                    'object' => $operationalRisksScale,
-                    'commentsIndexToValueMap' => $commentsIndexToValueMap,
-                    'operationalRiskScaleTypes' => $scaleTypesData,
-                    'operationalRiskScaleComments' => $operationalRisksScale->getOperationalRiskScaleComments(),
-                ];
-            }
-        }
-
-        return $this->cachedData['currentOperationalRiskScalesData'];
-    }
-
-    /**
-     * Prepare and cache the new scales for the future use.
-     * The format can be different, depends on the version (before v2.11.0 and after).
-     */
-    private function getExternalOperationalRiskScalesData(Entity\Anr $anr, array $data): array
-    {
-        if (empty($this->cachedData['externalOperationalRiskScalesData'])) {
-            /* Populate with informational risks scales in case if there is an import of file before v2.11.0. */
-            $scalesDataResult = [
-                CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT => [
-                    'min' => 0,
-                    'max' => $data['scales'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['max']
-                        - $data['scales'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'],
-                    'commentsIndexToValueMap' => [],
-                    'operationalRiskScaleTypes' => [],
-                    'operationalRiskScaleComments' => [],
-                ],
-                CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD => [
-                    'min' => $data['scales'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['min'],
-                    'max' => $data['scales'][CoreEntity\ScaleSuperClass::TYPE_THREAT]['max'],
-                    'commentsIndexToValueMap' => [],
-                    'operationalRiskScaleTypes' => [],
-                    'operationalRiskScaleComments' => [],
-                ],
-            ];
-            if (!empty($data['operationalRiskScales'])) {
-                /* Overwrite the values for the version >= 2.10.5. */
-                foreach ($data['operationalRiskScales'] as $scaleType => $operationalRiskScaleData) {
-                    $scalesDataResult[$scaleType]['min'] = $operationalRiskScaleData['min'];
-                    $scalesDataResult[$scaleType]['max'] = $operationalRiskScaleData['max'];
-
-                    /* Build the map of the comments index <=> values relation. */
-                    foreach ($operationalRiskScaleData['operationalRiskScaleTypes'] as $typeIndex => $scaleTypeData) {
-                        $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$typeIndex] = $scaleTypeData;
-                        /* All the scale comment have the same index->value corresponding values, so populating once. */
-                        if (empty($scalesDataResult[$scaleType]['commentsIndexToValueMap'])) {
-                            foreach ($scaleTypeData['operationalRiskScaleComments'] as $scaleTypeComment) {
-                                if (!$scaleTypeComment['isHidden']) {
-                                    $scalesDataResult[$scaleType]['commentsIndexToValueMap']
-                                    [$scaleTypeComment['scaleIndex']] = $scaleTypeComment['scaleValue'];
-                                }
-                            }
-                        }
-                    }
-
-                    $scalesDataResult[$scaleType]['operationalRiskScaleComments'] =
-                        $operationalRiskScaleData['operationalRiskScaleComments'];
-                }
-            } else {
-                /* Convert comments and types from informational risks to operational (new format). */
-                $anrLanguageCode = $this->getAnrLanguageCode($anr);
-                $scaleMin = $data['scales'][CoreEntity\ScaleSuperClass::TYPE_IMPACT]['min'];
-                foreach ($this->scaleImpactTypeTable->findByAnrOrderedByPosition($anr) as $index => $scaleImpactType) {
-                    if ($scaleImpactType->isSys() && \in_array(
-                        $scaleImpactType->getType(),
-                        CoreEntity\ScaleImpactTypeSuperClass::getScaleImpactTypesRolfp(),
-                        true
-                    )) {
-                        $labelTranslationKey = (string)Uuid::uuid4();
-                        $scalesDataResult[CoreEntity\ScaleSuperClass::TYPE_IMPACT]['operationalRiskScaleTypes'][$index] = [
-                            'id' => $scaleImpactType->getId(),
-                            'isHidden' => $scaleImpactType->isHidden(),
-                            'labelTranslationKey' => $labelTranslationKey,
-                            'translation' => [
-                                'key' => $labelTranslationKey,
-                                'lang' => $anrLanguageCode,
-                                'value' => $scaleImpactType->getLabel($anr->getLanguage()),
-                            ],
-                        ];
-                    }
-                }
-                foreach ($data['scalesComments'] as $scaleComment) {
-                    $scaleType = $scaleComment['scale']['type'];
-                    if (!\in_array(
-                        $scaleType,
-                        [CoreEntity\ScaleSuperClass::TYPE_IMPACT, CoreEntity\ScaleSuperClass::TYPE_THREAT],
-                        true
-                    )) {
-                        continue;
-                    }
-
-                    if ($scaleType === CoreEntity\ScaleSuperClass::TYPE_THREAT) {
-                        $commentTranslationKey = (string)Uuid::uuid4();
-                        $scalesDataResult[$scaleType]['operationalRiskScaleComments'][] = [
-                            'id' => $scaleComment['id'],
-                            'scaleIndex' => $scaleComment['val'],
-                            'scaleValue' => $scaleComment['val'],
-                            'isHidden' => false,
-                            'commentTranslationKey' => $commentTranslationKey,
-                            'translation' => [
-                                'key' => $commentTranslationKey,
-                                'lang' => $anrLanguageCode,
-                                'value' => $scaleComment['comment' . $anr->getLanguage()] ?? '',
-                            ],
-                        ];
-                    } elseif ($scaleType === CoreEntity\ScaleSuperClass::TYPE_IMPACT
-                        && $scaleComment['val'] >= $scaleMin
-                    ) {
-                        $commentTranslationKey = (string)Uuid::uuid4();
-                        $scaleIndex = $scaleComment['val'] - $scaleMin;
-                        $scaleTypePosition = $scaleComment['scaleImpactType']['position'];
-                        if (isset($scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypePosition])) {
-                            $scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypePosition]
-                            ['operationalRiskScaleComments'][] = [
-                                'id' => $scaleComment['id'],
-                                'scaleIndex' => $scaleIndex,
-                                'scaleValue' => $scaleComment['val'],
-                                'isHidden' => false,
-                                'commentTranslationKey' => $commentTranslationKey,
-                                'translation' => [
-                                    'key' => $commentTranslationKey,
-                                    'lang' => $anrLanguageCode,
-                                    'value' => $scaleComment['comment' . $anr->getLanguage()] ?? '',
-                                ],
-                            ];
-
-                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleIndex]
-                                = $scaleComment['val'];
-                        }
-                    }
-                }
-            }
-
-            $this->cachedData['externalOperationalRiskScalesData'] = $scalesDataResult;
-        }
-
-        return $this->cachedData['externalOperationalRiskScalesData'];
-    }
-
-    private function updateScalesAndComments(Entity\Anr $anr, array $data): void
-    {
-        $scalesByType = [];
-        $scales = $this->scaleTable->findByAnr($anr);
-        foreach ([
-            CoreEntity\ScaleSuperClass::TYPE_IMPACT,
-            CoreEntity\ScaleSuperClass::TYPE_THREAT,
-            CoreEntity\ScaleSuperClass::TYPE_VULNERABILITY
-        ] as $type) {
-            foreach ($scales as $scale) {
-                if ($scale->getType() === $type) {
-                    $scale->setMin((int)$data['scales'][$type]['min']);
-                    $scale->setMax((int)$data['scales'][$type]['max']);
-
-                    $scalesByType[$type] = $scale;
-
-                    $this->scaleTable->save($scale, false);
-                }
-            }
-        }
-
-        if (!empty($data['scalesComments'])) {
-            $scaleComments = $this->scaleCommentTable->findByAnr($anr);
-            foreach ($scaleComments as $scaleComment) {
-                if ($scaleComment->getScaleImpactType() === null
-                    || $scaleComment->getScaleImpactType()->isSys()
-                ) {
-                    $this->scaleCommentTable->remove($scaleComment, false);
-                }
-            }
-            $this->scaleCommentTable->flush();
-
-            // TODO: there is no position field anymore.
-            $scaleImpactTypes = $this->scaleImpactTypeTable->findByAnrOrderedAndIndexedByPosition($anr);
-            foreach ($data['scalesComments'] as $scalesCommentData) {
-                /*
-                 * Comments, which are not matched with a scale impact type, should not be created.
-                 * This is possible only for exported files before v2.11.0.
-                 */
-                if (isset($scalesCommentData['scaleImpactType'])
-                    && !isset($scaleImpactTypes[$scalesCommentData['scaleImpactType']['position']])
-                    && !isset($scalesCommentData['scaleImpactType']['labels'])
-                ) {
-                    continue;
-                }
-
-                $scale = $scalesByType[$scalesCommentData['scale']['type']];
-                $scaleComment = (new Entity\ScaleComment())
-                    ->setAnr($anr)
-                    ->setScale($scale)
-                    ->setScaleIndex($scalesCommentData['scaleIndex'] ?? $scalesCommentData['val'])
-                    ->setScaleValue($scalesCommentData['scaleValue'] ?? $scalesCommentData['val'])
-                    ->setComments([
-                        'comment1' => $scalesCommentData['comment1'],
-                        'comment2' => $scalesCommentData['comment2'],
-                        'comment3' => $scalesCommentData['comment3'],
-                        'comment4' => $scalesCommentData['comment4'],
-                    ])
-                    ->setCreator($this->connectedUser->getEmail());
-
-                if (isset($scalesCommentData['scaleImpactType']['position'])) {
-                    $scaleImpactTypePosition = $scalesCommentData['scaleImpactType']['position'];
-                    $scaleImpactType = $scaleImpactTypes[$scaleImpactTypePosition] ?? null;
-                    $isSystem = $scaleImpactType !== null && $scaleImpactType->isSys();
-                    /* Scale impact types are presented in the export separately since v2.11.0 */
-                    if (isset($scalesCommentData['scaleImpactType']['labels'])
-                        && !$isSystem
-                        && ($scaleImpactType === null
-                            || $scaleImpactType->getLabel($anr->getLanguage())
-                            !== $scalesCommentData['scaleImpactType']['labels']['label' . $anr->getLanguage()]
-                        )
-                    ) {
-                        $scaleImpactType = (new Entity\ScaleImpactType())
-                            ->setType($scalesCommentData['scaleImpactType']['type'])
-                            ->setLabels($scalesCommentData['scaleImpactType']['labels'])
-                            ->setIsSys($scalesCommentData['scaleImpactType']['isSys'])
-                            ->setIsHidden($scalesCommentData['scaleImpactType']['isHidden'])
-                            ->setAnr($anr)
-                            ->setScale($scale)
-                            ->setCreator($this->connectedUser->getEmail());
-
-                        $this->scaleImpactTypeTable->save($scaleImpactType, false);
-
-                        $scaleImpactTypes[$scaleImpactTypePosition] = $scaleImpactType;
-                    }
-                    if ($scaleImpactType === null) {
-                        continue;
-                    }
-
-                    /* We may overwrite the comments if position is matched but scale type labels are different */
-                    $scaleComment->setScaleImpactType($scaleImpactType);
-                }
-
-                $this->scaleCommentTable->save($scaleComment, false);
-            }
-            $this->scaleCommentTable->flush();
-        }
-
-        /* Reset the cache */
-        $this->cachedData['scales'] = [];
-    }
-
-    private function updateOperationalRisksScalesAndRelatedInstances(Entity\Anr $anr, array $data): void
-    {
-        $operationalRiskScales = $this->operationalRiskScaleTable->findByAnr($anr);
-        $anrLanguageCode = $this->getAnrLanguageCode($anr);
-        $scalesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $anr,
-            [Translation::OPERATIONAL_RISK_SCALE_TYPE, Translation::OPERATIONAL_RISK_SCALE_COMMENT],
-            $anrLanguageCode
-        );
-        $externalOperationalScalesData = $this->getExternalOperationalRiskScalesData($anr, $data);
-
-        foreach ($operationalRiskScales as $operationalRiskScale) {
-            $scaleData = $externalOperationalScalesData[$operationalRiskScale->getType()];
-            $currentScaleLevelDifferenceFromExternal = $operationalRiskScale->getMax() - $scaleData['max'];
-            $operationalRiskScale
-                ->setAnr($anr)
-                ->setMin($scaleData['min'])
-                ->setMax($scaleData['max'])
-                ->setUpdater($this->connectedUser->getEmail());
-
-            /* This is currently only applicable for impact scales type. */
-            $createdScaleTypes = [];
-            $matchedScaleTypes = [];
-            foreach ($scaleData['operationalRiskScaleTypes'] as $scaleTypeData) {
-                $isScaleTypeMatched = true;
-                $operationalRiskScaleType = $this->matchScaleTypeDataWithScaleTypesList(
-                    $scaleTypeData,
-                    $operationalRiskScale->getOperationalRiskScaleTypes(),
-                    $scalesTranslations
-                );
-                if ($operationalRiskScaleType === null) {
-                    $isScaleTypeMatched = false;
-                    $labelTranslationKey = (string)Uuid::uuid4();
-                    $operationalRiskScaleType = (new Entity\OperationalRiskScaleType())
-                        ->setAnr($anr)
-                        ->setOperationalRiskScale($operationalRiskScale)
-                        ->setLabelTranslationKey($labelTranslationKey)
-                        ->setCreator($this->connectedUser->getEmail());
-
-                    $translation = (new Translation())
-                        ->setAnr($anr)
-                        ->setType(Translation::OPERATIONAL_RISK_SCALE_TYPE)
-                        ->setLang($anrLanguageCode)
-                        ->setKey($labelTranslationKey)
-                        ->setValue($scaleTypeData['translation']['value'])
-                        ->setCreator($this->connectedUser->getEmail());
-                    $this->translationTable->save($translation, false);
-
-                    $createdScaleTypes[$labelTranslationKey] = $operationalRiskScaleType;
-                } elseif ($currentScaleLevelDifferenceFromExternal !== 0) {
-                    $matchedScaleTypes[$operationalRiskScaleType->getId()] = $operationalRiskScaleType;
-                }
-
-                /* The map is used to match for the importing operational risks, scale values with scale types. */
-                $this->cachedData['operationalRiskScaleTypes']['currentScaleTypeLabelTranslationKeyToExternalIds']
-                [$operationalRiskScaleType->getLabelTranslationKey()] = $scaleTypeData['id'];
-
-                $operationalRiskScaleType->setIsHidden($scaleTypeData['isHidden']);
-                $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
-
-                foreach ($scaleTypeData['operationalRiskScaleComments'] as $scaleTypeCommentData) {
-                    $this->createOrUpdateOperationalRiskScaleComment(
-                        $anr,
-                        $isScaleTypeMatched,
-                        $operationalRiskScale,
-                        $scaleTypeCommentData,
-                        $operationalRiskScaleType->getOperationalRiskScaleComments(),
-                        $scalesTranslations,
-                        $operationalRiskScaleType
-                    );
-                }
-            }
-
-            /* Create relations of all the created scales with existed risks. */
-            if (!empty($createdScaleTypes)) {
-                $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnr($anr);
-                foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
-                    foreach ($createdScaleTypes as $createdScaleType) {
-                        $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
-                            ->setAnr($anr)
-                            ->setOperationalRiskScaleType($createdScaleType)
-                            ->setOperationalInstanceRisk($operationalInstanceRisk)
-                            ->setCreator($this->connectedUser->getEmail());
-                        $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
-                    }
-                }
-            }
-
-            $maxIndexForLikelihood = 0;
-            /* This is currently applicable only for likelihood scales type */
-            foreach ($scaleData['operationalRiskScaleComments'] as $scaleCommentData) {
-                $this->createOrUpdateOperationalRiskScaleComment(
-                    $anr,
-                    true,
-                    $operationalRiskScale,
-                    $scaleCommentData,
-                    $operationalRiskScale->getOperationalRiskScaleComments(),
-                    $scalesTranslations
-                );
-                $maxIndexForLikelihood = (int)$scaleCommentData['scaleIndex'] > $maxIndexForLikelihood
-                    ? (int)$scaleCommentData['scaleIndex']
-                    : $maxIndexForLikelihood;
-            }
-            /* Manage a case when the scale (probability) is not matched and level higher than external. */
-            if ($maxIndexForLikelihood !== 0
-                && $operationalRiskScale->getType() === CoreEntity\OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD
-            ) {
-                foreach ($operationalRiskScale->getOperationalRiskScaleComments() as $comment) {
-                    if ($comment->getScaleIndex() >= $maxIndexForLikelihood) {
-                        $comment->setIsHidden(true);
-                        $this->operationalRiskScaleCommentTable->save($comment, false);
-                    }
-                }
-            }
-
-            /* Validate if any existed comments are now out of the new scales bound and if their values are valid.
-                Also, if their comments are complete per scale's level. */
-            if ($currentScaleLevelDifferenceFromExternal !== 0) {
-                foreach ($operationalRiskScale->getOperationalRiskScaleTypes() as $operationalRiskScaleType) {
-                    /* Ignore the currently created scale types. */
-                    if (\array_key_exists($operationalRiskScaleType->getLabelTranslationKey(), $createdScaleTypes)) {
-                        continue;
-                    }
-
-                    if ($currentScaleLevelDifferenceFromExternal < 0
-                        && !\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)
-                    ) {
-                        /* The scales type was not matched and the current scales level is lower then external,
-                            so we need to create missing empty scales comments. */
-                        $commentIndex = $operationalRiskScale->getMax() + $currentScaleLevelDifferenceFromExternal + 1;
-                        $commentIndexToValueMap = $externalOperationalScalesData
-                        [CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT]['commentsIndexToValueMap'];
-                        while ($commentIndex <= $operationalRiskScale->getMax()) {
-                            $this->createOrUpdateOperationalRiskScaleComment(
-                                $anr,
-                                false,
-                                $operationalRiskScale,
-                                [
-                                    'scaleIndex' => $commentIndex,
-                                    'scaleValue' => $commentIndexToValueMap[$commentIndex],
-                                    'isHidden' => false,
-                                    'translation' => [
-                                        'value' => '',
-                                    ],
-                                ],
-                                [],
-                                [],
-                                $operationalRiskScaleType
-                            );
-                            $commentIndex++;
-                        }
-
-                        continue;
-                    }
-
-                    if ($currentScaleLevelDifferenceFromExternal > 0) {
-                        $commentIndexToValueMap = $externalOperationalScalesData
-                        [CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT]['commentsIndexToValueMap'];
-                        $maxValue = $commentIndexToValueMap[$operationalRiskScale->getMax()];
-                        if (\array_key_exists($operationalRiskScaleType->getId(), $matchedScaleTypes)) {
-                            /* The scales type was matched and the current scales level is higher then external,
-                                so we need to hide their comments and validate values. */
-                            foreach ($matchedScaleTypes as $matchedScaleType) {
-                                foreach ($matchedScaleType->getOperationalRiskScaleComments() as $comment) {
-                                    $isHidden = $operationalRiskScale->getMin() > $comment->getScaleIndex()
-                                        || $operationalRiskScale->getMax() < $comment->getScaleIndex();
-                                    $comment->setIsHidden($isHidden);
-                                    if ($isHidden && $maxValue >= $comment->getScaleValue()) {
-                                        $comment->setScaleValue(++$maxValue);
-                                    }
-
-                                    $this->operationalRiskScaleCommentTable->save($comment, false);
-                                }
-                            }
-                        } else {
-                            /* Manage a case when the scale is not matched and level higher than external */
-                            foreach ($operationalRiskScaleType->getOperationalRiskScaleComments() as $comment) {
-                                $isHidden = $operationalRiskScale->getMin() > $comment->getScaleIndex()
-                                    || $operationalRiskScale->getMax() < $comment->getScaleIndex();
-                                $comment->setIsHidden($isHidden);
-                                if ($isHidden && $maxValue >= $comment->getScaleValue()) {
-                                    $comment->setScaleValue(++$maxValue);
-                                }
-
-                                $this->operationalRiskScaleCommentTable->save($comment, false);
-                            }
-                        }
-                    }
-                }
-            }
-
-            $this->operationalRiskScaleTable->save($operationalRiskScale);
-        }
-
-        /* Reset the cache */
-        $this->cachedData['currentOperationalRiskScalesData'] = [];
-    }
-
-    private function createOrUpdateOperationalRiskScaleComment(
-        Entity\Anr $anr,
-        bool $isMatchRequired,
-        Entity\OperationalRiskScale $operationalRiskScale,
-        array $scaleCommentData,
-        iterable $scaleCommentsToMatchWith,
-        array $scalesTranslations,
-        ?Entity\OperationalRiskScaleType $operationalRiskScaleType = null
-    ): void {
-        $operationalRiskScaleComment = null;
-        if ($isMatchRequired) {
-            $operationalRiskScaleComment = $this->matchScaleCommentDataWithScaleCommentsList(
-                $operationalRiskScale,
-                $scaleCommentData,
-                $scaleCommentsToMatchWith,
-                $scalesTranslations
-            );
-        }
-        if ($operationalRiskScaleComment === null) {
-            $anrLanguageCode = $this->getAnrLanguageCode($anr);
-            $commentTranslationKey = (string)Uuid::uuid4();
-            $operationalRiskScaleComment = (new Entity\OperationalRiskScaleComment())
-                ->setAnr($anr)
-                ->setOperationalRiskScale($operationalRiskScale)
-                ->setCommentTranslationKey($commentTranslationKey)
-                ->setCreator($this->connectedUser->getEmail());
-
-            $translation = (new Translation())
-                ->setAnr($anr)
-                ->setType(Translation::OPERATIONAL_RISK_SCALE_COMMENT)
-                ->setLang($anrLanguageCode)
-                ->setKey($commentTranslationKey)
-                ->setValue($scaleCommentData['translation']['value'])
-                ->setCreator($this->connectedUser->getEmail());
-            $this->translationTable->save($translation, false);
-        }
-
-        if ($operationalRiskScaleType !== null) {
-            $operationalRiskScaleComment->setOperationalRiskScaleType($operationalRiskScaleType);
-        }
-
-        $operationalRiskScaleComment
-            ->setScaleIndex($scaleCommentData['scaleIndex'])
-            ->setScaleValue($scaleCommentData['scaleValue'])
-            ->setIsHidden($scaleCommentData['isHidden']);
-        $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment, false);
-    }
-
-    /**
-     * @param array $scaleTypeData
-     * @param Entity\OperationalRiskScaleType[] $operationalRiskScaleTypes
-     * @param Translation[] $scalesTranslations
-     *
-     * @return Entity\OperationalRiskScaleType|null
-     */
-    private function matchScaleTypeDataWithScaleTypesList(
-        array $scaleTypeData,
-        iterable $operationalRiskScaleTypes,
-        array $scalesTranslations
-    ): ?Entity\OperationalRiskScaleType {
-        foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
-            if (isset($scalesTranslations[$operationalRiskScaleType->getLabelTranslationKey()])) {
-                $translation = $scalesTranslations[$operationalRiskScaleType->getLabelTranslationKey()];
-                if ($translation->getValue() === $scaleTypeData['translation']['value']) {
-                    return $operationalRiskScaleType;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private function matchScaleCommentDataWithScaleCommentsList(
-        Entity\OperationalRiskScale $operationalRiskScale,
-        array $scaleTypeCommentData,
-        iterable $operationalRiskScaleComments,
-        array $scalesTranslations
-    ): ?Entity\OperationalRiskScaleComment {
-        foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
-            if ($operationalRiskScale->getId() !== $operationalRiskScaleComment->getOperationalRiskScale()->getId()) {
-                continue;
-            }
-            if ($operationalRiskScaleComment->getScaleIndex() === $scaleTypeCommentData['scaleIndex']) {
-                $translation = $scalesTranslations[$operationalRiskScaleComment->getCommentTranslationKey()];
-                if ($translation->getValue() !== $scaleTypeCommentData['translation']['value']) {
-                    /* We need to update the translation value. */
-                    $translation->setValue($scaleTypeCommentData['translation']['value']);
-                    $this->translationTable->save($translation, false);
-                }
-
-                return $operationalRiskScaleComment;
-            }
-        }
-
-        return null;
-    }
-
-    private function getAnrLanguageCode(Anr $anr): string
-    {
-        return strtolower($this->configService->getLanguageCodes()[$anr->getLanguage()]);
-    }
-
-    private function createInstanceMetadata(Entity\Instance $instance, $data): void
-    {
-        $anr = $instance->getAnr();
-        $anrLanguageCode = $this->getAnrLanguageCode($anr);
-        //fetch translations
-        $instanceMetadataTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $anr,
-            [Translation::INSTANCE_METADATA],
-            $anrLanguageCode
-        );
-        if (isset($data['instancesMetadatas'])) {
-            if (!isset($this->cachedData['anrMetadataOnInstances'])) {
-                $this->cachedData['anrMetadataOnInstances'] =
-                    $this->getCurrentAnrMetadataOnInstances($anr);
-            }
-            // initialize the metadatas labels
-            $labels = array_column($this->cachedData['anrMetadataOnInstances'], 'label');
-            foreach ($data['instancesMetadatas'] as $instanceMetadata) {
-                if (!in_array($instanceMetadata['label'], $labels)) {
-                    $this->createAnrMetadataOnInstances($anr, [$instanceMetadata]);
-                    //update after insertion
-                    $labels = array_column($this->cachedData['anrMetadataOnInstances'], 'label');
-                }
-                // if the metadata exist we can create/update the instanceMetadata
-                if (in_array($instanceMetadata['label'], $labels)) {
-                    $indexMetadata = array_search($instanceMetadata['label'], $labels);
-                    $metadata = $this->cachedData['anrMetadataOnInstances'][$indexMetadata]['object'];
-                    $instanceMetadataObject = $this->instanceMetadataTable->findByInstanceAndMetadataField(
-                        $instance,
-                        $metadata
-                    );
-                    if ($instanceMetadataObject === null) {
-                        $commentTranslationKey = (string)Uuid::uuid4();
-                        $instanceMetadataObject = (new Entity\InstanceMetadata())
-                            ->setInstance($instance)
-                            ->setAnrInstanceMetadataField($metadata)
-                            ->setCommentTranslationKey($commentTranslationKey)
-                            ->setCreator($this->connectedUser->getEmail());
-                        $this->instanceMetadataTable->save($instanceMetadataObject, false);
-
-                        $translation = (new Translation())
-                            ->setAnr($anr)
-                            ->setType(Translation::INSTANCE_METADATA)
-                            ->setKey($commentTranslationKey)
-                            ->setValue($instanceMetadata['comment'])
-                            ->setLang($anrLanguageCode)
-                            ->setCreator($this->connectedUser->getEmail());
-                        $this->translationTable->save($translation, false);
-                        $instanceMetadataTranslations[$commentTranslationKey] = $translation;
-                        $this->updateInstanceMetadataToBrothers($instance, $instanceMetadataObject);
-                    } else {
-                        $commentTranslationKey = $instanceMetadataObject->getCommentTranslationKey();
-                        $commentTranslation = $instanceMetadataTranslations[$commentTranslationKey];
-                        $commentTranslation->setValue(
-                            $commentTranslation->getValue().' '.$instanceMetadata['comment']
-                        );
-                        $this->translationTable->save($commentTranslation, false);
-                    }
-                }
-            }
-        }
-        $this->instanceMetadataTable->flush();
-        $this->updateInstanceMetadataFromBrothers($instance);
-        $this->instanceMetadataTable->flush();
-    }
-
-    private function createAnrMetadataOnInstances(Entity\Anr $anr, array $data): void
-    {
-        $labels = array_column($this->cachedData['anrMetadataOnInstances'], 'label');
-        foreach ($data as $anrInstanceMetadataData) {
-            if (!\in_array($anrInstanceMetadataData['label'], $labels, true)) {
-                $metadata = (new Entity\AnrInstanceMetadataField())
-                    ->setAnr($anr)
-                    ->setLabel($anrInstanceMetadataData['label'])
-                    ->setCreator($this->connectedUser->getEmail())
-                    ->setIsDeletable(true);
-                $this->anrInstanceMetadataFieldTable->save($metadata, false);
-
-                // TODO: simplify the cache by $this->cachedData['anrMetadataOnInstances'][$anrInstanceMetadataData['id']]] = $metadata;
-                $this->cachedData['anrMetadataOnInstances'][] = [
-                    'id' => $metadata->getId(),
-                    'label' => $anrInstanceMetadataData['label'],
-                    'object' => $metadata,
-                ];
-            }
-        }
-        $this->anrInstanceMetadataFieldTable->flush();
-    }
-
-    private function getCurrentAnrMetadataOnInstances(Entity\Anr $anr): array
-    {
-        $this->cachedData['currentAnrMetadataOnInstances'] = [];
-        $anrMetadatasOnInstancesTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $anr,
-            [Translation::ANR_METADATAS_ON_INSTANCES],
-            $this->getAnrLanguageCode($anr)
-        );
-
-        $anrInstanceMetadataFields = $this->anrInstanceMetadataFieldTable->findByAnr($anr);
-        foreach ($anrInstanceMetadataFields as $metadataField) {
-            $translationLabel = $anrMetadatasOnInstancesTranslations[$metadataField->getLabelTranslationKey()] ?? null;
-            $this->cachedData['currentAnrMetadataOnInstances'][] = [
-                'id' => $metadataField->getId(),
-                'label' => $translationLabel !== null ? $translationLabel->getValue() : '',
-                'object' => $metadataField,
-                'translation' => $translationLabel,
-            ];
-        }
-        return $this->cachedData['currentAnrMetadataOnInstances'] ?? [];
-    }
-
-    /**
-     * Updates the instance impacts from brothers for global assets.
-     */
-    private function updateInstanceMetadataFromBrothers(Entity\Instance $instance): void
-    {
-        if ($instance->getObject()->isScopeGlobal()) {
-            $instanceBrothers = $this->getInstanceBrothers($instance);
-            if (!empty($instanceBrothers)) {
-                // Update instanceMetadata of $instance. We use only one brother as the instanceMetadatas are the same.
-                $instanceBrother = current($instanceBrothers);
-                $instancesMetadatasFromBrother = $instanceBrother->getInstanceMetadata();
-                foreach ($instancesMetadatasFromBrother as $instanceMetadataFromBrother) {
-                    $metadata = $instanceMetadataFromBrother->getAnrInstanceMetadataFields();
-                    $instanceMetadata = $this->instanceMetadataTable
-                        ->findByInstanceAndMetadataField($instance, $metadata);
-                    if ($instanceMetadata === null) {
-                        $instanceMetadata = (new Entity\InstanceMetadata())
-                            ->setInstance($instance)
-                            ->setAnrInstanceMetadataField($metadata)
-                            ->setCommentTranslationKey($instanceMetadataFromBrother->getCommentTranslationKey())
-                            ->setCreator($this->connectedUser->getEmail());
-                        $this->instanceMetadataTable->save($instanceMetadata, false);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Updates the instance impacts from instance to Brothers for global assets.
-     */
-    private function updateInstanceMetadataToBrothers(
-        Entity\Instance $instance,
-        Entity\InstanceMetadata $instanceMetadata
-    ): void {
-        if ($instance->getObject()->isScopeGlobal()) {
-            $instanceBrothers = $this->getInstanceBrothers($instance);
-            if (!empty($instanceBrothers)) {
-                foreach ($instanceBrothers as $instanceBrother) {
-                    $metadata = $instanceMetadata->getAnrInstanceMetadataFields();
-                    $instanceMetadataBrother = $this->instanceMetadataTable
-                        ->findByInstanceAndMetadataField($instanceBrother, $metadata);
-                    if ($instanceMetadataBrother === null) {
-                        $instanceMetadataBrother = (new Entity\InstanceMetadata())
-                            ->setInstance($instanceBrother)
-                            ->setAnrInstanceMetadataField($metadata)
-                            ->setCommentTranslationKey($instanceMetadata->getCommentTranslationKey())
-                            ->setCreator($this->connectedUser->getEmail());
-                        $this->instanceMetadataTable->save($instanceMetadataBrother, false);
-                    }
-                }
-            }
-        }
-    }
-
-    private function getCurrentSoaScaleCommentData(Entity\Anr $anr): array
-    {
-        if (empty($this->cachedData['currentSoaScaleCommentData'])) {
-            $scales = $this->soaScaleCommentTable->findByAnrOrderByIndex($anr);
-            foreach ($scales as $scale) {
-                if (!$scale->isHidden()) {
-                    $this->cachedData['currentSoaScaleCommentData'][$scale->getScaleIndex()] = [
-                        'scaleIndex' => $scale->getScaleIndex(),
-                        'isHidden' => $scale->isHidden(),
-                        'colour' => $scale->getColour(),
-                        'object' => $scale,
-                    ];
-                }
-            }
-        }
-
-        return $this->cachedData['currentSoaScaleCommentData'] ?? [];
-    }
-
-    private function mergeSoaScaleComment(array $newScales, Entity\Anr $anr)
-    {
-        $soaScaleCommentTranslations = $this->translationTable->findByAnrTypesAndLanguageIndexedByKey(
-            $anr,
-            [CoreEntity\TranslationSuperClass::SOA_SCALE_COMMENT],
-            $this->getAnrLanguageCode($anr)
-        );
-        $scales = $this->soaScaleCommentTable->findByAnrIndexedByScaleIndex($anr);
-        // we have scales to create
-        if (\count($newScales) > \count($scales)) {
-            $anrLanguageCode = $this->getAnrLanguageCode($anr);
-            for ($i = \count($scales); $i < \count($newScales); $i++) {
-                // todo: no translations anymore !
-//                $translationKey = (string)Uuid::uuid4();
-//                $translation = (new Translation())
-//                    ->setAnr($anr)
-//                    ->setType(TranslationSuperClass::SOA_SCALE_COMMENT)
-//                    ->setKey($translationKey)
-//                    ->setValue('')
-//                    ->setLang($anrLanguageCode)
-//                    ->setCreator($this->connectedUser->getEmail());
-//                $this->translationTable->save($translation, false);
-//                $soaScaleCommentTranslations[$translationKey]  = $translation;
-
-                $scales[$i] = (new Entity\SoaScaleComment())
-                    ->setScaleIndex($i)
-                    ->setAnr($anr)
-                    ->setCommentTranslationKey($translationKey)
-                    ->setCreator($this->connectedUser->getEmail());
-                $this->soaScaleCommentTable->save($scales[$i], false);
-            }
-        }
-        //we have scales to hide
-        if (\count($newScales) < \count($scales)) {
-            for ($i = \count($newScales); $i < \count($scales); $i++) {
-                $scales[$i]->setIsHidden(true);
-                $this->soaScaleCommentTable->save($scales[$i], false);
-            }
-        }
-        //we process the scales
-        foreach ($newScales as $id => $newScale) {
-            $scales[$newScale['scaleIndex']]
-                ->setColour($newScale['colour'])
-                ->setIsHidden($newScale['isHidden']);
-            $this->soaScaleCommentTable->save($scales[$newScale['scaleIndex']], false);
-
-            $translationKey = $scales[$newScale['scaleIndex']]->getCommentTranslationKey();
-            $translation = $soaScaleCommentTranslations[$translationKey];
-            $translation->setValue($newScale['comment']);
-
-            $this->translationTable->save($translation, false);
-
-            $this->importCacheHelper->addItemToArrayCache(
-                'newSoaScaleCommentIndexedByScale',
-                $scales[$newScale['scaleIndex']],
-                $newScale['scaleIndex']
-            );
-            $this->importCacheHelper
-                ->addItemToArrayCache('soaScaleCommentExternalIdMapToNewObject', $scales[$newScale['scaleIndex']], $id);
-        }
-        $this->soaScaleCommentTable->flush();
-    }
-
-    // TODO: replace to use measure father/masterMeasure or child/linkedMeasure existence in the cached data.
-    // TODO: use the ReferentialImportProcessor.
-    private function importMeasuresLinks(Entity\Anr $anr, array $data): void
-    {
-        foreach ($data['measuresMeasures'] ?? [] as $measureMeasureData) {
-            if (!$this->measureMeasureTable->existsWithAnrMasterMeasureUuidAndLinkedMeasureUuid(
-                $anr,
-                $measureMeasureData['father'] ?? $measureMeasureData['masterMeasure'],
-                $measureMeasureData['child'] ?? $measureMeasureData['linkedMeasure']
-            )) {
-                /** @var Entity\Measure $masterMeasure */
-                $masterMeasure = $this->importCacheHelper->getItemFromArrayCache(
-                    'measures',
-                    $measureMeasureData['father']
-                );
-                /** @var Entity\Measure $linkedMeasure */
-                $linkedMeasure = $this->importCacheHelper->getItemFromArrayCache(
-                    'measures',
-                    $measureMeasureData['child']
-                );
-                $masterMeasure->addLinkedMeasure($linkedMeasure);
-                $this->measureTable->save($masterMeasure, false);
-            }
-        }
+        return version_compare($this->monarcVersion, $version) < 0;
     }
 }
