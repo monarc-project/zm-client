@@ -143,10 +143,19 @@ class OperationalRiskScaleImportProcessor
     }
 
     /**
-     * Prepare and cache the new scales for the future use.
+     * Prepares and caches the new/importing operational risks scales.
      * The format can be different, depends on the version (before v2.11.0 and after).
      */
     public function getExternalOperationalRiskScalesData(Entity\Anr $anr, array $data): array
+    {
+        if (!empty($data)) {
+            $this->prepareExternalOperationalRiskScalesDataCache($anr, $data);
+        }
+
+        return $this->importCacheHelper->getItemFromArrayCache('external_operational_risk_scales_data');
+    }
+
+    public function prepareExternalOperationalRiskScalesDataCache(Entity\Anr $anr, array $data): void
     {
         if (!$this->importCacheHelper->isCacheKeySet('external_operational_risk_scales_data')) {
             /* Populate with informational risks scales if there is an import of a file exported prior v2.11.0. */
@@ -188,9 +197,8 @@ class OperationalRiskScaleImportProcessor
                         }
                     }
 
-                    $scalesDataResult[$scaleType]['operationalRiskScaleComments'] = $operationalRiskScaleData[
-                        'operationalRiskScaleComments'
-                    ];
+                    $scalesDataResult[$scaleType]['operationalRiskScaleComments']
+                        = $operationalRiskScaleData['operationalRiskScaleComments'];
                 }
             } else {
                 /* Convert comments and types from informational risks to operational (new format). */
@@ -216,9 +224,7 @@ class OperationalRiskScaleImportProcessor
                             'isHidden' => false,
                             'comment' => $scaleCommentLabel,
                         ];
-                    } elseif ($scaleType === ScaleSuperClass::TYPE_IMPACT
-                        && $scaleComment['val'] >= $scaleMin
-                    ) {
+                    } elseif ($scaleType === ScaleSuperClass::TYPE_IMPACT && $scaleComment['val'] >= $scaleMin) {
                         $scaleIndex = $scaleComment['val'] - $scaleMin;
                         $scaleTypePosition = $scaleComment['scaleImpactType']['position'];
                         if (isset($scalesDataResult[$scaleType]['operationalRiskScaleTypes'][$scaleTypePosition])) {
@@ -231,9 +237,8 @@ class OperationalRiskScaleImportProcessor
                                 'comment' => $scaleCommentLabel,
                             ];
 
-                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][
-                                $scaleIndex
-                            ] = $scaleComment['val'];
+                            $scalesDataResult[$scaleType]['commentsIndexToValueMap'][$scaleIndex]
+                                = $scaleComment['val'];
                         }
                     }
                 }
@@ -250,8 +255,6 @@ class OperationalRiskScaleImportProcessor
                 OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD
             );
         }
-
-        return $this->importCacheHelper->getItemFromArrayCache('external_operational_risk_scales_data');
     }
 
     public function updateOperationalRisksScalesAndRelatedInstances(Entity\Anr $anr, array $data): void
@@ -291,9 +294,11 @@ class OperationalRiskScaleImportProcessor
                 }
 
                 /* The map is used to match for the importing operational risks, scale values with scale types. */
-                $this->cachedData['operationalRiskScaleTypes']['currentScaleTypeLabelToExternalIds'][
+                $this->importCacheHelper->addItemToArrayCache(
+                    'operational_risk_scale_type_label_to_old_id',
+                    $scaleTypeData['id'],
                     $operationalRiskScaleType->getLabel()
-                ] = $scaleTypeData['id'];
+                );
 
                 $operationalRiskScaleType->setIsHidden($scaleTypeData['isHidden']);
                 $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
@@ -328,7 +333,6 @@ class OperationalRiskScaleImportProcessor
             $maxIndexForLikelihood = 0;
             /* This is currently applicable only for likelihood scales type */
             foreach ($externalScaleData['object']->getOperationalRiskScaleComments() as $scaleCommentData) {
-
                 $this->createOrUpdateOperationalRiskScaleComment(
                     $anr,
                     true,

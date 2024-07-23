@@ -17,13 +17,13 @@ class RolfTagImportProcessor
     public function __construct(
         private RolfTagTable $rolfTagTable,
         private ImportCacheHelper $importCacheHelper,
-        private AnrRolfTagService $anrRolfTagService
+        private AnrRolfTagService $anrRolfTagService,
+        private OperationalRiskImportProcessor $operationalRiskImportProcessor
     ) {
     }
 
     public function processRolfTagsData(Entity\Anr $anr, array $rolfTagsData): void
     {
-        $this->prepareRolfTagsCache($anr);
         foreach ($rolfTagsData as $rolfTagData) {
             $this->processRolfTagData($anr, $rolfTagData);
         }
@@ -31,7 +31,7 @@ class RolfTagImportProcessor
 
     public function processRolfTagData(Entity\Anr $anr, array $rolfTagData): Entity\RolfTag
     {
-        $rolfTag = $this->getRolfTagFromCache($rolfTagData['code']);
+        $rolfTag = $this->getRolfTagFromCache($anr, $rolfTagData['code']);
         if ($rolfTag !== null) {
             return $rolfTag;
         }
@@ -44,21 +44,25 @@ class RolfTagImportProcessor
         $rolfTag = $this->anrRolfTagService->create($anr, $rolfTagData, false);
         $this->importCacheHelper->addItemToArrayCache('rolf_tags_by_code', $rolfTag, $rolfTag->getCode());
 
+        /* For the objects and instance risks data the "rolfRisks" are inside the "rolfTag".
+        For the knowledge base data the rolfTags don't contain "rolfRisks." */
+        if (!empty($rolfTagData['rolfRisks'])) {
+            $this->operationalRiskImportProcessor->processOperationalRisksData($anr, $rolfTagData['rolfRisks']);
+        }
+
         return $rolfTag;
     }
 
-    public function getRolfTagFromCache(string $code): ?Entity\RolfTag
+    public function getRolfTagFromCache(Entity\Anr $anr, string $code): ?Entity\RolfTag
     {
-        return $this->importCacheHelper->getItemFromArrayCache('rolf_tags_by_code', $code);
-    }
-
-    public function prepareRolfTagsCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('rolf_tags_by_code')) {
+        if (!$this->importCacheHelper->isCacheKeySet('is_rolf_tags_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_rolf_tags_cache_loaded', true);
             /** @var Entity\RolfTag $rolfTag */
             foreach ($this->rolfTagTable->findByAnr($anr) as $rolfTag) {
                 $this->importCacheHelper->addItemToArrayCache('rolf_tags_by_code', $rolfTag, $rolfTag->getCode());
             }
         }
+
+        return $this->importCacheHelper->getItemFromArrayCache('rolf_tags_by_code', $code);
     }
 }

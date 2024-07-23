@@ -92,6 +92,24 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
         return $this->recommendationRisks;
     }
 
+    public function addRecommendationRisk(RecommendationRisk $recommendationRisk): self
+    {
+        if (!$this->recommendationRisks->contains($recommendationRisk)) {
+            $this->recommendationRisks->add($recommendationRisk);
+        }
+
+        return $this;
+    }
+
+    public function removeRecommendationRisk(RecommendationRisk $recommendationRisk): self
+    {
+        if ($this->recommendationRisks->contains($recommendationRisk)) {
+            $this->recommendationRisks->removeElement($recommendationRisk);
+        }
+
+        return $this;
+    }
+
     public function getInstanceRiskOwner(): ?InstanceRiskOwner
     {
         return $this->instanceRiskOwner;

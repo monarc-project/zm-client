@@ -208,10 +208,9 @@ class AnrRecordService extends AbstractService
             }
         }
         foreach ($oldRecipients as $rc) {
-            if (!in_array($rc, $data['recipients']) && $this->recordRecipientService->orphanRecipient(
-                    $rc,
-                    $data['anr']
-                )) {
+            if (!in_array($rc, $data['recipients'])
+                && $this->recordRecipientService->orphanRecipient($rc, $data['anr'])
+            ) {
                 $this->recordRecipientService->delete(['anr' => $data['anr'], 'id' => $rc]);
             }
         }

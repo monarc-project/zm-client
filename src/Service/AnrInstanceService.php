@@ -118,25 +118,23 @@ class AnrInstanceService
             ->setNames($object->getNames())
             ->setLabels($object->getLabels())
             ->setCreator($this->connectedUser->getEmail());
-        if (isset($instanceData['c']) || isset($instanceData['confidentiality'])) {
-            $instance->setConfidentiality((int)($instanceData['c'] ?? $instanceData['confidentiality']));
+        if (isset($instanceData['confidentiality'])) {
+            $instance->setConfidentiality($instanceData['confidentiality']);
         }
-        if (isset($instanceData['i']) || isset($instanceData['integrity'])) {
-            $instance->setIntegrity((int)($instanceData['i'] ?? $instanceData['integrity']));
+        if (isset($instanceData['integrity'])) {
+            $instance->setIntegrity(($instanceData['integrity']));
         }
-        if (isset($instanceData['d']) || isset($instanceData['availability'])) {
-            $instance->setAvailability((int)($instanceData['d'] ?? $instanceData['availability']));
+        if (isset($instanceData['availability'])) {
+            $instance->setAvailability($instanceData['availability']);
         }
-        if (isset($instanceData['ch']) || isset($instanceData['isConfidentialityInherited'])) {
-            $instance->setInheritedConfidentiality(
-                (int)($instanceData['ch'] ?? $instanceData['isConfidentialityInherited'])
-            );
+        if (isset($instanceData['isConfidentialityInherited'])) {
+            $instance->setInheritedConfidentiality($instanceData['isConfidentialityInherited']);
         }
-        if (isset($instanceData['ih']) || isset($instanceData['isIntegrityInherited'])) {
-            $instance->setInheritedIntegrity((int)($instanceData['ih'] ?? $instanceData['isIntegrityInherited']));
+        if (isset($instanceData['isIntegrityInherited'])) {
+            $instance->setInheritedIntegrity($instanceData['isIntegrityInherited']);
         }
-        if (isset($instanceData['dh']) || isset($instanceData['isAvailabilityInherited'])) {
-            $instance->setInheritedAvailability((int)($instanceData['dh'] ?? $instanceData['isAvailabilityInherited']));
+        if (isset($instanceData['isAvailabilityInherited'])) {
+            $instance->setInheritedAvailability($instanceData['isAvailabilityInherited']);
         }
 
         if (!empty($data['parent'])) {
@@ -425,9 +423,7 @@ class AnrInstanceService
 
     private function updateInstanceParent(Entity\Instance $instance, array $data): void
     {
-        if (!empty($data['parent'])
-            && (!$instance->hasParent() || $instance->getParent()->getId() !== $data['parent'])
-        ) {
+        if (!empty($data['parent']) && $instance->getParent()?->getId() !== $data['parent']) {
             /** @var Entity\Instance|null $parentInstance */
             $parentInstance = $this->instanceTable->findById((int)$data['parent'], false);
             if ($parentInstance !== null) {

@@ -71,12 +71,10 @@ class ApiAnrObjectsController extends AbstractRestfulControllerRequestHandler
      */
     public function create($data)
     {
-        // TODO: Validate the 3 import + 1 MOSP cases and 1 manual ...
-
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
         if (!empty($data['mosp'])) {
-            $monarcObject = $this->objectImportService->importFromArray($data, $anr);
+            $monarcObject = $this->objectImportService->importFromArray($anr, $data);
 
             return $monarcObject !== null
                 ? $this->getSuccessfulJsonResponse(['id' => $monarcObject->getUuid()])

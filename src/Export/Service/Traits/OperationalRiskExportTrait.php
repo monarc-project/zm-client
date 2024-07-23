@@ -7,21 +7,13 @@
 
 namespace Monarc\FrontOffice\Export\Service\Traits;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Monarc\FrontOffice\Entity;
 
 trait OperationalRiskExportTrait
 {
     use MeasureExportTrait;
 
-    #[ArrayShape([
-        'id' => "int",
-        'code' => "string",
-        'label' => "string",
-        'description' => "string",
-        'rolfTags' => "array",
-        'measures' => "array"
-    ])] private function prepareOperationalRiskData(
+    private function prepareOperationalRiskData(
         Entity\RolfRisk $rolfRisk,
         int $languageIndex,
         bool $withControls = true,

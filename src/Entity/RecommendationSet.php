@@ -137,11 +137,11 @@ class RecommendationSet
     public static function getCustomImportLabelByLanguageCode(string $languageCode): string
     {
         switch ($languageCode) {
-            case 'FR':
+            case 'fr':
                 return 'Recommandations importées';
-            case 'DE':
+            case 'de':
                 return 'Importierte empfehlungen';
-            case 'NL':
+            case 'nl':
                 return 'Geïmporteerde aanbevelingen';
             default:
                 return 'Imported recommendations';

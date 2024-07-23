@@ -87,6 +87,19 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $instanceRiskOwner;
 
     /**
+     * IMPORTANT! The field has to be always at the last place in the class due to the double fields' relation issue!
+     * Because when a nullable relation of AMV is set, the anr value is saved as NULL as well.
+     *
+     * @var Anr
+     *
+     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
+     * })
+     */
+    protected $anr;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="context", type="string", length=255, nullable=true)
@@ -124,6 +137,25 @@ class InstanceRisk extends InstanceRiskSuperClass
     public function getRecommendationRisks()
     {
         return $this->recommendationRisks;
+    }
+
+
+    public function addRecommendationRisk(RecommendationRisk $recommendationRisk): self
+    {
+        if (!$this->recommendationRisks->contains($recommendationRisk)) {
+            $this->recommendationRisks->add($recommendationRisk);
+        }
+
+        return $this;
+    }
+
+    public function removeRecommendationRisk(RecommendationRisk $recommendationRisk): self
+    {
+        if ($this->recommendationRisks->contains($recommendationRisk)) {
+            $this->recommendationRisks->removeElement($recommendationRisk);
+        }
+
+        return $this;
     }
 
     public function getInstanceRiskOwner(): ?InstanceRiskOwner

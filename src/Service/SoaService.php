@@ -8,9 +8,7 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\InputFormatter\FormattedInputParams;
-use Monarc\FrontOffice\Entity\Anr;
-use Monarc\FrontOffice\Entity\Soa;
-use Monarc\FrontOffice\Entity\SoaScaleComment;
+use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table\SoaScaleCommentTable;
 use Monarc\FrontOffice\Table\SoaTable;
 
@@ -27,7 +25,7 @@ class SoaService
     public function getList(FormattedInputParams $params): array
     {
         $result = [];
-        /** @var Soa $soa */
+        /** @var Entity\Soa $soa */
         foreach ($this->soaTable->findByParams($params) as $soa) {
             $measure = $soa->getMeasure();
             $linkedMeasuresUuids = [];
@@ -106,10 +104,53 @@ class SoaService
         return $this->soaTable->countByParams($params);
     }
 
-    public function patchSoa(Anr $anr, int $id, array $data, bool $saveInDb = true): Soa
+    public function createSoaObject(Entity\Anr $anr, Entity\Measure $measure, array $data = []): Entity\Soa
     {
-        /** @var Soa $soa */
+        $soa = (new Entity\Soa())->setAnr($anr)->setMeasure($measure);
+        $this->setSoaData($anr, $soa, $data);
+
+        $this->soaTable->save($soa, false);
+
+        return $soa;
+    }
+
+    public function patchSoa(Entity\Anr $anr, int $id, array $data, bool $saveInDb = true): Entity\Soa
+    {
+        /** @var Entity\Soa $soa */
         $soa = $this->soaTable->findByIdAndAnr($id, $anr);
+
+        return $this->patchSoaObject($anr, $soa, $data, $saveInDb);
+    }
+
+    public function patchSoaObject(Entity\Anr $anr, Entity\Soa $soa, array $data, bool $saveInDb = true): Entity\Soa
+    {
+        $this->setSoaData($anr, $soa, $data);
+
+        $this->soaTable->save($soa, $saveInDb);
+
+        return $soa;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function patchList(Entity\Anr $anr, array $data): array
+    {
+        $updatedIds = [];
+        foreach ($data as $row) {
+            $id = $row['id'];
+            if (\is_array($row['soaScaleComment'])) {
+                $row['soaScaleComment'] = $row['soaScaleComment']['id'];
+            }
+            $updatedIds[] = $this->patchSoa($anr, $id, $row, false)->getId();
+        }
+        $this->soaTable->flush();
+
+        return $updatedIds;
+    }
+
+    private function setSoaData(Entity\Anr $anr, Entity\Soa $soa, array $data): void
+    {
         if (isset($data['remarks'])) {
             $soa->setRemarks($data['remarks']);
         }
@@ -137,34 +178,12 @@ class SoaService
         if (isset($data['RRA'])) {
             $soa->setRra($data['RRA']);
         }
-        if (!empty($data['soaScaleComment']) && $soa->getSoaScaleComment() !== null
-            && $soa->getSoaScaleComment()->getId() !== (int)$data['soaScaleComment']
-        ) {
-            /** @var SoaScaleComment $soaScaleComment */
-            $soaScaleComment = $this->soaScaleCommentTable->findByIdAndAnr((int)$data['soaScaleComment'], $anr);
-            $soa->setSoaScaleComment($soaScaleComment);
+        if (!empty($data['soaScaleComment'])) {
+            /** @var Entity\SoaScaleComment $newSoaScaleComment */
+            $newSoaScaleComment = $data['soaScaleComment'] instanceof Entity\SoaScaleComment
+                ? $data['soaScaleComment']
+                : $this->soaScaleCommentTable->findByIdAndAnr((int)$data['soaScaleComment'], $anr);
+            $soa->setSoaScaleComment($newSoaScaleComment);
         }
-
-        $this->soaTable->save($soa, $saveInDb);
-
-        return $soa;
-    }
-
-    /**
-     * @return int[]
-     */
-    public function patchList(Anr $anr, array $data): array
-    {
-        $updatedIds = [];
-        foreach ($data as $row) {
-            $id = $row['id'];
-            if (\is_array($row['soaScaleComment'])) {
-                $row['soaScaleComment'] = $row['soaScaleComment']['id'];
-            }
-            $updatedIds[] = $this->patchSoa($anr, $id, $row, false)->getId();
-        }
-        $this->soaTable->flush();
-
-        return $updatedIds;
     }
 }

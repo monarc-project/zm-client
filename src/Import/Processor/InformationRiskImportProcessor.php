@@ -29,7 +29,6 @@ class InformationRiskImportProcessor
 
     public function processInformationRisksData(Entity\Anr $anr, array $informationRisksData): void
     {
-        $this->prepareInformationRisksUuids($anr);
         foreach ($informationRisksData as $informationRiskData) {
             $this->processInformationRiskData($anr, $informationRiskData);
         }
@@ -37,24 +36,15 @@ class InformationRiskImportProcessor
 
     public function processInformationRiskData(Entity\Anr $anr, array $informationRiskData): Entity\Amv
     {
-        $informationRisk = $this->getInformationRiskFromCache($informationRiskData['uuid']);
+        $informationRisk = $this->getInformationRiskFromCache($anr, $informationRiskData['uuid']);
         if ($informationRisk !== null) {
             return $informationRisk;
         }
 
-        $asset = $this->assetImportProcessor->getAssetFromCache(
-            $informationRiskData['asset']['uuid'] ?? $informationRiskData['asset']
-        );
-        $threat = $this->threatImportProcessor
-            ->getThreatFromCache($informationRiskData['threat']['uuid'] ?? $informationRiskData['threat']);
-        $vulnerability = $this->vulnerabilityImportProcessor->getVulnerabilityFromCache(
-            $informationRiskData['vulnerability']['uuid'] ?? $informationRiskData['vulnerability']
-        );
-        if ($asset === null || $threat === null || $vulnerability === null) {
-            throw new \LogicException(
-                'Assets, threats and vulnerabilities have to be imported before the information risks.'
-            );
-        }
+        $asset = $this->assetImportProcessor->processAssetData($anr, $informationRiskData['asset']);
+        $threat = $this->threatImportProcessor->processThreatData($anr, $informationRiskData['threat']);
+        $vulnerability = $this->vulnerabilityImportProcessor
+            ->processVulnerabilityData($anr, $informationRiskData['vulnerability']);
 
         /* Prepare the max positions per asset as the objects are not saved in the DB to be able to determine on fly. */
         if (!isset($this->maxPositionsPerAsset[$asset->getUuid()])) {
@@ -73,31 +63,37 @@ class InformationRiskImportProcessor
             'setOnlyExactPosition' => true,
             'position' => ++$this->maxPositionsPerAsset[$asset->getUuid()],
         ], false, false);
+
         foreach ($informationRiskData['measures'] as $measureData) {
-            $measureUuid = $measureData['uuid'] ?? $measureData;
-            $measure = $this->referentialImportProcessor->getMeasureFromCache($measureUuid);
+            $measure = $this->referentialImportProcessor->getMeasureFromCache($anr, $measureData['uuid']);
+            if ($measure === null && !empty($measureData['referential'])) {
+                $referential = $this->referentialImportProcessor->processReferentialData(
+                    $anr,
+                    $measureData['referential']
+                );
+                $measure = $this->referentialImportProcessor->processMeasureData($anr, $referential, $measureData);
+            }
             if ($measure !== null) {
                 $amv->addMeasure($measure);
             }
         }
+
         $this->amvTable->save($amv, false);
-        $this->importCacheHelper->addItemToArrayCache('amvs', $amv, $amv->getUuid());
+        $this->importCacheHelper->addItemToArrayCache('amvs_by_uuid', $amv, $amv->getUuid());
 
         return $amv;
     }
 
-    public function getInformationRiskFromCache(string $uuid): ?Entity\Amv
+    private function getInformationRiskFromCache(Entity\Anr $anr, string $uuid): ?Entity\Amv
     {
-        return $this->importCacheHelper->getItemFromArrayCache('amvs', $uuid);
-    }
-
-    public function prepareInformationRisksUuids(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('amvs')) {
+        if (!$this->importCacheHelper->isCacheKeySet('is_amvs_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_amvs_cache_loaded', true);
             /** @var Entity\Amv $amv */
             foreach ($this->amvTable->findByAnr($anr) as $amv) {
-                $this->importCacheHelper->addItemToArrayCache('amvs', $amv, $amv->getUuid());
+                $this->importCacheHelper->addItemToArrayCache('amvs_by_uuid', $amv, $amv->getUuid());
             }
         }
+
+        return $this->importCacheHelper->getItemFromArrayCache('amvs_by_uuid', $uuid);
     }
 }

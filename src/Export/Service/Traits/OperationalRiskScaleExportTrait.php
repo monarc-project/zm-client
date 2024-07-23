@@ -7,18 +7,11 @@
 
 namespace Monarc\FrontOffice\Export\Service\Traits;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Monarc\FrontOffice\Entity;
 
 trait OperationalRiskScaleExportTrait
 {
-    #[ArrayShape([
-        'min' => "int",
-        'max' => "int",
-        'type' => "int",
-        'operationalRiskScaleTypes' => "array",
-        'operationalRiskScaleComments' => "array"
-    ])] private function prepareOperationalRiskScaleData(Entity\OperationalRiskScale $operationalRiskScale): array
+    private function prepareOperationalRiskScaleData(Entity\OperationalRiskScale $operationalRiskScale): array
     {
         $scaleTypes = [];
         /** @var Entity\OperationalRiskScaleType $scaleType */

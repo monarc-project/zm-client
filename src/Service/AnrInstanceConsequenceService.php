@@ -81,8 +81,7 @@ class AnrInstanceConsequenceService
         }
 
         if ($siblingInstance !== null) {
-            $instancesConsequences = $this->instanceConsequenceTable->findByAnrAndInstance($anr, $siblingInstance);
-            foreach ($instancesConsequences as $instanceConsequence) {
+            foreach ($siblingInstance->getInstanceConsequences() as $instanceConsequence) {
                 /** @var Entity\ScaleImpactType $scalesImpactType */
                 $scalesImpactType = $instanceConsequence->getScaleImpactType();
                 $this->createInstanceConsequence(
@@ -127,13 +126,13 @@ class AnrInstanceConsequenceService
             ->setScaleImpactType($scaleImpactType)
             ->setIsHidden($isHidden)
             ->setCreator($this->connectedUser->getEmail());
-        if (isset($evaluationCriteria['confidentiality'])) {
+        if (!$isHidden && isset($evaluationCriteria['confidentiality'])) {
             $instanceConsequence->setConfidentiality($evaluationCriteria['confidentiality']);
         }
-        if (isset($evaluationCriteria['integrity'])) {
+        if (!$isHidden && isset($evaluationCriteria['integrity'])) {
             $instanceConsequence->setIntegrity($evaluationCriteria['integrity']);
         }
-        if (isset($evaluationCriteria['availability'])) {
+        if (!$isHidden && isset($evaluationCriteria['availability'])) {
             $instanceConsequence->setAvailability($evaluationCriteria['availability']);
         }
 

@@ -23,7 +23,6 @@ class AnrInstanceMetadataFieldImportProcessor
 
     public function processAnrInstanceMetadataFields(Entity\Anr $anr, array $anrInstanceMetadataFieldsData): void
     {
-        $this->prepareAnrInstanceMetadataFieldsCache($anr);
         foreach ($anrInstanceMetadataFieldsData as $anrInstanceMetadataFieldData) {
             $this->processAnrInstanceMetadataField($anr, $anrInstanceMetadataFieldData);
         }
@@ -33,7 +32,7 @@ class AnrInstanceMetadataFieldImportProcessor
         Entity\Anr $anr,
         array $metadataFieldData
     ): Entity\AnrInstanceMetadataField {
-        $anrInstanceMetadataField = $this->getAnrInstanceMetadataFieldsFromCache($metadataFieldData['label']);
+        $anrInstanceMetadataField = $this->getAnrInstanceMetadataFieldsFromCache($anr, $metadataFieldData['label']);
         if ($anrInstanceMetadataField !== null) {
             return $anrInstanceMetadataField;
         }
@@ -53,14 +52,12 @@ class AnrInstanceMetadataFieldImportProcessor
         return $metadataField;
     }
 
-    public function getAnrInstanceMetadataFieldsFromCache(string $label): Entity\AnrInstanceMetadataField
-    {
-        return $this->importCacheHelper->getItemFromArrayCache('anr_instance_metadata_fields', $label);
-    }
-
-    private function prepareAnrInstanceMetadataFieldsCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('anr_instance_metadata_fields')) {
+    private function getAnrInstanceMetadataFieldsFromCache(
+        Entity\Anr $anr,
+        string $label
+    ): ?Entity\AnrInstanceMetadataField {
+        if (!$this->importCacheHelper->isCacheKeySet('is_anr_instance_metadata_fields_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_anr_instance_metadata_fields_cache_loaded', true);
             /** @var Entity\AnrInstanceMetadataField $anrInstanceMetadataField */
             foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $anrInstanceMetadataField) {
                 $this->importCacheHelper->addItemToArrayCache(
@@ -70,5 +67,7 @@ class AnrInstanceMetadataFieldImportProcessor
                 );
             }
         }
+
+        return $this->importCacheHelper->getItemFromArrayCache('anr_instance_metadata_fields', $label);
     }
 }

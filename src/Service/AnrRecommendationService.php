@@ -83,8 +83,8 @@ class AnrRecommendationService
         if (isset($data['status'])) {
             $recommendation->setStatus($data['status']);
         }
-        if (isset($data['responsible'])) {
-            $recommendation->setResponsible($data['responsible']);
+        if (isset($data['responsible']) || isset($data['responsable'])) {
+            $recommendation->setResponsible($data['responsible'] ?? $data['responsable']);
         }
         if (isset($data['duedate'])) {
             if (!empty($data['duedate']) && !$data['duedate'] instanceof DateTime) {

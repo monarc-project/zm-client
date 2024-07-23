@@ -82,7 +82,7 @@ trait InstanceExportTrait
         foreach ($instance->getInstanceMetadata() as $instanceMetadata) {
             $result[] = [
                 'anrInstanceMetadataField' => [
-                    'label' => $instanceMetadata->getAnrInstanceMetadataField()->getLbel(),
+                    'label' => $instanceMetadata->getAnrInstanceMetadataField()->getLabel(),
                 ],
                 'comment' => $instanceMetadata->getComment(),
             ];

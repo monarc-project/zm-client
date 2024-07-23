@@ -7,20 +7,13 @@
 
 namespace Monarc\FrontOffice\Export\Service\Traits;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Monarc\FrontOffice\Entity;
 
 trait ScaleExportTrait
 {
     use ScaleImpactTypeExportTrait;
 
-    #[ArrayShape([
-        'min' => "int",
-        'max' => "int",
-        'type' => "int",
-        'scaleImpactTypes' => "array",
-        'scaleComments' => "array",
-    ])] private function prepareScaleData(Entity\Scale $scale, int $languageIndex): array
+    private function prepareScaleData(Entity\Scale $scale, int $languageIndex): array
     {
         /* Prepare comments that are not linked to scaleTypes and directly linked to the scale. */
         $scaleCommentsData = [];

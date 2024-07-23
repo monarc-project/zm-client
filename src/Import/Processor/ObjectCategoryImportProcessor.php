@@ -29,7 +29,6 @@ class ObjectCategoryImportProcessor
      */
     public function processObjectCategoriesData(Entity\Anr $anr, array $objectCategoriesData, string $importMode): void
     {
-        $this->prepareObjectCategoriesCache($anr);
         foreach ($objectCategoriesData as $categoryData) {
             $this->processObjectCategoryData($anr, $categoryData, $importMode);
         }
@@ -41,18 +40,13 @@ class ObjectCategoryImportProcessor
         string $importMode
     ): Entity\ObjectCategory {
         $parentCategory = null;
-        // TODO: support the old structure where parent is and int ID and the cats are on thr same level in the json.
-        if (isset($objectCategoryData['parent']) && $objectCategoryData['parent'] instanceof Entity\ObjectCategory) {
+        $labelKey = 'label' . $anr->getLanguage();
+        if (!empty($objectCategoryData['parent']) && $objectCategoryData['parent'] instanceof Entity\ObjectCategory) {
             $parentCategory = $objectCategoryData['parent'];
-        } elseif (isset($objectCategoryData['parent']['label'])) {
+        } elseif (isset($objectCategoryData['parent']['label']) || isset($objectCategoryData['parent'][$labelKey])) {
             $parentCategory = $this->processObjectCategoryData($anr, $objectCategoryData['parent'], $importMode);
             $objectCategoryData['parent'] = $parentCategory;
         }
-
-        // TODO: process the categories data when the request comes NOT from the library:
-        // - parent and it's parents' data are inside so this method have to be recursively called.
-        // - support he old structure format:
-        // -> the categories data are under the objects structure and they are inside of the "instances" !!!
 
         $parentCategoryLabel = '';
         if ($parentCategory !== null) {
@@ -61,15 +55,12 @@ class ObjectCategoryImportProcessor
 
         /* In the new data structure there is only "label" field set. */
         if (isset($objectCategoryData['label'])) {
-            $objectCategoryData['label' . $anr->getLanguage()] = $objectCategoryData['label'];
+            $objectCategoryData[$labelKey] = $objectCategoryData['label'];
         }
 
         /* If parents are different, a new category is created anyway. */
-        /** @var ?Entity\ObjectCategory $objectCategory */
-        $objectCategory = $this->importCacheHelper->getItemFromArrayCache(
-            'object_categories_by_label',
-            $objectCategoryData['label' . $anr->getLanguage()] . $parentCategoryLabel
-        );
+        $objectCategory = $this
+            ->getObjectCategoryFromCacheByLabel($anr, $objectCategoryData[$labelKey] . $parentCategoryLabel);
 
         if ($objectCategory === null) {
             /* Prepare the position and cache it. */
@@ -108,9 +99,12 @@ class ObjectCategoryImportProcessor
     }
 
     /* The categories cache's items keys are based on their labels + parent's labels if not root. */
-    private function prepareObjectCategoriesCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('object_categories_by_label')) {
+    private function getObjectCategoryFromCacheByLabel(
+        Entity\Anr $anr,
+        string $categoryAndItsParentLabels
+    ): ?Entity\ObjectCategory {
+        if (!$this->importCacheHelper->isCacheKeySet('is_object_categories_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_object_categories_cache_loaded', true);
             $languageIndex = $anr->getLanguage();
             /** @var Entity\ObjectCategory $objectCategory */
             foreach ($this->objectCategoryTable->findByAnr($anr) as $objectCategory) {
@@ -125,5 +119,8 @@ class ObjectCategoryImportProcessor
                 );
             }
         }
+
+        return $this->importCacheHelper
+            ->getItemFromArrayCache('object_categories_by_label', $categoryAndItsParentLabels);
     }
 }

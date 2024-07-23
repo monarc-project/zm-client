@@ -242,12 +242,8 @@ class AnrService
 
         /* Recreate rolf tags and risks. */
         $rolfTagsOldIdsToNewObjects = $this->duplicateRolfTags($sourceAnr, $newAnr);
-        $rolfRisksOldIdsToNewObjects = $this->duplicateRolfRisks(
-            $sourceAnr,
-            $newAnr,
-            $rolfTagsOldIdsToNewObjects,
-            $createdMeasuresUuidsToObjects
-        );
+        $rolfRisksOldIdsToNewObjects = $this
+            ->duplicateRolfRisks($sourceAnr, $newAnr, $rolfTagsOldIdsToNewObjects, $createdMeasuresUuidsToObjects);
 
         /* Recreate SOAs */
         $this->duplicateSoasAndSoaScaleComments($sourceAnr, $newAnr, $createdMeasuresUuidsToObjects, $isSourceCommon);
@@ -262,11 +258,8 @@ class AnrService
         );
 
         /* Recreate AnrInstanceMetadataFields */
-        $anrInstanceMetadataFieldOldIdsToNewObjects = $this->duplicateAnrMetadataInstanceFields(
-            $sourceAnr,
-            $newAnr,
-            $isSourceCommon,
-        );
+        $anrInstanceMetadataFieldOldIdsToNewObjects = $this
+            ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon,);
 
         /* Recreate Instances, InstanceRisks, InstanceConsequences and InstanceMetadata. */
         $this->duplicateInstancesTreeRisksSequencesRecommendationsMetadataAndScales(

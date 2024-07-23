@@ -16,6 +16,7 @@ use Monarc\FrontOffice\Entity\Snapshot;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\SnapshotTable;
 use Monarc\FrontOffice\Table\UserAnrTable;
+use Ramsey\Uuid\Uuid;
 
 class SnapshotService
 {
@@ -112,7 +113,7 @@ class SnapshotService
             ->setLabel($anrReference->getLabel());
         $referenceAnrUuid = $anrReference->getUuid();
 
-        $this->anrTable->remove($anrReference, false);
+        $this->anrTable->remove($anrReference);
 
         $this->anrTable->save($newAnr->setUuid($referenceAnrUuid));
 

@@ -13,6 +13,7 @@ trait ObjectExportTrait
 {
     use AssetExportTrait;
     use InformationRiskExportTrait;
+    use OperationalRiskExportTrait;
 
     private function prepareObjectData(
         Entity\MonarcObject $object,

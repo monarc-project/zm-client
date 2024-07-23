@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Export\Service\Traits;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Monarc\FrontOffice\Entity;
 
 trait InformationRiskExportTrait
@@ -17,14 +16,7 @@ trait InformationRiskExportTrait
     use ThreatExportTrait;
     use VulnerabilityExportTrait;
 
-    #[ArrayShape([
-        'uuid' => "string",
-        'asset' => "array",
-        'threat' => "array",
-        'vulnerability' => "array",
-        'measures' => "array",
-        'status' => "int"
-    ])] private function prepareInformationRiskData(
+    private function prepareInformationRiskData(
         Entity\Amv $amv,
         bool $withEval = false,
         bool $withControls = true,

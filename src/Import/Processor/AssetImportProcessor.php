@@ -17,13 +17,13 @@ class AssetImportProcessor
     public function __construct(
         private AssetTable $assetTable,
         private ImportCacheHelper $importCacheHelper,
-        private AnrAssetService $anrAssetService
+        private AnrAssetService $anrAssetService,
+        private InformationRiskImportProcessor $informationRiskImportProcessor
     ) {
     }
 
     public function processAssetsData(Entity\Anr $anr, array $assetsData): void
     {
-        $this->prepareAssetsAndCodesCache($anr);
         foreach ($assetsData as $assetData) {
             $this->processAssetData($anr, $assetData);
         }
@@ -31,7 +31,7 @@ class AssetImportProcessor
 
     public function processAssetData(Entity\Anr $anr, array $assetData): Entity\Asset
     {
-        $asset = $this->getAssetFromCache($assetData['uuid']);
+        $asset = $this->getAssetFromCache($anr, $assetData['uuid']);
         if ($asset !== null) {
             return $asset;
         }
@@ -50,24 +50,27 @@ class AssetImportProcessor
         }
 
         $asset = $this->anrAssetService->create($anr, $assetData, false);
-        $this->importCacheHelper->addItemToArrayCache('assets', $asset, $asset->getUuid());
+        $this->importCacheHelper->addItemToArrayCache('assets_by_uuid', $asset, $asset->getUuid());
+
+        /* In case if the process is called from the object then process information risks data. */
+        if (!empty($assetsData['informationRisks'])) {
+            $this->informationRiskImportProcessor->processInformationRisksData($anr, $assetsData['informationRisks']);
+        }
 
         return $asset;
     }
 
-    public function getAssetFromCache(string $uuid): ?Entity\Asset
+    public function getAssetFromCache(Entity\Anr $anr, string $uuid): ?Entity\Asset
     {
-        return $this->importCacheHelper->getItemFromArrayCache('assets', $uuid);
-    }
-
-    public function prepareAssetsAndCodesCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('assets')) {
+        if (!$this->importCacheHelper->isCacheKeySet('is_assets_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_assets_cache_loaded', true);
             /** @var Entity\Asset $asset */
             foreach ($this->assetTable->findByAnr($anr) as $asset) {
-                $this->importCacheHelper->addItemToArrayCache('assets', $asset, $asset->getUuid());
+                $this->importCacheHelper->addItemToArrayCache('assets_by_uuid', $asset, $asset->getUuid());
                 $this->importCacheHelper->addItemToArrayCache('assets_codes', $asset->getCode(), $asset->getCode());
             }
         }
+
+        return $this->importCacheHelper->getItemFromArrayCache('assets_by_uuid', $uuid);
     }
 }

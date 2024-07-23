@@ -23,8 +23,7 @@ class SoaTable extends AbstractTable
      */
     public function findByAnrAndSoaCategory(Entity\Anr $anr, Entity\SoaCategory $soaCategory, array $order = []): array
     {
-        $queryBuilder = $this->getRepository()
-            ->createQueryBuilder('s')
+        $queryBuilder = $this->getRepository()->createQueryBuilder('s')
             ->innerJoin('s.measure', 'm')
             ->where('s.anr = :anr')
             ->andWhere('m.category = :category')
@@ -40,8 +39,7 @@ class SoaTable extends AbstractTable
 
     public function findByAnrAndMeasureUuid(Entity\Anr $anr, string $measureUuid): ?Entity\Soa
     {
-        return $this->getRepository()
-            ->createQueryBuilder('s')
+        return $this->getRepository()->createQueryBuilder('s')
             ->innerJoin('s.measure', 'm')
             ->where('s.anr = :anr')
             ->andWhere('m.uuid = :measure_uuid')
@@ -51,5 +49,18 @@ class SoaTable extends AbstractTable
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * @return Entity\Soa[]
+     */
+    public function findByAnrWithNotEmptySoaScaleComments(Entity\Anr $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('s')
+            ->where('s.anr = :anr')
+            ->andWhere('s.soaScaleComment IS NOT NULL')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
     }
 }

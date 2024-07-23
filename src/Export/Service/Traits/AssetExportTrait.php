@@ -7,19 +7,11 @@
 
 namespace Monarc\FrontOffice\Export\Service\Traits;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Monarc\FrontOffice\Entity;
 
 trait AssetExportTrait
 {
-    #[ArrayShape([
-        'uuid' => "string",
-        'code' => "string",
-        'label' => "string",
-        'description' => "string",
-        'type' => "int",
-        'status' => "int"
-    ])] private function prepareAssetData(
+    private function prepareAssetData(
         Entity\Asset $asset,
         int $languageIndex,
         bool $includeCompleteData = true

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Import\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Import\Service\ObjectImportService;
 
 class ApiAnrObjectsImportController extends AbstractRestfulControllerRequestHandler
@@ -22,13 +23,11 @@ class ApiAnrObjectsImportController extends AbstractRestfulControllerRequestHand
 
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $filter = $this->params()->fromQuery("filter");
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $filter = $this->params()->fromQuery('filter', '');
 
-        $objects = $this->anrObjectService->getCommonObjects($anrId, $filter);
+        $objects = $this->objectImportService->getObjectsDataFromCommonDatabase($anr, $filter);
 
         return $this->getPreparedJsonResponse([
             'count' => \count($objects),
@@ -38,33 +37,23 @@ class ApiAnrObjectsImportController extends AbstractRestfulControllerRequestHand
 
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $object = $this->anrObjectService->getCommonEntity($anrId, (int)$id);
-
-        $this->formatDependencies($object, ['asset', 'category', 'rolfTag']);
-        unset($object['anrs']);
-
-        return $this->getPreparedJsonResponse($object);
+        return $this->getPreparedJsonResponse($this->objectImportService->getObjectDataFromCommonDatabase($anr, $id));
     }
 
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $data['file'] = $this->params()->fromFiles('file');
+        if (empty($data['file'])) {
+            throw new Exception('File is missing.', 412);
         }
 
-        $files = $this->params()->fromFiles('file');
-        if (empty($files)) {
-            throw new Exception('File missing', 412);
-        }
-        $data['file'] = $files;
-
-        [$ids, $errors] = $this->objectImportService->importFromFile($anrId, $data);
+        [$ids, $errors] = $this->objectImportService->importFromFile($anr, $data);
 
         return $this->getSuccessfulJsonResponse([
             'id' => $ids,
@@ -74,19 +63,11 @@ class ApiAnrObjectsImportController extends AbstractRestfulControllerRequestHand
 
     public function patch($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $monarcObject = $this->objectImportService->importFromCommon((int)$id, $data);
-        if ($monarcObject === null) {
-            throw new Exception('An error occurred during the import of the object.', 412);
-        }
+        $object = $this->objectImportService->importFromCommonDatabase($anr, $id, $data);
 
-        return $this->getSuccessfulJsonResponse([
-            'id' => $monarcObject->getUuid(),
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $object->getUuid()]);
     }
 }

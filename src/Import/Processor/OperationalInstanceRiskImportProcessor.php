@@ -7,28 +7,38 @@
 
 namespace Monarc\FrontOffice\Import\Processor;
 
-use Monarc\Core\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Entity\OperationalRiskScaleSuperClass;
 use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrRecommendationRiskService;
 use Monarc\FrontOffice\Service\InstanceRiskOwnerService;
 use Monarc\FrontOffice\Table;
+use PhpOffice\PhpWord\Exception\Exception;
 
 class OperationalInstanceRiskImportProcessor
 {
     private UserSuperClass $connectedUser;
 
+    private static array $oldInstanceRiskFieldsMapToScaleTypesFields = [
+        ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetedR' => 'TargetedValue'],
+        ['brutO' => 'BrutValue', 'netO' => 'NetValue', 'targetedO' => 'TargetedValue'],
+        ['brutL' => 'BrutValue', 'netL' => 'NetValue', 'targetedL' => 'TargetedValue'],
+        ['brutF' => 'BrutValue', 'netF' => 'NetValue', 'targetedF' => 'TargetedValue'],
+        ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetedP' => 'TargetedValue'],
+    ];
+
     public function __construct(
         private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
-        private ImportCacheHelper $importCacheHelper,
+        private OperationalRiskImportProcessor $operationalRiskImportProcessor,
         private OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor,
         private RecommendationImportProcessor $recommendationImportProcessor,
+        private ImportCacheHelper $importCacheHelper,
         private InstanceRiskOwnerService $instanceRiskOwnerService,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
         private AnrRecommendationRiskService $anrRecommendationRiskService,
@@ -37,286 +47,273 @@ class OperationalInstanceRiskImportProcessor
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function processOperationalInstanceRisks(
-        array $data,
+    public function processOperationalInstanceRisksData(
         Entity\Anr $anr,
         Entity\Instance $instance,
-        Entity\MonarcObject $monarcObject,
-        bool $includeEval,
+        array $operationalInstanceRisksData,
+        bool $withEval,
         bool $isImportTypeAnr
     ): void {
-        if (empty($data['risksop'])) {
-            return;
-        }
-
-        $operationalRiskScalesData = $this->operationalRiskScaleImportProcessor
+        $currentOperationalRiskScalesData = $this->operationalRiskScaleImportProcessor
             ->getCurrentOperationalRiskScalesData($anr);
         $externalOperationalRiskScalesData = [];
         $areScalesLevelsOfLikelihoodDifferent = false;
         $areImpactScaleTypesValuesDifferent = false;
         $matchedScaleTypesMap = [];
-        if ($includeEval && !$isImportTypeAnr) {
+        /* For the instances import with evaluations the values have to be converted to the current analysis scales. */
+        if ($withEval && !$isImportTypeAnr) {
             $externalOperationalRiskScalesData = $this->operationalRiskScaleImportProcessor
-                ->getExternalOperationalRiskScalesData($anr, $data);
+                ->getExternalOperationalRiskScalesData($anr, []);
+            if ($externalOperationalRiskScalesData === null) {
+                throw new Exception('The scales have to be prepared before the process of the operational risks.', 412);
+            }
             $areScalesLevelsOfLikelihoodDifferent = $this->areLikelihoodScalesLevelsOfTypeDifferent(
-                $operationalRiskScalesData,
+                $currentOperationalRiskScalesData,
                 $externalOperationalRiskScalesData
             );
             $areImpactScaleTypesValuesDifferent = $this->areImpactScaleTypeValuesDifferent(
-                $operationalRiskScalesData,
+                $currentOperationalRiskScalesData,
                 $externalOperationalRiskScalesData
             );
             $matchedScaleTypesMap = $this->matchAndGetOperationalRiskScaleTypesMap(
-                $operationalRiskScalesData,
+                $currentOperationalRiskScalesData,
                 $externalOperationalRiskScalesData
             );
         }
-        $oldInstanceRiskFieldsMapToScaleTypesFields = [
-            ['brutR' => 'BrutValue', 'netR' => 'NetValue', 'targetedR' => 'TargetedValue'],
-            ['brutO' => 'BrutValue', 'netO' => 'NetValue', 'targetedO' => 'TargetedValue'],
-            ['brutL' => 'BrutValue', 'netL' => 'NetValue', 'targetedL' => 'TargetedValue'],
-            ['brutF' => 'BrutValue', 'netF' => 'NetValue', 'targetedF' => 'TargetedValue'],
-            ['brutP' => 'BrutValue', 'netP' => 'NetValue', 'targetedP' => 'TargetedValue'],
-        ];
-
-        // TODO: if it will be called from the new structure logic adopt to check if "withRecommendations".
-        if (!empty($data['recs'])) {
-            $this->recommendationImportProcessor->prepareRecommendationsCache($anr);
-        }
-
-        foreach ($data['risksop'] as $operationalRiskData) {
-            $operationalInstanceRisk = (new Entity\InstanceRiskOp())
-                ->setAnr($anr)
-                ->setInstance($instance)
-                ->setObject($monarcObject)
-                ->setRiskCacheLabels([
-                    'riskCacheLabel1' => $operationalRiskData['riskCacheLabel1'],
-                    'riskCacheLabel2' => $operationalRiskData['riskCacheLabel2'],
-                    'riskCacheLabel3' => $operationalRiskData['riskCacheLabel3'],
-                    'riskCacheLabel4' => $operationalRiskData['riskCacheLabel4'],
-                ])
-                ->setRiskCacheDescriptions([
-                    'riskCacheDescription1' => $operationalRiskData['riskCacheDescription1'],
-                    'riskCacheDescription2' => $operationalRiskData['riskCacheDescription2'],
-                    'riskCacheDescription3' => $operationalRiskData['riskCacheDescription3'],
-                    'riskCacheDescription4' => $operationalRiskData['riskCacheDescription4'],
-                ])
-                ->setBrutProb((int)$operationalRiskData['brutProb'])
-                ->setNetProb((int)$operationalRiskData['netProb'])
-                ->setTargetedProb((int)$operationalRiskData['targetedProb'])
-                ->setCacheBrutRisk((int)$operationalRiskData['cacheBrutRisk'])
-                ->setCacheNetRisk((int)$operationalRiskData['cacheNetRisk'])
-                ->setCacheTargetedRisk((int)$operationalRiskData['cacheTargetedRisk'])
-                ->setKindOfMeasure((int)$operationalRiskData['kindOfMeasure'])
-                ->setComment($operationalRiskData['comment'] ?? '')
-                ->setMitigation($operationalRiskData['mitigation'] ?? '')
-                ->setIsSpecific((bool)$operationalRiskData['specific'])
-                ->setContext($operationalRiskData['context'] ?? '')
-                ->setCreator($this->connectedUser->getEmail());
-
-            if (!empty($operationalRiskData['riskOwner'])) {
-                $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
-                    $anr,
-                    $anr,
-                    $operationalRiskData['riskOwner']
-                );
-                $operationalInstanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+        foreach ($operationalInstanceRisksData as $operationalInstanceRiskData) {
+            $operationalRisk = $this->operationalRiskImportProcessor
+                ->processOperationalRiskData($anr, $operationalInstanceRiskData['operationalRisk']);
+            /** @var Entity\MonarcObject $object */
+            $object = $instance->getObject();
+            $operationalInstanceRisk = $this->anrInstanceRiskOpService
+                ->createInstanceRiskOpObject($instance, $object, $operationalRisk);
+            if ($withEval) {
+                $operationalInstanceRisk
+                    ->setBrutProb((int)$operationalInstanceRiskData['brutProb'])
+                    ->setNetProb((int)$operationalInstanceRiskData['netProb'])
+                    ->setTargetedProb((int)$operationalInstanceRiskData['targetedProb'])
+                    ->setCacheBrutRisk((int)$operationalInstanceRiskData['cacheBrutRisk'])
+                    ->setCacheNetRisk((int)$operationalInstanceRiskData['cacheNetRisk'])
+                    ->setCacheTargetedRisk((int)$operationalInstanceRiskData['cacheTargetedRisk'])
+                    ->setKindOfMeasure((int)$operationalInstanceRiskData['kindOfMeasure'])
+                    ->setComment($operationalInstanceRiskData['comment'] ?? '')
+                    ->setMitigation($operationalInstanceRiskData['mitigation'] ?? '')
+                    ->setContext($operationalInstanceRiskData['context'] ?? '');
+                if (!empty($instanceRiskData['riskOwner'])) {
+                    $this->instanceRiskOwnerService
+                        ->processRiskOwnerNameAndAssign($instanceRiskData['riskOwner'], $operationalInstanceRisk);
+                }
             }
-
             if ($areScalesLevelsOfLikelihoodDifferent) {
                 $this->operationalRiskScaleImportProcessor->adjustOperationalRisksProbabilityScales(
                     $operationalInstanceRisk,
                     $externalOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD],
-                    $operationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD]
+                    $currentOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_LIKELIHOOD]
                 );
             }
 
-            if (!empty($operationalRiskData['rolfRisk']) && $monarcObject->getRolfTag() !== null) {
-                /** @var Entity\RolfRisk|null $rolfRisk */
-                $rolfRisk = $this->importCacheHelper->getItemFromArrayCache(
-                    'rolf_risks_by_old_ids',
-                    (int)$operationalRiskData['rolfRisk']
+            [$currentOperationalRiskScalesData, $areImpactScaleTypesValuesDifferent] = $this
+                ->processOperationalRiskScalesTypes(
+                    $anr,
+                    $instance,
+                    $operationalInstanceRisk,
+                    $currentOperationalRiskScalesData,
+                    $externalOperationalRiskScalesData,
+                    $matchedScaleTypesMap,
+                    $operationalInstanceRiskData,
+                    $areImpactScaleTypesValuesDifferent,
+                    $withEval,
+                    $isImportTypeAnr
                 );
-                if ($rolfRisk !== null) {
-                    $operationalInstanceRisk->setRolfRisk($rolfRisk)->setRiskCacheCode($rolfRisk->getCode());
-                }
+
+            if ($withEval) {
+                /* Recalculate the cached risk values. */
+                $this->anrInstanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk);
             }
 
-            $impactScaleData = $operationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT];
-            foreach ($impactScaleData['operationalRiskScaleTypes'] as $index => $scaleType) {
-                /** @var Entity\OperationalRiskScaleType $operationalRiskScaleType */
-                $operationalRiskScaleType = $scaleType['object'];
-                $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
-                    ->setAnr($anr)
-                    ->setOperationalRiskScaleType($operationalRiskScaleType)
-                    ->setOperationalInstanceRisk($operationalInstanceRisk)
-                    ->setCreator($this->connectedUser->getEmail());
+            /* Process the linked recommendations. */
+            foreach ($operationalInstanceRiskData['recommendations'] ?? [] as $recommendationData) {
+                $recommendationSet = $this->recommendationImportProcessor
+                    ->processRecommendationSetData($anr, $recommendationData['recommendationSet']);
+                $recommendation = $this->recommendationImportProcessor
+                    ->processRecommendationData($recommendationSet, $recommendationData);
+                $this->anrRecommendationRiskService->createRecommendationRisk(
+                    $recommendation,
+                    $operationalInstanceRisk,
+                    $recommendationData['commentAfter'] ?? '',
+                    false
+                );
+            }
 
-                if ($includeEval) {
-                    /* The format is since v2.11.0 */
-                    if (isset($operationalRiskData['scalesValues'])) {
-                        $externalScaleTypeId = null;
-                        if ($isImportTypeAnr) {
-                            /* For anr import, match current scale type translation key with external ids. */
-                            $externalScaleTypeId = $this->getExternalScaleTypeIdByCurrentScaleLabel(
-                                $operationalRiskScaleType->getLabel()
-                            );
-                        } elseif (isset($matchedScaleTypesMap['currentScaleTypeLabelToExternalIds'][
+            $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
+        }
+    }
+
+    private function processOperationalRiskScalesTypes(
+        Entity\Anr $anr,
+        Entity\Instance $instance,
+        Entity\InstanceRiskOp $operationalInstanceRisk,
+        array $currentOperationalRiskScalesData,
+        array $externalOperationalRiskScalesData,
+        array $matchedScaleTypesMap,
+        array $operationalInstanceRiskData,
+        bool $areImpactScaleTypesValuesDifferent,
+        bool $withEval,
+        bool $isImportTypeAnr
+    ): array {
+        $currentImpactScaleData = $currentOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT];
+        foreach ($currentImpactScaleData['operationalRiskScaleTypes'] as $index => $scaleType) {
+            /** @var Entity\OperationalRiskScaleType $operationalRiskScaleType */
+            $operationalRiskScaleType = $scaleType['object'];
+            $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
+                ->setAnr($anr)
+                ->setOperationalRiskScaleType($operationalRiskScaleType)
+                ->setOperationalInstanceRisk($operationalInstanceRisk)
+                ->setCreator($this->connectedUser->getEmail());
+
+            if ($withEval) {
+                /* The format is since v2.11.0 */
+                if (isset($operationalInstanceRiskData['operationalInstanceRiskScales'])) {
+                    $externalScaleTypeId = null;
+                    if ($isImportTypeAnr) {
+                        /* For anr import, match current scale type label with external ids. */
+                        $externalScaleTypeId = $this->importCacheHelper->getItemFromArrayCache(
+                            'operational_risk_scale_type_label_to_old_id',
                             $operationalRiskScaleType->getLabel()
-                        ])) {
-                            /* For instance import, match current scale type label with external ids. */
-                            $externalScaleTypeId = $matchedScaleTypesMap['currentScaleTypeLabelToExternalIds'][
-                                $operationalRiskScaleType->getLabel()
-                            ];
-                        }
-                        if ($externalScaleTypeId !== null
-                            && isset($operationalRiskData['scalesValues'][$externalScaleTypeId])
-                        ) {
-                            $scalesValueData = $operationalRiskData['scalesValues'][$externalScaleTypeId];
-                            $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
-                            $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
-                            $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetedValue']);
-                            if ($areImpactScaleTypesValuesDifferent) {
-                                /* We convert from the importing new scales to the current anr scales. */
-                                $this->operationalRiskScaleImportProcessor->adjustOperationalInstanceRisksScales(
-                                    $operationalInstanceRiskScale,
-                                    $externalOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT],
-                                    $impactScaleData
-                                );
-                            }
-                        }
-                        /* The format before v2.11.0. Update only first 5 scales (ROLFP if not changed by user). */
-                    } elseif ($index < 5) {
-                        foreach ($oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
-                            $operationalInstanceRiskScale->{'set' . $typeField}($operationalRiskData[$oldFiled]);
-                        }
+                        );
+                    } elseif (isset($matchedScaleTypesMap['currentScaleTypeLabelToExternalIds'][
+                        $operationalRiskScaleType->getLabel()
+                    ])) {
+                        /* For instance import, match current scale type label with external ids. */
+                        $externalScaleTypeId = $matchedScaleTypesMap['currentScaleTypeLabelToExternalIds'][
+                            $operationalRiskScaleType->getLabel()
+                        ];
+                    }
+                    if ($externalScaleTypeId !== null
+                        && isset($operationalInstanceRiskData['operationalInstanceRiskScales'][$externalScaleTypeId])
+                    ) {
+                        $scalesValueData = $operationalInstanceRiskData['operationalInstanceRiskScales'][
+                            $externalScaleTypeId
+                        ];
+                        $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
+                        $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
+                        $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetedValue']);
                         if ($areImpactScaleTypesValuesDifferent) {
                             /* We convert from the importing new scales to the current anr scales. */
                             $this->operationalRiskScaleImportProcessor->adjustOperationalInstanceRisksScales(
                                 $operationalInstanceRiskScale,
                                 $externalOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT],
-                                $impactScaleData
+                                $currentImpactScaleData
                             );
                         }
                     }
+                    /* The format before v2.11.0. Update only first 5 scales (ROLFP if not changed by user). */
+                } elseif ($index < 5) {
+                    foreach (static::$oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
+                        $operationalInstanceRiskScale->{'set' . $typeField}($operationalInstanceRiskData[$oldFiled]);
+                    }
+                    if ($areImpactScaleTypesValuesDifferent) {
+                        /* We convert from the importing new scales to the current anr scales. */
+                        $this->operationalRiskScaleImportProcessor->adjustOperationalInstanceRisksScales(
+                            $operationalInstanceRiskScale,
+                            $externalOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT],
+                            $currentImpactScaleData
+                        );
+                    }
                 }
-
-                $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
             }
 
-            if (!empty($matchedScaleTypesMap['notMatchedScaleTypes']) && !$isImportTypeAnr) {
-                /* In case of instance import, there is a need to create external scale types in case if
-                    the linked values are set for at least one operational instance risk.
-                    The new created type has to be linked with all the existed risks. */
-                foreach ($matchedScaleTypesMap['notMatchedScaleTypes'] as $extScaleTypeId => $extScaleTypeData) {
-                    if (isset($operationalRiskData['scalesValues'][$extScaleTypeId])) {
-                        $scalesValueData = $operationalRiskData['scalesValues'][$extScaleTypeId];
-                        if ($scalesValueData['netValue'] !== -1
-                            || $scalesValueData['brutValue'] !== -1
-                            || $scalesValueData['targetedValue'] !== -1
-                        ) {
-                            $operationalRiskScaleType = (new Entity\OperationalRiskScaleType())
-                                ->setAnr($anr)
-                                ->setOperationalRiskScale($impactScaleData['object'])
-                                ->setLabel($extScaleTypeData['label'] ?? $extScaleTypeData['translation']['value'])
-                                ->setCreator($this->connectedUser->getEmail());
-                            $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
+            $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
+        }
 
-                            foreach ($extScaleTypeData['operationalRiskScaleComments'] as $scaleCommentData) {
-                                $this->operationalRiskScaleImportProcessor->createOrUpdateOperationalRiskScaleComment(
-                                    $anr,
-                                    false,
-                                    $impactScaleData['object'],
-                                    $scaleCommentData,
-                                    [],
-                                    $operationalRiskScaleType
+        /* Process not matched operational risk scales types. */
+        if (!empty($matchedScaleTypesMap['notMatchedScaleTypes']) && !$isImportTypeAnr) {
+            /* In case of instance import, there is a need to create external scale types in case if
+                the linked values are set for at least one operational instance risk.
+                The new created type has to be linked with all the existed risks. */
+            foreach ($matchedScaleTypesMap['notMatchedScaleTypes'] as $extScaleTypeId => $extScaleTypeData) {
+                if (isset($operationalRiskData['operationalInstanceRiskScales'][$extScaleTypeId])) {
+                    $scalesValueData = $operationalRiskData['operationalInstanceRiskScales'][$extScaleTypeId];
+                    if ($scalesValueData['netValue'] !== -1
+                        || $scalesValueData['brutValue'] !== -1
+                        || $scalesValueData['targetedValue'] !== -1
+                    ) {
+                        $operationalRiskScaleType = (new Entity\OperationalRiskScaleType())
+                            ->setAnr($anr)
+                            ->setOperationalRiskScale($currentImpactScaleData['object'])
+                            ->setLabel($extScaleTypeData['label'] ?? $extScaleTypeData['translation']['value'])
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->operationalRiskScaleTypeTable->save($operationalRiskScaleType, false);
+
+                        foreach ($extScaleTypeData['operationalRiskScaleComments'] as $scaleCommentData) {
+                            $this->operationalRiskScaleImportProcessor->createOrUpdateOperationalRiskScaleComment(
+                                $anr,
+                                false,
+                                $currentImpactScaleData['object'],
+                                $scaleCommentData,
+                                [],
+                                $operationalRiskScaleType
+                            );
+                        }
+
+                        $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
+                            ->setAnr($anr)
+                            ->setOperationalInstanceRisk($operationalInstanceRisk)
+                            ->setOperationalRiskScaleType($operationalRiskScaleType)
+                            ->setBrutValue($scalesValueData['brutValue'])
+                            ->setNetValue($scalesValueData['netValue'])
+                            ->setTargetedValue($scalesValueData['targetedValue'])
+                            ->setCreator($this->connectedUser->getEmail());
+                        $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
+
+                        $this->operationalRiskScaleImportProcessor->adjustOperationalInstanceRisksScales(
+                            $operationalInstanceRiskScale,
+                            $externalOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT],
+                            $currentImpactScaleData
+                        );
+
+                        /* To swap the scale risk between the two keys in the map as it is already matched. */
+                        unset($matchedScaleTypesMap['notMatchedScaleTypes'][$extScaleTypeId]);
+                        $matchedScaleTypesMap['currentScaleTypeLabelToExternalIds'][$operationalRiskScaleType
+                            ->getLabel()] = $extScaleTypeId;
+
+                        /* Due to the new scale type and related comments the cached the data has to be updated. */
+                        [$scaleTypesData, $commentsIndexToValueMap] = $this->operationalRiskScaleImportProcessor
+                            ->prepareScaleTypesDataAndCommentsIndexToValueMap($currentImpactScaleData['object']);
+                        $this->importCacheHelper->addItemToArrayCache('current_operational_risk_scales_data', [
+                            'min' => $currentImpactScaleData['min'],
+                            'max' => $currentImpactScaleData['max'],
+                            'object' => $currentImpactScaleData['object'],
+                            'commentsIndexToValueMap' => $commentsIndexToValueMap,
+                            'operationalRiskScaleTypes' => $scaleTypesData,
+                        ], OperationalRiskScaleSuperClass::TYPE_IMPACT);
+                        $currentOperationalRiskScalesData = $this->operationalRiskScaleImportProcessor
+                            ->getCurrentOperationalRiskScalesData($anr);
+                        $areImpactScaleTypesValuesDifferent = true;
+
+                        /* Link the newly created scale type to all the existed operational risks. */
+                        $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrAndInstance(
+                            $anr,
+                            $instance
+                        );
+                        foreach ($operationalInstanceRisks as $operationalInstanceRiskToUpdate) {
+                            if ($operationalInstanceRiskToUpdate->getId() !== $operationalInstanceRisk->getId()) {
+                                $this->operationalInstanceRiskScaleTable->save(
+                                    (new Entity\OperationalInstanceRiskScale())
+                                        ->setAnr($anr)
+                                        ->setOperationalInstanceRisk($operationalInstanceRiskToUpdate)
+                                        ->setOperationalRiskScaleType($operationalRiskScaleType)
+                                        ->setCreator($this->connectedUser->getEmail()),
+                                    false
                                 );
                             }
-
-                            $operationalInstanceRiskScale = (new Entity\OperationalInstanceRiskScale())
-                                ->setAnr($anr)
-                                ->setOperationalInstanceRisk($operationalInstanceRisk)
-                                ->setOperationalRiskScaleType($operationalRiskScaleType)
-                                ->setBrutValue($scalesValueData['brutValue'])
-                                ->setNetValue($scalesValueData['netValue'])
-                                ->setTargetedValue($scalesValueData['targetedValue'])
-                                ->setCreator($this->connectedUser->getEmail());
-                            $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
-
-                            $this->operationalRiskScaleImportProcessor->adjustOperationalInstanceRisksScales(
-                                $operationalInstanceRiskScale,
-                                $externalOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT],
-                                $impactScaleData
-                            );
-
-                            /* To swap the scale risk between the two keys in the map as it is already matched. */
-                            unset($matchedScaleTypesMap['notMatchedScaleTypes'][$extScaleTypeId]);
-                            $matchedScaleTypesMap['currentScaleTypeLabelToExternalIds'][
-                                $operationalRiskScaleType->getLabel()
-                            ] = $extScaleTypeId;
-
-                            /* Due to the new scale type and related comments the cached the data has to be updated. */
-                            [$scaleTypesData, $commentsIndexToValueMap] = $this->operationalRiskScaleImportProcessor
-                                ->prepareScaleTypesDataAndCommentsIndexToValueMap($impactScaleData['object']);
-                            $this->importCacheHelper->addItemToArrayCache('current_operational_risk_scales_data', [
-                                'min' => $impactScaleData['min'],
-                                'max' => $impactScaleData['max'],
-                                'object' => $impactScaleData['object'],
-                                'commentsIndexToValueMap' => $commentsIndexToValueMap,
-                                'operationalRiskScaleTypes' => $scaleTypesData,
-                            ], OperationalRiskScaleSuperClass::TYPE_IMPACT);
-                            $operationalRiskScalesData = $this->operationalRiskScaleImportProcessor
-                                ->getCurrentOperationalRiskScalesData($anr);
-                            $areImpactScaleTypesValuesDifferent = true;
-
-                            /* Link the newly created scale type to all the existed operational risks. */
-                            $operationalInstanceRisks = $this->instanceRiskOpTable->findByAnrAndInstance(
-                                $anr,
-                                $instance
-                            );
-                            foreach ($operationalInstanceRisks as $operationalInstanceRiskToUpdate) {
-                                if ($operationalInstanceRiskToUpdate->getId() !== $operationalInstanceRisk->getId()) {
-                                    $this->operationalInstanceRiskScaleTable->save(
-                                        (new Entity\OperationalInstanceRiskScale())
-                                            ->setAnr($anr)
-                                            ->setOperationalInstanceRisk($operationalInstanceRiskToUpdate)
-                                            ->setOperationalRiskScaleType($operationalRiskScaleType)
-                                            ->setCreator($this->connectedUser->getEmail()),
-                                        false
-                                    );
-                                }
-                            }
                         }
                     }
-                }
-            }
-
-            if ($includeEval) {
-                /* recalculate the cached risk values */
-                $this->anrInstanceRiskOpService->updateRiskCacheValues($operationalInstanceRisk);
-            }
-
-            $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
-
-            /* Process recommendations related to the operational risk. */
-            if ($includeEval && !empty($data['recosop'][$operationalRiskData['id']])) {
-                foreach ($data['recosop'][$operationalRiskData['id']] as $recommendationData) {
-                    $recommendation = $this->recommendationImportProcessor->processRecommendationDataLinkedToRisk(
-                        $anr,
-                        $recommendationData,
-                        $data['recSets'],
-                        $operationalRiskData['kindOfMeasure'] !== InstanceRiskOpSuperClass::KIND_NOT_TREATED
-                    );
-
-                    $this->anrRecommendationRiskService->createRecommendationRisk(
-                        $recommendation,
-                        $operationalInstanceRisk,
-                        $recommendationData['commentAfter'] ?? '',
-                        false
-                    );
                 }
             }
         }
+
+        return [$currentOperationalRiskScalesData, $areImpactScaleTypesValuesDifferent];
     }
 
     private function matchAndGetOperationalRiskScaleTypesMap(
@@ -352,11 +349,6 @@ class OperationalInstanceRiskImportProcessor
         }
 
         return $matchedScaleTypesMap;
-    }
-
-    private function getExternalScaleTypeIdByCurrentScaleLabel(string $label): ?int
-    {
-        return $this->cachedData['operationalRiskScaleTypes']['currentScaleTypeLabelToExternalIds'][$label] ?? null;
     }
 
     private function areLikelihoodScalesLevelsOfTypeDifferent(

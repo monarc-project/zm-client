@@ -10,16 +10,14 @@ namespace Monarc\FrontOffice\Import\Service;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Entity\Amv;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\Asset;
 use Monarc\FrontOffice\Entity\InstanceRisk;
-use Monarc\FrontOffice\Entity\Measure;
-use Monarc\FrontOffice\Entity\Referential;
 use Monarc\FrontOffice\Import\Processor;
 use Monarc\FrontOffice\Table;
 
+// TODO: the service has to be removed. It's not used anywhere.
 class AssetImportService
 {
     private UserSuperClass $connectedUser;
@@ -28,26 +26,17 @@ class AssetImportService
         private Processor\AssetImportProcessor $assetImportProcessor,
         private Processor\ThreatImportProcessor $threatImportProcessor,
         private Processor\VulnerabilityImportProcessor $vulnerabilityImportProcessor,
-        private Processor\ReferentialImportProcessor $referentialImportProcessor,
-        private Table\MeasureTable $measureTable,
         private Table\AmvTable $amvTable,
         private Table\InstanceRiskTable $instanceRiskTable,
-        private Table\ReferentialTable $referentialTable,
-        private ImportCacheHelper $importCacheHelper,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function importFromArray($monarcVersion, array $data, Anr $anr): ?Asset
+    public function importFromArray(array $data, Anr $anr): ?Asset
     {
         if (!isset($data['type']) || $data['type'] !== 'asset') {
             return null;
-        }
-
-        if (version_compare($monarcVersion, '2.8.2') < 0) {
-            throw new Exception('Import of files exported from MONARC v2.8.1 or lower are not supported.'
-                . ' Please contact us for more details.');
         }
 
         $asset = $this->assetImportProcessor->processAssetData($anr, $data['asset']);
@@ -62,7 +51,7 @@ class AssetImportService
         return $asset;
     }
 
-    // TODO: use services to create the objects.
+    // TODO: use processors to create the objects.
     private function processInformationRisksData(array $amvsData, Anr $anr, Asset $asset): void
     {
         foreach ($amvsData as $amvUuid => $amvData) {
@@ -75,10 +64,9 @@ class AssetImportService
                     ->setAsset($asset)
                     ->setCreator($this->connectedUser->getEmail());
 
-                $threat = $this->threatImportProcessor->getThreatFromCache($amvData['threat']);
-                $vulnerability = $this->vulnerabilityImportProcessor->getVulnerabilityFromCache(
-                    $amvData['vulnerability']
-                );
+                $threat = $this->threatImportProcessor->getThreatFromCache($anr, $amvData['threat']);
+                $vulnerability = $this->vulnerabilityImportProcessor
+                    ->getVulnerabilityFromCache($anr, $amvData['vulnerability']);
                 if ($threat === null || $vulnerability === null) {
                     throw new Exception(sprintf(
                         'The import file is malformed. AMV\'s "%s" threats or vulnerability was not processed before.',
@@ -104,9 +92,9 @@ class AssetImportService
                 }
             }
 
-            if (!empty($amvData['measures'])) {
-                $this->processMeasuresAndReferentialData($amvData['measures'], $anr, $amv);
-            }
+//            if (!empty($amvData['measures'])) {
+//                $this->processMeasuresAndReferentialData($amvData['measures'], $anr, $amv);
+//            }
         }
 
         // TODO: perhaps we can do this before the previous foreach or find another solution.
@@ -139,72 +127,6 @@ class AssetImportService
 
         if (!empty($amvsToDelete)) {
             $this->amvTable->removeList($amvsToDelete);
-        }
-    }
-
-    // TODO: use the ReferentialImportProcessor.
-    private function processMeasuresAndReferentialData(array $measuresData, Anr $anr, Amv $amv): void
-    {
-        $languageIndex = $anr->getLanguage();
-        $labelKey = 'label' . $languageIndex;
-        $this->referentialImportProcessor->prepareSoaCategoriesCache($anr);
-        foreach ($measuresData as $measureUuid) {
-            $measure = $this->importCacheHelper->getItemFromArrayCache('measures', $measureUuid)
-                ?: $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
-            if ($measure === null) {
-                /* Backward compatibility. Prior v2.10.3 we did not set referential data when exported. */
-                $referentialUuid = $data['measures'][$measureUuid]['referential']['uuid']
-                    ?? $data['measures'][$measureUuid]['referential'];
-
-                $referential = $this->importCacheHelper->getItemFromArrayCache('referentials', $referentialUuid)
-                    ?: $this->referentialTable->findByUuidAndAnr($referentialUuid, $anr);
-
-                /* For backward compatibility. */
-                if ($referential === null
-                    && isset($data['measures'][$measureUuid]['referential'][$labelKey])
-                ) {
-                    $referential = (new Referential())
-                        ->setAnr($anr)
-                        ->setUuid($referentialUuid)
-                        ->setLabels([$labelKey => $data['measures'][$measureUuid]['referential'][$labelKey]])
-                        ->setCreator($this->connectedUser->getEmail());
-
-                    $this->referentialTable->save($referential, false);
-
-                    $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referentialUuid);
-                }
-
-                /* For backward compatibility. */
-                if ($referential === null) {
-                    continue;
-                }
-
-                $soaCategory = null;
-                if (!empty($data['measures'][$measureUuid]['category'][$labelKey])) {
-                    $soaCategory = $this->referentialImportProcessor->processSoaCategoryData(
-                        $anr,
-                        $referential,
-                        [
-                            'category' => ['label' => $data['measures'][$measureUuid]['category'][$labelKey]],
-                        ]
-                    );
-                }
-
-                $measure = (new Measure())
-                    ->setAnr($anr)
-                    ->setUuid($measureUuid)
-                    ->setCategory($soaCategory)
-                    ->setReferential($referential)
-                    ->setCode($data['measures'][$measureUuid]['code'])
-                    ->setLabels($data['measures'][$measureUuid])
-                    ->setCreator($this->connectedUser->getEmail());
-
-                $this->importCacheHelper->addItemToArrayCache('measures', $measure, $measure->getUuid());
-            }
-
-            $measure->addAmv($amv);
-
-            $this->measureTable->save($measure, false);
         }
     }
 }

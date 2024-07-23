@@ -53,7 +53,7 @@ class AnrScaleImpactTypeService
             ->setScale(
                 $data['scale'] instanceof Entity\Scale ? $data['scale'] : $this->scaleTable->findById($data['scale'])
             )
-            ->setLabels($data['labels'])
+            ->setLabels($data['labels'] ?? $data)
             ->setType($data['type'] ?? $this->scaleImpactTypeTable->findMaxTypeValueByAnr($anr) + 1)
             ->setCreator($this->connectedUser->getEmail());
         if (isset($data['isHidden'])) {

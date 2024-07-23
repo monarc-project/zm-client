@@ -186,14 +186,33 @@ class AnrInstanceRiskOpService
     /** The objects are created and persisted but not saved in the DB. */
     public function createInstanceRiskOpWithScales(
         Entity\Instance $instance,
-        Entity\MonarcObject $monarcObject,
+        Entity\MonarcObject $object,
+        Entity\RolfRisk $rolfRisk
+    ): Entity\InstanceRiskOp {
+        $instanceRiskOp = $this->createInstanceRiskOpObject($instance, $object, $rolfRisk);
+
+        /** @var Entity\OperationalRiskScaleType[] $operationalRiskScaleTypes */
+        $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(
+            $instance->getAnr(),
+            CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT
+        );
+        foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
+            $this->createOperationalInstanceRiskScaleObject($instanceRiskOp, $operationalRiskScaleType);
+        }
+
+        return $instanceRiskOp;
+    }
+
+    public function createInstanceRiskOpObject(
+        Entity\Instance $instance,
+        Entity\MonarcObject $object,
         Entity\RolfRisk $rolfRisk
     ): Entity\InstanceRiskOp {
         /** @var Entity\InstanceRiskOp $instanceRiskOp */
         $instanceRiskOp = (new Entity\InstanceRiskOp())
             ->setAnr($instance->getAnr())
             ->setInstance($instance)
-            ->setObject($monarcObject)
+            ->setObject($object)
             ->setRolfRisk($rolfRisk)
             ->setRiskCacheCode($rolfRisk->getCode())
             ->setRiskCacheLabels([
@@ -211,15 +230,6 @@ class AnrInstanceRiskOpService
             ->setCreator($this->connectedUser->getEmail());
 
         $this->instanceRiskOpTable->save($instanceRiskOp, false);
-
-        /** @var Entity\OperationalRiskScaleType[] $operationalRiskScaleTypes */
-        $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(
-            $instance->getAnr(),
-            CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT
-        );
-        foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
-            $this->createOperationalInstanceRiskScaleObject($instanceRiskOp, $operationalRiskScaleType);
-        }
 
         return $instanceRiskOp;
     }

@@ -27,17 +27,14 @@ class ThreatImportProcessor
 
     public function processThreatsData(Entity\Anr $anr, array $threatsData, array $themesData = []): void
     {
-        $this->prepareThreatsAndCodesCache($anr);
-        $this->prepareThemesCache($anr);
-
         foreach ($threatsData as $threatData) {
             $this->processThreatData($anr, $threatData, $themesData);
         }
     }
 
-    public function processThreatData(Entity\Anr $anr, array $threatData, array $themesData): Entity\Threat
+    public function processThreatData(Entity\Anr $anr, array $threatData, array $themesData = []): Entity\Threat
     {
-        $threat = $this->getThreatFromCache($threatData['uuid']);
+        $threat = $this->getThreatFromCache($anr, $threatData['uuid']);
         if ($threat !== null) {
             return $threat;
         }
@@ -67,36 +64,23 @@ class ThreatImportProcessor
         }
 
         $threat = $this->anrThreatService->create($anr, $threatData, false);
-        $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
+        $this->importCacheHelper->addItemToArrayCache('threats_by_uuid', $threat, $threat->getUuid());
 
         return $threat;
     }
 
-    public function getThreatFromCache(string $uuid): ?Entity\Threat
+    public function getThreatFromCache(Entity\Anr $anr, string $uuid): ?Entity\Threat
     {
-        return $this->importCacheHelper->getItemFromArrayCache('threats', $uuid);
-    }
-
-    public function prepareThreatsAndCodesCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('threats')) {
+        if (!$this->importCacheHelper->isCacheKeySet('is_threats_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_threats_cache_loaded', true);
             /** @var Entity\Threat $threat */
             foreach ($this->threatTable->findByAnr($anr) as $threat) {
-                $this->importCacheHelper->addItemToArrayCache('threats', $threat, $threat->getUuid());
+                $this->importCacheHelper->addItemToArrayCache('threats_by_uuid', $threat, $threat->getUuid());
                 $this->importCacheHelper->addItemToArrayCache('threats_codes', $threat->getCode(), $threat->getCode());
             }
         }
-    }
 
-    public function prepareThemesCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('themes_by_labels')) {
-            /** @var Entity\Theme $theme */
-            foreach ($this->themeTable->findByAnr($anr) as $theme) {
-                $this->importCacheHelper
-                    ->addItemToArrayCache('themes_by_labels', $theme, $theme->getLabel($anr->getLanguage()));
-            }
-        }
+        return $this->importCacheHelper->getItemFromArrayCache('threats_by_uuid', $uuid);
     }
 
     private function processThemeData(Entity\Anr $anr, array $themeData): Entity\Theme
@@ -105,12 +89,26 @@ class ThreatImportProcessor
             $themeData['label' . $anr->getLanguage()] = $themeData['label'];
         }
         $themeLabel = $themeData['label' . $anr->getLanguage()];
-        $theme = $this->importCacheHelper->getItemFromArrayCache('themes_by_labels', $themeLabel);
+        $theme = $this->getThemeFromCache($anr, $themeLabel);
         if ($theme === null) {
             $theme = $this->anrThemeService->create($anr, $themeData, false);
             $this->importCacheHelper->addItemToArrayCache('themes_by_labels', $theme, $themeLabel);
         }
 
         return $theme;
+    }
+
+    private function getThemeFromCache(Entity\Anr $anr, string $label): ?Entity\Theme
+    {
+        if (!$this->importCacheHelper->isCacheKeySet('is_themes_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_themes_cache_loaded', true);
+            /** @var Entity\Theme $theme */
+            foreach ($this->themeTable->findByAnr($anr) as $theme) {
+                $this->importCacheHelper
+                    ->addItemToArrayCache('themes_by_labels', $theme, $theme->getLabel($anr->getLanguage()));
+            }
+        }
+
+        return $this->importCacheHelper->getItemFromArrayCache('themes_by_labels', $label);
     }
 }

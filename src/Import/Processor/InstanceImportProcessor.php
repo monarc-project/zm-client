@@ -7,16 +7,19 @@
 
 namespace Monarc\FrontOffice\Import\Processor;
 
+use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Import\Service\ObjectImportService;
+use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
 use Monarc\FrontOffice\Service\AnrInstanceService;
 use Monarc\FrontOffice\Table;
 
 class InstanceImportProcessor
 {
+    use EvaluationConverterTrait;
+
     private UserSuperClass $connectedUser;
 
     public function __construct(
@@ -29,13 +32,15 @@ class InstanceImportProcessor
         private ObjectCategoryImportProcessor $objectCategoryImportProcessor,
         private InstanceConsequenceImportProcessor $instanceConsequenceImportProcessor,
         private AnrInstanceMetadataFieldImportProcessor $anrInstanceMetadataFieldImportProcessor,
+        private OperationalInstanceRiskImportProcessor $operationalInstanceRiskImportProcessor,
+        private InstanceRiskImportProcessor $instanceRiskImportProcessor,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
     /**
-     * @return int[] IDs of the created root instances.
+     * @return Entity\Instance[] List of the created root instances.
      */
     public function processInstancesData(
         Entity\Anr $anr,
@@ -44,24 +49,21 @@ class InstanceImportProcessor
         string $importMode,
         bool $withEval
     ): array {
-        $this->prepareGlobalInstancesCache($anr);
         $maxPositionInsideOfParentInstance = 0;
-        if ($parentInstance !== null) {
+        /* The query to get the max position is executed only if the parent instances is set and stored in the DB. */
+        if ($parentInstance !== null && $parentInstance->getId() !== null) {
             $maxPositionInsideOfParentInstance = $this->instanceTable->findMaxPosition(
                 $parentInstance->getImplicitPositionRelationsValues()
             );
         }
-        $instancesIds = [];
+        $instances = [];
         foreach ($instancesData as $instanceData) {
-            if ($maxPositionInsideOfParentInstance > 0) {
-                $instanceData['position'] += ++$maxPositionInsideOfParentInstance;
-            }
-            $instancesIds[] = $this
-                ->processInstanceData($anr, $instanceData, $parentInstance, $importMode, $withEval)
-                ->getId();
+            $instanceData['position'] += $maxPositionInsideOfParentInstance++;
+            $instanceData['setOnlyExactPosition'] = true;
+            $instances[] = $this->processInstanceData($anr, $instanceData, $parentInstance, $importMode, $withEval);
         }
 
-        return $instancesIds;
+        return $instances;
     }
 
     /** The method is called as a starting point of the root instances import and should not be called recursively. */
@@ -70,9 +72,9 @@ class InstanceImportProcessor
         array $instanceData,
         ?Entity\Instance $parentInstance,
         string $importMode,
-        bool $withEval
+        bool $withEval,
+        bool $isImportTypeAnr = true
     ): Entity\Instance {
-        // TODO support the old format -> category is on the same level as object and object is inside of 'object'.
         $objectCategory = null;
         if (isset($instanceData['object']['category'])) {
             $objectCategory = $this->objectCategoryImportProcessor
@@ -81,50 +83,48 @@ class InstanceImportProcessor
         $instanceData['object'] = $this->objectImportProcessor
             ->processObjectData($anr, $objectCategory, $instanceData['object'], $importMode);
         $instanceData['parent'] = $parentInstance;
-        $instanceData['setOnlyExactPosition'] = true;
 
+        /* For the instances import the values have to be converted to local scales. */
+        if ($withEval && !$isImportTypeAnr) {
+            $this->convertInstanceEvaluations($instanceData);
+        }
         $instance = $this->instanceService->createInstance($anr, $instanceData, $parentInstance === null, false);
-        /* In case if the import is into an instance the scales impacts could be adjusted ih not set directly. */
+        $this->prepareAndProcessInstanceConsequencesData(
+            $instance,
+            $instanceData['instancesConsequences'],
+            $withEval,
+            $isImportTypeAnr
+        );
+        $instance->updateImpactBasedOnConsequences();
+        /* In case if there is a parent instance, the scales impacts could be adjusted, if they are not set directly. */
         if ($parentInstance !== null) {
             $instance->refreshInheritedImpact();
         }
 
-        $this->instanceConsequenceImportProcessor->processInstanceConsequencesData(
+        $siblingInstances = [];
+        if (!$withEval && $instance->getObject()->isScopeGlobal()) {
+            $siblingInstances = $this->getGlobalObjectInstancesFromCache($anr, $instance->getObject()->getUuid());
+        }
+        $this->instanceRiskImportProcessor->processInstanceRisksData(
             $instance,
-            $instanceData['instancesConsequences'],
-            $withEval
+            $siblingInstances,
+            $instanceData['instanceRisks'],
+            $withEval,
+            $isImportTypeAnr
         );
 
-        // TODO: process instanceRisks here or after the brothers update ???
-
-        // TODO: 1. set impacts based on the importing data,
-        // 2. If parent is set initially and it has impacts set (inherited or not) they have to be applied
-        //      to the root instances and as the result to their parents. Only when !$withEval or impacts are not set.
-        // 3. If !$withEval than try to get global object's impact to set for the importing instances, conseq, trheats, vulns.
-        //    But only from the DB, not created during the import (fetch from the DB or if possible check if object is now or not).
-        //    In general: if object, linked to the instance is not new (from DB), is global and has instances with evaluations we apply to the newly created.
-
-        /* If import is without eval and the object is global, then sibling object's 1st instance eval is applied. */
-        if ($importMode === ObjectImportService::IMPORT_MODE_MERGE && $instance->getObject()->isScopeGlobal()) {
-            // TODO: consider a cache of the DB objects and created ones separately.
-            if ($withEval) {
-                // siblings only in the DB.
-                // TODO: updateInstanceEvaluationsFromSiblings
-            } else {
-                // siblings only newly created.
-                // TODO: applyInstanceEvaluationsToSiblings
-            }
-        }
-
-        // TODO: ...
-        $this->processInstanceMetadata(
+        $this->operationalInstanceRiskImportProcessor->processOperationalInstanceRisksData(
             $anr,
             $instance,
-            $instanceData['instancesMetadatas'] ?? $instanceData['instanceMetadata']
+            $instanceData['operationalInstanceRisks'],
+            $withEval,
+            $isImportTypeAnr
         );
 
+        $this->processInstanceMetadata($anr, $instance, $instanceData['instanceMetadata']);
+
         if (!empty($instanceData['children'])) {
-            $this->processChildrenInstancesData($anr, $instanceData['children']);
+            $this->processInstancesData($anr, $instanceData['children'], $instance, $importMode, $withEval);
         }
 
         return $instance;
@@ -135,9 +135,9 @@ class InstanceImportProcessor
         Entity\Instance $instance,
         array $instanceMetadataData
     ): void {
-        foreach ($instanceMetadataData as $metadataData) {
+        foreach ($instanceMetadataData as $metadataDatum) {
             $metadataField = $this->anrInstanceMetadataFieldImportProcessor->processAnrInstanceMetadataField($anr, [
-                'label' => $instanceMetadataData['anrInstanceMetadataField']['label'] ?? $instanceMetadataData['label'],
+                'label' => $metadataDatum['anrInstanceMetadataField']['label'] ?? $metadataDatum['label'],
                 'isDeletable' => true,
             ]);
 
@@ -146,29 +146,57 @@ class InstanceImportProcessor
                 $instanceMetadata = (new Entity\InstanceMetadata())
                     ->setInstance($instance)
                     ->setAnrInstanceMetadataField($metadataField)
-                    ->setComment($metadataData['comment'])
+                    ->setComment($metadataDatum['comment'])
                     ->setCreator($this->connectedUser->getEmail());
                 $this->instanceMetadataTable->save($instanceMetadata, false);
 
-                $this->applyInstanceMetadataToSiblings($instance, $instanceMetadata);
-            } elseif ($instanceMetadata->getComment() !== $metadataData['comment']) {
-                $instanceMetadata->setComment($metadataData['comment'])->setUpdater($this->connectedUser->getEmail());
+                $this->applyInstanceMetadataToSiblings($anr, $instance, $instanceMetadata);
+            } elseif ($instanceMetadata->getComment() !== $metadataDatum['comment']) {
+                $instanceMetadata->setComment($metadataDatum['comment'])->setUpdater($this->connectedUser->getEmail());
                 $this->instanceMetadataTable->save($instanceMetadata, false);
             }
         }
 
-        $this->updateInstanceMetadataFromSiblings($instance);
+        $this->updateInstanceMetadataFromSiblings($anr, $instance);
+    }
+
+    /** A wrapper method to help of processing the instance consequences data. */
+    public function prepareAndProcessInstanceConsequencesData(
+        Entity\Instance $instance,
+        array $instanceConsequencesData,
+        bool $withEval,
+        bool $isImportTypeAnr
+    ): void {
+        /** @var Entity\Anr $anr */
+        $anr = $instance->getAnr();
+        /* When the importing data are without evaluation and the object is global
+        the evaluations are taken from a sibling. */
+        $siblingInstance = null;
+        if (!$withEval && $instance->getObject()->isScopeGlobal()) {
+            $siblingInstances = $this->getGlobalObjectInstancesFromCache($anr, $instance->getObject()->getUuid());
+            $siblingInstance = $siblingInstances[0] ?? null;
+        }
+
+        $this->instanceConsequenceImportProcessor->processInstanceConsequencesData(
+            $instance,
+            $instanceConsequencesData,
+            $withEval,
+            $siblingInstance,
+            $isImportTypeAnr
+        );
     }
 
     /**
      * Applies the newly created instance metadata to the others global sibling instances.
      */
     private function applyInstanceMetadataToSiblings(
+        Entity\Anr $anr,
         Entity\Instance $instance,
         Entity\InstanceMetadata $instanceMetadata
     ): void {
         if ($instance->getObject()->isScopeGlobal()) {
-            foreach ($this->getGlobalObjectInstancesFromCache($instance->getObject()->getUuid()) as $instanceSibling) {
+            $instanceSiblings = $this->getGlobalObjectInstancesFromCache($anr, $instance->getObject()->getUuid());
+            foreach ($instanceSiblings as $instanceSibling) {
                 $instanceMetadataOfSibling = $instanceSibling->getInstanceMetadataByMetadataFieldLink(
                     $instanceMetadata->getAnrInstanceMetadataField()
                 );
@@ -187,10 +215,12 @@ class InstanceImportProcessor
     /**
      * Updates the instance metadata from the others global sibling instances.
      */
-    private function updateInstanceMetadataFromSiblings(Entity\Instance $instance): void
+    private function updateInstanceMetadataFromSiblings(Entity\Anr $anr, Entity\Instance $instance): void
     {
         if ($instance->getObject()->isScopeGlobal()) {
-            $instanceSibling = current($this->getGlobalObjectInstancesFromCache($instance->getObject()->getUuid()));
+            $instanceSibling = current(
+                $this->getGlobalObjectInstancesFromCache($anr, $instance->getObject()->getUuid())
+            );
             if ($instanceSibling !== false) {
                 foreach ($instanceSibling->getInstanceMetadata() as $instanceMetadataOfSibling) {
                     $instanceMetadata = $instance->getInstanceMetadataByMetadataFieldLink(
@@ -209,35 +239,55 @@ class InstanceImportProcessor
         }
     }
 
-    private function processChildrenInstancesData(Entity\Anr $anr, array $childrenInstanceData): void
-    {
-        // TODO
-    }
-
     /**
      * @return Entity\Instance[]
      */
-    private function getGlobalObjectInstancesFromCache(string $objectUuid): array
+    private function getGlobalObjectInstancesFromCache(Entity\Anr $anr, string $objectUuid): array
     {
+        if (!$this->importCacheHelper->isCacheKeySet('is_global_instances_cache_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_global_instances_cache_loaded', true);
+            foreach ($this->monarcObjectTable->findGlobalObjectsByAnr($anr) as $object) {
+                $instances = [];
+                foreach ($object->getInstances() as $instance) {
+                    $instances[] = $instance;
+                }
+                $this->importCacheHelper->addItemToArrayCache(
+                    'global_instances_by_object_uuids',
+                    $instances,
+                    $object->getUuid()
+                );
+            }
+        }
+
         return $this->importCacheHelper->getItemFromArrayCache('global_instances_by_object_uuids', $objectUuid) ?? [];
     }
 
-    private function prepareGlobalInstancesCache(Entity\Anr $anr): void
+    private function convertInstanceEvaluations(array &$instanceData): void
     {
-        if (!$this->importCacheHelper->isCacheKeySet('global_instances_by_object_uuids')) {
-            foreach ($this->monarcObjectTable->findGlobalObjectsByAnr($anr) as $object) {
-                if ($object->hasInstances()) {
-                    $instances = [];
-                    foreach ($object->getInstances() as $instance) {
-                        $instances[] = $instance;
-                    }
-                    $this->importCacheHelper->addItemToArrayCache(
-                        'global_instances_by_object_uuids',
-                        $instances,
-                        $object->getUuid()
-                    );
-                }
-            }
-        }
+        $currentScaleRange = $this->importCacheHelper
+            ->getItemFromArrayCache('current_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
+        $externalScaleRange = $this->importCacheHelper
+            ->getItemFromArrayCache('external_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
+        $instanceData['confidentiality'] = $this->convertValueWithinNewScalesRange(
+            $instanceData['confidentiality'],
+            $externalScaleRange['min'],
+            $externalScaleRange['max'],
+            $currentScaleRange['min'],
+            $currentScaleRange['max'],
+        );
+        $instanceData['integrity'] = $this->convertValueWithinNewScalesRange(
+            $instanceData['integrity'],
+            $externalScaleRange['min'],
+            $externalScaleRange['max'],
+            $currentScaleRange['min'],
+            $currentScaleRange['max'],
+        );
+        $instanceData['availability'] = $this->convertValueWithinNewScalesRange(
+            $instanceData['availability'],
+            $externalScaleRange['min'],
+            $externalScaleRange['max'],
+            $currentScaleRange['min'],
+            $currentScaleRange['max'],
+        );
     }
 }

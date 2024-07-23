@@ -93,6 +93,13 @@ class Measure extends MeasureSuperClass
      */
     protected $linkedMeasures;
 
+    /**
+     * @var Soa|null
+     *
+     * @ORM\OneToOne(targetEntity="Soa", mappedBy="measure")
+     */
+    protected $soa;
+
     public function getId()
     {
         return $this->id;
@@ -106,6 +113,19 @@ class Measure extends MeasureSuperClass
     public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+
+        return $this;
+    }
+
+    public function getSoa()
+    {
+        return $this->soa;
+    }
+
+    public function setSoa(Soa $soa): self
+    {
+        $this->soa = $soa;
+        $soa->setMeasure($this);
 
         return $this;
     }

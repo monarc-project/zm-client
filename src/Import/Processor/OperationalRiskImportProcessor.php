@@ -12,7 +12,7 @@ use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Service\AnrRolfRiskService;
 use Monarc\FrontOffice\Table\RolfRiskTable;
 
-class OperationalRisksImportProcessor
+class OperationalRiskImportProcessor
 {
     public function __construct(
         private RolfRiskTable $rolfRiskTable,
@@ -25,7 +25,6 @@ class OperationalRisksImportProcessor
 
     public function processOperationalRisksData(Entity\Anr $anr, array $operationalRisksData): void
     {
-        $this->prepareRolfRisksCache($anr);
         foreach ($operationalRisksData as $operationalRiskData) {
             $this->processOperationalRiskData($anr, $operationalRiskData);
         }
@@ -33,17 +32,17 @@ class OperationalRisksImportProcessor
 
     public function processOperationalRiskData(Entity\Anr $anr, array $operationalRiskData): Entity\RolfRisk
     {
-        $operationalRisk = $this->getRolfRiskFromCache($operationalRiskData['code']);
+        $operationalRisk = $this->getRolfRiskFromCache($anr, $operationalRiskData['code']);
         if ($operationalRisk !== null) {
             return $operationalRisk;
         }
 
         $operationalRisk = $this->anrRolfRiskService->create($anr, [
             'code' => $operationalRiskData['code'],
-            'label' . $anr->getLanguage() => $operationalRiskData['label']
-                ?? $operationalRiskData['label' . $anr->getLanguage()],
-            'description' . $anr->getLanguage() => $operationalRiskData['label']
-                ?? $operationalRiskData['description' . $anr->getLanguage()],
+            'label' . $anr->getLanguage() =>
+                $operationalRiskData['label'] ?? $operationalRiskData['label' . $anr->getLanguage()],
+            'description' . $anr->getLanguage() =>
+                $operationalRiskData['label'] ?? $operationalRiskData['description' . $anr->getLanguage()],
         ], false);
         $this->importCacheHelper->addItemToArrayCache(
             'rolf_risks_by_code',
@@ -51,35 +50,36 @@ class OperationalRisksImportProcessor
             $operationalRisk->getCode()
         );
         foreach ($operationalRiskData['measures'] as $measureData) {
-            $measureUuid = $measureData['uuid'] ?? $measureData;
-            $measure = $this->referentialImportProcessor->getMeasureFromCache($measureUuid);
+            $measure = $this->referentialImportProcessor->getMeasureFromCache($anr, $measureData);
+            if ($measure === null && !empty($measureData['referential'])) {
+                $referential = $this->referentialImportProcessor->processReferentialData(
+                    $anr,
+                    $measureData['referential']
+                );
+                $measure = $this->referentialImportProcessor->processMeasureData($anr, $referential, $measureData);
+            }
             if ($measure !== null) {
                 $operationalRisk->addMeasure($measure);
             }
         }
         foreach ($operationalRiskData['rolfTags'] as $rolfTagData) {
-            $rolfTag = $this->rolfTagImportProcessor->getRolfTagFromCache($rolfTagData['code']);
-            if ($rolfTag !== null) {
-                $operationalRisk->addTag($rolfTag);
-            }
+            $operationalRisk->addTag($this->rolfTagImportProcessor->processRolfTagData($anr, $rolfTagData));
         }
         $this->rolfRiskTable->save($operationalRisk, false);
 
         return $operationalRisk;
     }
 
-    public function getRolfRiskFromCache(string $code): ?Entity\RolfRisk
+    private function getRolfRiskFromCache(Entity\Anr $anr, string $code): ?Entity\RolfRisk
     {
-        return $this->importCacheHelper->getItemFromArrayCache('rolf_risks_by_code', $code);
-    }
-
-    public function prepareRolfRisksCache(Entity\Anr $anr): void
-    {
-        if (!$this->importCacheHelper->isCacheKeySet('rolf_risks_by_code')) {
+        if (!$this->importCacheHelper->isCacheKeySet('is_rolf_risks_loaded')) {
+            $this->importCacheHelper->addItemToArrayCache('is_rolf_risks_loaded', true);
             /** @var Entity\RolfRisk $rolfRisk */
             foreach ($this->rolfRiskTable->findByAnr($anr) as $rolfRisk) {
                 $this->importCacheHelper->addItemToArrayCache('rolf_risks_by_code', $rolfRisk, $rolfRisk->getCode());
             }
         }
+
+        return $this->importCacheHelper->getItemFromArrayCache('rolf_risks_by_code', $code);
     }
 }

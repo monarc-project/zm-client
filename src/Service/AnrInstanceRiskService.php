@@ -141,26 +141,32 @@ class AnrInstanceRiskService
         Entity\Instance $instance,
         ?Entity\Amv $amv,
         ?Entity\InstanceRisk $fromInstanceRisk = null,
+        ?Entity\Threat $threat = null,
+        ?Entity\Vulnerability $vulnerability = null,
         bool $saveInDb = false
     ): Entity\InstanceRisk {
+        if ($fromInstanceRisk === null && $amv === null && $threat === null && $vulnerability === null) {
+            throw new \LogicException('Instance risk can\'t be created without threat and vulnerability.');
+        }
+
         $instanceRisk = $fromInstanceRisk !== null
             ? Entity\InstanceRisk::constructFromObjectOfTheSameAnr($fromInstanceRisk)
             : new Entity\InstanceRisk();
 
-        /** @var Entity\InstanceRisk $instanceRisk */
         $instanceRisk
             ->setInstance($instance)
             ->setCreator($this->connectedUser->getEmail());
-        if ($fromInstanceRisk === null && $amv !== null) {
+        if ($fromInstanceRisk === null) {
             $instanceRisk
                 ->setAnr($instance->getAnr())
                 ->setAmv($amv)
-                ->setAsset($amv->getAsset())
-                ->setThreat($amv->getThreat())
-                ->setVulnerability($amv->getVulnerability());
+                ->setAsset($amv !== null ? $amv->getAsset() : $instance->getAsset())
+                ->setThreat($amv !== null ? $amv->getThreat() : $threat)
+                ->setVulnerability($amv !== null ? $amv->getVulnerability() : $vulnerability);
+        } else {
+            /* The evaluation values are only set when the object is created based on the other instance risk. */
+            $this->recalculateRiskRates($instanceRisk);
         }
-
-        $this->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
 
         $this->instanceRiskTable->save($instanceRisk, $saveInDb);
 
@@ -188,13 +194,14 @@ class AnrInstanceRiskService
             foreach ($siblingInstance->getInstanceRisks() as $siblingInstanceRisk) {
                 /** @var Entity\Amv $amv */
                 $amv = $siblingInstanceRisk->getAmv();
-                $newInstanceRisk = $this->createInstanceRisk($instance, $amv, $siblingInstanceRisk);
+                $instanceRisk = $this->createInstanceRisk($instance, $amv, $siblingInstanceRisk, null, null, $saveInDb);
 
-                $this->duplicateRecommendationRisks($siblingInstanceRisk, $newInstanceRisk);
+                $this->duplicateRecommendationRisks($siblingInstanceRisk, $instanceRisk);
+                $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
             }
         } else {
             foreach ($object->getAsset()->getAmvs() as $amv) {
-                $instanceRisk = $this->createInstanceRisk($instance, $amv);
+                $instanceRisk = $this->createInstanceRisk($instance, $amv, null,  null, null, $saveInDb);
 
                 /* Process risk owner and context in case of import. */
                 if (!empty($params['risks'])) {

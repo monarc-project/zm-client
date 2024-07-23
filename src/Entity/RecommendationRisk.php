@@ -31,22 +31,12 @@ class RecommendationRisk
     protected $id;
 
     /**
-     * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
-     */
-    protected $anr;
-
-    /**
      * @var Recommendation
      *
-     * @ORM\ManyToOne(targetEntity="Recommendation", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Recommendation")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid"),
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $recommendation;
@@ -87,7 +77,7 @@ class RecommendationRisk
      * @ORM\ManyToOne(targetEntity="MonarcObject")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_global_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $globalObject;
@@ -98,7 +88,7 @@ class RecommendationRisk
      * @ORM\ManyToOne(targetEntity="Asset")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $asset;
@@ -109,7 +99,7 @@ class RecommendationRisk
      * @ORM\ManyToOne(targetEntity="Threat")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $threat;
@@ -120,10 +110,23 @@ class RecommendationRisk
      * @ORM\ManyToOne(targetEntity="Vulnerability")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
      * })
      */
     protected $vulnerability;
+
+    /**
+     * IMPORTANT! The field has to be always at the last place in the class due to the double fields' relation issue!
+     * Because when a nullable relation of AMV is set, the anr value is saved as NULL as well.
+     *
+     * @var Anr
+     *
+     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
+     * })
+     */
+    protected $anr;
 
     /**
      * @var string
@@ -169,7 +172,15 @@ class RecommendationRisk
 
     public function setInstanceRisk(?InstanceRisk $instanceRisk): self
     {
-        $this->instanceRisk = $instanceRisk;
+        if ($instanceRisk === null) {
+            if ($this->instanceRisk !== null) {
+                $this->instanceRisk->removeRecommendationRisk($this);
+                $this->instanceRisk = null;
+            }
+        } else {
+            $this->instanceRisk = $instanceRisk;
+            $instanceRisk->addRecommendationRisk($this);
+        }
 
         return $this;
     }
@@ -181,7 +192,15 @@ class RecommendationRisk
 
     public function setInstanceRiskOp(?InstanceRiskOp $instanceRiskOp)
     {
-        $this->instanceRiskOp = $instanceRiskOp;
+        if ($instanceRiskOp === null) {
+            if ($this->instanceRiskOp !== null) {
+                $this->instanceRiskOp->removeRecommendationRisk($this);
+                $this->instanceRiskOp = null;
+            }
+        } else {
+            $this->instanceRiskOp = $instanceRiskOp;
+            $instanceRiskOp->addRecommendationRisk($this);
+        }
 
         return $this;
     }

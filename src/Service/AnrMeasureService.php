@@ -21,6 +21,7 @@ class AnrMeasureService
         private Table\MeasureTable $measureTable,
         private Table\ReferentialTable $referentialTable,
         private Table\SoaCategoryTable $soaCategoryTable,
+        private SoaService $soaService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -59,7 +60,11 @@ class AnrMeasureService
         /** @var Entity\SoaCategory $soaCategory */
         $soaCategory = $this->soaCategoryTable->findByIdAndAnr($data['categoryId'], $anr);
 
-        return $this->createMeasureObject($anr, $referential, $soaCategory, $data, $saveInDb);
+        $measure = $this->createMeasureObject($anr, $referential, $soaCategory, $data, $saveInDb);
+
+        $this->soaService->createSoaObject($anr, $measure);
+
+        return $measure;
     }
 
     public function createMeasureObject(

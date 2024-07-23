@@ -105,6 +105,9 @@ class DeliverableGenerationService
     public function getLastDelivery(Entity\Anr $anr, int $docType): array
     {
         $lastDelivery = $this->deliveryTable->findLastByAnrAndDocType($anr, $docType);
+        if ($lastDelivery === null) {
+            return [];
+        }
 
         return [
             'id' => $lastDelivery->getId(),
@@ -657,17 +660,17 @@ class DeliverableGenerationService
      * Generate Informational Risk Acceptance thresholds table.
      */
     private function generateInformationalRiskAcceptanceThresholdsTable(
-        $impactsScale,
-        $threatsScale,
-        $vulnsScale
+        Entity\Scale $impactsScale,
+        Entity\Scale $threatsScale,
+        Entity\Scale $vulnsScale
     ): PhpWord\Element\Table {
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->noBorderTable);
 
         $header = [];
-        for ($t = $threatsScale['min']; $t <= $threatsScale['max']; ++$t) {
-            for ($v = $vulnsScale['min']; $v <= $vulnsScale['max']; ++$v) {
+        for ($t = $threatsScale->getMin(); $t <= $threatsScale->getMax(); ++$t) {
+            for ($v = $vulnsScale->getMin(); $v <= $vulnsScale->getMax(); ++$v) {
                 $prod = $t * $v;
                 if (!\in_array($prod, $header, true)) {
                     $header[] = $prod;
@@ -690,7 +693,7 @@ class DeliverableGenerationService
                 ->addText($MxV, $this->boldFont, $this->centerParagraph);
         }
 
-        for ($row = $impactsScale['min']; $row <= $impactsScale['max']; ++$row) {
+        for ($row = $impactsScale->getMin(); $row <= $impactsScale->getMax(); ++$row) {
             $table->addRow(PhpWord\Shared\Converter::cmToTwip($size));
             $table->addCell(null, $this->continueCell);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(1), $this->whiteBigBorderTable)
@@ -3621,7 +3624,7 @@ class DeliverableGenerationService
                                 $instance->{'get' . $instanceCriteria[$impact]}() !== -1
                                 ? $instance->{'get' . $instanceCriteria[$impact]}()
                                 : 0
-                            ];
+                            ] ?? '';
                             $translatedImpact = ucfirst($impact);
                             if ($impact === 'd') {
                                 $translatedImpact = ucfirst($this->anrTranslate('A'));
@@ -3643,7 +3646,7 @@ class DeliverableGenerationService
                         }
                         $comment = $instanceConsequence['comments'][
                             $instanceConsequence[$impact . '_risk'] !== -1 ? $instanceConsequence[$impact . '_risk'] : 0
-                        ];
+                        ] ?? '';
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
                             ->addText(
                                 _WT($instanceConsequence['scaleImpactTypeDescription' . $this->currentLangAnrIndex]),
@@ -4078,7 +4081,7 @@ class DeliverableGenerationService
     }
 }
 
-function _WT($input)
+function _WT(string $input)
 {
     $input = htmlspecialchars(trim($input), ENT_COMPAT);
 

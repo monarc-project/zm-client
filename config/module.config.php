@@ -1575,18 +1575,7 @@ return [
             Export\Service\InstanceExportService::class => AutowireFactory::class,
             /* Import services. */
             Import\Service\ObjectImportService::class => AutowireFactory::class,
-            Import\Service\AssetImportService::class => AutowireFactory::class,
             Import\Service\InstanceImportService::class => AutowireFactory::class,
-            Import\Processor\AssetImportProcessor::class => AutowireFactory::class,
-            Import\Processor\InformationRiskImportProcessor::class => AutowireFactory::class,
-            Import\Processor\ObjectCategoryImportProcessor::class => AutowireFactory::class,
-            Import\Processor\ObjectImportProcessor::class => AutowireFactory::class,
-            Import\Processor\OperationalRisksImportProcessor::class => AutowireFactory::class,
-            Import\Processor\RecommendationImportProcessor::class => AutowireFactory::class,
-            Import\Processor\ReferentialImportProcessor::class => AutowireFactory::class,
-            Import\Processor\RolfTagImportProcessor::class => AutowireFactory::class,
-            Import\Processor\ThreatImportProcessor::class => AutowireFactory::class,
-            Import\Processor\VulnerabilityImportProcessor::class => AutowireFactory::class,
 
             // Helpers
             Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
@@ -1718,6 +1707,10 @@ return [
                 Service\AnrInstanceService::class => Service\AnrInstanceService::class,
                 Import\Processor\ObjectCategoryImportProcessor::class =>
                     Import\Processor\ObjectCategoryImportProcessor::class,
+                Import\Processor\InformationRiskImportProcessor::class =>
+                    Import\Processor\InformationRiskImportProcessor::class,
+                Import\Processor\OperationalRiskImportProcessor::class =>
+                    Import\Processor\OperationalRiskImportProcessor::class,
             ],
             'proxies_target_dir' => $dataPath . '/LazyServices/Proxy',
             'write_proxy_files' => $env === 'production',
@@ -1730,6 +1723,12 @@ return [
                 LazyServiceFactory::class,
             ],
             Import\Processor\ObjectCategoryImportProcessor::class => [
+                LazyServiceFactory::class,
+            ],
+            Import\Processor\InformationRiskImportProcessor::class => [
+                LazyServiceFactory::class,
+            ],
+            Import\Processor\OperationalRiskImportProcessor::class => [
                 LazyServiceFactory::class,
             ],
         ],

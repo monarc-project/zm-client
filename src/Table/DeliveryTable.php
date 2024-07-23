@@ -20,16 +20,16 @@ class DeliveryTable extends AbstractTable
         parent::__construct($entityManager, $entityName);
     }
 
-    public function findLastByAnrAndDocType(Anr $anr, int $docType): Delivery
+    public function findLastByAnrAndDocType(Anr $anr, int $docType): ?Delivery
     {
         return $this->getRepository()->createQueryBuilder('d')
             ->where('d.anr = :anr')
             ->andWhere('d.docType = :docType')
             ->setParameter('anr', $anr)
             ->setParameter('docType', $docType)
-            ->orderBy('createdAt', Criteria::DESC)
+            ->orderBy('d.createdAt', Criteria::DESC)
             ->setMaxResults(1)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
     }
 }

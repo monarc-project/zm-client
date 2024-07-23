@@ -7,21 +7,13 @@
 
 namespace Monarc\FrontOffice\Export\Service\Traits;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Monarc\FrontOffice\Entity;
 
 trait InstanceConsequenceExportTrait
 {
     use ScaleImpactTypeExportTrait;
 
-    #[ArrayShape([
-        'id' => "int",
-        'confidentiality' => "int",
-        'integrity' => "int",
-        'availability' => "int",
-        'isHidden' => "bool",
-        'scaleImpactType' => "array"
-    ])] private function prepareInstanceConsequenceData(
+    private function prepareInstanceConsequenceData(
         Entity\InstanceConsequence $instanceConsequence,
         int $languageIndex
     ): array {
