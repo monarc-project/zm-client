@@ -104,7 +104,7 @@ class ObjectCategoryImportProcessor
         string $categoryAndItsParentLabels
     ): ?Entity\ObjectCategory {
         if (!$this->importCacheHelper->isCacheKeySet('is_object_categories_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_object_categories_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_object_categories_cache_loaded', true);
             $languageIndex = $anr->getLanguage();
             /** @var Entity\ObjectCategory $objectCategory */
             foreach ($this->objectCategoryTable->findByAnr($anr) as $objectCategory) {

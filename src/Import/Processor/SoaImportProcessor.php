@@ -29,6 +29,7 @@ class SoaImportProcessor
         private ImportCacheHelper $importCacheHelper,
         private SoaService $soaService,
         private SoaScaleCommentService $soaScaleCommentService,
+        private ReferentialImportProcessor $referentialImportProcessor,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -69,7 +70,7 @@ class SoaImportProcessor
                     $this->soaScaleCommentTable->save($currentSoaScaleComment, false);
                 }
                 $this->importCacheHelper->addItemToArrayCache(
-                    'soa_scale_comments',
+                    'soa_scale_comments_by_index',
                     $currentSoaScaleComment,
                     $currentSoaScaleComment->getScaleIndex()
                 );
@@ -87,7 +88,8 @@ class SoaImportProcessor
                         $newSoaScaleCommentsData[$soaScaleCommentKey]['colour'],
                         $newSoaScaleCommentsData[$soaScaleCommentKey]['comment']
                     );
-                    $this->importCacheHelper->addItemToArrayCache('soa_scale_comments', $newSoaScaleComment, $index);
+                    $this->importCacheHelper
+                        ->addItemToArrayCache('soa_scale_comments_by_index', $newSoaScaleComment, $index);
                 }
             }
         }
@@ -129,12 +131,16 @@ class SoaImportProcessor
             }
             if (isset($soaData['soaScaleCommentIndex']) && $soaData['soaScaleCommentIndex'] !== null) {
                 /* New structure from v2.13.1 or set workaround for the old export. */
-                $soaData['soaScaleComment'] = $this->importCacheHelper->getItemFromArrayCache(
-                    'soa_scale_comments',
-                    $soaData['soaScaleCommentIndex']
-                );
+                $soaData['soaScaleComment'] = $this->importCacheHelper
+                    ->getItemFromArrayCache('soa_scale_comments_by_index', $soaData['soaScaleCommentIndex']);
             }
             $this->soaService->patchSoaObject($anr, $soa, $soaData, false);
+        } else {
+            $measure = $this->referentialImportProcessor->getMeasureFromCache($anr, $measureUuid);
+            if ($measure === null) {
+                throw new \Exception('Measures have to be processed before the Statement of Applicability data.', 412);
+            }
+            $soa = $this->soaService->createSoaObject($anr, $measure, $soaData);
         }
 
         return $soa;
@@ -157,10 +163,10 @@ class SoaImportProcessor
                 0
             );
             if ($soaComment->getScaleIndex() !== $newScaleIndex
-                && $this->importCacheHelper->isItemInArrayCache('soa_scale_comments', $newScaleIndex)
+                && $this->importCacheHelper->isItemInArrayCache('soa_scale_comments_by_index', $newScaleIndex)
             ) {
                 $soa->setSoaScaleComment(
-                    $this->importCacheHelper->getItemFromArrayCache('soa_scale_comments', $newScaleIndex)
+                    $this->importCacheHelper->getItemFromArrayCache('soa_scale_comments_by_index', $newScaleIndex)
                 );
                 $this->soaTable->save($soa, false);
             }
@@ -170,7 +176,7 @@ class SoaImportProcessor
     private function getSoaFromCache(Entity\Anr $anr, string $measureUuid): ?Entity\Soa
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_soa_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_soa_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_soa_cache_loaded', true);
             /** @var Entity\Soa $soa */
             foreach ($this->soaTable->findByAnr($anr) as $soa) {
                 $this->importCacheHelper->addItemToArrayCache(

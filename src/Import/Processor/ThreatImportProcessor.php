@@ -72,7 +72,7 @@ class ThreatImportProcessor
     public function getThreatFromCache(Entity\Anr $anr, string $uuid): ?Entity\Threat
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_threats_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_threats_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_threats_cache_loaded', true);
             /** @var Entity\Threat $threat */
             foreach ($this->threatTable->findByAnr($anr) as $threat) {
                 $this->importCacheHelper->addItemToArrayCache('threats_by_uuid', $threat, $threat->getUuid());
@@ -101,7 +101,7 @@ class ThreatImportProcessor
     private function getThemeFromCache(Entity\Anr $anr, string $label): ?Entity\Theme
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_themes_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_themes_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_themes_cache_loaded', true);
             /** @var Entity\Theme $theme */
             foreach ($this->themeTable->findByAnr($anr) as $theme) {
                 $this->importCacheHelper

@@ -73,7 +73,7 @@ class OperationalRiskImportProcessor
     private function getRolfRiskFromCache(Entity\Anr $anr, string $code): ?Entity\RolfRisk
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_rolf_risks_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_rolf_risks_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_rolf_risks_loaded', true);
             /** @var Entity\RolfRisk $rolfRisk */
             foreach ($this->rolfRiskTable->findByAnr($anr) as $rolfRisk) {
                 $this->importCacheHelper->addItemToArrayCache('rolf_risks_by_code', $rolfRisk, $rolfRisk->getCode());

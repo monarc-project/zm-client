@@ -30,6 +30,7 @@ use function in_array;
  */
 class DeliverableGenerationService
 {
+    // TODO: correct all the get ->getList usage due to the formatted param.
     private UserSuperClass $connectedUser;
 
     private $currentLangAnrIndex = 1;

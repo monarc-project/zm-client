@@ -12,7 +12,7 @@ use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
-use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
+use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrRecommendationRiskService;
 use Monarc\FrontOffice\Service\InstanceRiskOwnerService;
@@ -50,9 +50,7 @@ class OperationalInstanceRiskImportProcessor
     public function processOperationalInstanceRisksData(
         Entity\Anr $anr,
         Entity\Instance $instance,
-        array $operationalInstanceRisksData,
-        bool $withEval,
-        bool $isImportTypeAnr
+        array $operationalInstanceRisksData
     ): void {
         $currentOperationalRiskScalesData = $this->operationalRiskScaleImportProcessor
             ->getCurrentOperationalRiskScalesData($anr);
@@ -60,8 +58,12 @@ class OperationalInstanceRiskImportProcessor
         $areScalesLevelsOfLikelihoodDifferent = false;
         $areImpactScaleTypesValuesDifferent = false;
         $matchedScaleTypesMap = [];
+        $withEval = $this->importCacheHelper->getValueFromArrayCache('with_eval');
+        $isImportTypeInstance = $this->importCacheHelper->getValueFromArrayCache(
+            'import_type'
+        ) === InstanceImportService::IMPORT_TYPE_INSTANCE;
         /* For the instances import with evaluations the values have to be converted to the current analysis scales. */
-        if ($withEval && !$isImportTypeAnr) {
+        if ($withEval && $isImportTypeInstance) {
             $externalOperationalRiskScalesData = $this->operationalRiskScaleImportProcessor
                 ->getExternalOperationalRiskScalesData($anr, []);
             if ($externalOperationalRiskScalesData === null) {
@@ -87,7 +89,7 @@ class OperationalInstanceRiskImportProcessor
             $object = $instance->getObject();
             $operationalInstanceRisk = $this->anrInstanceRiskOpService
                 ->createInstanceRiskOpObject($instance, $object, $operationalRisk);
-            if ($withEval) {
+            if ($this->importCacheHelper->getValueFromArrayCache('with_eval')) {
                 $operationalInstanceRisk
                     ->setBrutProb((int)$operationalInstanceRiskData['brutProb'])
                     ->setNetProb((int)$operationalInstanceRiskData['netProb'])
@@ -121,9 +123,7 @@ class OperationalInstanceRiskImportProcessor
                     $externalOperationalRiskScalesData,
                     $matchedScaleTypesMap,
                     $operationalInstanceRiskData,
-                    $areImpactScaleTypesValuesDifferent,
-                    $withEval,
-                    $isImportTypeAnr
+                    $areImpactScaleTypesValuesDifferent
                 );
 
             if ($withEval) {
@@ -157,10 +157,12 @@ class OperationalInstanceRiskImportProcessor
         array $externalOperationalRiskScalesData,
         array $matchedScaleTypesMap,
         array $operationalInstanceRiskData,
-        bool $areImpactScaleTypesValuesDifferent,
-        bool $withEval,
-        bool $isImportTypeAnr
+        bool $areImpactScaleTypesValuesDifferent
     ): array {
+        $withEval = $this->importCacheHelper->getValueFromArrayCache('with_eval');
+        $isImportTypeAnr = $this->importCacheHelper
+            ->getValueFromArrayCache('import_type') === InstanceImportService::IMPORT_TYPE_ANR;
+
         $currentImpactScaleData = $currentOperationalRiskScalesData[OperationalRiskScaleSuperClass::TYPE_IMPACT];
         foreach ($currentImpactScaleData['operationalRiskScaleTypes'] as $index => $scaleType) {
             /** @var Entity\OperationalRiskScaleType $operationalRiskScaleType */

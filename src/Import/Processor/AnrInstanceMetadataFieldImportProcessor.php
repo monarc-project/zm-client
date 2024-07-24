@@ -57,7 +57,7 @@ class AnrInstanceMetadataFieldImportProcessor
         string $label
     ): ?Entity\AnrInstanceMetadataField {
         if (!$this->importCacheHelper->isCacheKeySet('is_anr_instance_metadata_fields_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_anr_instance_metadata_fields_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_anr_instance_metadata_fields_cache_loaded', true);
             /** @var Entity\AnrInstanceMetadataField $anrInstanceMetadataField */
             foreach ($this->anrInstanceMetadataFieldTable->findByAnr($anr) as $anrInstanceMetadataField) {
                 $this->importCacheHelper->addItemToArrayCache(

@@ -399,7 +399,7 @@ class AnrExportService
         $result = [];
         /** @var Entity\Soa $soa */
         foreach ($this->soaTable->findByAnr($anr) as $soa) {
-            $result = [
+            $result[] = [
                 'remarks' => $soa->getRemarks(),
                 'evidences' => $soa->getEvidences(),
                 'actions' => $soa->getActions(),

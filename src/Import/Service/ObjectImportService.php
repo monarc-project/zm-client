@@ -12,6 +12,7 @@ use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\Export\ObjectExportService as CoreObjectExportService;
 use Monarc\Core\Table\MonarcObjectTable as CoreMonarcObjectTable;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Import\Processor;
 use Monarc\FrontOffice\Import\Traits;
 use Monarc\FrontOffice\Table;
@@ -30,7 +31,8 @@ class ObjectImportService
         private Processor\ObjectCategoryImportProcessor $objectCategoryImportProcessor,
         private Table\ClientTable $clientTable,
         private CoreMonarcObjectTable $coreMonarcObjectTable,
-        private CoreObjectExportService $coreObjectExportService
+        private CoreObjectExportService $coreObjectExportService,
+        private ImportCacheHelper $importCacheHelper
     ) {
     }
 
@@ -146,8 +148,10 @@ class ObjectImportService
 
         $this->setAndValidateImportingDataVersion($data);
 
-        /* Convert the old structure format to the new one if needed. */
-        if ($this->isImportingDataVersionLowerThan('2.13.1')) {
+        $this->importCacheHelper->setArrayCacheValue('import_type', InstanceImportService::IMPORT_TYPE_OBJECT);
+
+        /* Convert the old structure format to the new one if the import is from MOSP or importing version is below. */
+        if (!empty($data['mosp']) || $this->isImportingDataVersionLowerThan('2.13.1')) {
             $data = $this->adaptOldObjectDataStructureToNewFormat($data);
         }
 

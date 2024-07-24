@@ -7,26 +7,30 @@
 
 namespace Monarc\FrontOffice\Import\Processor;
 
+use Monarc\Core\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Entity\ObjectSuperClass;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Import\Service\ObjectImportService;
-use Monarc\FrontOffice\Service\AnrObjectObjectService;
-use Monarc\FrontOffice\Service\AnrObjectService;
-use Monarc\FrontOffice\Table\MonarcObjectTable;
-use Monarc\FrontOffice\Table\ObjectObjectTable;
+use Monarc\FrontOffice\Service;
+use Monarc\FrontOffice\Table;
 
 class ObjectImportProcessor
 {
     public function __construct(
-        private MonarcObjectTable $monarcObjectTable,
-        private ObjectObjectTable $objectObjectTable,
+        private Table\MonarcObjectTable $monarcObjectTable,
+        private Table\ObjectObjectTable $objectObjectTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private Table\AmvTable $amvTable,
         private ImportCacheHelper $importCacheHelper,
-        private AnrObjectService $anrObjectService,
-        private AnrObjectObjectService $anrObjectObjectService,
+        private Service\AnrObjectService $anrObjectService,
+        private Service\AnrObjectObjectService $anrObjectObjectService,
+        private Service\AnrInstanceRiskService $anrInstanceRiskService,
         private AssetImportProcessor $assetImportProcessor,
         private RolfTagImportProcessor $rolfTagImportProcessor,
-        private ObjectCategoryImportProcessor $objectCategoryImportProcessor
+        private ObjectCategoryImportProcessor $objectCategoryImportProcessor,
+        private InformationRiskImportProcessor $informationRiskImportProcessor
     ) {
     }
 
@@ -75,15 +79,16 @@ class ObjectImportProcessor
             }
         }
 
+        $isImportTypeObject = $this->importCacheHelper
+            ->getValueFromArrayCache('import_type') === InstanceImportService::IMPORT_TYPE_OBJECT;
         $currentObjectUuid = $objectData['uuid'];
         if ($object === null) {
-            if (empty($objectData['asset'])) {
-                $a = 1;
-            }
+            /* If IMPORT_TYPE_OBJECT then the process of informationRisks/amvs is done inside. */
             $asset = $this->assetImportProcessor->processAssetData($anr, $objectData['asset']);
 
             $rolfTag = null;
             if (!empty($objectData['rolfTag'])) {
+                /* If IMPORT_TYPE_OBJECT then the process of $objectData['rolfTag']['rolfRisks'] is done inside. */
                 $rolfTag = $this->rolfTagImportProcessor->processRolfTagData($anr, $objectData['rolfTag']);
             }
 
@@ -107,9 +112,9 @@ class ObjectImportProcessor
             );
             $this->importCacheHelper
                 ->addItemToArrayCache('objects_names', $objectData[$nameFiledKey], $objectData[$nameFiledKey]);
-        } else {
+        } elseif ($isImportTypeObject) {
             /* If asset's amvs (information risks) are different, then update them. */
-            if (isset($objectData['asset']['informationRisks'])) {
+            if (!empty($objectData['asset']['informationRisks'])) {
                 $this->mergeAssetInformationRisks($object, $objectData['asset']['informationRisks']);
             }
             /* Validate if the RolfTag is the same or/and the linked to it operational risks are equal. */
@@ -120,26 +125,19 @@ class ObjectImportProcessor
 
         /* Process objects links. */
         foreach ($objectData['children'] as $positionIndex => $childObjectData) {
-            $objectCategory = $this->objectCategoryImportProcessor->processObjectCategoryData(
-                $anr,
-                $childObjectData['category'],
-                $importMode
-            );
+            $objectCategory = $this->objectCategoryImportProcessor
+                ->processObjectCategoryData($anr, $childObjectData['category'], $importMode);
             $childObject = $this->processObjectData($anr, $objectCategory, $childObjectData, $importMode);
 
-            if (!$object->hasChild($childObject) && !$this->importCacheHelper->isItemInArrayCache(
-                    'objects_links_uuids',
-                    $object->getUuid() . $childObject->getUuid()
-                )) {
+            $linksCacheKey = $object->getUuid() . $childObject->getUuid();
+            if (!$object->hasChild($childObject)
+                && !$this->importCacheHelper->isItemInArrayCache('objects_links_uuids', $linksCacheKey)
+            ) {
                 $this->anrObjectObjectService->createObjectLink($object, $childObject, [
                     'position' => $positionIndex + 1,
                     'forcePositionUpdate' => true,
                 ], false);
-                $this->importCacheHelper->addItemToArrayCache(
-                    'objects_links_uuids',
-                    $object->getUuid() . $childObject->getUuid(),
-                    $object->getUuid() . $childObject->getUuid()
-                );
+                $this->importCacheHelper->addItemToArrayCache('objects_links_uuids', $linksCacheKey, $linksCacheKey);
             }
         }
 
@@ -154,7 +152,7 @@ class ObjectImportProcessor
         ?int $categoryId
     ): ?Entity\MonarcObject {
         if (!$this->importCacheHelper->isCacheKeySet('is_objects_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_objects_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_objects_cache_loaded', true);
             $languageIndex = $anr->getLanguage();
             /** @var Entity\MonarcObject $object */
             foreach ($this->monarcObjectTable->findByAnr($anr) as $object) {
@@ -194,28 +192,49 @@ class ObjectImportProcessor
         return $objectName;
     }
 
+    /* Merges the amvs (information risks) of the existing object. */
     private function mergeAssetInformationRisks(Entity\MonarcObject $object, array $informationRisksData): void
     {
+        $existingAmvs = [];
+        /** @var Entity\Amv $amv */
+        foreach ($object->getAsset()->getAmvs() as $amv) {
+            $existingAmvs[$amv->getUuid()] = $amv;
+        }
+        $importingAmvsData = [];
         foreach ($informationRisksData as $informationRiskData) {
-            $asset = $object->getAsset();
-            $informationRiskData['uuid'];
-            // TODO: !!! Instance risks are supposed to be processed in the InstanceRiskImportProcessor, so here we correct only amvs. !!!
-            // the same is for op risks.
-            // TODO: + figure out (based on AssetImportService) if the asset's data have to be reprocessed if informationRisks are set.
-            // TODO: 1. match the difference and update them
-            // -> when amv is added : add new instance risks
-            // -> when removed: turn existing instance risks to specific and drop the amv.
+            $importingAmvsData[$informationRiskData['uuid']] = $informationRiskData;
+        }
+        foreach (array_diff_key($importingAmvsData, $existingAmvs) as $newImportingAmvData) {
+            $amv = $this->informationRiskImportProcessor
+                ->processInformationRiskData($object->getAnr(), $newImportingAmvData);
+            /* Recreated instance risks if the object is instantiated. */
+            foreach ($object->getInstances() as $instance) {
+                $this->anrInstanceRiskService->createInstanceRisk($instance, $amv, null, null, null, false);
+            }
+        }
+        /** @var Entity\Amv $existingAmvToRemove */
+        foreach (array_diff_key($existingAmvs, $importingAmvsData) as $existingAmvToRemove) {
+            /* Recreated instance risks if the object is instantiated. */
+            foreach ($existingAmvToRemove->getInstanceRisks() as $instanceRiskToSetSpecific) {
+                $instanceRiskToSetSpecific->setSpecific(InstanceRiskSuperClass::TYPE_SPECIFIC)
+                    ->setAmv(null);
+                $this->instanceRiskTable->save($instanceRiskToSetSpecific, false);
+            }
+            $this->amvTable->remove($existingAmvToRemove, false);
         }
     }
 
+    /* Merges the rolfRisks (operational risks) of the existing object. */
     private function mergeRolfTagOperationalRisks(Entity\MonarcObject $object, ?array $rolfTagData): void
     {
-        if (empty($rolfTagData) && $object->getRolfTag() !== null) {
-            // if ($object->getRolfTag()->getCode() !== $rolfTagData['code']) {}
-            // TODO: 1. if there was no rolfTag and we set, then also create the rolf risks if different and add/remove instance risks op.
-            // TODO: 2. was a rolf tag and now removed, then remove all the instance risks op have to be removed.
-            // TODO: 3. if a new rolf is changed, then all the op risks have to be updated.
-            // TODO: 4. rolfTag stays the same (set) then we have to validate the difference of rolf risks.
+        // if ($object->getRolfTag()->getCode() !== $rolfTagData['code']) {}
+        // TODO: 1.
+        // TODO: 2. was a rolf tag and now removed, then remove all the instance risks op have to be removed.
+        // TODO: 3. if a new rolf is changed, then all the op risks have to be updated.
+        // TODO: 4. rolfTag stays the same (set) then we have to validate the difference of rolf risks.
+        /* if there was no rolfTag and a new one is set. */
+        if (!empty($rolfTagData) && $object->getRolfTag() === null) {
+
         }
     }
 }

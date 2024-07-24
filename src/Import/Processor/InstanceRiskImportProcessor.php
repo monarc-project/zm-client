@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Import\Processor;
 use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrRecommendationRiskService;
@@ -36,26 +37,20 @@ class InstanceRiskImportProcessor
     public function processInstanceRisksData(
         Entity\Instance $instance,
         array $siblingInstances,
-        array $instanceRisksData,
-        bool $withEval,
-        bool $isImportTypeAnr
+        array $instanceRisksData
     ): void {
         /* Create new instance risks. */
         foreach ($instanceRisksData as $instanceRiskData) {
-            $this->processInstanceRiskData($instance, $instanceRiskData, $withEval, $isImportTypeAnr);
+            $this->processInstanceRiskData($instance, $instanceRiskData);
         }
         if (!empty($siblingInstances)) {
             /* Match the created instance risks with sibling instances' ones. */
-            $this->matchCreatedInstanceRisksWithSiblingInstances($instance, $siblingInstances, $withEval);
+            $this->matchCreatedInstanceRisksWithSiblingInstances($instance, $siblingInstances);
         }
     }
 
-    private function processInstanceRiskData(
-        Entity\Instance $instance,
-        array $instanceRiskData,
-        bool $withEval,
-        bool $isImportTypeAnr
-    ): Entity\InstanceRisk {
+    private function processInstanceRiskData(Entity\Instance $instance, array $instanceRiskData): Entity\InstanceRisk
+    {
         /** @var Entity\Anr $anr */
         $anr = $instance->getAnr();
         if (!empty($instanceRiskData['informationRisk'])) {
@@ -86,9 +81,11 @@ class InstanceRiskImportProcessor
             );
         }
 
-        if ($withEval) {
+        if ($this->importCacheHelper->getValueFromArrayCache('with_eval')) {
             /* For the instances import the values have to be converted to local scales. */
-            if (!$isImportTypeAnr) {
+            if ($this->importCacheHelper
+                ->getValueFromArrayCache('import_type') === InstanceImportService::IMPORT_TYPE_INSTANCE
+            ) {
                 $this->convertInstanceRiskEvaluations($instanceRiskData);
             }
 
@@ -126,11 +123,11 @@ class InstanceRiskImportProcessor
      */
     private function matchCreatedInstanceRisksWithSiblingInstances(
         Entity\Instance $instance,
-        array $siblingInstances,
-        bool $withEval
+        array $siblingInstances
     ): void {
         $createdRiskKeys = [];
         $siblingRiskKeys = [];
+        $withEval = $this->importCacheHelper->getValueFromArrayCache('with_eval');
         foreach ($siblingInstances as $siblingInstance) {
             /** @var Entity\InstanceRisk $createdInstanceRisk */
             foreach ($instance->getInstanceRisks() as $createdInstanceRisk) {

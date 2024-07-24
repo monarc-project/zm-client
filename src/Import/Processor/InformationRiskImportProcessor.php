@@ -87,7 +87,7 @@ class InformationRiskImportProcessor
     private function getInformationRiskFromCache(Entity\Anr $anr, string $uuid): ?Entity\Amv
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_amvs_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_amvs_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_amvs_cache_loaded', true);
             /** @var Entity\Amv $amv */
             foreach ($this->amvTable->findByAnr($anr) as $amv) {
                 $this->importCacheHelper->addItemToArrayCache('amvs_by_uuid', $amv, $amv->getUuid());

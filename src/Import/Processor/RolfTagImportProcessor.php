@@ -56,7 +56,7 @@ class RolfTagImportProcessor
     public function getRolfTagFromCache(Entity\Anr $anr, string $code): ?Entity\RolfTag
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_rolf_tags_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_rolf_tags_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_rolf_tags_cache_loaded', true);
             /** @var Entity\RolfTag $rolfTag */
             foreach ($this->rolfTagTable->findByAnr($anr) as $rolfTag) {
                 $this->importCacheHelper->addItemToArrayCache('rolf_tags_by_code', $rolfTag, $rolfTag->getCode());

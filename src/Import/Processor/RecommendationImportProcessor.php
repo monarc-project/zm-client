@@ -124,7 +124,7 @@ class RecommendationImportProcessor
     private function prepareRecommendationsCache(Entity\Anr $anr): void
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_recommendations_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_recommendations_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_recommendations_cache_loaded', true);
             $this->currentMaxRecommendationPosition = $this->recommendationTable->findMaxPosition(['anr' => $anr]);
             /** @var Entity\RecommendationSet $recommendationSet */
             foreach ($this->recommendationSetTable->findByAnr($anr) as $recommendationSet) {

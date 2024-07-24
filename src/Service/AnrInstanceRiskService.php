@@ -201,7 +201,7 @@ class AnrInstanceRiskService
             }
         } else {
             foreach ($object->getAsset()->getAmvs() as $amv) {
-                $instanceRisk = $this->createInstanceRisk($instance, $amv, null,  null, null, $saveInDb);
+                $instanceRisk = $this->createInstanceRisk($instance, $amv, null, null, null, $saveInDb);
 
                 /* Process risk owner and context in case of import. */
                 if (!empty($params['risks'])) {

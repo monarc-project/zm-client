@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Import\Processor;
 use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
 use Monarc\FrontOffice\Service\AnrInstanceConsequenceService;
 
@@ -27,13 +28,11 @@ class InstanceConsequenceImportProcessor
     public function processInstanceConsequencesData(
         Entity\Instance $instance,
         array $instanceConsequencesData,
-        bool $withEval,
         ?Entity\Instance $siblingInstance,
-        bool $isImportTypeAnr
     ): void {
-        if ($withEval) {
+        if ($this->importCacheHelper->getValueFromArrayCache('with_eval')) {
             foreach ($instanceConsequencesData as $instanceConsequenceData) {
-                $this->processInstanceConsequenceData($instance, $instanceConsequenceData, $isImportTypeAnr);
+                $this->processInstanceConsequenceData($instance, $instanceConsequenceData);
             }
         } elseif ($siblingInstance === null) {
             $this->createInstanceConsequencesBasedOnExistingImpactTypes($instance);
@@ -44,8 +43,7 @@ class InstanceConsequenceImportProcessor
 
     public function processInstanceConsequenceData(
         Entity\Instance $instance,
-        array $instanceConsequenceData,
-        bool $isImportTypeAnr
+        array $instanceConsequenceData
     ): ?Entity\InstanceConsequence {
         /** @var Entity\Anr $anr */
         $anr = $instance->getAnr();
@@ -56,7 +54,9 @@ class InstanceConsequenceImportProcessor
         }
 
         /* For the instances import the values have to be converted to local scales. */
-        if (!$isImportTypeAnr) {
+        if ($this->importCacheHelper
+            ->getValueFromArrayCache('import_type') === InstanceImportService::IMPORT_TYPE_INSTANCE
+        ) {
             $this->convertInstanceConsequencesEvaluations($instanceConsequenceData);
         }
 
@@ -105,26 +105,14 @@ class InstanceConsequenceImportProcessor
             ->getItemFromArrayCache('current_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
         $externalScaleRange = $this->importCacheHelper
             ->getItemFromArrayCache('external_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
-        $instanceData['confidentiality'] = $this->convertValueWithinNewScalesRange(
-            $instanceData['confidentiality'],
-            $externalScaleRange['min'],
-            $externalScaleRange['max'],
-            $currentScaleRange['min'],
-            $currentScaleRange['max'],
-        );
-        $instanceData['integrity'] = $this->convertValueWithinNewScalesRange(
-            $instanceData['integrity'],
-            $externalScaleRange['min'],
-            $externalScaleRange['max'],
-            $currentScaleRange['min'],
-            $currentScaleRange['max'],
-        );
-        $instanceData['availability'] = $this->convertValueWithinNewScalesRange(
-            $instanceData['availability'],
-            $externalScaleRange['min'],
-            $externalScaleRange['max'],
-            $currentScaleRange['min'],
-            $currentScaleRange['max'],
-        );
+        foreach (['confidentiality', 'integrity', 'availability'] as $propertyName) {
+            $instanceData[$propertyName] = $this->convertValueWithinNewScalesRange(
+                $instanceData[$propertyName],
+                $externalScaleRange['min'],
+                $externalScaleRange['max'],
+                $currentScaleRange['min'],
+                $currentScaleRange['max'],
+            );
+        }
     }
 }

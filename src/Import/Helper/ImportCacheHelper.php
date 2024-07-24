@@ -41,4 +41,16 @@ class ImportCacheHelper
 
         return $this->arrayCache[$cacheKey][$itemKey] ?? null;
     }
+
+    /** Sets a single array cache value. */
+    public function setArrayCacheValue(string $cacheKey, $value): void
+    {
+        $this->arrayCache[$cacheKey] = $value;
+    }
+
+    /** Returns the array cache value or null if not set. */
+    public function getValueFromArrayCache(string $cacheKey)
+    {
+        return $this->arrayCache[$cacheKey] ?? null;
+    }
 }

@@ -39,7 +39,8 @@ trait InformationInstanceRiskExportTrait
                 $recommendation = $recommendationRisk->getRecommendation();
                 $recommendationsData[] = array_merge(
                     $this->prepareRecommendationData($recommendation),
-                    ['commentAfter' => $recommendationRisk->getCommentAfter()]);
+                    ['commentAfter' => $recommendationRisk->getCommentAfter()]
+                );
             }
         }
 

@@ -63,7 +63,7 @@ class AssetImportProcessor
     public function getAssetFromCache(Entity\Anr $anr, string $uuid): ?Entity\Asset
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_assets_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_assets_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_assets_cache_loaded', true);
             /** @var Entity\Asset $asset */
             foreach ($this->assetTable->findByAnr($anr) as $asset) {
                 $this->importCacheHelper->addItemToArrayCache('assets_by_uuid', $asset, $asset->getUuid());

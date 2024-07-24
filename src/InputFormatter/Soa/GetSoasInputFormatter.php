@@ -33,7 +33,7 @@ class GetSoasInputFormatter extends AbstractInputFormatter
         ],
     ];
 
-    protected static array $ignoredFilterFieldValues = ['category' => 0];
+    protected static array $ignoredFilterFieldValues = ['category' => '0'];
 
     protected static array $orderParamsToFieldsMap = [
         'm.code' => 'measure.code|LENGTH,measure.code',

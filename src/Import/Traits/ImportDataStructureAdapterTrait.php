@@ -46,6 +46,16 @@ trait ImportDataStructureAdapterTrait
         return $newStructure;
     }
 
+    public function adaptOldSoaScaleCommentsToNewFormat(array $soaScaleCommentsData): array
+    {
+        $newStructure = [];
+        foreach ($soaScaleCommentsData as $scaleCommentData) {
+            $newStructure[$scaleCommentData['scaleIndex']] = $scaleCommentData;
+        }
+
+        return $newStructure;
+    }
+
     /** Converts all the instance related data from the structure prior v2.13.1 to the new one. */
     public function adaptOldInstanceDataToNewFormat(array $data, int $languageIndex): array
     {

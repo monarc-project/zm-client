@@ -12,6 +12,7 @@ use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
+use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
 use Monarc\FrontOffice\Service\AnrInstanceService;
 use Monarc\FrontOffice\Table;
@@ -60,7 +61,7 @@ class InstanceImportProcessor
         foreach ($instancesData as $instanceData) {
             $instanceData['position'] += $maxPositionInsideOfParentInstance++;
             $instanceData['setOnlyExactPosition'] = true;
-            $instances[] = $this->processInstanceData($anr, $instanceData, $parentInstance, $importMode, $withEval);
+            $instances[] = $this->processInstanceData($anr, $instanceData, $parentInstance, $importMode);
         }
 
         return $instances;
@@ -71,9 +72,7 @@ class InstanceImportProcessor
         Entity\Anr $anr,
         array $instanceData,
         ?Entity\Instance $parentInstance,
-        string $importMode,
-        bool $withEval,
-        bool $isImportTypeAnr = true
+        string $importMode
     ): Entity\Instance {
         $objectCategory = null;
         if (isset($instanceData['object']['category'])) {
@@ -85,16 +84,13 @@ class InstanceImportProcessor
         $instanceData['parent'] = $parentInstance;
 
         /* For the instances import the values have to be converted to local scales. */
-        if ($withEval && !$isImportTypeAnr) {
+        if ($this->importCacheHelper->getValueFromArrayCache('with_eval') && $this->importCacheHelper
+            ->getValueFromArrayCache('import_type') === InstanceImportService::IMPORT_TYPE_INSTANCE
+        ) {
             $this->convertInstanceEvaluations($instanceData);
         }
         $instance = $this->instanceService->createInstance($anr, $instanceData, $parentInstance === null, false);
-        $this->prepareAndProcessInstanceConsequencesData(
-            $instance,
-            $instanceData['instancesConsequences'],
-            $withEval,
-            $isImportTypeAnr
-        );
+        $this->prepareAndProcessInstanceConsequencesData($instance, $instanceData['instancesConsequences']);
         $instance->updateImpactBasedOnConsequences();
         /* In case if there is a parent instance, the scales impacts could be adjusted, if they are not set directly. */
         if ($parentInstance !== null) {
@@ -102,29 +98,19 @@ class InstanceImportProcessor
         }
 
         $siblingInstances = [];
-        if (!$withEval && $instance->getObject()->isScopeGlobal()) {
+        if (!$this->importCacheHelper->getValueFromArrayCache('with_eval') && $instance->getObject()->isScopeGlobal()) {
             $siblingInstances = $this->getGlobalObjectInstancesFromCache($anr, $instance->getObject()->getUuid());
         }
-        $this->instanceRiskImportProcessor->processInstanceRisksData(
-            $instance,
-            $siblingInstances,
-            $instanceData['instanceRisks'],
-            $withEval,
-            $isImportTypeAnr
-        );
+        $this->instanceRiskImportProcessor
+            ->processInstanceRisksData($instance, $siblingInstances, $instanceData['instanceRisks']);
 
-        $this->operationalInstanceRiskImportProcessor->processOperationalInstanceRisksData(
-            $anr,
-            $instance,
-            $instanceData['operationalInstanceRisks'],
-            $withEval,
-            $isImportTypeAnr
-        );
+        $this->operationalInstanceRiskImportProcessor
+            ->processOperationalInstanceRisksData($anr, $instance, $instanceData['operationalInstanceRisks']);
 
         $this->processInstanceMetadata($anr, $instance, $instanceData['instanceMetadata']);
 
         if (!empty($instanceData['children'])) {
-            $this->processInstancesData($anr, $instanceData['children'], $instance, $importMode, $withEval);
+            $this->processInstancesData($anr, $instanceData['children'], $instance, $importMode);
         }
 
         return $instance;
@@ -163,27 +149,20 @@ class InstanceImportProcessor
     /** A wrapper method to help of processing the instance consequences data. */
     public function prepareAndProcessInstanceConsequencesData(
         Entity\Instance $instance,
-        array $instanceConsequencesData,
-        bool $withEval,
-        bool $isImportTypeAnr
+        array $instanceConsequencesData
     ): void {
         /** @var Entity\Anr $anr */
         $anr = $instance->getAnr();
         /* When the importing data are without evaluation and the object is global
         the evaluations are taken from a sibling. */
         $siblingInstance = null;
-        if (!$withEval && $instance->getObject()->isScopeGlobal()) {
+        if (!$this->importCacheHelper->getValueFromArrayCache('with_eval') && $instance->getObject()->isScopeGlobal()) {
             $siblingInstances = $this->getGlobalObjectInstancesFromCache($anr, $instance->getObject()->getUuid());
             $siblingInstance = $siblingInstances[0] ?? null;
         }
 
-        $this->instanceConsequenceImportProcessor->processInstanceConsequencesData(
-            $instance,
-            $instanceConsequencesData,
-            $withEval,
-            $siblingInstance,
-            $isImportTypeAnr
-        );
+        $this->instanceConsequenceImportProcessor
+            ->processInstanceConsequencesData($instance, $instanceConsequencesData, $siblingInstance);
     }
 
     /**
@@ -245,7 +224,7 @@ class InstanceImportProcessor
     private function getGlobalObjectInstancesFromCache(Entity\Anr $anr, string $objectUuid): array
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_global_instances_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_global_instances_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_global_instances_cache_loaded', true);
             foreach ($this->monarcObjectTable->findGlobalObjectsByAnr($anr) as $object) {
                 $instances = [];
                 foreach ($object->getInstances() as $instance) {
@@ -268,26 +247,14 @@ class InstanceImportProcessor
             ->getItemFromArrayCache('current_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
         $externalScaleRange = $this->importCacheHelper
             ->getItemFromArrayCache('external_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
-        $instanceData['confidentiality'] = $this->convertValueWithinNewScalesRange(
-            $instanceData['confidentiality'],
-            $externalScaleRange['min'],
-            $externalScaleRange['max'],
-            $currentScaleRange['min'],
-            $currentScaleRange['max'],
-        );
-        $instanceData['integrity'] = $this->convertValueWithinNewScalesRange(
-            $instanceData['integrity'],
-            $externalScaleRange['min'],
-            $externalScaleRange['max'],
-            $currentScaleRange['min'],
-            $currentScaleRange['max'],
-        );
-        $instanceData['availability'] = $this->convertValueWithinNewScalesRange(
-            $instanceData['availability'],
-            $externalScaleRange['min'],
-            $externalScaleRange['max'],
-            $currentScaleRange['min'],
-            $currentScaleRange['max'],
-        );
+        foreach (['confidentiality', 'integrity', 'availability'] as $propertyName) {
+            $instanceData[$propertyName] = $this->convertValueWithinNewScalesRange(
+                $instanceData[$propertyName],
+                $externalScaleRange['min'],
+                $externalScaleRange['max'],
+                $currentScaleRange['min'],
+                $currentScaleRange['max'],
+            );
+        }
     }
 }

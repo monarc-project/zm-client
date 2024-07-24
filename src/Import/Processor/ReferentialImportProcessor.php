@@ -161,7 +161,7 @@ class ReferentialImportProcessor
     private function getSoaCategoryFromCache(Entity\Anr $anr, string $refUuidAndSoaCatLabel): ?Entity\SoaCategory
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_soa_categories_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_soa_categories_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_soa_categories_cache_loaded', true);
             /** @var Entity\SoaCategory $soaCategory */
             foreach ($this->soaCategoryTable->findByAnr($anr) as $soaCategory) {
                 $this->importCacheHelper->addItemToArrayCache(
@@ -179,7 +179,7 @@ class ReferentialImportProcessor
     private function prepareReferentialsAndMeasuresCache(Entity\Anr $anr): void
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_referentials_cache_loaded')) {
-            $this->importCacheHelper->addItemToArrayCache('is_referentials_cache_loaded', true);
+            $this->importCacheHelper->setArrayCacheValue('is_referentials_cache_loaded', true);
             /** @var Entity\Referential $referential */
             foreach ($this->referentialTable->findByAnr($anr) as $referential) {
                 $this->importCacheHelper->addItemToArrayCache('referentials', $referential, $referential->getUuid());

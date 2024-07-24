@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Import\Service;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Import\Processor;
 use Monarc\FrontOffice\Import\Traits;
 use Monarc\FrontOffice\Table;
@@ -17,6 +18,10 @@ use Monarc\FrontOffice\Service;
 
 class InstanceImportService
 {
+    public const IMPORT_TYPE_ANR = 'anr';
+    public const IMPORT_TYPE_INSTANCE = 'instance';
+    public const IMPORT_TYPE_OBJECT = 'object';
+
     use RiskCalculationTrait;
     use Traits\EvaluationConverterTrait;
     use Traits\ImportFileContentTrait;
@@ -42,6 +47,7 @@ class InstanceImportService
         private Processor\OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor,
         private Processor\OperationalInstanceRiskImportProcessor $operationalInstanceRiskImportProcessor,
         private Processor\SoaImportProcessor $soaImportProcessor,
+        private ImportCacheHelper $importCacheHelper,
         private Service\AnrRecordService $anrRecordService,
         private Table\InstanceTable $instanceTable,
         private Table\AnrTable $anrTable,
@@ -106,26 +112,27 @@ class InstanceImportService
         $this->validateIfImportIsPossible($anr, $parentInstance, $data);
 
         $withEval = $data['withEval'] ?? $data['with_eval'];
+        /* To simplify the value access across all the processors. */
+        $this->importCacheHelper->setArrayCacheValue('with_eval', $withEval);
 
         $createdInstances = [];
 
-        if ($data['type'] === 'anr') {
+        if ($data['type'] === self::IMPORT_TYPE_ANR) {
+            $this->importCacheHelper->setArrayCacheValue('import_type', self::IMPORT_TYPE_ANR);
             $createdInstances = $this->isImportingDataVersionLowerThan('2.13.1')
                 ? $this->importAnrFromArray($data, $anr, $parentInstance, $importMode)
                 : $this->processAnrImport($anr, $data, $parentInstance, $importMode);
-        } elseif ($data['type'] === 'instance') {
+        } elseif ($data['type'] === self::IMPORT_TYPE_INSTANCE) {
+            $this->importCacheHelper->setArrayCacheValue('import_type', self::IMPORT_TYPE_INSTANCE);
             if ($withEval) {
                 $this->scaleImportProcessor->prepareScalesCache($anr, $data);
-                $this->operationalRiskScaleImportProcessor->prepareExternalOperationalRiskScalesDataCache(
-                    $anr,
-                    $data
-                );
+                $this->operationalRiskScaleImportProcessor->prepareExternalOperationalRiskScalesDataCache($anr, $data);
             }
             if ($this->isImportingDataVersionLowerThan('2.13.1')) {
                 $data['instance'] = $this->adaptOldInstanceDataToNewFormat($data, $anr->getLanguage());
             }
             $createdInstances[] = $this->instanceImportProcessor
-                ->processInstanceData($anr, $data['instance'], $parentInstance, $importMode, $withEval, false);
+                ->processInstanceData($anr, $data['instance'], $parentInstance, $importMode);
         }
 
         $this->anrTable->flush();
@@ -159,7 +166,6 @@ class InstanceImportService
             /* Apply the importing operational risks scales. */
             $this->operationalRiskScaleImportProcessor->adjustOperationalRisksScaleValuesBasedOnNewScales($anr, $data);
             $this->operationalRiskScaleImportProcessor->updateOperationalRisksScalesAndRelatedInstances($anr, $data);
-
         }
         if ($data['withInterviews']) {
             /* Process the interviews' data. */
@@ -187,6 +193,9 @@ class InstanceImportService
         /* Process Soa and SoaScaleComments data. */
         if (!empty($data['soaScaleComments'])) {
             $this->soaImportProcessor->mergeSoaScaleComments($anr, $data['soaScaleComments'], false);
+        }
+        if (!empty($data['soas'])) {
+            $this->soaImportProcessor->processSoasData($anr, $data['soas']);
         }
 
         /* import the GDPR records. */
@@ -268,7 +277,8 @@ class InstanceImportService
 
         /* Import SOA Scale Comments if they are passed. Only in the new structure, when the functionality exists. */
         if (!empty($data['soaScaleComment'])) {
-            $this->soaImportProcessor->mergeSoaScaleComments($anr, $data['soaScaleComment'], true);
+            $soaScaleCommentsData = $this->adaptOldSoaScaleCommentsToNewFormat($data['soaScaleComment']);
+            $this->soaImportProcessor->mergeSoaScaleComments($anr, $soaScaleCommentsData, true);
         }
 
         /* Import the Statement of Applicability (SOA). */
@@ -291,7 +301,7 @@ class InstanceImportService
             );
         }
 
-        $withEval = (bool)$data['with_eval'];
+        $withEval = $this->importCacheHelper->getValueFromArrayCache('with_eval');
         /* Import scales. */
         if ($withEval && !empty($data['scales'])) {
             /* Adjust the values of information risks' scales. */
@@ -318,7 +328,7 @@ class InstanceImportService
             }
 
             $instances[] = $this->instanceImportProcessor
-                ->processInstanceData($anr, $instanceData, $parentInstance, $modeImport, $withEval);
+                ->processInstanceData($anr, $instanceData, $parentInstance, $modeImport);
         }
 
         return $instances;

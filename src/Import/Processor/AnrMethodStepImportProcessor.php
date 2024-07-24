@@ -33,7 +33,7 @@ class AnrMethodStepImportProcessor
     {
         if (!empty($methodStepsData['questions'])) {
             /* The only place where the data is flushed, so has to be called first. */
-            $this->processQuestionsData($anr, $methodStepsData['questions']);
+            $this->processQuestionsData($anr, $methodStepsData);
         }
 
         /* Set method steps checkboxes. */
@@ -116,13 +116,13 @@ class AnrMethodStepImportProcessor
         }
     }
 
-    private function processQuestionsData(Entity\Anr $anr, $questionsData): void
+    private function processQuestionsData(Entity\Anr $anr, array $methodStepsData): void
     {
         foreach ($this->questionTable->findByAnr($anr) as $question) {
             $this->questionTable->deleteEntity($question, false);
         }
 
-        foreach ($questionsData as $position => $questionData) {
+        foreach ($methodStepsData['questions'] as $position => $questionData) {
             /* In the new data structure there is only "label" field set. */
             if (isset($questionData['label'])) {
                 $questionData['label' . $anr->getLanguage()] = $questionData['label'];
@@ -142,7 +142,7 @@ class AnrMethodStepImportProcessor
                 $choicesOldIdsToNewObjects = [];
                 /* Support the old structure format, prior v2.13.1 */
                 $questionChoicesData = $methodStepsData['questionChoice'] ?? $questionData['questionChoices'];
-                foreach ($questionChoicesData as $questionChoiceData) {
+                foreach ($questionChoicesData as $questionChoiceId => $questionChoiceData) {
                     if (!isset($questionChoiceData['question'])
                         || $questionChoiceData['question'] === $questionData['id']
                     ) {
@@ -153,7 +153,7 @@ class AnrMethodStepImportProcessor
                             ->setLabels($questionChoiceData)->setPosition($questionChoiceData['position'])
                             ->setCreator($this->connectedUser->getEmail());
                         $this->questionChoiceTable->saveEntity($questionChoice, false);
-                        $choicesOldIdsToNewObjects[$questionChoiceData['id']] = $questionChoice;
+                        $choicesOldIdsToNewObjects[$questionChoiceData['id'] ?? $questionChoiceId] = $questionChoice;
                     }
                 }
                 $response = trim($question->getResponse(), '[]');
