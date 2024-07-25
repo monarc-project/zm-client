@@ -152,7 +152,7 @@ class ObjectImportService
 
         /* Convert the old structure format to the new one if the import is from MOSP or importing version is below. */
         if (!empty($data['mosp']) || $this->isImportingDataVersionLowerThan('2.13.1')) {
-            $data = $this->adaptOldObjectDataStructureToNewFormat($data);
+            $data = $this->adaptOldObjectDataStructureToNewFormat($data, $anr->getLanguage());
         }
 
         $objectCategory = $this->objectCategoryImportProcessor

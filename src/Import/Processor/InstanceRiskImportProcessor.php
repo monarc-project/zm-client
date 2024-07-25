@@ -99,12 +99,12 @@ class InstanceRiskImportProcessor
                 ->setCacheMaxRisk($instanceRiskData['cacheMaxRisk'])
                 ->setCacheTargetedRisk($instanceRiskData['cacheTargetedRisk'])
                 ->setKindOfMeasure($instanceRiskData['kindOfMeasure'])
-                ->setComment($instanceRiskData['comment'])
-                ->setCommentAfter($instanceRiskData['commentAfter'])
+                ->setComment($instanceRiskData['comment'] ?? '')
+                ->setCommentAfter($instanceRiskData['commentAfter'] ?? '')
                 ->setIsThreatRateNotSetOrModifiedExternally(
                     (bool)$instanceRiskData['isThreatRateNotSetOrModifiedExternally']
                 )
-                ->setContext($instanceRiskData['context']);
+                ->setContext($instanceRiskData['context'] ?? '');
             if (!empty($instanceRiskData['riskOwner'])) {
                 $this->instanceRiskOwnerService
                     ->processRiskOwnerNameAndAssign($instanceRiskData['riskOwner'], $instanceRisk);

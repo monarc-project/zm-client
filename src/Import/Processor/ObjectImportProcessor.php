@@ -192,7 +192,7 @@ class ObjectImportProcessor
         return $objectName;
     }
 
-    /* Merges the amvs (information risks) of the existing object. */
+    /** Merges the amvs (information risks) of the existing object. */
     private function mergeAssetInformationRisks(Entity\MonarcObject $object, array $informationRisksData): void
     {
         $existingAmvs = [];
@@ -224,17 +224,19 @@ class ObjectImportProcessor
         }
     }
 
-    /* Merges the rolfRisks (operational risks) of the existing object. */
+    /** Merges the rolfRisks (operational risks) of the existing object. */
     private function mergeRolfTagOperationalRisks(Entity\MonarcObject $object, ?array $rolfTagData): void
     {
-        // if ($object->getRolfTag()->getCode() !== $rolfTagData['code']) {}
-        // TODO: 1.
-        // TODO: 2. was a rolf tag and now removed, then remove all the instance risks op have to be removed.
-        // TODO: 3. if a new rolf is changed, then all the op risks have to be updated.
-        // TODO: 4. rolfTag stays the same (set) then we have to validate the difference of rolf risks.
-        /* if there was no rolfTag and a new one is set. */
         if (!empty($rolfTagData) && $object->getRolfTag() === null) {
+            // TODO: 1:
+            /* if there was no rolfTag and a new one is set. */
 
+        } elseif (empty($rolfTagData) && $object->getRolfTag() !== null) {
+            // TODO: 2. was a rolf tag and now removed, then remove all the instance risks op have to be removed.
+        } elseif ($object->getRolfTag()->getCode() !== $rolfTagData['code']) {
+            // TODO: 3. if a new rolf is changed, then all the op risks have to be updated.
+        } else {
+            // TODO: 4. rolfTag stays the same (set) then we have to validate the difference of rolf risks.
         }
     }
 }

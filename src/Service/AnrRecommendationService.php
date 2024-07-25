@@ -86,11 +86,14 @@ class AnrRecommendationService
         if (isset($data['responsible']) || isset($data['responsable'])) {
             $recommendation->setResponsible($data['responsible'] ?? $data['responsable']);
         }
-        if (isset($data['duedate'])) {
-            if (!empty($data['duedate']) && !$data['duedate'] instanceof DateTime) {
-                $recommendation->setDueDateFromString($data['duedate']);
-            } else {
+        if (!empty($data['duedate'])) {
+            if ($data['duedate'] instanceof DateTime) {
                 $recommendation->setDueDate($data['duedate']);
+            } else {
+                if (\is_array($data['duedate'])) {
+                    $data['duedate'] = $data['duedate']['date'];
+                }
+                $recommendation->setDueDateFromString($data['duedate']);
             }
         }
         if (isset($data['counterTreated'])) {
@@ -122,9 +125,13 @@ class AnrRecommendationService
         $recommendation = $this->recommendationTable->findByUuidAndAnr($uuid, $anr);
 
         if (!empty($data['duedate'])) {
-            try {
-                $recommendation->setDueDate(new DateTime($data['duedate']));
-            } catch (Throwable) {
+            if ($data['duedate'] instanceof DateTime) {
+                $recommendation->setDueDate($data['duedate']);
+            } else {
+                if (\is_array($data['duedate'])) {
+                    $data['duedate'] = $data['duedate']['date'];
+                }
+                $recommendation->setDueDateFromString($data['duedate']);
             }
         } elseif (isset($data['duedate']) && $data['duedate'] === '') {
             $recommendation->setDueDate(null);

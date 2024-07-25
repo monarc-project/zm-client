@@ -41,6 +41,9 @@ class AnrReferentialService
     {
         /** @var Referential $referential */
         $referential = (new Referential())->setAnr($anr)->setLabels($data);
+        if (!empty($data['uuid'])) {
+            $referential->setUuid($data['uuid']);
+        }
 
         $this->referentialTable->save($referential, $saveInDb);
 

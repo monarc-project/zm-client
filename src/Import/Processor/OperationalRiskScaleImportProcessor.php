@@ -332,7 +332,7 @@ class OperationalRiskScaleImportProcessor
 
             $maxIndexForLikelihood = 0;
             /* This is currently applicable only for likelihood scales type */
-            foreach ($externalScaleData['object']->getOperationalRiskScaleComments() as $scaleCommentData) {
+            foreach ($externalScaleData['operationalRiskScaleComments'] as $scaleCommentData) {
                 $this->createOrUpdateOperationalRiskScaleComment(
                     $anr,
                     true,

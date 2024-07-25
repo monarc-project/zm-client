@@ -56,6 +56,18 @@ trait ImportDataStructureAdapterTrait
         return $newStructure;
     }
 
+    public function adaptOldSoasToNewFormatWithSoaScaleCommentIndex(array $data): array
+    {
+        $newStructure = [];
+        foreach ($data['soas'] as $soaData) {
+            $newStructure[] = array_merge($soaData, isset($soaData['soaScaleComment']) ? [
+                'soaScaleCommentIndex' => $data['soaScaleComment'][$soaData['soaScaleComment']]['scaleIndex'] ?? -1,
+            ] : []);
+        }
+
+        return $newStructure;
+    }
+
     /** Converts all the instance related data from the structure prior v2.13.1 to the new one. */
     public function adaptOldInstanceDataToNewFormat(array $data, int $languageIndex): array
     {
@@ -70,8 +82,8 @@ trait ImportDataStructureAdapterTrait
             'isConfidentialityInherited' => $data['instance']['ch'],
             'isIntegrityInherited' => $data['instance']['ih'],
             'isAvailabilityInherited' => $data['instance']['dh'],
-            'asset' => $data['instance']['object']['asset']['asset'],
-            'object' => $this->adaptOldObjectDataStructureToNewFormat($data['instance'])['object'],
+            'asset' => $data['object']['asset']['asset'],
+            'object' => $this->adaptOldObjectDataStructureToNewFormat($data['object'], $languageIndex)['object'],
             'instanceMetadata' => $this->prepareInstanceMetadataData($data),
             'instanceRisks' => $this->prepareInstanceRisksData($data, $languageIndex),
             'operationalInstanceRisks' => $this->prepareOperationalInstanceRisksData($data, $languageIndex),
@@ -81,8 +93,15 @@ trait ImportDataStructureAdapterTrait
     }
 
     /** Converts all the object's related data from the structure prior v2.13.1 to the new one. */
-    public function adaptOldObjectDataStructureToNewFormat(array $data): array
+    public function adaptOldObjectDataStructureToNewFormat(array $data, int $languageIndex): array
     {
+        $newStructure['object'] = [
+            'uuid' => $data['object']['uuid'],
+            'name' => $data['object']['name' . $languageIndex],
+            'label' => $data['object']['label' . $languageIndex],
+            'mode' => $data['object']['mode'],
+            'scope' => $data['object']['scope'],
+        ];
         $newStructure['object']['category'] = $this->adaptOldCategoryStructureToNewFormat($data);
         $newStructure['object']['asset'] = $data['asset']['asset'];
         $newStructure['object']['asset']['informationRisks'] = [];
@@ -108,7 +127,7 @@ trait ImportDataStructureAdapterTrait
             ];
         }
         $newStructure['object']['rolfTag'] = null;
-        if (!empty($data['object']['rolfTag']) && !empty($data['rolfTags'][$data['object']['rolfTag']])) {
+        if (isset($data['object']['rolfTag']) && !empty($data['rolfTags'][$data['object']['rolfTag']])) {
             $newStructure['object']['rolfTag'] = $data['rolfTags'][$data['object']['rolfTag']];
             $newStructure['object']['rolfTag']['rolfRisks'] = [];
             foreach ($newStructure['object']['rolfTag']['risks'] ?? [] as $rolfRiskId) {
@@ -126,9 +145,10 @@ trait ImportDataStructureAdapterTrait
             }
         }
         $newStructure['object']['children'] = [];
-        foreach ($data['object']['children'] as $childObjectData) {
+        foreach ($data['children'] ?? [] as $childObjectData) {
             $newStructure['object']['children'][] = $this->adaptOldObjectDataStructureToNewFormat(
-                $childObjectData
+                $childObjectData,
+                $languageIndex
             )['object'];
         }
 
@@ -153,7 +173,7 @@ trait ImportDataStructureAdapterTrait
     private function adaptOldCategoryStructureToNewFormat(array $data): array
     {
         $newCategoryStructure = [];
-        if (isset($data['categories'][$data['object']['category']])) {
+        if (isset($data['object']['category'], $data['categories'][$data['object']['category']])) {
             $newCategoryStructure = $data['categories'][$data['object']['category']];
             $newCategoryStructure['parent'] = $this
                 ->prepareNewStructureOfParentsHierarchy($data['categories'], (int)$newCategoryStructure['parent']);
@@ -195,7 +215,7 @@ trait ImportDataStructureAdapterTrait
     {
         $instanceRisksData = [];
         foreach ($data['risks'] ?? [] as $instanceRiskDatum) {
-            $instanceRiskData = null;
+            $informationRiskData = null;
             $threatData = $data['threats'][$instanceRiskDatum['threat']] ?? ['uuid' => $instanceRiskDatum['threat']];
             if (!empty($threatData['theme'])) {
                 $threatData['theme'] = $data['object']['asset']['themes'][$threatData['theme']];
@@ -210,8 +230,9 @@ trait ImportDataStructureAdapterTrait
                         $measuresData[] = $data['measures'][$measureUuid];
                     }
                 }
-                $instanceRiskData = [
+                $informationRiskData = [
                     'uuid' => $instanceRiskDatum['amv'],
+                    'asset' => $data['object']['asset']['asset'],
                     'threat' => $threatData,
                     'vulnerability' => $vulnerabilityData,
                     'measures' => $measuresData,
@@ -227,7 +248,7 @@ trait ImportDataStructureAdapterTrait
             }
 
             $instanceRisksData[] = [
-                'informationRisk' => $instanceRiskData,
+                'informationRisk' => $informationRiskData,
                 'threat' => $threatData,
                 'vulnerability' => $vulnerabilityData,
                 'specific' => $instanceRiskDatum['specific'],

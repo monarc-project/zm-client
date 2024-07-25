@@ -53,10 +53,10 @@ class AnrMethodStepImportProcessor
 
         /* Set data of text-boxes. */
         if (!empty($methodStepsData['data'])) {
-            $anr->setContextAnaRisk($methodStepsData['data']['contextAnaRisk'])
-                ->setContextGestRisk($methodStepsData['data']['contextGestRisk'])
-                ->setSynthThreat($methodStepsData['data']['synthThreat'])
-                ->setSynthAct($methodStepsData['data']['synthAct'])
+            $anr->setContextAnaRisk($methodStepsData['data']['contextAnaRisk'] ?? '')
+                ->setContextGestRisk($methodStepsData['data']['contextGestRisk'] ?? '')
+                ->setSynthThreat($methodStepsData['data']['synthThreat'] ?? '')
+                ->setSynthAct($methodStepsData['data']['synthAct'] ?? '')
                 ->setUpdater($this->connectedUser->getEmail());
             $this->anrTable->save($anr, false);
         }

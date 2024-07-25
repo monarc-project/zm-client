@@ -42,7 +42,7 @@ class SoaImportProcessor
         }
     }
 
-    public function mergeSoaScaleComments(Entity\Anr $anr, array $newSoaScaleCommentsData, bool $isOldStructure): void
+    public function mergeSoaScaleComments(Entity\Anr $anr, array $newSoaScaleCommentsData): void
     {
         $currentSoaScaleCommentsNumber = 0;
         $newSoaScaleCommentsNumber = \count($newSoaScaleCommentsData);
@@ -102,38 +102,19 @@ class SoaImportProcessor
                 $newSoaScaleCommentsNumber - 1
             );
         }
-
-        /* To make exported prior v2.13.1 files working, a map with soa_scale_comments_ids_to_indexes is created. */
-        if ($isOldStructure) {
-            foreach ($newSoaScaleCommentsData as $oldId => $newSoaScaleCommentData) {
-                $this->importCacheHelper->addItemToArrayCache(
-                    'soa_scale_comments_ids_to_indexes',
-                    $newSoaScaleCommentData['scaleIndex'],
-                    $oldId
-                );
-            }
-        }
     }
 
     private function processSoaData(Entity\Anr $anr, array $soaData): Entity\Soa
     {
         /* Support the old structure field name prior v2.13.1. */
         $measureUuid = $soaData['measure_id'] ?? $soaData['measureUuid'];
+        /* New SOAs were created and cached during the new measures process, and existed SOA's cache is initialising. */
         $soa = $this->getSoaFromCache($anr, $measureUuid);
-        /* New SOAs were created and cached during the new measures process, and existed SOAs cache also initialised. */
+        if (isset($soaData['soaScaleCommentIndex']) && $soaData['soaScaleCommentIndex'] !== null) {
+            $soaData['soaScaleComment'] = $this->importCacheHelper
+                ->getItemFromArrayCache('soa_scale_comments_by_index', $soaData['soaScaleCommentIndex']);
+        }
         if ($soa !== null) {
-            if (isset($soaData['soaScaleComment'])) {
-                /* Support the old structure field name prior v2.13.1. */
-                $soaData['soaScaleCommentIndex'] = $this->importCacheHelper->getItemFromArrayCache(
-                    'soa_scale_comments_ids_to_indexes',
-                    $soaData['soaScaleComment']
-                );
-            }
-            if (isset($soaData['soaScaleCommentIndex']) && $soaData['soaScaleCommentIndex'] !== null) {
-                /* New structure from v2.13.1 or set workaround for the old export. */
-                $soaData['soaScaleComment'] = $this->importCacheHelper
-                    ->getItemFromArrayCache('soa_scale_comments_by_index', $soaData['soaScaleCommentIndex']);
-            }
             $this->soaService->patchSoaObject($anr, $soa, $soaData, false);
         } else {
             $measure = $this->referentialImportProcessor->getMeasureFromCache($anr, $measureUuid);

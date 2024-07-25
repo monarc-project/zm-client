@@ -47,8 +47,7 @@ class InstanceImportProcessor
         Entity\Anr $anr,
         array $instancesData,
         ?Entity\Instance $parentInstance,
-        string $importMode,
-        bool $withEval
+        string $importMode
     ): array {
         $maxPositionInsideOfParentInstance = 0;
         /* The query to get the max position is executed only if the parent instances is set and stored in the DB. */
@@ -77,7 +76,7 @@ class InstanceImportProcessor
         $objectCategory = null;
         if (isset($instanceData['object']['category'])) {
             $objectCategory = $this->objectCategoryImportProcessor
-                ->processObjectCategoryData($anr, $objectCategory, $importMode);
+                ->processObjectCategoryData($anr, $instanceData['object']['category'], $importMode);
         }
         $instanceData['object'] = $this->objectImportProcessor
             ->processObjectData($anr, $objectCategory, $instanceData['object'], $importMode);

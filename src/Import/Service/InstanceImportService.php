@@ -188,11 +188,11 @@ class InstanceImportService
 
         /* Process the Instances, Instance Risks, Consequences and evaluations data. */
         $result = $this->instanceImportProcessor
-            ->processInstancesData($anr, $data['instances'], $parentInstance, $importMode, $data['withEval']);
+            ->processInstancesData($anr, $data['instances'], $parentInstance, $importMode);
 
         /* Process Soa and SoaScaleComments data. */
         if (!empty($data['soaScaleComments'])) {
-            $this->soaImportProcessor->mergeSoaScaleComments($anr, $data['soaScaleComments'], false);
+            $this->soaImportProcessor->mergeSoaScaleComments($anr, $data['soaScaleComments']);
         }
         if (!empty($data['soas'])) {
             $this->soaImportProcessor->processSoasData($anr, $data['soas']);
@@ -278,11 +278,14 @@ class InstanceImportService
         /* Import SOA Scale Comments if they are passed. Only in the new structure, when the functionality exists. */
         if (!empty($data['soaScaleComment'])) {
             $soaScaleCommentsData = $this->adaptOldSoaScaleCommentsToNewFormat($data['soaScaleComment']);
-            $this->soaImportProcessor->mergeSoaScaleComments($anr, $soaScaleCommentsData, true);
+            $this->soaImportProcessor->mergeSoaScaleComments($anr, $soaScaleCommentsData);
         }
 
         /* Import the Statement of Applicability (SOA). */
         if (!empty($data['soas'])) {
+            if (!empty($data['soaScaleComment'])) {
+                $data['soas'] = $this->adaptOldSoasToNewFormatWithSoaScaleCommentIndex($data);
+            }
             $this->soaImportProcessor->processSoasData($anr, $data['soas']);
         }
 
