@@ -42,7 +42,6 @@ class CreateAnrDataInputValidator extends AbstractInputValidator
                     ],
                 ],
                 'validators' => [
-                    // TODO: Add unique label validation.
                     [
                         'name' => StringLength::class,
                         'options' => [

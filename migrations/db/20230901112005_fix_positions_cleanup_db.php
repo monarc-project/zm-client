@@ -277,6 +277,7 @@ class FixPositionsCleanupDb extends AbstractMigration
         $this->table('measures_rolf_risks')
             ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
             ->removeColumn('measure_uuid')
+            ->removeColumn('anr_id')
             ->update();
 
         /* Rename column of owner_id to risk_owner_id. */

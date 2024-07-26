@@ -33,24 +33,24 @@ class OperationalRiskImportProcessor
     public function processOperationalRiskData(Entity\Anr $anr, array $operationalRiskData): Entity\RolfRisk
     {
         $operationalRisk = $this->getRolfRiskFromCache($anr, $operationalRiskData['code']);
-        if ($operationalRisk !== null) {
-            return $operationalRisk;
+        if ($operationalRisk === null) {
+            $operationalRisk = $this->anrRolfRiskService->create($anr, [
+                'code' => $operationalRiskData['code'],
+                'label' . $anr->getLanguage() =>
+                    $operationalRiskData['label'] ?? $operationalRiskData['label' . $anr->getLanguage()],
+                'description' . $anr->getLanguage() =>
+                    $operationalRiskData['label'] ?? $operationalRiskData['description' . $anr->getLanguage()],
+            ], false);
+            $this->importCacheHelper->addItemToArrayCache(
+                'rolf_risks_by_code',
+                $operationalRisk,
+                $operationalRisk->getCode()
+            );
         }
 
-        $operationalRisk = $this->anrRolfRiskService->create($anr, [
-            'code' => $operationalRiskData['code'],
-            'label' . $anr->getLanguage() =>
-                $operationalRiskData['label'] ?? $operationalRiskData['label' . $anr->getLanguage()],
-            'description' . $anr->getLanguage() =>
-                $operationalRiskData['label'] ?? $operationalRiskData['description' . $anr->getLanguage()],
-        ], false);
-        $this->importCacheHelper->addItemToArrayCache(
-            'rolf_risks_by_code',
-            $operationalRisk,
-            $operationalRisk->getCode()
-        );
+        $saveOperationalRisk = false;
         foreach ($operationalRiskData['measures'] as $measureData) {
-            $measure = $this->referentialImportProcessor->getMeasureFromCache($anr, $measureData);
+            $measure = $this->referentialImportProcessor->getMeasureFromCache($anr, $measureData['uuid']);
             if ($measure === null && !empty($measureData['referential'])) {
                 $referential = $this->referentialImportProcessor->processReferentialData(
                     $anr,
@@ -60,12 +60,22 @@ class OperationalRiskImportProcessor
             }
             if ($measure !== null) {
                 $operationalRisk->addMeasure($measure);
+                $saveOperationalRisk = true;
             }
         }
-        foreach ($operationalRiskData['rolfTags'] as $rolfTagData) {
-            $operationalRisk->addTag($this->rolfTagImportProcessor->processRolfTagData($anr, $rolfTagData));
+        foreach ($operationalRiskData['rolfTags'] ?? [] as $rolfTagData) {
+            $rolfTag = $this->rolfTagImportProcessor->processRolfTagData($anr, $rolfTagData);
+            if (!$operationalRisk->hasRolfTag($rolfTag)) {
+                $saveOperationalRisk = true;
+            }
+            $operationalRisk->addTag($rolfTag);
         }
-        $this->rolfRiskTable->save($operationalRisk, false);
+
+        if ($saveOperationalRisk) {
+            $this->rolfRiskTable->save($operationalRisk, false);
+            $this->importCacheHelper
+                ->addItemToArrayCache('rolf_risks_by_code', $operationalRisk, $operationalRisk->getCode());
+        }
 
         return $operationalRisk;
     }

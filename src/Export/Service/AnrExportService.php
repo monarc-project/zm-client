@@ -101,9 +101,13 @@ class AnrExportService
             'withKnowledgeBase' => $withKnowledgeBase,
             'languageCode' => $anr->getLanguageCode(),
             'languageIndex' => $anr->getLanguage(),
-            'knowledgeBase' => $withKnowledgeBase
-                ? $this->prepareKnowledgeBaseData($anr, $withEval, $withControls, $withRecommendations)
-                : [],
+            'knowledgeBase' => $withKnowledgeBase || $withSoas ? $this->prepareKnowledgeBaseData(
+                $anr,
+                $withEval,
+                $withControls,
+                $withRecommendations,
+                !$withKnowledgeBase
+            ) : [],
             'library' => $withLibrary ? $this->prepareLibraryData($anr, !$withKnowledgeBase) : [],
             'instances' => $this
                 ->prepareInstancesData($anr, !$withLibrary, $withEval, $withControls, $withRecommendations),
@@ -137,13 +141,27 @@ class AnrExportService
         Entity\Anr $anr,
         bool $withEval,
         bool $withControls,
-        bool $withRecommendations
+        bool $withRecommendations,
+        bool $onlyWithReferentials
     ): array {
+        if ($onlyWithReferentials) {
+            return [
+                'assets' => [],
+                'threats' => [],
+                'vulnerabilities' => [],
+                'referentials' => $this->prepareReferentialsData($anr),
+                'informationRisks' => [],
+                'rolfTags' => [],
+                'operationalRisks' => [],
+                'recommendationSets' => [],
+            ];
+        }
+
         return [
             'assets' => $this->prepareAssetsData($anr),
             'threats' => $this->prepareThreatsData($anr, $withEval),
             'vulnerabilities' => $this->prepareVulnerabilitiesData($anr),
-            'referentials' => $withControls ? $this->prepareReferentialsData($anr) : [],
+            'referentials' => $this->prepareReferentialsData($anr),
             'informationRisks' => $this->prepareInformationRisksData($anr, $withEval, $withControls),
             'rolfTags' => $this->prepareRolfTagsData($anr),
             'operationalRisks' => $this->prepareOperationalRisksData($anr, $withControls),

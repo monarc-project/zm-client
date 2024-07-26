@@ -32,29 +32,27 @@ class AssetImportProcessor
     public function processAssetData(Entity\Anr $anr, array $assetData): Entity\Asset
     {
         $asset = $this->getAssetFromCache($anr, $assetData['uuid']);
-        if ($asset !== null) {
-            return $asset;
-        }
+        if ($asset === null) {
+            /* The code should be unique. */
+            if ($this->importCacheHelper->isItemInArrayCache('assets_codes', $assetData['code'])) {
+                $assetData['code'] .= '-' . time();
+            }
 
-        /* The code should be unique. */
-        if ($this->importCacheHelper->isItemInArrayCache('assets_codes', $assetData['code'])) {
-            $assetData['code'] .= '-' . time();
-        }
+            /* In the new data structure there is only "label" field set. */
+            if (isset($assetData['label'])) {
+                $assetData['label' . $anr->getLanguage()] = $assetData['label'];
+            }
+            if (isset($assetData['description'])) {
+                $assetData['description' . $anr->getLanguage()] = $assetData['description'];
+            }
 
-        /* In the new data structure there is only "label" field set. */
-        if (isset($assetData['label'])) {
-            $assetData['label' . $anr->getLanguage()] = $assetData['label'];
+            $asset = $this->anrAssetService->create($anr, $assetData, false);
+            $this->importCacheHelper->addItemToArrayCache('assets_by_uuid', $asset, $asset->getUuid());
         }
-        if (isset($assetData['description'])) {
-            $assetData['description' . $anr->getLanguage()] = $assetData['description'];
-        }
-
-        $asset = $this->anrAssetService->create($anr, $assetData, false);
-        $this->importCacheHelper->addItemToArrayCache('assets_by_uuid', $asset, $asset->getUuid());
 
         /* In case if the process is called from the object then process information risks data. */
-        if (!empty($assetsData['informationRisks'])) {
-            $this->informationRiskImportProcessor->processInformationRisksData($anr, $assetsData['informationRisks']);
+        if (!empty($assetData['informationRisks'])) {
+            $this->informationRiskImportProcessor->processInformationRisksData($anr, $assetData['informationRisks']);
         }
 
         return $asset;

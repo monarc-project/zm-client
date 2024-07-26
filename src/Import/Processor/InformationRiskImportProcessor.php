@@ -37,34 +37,33 @@ class InformationRiskImportProcessor
     public function processInformationRiskData(Entity\Anr $anr, array $informationRiskData): Entity\Amv
     {
         $informationRisk = $this->getInformationRiskFromCache($anr, $informationRiskData['uuid']);
-        if ($informationRisk !== null) {
-            return $informationRisk;
-        }
+        if ($informationRisk === null) {
+            $asset = $this->assetImportProcessor->processAssetData($anr, $informationRiskData['asset']);
+            $threat = $this->threatImportProcessor->processThreatData($anr, $informationRiskData['threat']);
+            $vulnerability = $this->vulnerabilityImportProcessor
+                ->processVulnerabilityData($anr, $informationRiskData['vulnerability']);
 
-        $asset = $this->assetImportProcessor->processAssetData($anr, $informationRiskData['asset']);
-        $threat = $this->threatImportProcessor->processThreatData($anr, $informationRiskData['threat']);
-        $vulnerability = $this->vulnerabilityImportProcessor
-            ->processVulnerabilityData($anr, $informationRiskData['vulnerability']);
-
-        /* Prepare the max positions per asset as the objects are not saved in the DB to be able to determine on fly. */
-        if (!isset($this->maxPositionsPerAsset[$asset->getUuid()])) {
-            $this->maxPositionsPerAsset[$asset->getUuid()] = $this->amvTable->findMaxPosition([
-                'anr' => $anr,
-                'asset' => [
-                    'uuid' => $asset->getUuid(),
+            /* Prepare the max positions per asset as the objects are not saved in the DB. */
+            if (!isset($this->maxPositionsPerAsset[$asset->getUuid()])) {
+                $this->maxPositionsPerAsset[$asset->getUuid()] = $this->amvTable->findMaxPosition([
                     'anr' => $anr,
-                ],
-            ]);
+                    'asset' => [
+                        'uuid' => $asset->getUuid(),
+                        'anr' => $anr,
+                    ],
+                ]);
+            }
+
+            $informationRisk = $this->anrAmvService->createAmvFromPreparedData($anr, $asset, $threat, $vulnerability, [
+                'uuid' => $informationRiskData['uuid'],
+                'status' => $informationRiskData['status'],
+                'setOnlyExactPosition' => true,
+                'position' => ++$this->maxPositionsPerAsset[$asset->getUuid()],
+            ], false, false);
         }
 
-        $amv = $this->anrAmvService->createAmvFromPreparedData($anr, $asset, $threat, $vulnerability, [
-            'uuid' => $informationRiskData['uuid'],
-            'status' => $informationRiskData['status'],
-            'setOnlyExactPosition' => true,
-            'position' => ++$this->maxPositionsPerAsset[$asset->getUuid()],
-        ], false, false);
-
-        foreach ($informationRiskData['measures'] as $measureData) {
+        $saveInformationRisk = false;
+        foreach ($informationRiskData['measures'] ?? [] as $measureData) {
             $measure = $this->referentialImportProcessor->getMeasureFromCache($anr, $measureData['uuid']);
             if ($measure === null && !empty($measureData['referential'])) {
                 $referential = $this->referentialImportProcessor->processReferentialData(
@@ -74,14 +73,18 @@ class InformationRiskImportProcessor
                 $measure = $this->referentialImportProcessor->processMeasureData($anr, $referential, $measureData);
             }
             if ($measure !== null) {
-                $amv->addMeasure($measure);
+                $informationRisk->addMeasure($measure);
+                $saveInformationRisk = true;
             }
         }
 
-        $this->amvTable->save($amv, false);
-        $this->importCacheHelper->addItemToArrayCache('amvs_by_uuid', $amv, $amv->getUuid());
+        if ($saveInformationRisk) {
+            $this->amvTable->save($informationRisk, false);
+            $this->importCacheHelper
+                ->addItemToArrayCache('amvs_by_uuid', $informationRisk, $informationRisk->getUuid());
+        }
 
-        return $amv;
+        return $informationRisk;
     }
 
     private function getInformationRiskFromCache(Entity\Anr $anr, string $uuid): ?Entity\Amv

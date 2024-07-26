@@ -167,15 +167,15 @@ class InstanceImportService
             $this->operationalRiskScaleImportProcessor->adjustOperationalRisksScaleValuesBasedOnNewScales($anr, $data);
             $this->operationalRiskScaleImportProcessor->updateOperationalRisksScalesAndRelatedInstances($anr, $data);
         }
-        if ($data['withInterviews']) {
+        if (!empty($data['interviews'])) {
             /* Process the interviews' data. */
             $this->anrMethodStepImportProcessor->processInterviewsData($anr, $data['interviews']);
         }
-        if ($data['withKnowledgeBase']) {
+        if (!empty($data['knowledgeBase'])) {
             /* Process the Knowledge Base data. */
             $this->processKnowledgeBaseData($anr, $data['knowledgeBase']);
         }
-        if ($data['withLibrary']) {
+        if (!empty($data['library'])) {
             /* Process the Assets Library data. */
             $this->objectCategoryImportProcessor
                 ->processObjectCategoriesData($anr, $data['library']['categories'], $importMode);
