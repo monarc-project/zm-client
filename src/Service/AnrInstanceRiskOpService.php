@@ -25,6 +25,8 @@ class AnrInstanceRiskOpService
 
     private CoreEntity\UserSuperClass $connectedUser;
 
+    private array $operationalRiskImpactScales = [];
+
     public function __construct(
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
         private Table\InstanceTable $instanceTable,
@@ -191,12 +193,14 @@ class AnrInstanceRiskOpService
     ): Entity\InstanceRiskOp {
         $instanceRiskOp = $this->createInstanceRiskOpObject($instance, $object, $rolfRisk);
 
-        /** @var Entity\OperationalRiskScaleType[] $operationalRiskScaleTypes */
-        $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(
-            $instance->getAnr(),
-            CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT
-        );
-        foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
+        if (empty($this->operationalRiskImpactScales)) {
+            /** @var Entity\OperationalRiskScaleType[] $operationalRiskScaleTypes */
+            $this->operationalRiskImpactScales = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(
+                $instance->getAnr(),
+                CoreEntity\OperationalRiskScaleSuperClass::TYPE_IMPACT
+            );
+        }
+        foreach ($this->operationalRiskImpactScales as $operationalRiskScaleType) {
             $this->createOperationalInstanceRiskScaleObject($instanceRiskOp, $operationalRiskScaleType);
         }
 
@@ -206,27 +210,30 @@ class AnrInstanceRiskOpService
     public function createInstanceRiskOpObject(
         Entity\Instance $instance,
         Entity\MonarcObject $object,
-        Entity\RolfRisk $rolfRisk
+        ?Entity\RolfRisk $rolfRisk,
+        array $data = []
     ): Entity\InstanceRiskOp {
+        /** @var Entity\Anr $anr */
+        $anr = $instance->getAnr();
         /** @var Entity\InstanceRiskOp $instanceRiskOp */
         $instanceRiskOp = (new Entity\InstanceRiskOp())
             ->setAnr($instance->getAnr())
             ->setInstance($instance)
             ->setObject($object)
             ->setRolfRisk($rolfRisk)
-            ->setRiskCacheCode($rolfRisk->getCode())
-            ->setRiskCacheLabels([
+            ->setRiskCacheCode($rolfRisk ? $rolfRisk->getCode() : $data['riskCacheCode'])
+            ->setRiskCacheLabels($rolfRisk ? [
                 'riskCacheLabel1' => $rolfRisk->getLabel(1),
                 'riskCacheLabel2' => $rolfRisk->getLabel(2),
                 'riskCacheLabel3' => $rolfRisk->getLabel(3),
                 'riskCacheLabel4' => $rolfRisk->getLabel(4),
-            ])
-            ->setRiskCacheDescriptions([
+            ] : ['riskCacheLabel' . $anr->getLanguage() => $data['riskCacheLabel']])
+            ->setRiskCacheDescriptions($rolfRisk ? [
                 'riskCacheDescription1' => $rolfRisk->getDescription(1),
                 'riskCacheDescription2' => $rolfRisk->getDescription(2),
                 'riskCacheDescription3' => $rolfRisk->getDescription(3),
                 'riskCacheDescription4' => $rolfRisk->getDescription(4),
-            ])
+            ] : ['riskCacheDescription' . $anr->getLanguage() => $data['riskCacheDescription']])
             ->setCreator($this->connectedUser->getEmail());
 
         $this->instanceRiskOpTable->save($instanceRiskOp, false);

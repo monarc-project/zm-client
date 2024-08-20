@@ -13,7 +13,8 @@ trait RecommendationExportTrait
 {
     private function prepareRecommendationData(
         Entity\Recommendation $recommendation,
-        bool $includeRecommendationSetData = true
+        bool $includeRecommendationSetData = true,
+        bool $includePosition = true
     ): array {
         $result = [
             'uuid' => $recommendation->getUuid(),
@@ -31,6 +32,9 @@ trait RecommendationExportTrait
                 'uuid' => $recommendation->getRecommendationSet()->getUuid(),
                 'label' => $recommendation->getRecommendationSet()->getLabel(),
             ];
+        }
+        if ($includePosition) {
+            $result['position'] = $recommendation->getPosition();
         }
 
         return $result;

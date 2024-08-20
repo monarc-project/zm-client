@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Import\Processor;
 
+use Monarc\Core\Entity\InstanceRiskOpSuperClass;
 use Monarc\Core\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Entity\ObjectSuperClass;
 use Monarc\FrontOffice\Entity;
@@ -22,15 +23,18 @@ class ObjectImportProcessor
         private Table\MonarcObjectTable $monarcObjectTable,
         private Table\ObjectObjectTable $objectObjectTable,
         private Table\InstanceRiskTable $instanceRiskTable,
+        private Table\InstanceRiskOpTable $instanceRiskOpTable,
         private Table\AmvTable $amvTable,
         private ImportCacheHelper $importCacheHelper,
         private Service\AnrObjectService $anrObjectService,
         private Service\AnrObjectObjectService $anrObjectObjectService,
         private Service\AnrInstanceRiskService $anrInstanceRiskService,
+        private Service\AnrInstanceRiskOpService $anrInstanceRiskOpService,
         private AssetImportProcessor $assetImportProcessor,
         private RolfTagImportProcessor $rolfTagImportProcessor,
         private ObjectCategoryImportProcessor $objectCategoryImportProcessor,
-        private InformationRiskImportProcessor $informationRiskImportProcessor
+        private InformationRiskImportProcessor $informationRiskImportProcessor,
+        private OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor
     ) {
     }
 
@@ -216,8 +220,7 @@ class ObjectImportProcessor
         foreach (array_diff_key($existingAmvs, $importingAmvsData) as $existingAmvToRemove) {
             /* Recreated instance risks if the object is instantiated. */
             foreach ($existingAmvToRemove->getInstanceRisks() as $instanceRiskToSetSpecific) {
-                $instanceRiskToSetSpecific->setSpecific(InstanceRiskSuperClass::TYPE_SPECIFIC)
-                    ->setAmv(null);
+                $instanceRiskToSetSpecific->setSpecific(InstanceRiskSuperClass::TYPE_SPECIFIC)->setAmv(null);
                 $this->instanceRiskTable->save($instanceRiskToSetSpecific, false);
             }
             $this->amvTable->remove($existingAmvToRemove, false);
@@ -225,18 +228,45 @@ class ObjectImportProcessor
     }
 
     /** Merges the rolfRisks (operational risks) of the existing object. */
-    private function mergeRolfTagOperationalRisks(Entity\MonarcObject $object, ?array $rolfTagData): void
-    {
+    private function mergeRolfTagOperationalRisks(
+        Entity\Anr $anr,
+        Entity\MonarcObject $object,
+        ?array $rolfTagData
+    ): void {
+        /* NOTE. If rolfTag stays the same, then the rolf risks could be validated and updated if different. */
         if (!empty($rolfTagData) && $object->getRolfTag() === null) {
-            // TODO: 1:
             /* if there was no rolfTag and a new one is set. */
-
+            $rolfTag = $this->rolfTagImportProcessor->processRolfTagData($anr, $rolfTagData);
+            $object->setRolfTag($rolfTag);
+            $this->monarcObjectTable->save($object, false);
         } elseif (empty($rolfTagData) && $object->getRolfTag() !== null) {
-            // TODO: 2. was a rolf tag and now removed, then remove all the instance risks op have to be removed.
+            /* if there was a rolfTag and now removed, then all the InstanceRiskOp have to be set as specific. */
+            $this->setOperationalRisksSpecific($object);
+            $object->setRolfTag(null);
+            $this->monarcObjectTable->save($object, false);
         } elseif ($object->getRolfTag()->getCode() !== $rolfTagData['code']) {
-            // TODO: 3. if a new rolf is changed, then all the op risks have to be updated.
-        } else {
-            // TODO: 4. rolfTag stays the same (set) then we have to validate the difference of rolf risks.
+            /* If rolfTag is changed, then all the op risks have to be updated. */
+            $this->setOperationalRisksSpecific($object);
+            $rolfTag = $this->rolfTagImportProcessor->processRolfTagData($anr, $rolfTagData);
+            $object->setRolfTag($rolfTag);
+            foreach ($object->getInstances() as $instance) {
+                foreach ($rolfTag->getRisks() as $rolfRisk) {
+                    $this->anrInstanceRiskOpService->createInstanceRiskOpWithScales($instance, $object, $rolfRisk);
+                }
+            }
+            $this->monarcObjectTable->save($object, false);
+        }
+    }
+
+    private function setOperationalRisksSpecific(Entity\MonarcObject $object): void
+    {
+        if ($object->getRolfTag() !== null) {
+            foreach ($object->getRolfTag()->getRisks() as $rolfRisk) {
+                foreach ($rolfRisk->getOperationalInstanceRisks() as $operationalInstanceRisk) {
+                    $operationalInstanceRisk->setSpecific(InstanceRiskOpSuperClass::TYPE_SPECIFIC)->setRolfRisk(null);
+                    $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
+                }
+            }
         }
     }
 }

@@ -51,6 +51,7 @@ trait OperationalInstanceRiskExportTrait
             'operationalRisk' => $operationalRisk !== null
                 ? $this->prepareOperationalRiskData($operationalRisk, $languageIndex, $withControls)
                 : null,
+            'riskCacheCode' => $operationalInstanceRisk->getRiskCacheCode(),
             'riskCacheLabel' => $operationalInstanceRisk->getRiskCacheLabel($languageIndex),
             'riskCacheDescription' => $operationalInstanceRisk->getRiskCacheDescription($languageIndex),
             'brutProb' => $withEval ? $operationalInstanceRisk->getBrutProb() : -1,

@@ -9,22 +9,21 @@ namespace Monarc\FrontOffice\Export\Controller\Traits;
 
 use Laminas\Diactoros\Response;
 use Psr\Http\Message\ResponseInterface;
-
 use function strlen;
 
 trait ExportResponseControllerTrait
 {
     private function prepareExportResponse(string $filename, string $output, bool $isEncrypted): ResponseInterface
     {
-        $dataType = 'application/json';
         $contentType = 'application/json; charset=utf-8';
         $extension = '.json';
         if ($isEncrypted) {
-            $dataType = 'text/plain';
             $contentType = 'text/plain; charset=utf-8';
             $extension = '.bin';
         }
-        $stream = fopen('data://' . $dataType . ',' . $output, 'rb+');
+        $stream = fopen('php://memory', 'rb+');
+        fwrite($stream, $output);
+        rewind($stream);
 
         return new Response($stream, 200, [
             'Content-Type' => $contentType,

@@ -54,11 +54,13 @@ class InstanceRiskImportProcessor
         /** @var Entity\Anr $anr */
         $anr = $instance->getAnr();
         if (!empty($instanceRiskData['informationRisk'])) {
+            /* The case of normal instance risk, where threat and vulnerability are taken from AMV. */
             $amv = $this->informationRiskImportProcessor
                 ->processInformationRiskData($anr, $instanceRiskData['informationRisk']);
             $threat = null;
             $vulnerability = null;
         } else {
+            /* The case of specific instance risk that has no relation to AMV. */
             $amv = null;
             $threat = $this->threatImportProcessor->processThreatData($anr, $instanceRiskData['threat']);
             $vulnerability = $this->vulnerabilityImportProcessor

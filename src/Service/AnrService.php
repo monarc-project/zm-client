@@ -162,16 +162,14 @@ class AnrService
     /**
      * Creates (Duplicates) an analysis based on existing one on the client's side or a model's anr
      * in the common database, and performs the biggest part of creation/restoring snapshots.
-     *
-     * @param string|null $snapshotMode The value is null for anr creation, and 'create' | 'restore' for snapshots.
      */
     public function duplicateAnr(
         CoreEntity\AnrSuperClass $sourceAnr,
         array $data = [],
-        ?string $snapshotMode = null
+        bool $isSnapshotMode = false
     ): Entity\Anr {
         $isSourceCommon = $sourceAnr instanceof CoreEntity\Anr;
-        if (!$isSourceCommon && $snapshotMode === null) {
+        if (!$isSourceCommon && !$isSnapshotMode) {
             /* Validate id the duplicated anr accessible for the user. */
             if (!$this->connectedUser->hasRole(Entity\UserRole::USER_ROLE_SYSTEM)
                 && $this->userAnrTable->findByAnrAndUser($sourceAnr, $this->connectedUser) === null
@@ -187,7 +185,7 @@ class AnrService
 
         $newAnr = Entity\Anr::constructFromObjectAndData($sourceAnr, $data)
             ->setCreator($this->connectedUser->getEmail());
-        if ($snapshotMode === 'create') {
+        if ($isSnapshotMode) {
             /* The "[SNAP]" prefix is added for snapshots. */
             $newAnr->setLabel('[SNAP] ' . $newAnr->getLabel());
         }
@@ -195,7 +193,7 @@ class AnrService
         $this->anrTable->save($newAnr, false);
 
         /* Not needed for snapshots creation or restoring. */
-        if ($snapshotMode === null) {
+        if (!$isSnapshotMode) {
             $userAnr = (new Entity\UserAnr())
                 ->setUser($this->connectedUser)
                 ->setAnr($newAnr)
@@ -286,7 +284,7 @@ class AnrService
             $this->duplicateRopa($sourceAnr, $newAnr);
         }
 
-        if ($snapshotMode !== 'create') {
+        if (!$isSnapshotMode) {
             $this->setCurrentAnrToConnectedUser($newAnr);
         }
 

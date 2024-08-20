@@ -83,12 +83,16 @@ class OperationalInstanceRiskImportProcessor
             );
         }
         foreach ($operationalInstanceRisksData as $operationalInstanceRiskData) {
-            $operationalRisk = $this->operationalRiskImportProcessor
-                ->processOperationalRiskData($anr, $operationalInstanceRiskData['operationalRisk']);
+            $operationalRisk = empty($operationalInstanceRiskData['operationalRisk'])
+                ? null
+                : $this->operationalRiskImportProcessor->processOperationalRiskData(
+                    $anr,
+                    $operationalInstanceRiskData['operationalRisk']
+                );
             /** @var Entity\MonarcObject $object */
             $object = $instance->getObject();
             $operationalInstanceRisk = $this->anrInstanceRiskOpService
-                ->createInstanceRiskOpObject($instance, $object, $operationalRisk);
+                ->createInstanceRiskOpObject($instance, $object, $operationalRisk, $operationalInstanceRiskData);
             if ($this->importCacheHelper->getValueFromArrayCache('with_eval')) {
                 $operationalInstanceRisk
                     ->setBrutProb((int)$operationalInstanceRiskData['brutProb'])

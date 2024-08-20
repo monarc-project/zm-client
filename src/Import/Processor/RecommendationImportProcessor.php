@@ -15,6 +15,8 @@ use Monarc\FrontOffice\Table;
 
 class RecommendationImportProcessor
 {
+    private int $maxRecommendationPosition = 0;
+
     public function __construct(
         private Table\RecommendationSetTable $recommendationSetTable,
         private Table\RecommendationTable $recommendationTable,
@@ -87,6 +89,9 @@ class RecommendationImportProcessor
 
         $recommendationData['recommendationSet'] = $recommendationSet;
 
+        if (!empty($recommendationData['position'])) {
+            $recommendationData['position'] += $this->maxRecommendationPosition;
+        }
         $recommendation = $this->anrRecommendationService->create($anr, $recommendationData, false);
         $this->importCacheHelper->addItemToArrayCache('recommendations', $recommendation, $recommendation->getUuid());
 
@@ -125,7 +130,7 @@ class RecommendationImportProcessor
     {
         if (!$this->importCacheHelper->isCacheKeySet('is_recommendations_cache_loaded')) {
             $this->importCacheHelper->setArrayCacheValue('is_recommendations_cache_loaded', true);
-            $this->currentMaxRecommendationPosition = $this->recommendationTable->findMaxPosition(['anr' => $anr]);
+            $this->maxRecommendationPosition = $this->recommendationTable->findMaxPosition(['anr' => $anr]);
             /** @var Entity\RecommendationSet $recommendationSet */
             foreach ($this->recommendationSetTable->findByAnr($anr) as $recommendationSet) {
                 $this->importCacheHelper->addItemToArrayCache(

@@ -109,8 +109,14 @@ class AnrExportService
                 !$withKnowledgeBase
             ) : [],
             'library' => $withLibrary ? $this->prepareLibraryData($anr, !$withKnowledgeBase) : [],
-            'instances' => $this
-                ->prepareInstancesData($anr, !$withLibrary, $withEval, $withControls, $withRecommendations),
+            'instances' => $this->prepareInstancesData(
+                $anr,
+                !$withLibrary,
+                !$withKnowledgeBase,
+                $withEval,
+                $withControls,
+                $withRecommendations
+            ),
             'anrInstanceMetadataFields' => $this->prepareAnrInstanceMetadataFieldsData($anr),
             'scales' => $withEval ? $this->prepareScalesData($anr) : [],
             'operationalRiskScales' => $withEval ? $this->prepareOperationalRiskScalesData($anr) : [],
@@ -165,7 +171,7 @@ class AnrExportService
             'informationRisks' => $this->prepareInformationRisksData($anr, $withEval, $withControls),
             'rolfTags' => $this->prepareRolfTagsData($anr),
             'operationalRisks' => $this->prepareOperationalRisksData($anr, $withControls),
-            'recommendationSets' => $withRecommendations ? $this->prepareRecommendationSetsData($anr) : [],
+            'recommendationSets' => $this->prepareRecommendationSetsData($anr, $withRecommendations),
         ];
     }
 
@@ -266,14 +272,14 @@ class AnrExportService
         return $result;
     }
 
-    private function prepareRecommendationSetsData(Entity\Anr $anr): array
+    private function prepareRecommendationSetsData(Entity\Anr $anr, bool $includePositions): array
     {
         $result = [];
         /** @var Entity\RecommendationSet $recommendationSet */
         foreach ($this->recommendationSetTable->findByAnr($anr) as $recommendationSet) {
             $recommendationsData = [];
             foreach ($recommendationSet->getRecommendations() as $recommendation) {
-                $recommendationsData[] = $this->prepareRecommendationData($recommendation, false);
+                $recommendationsData[] = $this->prepareRecommendationData($recommendation, false, $includePositions);
             }
             if (!empty($recommendationsData)) {
                 $result[] = [
@@ -348,7 +354,8 @@ class AnrExportService
 
     private function prepareInstancesData(
         Entity\Anr $anr,
-        bool $includeObjectDataInTheResult,
+        bool $includeObjectData,
+        bool $includeCompleteInformationRisksData,
         bool $withEval,
         bool $withControls,
         bool $withRecommendations
@@ -360,8 +367,8 @@ class AnrExportService
             $result[] = $this->prepareInstanceData(
                 $instance,
                 $languageIndex,
-                $includeObjectDataInTheResult,
-                false,
+                $includeObjectData,
+                $includeCompleteInformationRisksData,
                 $withEval,
                 $withControls,
                 $withRecommendations,

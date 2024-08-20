@@ -13,20 +13,18 @@ use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\Snapshot;
-use Monarc\FrontOffice\Table\AnrTable;
-use Monarc\FrontOffice\Table\SnapshotTable;
-use Monarc\FrontOffice\Table\UserAnrTable;
-use Ramsey\Uuid\Uuid;
+use Monarc\FrontOffice\Table;
 
 class SnapshotService
 {
     private UserSuperClass $connectedUser;
 
     public function __construct(
-        private SnapshotTable $snapshotTable,
-        private AnrTable $anrTable,
+        private Table\SnapshotTable $snapshotTable,
+        private Table\AnrTable $anrTable,
         private AnrService $anrService,
-        private UserAnrTable $userAnrTable,
+        private Table\UserAnrTable $userAnrTable,
+        private Table\UserTable $userTable,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -55,7 +53,7 @@ class SnapshotService
 
     public function create(Anr $anr, array $data): Snapshot
     {
-        $newAnr = $this->anrService->duplicateAnr($anr, [], 'create');
+        $newAnr = $this->anrService->duplicateAnr($anr, [], true);
         /*
          * Snapshots should not be visible on global dashboard
          * and stats not send to the StatsService (but snapshots are ignored anyway).
@@ -87,36 +85,49 @@ class SnapshotService
         /** @var Snapshot $snapshot */
         $snapshot = $this->snapshotTable->findById($snapshotId);
         if ($snapshot->getAnrReference()->getId() !== $anrReference->getId()) {
-            throw new Exception('The analysis associated with the snapshot does match the requested one.', 412);
+            throw new Exception('The analysis associated with the snapshot matches the requested one.', 412);
         }
 
-        /* Duplicate the anr linked to this snapshot */
-        $newAnr = $this->anrService->duplicateAnr($snapshot->getAnr(), [], 'restore');
+        /* Use the anr from the snapshot as a new one. */
+        $snapshotAnr = $snapshot->getAnr();
 
         /* Update the reference for all the other snapshots. */
         foreach ($anrReference->getReferencedSnapshots() as $referencedSnapshot) {
-            $referencedSnapshot->setAnrReference($newAnr);
-            $this->snapshotTable->save($referencedSnapshot, false);
+            if ($snapshot->getId() !== $referencedSnapshot->getId()) {
+                $this->snapshotTable->save($referencedSnapshot->setAnrReference($snapshotAnr), false);
+            }
+            $anrReference->removeReferencedSnapshot($referencedSnapshot);
         }
 
         /* Move permissions from the old anr to the new one. */
         foreach ($anrReference->getUsersAnrsPermissions() as $userAnrPermission) {
-            $this->userAnrTable->save($userAnrPermission->setAnr($newAnr), false);
+            $anrReference->removeUserAnrPermission($userAnrPermission);
+            $this->userAnrTable->save($userAnrPermission->setAnr($snapshotAnr), false);
         }
 
         /*
          * We need to set visibility on global dashboard, set stats sending option,
          * swap the uuid of the old anr, that we are going to drop and restore labels.
          */
-        $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
+        $snapshotAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
             ->setIsStatsCollected((int)$anrReference->isStatsCollected())
             ->setLabel($anrReference->getLabel());
         $referenceAnrUuid = $anrReference->getUuid();
 
-        $this->anrTable->remove($anrReference);
+        $this->userTable->save($this->connectedUser->setCurrentAnr($snapshotAnr), false);
 
-        $this->anrTable->save($newAnr->setUuid($referenceAnrUuid));
+        $this->snapshotTable->save($snapshot->setAnr($anrReference), false);
+        $this->anrTable->save($anrReference->generateAndSetUuid());
+        try {
+            $this->anrTable->remove($anrReference, false);
+            $this->snapshotTable->remove($snapshot, false);
+            $this->anrTable->save($snapshotAnr->setUuid($referenceAnrUuid));
+        } catch (\Throwable $e) {
+            $this->snapshotTable->save($snapshot->setAnr($snapshotAnr), false);
+            $this->anrTable->save($anrReference->setUuid($referenceAnrUuid));
+            throw $e;
+        }
 
-        return $newAnr;
+        return $snapshotAnr;
     }
 }

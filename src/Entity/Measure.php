@@ -39,14 +39,6 @@ class Measure extends MeasureSuperClass
     protected $uuid;
 
     /**
-     * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
-     */
-    protected $anr;
-
-    /**
      * @var ArrayCollection|Amv[]
      *
      * @ORM\ManyToMany(targetEntity="Amv", inversedBy="measures", fetch="EAGER")
@@ -99,6 +91,14 @@ class Measure extends MeasureSuperClass
      * @ORM\OneToOne(targetEntity="Soa", mappedBy="measure")
      */
     protected $soa;
+
+    /**
+     * @var Anr
+     *
+     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
+     */
+    protected $anr;
 
     public function getId()
     {

@@ -7,8 +7,12 @@
 
 namespace Monarc\FrontOffice\Import\Traits;
 
+use Monarc\Core\Entity\InstanceRiskSuperClass;
+
 trait ImportDataStructureAdapterTrait
 {
+    private int $recommendationsPositionsCounter = 0;
+
     /** Converts the scales, comments and impact types related data from the structure prior v2.13.1 to the new one. */
     public function adoptOldScalesDataStructureToNewFormat(array $data, int $languageIndex): array
     {
@@ -242,8 +246,12 @@ trait ImportDataStructureAdapterTrait
             $recommendationsData = [];
             if (!empty($data['recos'][$instanceRiskDatum['id']])) {
                 foreach ($data['recos'][$instanceRiskDatum['id']] as $recommendationData) {
-                    $recommendationsData[] = $this
-                        ->prepareRecommendationData($data, $recommendationData, $languageIndex);
+                    $recommendationsData[] = $this->prepareRecommendationData(
+                        $data,
+                        $recommendationData,
+                        $instanceRiskDatum['kindOfMeasure'] !== InstanceRiskSuperClass::KIND_NOT_TREATED,
+                        $languageIndex
+                    );
                 }
             }
 
@@ -327,13 +335,18 @@ trait ImportDataStructureAdapterTrait
             $recommendationsData = [];
             if (!empty($data['recosop'][$operationalInstanceRiskData['id']])) {
                 foreach ($data['recosop'][$operationalInstanceRiskData['id']] as $recommendationData) {
-                    $recommendationsData[] = $this
-                        ->prepareRecommendationData($data, $recommendationData, $languageIndex);
+                    $recommendationsData[] = $this->prepareRecommendationData(
+                        $data,
+                        $recommendationData,
+                        $operationalInstanceRiskData['kindOfMeasure'] !== InstanceRiskSuperClass::KIND_NOT_TREATED,
+                        $languageIndex
+                    );
                 }
             }
 
             $operationalInstanceRisksData[] = [
                 'operationalRisk' => $rolfRiskData,
+                'riskCacheCode' => $operationalInstanceRiskData['riskCacheCode'] ?? 'empty-code-' . time(),
                 'riskCacheLabel' => $operationalInstanceRiskData['riskCacheLabel' . $languageIndex],
                 'riskCacheDescription' => $operationalInstanceRiskData['riskCacheDescription' . $languageIndex],
                 'brutProb' => $operationalInstanceRiskData['brutProb'],
@@ -356,8 +369,12 @@ trait ImportDataStructureAdapterTrait
         return $operationalInstanceRisksData;
     }
 
-    private function prepareRecommendationData(array $data, array $recommendationData, int $languageIndex): array
-    {
+    private function prepareRecommendationData(
+        array $data,
+        array $recommendationData,
+        bool $isRiskTreated,
+        int $languageIndex
+    ): array {
         $recommendationSetUuid = $recommendationData['recommendationSet'] ?? '';
 
         return [
@@ -371,6 +388,7 @@ trait ImportDataStructureAdapterTrait
             'duedate' => $recommendationData['duedate'],
             'counterTreated' => $recommendationData['counterTreated'],
             'commentAfter' => $recommendationData['commentAfter'],
+            'position' => $isRiskTreated ? ++$this->recommendationsPositionsCounter : 0,
             'recommendationSet' => [
                 'uuid' => $recommendationSetUuid,
                 'label' => $data['recSets'][$recommendationSetUuid]['label' . $languageIndex] ?? 'Imported',

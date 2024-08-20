@@ -49,7 +49,7 @@ class Snapshot
      *
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_reference_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
+     *   @ORM\JoinColumn(name="anr_reference_id", referencedColumnName="id", nullable=false)
      * })
      */
     protected $anrReference;

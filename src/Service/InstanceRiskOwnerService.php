@@ -42,7 +42,7 @@ class InstanceRiskOwnerService
 
     public function getOrCreateInstanceRiskOwner(Anr $sourceAnr, Anr $anr, string $ownerName): InstanceRiskOwner
     {
-        if (isset($this->cachedData['isInstanceRiskOwnersCacheLoaded'])) {
+        if (!isset($this->cachedData['isInstanceRiskOwnersCacheLoaded'])) {
             $this->cachedData['isInstanceRiskOwnersCacheLoaded'] = true;
             /** @var InstanceRiskOwner $instanceRiskOwner */
             foreach ($this->instanceRiskOwnerTable->findByAnr($sourceAnr) as $instanceRiskOwner) {

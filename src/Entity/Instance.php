@@ -87,8 +87,10 @@ class Instance extends InstanceSuperClass
     public function getInstanceMetadataByMetadataFieldLink(AnrInstanceMetadataField $metadataField): ?InstanceMetadata
     {
         foreach ($this->instanceMetadata as $instanceMetadata) {
-            if ($instanceMetadata->getAnrInstanceMetadataField()->getLabel() === $metadataField->getLabel()) {
-                return $instanceMetadata->getAnrInstanceMetadataField();
+            if ($this->id === $instanceMetadata->getInstance()->getId()
+                && $instanceMetadata->getAnrInstanceMetadataField()->getLabel() === $metadataField->getLabel()
+            ) {
+                return $instanceMetadata;
             }
         }
 

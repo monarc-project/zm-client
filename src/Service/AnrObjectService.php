@@ -373,6 +373,7 @@ class AnrObjectService
         if (!empty($data['rolfTag']) && (
             $monarcObject->getRolfTag() === null || (int)$data['rolfTag'] !== $monarcObject->getRolfTag()->getId()
         )) {
+            /** @var Entity\RolfTag $rolfTag */
             $rolfTag = $this->rolfTagTable->findByIdAndAnr((int)$data['rolfTag'], $monarcObject->getAnr());
             $monarcObject->setRolfTag($rolfTag);
 

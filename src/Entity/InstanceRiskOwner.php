@@ -34,17 +34,6 @@ class InstanceRiskOwner
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     protected $id;
-
-    /**
-     * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", onDelete="CASCADE")
-     * })
-     */
-    protected $anr;
-
     /**
      * @var InstanceRisk[]|ArrayCollection
      *
@@ -58,6 +47,16 @@ class InstanceRiskOwner
      * @ORM\OneToMany(targetEntity="InstanceRiskOp", mappedBy="instanceRiskOwner")
      */
     protected $operationalInstanceRisks;
+
+    /**
+     * @var Anr
+     *
+     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", onDelete="CASCADE")
+     * })
+     */
+    protected $anr;
 
     /**
      * @var string

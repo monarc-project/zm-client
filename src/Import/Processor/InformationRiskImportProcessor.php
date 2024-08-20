@@ -60,6 +60,9 @@ class InformationRiskImportProcessor
                 'setOnlyExactPosition' => true,
                 'position' => ++$this->maxPositionsPerAsset[$asset->getUuid()],
             ], false, false);
+
+            $this->importCacheHelper
+                ->addItemToArrayCache('amvs_by_uuid', $informationRisk, $informationRisk->getUuid());
         }
 
         $saveInformationRisk = false;
@@ -80,8 +83,6 @@ class InformationRiskImportProcessor
 
         if ($saveInformationRisk) {
             $this->amvTable->save($informationRisk, false);
-            $this->importCacheHelper
-                ->addItemToArrayCache('amvs_by_uuid', $informationRisk, $informationRisk->getUuid());
         }
 
         return $informationRisk;

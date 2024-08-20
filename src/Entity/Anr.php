@@ -73,7 +73,7 @@ class Anr extends AnrSuperClass
     /**
      * @var Snapshot|null
      *
-     * @ORM\OneToOne(targetEntity="Snapshot", mappedBy="anr")
+     * @ORM\OneToOne(targetEntity="Snapshot", mappedBy="anr", cascade={"remove"})
      */
     protected $snapshot;
 
@@ -372,6 +372,15 @@ class Anr extends AnrSuperClass
         if (!$this->referencedSnapshots->contains($snapshot)) {
             $this->referencedSnapshots->add($snapshot);
             $snapshot->setAnrReference($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReferencedSnapshot(Snapshot $snapshot): self
+    {
+        if ($this->referencedSnapshots->contains($snapshot)) {
+            $this->referencedSnapshots->removeElement($snapshot);
         }
 
         return $this;
