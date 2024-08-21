@@ -1651,8 +1651,9 @@ return [
                 ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
-            InputValidator\Threat\PostThreatDataInputValidator::class => static function (Containerinterface $container)
-            {
+            InputValidator\Threat\PostThreatDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
                 return new InputValidator\Threat\PostThreatDataInputValidator(
                     $container->get('config'),
                     $container->get(CoreInputValidator\InputValidationTranslator::class),
