@@ -7,11 +7,13 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Laminas\Diactoros\Response;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\DeliverableGenerationService;
+use function strlen;
 
 class ApiAnrDeliverableController extends AbstractRestfulControllerRequestHandler
 {
@@ -36,17 +38,17 @@ class ApiAnrDeliverableController extends AbstractRestfulControllerRequestHandle
             throw new Exception('Generated file is not found: ' . $filePath);
         }
 
-        $response = $this->getResponse();
-        $response->setContent(file_get_contents($filePath));
-
+        $reportContent = file_get_contents($filePath);
+        $stream = fopen('php://memory', 'rb+');
+        fwrite($stream, $reportContent);
+        rewind($stream);
         unlink($filePath);
 
-        $headers = $response->getHeaders();
-        $headers->clearHeaders()
-            ->addHeaderLine('Content-Type', 'text/plain; charset=utf-8')
-            ->addHeaderLine('Content-Disposition', 'attachment; filename="deliverable.docx"');
-
-        return $this->response;
+        return new Response($stream, 200, [
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'Content-Length' => strlen($reportContent),
+            'Content-Disposition' => 'attachment; filename="deliverable.docx"',
+        ]);
     }
 
     public function get($id)

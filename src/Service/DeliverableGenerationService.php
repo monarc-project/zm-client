@@ -30,13 +30,11 @@ use function in_array;
  */
 class DeliverableGenerationService
 {
-    // TODO: correct all the get ->getList usage due to the formatted param.
     private UserSuperClass $connectedUser;
 
-    private $currentLangAnrIndex = 1;
+    private int $currentLangAnrIndex = 1;
 
-    /** @var Entity\Anr */
-    private $anr;
+    private ?Entity\Anr $anr;
 
     private $noBorderTable;
 
@@ -82,6 +80,7 @@ class DeliverableGenerationService
         private Table\InstanceRiskOwnerTable $instanceRiskOwnerTable,
         private Table\ThreatTable $threatTable,
         private Table\ClientTable $clientTable,
+        private Table\MeasureTable $measureTable,
         private RecordTable $recordTable,
         private DeliveriesModelsTable $deliveriesModelsTable,
         private OperationalRiskScaleService $operationalRiskScaleService,
@@ -89,8 +88,6 @@ class DeliverableGenerationService
         private AnrQuestionChoiceService $anrQuestionChoiceService,
         private AnrInterviewService $interviewService,
         private AnrCartoRiskService $cartoRiskService,
-        private SoaService $soaService,
-        private AnrMeasureService $measureService,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
         private AnrInstanceRiskService $anrInstanceRiskService,
         private CoreService\Helper\ScalesCacheHelper $scalesCacheHelper,
@@ -146,11 +143,7 @@ class DeliverableGenerationService
         $this->anr = $anr;
         $this->currentLangAnrIndex = $anr->getLanguage();
 
-        /** @var DeliveriesModels $deliveryModel */
-        $deliveryModel = current($this->deliveriesModelsTable->getEntityByFields(['id' => (int)$data['template']]));
-        if (!$deliveryModel) {
-            throw new Exception(sprintf('Delivery template with ID "%s" was not found.', $data['template']));
-        }
+        $deliveryModel = $this->deliveriesModelsTable->findById((int)$data['template']);
 
         $values = [
             'txt' => [
@@ -182,11 +175,14 @@ class DeliverableGenerationService
             }
         }
 
-        $referential = $data['referential'] ?? null;
+        $referentialUuid = $data['referential'] ?? null;
         $risksByControl = $data['risksByControl'] ?? false;
         $record = $data['record'] ?? null;
 
-        $values = array_merge_recursive($values, $this->buildValues($docType, $referential, $record, $risksByControl));
+        $values = array_merge_recursive(
+            $values,
+            $this->buildValues($docType, $referentialUuid, $record, $risksByControl)
+        );
 
         return $this->generateDeliverableWithValuesAndModel($pathModel, $values);
     }
@@ -253,8 +249,12 @@ class DeliverableGenerationService
      *
      * @return array The values for the Word document as a key-value array
      */
-    private function buildValues($modelCategory, $referential = null, $record = null, $risksByControl = false): array
-    {
+    private function buildValues(
+        $modelCategory,
+        ?string $referentialUuid = null,
+        $record = null,
+        $risksByControl = false
+    ): array {
         $this->setStyles();
 
         return match ($modelCategory) {
@@ -262,8 +262,9 @@ class DeliverableGenerationService
             DeliveriesModels::MODEL_ASSETS_AND_MODELS_VALIDATION => $this->buildContextModelingValues(),
             DeliveriesModels::MODEL_RISK_ANALYSIS => $this->buildRiskAssessmentValues(),
             DeliveriesModels::MODEL_IMPLEMENTATION_PLAN => $this->buildImplementationPlanValues(),
-            DeliveriesModels::MODEL_STATEMENT_OF_APPLICABILITY => $this
-                ->buildStatementOfAppplicabilityValues($referential, $risksByControl),
+            DeliveriesModels::MODEL_STATEMENT_OF_APPLICABILITY => $referentialUuid
+                ? $this->buildStatementOfAppplicabilityValues($referentialUuid, $risksByControl)
+                : [],
             DeliveriesModels::MODEL_RECORD_OF_PROCESSING_ACTIVITIES => $this
                 ->buildRecordOfProcessingActivitiesValues($record),
             DeliveriesModels::MODEL_ALL_RECORD_OF_PROCESSING_ACTIVITIES => $this->buildAllRecordsValues(),
@@ -524,7 +525,7 @@ class DeliverableGenerationService
      * Build values for Step 5 deliverable (Statement Of Applicability)
      * @return array The key-value array
      */
-    private function buildStatementOfAppplicabilityValues($referential, $risksByControl)
+    private function buildStatementOfAppplicabilityValues(string $referentialUuid, $risksByControl)
     {
         /** @var Entity\SoaScaleComment[] $soaScaleComments */
         $soaScaleComments = $this->soaScaleCommentTable->findByAnrOrderByIndex($this->anr, true);
@@ -533,11 +534,11 @@ class DeliverableGenerationService
                 'TABLE_STATEMENT_OF_APPLICABILITY_SCALE' => $this->generateTableStatementOfApplicabilityScale(
                     $soaScaleComments
                 ),
-                'TABLE_STATEMENT_OF_APPLICABILITY' => $this->generateTableStatementOfApplicability($referential),
+                'TABLE_STATEMENT_OF_APPLICABILITY' => $this->generateTableStatementOfApplicability($referentialUuid),
             ],
         ];
         if ($risksByControl) {
-            $values['xml']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($referential);
+            $values['xml']['TABLE_RISKS_BY_CONTROL'] = $this->generateTableRisksByControl($referentialUuid);
         } else {
             $values['txt']['TABLE_RISKS_BY_CONTROL'] = null;
         }
@@ -698,7 +699,7 @@ class DeliverableGenerationService
             $table->addRow(PhpWord\Shared\Converter::cmToTwip($size));
             $table->addCell(null, $this->continueCell);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(1), $this->whiteBigBorderTable)
-                ->addText($row, $this->boldFont, $this->centerParagraph);
+                ->addText((string)$row, $this->boldFont, $this->centerParagraph);
 
             foreach ($header as $MxV) {
                 $value = $MxV * $row;
@@ -1820,11 +1821,11 @@ class DeliverableGenerationService
         $result = null;
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr);
         $opRisksImpactsScaleType = array_values(
-            array_filter($opRisksAllScales, function ($scale) {
-                return $scale['type'] === 1;
+            array_filter($opRisksAllScales, static function ($scale) {
+                return $scale['type'] === OperationalRiskScaleSuperClass::TYPE_IMPACT;
             })
         );
-        $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], function ($scale) {
+        $opRisksImpactsScales = array_filter($opRisksImpactsScaleType[0]['scaleTypes'], static function ($scale) {
             return $scale['isHidden'] === false;
         });
         $sizeCellImpact = count($opRisksImpactsScales) * 0.70;
@@ -1835,12 +1836,11 @@ class DeliverableGenerationService
                 null,
                 ['limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]
             );
-            $risksOpByTreatment = $this->anrInstanceRiskOpService
-                ->getOperationalRisks(
-                    $this->anr,
-                    null,
-                    ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]
-                );
+            $risksOpByTreatment = $this->anrInstanceRiskOpService->getOperationalRisks(
+                $this->anr,
+                null,
+                ['limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc', 'kindOfMeasure' => $i]
+            );
 
             //create section
             $tableWord = new PhpWord\PhpWord();
@@ -2175,9 +2175,9 @@ class DeliverableGenerationService
             $instanceRisk = $recommendationRisk->getInstanceRisk();
             if ($instanceRisk !== null && $recommendationRisk->hasGlobalObjectRelation()) {
                 $key = $recommendationRisk->getRecommendation()->getUuid()
-                    . ' - ' . $recommendationRisk->getThreat()->getUuid()
-                    . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
-                    . ' - ' . $recommendationRisk->getGlobalObject()->getUuid();
+                    . ' - ' . $recommendationRisk->getThreat()?->getUuid()
+                    . ' - ' . $recommendationRisk->getVulnerability()?->getUuid()
+                    . ' - ' . $recommendationRisk->getGlobalObject()?->getUuid();
                 if (array_key_exists($key, $global)) {
                     if (array_key_exists($key, $toUnset) && $instanceRisk->getCacheMaxRisk() > $toUnset[$key]) {
                         $toUnset[$key] = $instanceRisk->getCacheMaxRisk();
@@ -2431,7 +2431,7 @@ class DeliverableGenerationService
             }
 
             $recoDeadline = '';
-            if ($recommendation->getDueDate()) {
+            if ($recommendation->getDueDate() !== null) {
                 $recoDeadline = $recommendation->getDueDate()->format('d-m-Y');
             }
 
@@ -2603,48 +2603,16 @@ class DeliverableGenerationService
     /**
      * Generates the Statement Of Applicability data
      */
-    private function generateTableStatementOfApplicability($referential): PhpWord\Element\Table
+    private function generateTableStatementOfApplicability(string $referentialUuid): PhpWord\Element\Table
     {
-        $filterMeasures['r.anr'] = $this->anr->getId();
-        $filterMeasures['r.uuid'] = $referential;
-        $measureService = $this->measureService;
-        $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
-        $measuresFilteredId = [];
-        foreach ($measuresFiltered as $key) {
-            $measuresFilteredId[] = $key['uuid'];
-        }
-        $filterAnd['m.uuid'] = [
-            'op' => 'IN',
-            'value' => $measuresFilteredId,
-        ];
-        $filterAnd['m.anr'] = $this->anr->getId();
-        $controlSoaList = $this->soaService->getList(1, 0, 'm.code', null, $filterAnd);
+        $measures = $this->measureTable->findByAnrAndReferentialUuidOrderByCode($this->anr, $referentialUuid);
 
-        //create section
+        /* Create section. */
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
-        //header if array is not empty
-        if (count($controlSoaList)) {
-            $table->addRow(400, $this->tblHeader);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
-                ->addText($this->anrTranslate('Code'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText($this->anrTranslate('Control'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
-                ->addText($this->anrTranslate('Inclusion/Exclusion'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText($this->anrTranslate('Remarks/Justification'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText($this->anrTranslate('Evidences'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
-                ->addText($this->anrTranslate('Actions'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
-                ->addText($this->anrTranslate('Level of compliance'), $this->boldFont, $this->centerParagraph);
-        }
-
-        $inclusions = [
+        $inclusionsTranslations = [
             'EX' => $this->anrTranslate('Excluded'),
             'LR' => $this->anrTranslate('Legal requirements'),
             'CO' => $this->anrTranslate('Contractual obligations'),
@@ -2652,63 +2620,98 @@ class DeliverableGenerationService
             'BP' => $this->anrTranslate('Best practices'),
             'RRA' => $this->anrTranslate('Results of risk assessment'),
         ];
-
         $previousCatId = null;
-
-        foreach ($controlSoaList as $controlSoa) {
-            $getInclusions = [];
-            foreach ($inclusions as $incl => $value) {
-                if ($controlSoa[$incl]) {
-                    $getInclusions[] = $value;
-                }
+        $isTitleSet = false;
+        foreach ($measures as $measure) {
+            $soa = $measure->getSoa();
+            if ($soa === null) {
+                continue;
             }
-            $inclusion = implode("\n\n", $getInclusions);
+
+            if (!$isTitleSet) {
+                $table->addRow(400, $this->tblHeader);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Code'), $this->boldFont, $this->centerParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Control'), $this->boldFont, $this->centerParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Inclusion/Exclusion'), $this->boldFont, $this->centerParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Remarks/Justification'), $this->boldFont, $this->centerParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Evidences'), $this->boldFont, $this->centerParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Actions'), $this->boldFont, $this->centerParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
+                    ->addText($this->anrTranslate('Level of compliance'), $this->boldFont, $this->centerParagraph);
+                $isTitleSet = true;
+            }
+
+            $inclusions = [];
+            if ($soa->getEx()) {
+                $inclusions[] = $inclusionsTranslations['EX'];
+            }
+            if ($soa->getLr()) {
+                $inclusions[] = $inclusionsTranslations['LR'];
+            }
+            if ($soa->getCo()) {
+                $inclusions[] = $inclusionsTranslations['CO'];
+            }
+            if ($soa->getBr()) {
+                $inclusions[] = $inclusionsTranslations['BR'];
+            }
+            if ($soa->getBp()) {
+                $inclusions[] = $inclusionsTranslations['BP'];
+            }
+            if ($soa->getRra()) {
+                $inclusions[] = $inclusionsTranslations['RRA'];
+            }
+            $inclusion = implode("\n\n", $inclusions);
 
             $complianceLevel = "";
             $bgcolor = 'FFFFFF';
 
-            /** @var ?Entity\SoaScaleComment $soaScaleComment */
-            $soaScaleComment = $controlSoa['soaScaleComment'];
+            $soaScaleComment = $soa->getSoaScaleComment();
             if ($soaScaleComment !== null && !$soaScaleComment->isHidden()) {
                 $complianceLevel = $soaScaleComment->getComment();
                 $bgcolor = $soaScaleComment->getColour();
             }
 
-            if ($controlSoa['EX']) {
+            if ($soa->getEx()) {
                 $complianceLevel = "";
                 $bgcolor = 'E7E6E6';
             }
 
             $styleContentCellCompliance = ['valign' => 'center', 'bgcolor' => $bgcolor];
 
-            if ($controlSoa['measure']->getCategory()->getId() !== $previousCatId) {
+            if ($measure->getCategory() !== null && $measure->getCategory()->getId() !== $previousCatId) {
                 $table->addRow(400);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(7, 'DBE5F1'))
                     ->addText(
-                        _WT($controlSoa['measure']->category->getLabel($this->currentLangAnrIndex)),
+                        _WT($measure->getCategory()->getLabel($this->currentLangAnrIndex)),
                         $this->boldFont,
                         $this->leftParagraph
                     );
+                $previousCatId = $measure->getCategory()->getId();
             }
-            $previousCatId = $controlSoa['measure']->category->getId();
 
             $table->addRow(400);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                ->addText(_WT($controlSoa['measure']->code), $this->normalFont, $this->centerParagraph);
+                ->addText(_WT($measure->getCode()), $this->normalFont, $this->centerParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($controlSoa['measure']->getLabel($this->currentLangAnrIndex)),
+                    _WT($measure->getLabel($this->currentLangAnrIndex)),
                     $this->normalFont,
                     $this->leftParagraph
                 );
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                 ->addText(_WT($inclusion), $this->normalFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(_WT($controlSoa['remarks']), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT($soa->getRemarks()), $this->normalFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(_WT($controlSoa['evidences']), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT($soa->getEvidences()), $this->normalFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.00), $this->vAlignCenterCell)
-                ->addText(_WT($controlSoa['actions']), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT($soa->getActions()), $this->normalFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $styleContentCellCompliance)
                 ->addText(_WT($complianceLevel), $this->normalFont, $this->centerParagraph);
         }
@@ -2721,22 +2724,8 @@ class DeliverableGenerationService
      *
      * @return mixed|string The WordXml data generated
      */
-    private function generateTableRisksByControl($referential)
+    private function generateTableRisksByControl(string $referentialUuid)
     {
-        $filterMeasures['r.anr'] = $this->anr->getId();
-        $filterMeasures['r.uuid'] = $referential;
-        $measureService = $this->measureService;
-        $measuresFiltered = $measureService->getList(1, 0, null, null, $filterMeasures);
-        $measuresFilteredId = [];
-        foreach ($measuresFiltered as $key) {
-            $measuresFilteredId[] = $key['uuid'];
-        }
-        $filterAnd['m.uuid'] = [
-            'op' => 'IN',
-            'value' => $measuresFilteredId,
-        ];
-        $filterAnd['m.anr'] = $this->anr->getId();
-        $controlSoaList = $this->soaService->getList(1, 0, 'm.code', null, $filterAnd);
         $opRisksAllScales = $this->operationalRiskScaleService->getOperationalRiskScales($this->anr);
         $opRisksImpactsScaleType = array_values(
             array_filter($opRisksAllScales, static function ($scale) {
@@ -2752,42 +2741,47 @@ class DeliverableGenerationService
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
 
-        $previousControlId = null;
-
-        foreach ($controlSoaList as $controlSoa) {
-            $amvs = [];
-            $rolfRisks = [];
-            foreach ($controlSoa['measure']->amvs as $amv) {
-                $amvs[] = $amv->getUuid();
-            }
-            foreach ($controlSoa['measure']->rolfRisks as $rolfRisk) {
-                $rolfRisks[] = $rolfRisk->getId();
-            }
-            $controlSoa['measure']->rolfRisks = [];
-            if (!empty($rolfRisks)) {
-                $controlSoa['measure']->rolfRisks = $this->anrInstanceRiskOpService->getOperationalRisks(
-                    $this->anr,
-                    null,
-                    ['rolfRisks' => $rolfRisks, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']
-                );
-            }
-            if (!empty($amvs)) {
-                $controlSoa['measure']->amvs = $this->anrInstanceRiskService->getInstanceRisks(
-                    $this->anr,
-                    null,
-                    ['amvs' => $amvs, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']
-                );
+        $measures = $this->measureTable->findByAnrAndReferentialUuidOrderByCode($this->anr, $referentialUuid);
+        $previousMeasureUuid = null;
+        foreach ($measures as $measure) {
+            $soa = $measure->getSoa();
+            if ($soa === null) {
+                continue;
             }
 
-            if (count($controlSoa['measure']->amvs) || count($controlSoa['measure']->rolfRisks)) {
-                if ($controlSoa['measure']->getUuid() !== $previousControlId) {
+            $amvUuids = [];
+            $rolfRiskIds = [];
+            foreach ($measure->getAmvs() as $amv) {
+                $amvUuids[] = $amv->getUuid();
+            }
+            foreach ($measure->getRolfRisks() as $rolfRisk) {
+                $rolfRiskIds[] = $rolfRisk->getId();
+            }
+            $instanceRisks = [];
+            $operationalInstanceRisks = [];
+            if (!empty($amvUuids)) {
+                $instanceRisks = $this->anrInstanceRiskService->getInstanceRisks(
+                    $this->anr,
+                    null,
+                    ['amvs' => $amvUuids, 'limit' => -1, 'order' => 'maxRisk', 'order_direction' => 'desc']
+                );
+            }
+            if (!empty($rolfRiskIds)) {
+                $operationalInstanceRisks = $this->anrInstanceRiskOpService->getOperationalRisks(
+                    $this->anr,
+                    null,
+                    ['rolfRisks' => $rolfRiskIds, 'limit' => -1, 'order' => 'cacheNetRisk', 'order_direction' => 'desc']
+                );
+            }
+
+            if (!empty($instanceRisks) || !empty($operationalInstanceRisks)) {
+                if ($measure->getUuid() !== $previousMeasureUuid) {
                     $section->addText(
-                        _WT($controlSoa['measure']->code) . ' - '
-                        . _WT($controlSoa['measure']->getLabel($this->currentLangAnrIndex)),
+                        _WT($measure->getCode()) . ' - ' . _WT($measure->getLabel($this->currentLangAnrIndex)),
                         array_merge($this->boldFont, ['size' => 11])
                     );
 
-                    if (count($controlSoa['measure']->amvs)) {
+                    if (!empty($instanceRisks)) {
                         $section->addText($this->anrTranslate('Information risks'), $this->boldFont);
                         $tableRiskInfo = $section->addTable($this->borderTable);
 
@@ -2845,7 +2839,7 @@ class DeliverableGenerationService
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->continueAndGrayCell);
                     }
-                    if (count($controlSoa['measure']->rolfRisks)) {
+                    if (!empty($operationalInstanceRisks)) {
                         $section->addText($this->anrTranslate('Operational risks'), $this->boldFont);
                         $tableRiskOp = $section->addTable($this->borderTable);
 
@@ -2927,25 +2921,26 @@ class DeliverableGenerationService
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
                     }
                 }
-                $previousControlId = $controlSoa['measure']->getUuid();
-                if (!empty($controlSoa['measure']->amvs)) {
+
+                $previousMeasureUuid = $measure->getUuid();
+                if (!empty($instanceRisks)) {
                     $impacts = ['c', 'i', 'd'];
 
-                    foreach ($controlSoa['measure']->amvs as $r) {
+                    foreach ($instanceRisks as $instanceRisk) {
                         foreach ($impacts as $impact) {
-                            if ($r[$impact . '_risk_enabled'] === 0) {
-                                $r[$impact . '_risk'] = null;
+                            if ($instanceRisk[$impact . '_risk_enabled'] === 0) {
+                                $instanceRisk[$impact . '_risk'] = null;
                             }
                         }
 
-                        foreach ($r as $key => $value) {
+                        foreach ($instanceRisk as $key => $value) {
                             if ($value === -1) {
-                                $r[$key] = '-';
+                                $instanceRisk[$key] = '-';
                             }
                         }
 
                         /** @var Entity\Instance $instance */
-                        $instance = $this->instanceTable->findByIdAndAnr($r['instance'], $this->anr);
+                        $instance = $this->instanceTable->findByIdAndAnr($instanceRisk['instance'], $this->anr);
                         if (!$instance->getObject()->isScopeGlobal()) {
                             $path = $instance->getHierarchyString();
                         } else {
@@ -2957,63 +2952,63 @@ class DeliverableGenerationService
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText($r['c_impact'], $this->normalFont, $this->centerParagraph);
+                            ->addText($instanceRisk['c_impact'], $this->normalFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText($r['i_impact'], $this->normalFont, $this->centerParagraph);
+                            ->addText($instanceRisk['i_impact'], $this->normalFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
-                            ->addText($r['d_impact'], $this->normalFont, $this->centerParagraph);
+                            ->addText($instanceRisk['d_impact'], $this->normalFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->vAlignCenterCell)
                             ->addText(
-                                _WT($r['threatLabel' . $this->currentLangAnrIndex]),
+                                _WT($instanceRisk['threatLabel' . $this->currentLangAnrIndex]),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
-                            ->addText($r['threatRate'], $this->normalFont, $this->centerParagraph);
+                            ->addText($instanceRisk['threatRate'], $this->normalFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(
-                                _WT($r['vulnLabel' . $this->currentLangAnrIndex]),
+                                _WT($instanceRisk['vulnLabel' . $this->currentLangAnrIndex]),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                            ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                            ->addText(_WT($instanceRisk['comment']), $this->normalFont, $this->leftParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText($r['vulnerabilityRate'], $this->normalFont, $this->centerParagraph);
+                            ->addText($instanceRisk['vulnerabilityRate'], $this->normalFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(
                             PhpWord\Shared\Converter::cmToTwip(1.00),
-                            $this->setBgColorCell($r['c_risk'])
-                        )->addText($r['c_risk'], $this->boldFont, $this->centerParagraph);
+                            $this->setBgColorCell($instanceRisk['c_risk'])
+                        )->addText($instanceRisk['c_risk'], $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(
                             PhpWord\Shared\Converter::cmToTwip(1.00),
-                            $this->setBgColorCell($r['i_risk'])
-                        )->addText($r['i_risk'], $this->boldFont, $this->centerParagraph);
+                            $this->setBgColorCell($instanceRisk['i_risk'])
+                        )->addText($instanceRisk['i_risk'], $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(
                             PhpWord\Shared\Converter::cmToTwip(1.00),
-                            $this->setBgColorCell($r['d_risk'])
-                        )->addText($r['d_risk'], $this->boldFont, $this->centerParagraph);
+                            $this->setBgColorCell($instanceRisk['d_risk'])
+                        )->addText($instanceRisk['d_risk'], $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(
-                                InstanceRiskOpSuperClass::getTreatmentNameByType($r['kindOfMeasure']),
+                                InstanceRiskOpSuperClass::getTreatmentNameByType($instanceRisk['kindOfMeasure']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
                         $tableRiskInfo->addCell(
                             PhpWord\Shared\Converter::cmToTwip(1.50),
-                            $this->setBgColorCell($r['target_risk'])
-                        )->addText($r['target_risk'], $this->boldFont, $this->centerParagraph);
+                            $this->setBgColorCell($instanceRisk['target_risk'])
+                        )->addText($instanceRisk['target_risk'], $this->boldFont, $this->centerParagraph);
                     }
                 }
 
-                if (count($controlSoa['measure']->rolfRisks)) {
-                    foreach ($controlSoa['measure']->rolfRisks as $r) {
-                        foreach ($r as $key => $value) {
+                if (!empty($operationalInstanceRisks)) {
+                    foreach ($operationalInstanceRisks as $riskOp) {
+                        foreach ($riskOp as $key => $value) {
                             if ($value === -1) {
-                                $r[$key] = '-';
+                                $riskOp[$key] = '-';
                             }
                         }
 
-                        $instance = $this->instanceTable->findById($r['instanceInfos']['id']);
+                        $instance = $this->instanceTable->findById($riskOp['instanceInfos']['id']);
                         $path = $instance->getHierarchyString();
 
                         $tableRiskOp->addRow(400);
@@ -3021,18 +3016,18 @@ class DeliverableGenerationService
                             ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
                             ->addText(
-                                _WT($r['label' . $this->currentLangAnrIndex]),
+                                _WT($riskOp['label' . $this->currentLangAnrIndex]),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
                         if ($this->anr->showRolfBrut()) {
                             $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                                ->addText($r['brutProb'], $this->normalFont, $this->centerParagraph);
+                                ->addText($riskOp['brutProb'], $this->normalFont, $this->centerParagraph);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                     ->addText(
-                                        $r['scales'][$opRiskImpactScale['id']]['brutValue'] !== -1 ?
-                                            $r['scales'][$opRiskImpactScale['id']]['brutValue'] :
+                                        $riskOp['scales'][$opRiskImpactScale['id']]['brutValue'] !== -1 ?
+                                            $riskOp['scales'][$opRiskImpactScale['id']]['brutValue'] :
                                             '-',
                                         $this->normalFont,
                                         $this->centerParagraph
@@ -3040,16 +3035,16 @@ class DeliverableGenerationService
                             }
                             $tableRiskOp->addCell(
                                 PhpWord\Shared\Converter::cmToTwip(1.00),
-                                $this->setBgColorCell($r['cacheBrutRisk'], false)
-                            )->addText($r['cacheBrutRisk'], $this->boldFont, $this->centerParagraph);
+                                $this->setBgColorCell($riskOp['cacheBrutRisk'], false)
+                            )->addText($riskOp['cacheBrutRisk'], $this->boldFont, $this->centerParagraph);
                         }
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->vAlignCenterCell)
-                            ->addText($r['netProb'], $this->normalFont, $this->centerParagraph);
+                            ->addText($riskOp['netProb'], $this->normalFont, $this->centerParagraph);
                         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                             $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                                 ->addText(
-                                    $r['scales'][$opRiskImpactScale['id']]['netValue'] !== -1
-                                        ? $r['scales'][$opRiskImpactScale['id']]['netValue']
+                                    $riskOp['scales'][$opRiskImpactScale['id']]['netValue'] !== -1
+                                        ? $riskOp['scales'][$opRiskImpactScale['id']]['netValue']
                                         : '-',
                                     $this->normalFont,
                                     $this->centerParagraph
@@ -3057,19 +3052,19 @@ class DeliverableGenerationService
                         }
                         $tableRiskOp->addCell(
                             PhpWord\Shared\Converter::cmToTwip(1.00),
-                            $this->setBgColorCell($r['cacheNetRisk'], false)
-                        )->addText($r['cacheNetRisk'], $this->boldFont, $this->centerParagraph);
+                            $this->setBgColorCell($riskOp['cacheNetRisk'], false)
+                        )->addText($riskOp['cacheNetRisk'], $this->boldFont, $this->centerParagraph);
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell)
-                            ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
+                            ->addText(_WT($riskOp['comment']), $this->normalFont, $this->leftParagraph);
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
                             ->addText(
-                                InstanceRiskOpSuperClass::getTreatmentNameByType($r['kindOfMeasure']),
+                                InstanceRiskOpSuperClass::getTreatmentNameByType($riskOp['kindOfMeasure']),
                                 $this->normalFont,
                                 $this->leftParagraph
                             );
-                        $cacheTargetedRisk = $r['cacheTargetedRisk'] === '-'
-                            ? $r['cacheNetRisk']
-                            : $r['cacheTargetedRisk'];
+                        $cacheTargetedRisk = $riskOp['cacheTargetedRisk'] === '-'
+                            ? $riskOp['cacheNetRisk']
+                            : $riskOp['cacheTargetedRisk'];
                         $tableRiskOp->addCell(
                             PhpWord\Shared\Converter::cmToTwip(2.00),
                             $this->setBgColorCell($cacheTargetedRisk, false)
@@ -3573,7 +3568,7 @@ class DeliverableGenerationService
         $table = $section->addTable($this->borderTable);
 
         //header
-        if (count($instances)) {
+        if (!empty($instances)) {
             $table->addRow(400, $this->tblHeader);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(9.00), $this->setColSpanCell(3, 'DFDFDF'))
                 ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
@@ -4000,17 +3995,17 @@ class DeliverableGenerationService
             if ($value['parent'] === $parentId) {
                 $children = $this->buildTree($elements, $element);
                 if ($children) {
-                    usort($children, function ($a, $b) {
+                    usort($children, static function ($a, $b) {
                         return $a['position'] <=> $b['position'];
                     });
                     $value['children'] = $children;
                 }
                 $branch[] = $value;
-            } elseif (!isset($value['parent']) && $parentId == $element) {
+            } elseif (!isset($value['parent']) && $parentId === $element) {
                 $branch[] = $value;
             }
         }
-        usort($branch, function ($a, $b) {
+        usort($branch, static function ($a, $b) {
             return $a['position'] <=> $b['position'];
         });
 

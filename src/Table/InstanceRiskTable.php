@@ -14,7 +14,6 @@ use Monarc\Core\Entity\InstanceSuperClass;
 use Monarc\Core\Table\InstanceRiskTable as CoreInstanceRiskTable;
 use Monarc\FrontOffice\Entity\Amv;
 use Monarc\FrontOffice\Entity\Anr;
-use Monarc\FrontOffice\Entity\Asset;
 use Monarc\FrontOffice\Entity\Instance;
 use Monarc\FrontOffice\Entity\InstanceRisk;
 use Monarc\FrontOffice\Entity\Threat;
@@ -93,36 +92,6 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $queryBuilder->getQuery()->getResult();
     }
 
-    public function findByInstanceAssetThreatUuidAndVulnerabilityUuid(
-        Instance $instance,
-        Asset $asset,
-        string $threatUuid,
-        string $vulnerabilityUuid
-    ): ?InstanceRisk {
-        return $this->getRepository()
-            ->createQueryBuilder('ir')
-            ->innerJoin('ir.asset', 'a')
-            ->innerJoin('ir.threat', 'thr')
-            ->innerJoin('ir.vulnerability', 'vuln')
-            ->where('ir.instance = :instance')
-            ->andWhere('a.uuid = :assetUuid')
-            ->andWhere('a.anr = :assetAnr')
-            ->andWhere('thr.uuid = :threatUuid')
-            ->andWhere('thr.anr = :threatAnr')
-            ->andWhere('vuln.uuid = :vulnerabilityUuid')
-            ->andWhere('vuln.anr = :vulnerabilityAnr')
-            ->setParameter('instance', $instance)
-            ->setParameter('assetUuid', $asset->getUuid())
-            ->setParameter('assetAnr', $asset->getAnr())
-            ->setParameter('threatUuid', $threatUuid)
-            ->setParameter('threatAnr', $instance->getAnr())
-            ->setParameter('vulnerabilityUuid', $vulnerabilityUuid)
-            ->setParameter('vulnerabilityAnr', $instance->getAnr())
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
-
     /**
      * @return InstanceRisk[]
      */
@@ -133,24 +102,6 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->innerJoin('ir.amv', 'amv')
             ->where('amv.uuid = :amvUuid')
             ->andWhere('amv.anr = :amvAnr')
-            ->setParameter('amvUuid', $amv->getUuid())
-            ->setParameter('amvAnr', $amv->getAnr())
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return InstanceRisk[]
-     */
-    public function findByInstanceAndAmv(Instance $instance, Amv $amv): array
-    {
-        return $this->getRepository()
-            ->createQueryBuilder('ir')
-            ->innerJoin('ir.amv', 'amv')
-            ->where('ir.instance = :instance')
-            ->andWhere('amv.uuid = :amvUuid')
-            ->andWhere('amv.anr = :amvAnr')
-            ->setParameter('instance', $instance)
             ->setParameter('amvUuid', $amv->getUuid())
             ->setParameter('amvAnr', $amv->getAnr())
             ->getQuery()
@@ -250,7 +201,7 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     /**
      * @return InstanceRisk[]
      */
-    public function findByAnrThreatExcludeLocallySetThreatRatesOrNot(
+    public function findByAnrAndThreatExcludeLocallySet(
         Anr $anr,
         Threat $threat,
         bool $excludeLocallySetThreatRates

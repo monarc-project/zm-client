@@ -9,10 +9,10 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\Core\Validator\InputValidator\Threat\PostThreatDataInputValidator;
 use Monarc\FrontOffice\InputFormatter\Threat\GetThreatsInputFormatter;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrThreatService;
+use Monarc\FrontOffice\Validator\InputValidator\Threat\PostThreatDataInputValidator;
 
 class ApiAnrThreatsController extends AbstractRestfulControllerRequestHandler
 {

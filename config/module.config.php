@@ -1651,6 +1651,14 @@ return [
                 ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
+            InputValidator\Threat\PostThreatDataInputValidator::class => static function (Containerinterface $container)
+            {
+                return new InputValidator\Threat\PostThreatDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\ThreatTable::class)
+                );
+            },
             CoreInputValidator\Asset\PostAssetDataInputValidator::class => static function (
                 Containerinterface $container
             ) {
@@ -1658,15 +1666,6 @@ return [
                     $container->get('config'),
                     $container->get(CoreInputValidator\InputValidationTranslator::class),
                     $container->get(Table\AssetTable::class)
-                );
-            },
-            CoreInputValidator\Threat\PostThreatDataInputValidator::class => static function (
-                Containerinterface $container
-            ) {
-                return new CoreInputValidator\Threat\PostThreatDataInputValidator(
-                    $container->get('config'),
-                    $container->get(CoreInputValidator\InputValidationTranslator::class),
-                    $container->get(Table\ThreatTable::class)
                 );
             },
             CoreInputValidator\Vulnerability\PostVulnerabilityDataInputValidator::class => static function (

@@ -189,7 +189,9 @@ class AnrThreatService
     private function manageQualification(Threat $threat, array $data): void
     {
         if (isset($data['qualification'])) {
-            $instancesRisks = $this->instanceRiskTable->findByAnrThreatExcludeLocallySetThreatRatesOrNot(
+            $threat->setQualification($data['qualification']);
+
+            $instancesRisks = $this->instanceRiskTable->findByAnrAndThreatExcludeLocallySet(
                 $threat->getAnr(),
                 $threat,
                 empty($data['forceQualification'])
@@ -202,9 +204,9 @@ class AnrThreatService
                     $instanceRisk->setIsThreatRateNotSetOrModifiedExternally(true);
                 }
 
-                $this->instanceRiskTable->save($instanceRisk, false);
-
                 $this->anrInstanceRiskService->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
+
+                $this->instanceRiskTable->save($instanceRisk, false);
             }
         }
     }

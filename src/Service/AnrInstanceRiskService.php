@@ -445,8 +445,9 @@ class AnrInstanceRiskService
         if (isset($data['reductionAmount'])) {
             $instanceRisk->setReductionAmount((int)$data['reductionAmount']);
         }
-        if (isset($data['threatRate'])) {
-            $instanceRisk->setThreatRate((int)$data['threatRate']);
+        if (isset($data['threatRate']) && $instanceRisk->getThreatRate() !== $data['threatRate']) {
+            $instanceRisk->setThreatRate((int)$data['threatRate'])
+                ->setIsThreatRateNotSetOrModifiedExternally(false);
         }
         if (isset($data['vulnerabilityRate'])) {
             $instanceRisk->setVulnerabilityRate((int)$data['vulnerabilityRate']);
