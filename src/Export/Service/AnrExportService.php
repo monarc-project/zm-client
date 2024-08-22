@@ -48,7 +48,7 @@ class AnrExportService
         private Table\DeliveryTable $deliveryTable,
         private Table\SoaTable $soaTable,
         private DeprecatedTable\QuestionTable $questionTable,
-        private DeprecatedTable\interviewTable $interviewTable,
+        private DeprecatedTable\InterviewTable $interviewTable,
         private DeprecatedTable\RecordTable $recordTable,
         private AnrRecordService $anrRecordService,
         private ConfigService $configService

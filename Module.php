@@ -81,7 +81,7 @@ class Module
             $errorJson['message'] = 'Resource not found.';
         }
 
-        if ($exception->getCode() === 400) {
+        if ($exception && $exception->getCode() === 400) {
             $model = new JsonModel([
                 'errors' => [json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR)],
             ]);
