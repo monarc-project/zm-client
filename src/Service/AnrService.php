@@ -323,6 +323,19 @@ class AnrService
         if (isset($data['manageRisks'])) {
             $anr->setManageRisks($data['manageRisks']);
         }
+        /* Context establishment texts. */
+        if (isset($data['contextAnaRisk'])) {
+            $anr->setContextAnaRisk($data['contextAnaRisk']);
+        }
+        if (isset($data['synthThreat'])) {
+            $anr->setSynthThreat($data['synthThreat']);
+        }
+        if (isset($data['contextGestRisk'])) {
+            $anr->setContextGestRisk($data['contextGestRisk']);
+        }
+        if (isset($data['synthAct'])) {
+            $anr->setSynthAct($data['synthAct']);
+        }
         /* Label, description update */
         if (isset($data['label']) && $anr->getLabel() !== $data['label']) {
             $anr->setLabel($data['label']);

@@ -375,7 +375,7 @@ trait ImportDataStructureAdapterTrait
         bool $isRiskTreated,
         int $languageIndex
     ): array {
-        $recommendationSetUuid = $recommendationData['recommendationSet'] ?? '';
+        $recommendationSetUuid = $recommendationData['recommandationSet'] ?? '';
 
         return [
             'uuid' => $recommendationData['uuid'],
