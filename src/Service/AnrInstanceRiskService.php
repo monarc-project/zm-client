@@ -343,7 +343,7 @@ class AnrInstanceRiskService
         $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
     }
 
-    public function getInstanceRisksInCsv(Entity\Anr $anr, $instanceId = null, $params = []): string
+    public function getInstanceRisksInCsv(Entity\Anr $anr, int $instanceId = null, array $params = []): string
     {
         $languageIndex = $anr->getLanguage();
 
@@ -358,9 +358,9 @@ class AnrInstanceRiskService
             $this->translateService->translate('Vulnerability', $languageIndex),
             $this->translateService->translate('Existing controls', $languageIndex),
             $this->translateService->translate('Qualif.', $languageIndex),
-            $this->translateService->translate('Current risk', $languageIndex). " C",
-            $this->translateService->translate('Current risk', $languageIndex) . " I",
-            $this->translateService->translate('Current risk', $languageIndex) . " "
+            $this->translateService->translate('Current risk', $languageIndex). ' C',
+            $this->translateService->translate('Current risk', $languageIndex) . ' I',
+            $this->translateService->translate('Current risk', $languageIndex) . ' '
                 . $this->translateService->translate('A', $languageIndex),
             $this->translateService->translate('Treatment', $languageIndex),
             $this->translateService->translate('Residual risk', $languageIndex),
@@ -383,14 +383,14 @@ class AnrInstanceRiskService
             $instance = $instanceRisk->getInstance();
             $recommendationData = [];
             foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
-                $recommendationData[] = $recommendationRisk->getRecommendation()->getCode() . " - "
+                $recommendationData[] = $recommendationRisk->getRecommendation()->getCode() . ' - '
                     . $recommendationRisk->getRecommendation()->getDescription();
             }
             $measuresData = [];
             if ($instanceRisk->getAmv() !== null) {
                 foreach ($instanceRisk->getAmv()->getMeasures() as $measure) {
-                    $measuresData[] = "[" . $measure->getReferential()->getLabel($anr->getLanguage()) . "] "
-                        . $measure->getCode() . " - " . $measure->getLabel($anr->getLanguage());
+                    $measuresData[] = '[' . $measure->getReferential()->getLabel($anr->getLanguage()) . '] '
+                        . $measure->getCode() . ' - ' . $measure->getLabel($anr->getLanguage());
                 }
             }
 

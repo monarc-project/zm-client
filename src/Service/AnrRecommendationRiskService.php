@@ -40,7 +40,7 @@ class AnrRecommendationRiskService
 
     public function getList(FormattedInputParams $formattedInputParams): array
     {
-        $hasRecommendationFilter = $formattedInputParams->hasFilterFor('recommendation');
+        $hasRecommendationFilter = $formattedInputParams->hasFilterFor('recommendation.uuid');
         $recommendationRisksData = [];
         $globalObjectsUuids = [];
         /** @var Entity\RecommendationRisk $recommendationRisk */
@@ -533,9 +533,12 @@ class AnrRecommendationRiskService
             'commentAfter' => $recommendationRisk->getCommentAfter(),
         ];
         if ($extendedFormat) {
-            $recommendationRiskData['instance'] = array_merge([
-                'id' => $recommendationRisk->getInstance()->getId(),
-            ], $recommendationRisk->getInstance()->getNames());
+            $instance = $recommendationRisk->getInstance();
+            $recommendationRiskData['instance'] = array_merge(['id' => $instance->getId()], $instance->getNames());
+            $recommendationRiskData['asset'] = array_merge([
+                'uuid' => $instance->getAsset()->getUuid(),
+                'type' => $instance->getAsset()->getType(),
+            ], $instance->getAsset()->getLabels());
             if ($recommendationRisk->getThreat() !== null && $recommendationRisk->getVulnerability() !== null) {
                 $recommendationRiskData['threat'] = array_merge([
                     'code' => $recommendationRisk->getThreat()->getCode(),

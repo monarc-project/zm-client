@@ -369,22 +369,22 @@ class AnrInstanceRiskOpService
         if ($anr->showRolfBrut()) {
             $translatedRiskValueDescription = $this->translateService->translate('Inherent risk', $anrLanguage);
             $tableHeaders['brutProb'] = $this->translateService->translate('Prob.', $anrLanguage)
-                . "(" . $translatedRiskValueDescription . ")";
+                . '(' . $translatedRiskValueDescription . ')';
             foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
                 $label = $operationalRiskScaleType->getLabel();
-                $tableHeaders[$label . " (" . $translatedRiskValueDescription . ")"] = $label . " ("
-                    . $translatedRiskValueDescription . ")";
+                $tableHeaders[$label . ' (' . $translatedRiskValueDescription . ')'] = $label . ' ('
+                    . $translatedRiskValueDescription . ')';
             }
             $tableHeaders['cacheBrutRisk'] = $translatedRiskValueDescription;
         }
 
         $translatedNetRiskDescription = $this->translateService->translate('Net risk', $anrLanguage);
-        $tableHeaders['netProb'] = $this->translateService->translate('Prob.', $anrLanguage) . "("
-            . $translatedNetRiskDescription . ")";
+        $tableHeaders['netProb'] = $this->translateService->translate('Prob.', $anrLanguage) . '('
+            . $translatedNetRiskDescription . ')';
         foreach ($operationalRiskScaleTypes as $operationalRiskScaleType) {
             $label = $operationalRiskScaleType->getLabel();
-            $tableHeaders[$label . " (" . $translatedNetRiskDescription . ")"] = $label . " ("
-                . $translatedNetRiskDescription . ")";
+            $tableHeaders[$label . ' (' . $translatedNetRiskDescription . ')'] = $label . ' ('
+                . $translatedNetRiskDescription . ')';
         }
         $tableHeaders['cacheNetRisk'] = $translatedNetRiskDescription;
         $tableHeaders['comment'] = $this->translateService->translate('Existing controls', $anrLanguage);
@@ -426,12 +426,12 @@ class AnrInstanceRiskOpService
             $values[] = CoreEntity\InstanceRiskOpSuperClass::getAvailableMeasureTypes()[
                 $operationalInstanceRisk->getKindOfMeasure()
             ];
-            $values[] = $operationalInstanceRisk->getCacheTargetedRisk() === -1 ?
-                $operationalInstanceRisk->getCacheNetRisk() :
-                $operationalInstanceRisk->getCacheTargetedRisk();
+            $values[] = $operationalInstanceRisk->getCacheTargetedRisk() === -1
+                ? $operationalInstanceRisk->getCacheNetRisk()
+                : $operationalInstanceRisk->getCacheTargetedRisk();
             $values[] = $operationalInstanceRisk->getInstanceRiskOwner()?->getName();
             $values[] = $operationalInstanceRisk->getContext();
-            $values[] = $this->getCsvRecommendations($anr, $operationalInstanceRisk);
+            $values[] = $this->getCsvRecommendations($operationalInstanceRisk);
             $values[] = $this->getCsvMeasures($anrLanguage, $operationalInstanceRisk);
 
 
@@ -473,12 +473,12 @@ class AnrInstanceRiskOpService
         return $operationalInstanceRiskScale;
     }
 
-    protected function getCsvRecommendations(Entity\Anr $anr, Entity\InstanceRiskOp $operationalInstanceRisk): string
+    protected function getCsvRecommendations(Entity\InstanceRiskOp $operationalInstanceRisk): string
     {
         $csvData = [];
         foreach ($operationalInstanceRisk->getRecommendationRisks() as $recommendationRisk) {
             $recommendation = $recommendationRisk->getRecommendation();
-            $csvData[] = $recommendation->getCode() . " - " . $recommendation->getDescription();
+            $csvData[] = $recommendation->getCode() . ' - ' . $recommendation->getDescription();
         }
 
         return implode("\n", $csvData);
@@ -487,9 +487,11 @@ class AnrInstanceRiskOpService
     protected function getCsvMeasures(int $anrLanguage, Entity\InstanceRiskOp $operationalInstanceRisk): string
     {
         $csvData = [];
-        foreach ($operationalInstanceRisk->getRolfRisk()->getMeasures() as $measure) {
-            $csvData[] = "[" . $measure->getReferential()->getLabel($anrLanguage) . "] " .
-               $measure->getCode() . " - " . $measure->getLabel($anrLanguage);
+        if ($operationalInstanceRisk->getRolfRisk() !== null) {
+            foreach ($operationalInstanceRisk->getRolfRisk()->getMeasures() as $measure) {
+                $csvData[] = '[' . $measure->getReferential()->getLabel($anrLanguage) . '] '
+                    . $measure->getCode() . ' - ' . $measure->getLabel($anrLanguage);
+            }
         }
 
         return implode("\n", $csvData);

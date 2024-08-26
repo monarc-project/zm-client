@@ -31,4 +31,16 @@ trait ExportResponseControllerTrait
             'Content-Disposition' => 'attachment; filename="' . $filename . $extension . '"',
         ]);
     }
+
+    private function prepareCsvDataResponse(string $output): ResponseInterface
+    {
+        $stream = fopen('php://memory', 'rb+');
+        fwrite($stream, $output);
+        rewind($stream);
+
+        return new Response($stream, 200, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Length' => strlen($output),
+        ]);
+    }
 }

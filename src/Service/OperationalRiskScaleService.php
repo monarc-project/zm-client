@@ -97,6 +97,9 @@ class OperationalRiskScaleService
         $operationalRiskScale = $this->operationalRiskScaleTable->findByAnrAndScaleId($anr, (int)$data['scaleId']);
 
         $operationalRiskScaleType = $this->getCreatedOperationalRiskScaleTypeObject($anr, $operationalRiskScale);
+        if (!empty($data['label'][$anr->getLanguageCode()])) {
+            $operationalRiskScaleType->setLabel($data['label'][$anr->getLanguageCode()]);
+        }
 
         // Process the scale comments.
         if (!empty($data['comments'])) {

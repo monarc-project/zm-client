@@ -7,13 +7,13 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\Http\Response;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\Instance\CreateInstanceDataInputValidator;
 use Monarc\Core\Validator\InputValidator\Instance\PatchInstanceDataInputValidator;
 use Monarc\Core\Validator\InputValidator\Instance\UpdateInstanceDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Export\Controller\Traits\ExportResponseControllerTrait;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrInstanceService;
@@ -21,6 +21,7 @@ use Monarc\FrontOffice\Service\AnrInstanceService;
 class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
+    use ExportResponseControllerTrait;
 
     public function __construct(
         private AnrInstanceService $anrInstanceService,
@@ -50,13 +51,13 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
 
         if ($this->params()->fromQuery('csv', false)) {
-            return $this->setCsvResponse(
+            return $this->prepareCsvDataResponse(
                 $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, (int)$id, $this->parseParams())
             );
         }
 
         if ($this->params()->fromQuery('csvInfoInst', false)) {
-            return $this->setCsvResponse(
+            return $this->prepareCsvDataResponse(
                 $this->anrInstanceRiskService->getInstanceRisksInCsv($anr, (int)$id, $this->parseParams())
             );
         }
@@ -141,14 +142,5 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
             'page' => (int)$params->fromQuery('page', 1),
             'limit' => (int)$params->fromQuery('limit', 0),
         ];
-    }
-
-    private function setCsvResponse(string $content): Response
-    {
-        $response = $this->getResponse();
-        $response->getHeaders()->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
-        $response->setContent($content);
-
-        return $response;
     }
 }

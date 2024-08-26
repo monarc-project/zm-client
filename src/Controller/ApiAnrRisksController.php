@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Export\Controller\Traits\ExportResponseControllerTrait;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Laminas\Http\Response;
 
@@ -19,6 +20,7 @@ use Laminas\Http\Response;
 class ApiAnrRisksController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
+    use ExportResponseControllerTrait;
 
     public function __construct(private AnrInstanceRiskService $anrInstanceRiskService)
     {
@@ -37,12 +39,9 @@ class ApiAnrRisksController extends AbstractRestfulControllerRequestHandler
         $id = $id === null ? null : (int)$id;
 
         if ($this->params()->fromQuery('csv', false)) {
-            /** @var Response $response */
-            $response = $this->getResponse();
-            $response->getHeaders()?->addHeaderLine('Content-Type', 'text/csv; charset=utf-8');
-            $response->setContent($this->anrInstanceRiskService->getInstanceRisksInCsv($anr, (int)$id, $params));
-
-            return $response;
+            return $this->prepareCsvDataResponse(
+                $this->anrInstanceRiskService->getInstanceRisksInCsv($anr, $id, $params)
+            );
         }
 
         $risks = $this->anrInstanceRiskService->getInstanceRisks($anr, $id, $params);

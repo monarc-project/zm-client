@@ -27,7 +27,7 @@ class ApiAnrRecommendationsRisksValidateController extends AbstractRestfulContro
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->anrRecommendationRiskService->validateFor($anr, $id, $data);
+        $this->anrRecommendationRiskService->validateFor($anr, (int)$id, $data);
 
         return $this->getSuccessfulJsonResponse();
     }

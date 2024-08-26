@@ -842,23 +842,24 @@ class DeliverableGenerationService
 
         // Fill in each row
         foreach ($questions as $question) {
-            $response = null;
+            $response = '';
             if ($question['type'] === 1) {
                 // Simple text
                 $response = $question['response'];
             } else {
                 // Choice, either simple or multiple
                 if ($question['multichoice']) {
-                    $responseIds = json_decode($question['response'], true);
+                    $responseIds = empty($question['response']) ? [] : json_decode($question['response'], true);
                     $responses = [];
 
-                    foreach ($questionsChoices as $choice) {
-                        if (!is_null($responseIds) && array_search($choice['id'], $responseIds) !== false) {
-                            $responses[] = '- ' . $choice['label' . $this->currentLangAnrIndex];
+                    if (!empty($responseIds)) {
+                        foreach ($questionsChoices as $choice) {
+                            if (in_array($choice['id'], $responseIds, true)) {
+                                $responses[] = '- ' . $choice['label' . $this->currentLangAnrIndex];
+                            }
                         }
+                        $response = implode("\n", $responses);
                     }
-
-                    $response = implode("\n", $responses);
                 } else {
                     foreach ($questionsChoices as $choice) {
                         if ($choice['id'] === $question['response']) {

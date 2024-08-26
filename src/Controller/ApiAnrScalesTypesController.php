@@ -49,7 +49,7 @@ class ApiAnrScalesTypesController extends AbstractRestfulControllerRequestHandle
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->scaleImpactTypeService->patch($anr, $id, $data);
+        $this->scaleImpactTypeService->patch($anr, (int)$id, $data);
 
         return $this->getSuccessfulJsonResponse();
     }

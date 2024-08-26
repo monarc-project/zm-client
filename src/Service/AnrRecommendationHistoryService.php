@@ -96,7 +96,7 @@ class AnrRecommendationHistoryService
             ->setRiskInstance($recommendationRisk->getInstance()->getName($languageIndex))
             ->setRiskInstanceContext($recommendationRisk->getInstance()->getHierarchyString())
             ->setCacheCommentAfter($recommendationRisk->getCommentAfter())
-            ->setCreator($this->connectedUser->getEmail());
+            ->setCreator($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname());
 
         $instanceRisk = $recommendationRisk->getInstanceRisk();
         $instanceRiskOp = $recommendationRisk->getInstanceRiskOp();
