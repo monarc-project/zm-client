@@ -116,9 +116,10 @@ class AnrRecommendationHistoryService
                 ->setRiskThreatVal($instanceRisk->getThreatRate())
                 ->setRiskVul($instanceRisk->getVulnerability()->getLabel($languageIndex))
                 ->setRiskVulValBefore($instanceRisk->getVulnerabilityRate())
-                ->setRiskVulValAfter($isFinal
-                    ? max(0, $instanceRisk->getVulnerabilityRate() - $instanceRisk->getReductionAmount())
-                    : $instanceRisk->getVulnerabilityRate()
+                ->setRiskVulValAfter(
+                    $isFinal
+                        ? max(0, $instanceRisk->getVulnerabilityRate() - $instanceRisk->getReductionAmount())
+                        : $instanceRisk->getVulnerabilityRate()
                 )
                 ->setRiskKindOfMeasure($instanceRisk->getKindOfMeasure())
                 ->setRiskCommentBefore($instanceRisk->getComment())
@@ -126,9 +127,10 @@ class AnrRecommendationHistoryService
                 ->setRiskMaxRiskBefore($instanceRisk->getCacheMaxRisk())
                 ->setRiskMaxRiskAfter(
                     $isFinal ? $instanceRisk->getCacheTargetedRisk() : $instanceRisk->getCacheMaxRisk()
-                )->setRiskColorBefore($instanceRisk->getCacheMaxRisk() !== -1
-                    ? $recommendation->getAnr()->getInformationalRiskLevelColor($instanceRisk->getCacheMaxRisk())
-                    : ''
+                )->setRiskColorBefore(
+                    $instanceRisk->getCacheMaxRisk() !== -1
+                        ? $recommendation->getAnr()->getInformationalRiskLevelColor($instanceRisk->getCacheMaxRisk())
+                        : ''
                 )->setRiskColorAfter($riskColorAfter);
         } elseif ($instanceRiskOp !== null) {
             if ($isFinal) {
@@ -150,9 +152,10 @@ class AnrRecommendationHistoryService
                 ->setRiskMaxRiskBefore($instanceRiskOp->getCacheNetRisk())
                 ->setRiskMaxRiskAfter(
                     $isFinal ? $instanceRiskOp->getCacheTargetedRisk() : $instanceRiskOp->getCacheNetRisk()
-                )->setRiskColorBefore($instanceRiskOp->getCacheNetRisk() !== -1
-                    ? $anr->getOperationalRiskLevelColor($instanceRiskOp->getCacheNetRisk())
-                    : ''
+                )->setRiskColorBefore(
+                    $instanceRiskOp->getCacheNetRisk() !== -1
+                        ? $anr->getOperationalRiskLevelColor($instanceRiskOp->getCacheNetRisk())
+                        : ''
                 )->setRiskColorAfter($riskColorAfter);
         }
 

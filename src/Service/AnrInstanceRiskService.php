@@ -478,15 +478,11 @@ class AnrInstanceRiskService
                 ->setCommentAfter($recommendationRiskToDuplicate->getCommentAfter())
                 ->setRecommendation($recommendationRiskToDuplicate->getRecommendation())
                 ->setInstance($instance)
+                ->setInstanceRisk($newInstanceRisk)
                 ->setGlobalObject($recommendationRiskToDuplicate->getGlobalObject())
                 ->setAsset($recommendationRiskToDuplicate->getAsset())
                 ->setThreat($recommendationRiskToDuplicate->getThreat())
                 ->setVulnerability($recommendationRiskToDuplicate->getVulnerability());
-            if ($recommendationRiskToDuplicate->getInstanceRisk()) {
-                $newRecommendationRisk->setInstanceRisk($recommendationRiskToDuplicate->getInstanceRisk());
-            } elseif ($recommendationRiskToDuplicate->getInstanceRiskOp()) {
-                $newRecommendationRisk->setInstanceRiskOp($recommendationRiskToDuplicate->getInstanceRiskOp());
-            }
 
             $this->recommendationRiskTable->save($newRecommendationRisk, false);
         }

@@ -29,6 +29,7 @@ class ObjectImportService
     public function __construct(
         private Processor\ObjectImportProcessor $objectImportProcessor,
         private Processor\ObjectCategoryImportProcessor $objectCategoryImportProcessor,
+        private Table\MonarcObjectTable $monarcObjectTable,
         private Table\ClientTable $clientTable,
         private CoreMonarcObjectTable $coreMonarcObjectTable,
         private CoreObjectExportService $coreObjectExportService,
@@ -158,7 +159,10 @@ class ObjectImportService
         $objectCategory = $this->objectCategoryImportProcessor
             ->processObjectCategoryData($anr, $data['object']['category'], $importMode);
 
-        return $this->objectImportProcessor->processObjectData($anr, $objectCategory, $data['object'], $importMode);
+        $object = $this->objectImportProcessor->processObjectData($anr, $objectCategory, $data['object'], $importMode);
+        $this->monarcObjectTable->save($object);
+
+        return $object;
     }
 
     private function validateAndGetObjectFromCommonDatabase(string $uuid): CoreMonarcObject

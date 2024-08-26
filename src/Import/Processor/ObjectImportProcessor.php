@@ -33,8 +33,7 @@ class ObjectImportProcessor
         private AssetImportProcessor $assetImportProcessor,
         private RolfTagImportProcessor $rolfTagImportProcessor,
         private ObjectCategoryImportProcessor $objectCategoryImportProcessor,
-        private InformationRiskImportProcessor $informationRiskImportProcessor,
-        private OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor
+        private InformationRiskImportProcessor $informationRiskImportProcessor
     ) {
     }
 
@@ -122,7 +121,7 @@ class ObjectImportProcessor
                 $this->mergeAssetInformationRisks($object, $objectData['asset']['informationRisks']);
             }
             /* Validate if the RolfTag is the same or/and the linked to it operational risks are equal. */
-            $this->mergeRolfTagOperationalRisks($object, $objectData['rolfTag']);
+            $this->mergeRolfTagOperationalRisks($anr, $object, $objectData['rolfTag']);
         }
 
         $this->importCacheHelper->addItemToArrayCache('processed_objects_by_old_uuids', $object, $currentObjectUuid);
@@ -244,7 +243,7 @@ class ObjectImportProcessor
             $this->setOperationalRisksSpecific($object);
             $object->setRolfTag(null);
             $this->monarcObjectTable->save($object, false);
-        } elseif ($object->getRolfTag()->getCode() !== $rolfTagData['code']) {
+        } elseif ($object->getRolfTag() !== null && $object->getRolfTag()->getCode() !== $rolfTagData['code']) {
             /* If rolfTag is changed, then all the op risks have to be updated. */
             $this->setOperationalRisksSpecific($object);
             $rolfTag = $this->rolfTagImportProcessor->processRolfTagData($anr, $rolfTagData);

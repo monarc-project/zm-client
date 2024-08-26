@@ -20,7 +20,8 @@ class ApiAnrRecommendationsRisksValidateController extends AbstractRestfulContro
     public function __construct(
         private AnrRecommendationRiskService $anrRecommendationRiskService,
         private ValidateRecommendationRiskDataInputValidator $validateRecommendationRiskDataInputValidator
-    ) {}
+    ) {
+    }
 
     public function patch($id, $data)
     {
