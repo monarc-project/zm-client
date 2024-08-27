@@ -484,8 +484,9 @@ class AnrService
         $linkedReferentialUuids = [];
         /* Removes already linked referentials from the list and unlink if not presented. */
         foreach ($anr->getReferentials() as $referential) {
-            if (\in_array($referential->getUuid(), $referentialUuids, true)) {
-                unset($referentialUuids[$referential->getUuid()]);
+            $foundUuidKey = array_search($referential->getUuid(), $referentialUuids, true);
+            if ($foundUuidKey !== false) {
+                unset($referentialUuids[$foundUuidKey]);
                 $linkedReferentialUuids[] = $referential->getUuid();
             } else {
                 /* The operation of removal is not supported in the UI. */

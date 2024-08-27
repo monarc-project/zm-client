@@ -2169,7 +2169,6 @@ class DeliverableGenerationService
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->continueAndGrayCell);
         }
 
-        //unset
         $global = [];
         $toUnset = [];
         foreach ($recommendationRisks as $recommendationRisk) {
@@ -2234,12 +2233,8 @@ class DeliverableGenerationService
 
                 $key = $recommendationRisk->getRecommendation()->getUuid()
                     . ' - ' . $recommendationRisk->getThreat()->getUuid()
-                    . ' - ' . $recommendationRisk->getVulnerability()->getUuid()
-                    . ' - ' . (
-                    $recommendationRisk->hasGlobalObjectRelation()
-                        ? $recommendationRisk->getGlobalObject()->getUuid()
-                        : ''
-                    );
+                    . ' - ' . $recommendationRisk->getVulnerability()?->getUuid()
+                    . ' - ' . $recommendationRisk->getGlobalObject()?->getUuid();
                 if (isset($toUnset[$key])) {
                     if (isset($alreadySet[$key])
                         || $instanceRisk->getCacheMaxRisk() < $toUnset[$key]
@@ -2424,8 +2419,20 @@ class DeliverableGenerationService
                 ->addText($this->anrTranslate('Deadline'), $this->boldFont, $this->centerParagraph);
         }
 
+        $globalObjectsRecommendationsKeys = [];
         foreach ($recommendationRisks as $recommendationRisk) {
             $recommendation = $recommendationRisk->getRecommendation();
+            if ($recommendationRisk->hasGlobalObjectRelation()) {
+                $key = 'o' . $recommendationRisk->getGlobalObject()->getUuid()
+                    . '-' . $recommendationRisk->getInstanceRisk()->getThreat()->getUuid()
+                    . '-' . $recommendationRisk->getInstanceRisk()->getVulnerability()->getUuid()
+                    . '-' . $recommendation->getUuid();
+                if (isset($globalObjectsRecommendationsKeys[$key])) {
+                    continue;
+                }
+                $globalObjectsRecommendationsKeys[$key] = $key;
+            }
+
             $importance = '';
             for ($i = 0; $i <= ($recommendation->getImportance() - 1); $i++) {
                 $importance .= '●';

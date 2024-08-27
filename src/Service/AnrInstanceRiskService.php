@@ -379,56 +379,72 @@ class AnrInstanceRiskService
         /** @var Entity\InstanceRisk[] $instanceRisks */
         $instanceRisks = $this->instanceRiskTable->findInstancesRisksByParams($anr, $languageIndex, $params);
 
+        $impactValues = [];
         foreach ($instanceRisks as $instanceRisk) {
             $instance = $instanceRisk->getInstance();
-            $recommendationData = [];
-            foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
-                $recommendationData[] = $recommendationRisk->getRecommendation()->getCode() . ' - '
-                    . $recommendationRisk->getRecommendation()->getDescription();
-            }
-            $measuresData = [];
-            if ($instanceRisk->getAmv() !== null) {
-                foreach ($instanceRisk->getAmv()->getMeasures() as $measure) {
-                    $measuresData[] = '[' . $measure->getReferential()->getLabel($anr->getLanguage()) . '] '
-                        . $measure->getCode() . ' - ' . $measure->getLabel($anr->getLanguage());
+            $object = $instance->getObject();
+            $threat = $instanceRisk->getThreat();
+            $vulnerability = $instanceRisk->getVulnerability();
+            $key = $object->isScopeGlobal()
+                ? 'o' . $object->getUuid() . '-' . $threat->getUuid() . '-' . $vulnerability->getUuid()
+                : 'r' . $instanceRisk->getId();
+            if (!isset($values[$key]) || $this->areInstanceRiskImpactsHigher($instanceRisk, $impactValues[$key])) {
+                $recommendationData = [];
+                foreach ($instanceRisk->getRecommendationRisks() as $recommendationRisk) {
+                    $recommendationData[] = $recommendationRisk->getRecommendation()->getCode()
+                        . ' - ' . $recommendationRisk->getRecommendation()->getDescription();
                 }
+                $measuresData = [];
+                if ($instanceRisk->getAmv() !== null) {
+                    foreach ($instanceRisk->getAmv()->getMeasures() as $measure) {
+                        $measuresData[] = '[' . $measure->getReferential()->getLabel($anr->getLanguage()) . '] '
+                            . $measure->getCode() . ' - ' . $measure->getLabel($anr->getLanguage());
+                    }
+                }
+
+                $impactValues[$key] = [
+                    'max_risk' => $instanceRisk->getCacheMaxRisk(),
+                    'c_impact' => $instance->getConfidentiality(),
+                    'i_impact' => $instance->getIntegrity(),
+                    'd_impact' => $instance->getAvailability(),
+                ];
+
+                $values[$key] = [
+                    $instance->getName($languageIndex),
+                    $instance->getConfidentiality() === -1 ? null : $instance->getConfidentiality(),
+                    $instance->getIntegrity() === -1 ? null : $instance->getIntegrity(),
+                    $instance->getAvailability() === -1 ? null : $instance->getAvailability(),
+                    $threat->getLabel($languageIndex),
+                    $instanceRisk->getThreatRate() === -1 ? null : $instanceRisk->getThreatRate(),
+                    $vulnerability->getLabel($languageIndex),
+                    $instanceRisk->getComment(),
+                    $instanceRisk->getVulnerabilityRate() === -1 ? null : $instanceRisk->getVulnerabilityRate(),
+                    $threat->getConfidentiality() === 0 || $instanceRisk->getRiskConfidentiality() === -1
+                        ? null
+                        : $instanceRisk->getRiskConfidentiality(),
+                    $instanceRisk->getThreat()->getIntegrity() === 0 || $instanceRisk->getRiskIntegrity() === -1
+                        ? null
+                        : $instanceRisk->getRiskIntegrity(),
+                    $instanceRisk->getThreat()->getAvailability() === 0 || $instanceRisk->getRiskAvailability() === -1
+                        ? null
+                        : $instanceRisk->getRiskAvailability(),
+                    $this->translateService->translate(
+                        Entity\InstanceRisk::getAvailableMeasureTypes()[$instanceRisk->getKindOfMeasure()],
+                        $languageIndex
+                    ),
+                    $instanceRisk->getCacheTargetedRisk() === -1 ? null : $instanceRisk->getCacheTargetedRisk(),
+                    $instanceRisk->getInstanceRiskOwner() ? $instanceRisk->getInstanceRiskOwner()->getName() : '',
+                    $instanceRisk->getContext(),
+                    implode("\n", $recommendationData),
+                    implode("\n", $measuresData),
+                ];
+
+                $output .= '"';
+                $search = ['"'];
+                $replace = ["'"];
+                $output .= implode('";"', str_replace($search, $replace, $values[$key]));
+                $output .= "\"\r\n";
             }
-
-            $values = [
-                $instance->getName($languageIndex),
-                $instance->getConfidentiality() === -1 ? null : $instance->getConfidentiality(),
-                $instance->getIntegrity() === -1 ? null : $instance->getIntegrity(),
-                $instance->getAvailability() === -1 ? null : $instance->getAvailability(),
-                $instanceRisk->getThreat()->getLabel($languageIndex),
-                $instanceRisk->getThreatRate() === -1 ? null : $instanceRisk->getThreatRate(),
-                $instanceRisk->getVulnerability()->getLabel($languageIndex),
-                $instanceRisk->getComment(),
-                $instanceRisk->getVulnerabilityRate() === -1 ? null : $instanceRisk->getVulnerabilityRate(),
-                $instanceRisk->getThreat()->getConfidentiality() === 0 || $instanceRisk->getRiskConfidentiality() === -1
-                    ? null
-                    : $instanceRisk->getRiskConfidentiality(),
-                $instanceRisk->getThreat()->getIntegrity() === 0 || $instanceRisk->getRiskIntegrity() === -1
-                    ? null
-                    : $instanceRisk->getRiskIntegrity(),
-                $instanceRisk->getThreat()->getAvailability() === 0 || $instanceRisk->getRiskAvailability() === -1
-                    ? null
-                    : $instanceRisk->getRiskAvailability(),
-                $this->translateService->translate(
-                    Entity\InstanceRisk::getAvailableMeasureTypes()[$instanceRisk->getKindOfMeasure()],
-                    $languageIndex
-                ),
-                $instanceRisk->getCacheTargetedRisk() === -1 ? null : $instanceRisk->getCacheTargetedRisk(),
-                $instanceRisk->getInstanceRiskOwner() ? $instanceRisk->getInstanceRiskOwner()->getName() : '',
-                $instanceRisk->getContext(),
-                implode("\n", $recommendationData),
-                implode("\n", $measuresData),
-            ];
-
-            $output .= '"';
-            $search = ['"'];
-            $replace = ["'"];
-            $output .= implode('";"', str_replace($search, $replace, $values));
-            $output .= "\"\r\n";
         }
 
         return $output;
