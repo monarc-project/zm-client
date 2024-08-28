@@ -87,7 +87,7 @@ class ApiAdminUsersController extends AbstractRestfulController
 
         $this->passwordService->resetPassword($id);
 
-        return $this->getPreparedJsonResponse($this->userService->getCompleteUser($id));
+        return $this->getPreparedJsonResponse();
     }
 
     public function delete($id)
