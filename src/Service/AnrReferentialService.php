@@ -23,7 +23,7 @@ class AnrReferentialService
         $result = [];
         /** @var Referential $referential */
         foreach ($this->referentialTable->findByParams($params) as $referential) {
-            $result[] = $this->prepareReferentialDataResult($referential);
+            $result[] = $this->prepareReferentialDataResult($referential, true);
         }
 
         return $result;
@@ -70,11 +70,29 @@ class AnrReferentialService
         $this->referentialTable->remove($referential);
     }
 
-    private function prepareReferentialDataResult(Referential $referential): array
+    private function prepareReferentialDataResult(Referential $referential, bool $includeMeasuresRisks = false): array
     {
         $measures = [];
         foreach ($referential->getMeasures() as $measure) {
-            $measures[] = ['uuid' => $measure->getUuid()];
+            $measuresData = array_merge(
+                ['uuid' => $measure->getUuid(), 'code' => $measure->getCode()],
+                $measure->getLabels()
+            );
+            if ($includeMeasuresRisks) {
+                $measuresData['amvs'] = [];
+                $measuresData['rolfRisks'] = [];
+                foreach ($measure->getAmvs() as $amv) {
+                    $measuresData['amvs'][] = [
+                        'uuid' => $amv->getUuid(),
+                    ];
+                }
+                foreach ($measure->getRolfRisks() as $rolfRisk) {
+                    $measuresData['rolfRisks'][] = [
+                        'uuid' => $rolfRisk->getId(),
+                    ];
+                }
+            }
+            $measures[] = $measuresData;
         }
 
         return array_merge(['uuid' => $referential->getUuid()], $referential->getLabels(), ['measures' => $measures]);

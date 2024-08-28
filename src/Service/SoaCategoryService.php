@@ -23,7 +23,7 @@ class SoaCategoryService
         $result = [];
         /** @var Entity\SoaCategory $soaCategory */
         foreach ($this->soaCategoryTable->findByParams($params) as $soaCategory) {
-            $result[] = $this->prepareSoaCategoryDataResult($soaCategory);
+            $result[] = $this->prepareSoaCategoryDataResult($soaCategory, true);
         }
 
         return $result;
@@ -70,8 +70,18 @@ class SoaCategoryService
         $this->soaCategoryTable->remove($soaCategory);
     }
 
-    private function prepareSoaCategoryDataResult(Entity\SoaCategory $soaCategory): array
-    {
-        return array_merge(['id' => $soaCategory->getId()], $soaCategory->getLabels());
+    private function prepareSoaCategoryDataResult(
+        Entity\SoaCategory $soaCategory,
+        bool $includeReferential = false
+    ): array {
+        $result = array_merge(['id' => $soaCategory->getId()], $soaCategory->getLabels());
+        if ($includeReferential) {
+            $result['referential'] = array_merge(
+                ['uuid' => $soaCategory->getReferential()->getUuid()],
+                $soaCategory->getReferential()->getLabels()
+            );
+        }
+
+        return $result;
     }
 }

@@ -40,12 +40,13 @@ class AnrRecommendationRiskService
 
     public function getList(FormattedInputParams $formattedInputParams): array
     {
-        $hasRecommendationFilter = $formattedInputParams->hasFilterFor('recommendation.uuid');
+        $includeRelations = $formattedInputParams->hasFilterFor('recommendation.uuid')
+            || $formattedInputParams->hasFilterFor('includeRelations');
         $recommendationRisksData = [];
         $globalObjectsUuids = [];
         /** @var Entity\RecommendationRisk $recommendationRisk */
         foreach ($this->recommendationRiskTable->findByParams($formattedInputParams) as $recommendationRisk) {
-            if ($hasRecommendationFilter
+            if ($includeRelations
                 && $recommendationRisk->getGlobalObject() !== null
                 && isset($globalObjectsUuids[$recommendationRisk->getGlobalObject()->getUuid()])
             ) {
@@ -54,10 +55,10 @@ class AnrRecommendationRiskService
 
             $recommendationRisksData[] = $this->getPreparedRecommendationRiskData(
                 $recommendationRisk,
-                $hasRecommendationFilter
+                $includeRelations
             );
 
-            if ($hasRecommendationFilter && $recommendationRisk->getGlobalObject() !== null) {
+            if ($includeRelations && $recommendationRisk->getGlobalObject() !== null) {
                 $globalObjectsUuids[$recommendationRisk->getGlobalObject()->getUuid()] = true;
             }
         }
@@ -534,16 +535,23 @@ class AnrRecommendationRiskService
         ];
         if ($extendedFormat) {
             $instance = $recommendationRisk->getInstance();
-            $recommendationRiskData['instance'] = array_merge(['id' => $instance->getId()], $instance->getNames());
+            $recommendationRiskData['instance'] = array_merge([
+                'id' => $instance->getId(),
+                'object' => [
+                    'uuid' => $instance->getObject()->getUuid(),
+                ],
+            ], $instance->getNames());
             $recommendationRiskData['asset'] = array_merge([
                 'uuid' => $instance->getAsset()->getUuid(),
                 'type' => $instance->getAsset()->getType(),
             ], $instance->getAsset()->getLabels());
             if ($recommendationRisk->getThreat() !== null && $recommendationRisk->getVulnerability() !== null) {
                 $recommendationRiskData['threat'] = array_merge([
+                    'uuid' => $recommendationRisk->getThreat()->getUuid(),
                     'code' => $recommendationRisk->getThreat()->getCode(),
                 ], $recommendationRisk->getThreat()->getLabels());
                 $recommendationRiskData['vulnerability'] = array_merge([
+                    'uuid' => $recommendationRisk->getVulnerability()->getUuid(),
                     'code' => $recommendationRisk->getVulnerability()->getCode(),
                 ], $recommendationRisk->getVulnerability()->getLabels());
             }
@@ -561,6 +569,9 @@ class AnrRecommendationRiskService
                     'kindOfMeasure' => $recommendationRisk->getInstanceRiskOp()->getKindOfMeasure(),
                     'cacheNetRisk' => $recommendationRisk->getInstanceRiskOp()->getCacheNetRisk(),
                     'cacheTargetedRisk' => $recommendationRisk->getInstanceRiskOp()->getCacheTargetedRisk(),
+                    'rolfRisk' => [
+                        'id' => $recommendationRisk->getInstanceRiskOp()->getRolfRisk()?->getId(),
+                    ],
                 ], $recommendationRisk->getInstanceRiskOp()->getRiskCacheLabels());
             }
         }

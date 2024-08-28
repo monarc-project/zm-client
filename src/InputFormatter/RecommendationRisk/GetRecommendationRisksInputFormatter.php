@@ -24,5 +24,9 @@ class GetRecommendationRisksInputFormatter extends AbstractInputFormatter
             'type' => 'int',
             'fieldName' => 'instanceRiskOp.id'
         ],
+        'includeRelations' => [
+            'type' => 'bool',
+            'isUsedInQuery' => false,
+        ],
     ];
 }
