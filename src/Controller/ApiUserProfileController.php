@@ -7,17 +7,22 @@
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\UserProfileService;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
+use Monarc\Core\Validator\InputValidator\Profile\PatchProfileDataInputValidator;
 
 class ApiUserProfileController extends AbstractRestfulController
 {
+    use ControllerRequestResponseHandlerTrait;
+
     private UserSuperClass $connectedUser;
 
     public function __construct(
+        private PatchProfileDataInputValidator $patchProfileDataInputValidator,
         private UserProfileService $userProfileService,
         ConnectedUserService $connectedUserService
     ) {
@@ -41,16 +46,21 @@ class ApiUserProfileController extends AbstractRestfulController
 
     public function patchList($data)
     {
+        $this->validatePostParams(
+            $this->patchProfileDataInputValidator->setExcludeFilter(['email' => $this->connectedUser->getEmail()]),
+            $data
+        );
+
         $this->userProfileService->updateMyData($data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function replaceList($data)
     {
         $this->userProfileService->updateMyData($data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function deleteList($data)
@@ -59,6 +69,6 @@ class ApiUserProfileController extends AbstractRestfulController
 
         $this->getResponse()->setStatusCode(204);
 
-        return new JsonModel();
+        return $this->getPreparedJsonResponse();
     }
 }
