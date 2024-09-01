@@ -67,6 +67,8 @@ class AnrRecommendationHistoryService
                 'riskCommentAfter' => $recommendationHistory->getRiskCommentAfter(),
                 'riskMaxRiskBefore' => $recommendationHistory->getRiskMaxRiskBefore(),
                 'riskMaxRiskAfter' => $recommendationHistory->getRiskMaxRiskAfter(),
+                'instanceRisk' => $recommendationHistory->getInstanceRisk() !== null,
+                'instanceRiskOp' => $recommendationHistory->getInstanceRiskOp() !== null,
             ];
         }
 
