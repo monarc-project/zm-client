@@ -27,7 +27,7 @@ class RecommendationHistoryTable extends AbstractTable
     {
         $queryBuilder = $this->getRepository()->createQueryBuilder('rh')
             ->where(
-                ($instanceRisk instanceof InstanceRisk ? 'rh.instanceRisk' : 'rh.instanceRiskOp') . ' = :$instanceRisk'
+                ($instanceRisk instanceof InstanceRisk ? 'rh.instanceRisk' : 'rh.instanceRiskOp') . ' = :instanceRisk'
             )
             ->setParameter('instanceRisk', $instanceRisk);
 
