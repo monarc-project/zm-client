@@ -387,7 +387,7 @@ class AnrRecommendationRiskService
                 /* Obtain list of new controls (commentAfter), that were specified since the new validation process
                 is started of all the recommendations linked to the risk. */
                 $cacheCommentsAfter = $this->recommendationHistoryService->getValidatedCachedCommentsList(
-                    $recommendationRisk->getInstanceRiskOp(),
+                    $instanceRisk,
                     $recommendationHistory
                 );
 
