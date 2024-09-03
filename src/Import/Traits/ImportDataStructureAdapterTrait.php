@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Import\Traits;
 
 use Monarc\Core\Entity\InstanceRiskSuperClass;
+use Monarc\Core\Entity\ScaleSuperClass;
 
 trait ImportDataStructureAdapterTrait
 {
@@ -296,7 +297,10 @@ trait ImportDataStructureAdapterTrait
                     'isSys' => (bool)$consequenceData['scaleImpactType']['isSys'],
                     'isHidden' => (bool)$consequenceData['scaleImpactType']['isHidden'],
                     'scaleComments' => [],
-                    'scale' => [],
+                    'scale' => [
+                        'id' => (int)($consequenceData['scale'] ?? 0),
+                        'type' => ScaleSuperClass::TYPE_IMPACT,
+                    ],
                 ],
             ];
         }

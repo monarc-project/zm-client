@@ -118,23 +118,23 @@ class AnrInstanceService
             ->setNames($object->getNames())
             ->setLabels($object->getLabels())
             ->setCreator($this->connectedUser->getEmail());
-        if (isset($instanceData['confidentiality'])) {
-            $instance->setConfidentiality($instanceData['confidentiality']);
+        if (isset($data['confidentiality'])) {
+            $instance->setConfidentiality($data['confidentiality']);
         }
-        if (isset($instanceData['integrity'])) {
-            $instance->setIntegrity(($instanceData['integrity']));
+        if (isset($data['integrity'])) {
+            $instance->setIntegrity($data['integrity']);
         }
-        if (isset($instanceData['availability'])) {
-            $instance->setAvailability($instanceData['availability']);
+        if (isset($data['availability'])) {
+            $instance->setAvailability($data['availability']);
         }
-        if (isset($instanceData['isConfidentialityInherited'])) {
-            $instance->setInheritedConfidentiality($instanceData['isConfidentialityInherited']);
+        if (isset($data['isConfidentialityInherited'])) {
+            $instance->setInheritedConfidentiality($data['isConfidentialityInherited']);
         }
-        if (isset($instanceData['isIntegrityInherited'])) {
-            $instance->setInheritedIntegrity($instanceData['isIntegrityInherited']);
+        if (isset($data['isIntegrityInherited'])) {
+            $instance->setInheritedIntegrity($data['isIntegrityInherited']);
         }
-        if (isset($instanceData['isAvailabilityInherited'])) {
-            $instance->setInheritedAvailability($instanceData['isAvailabilityInherited']);
+        if (isset($data['isAvailabilityInherited'])) {
+            $instance->setInheritedAvailability($data['isAvailabilityInherited']);
         }
 
         if (!empty($data['parent'])) {
