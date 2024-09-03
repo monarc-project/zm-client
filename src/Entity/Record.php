@@ -55,7 +55,7 @@ class Record extends AbstractEntity
     protected $label;
 
     /**
-     * @var array
+     * @var string
      *
      * @ORM\Column(name="purposes", type="text", nullable=true)
      */
@@ -187,20 +187,32 @@ class Record extends AbstractEntity
         $this->label = $label;
     }
 
-    /**
-     * @return array
-     */
-    public function getPurposes()
+    public function getlabel(): string
     {
-        return $this->purposes;
+        return (string)$this->label;
     }
-    /**
-     * @param string $purposes
-     * @return Record
-     */
-    public function setPurposes($purposes)
+
+    public function getPurposes(): string
+    {
+        return (string)$this->purposes;
+    }
+
+    public function setPurposes(string $purposes)
     {
         $this->purposes = $purposes;
+
+        return $this;
+    }
+
+    public function getSecMeasures(): string
+    {
+        return (string)$this->secMeasures;
+    }
+
+    public function setSecMeasures(string $secMeasures): self
+    {
+        $this->secMeasures = $secMeasures;
+
         return $this;
     }
 

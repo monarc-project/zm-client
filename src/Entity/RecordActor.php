@@ -53,7 +53,7 @@ class RecordActor extends AbstractEntity
     protected $label;
 
     /**
-     * @var array
+     * @var string
      *
      * @ORM\Column(name="contact", type="string", length=255, nullable=true)
      */
@@ -108,5 +108,15 @@ class RecordActor extends AbstractEntity
     {
         $this->contact = $contact;
         return $this;
+    }
+
+    public function getLabel(): string
+    {
+        return (string)$this->label;
+    }
+
+    public function getContact(): string
+    {
+        return (string)$this->contact;
     }
 }

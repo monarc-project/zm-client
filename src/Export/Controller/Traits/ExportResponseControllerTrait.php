@@ -13,7 +13,7 @@ use function strlen;
 
 trait ExportResponseControllerTrait
 {
-    private function prepareExportResponse(string $filename, string $output, bool $isEncrypted): ResponseInterface
+    private function prepareJsonExportResponse(string $filename, string $output, bool $isEncrypted): ResponseInterface
     {
         $contentType = 'application/json; charset=utf-8';
         $extension = '.json';
@@ -32,7 +32,7 @@ trait ExportResponseControllerTrait
         ]);
     }
 
-    private function prepareCsvDataResponse(string $output): ResponseInterface
+    private function prepareCsvExportResponse(string $output): ResponseInterface
     {
         $stream = fopen('php://memory', 'rb+');
         fwrite($stream, $output);
@@ -41,6 +41,19 @@ trait ExportResponseControllerTrait
         return new Response($stream, 200, [
             'Content-Type' => 'text/csv; charset=utf-8',
             'Content-Length' => strlen($output),
+        ]);
+    }
+
+    private function prepareWordExportResponse(string $filename, string $output): ResponseInterface
+    {
+        $stream = fopen('php://memory', 'rb+');
+        fwrite($stream, $output);
+        rewind($stream);
+
+        return new Response($stream, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Length' => strlen($output),
+            'Content-Disposition' => 'attachment; filename="' . utf8_decode($filename) . '"',
         ]);
     }
 }

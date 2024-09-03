@@ -3093,7 +3093,7 @@ class DeliverableGenerationService
      */
     private function generateTableRecordGDPR($recordId)
     {
-        $recordEntity = $this->recordTable->getEntity($recordId);
+        $record = $this->recordTable->findById((int)$recordId);
 
         $tableWord = new PhpWord\PhpWord();
         $tableWord->getSettings()->setUpdateFields(true);
@@ -3103,16 +3103,13 @@ class DeliverableGenerationService
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Name'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(_WT($recordEntity->get('label')), $this->normalFont, $this->leftParagraph);
+            ->addText(_WT($record->getLabel()), $this->normalFont, $this->leftParagraph);
         $table->addRow(400);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Creation date'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
             ->addText(
-                ($recordEntity->get('createdAt')
-                    ? strftime("%d-%m-%Y", $recordEntity->get('createdAt')->getTimeStamp())
-                    : ""
-                ),
+                $record->getCreatedAt() ? strftime("%d-%m-%Y", $record->getCreatedAt()->getTimeStamp()) : '',
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -3121,10 +3118,7 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Update date'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
             ->addText(
-                ($recordEntity->get('updatedAt')
-                    ? strftime("%d-%m-%Y", $recordEntity->get('updatedAt')->getTimeStamp())
-                    : ""
-                ),
+                $record->getUpdatedAt() ? strftime("%d-%m-%Y", $record->getUpdatedAt()->getTimeStamp()) : '',
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -3132,12 +3126,12 @@ class DeliverableGenerationService
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Purpose(s)'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(_WT($recordEntity->get('purposes')), $this->normalFont, $this->leftParagraph);
+            ->addText(_WT($record->getPurposes()), $this->normalFont, $this->leftParagraph);
         $table->addRow(400);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Security measures'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(_WT($recordEntity->get('secMeasures')), $this->normalFont, $this->leftParagraph);
+            ->addText(_WT($record->getSecMeasures()), $this->normalFont, $this->leftParagraph);
 
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -3149,8 +3143,8 @@ class DeliverableGenerationService
      */
     private function generateTableRecordActors($recordId)
     {
-        $recordEntity = $this->recordTable->getEntity($recordId);
-        $jointControllers = $recordEntity->get('jointControllers');
+        $record = $this->recordTable->findById((int)$recordId);
+        $jointControllers = $record->getJointControllers();
 
         //create section
         $tableWord = new PhpWord\PhpWord();
@@ -3171,13 +3165,13 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Controller'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('controller') ? $recordEntity->get('controller')->get('label') : ""),
+                _WT($record->getController() ? $record->getController()->getLabel() : ''),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('controller') ? $recordEntity->get('controller')->get('contact') : ""),
+                _WT($record->getController() ? $record->getController()->getContact() : ''),
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -3187,13 +3181,13 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Representative'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('representative') ? $recordEntity->get('representative')->get('label') : ""),
+                _WT($record->get('representative') ? $record->get('representative')->get('label') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('representative') ? $recordEntity->get('representative')->get('contact') : ""),
+                _WT($record->get('representative') ? $record->get('representative')->get('contact') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -3203,13 +3197,13 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Data protection officer'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('dpo') ? $recordEntity->get('dpo')->get('label') : ""),
+                _WT($record->get('dpo') ? $record->get('dpo')->get('label') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
             ->addText(
-                _WT($recordEntity->get('dpo') ? $recordEntity->get('dpo')->get('contact') : ""),
+                _WT($record->get('dpo') ? $record->get('dpo')->get('contact') : ""),
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -3218,7 +3212,7 @@ class DeliverableGenerationService
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
             ->addText($this->anrTranslate('Joint controllers'), $this->boldFont, $this->leftParagraph);
 
-        if (\count($jointControllers)) {
+        if (!empty($jointControllers)) {
             $i = 0;
             foreach ($jointControllers as $jc) {
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)

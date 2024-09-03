@@ -39,7 +39,7 @@ class ApiAnrRisksController extends AbstractRestfulControllerRequestHandler
         $id = $id === null ? null : (int)$id;
 
         if ($this->params()->fromQuery('csv', false)) {
-            return $this->prepareCsvDataResponse(
+            return $this->prepareCsvExportResponse(
                 $this->anrInstanceRiskService->getInstanceRisksInCsv($anr, $id, $params)
             );
         }

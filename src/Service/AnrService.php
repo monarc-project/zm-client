@@ -445,10 +445,12 @@ class AnrService
                 ['anrId' => $anr->getId()]
             );
             if ($importCronTask !== null && $importCronTask->getStatus() === Entity\CronTask::STATUS_IN_PROGRESS) {
-                $timeDiff = $importCronTask->getUpdatedAt()->diff(new DateTime());
+                $timeDiff = $importCronTask->getUpdatedAt() !== null
+                    ? $importCronTask->getUpdatedAt()->diff(new DateTime())
+                    : $importCronTask->getCreatedAt()->diff(new DateTime());
                 $instancesNumber = $this->instanceTable->countByAnrIdFromDate(
                     $anr->getId(),
-                    $importCronTask->getUpdatedAt()
+                    $importCronTask->getUpdatedAt() ?? $importCronTask->getCreatedAt()
                 );
                 $anrData['importStatus'] = [
                     'executionTime' => $timeDiff->h . ' hours ' . $timeDiff->i . ' min ' . $timeDiff->s . ' sec',

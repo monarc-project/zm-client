@@ -53,11 +53,12 @@ class RecordRecipient extends AbstractEntity
     protected $label;
 
     /**
+     * 0 for internal recipients and 1 for external recipients.
+     *
      * @var bool
      *
      * @ORM\Column(name="type", type="string", length=255, nullable=true)
      */
-     // 0 for internal recipients and 1 for external recipients
     protected $type;
 
     /**
@@ -101,5 +102,10 @@ class RecordRecipient extends AbstractEntity
         $this->anr = $anr;
 
         return $this;
+    }
+
+    public function getType(): int
+    {
+        return (int)$this->type;
     }
 }

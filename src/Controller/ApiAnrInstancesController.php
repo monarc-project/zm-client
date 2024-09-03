@@ -51,13 +51,13 @@ class ApiAnrInstancesController extends AbstractRestfulControllerRequestHandler
         $anr = $this->getRequest()->getAttribute('anr');
 
         if ($this->params()->fromQuery('csv', false)) {
-            return $this->prepareCsvDataResponse(
+            return $this->prepareCsvExportResponse(
                 $this->anrInstanceRiskOpService->getOperationalRisksInCsv($anr, (int)$id, $this->parseParams())
             );
         }
 
         if ($this->params()->fromQuery('csvInfoInst', false)) {
-            return $this->prepareCsvDataResponse(
+            return $this->prepareCsvExportResponse(
                 $this->anrInstanceRiskService->getInstanceRisksInCsv($anr, (int)$id, $this->parseParams())
             );
         }

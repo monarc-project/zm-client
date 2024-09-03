@@ -10,11 +10,13 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Export\Controller\Traits\ExportResponseControllerTrait;
 use Monarc\FrontOffice\Service\AnrRecordService;
 
 class ApiAnrRecordsExportController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
+    use ExportResponseControllerTrait;
 
     public function __construct(private AnrRecordService $anrRecordService)
     {
@@ -24,54 +26,20 @@ class ApiAnrRecordsExportController extends AbstractRestfulControllerRequestHand
     {
         if (!empty($data['id'])) {
             $output = $this->anrRecordService->export($data);
+            $filename = empty($data['filename']) ? $data['id'] : $data['filename'];
 
-            if (empty($data['password'])) {
-                $contentType = 'application/json; charset=utf-8';
-                $extension = '.json';
-            } else {
-                $contentType = 'text/plain; charset=utf-8';
-                $extension = '.bin';
-            }
-
-            $this->getResponse()
-                 ->getHeaders()
-                 ->clearHeaders()
-                 ->addHeaderLine('Content-Type', $contentType)
-                 ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
-                                  (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
-
-            $this->getResponse()
-                 ->setContent($output);
-
-            return $this->getResponse();
+            return $this->prepareJsonExportResponse($filename, $output, !empty($data['password']));
         }
 
         if ($data['export'] === "All") {
-            if (empty($data['password'])) {
-                $contentType = 'application/json; charset=utf-8';
-                $extension = '.json';
-            } else {
-                $contentType = 'text/plain; charset=utf-8';
-                $extension = '.bin';
-            }
             $anrId = (int)$this->params()->fromRoute('anrid');
             if (empty($anrId)) {
                 throw new Exception('Anr id missing', 412);
             }
             $data['anr'] = $anrId;
-            $data['filename'] = "records_list";
             $output = $this->anrRecordService->exportAll($data);
 
-            $this->getResponse()
-                 ->getHeaders()
-                 ->clearHeaders()
-                 ->addHeaderLine('Content-Type', $contentType)
-                 ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
-                                  (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
-
-            $this->getResponse()->setContent($output);
-
-            return $this->getResponse();
+            return $this->prepareJsonExportResponse('records_list', $output, !empty($data['password']));
         }
 
         throw new Exception('Record to export is required', 412);

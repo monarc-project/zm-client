@@ -26,6 +26,6 @@ class ApiAnrInstancesExportController extends AbstractRestfulControllerRequestHa
         $anr = $this->getRequest()->getAttribute('anr');
         $result = $this->anrInstanceExportService->export($anr, $data);
 
-        return $this->prepareExportResponse($result['filename'], $result['content'], !empty($data['password']));
+        return $this->prepareJsonExportResponse($result['filename'], $result['content'], !empty($data['password']));
     }
 }

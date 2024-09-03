@@ -11,10 +11,12 @@ use Monarc\Core\Controller\AbstractController;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\DeliveriesModelsService;
+use Monarc\FrontOffice\Export\Controller\Traits\ExportResponseControllerTrait;
 
 class ApiDeliveriesModelsController extends AbstractController
 {
     use ControllerRequestResponseHandlerTrait;
+    use ExportResponseControllerTrait;
 
     public function __construct(DeliveriesModelsService $deliveriesModelsService)
     {
@@ -85,23 +87,9 @@ class ApiDeliveriesModelsController extends AbstractController
 
                 $fileContents = file_get_contents($currentPath);
                 if ($fileContents !== false) {
-                    $response = $this->getResponse();
-                    $response->setContent($fileContents);
-
-                    $headers = $response->getHeaders();
-                    $headers->clearHeaders()
-                        ->addHeaderLine(
-                            'Content-Type',
-                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                        )
-                        ->addHeaderLine('Content-Disposition', 'attachment; filename="' . utf8_decode($name) . '"')
-                        ->addHeaderLine('Content-Length', strlen($fileContents));
-
-                    return $this->response;
+                    return $this->prepareWordExportResponse($name, $fileContents);
                 }
-                throw new Exception('Document template not found');
             }
-            throw new Exception('Document template not found');
         }
 
         throw new Exception('Document template not found');
