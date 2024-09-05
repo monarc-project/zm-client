@@ -90,7 +90,10 @@ class AnrObjectService
     {
         $result = [];
         foreach ($this->objectCategoryTable->findRootCategoriesByAnrOrderedByPosition($anr) as $rootObjectCategory) {
-            $result[] = $this->getCategoriesAndObjectsTreeList($rootObjectCategory);
+            $objectsCategoriesData = $this->getCategoriesAndObjectsTreeList($rootObjectCategory);
+            if (!empty($objectsCategoriesData)) {
+                $result[] = $objectsCategoriesData;
+            }
         }
 
         /* Places uncategorized objects. */

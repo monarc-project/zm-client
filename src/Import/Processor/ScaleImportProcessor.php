@@ -108,9 +108,17 @@ class ScaleImportProcessor
                 $this->importCacheHelper->addItemToArrayCache('current_scales_data_by_type', [
                     'min' => $scale->getMin(),
                     'max' => $scale->getMax(),
+                    'object' => $scale,
                 ], $scale->getType());
             }
         }
+    }
+
+    public function getCurrentScaleFromCacheByType(int $type): ?Entity\Scale
+    {
+        return $this->importCacheHelper->isCacheKeySet('current_scales_data_by_type')
+            ? $this->importCacheHelper->getItemFromArrayCache('current_scales_data_by_type', $type)['object']
+            : null;
     }
 
     public function prepareExternalScalesCache(array $externalScalesData): void
@@ -296,6 +304,32 @@ class ScaleImportProcessor
         return $this->importCacheHelper->getItemFromArrayCache('scale_impact_types_by_label');
     }
 
+    public function createNewScaleImpactType(
+        Entity\Anr $anr,
+        Entity\Scale $scale,
+        array $data,
+        int $existingImpactTypesNumber
+    ): Entity\ScaleImpactType {
+        $labelKey = 'label' . $anr->getLanguage();
+        if (!isset($data[$labelKey])) {
+            $data[$labelKey] = $data['label'];
+        }
+
+        $newScaleImpactType = $this->anrScaleImpactTypeService->create(
+            $anr,
+            array_merge($data, ['scale' => $scale, 'type' => ++$existingImpactTypesNumber]),
+            false
+        );
+
+        $this->importCacheHelper->addItemToArrayCache(
+            'scale_impact_types_by_label',
+            $newScaleImpactType,
+            $data['label']
+        );
+
+        return $newScaleImpactType;
+    }
+
     private function applyNewScaleImpactTypesAndComments(
         Entity\Anr $anr,
         Entity\Scale $scale,
@@ -359,21 +393,8 @@ class ScaleImportProcessor
                         $this->scaleImpactTypeTable->save($existingCustomImpactType, false);
                     }
                 } else {
-                    $labelKey = 'label' . $anr->getLanguage();
-                    if (!isset($newScaleImpactTypeData[$labelKey])) {
-                        $newScaleImpactTypeData[$labelKey] = $newScaleImpactTypeData['label'];
-                    }
-
-                    $newScaleImpactType = $this->anrScaleImpactTypeService->create($anr, array_merge(
-                        $newScaleImpactTypeData,
-                        ['scale' => $scale, 'type' => ++$existingImpactTypesNumber]
-                    ), false);
-
-                    $this->importCacheHelper->addItemToArrayCache(
-                        'scale_impact_types_by_label',
-                        $newScaleImpactType,
-                        $newScaleImpactTypeData['label']
-                    );
+                    $newScaleImpactType = $this
+                        ->createNewScaleImpactType($anr, $scale, $newScaleImpactTypeData, $existingImpactTypesNumber);
 
                     $this->applyNewScalesImpactsTypesComments(
                         $anr,

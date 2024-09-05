@@ -125,7 +125,7 @@ class InstanceImportService
         } elseif ($data['type'] === self::IMPORT_TYPE_INSTANCE) {
             $this->importCacheHelper->setArrayCacheValue('import_type', self::IMPORT_TYPE_INSTANCE);
             if ($withEval) {
-                $this->scaleImportProcessor->prepareScalesCache($anr, $data['operationalRiskScales']);
+                $this->scaleImportProcessor->prepareScalesCache($anr, $data['scales']);
                 $this->operationalRiskScaleImportProcessor->prepareExternalOperationalRiskScalesDataCache($anr, $data);
             }
             if ($this->isImportingDataVersionLowerThan('2.13.1')) {

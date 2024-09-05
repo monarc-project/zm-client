@@ -207,19 +207,39 @@ class InstanceRiskImportProcessor
 
     private function convertInstanceRiskEvaluations(array &$instanceRiskData): void
     {
-        $currentScaleRange = $this->importCacheHelper
-            ->getItemFromArrayCache('current_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
-        $externalScaleRange = $this->importCacheHelper
-            ->getItemFromArrayCache('external_scales_data_by_type')[ScaleSuperClass::TYPE_IMPACT];
-        foreach (['riskConfidentiality', 'riskIntegrity', 'riskAvailability', 'threatRate', 'vulnerabilityRate',
-            'reductionAmount', 'cacheMaxRisk', 'cacheTargetedRisk'] as $propertyName) {
+        $currentScalesRanges = $this->importCacheHelper->getItemFromArrayCache('current_scales_data_by_type');
+        $externalScalesRanges = $this->importCacheHelper->getItemFromArrayCache('external_scales_data_by_type');
+        foreach (['riskConfidentiality', 'riskIntegrity', 'riskAvailability'] as $propertyName) {
             $instanceRiskData[$propertyName] = $this->convertValueWithinNewScalesRange(
                 $instanceRiskData[$propertyName],
-                $externalScaleRange['min'],
-                $externalScaleRange['max'],
-                $currentScaleRange['min'],
-                $currentScaleRange['max'],
+                $externalScalesRanges[ScaleSuperClass::TYPE_IMPACT]['min'],
+                $externalScalesRanges[ScaleSuperClass::TYPE_IMPACT]['max'],
+                $currentScalesRanges[ScaleSuperClass::TYPE_IMPACT]['min'],
+                $currentScalesRanges[ScaleSuperClass::TYPE_IMPACT]['max'],
             );
         }
+        $instanceRiskData['threatRate'] = $this->convertValueWithinNewScalesRange(
+            $instanceRiskData['threatRate'],
+            $externalScalesRanges[ScaleSuperClass::TYPE_THREAT]['min'],
+            $externalScalesRanges[ScaleSuperClass::TYPE_THREAT]['max'],
+            $currentScalesRanges[ScaleSuperClass::TYPE_THREAT]['min'],
+            $currentScalesRanges[ScaleSuperClass::TYPE_THREAT]['max'],
+        );
+        $previousVulnerabilityRate = $instanceRiskData['vulnerabilityRate'];
+        $instanceRiskData['vulnerabilityRate'] = $this->convertValueWithinNewScalesRange(
+            $instanceRiskData['vulnerabilityRate'],
+            $externalScalesRanges[ScaleSuperClass::TYPE_VULNERABILITY]['min'],
+            $externalScalesRanges[ScaleSuperClass::TYPE_VULNERABILITY]['max'],
+            $currentScalesRanges[ScaleSuperClass::TYPE_VULNERABILITY]['min'],
+            $currentScalesRanges[ScaleSuperClass::TYPE_VULNERABILITY]['max'],
+        );
+        $instanceRiskData['reductionAmount'] = $this->convertValueWithinNewScalesRange(
+            $instanceRiskData['reductionAmount'],
+            0,
+            $previousVulnerabilityRate,
+            0,
+            $instanceRiskData['vulnerabilityRate'],
+            0
+        );
     }
 }

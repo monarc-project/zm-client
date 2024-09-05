@@ -50,7 +50,22 @@ class InstanceConsequenceImportProcessor
         $scaleImpactType = $this->scaleImportProcessor
             ->getScaleImpactTypeFromCacheByLabel($anr, $instanceConsequenceData['scaleImpactType']['label']);
         if ($scaleImpactType === null) {
-            return null;
+            $scaleType = $instanceConsequenceData['scaleImpactType']['scale']['type'] ?? null;
+            if ($scaleType === null) {
+                return null;
+            }
+            $scale = $this->scaleImportProcessor->getCurrentScaleFromCacheByType($scaleType);
+            if ($scale === null) {
+                return null;
+            }
+
+            $scaleImpactTypesNumber = \count($this->scaleImportProcessor->getScalesImpactTypesFromCache($anr));
+            $scaleImpactType = $this->scaleImportProcessor->createNewScaleImpactType(
+                $anr,
+                $scale,
+                $instanceConsequenceData['scaleImpactType'],
+                $scaleImpactTypesNumber
+            );
         }
 
         /* For the instances import the values have to be converted to local scales. */
