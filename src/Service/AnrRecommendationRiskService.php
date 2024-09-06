@@ -561,6 +561,7 @@ class AnrRecommendationRiskService
                     'kindOfMeasure' => $recommendationRisk->getInstanceRisk()->getKindOfMeasure(),
                     'cacheMaxRisk' => $recommendationRisk->getInstanceRisk()->getCacheMaxRisk(),
                     'cacheTargetedRisk' => $recommendationRisk->getInstanceRisk()->getCacheTargetedRisk(),
+                    'comment' => $recommendationRisk->getInstanceRisk()->getComment(),
                 ];
             }
             if ($recommendationRisk->getInstanceRiskOp()) {
@@ -572,6 +573,7 @@ class AnrRecommendationRiskService
                     'rolfRisk' => [
                         'id' => $recommendationRisk->getInstanceRiskOp()->getRolfRisk()?->getId(),
                     ],
+                    'comment' => $recommendationRisk->getInstanceRiskOp()->getComment(),
                 ], $recommendationRisk->getInstanceRiskOp()->getRiskCacheLabels());
             }
         }
