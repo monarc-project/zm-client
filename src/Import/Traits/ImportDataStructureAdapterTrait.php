@@ -322,9 +322,14 @@ trait ImportDataStructureAdapterTrait
     {
         $operationalInstanceRisksData = [];
         foreach ($data['risksop'] as $operationalInstanceRiskData) {
+            $riskLabel = $operationalInstanceRiskData['riskCacheLabel' . $languageIndex];
             $rolfRiskData = null;
             if (!empty($operationalInstanceRiskData['rolfRisk'])) {
-                $rolfRiskData = $data['object']['rolfRisks'][$operationalInstanceRiskData['rolfRisk']];
+                foreach ($data['object']['rolfRisks'] as $rolfRiskData) {
+                    if ($rolfRiskData['label' . $languageIndex] === $riskLabel) {
+                        break;
+                    }
+                }
                 $rolfTagsData = [];
                 foreach ($data['object']['rolfTags'] as $rolfTagData) {
                     if (isset($rolfTagData['risks'][$rolfRiskData['id']])) {
