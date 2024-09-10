@@ -2528,7 +2528,7 @@ class DeliverableGenerationService
 
             $table->addRow(400);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                ->addText(_WT($recoRecord->creator), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT($recoRecord->getCreator()), $this->normalFont, $this->leftParagraph);
             $cellReco = $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell);
             $cellRecoRun = $cellReco->addTextRun($this->leftParagraph);
             $cellRecoRun->addText($importance . ' ', $this->redFont);
