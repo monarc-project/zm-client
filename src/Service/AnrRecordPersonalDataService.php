@@ -35,7 +35,7 @@ class AnrRecordPersonalDataService extends AbstractService
         if (!empty($data['dataCategories'])) {
             foreach ($data['dataCategories'] as $dataCategory) {
                 if (!isset($dataCategory['id'])) {
-                    $dc['anr'] = $this->anrTable->getEntity($data['anr']);
+                    $dc['anr'] = $this->anrTable->findById((int)$data['anr']);
                     $dc['id'] = $this->recordDataCategoryService->createDataCategory($dataCategory);
                 }
                 $dataCategories[] = $dataCategory['id'];
@@ -76,7 +76,7 @@ class AnrRecordPersonalDataService extends AbstractService
         if (!empty($data['dataCategories'])) {
             foreach ($data['dataCategories'] as $dc) {
                 if (!isset($dc['id'])) {
-                    $dc['anr'] = $this->anrTable->getEntity($data['anr']);
+                    $dc['anr'] = $this->anrTable->findById((int)$data['anr']);
                     $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc);
                 }
                 $dataCategories[] = $dc['id'];
