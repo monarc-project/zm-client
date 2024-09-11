@@ -155,34 +155,35 @@ class AnrRecordService extends AbstractService
         } else {
             $data['representative'] = null;
         }
-        $data['jointControllers'] = [];
+
+        $jointControllers = [];
         foreach ($data['jointControllers'] as $jc) {
-            if (isset($jc['id'])) {
-                $data['jointControllers'][] = $jc['id'];
-            }
+            $jointControllers[] = $jc['id'];
         }
-        $data['personalData'] = [];
+        $data['jointControllers'] = $jointControllers;
+        $personalData = [];
         foreach ($data['personalData'] as $pd) {
-            if (isset($pd['id'])) {
-                $data['personalData'][] = $pd['id'];
-            }
+            $personalData[] = $pd['id'];
         }
-        $data['recipients'] = [];
+        $data['personalData'] = $personalData;
+
+        $recipients = [];
         foreach ($data['recipients'] as $recipient) {
-            $data['recipients'][] = $recipient['id'];
+            $recipients[] = $recipient['id'];
         }
-        $data['internationalTransfers'] = [];
+        $data['recipients'] = $recipients;
+
+        $internationalTransfers = [];
         foreach ($data['internationalTransfers'] as $it) {
-            if (isset($it['id'])) {
-                $data['internationalTransfers'][] = $it['id'];
-            }
+            $internationalTransfers[] = $it['id'];
         }
-        $data['processors'] = [];
+        $data['internationalTransfers'] = $internationalTransfers;
+
+        $processors = [];
         foreach ($data['processors'] as $processor) {
-            if (isset($processor['id'])) {
-                $data['processors'][] = $processor['id'];
-            }
+            $processors[] = $processor['id'];
         }
+        $data['processors'] = $processors;
 
         foreach ($entity->personalData as $pd) {
             if (!in_array($pd->id, $data['personalData'])) {
