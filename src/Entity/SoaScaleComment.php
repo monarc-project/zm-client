@@ -40,7 +40,7 @@ class SoaScaleComment extends SoaScaleCommentSuperClass
 
     public function getComment(): string
     {
-        return $this->comment;
+        return (string)$this->comment;
     }
 
     public function setComment(string $comment): self
