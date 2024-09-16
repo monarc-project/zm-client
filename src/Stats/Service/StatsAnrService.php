@@ -54,7 +54,7 @@ class StatsAnrService
         'vulnerability_average_on_date',
     ];
 
-    private User $connectedUser;
+    private ?User $connectedUser;
 
     /** @var string */
     private $apiKey;
@@ -81,7 +81,7 @@ class StatsAnrService
             return false;
         }
 
-        if (!$this->connectedUser->hasRole(UserRole::USER_ROLE_CEO)) {
+        if (!$this->connectedUser?->hasRole(UserRole::USER_ROLE_CEO)) {
             $anrUuids = $this->getAvailableUserAnrsUuids();
             if (empty($anrUuids)) {
                 return false;
@@ -797,7 +797,7 @@ class StatsAnrService
     private function getFilteredAnrUuids(array $validatedParams): array
     {
         $anrUuids = [];
-        if (!$this->connectedUser->hasRole(UserRole::USER_ROLE_CEO)) {
+        if (!$this->connectedUser?->hasRole(UserRole::USER_ROLE_CEO)) {
             $anrUuids = $this->getAvailableUserAnrsUuids($validatedParams['anrs']);
             if (empty($anrUuids)) {
                 throw new AccessForbiddenException();
@@ -928,7 +928,7 @@ class StatsAnrService
             return [];
         }
 
-        $userLanguageNumber = $this->connectedUser->getLanguage();
+        $userLanguageNumber = $this->connectedUser !== null ? $this->connectedUser->getLanguage() : 1;
         $formattedResult = [];
         foreach ($statsData as $data) {
             $anrUuid = $data->getAnr();
@@ -1240,7 +1240,7 @@ class StatsAnrService
 
     private function formatProcessedStatsData(array $data): array
     {
-        $userLanguageNumber = $this->connectedUser->getLanguage();
+        $userLanguageNumber = $this->connectedUser !== null ? $this->connectedUser->getLanguage() : 1;
         $formattedResponse = [];
         foreach ($data as $processedStats) {
             $dataRow = $processedStats;
@@ -1272,7 +1272,7 @@ class StatsAnrService
     private function getAvailableUserAnrsUuids(array $anrIds = []): array
     {
         $anrUuids = [];
-        $userAnrs = $this->connectedUser->getUserAnrs();
+        $userAnrs = $this->connectedUser !== null ? $this->connectedUser->getUserAnrs() : [];
         $snapshotAnrsIds = [];
         if (!$userAnrs->isEmpty()) {
             $snapshots = $this->snapshotTable->findAll();
