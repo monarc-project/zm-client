@@ -49,13 +49,20 @@ class ApiSoaCategoryController extends AbstractRestfulControllerRequestHandler
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-        $this->validatePostParams($this->postSoaCategoryDataInputValidator, $data);
+
+        $isBatchData = $this->isBatchData($data);
+        $this->validatePostParams($this->postSoaCategoryDataInputValidator, $data, $isBatchData);
+
+        if ($isBatchData) {
+            return $this->getSuccessfulJsonResponse([
+                'id' => $this->soaCategoryService
+                    ->createList($anr, $this->postSoaCategoryDataInputValidator->getValidDataSets()),
+            ]);
+        }
 
         return $this->getSuccessfulJsonResponse([
-            'id' => $this->soaCategoryService->create(
-                $anr,
-                $this->postSoaCategoryDataInputValidator->getValidData()
-            )->getId(),
+            'id' => $this->soaCategoryService->create($anr, $this->postSoaCategoryDataInputValidator->getValidData())
+                ->getId(),
         ]);
     }
 

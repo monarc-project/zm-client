@@ -52,6 +52,17 @@ class SoaCategoryService
         return $soaCategory;
     }
 
+    public function createList(Entity\Anr $anr, array $data): array
+    {
+        $createdIds = [];
+        foreach ($data as $datum) {
+            $createdIds[] = $this->create($anr, $datum, false)->getId();
+        }
+        $this->soaCategoryTable->flush();
+
+        return $createdIds;
+    }
+
     public function update(Entity\Anr $anr, int $id, array $data): Entity\SoaCategory
     {
         /** @var Entity\SoaCategory $soaCategory */

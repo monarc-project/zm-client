@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use Monarc\Core\Entity\ScaleCommentSuperClass;
 use Monarc\Core\InputFormatter\FormattedInputParams;
 use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
@@ -51,6 +52,8 @@ class AnrScaleCommentService
         $scale = isset($data['scale']) && $data['scale'] instanceof Entity\Scale
             ? $data['scale']
             : $this->scaleTable->findByIdAndAnr($data['scaleId'], $anr);
+
+        ScaleCommentSuperClass::validateScaleIndexValue($scale, $data['scaleIndex']);
 
         /** @var Entity\ScaleComment $scaleComment */
         $scaleComment = (new Entity\ScaleComment())
