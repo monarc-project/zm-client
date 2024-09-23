@@ -54,11 +54,16 @@ class SoaCategoryService
 
     public function createList(Entity\Anr $anr, array $data): array
     {
-        $createdIds = [];
+        $createdCategories = [];
         foreach ($data as $datum) {
-            $createdIds[] = $this->create($anr, $datum, false)->getId();
+            $createdCategories[] = $this->create($anr, $datum, false);
         }
         $this->soaCategoryTable->flush();
+
+        $createdIds = [];
+        foreach ($createdCategories as $category) {
+            $createdIds[] = $category->getId();
+        }
 
         return $createdIds;
     }
