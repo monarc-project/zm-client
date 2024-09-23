@@ -172,7 +172,9 @@ class Anr extends AnrSuperClass
                 ->setLanguageCode($sourceAnr->getLanguageCode())
                 ->setIsVisibleOnDashboard((int)$sourceAnr->isVisibleOnDashboard())
                 ->setIsStatsCollected((int)$sourceAnr->isStatsCollected())
-                ->setModelId($sourceAnr->getModelId());
+                ->setModelId($sourceAnr->getModelId())
+                ->setCacheModelAreScalesUpdatable($sourceAnr->getCacheModelAreScalesUpdatable())
+                ->setCacheModelShowRolfBrut($sourceAnr->getCacheModelShowRolfBrut());
         } elseif ($sourceAnr instanceof AnrCore) {
             /* Creation of an analysis based on a model. */
             $languageIndex = (int)($data['language'] ?? 1);
