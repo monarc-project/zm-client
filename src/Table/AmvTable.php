@@ -24,21 +24,20 @@ class AmvTable extends AbstractTable implements PositionUpdatableTableInterface
         parent::__construct($entityManager, $entityName);
     }
 
-    /**
-     * @return Amv[]
-     */
-    public function findByAnrAndAsset(Anr $anr, Asset $asset): array
+    public function findByAssetAndPosition(Asset $asset, int $position): ?Amv
     {
-        return $this->getRepository()
-            ->createQueryBuilder('amv')
+        return $this->getRepository()->createQueryBuilder('amv')
             ->innerJoin('amv.asset', 'a')
             ->where('amv.anr = :anr')
-            ->andWhere('a.uuid = :assetUuid')
+            ->andWhere('a.uuid = :asset_uuid')
             ->andWhere('a.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->setParameter('assetUuid', $asset->getUuid())
+            ->andWhere('amv.position = :position')
+            ->setParameter('anr', $asset->getAnr())
+            ->setParameter('asset_uuid', $asset->getUuid())
+            ->setParameter('position', $position)
+            ->setMaxResults(1)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
     }
 
     public function findByAmvItemsUuidsAndAnr(

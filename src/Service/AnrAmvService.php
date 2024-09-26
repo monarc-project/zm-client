@@ -64,7 +64,7 @@ class AnrAmvService implements PositionUpdatableServiceInterface
         /** @var Entity\Amv $amv */
         $amv = $this->amvTable->findByUuidAndAnr($uuid, $anr);
 
-        return $this->prepareAmvDataResult($amv);
+        return $this->prepareAmvDataResult($amv, true);
     }
 
     public function create(Entity\Anr $anr, array $data, bool $saveInDb = true): Entity\Amv
@@ -144,6 +144,8 @@ class AnrAmvService implements PositionUpdatableServiceInterface
         }
 
         $amv->setUpdater($this->connectedUser->getEmail());
+
+        $this->updatePositions($amv, $this->amvTable, $data);
 
         $isThreatChanged = $this->isThreatChanged($data, $amv);
         if ($isThreatChanged) {
@@ -385,7 +387,9 @@ class AnrAmvService implements PositionUpdatableServiceInterface
                 if ($maxPositionByAsset === $amv->getPosition()) {
                     $result['implicitPosition'] = 2;
                 } else {
-                    $previousAmv = $this->amvTable->findByAssetAndPosition($amv->getAsset(), $amv->getPosition() - 1);
+                    /** @var Entity\Asset $asset */
+                    $asset = $amv->getAsset();
+                    $previousAmv = $this->amvTable->findByAssetAndPosition($asset, $amv->getPosition() - 1);
                     if ($previousAmv !== null) {
                         $result['implicitPosition'] = 3;
                         $result['previous'] = array_merge([
@@ -404,6 +408,9 @@ class AnrAmvService implements PositionUpdatableServiceInterface
     {
         $asset = $amv->getAsset();
         $threat = $amv->getThreat();
+        $themeData = $threat->getTheme() !== null
+            ? array_merge(['id' => $threat->getTheme()->getId()], $threat->getTheme()->getLabels())
+            : null;
         $vulnerability = $amv->getVulnerability();
 
         return [
@@ -414,6 +421,7 @@ class AnrAmvService implements PositionUpdatableServiceInterface
             'threat' => array_merge([
                 'uuid' => $threat->getUuid(),
                 'code' => $threat->getCode(),
+                'theme' => $themeData,
             ], $threat->getLabels()),
             'vulnerability' => array_merge([
                 'uuid' => $vulnerability->getUuid(),

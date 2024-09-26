@@ -108,11 +108,14 @@ class AnrRecommendationSetService
         $this->recommendationSetTable->remove($recommendationSet);
     }
 
-    private function getPreparedRecommendationSetData($recommendationSet): array
+    private function getPreparedRecommendationSetData(RecommendationSet $recommendationSet): array
     {
         return [
             'uuid' => $recommendationSet->getUuid(),
             'label' => $recommendationSet->getLabel(),
+            'anr' => [
+                'id' => $recommendationSet->getAnr()->getId(),
+            ],
         ];
     }
 }
