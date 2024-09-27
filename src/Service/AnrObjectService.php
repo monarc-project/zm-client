@@ -118,7 +118,7 @@ class AnrObjectService
         /** @var Entity\ObjectCategory $objectCategory */
         $objectCategory = $this->objectCategoryTable->findByIdAndAnr($data['category'], $anr);
         /** @var ?Entity\RolfTag $rolfTag */
-        $rolfTag = !empty($data['rolfTag']) && !$asset->isPrimary()
+        $rolfTag = !empty($data['rolfTag']) && $asset->isPrimary()
             ? $this->rolfTagTable->findByIdAndAnr($data['rolfTag'], $anr)
             : null;
 

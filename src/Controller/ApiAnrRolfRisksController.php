@@ -73,7 +73,12 @@ class ApiAnrRolfRisksController extends AbstractRestfulControllerRequestHandler
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-        $this->validatePostParams($this->postRolfRiskDataInputValidator->setExcludeFilter(['id' => (int)$id]), $data);
+        $this->validatePostParams(
+            $this->postRolfRiskDataInputValidator
+                ->setIncludeFilter(['anr' => $anr])
+                ->setExcludeFilter(['id' => (int)$id]),
+            $data
+        );
 
         $this->anrRolfRiskService->update($anr, (int)$id, $this->postRolfRiskDataInputValidator->getValidData());
 

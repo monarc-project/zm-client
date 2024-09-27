@@ -1678,6 +1678,24 @@ return [
                     $container->get(Table\VulnerabilityTable::class)
                 );
             },
+            CoreInputValidator\RolfRisk\PostRolfRiskDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new CoreInputValidator\RolfRisk\PostRolfRiskDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\RolfRiskTable::class)
+                );
+            },
+            CoreInputValidator\RolfTag\PostRolfTagDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new CoreInputValidator\RolfTag\PostRolfTagDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\RolfTagTable::class)
+                );
+            },
 
             // Commands
             Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container) {

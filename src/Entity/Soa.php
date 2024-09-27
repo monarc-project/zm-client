@@ -154,51 +154,36 @@ class Soa
         return $this;
     }
 
-    public function getRemarks()
+    public function getRemarks(): string
     {
-        return $this->remarks;
+        return (string)$this->remarks;
     }
 
-    /**
-     * @param string $remarks
-     */
-    public function setRemarks($remarks): self
+    public function setRemarks(string $remarks): self
     {
         $this->remarks = $remarks;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getEvidences()
+    public function getEvidences(): string
     {
-        return $this->evidences;
+        return (string)$this->evidences;
     }
 
-    /**
-     * @param string $evidences
-     */
-    public function setEvidences($evidences): self
+    public function setEvidences(string $evidences): self
     {
         $this->evidences = $evidences;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getActions()
+    public function getActions(): string
     {
-        return $this->actions;
+        return (string)$this->actions;
     }
 
-    /**
-     * @param string $actions
-     */
-    public function setActions($actions): self
+    public function setActions(string $actions): self
     {
         $this->actions = $actions;
 

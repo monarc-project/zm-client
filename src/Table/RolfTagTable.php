@@ -9,25 +9,16 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
-use Monarc\FrontOffice\Entity\Anr;
+use Monarc\Core\Table\Interfaces\UniqueCodeTableInterface;
+use Monarc\Core\Table\Traits\CodeExistenceValidationTableTrait;
 use Monarc\FrontOffice\Entity\RolfTag;
 
-class RolfTagTable extends AbstractTable
+class RolfTagTable extends AbstractTable implements UniqueCodeTableInterface
 {
+    use CodeExistenceValidationTableTrait;
+
     public function __construct(EntityManager $entityManager, string $entityName = RolfTag::class)
     {
         parent::__construct($entityManager, $entityName);
-    }
-
-    public function findByAnrAndCode(Anr $anr, string $code): ?RolfTag
-    {
-        return $this->getRepository()->createQueryBuilder('rt')
-            ->where('rt.anr = :anr')
-            ->setParameter('anr', $anr)
-            ->andWhere('rt.code = :code')
-            ->setParameter('code', $code)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
     }
 }

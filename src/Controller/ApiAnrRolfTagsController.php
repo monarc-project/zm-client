@@ -72,7 +72,12 @@ class ApiAnrRolfTagsController extends AbstractRestfulControllerRequestHandler
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-        $this->validatePostParams($this->postRolfTagDataInputValidator->setExcludeFilter(['id' => (int)$id]), $data);
+        $this->validatePostParams(
+            $this->postRolfTagDataInputValidator
+                ->setIncludeFilter(['anr' => $anr])
+                ->setExcludeFilter(['id' => (int)$id]),
+            $data
+        );
 
         $this->anrRolfTagService->update($anr, (int)$id, $this->postRolfTagDataInputValidator->getValidData());
 
