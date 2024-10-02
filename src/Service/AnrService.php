@@ -257,7 +257,7 @@ class AnrService
 
         /* Recreate AnrInstanceMetadataFields */
         $anrInstanceMetadataFieldOldIdsToNewObjects = $this
-            ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon,);
+            ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon);
 
         /* Recreate Instances, InstanceRisks, InstanceConsequences and InstanceMetadata. */
         $this->duplicateInstancesTreeRisksSequencesRecommendationsMetadataAndScales(

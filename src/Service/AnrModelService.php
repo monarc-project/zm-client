@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\ConfigService;
 use Monarc\Core\Table as CoreTable;
 use Monarc\Core\Model\Table as CoreDeprecatedTable;
 use Monarc\Core\Entity as CoreEntity;
@@ -26,8 +25,7 @@ class AnrModelService
         private CoreTable\RolfRiskTable $coreRolfRiskTable,
         private CoreTable\RolfTagTable $coreRolfTagTable,
         private CoreDeprecatedTable\QuestionTable $coreQuestionTable,
-        private CoreDeprecatedTable\QuestionChoiceTable $coreQuestionChoiceTable,
-        private ConfigService $configService
+        private CoreDeprecatedTable\QuestionChoiceTable $coreQuestionChoiceTable
     ) {
     }
 

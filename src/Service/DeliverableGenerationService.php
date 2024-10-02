@@ -486,7 +486,7 @@ class DeliverableGenerationService
             ]
         ]);
 
-        $values = array_merge_recursive(
+        return array_merge_recursive(
             $values,
             [
                 'xml' => [
@@ -501,8 +501,6 @@ class DeliverableGenerationService
                 ],
             ]
         );
-
-        return $values;
     }
 
     /**
@@ -511,14 +509,12 @@ class DeliverableGenerationService
      */
     private function buildImplementationPlanValues()
     {
-        $values = [
+        return [
             'table' => [
                 'TABLE_IMPLEMENTATION_PLAN' => $this->generateTableImplementationPlan(),
                 'TABLE_IMPLEMENTATION_HISTORY' => $this->generateTableImplementationHistory(),
             ],
         ];
-
-        return $values;
     }
 
     /**
@@ -552,7 +548,7 @@ class DeliverableGenerationService
      */
     private function buildRecordOfProcessingActivitiesValues($record)
     {
-        $values = [
+        return [
             'xml' => [
                 'TABLE_RECORD_INFORMATION' => $this->generateTableRecordGDPR($record),
                 'TABLE_RECORD_ACTORS' => $this->generateTableRecordActors($record),
@@ -562,8 +558,6 @@ class DeliverableGenerationService
                 'TABLE_RECORD_PROCESSORS' => $this->generateTableRecordProcessors($record),
             ],
         ];
-
-        return $values;
     }
 
     /**
@@ -629,7 +623,7 @@ class DeliverableGenerationService
                         break;
                     }
                 }
-                if (\in_array($type, ScaleImpactTypeSuperClass::getScaleImpactTypesCid(), true)) {
+                if (in_array($type, ScaleImpactTypeSuperClass::getScaleImpactTypesCid(), true)) {
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.80), $this->restartAndTopCell)
                         ->addText(_WT($commentText), $this->normalFont, $this->leftParagraph);
                 } else {
@@ -674,7 +668,7 @@ class DeliverableGenerationService
         for ($t = $threatsScale->getMin(); $t <= $threatsScale->getMax(); ++$t) {
             for ($v = $vulnsScale->getMin(); $v <= $vulnsScale->getMax(); ++$v) {
                 $prod = $t * $v;
-                if (!\in_array($prod, $header, true)) {
+                if (!in_array($prod, $header, true)) {
                     $header[] = $prod;
                 }
             }
@@ -1292,7 +1286,7 @@ class DeliverableGenerationService
                 $tableWord->addTitleStyle($i + 3, $this->titleFont);
             }
 
-            if (\in_array('true', $global, true)) {
+            if (in_array('true', $global, true)) {
                 $section->addTitle($this->anrTranslate('Global assets'), 3);
             }
 
@@ -1340,7 +1334,7 @@ class DeliverableGenerationService
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                 } else {
-                    $treeNum = \count($data['tree']);
+                    $treeNum = count($data['tree']);
                     for ($i = 0; $i < $treeNum; $i++) {
                         if ($i <= $maxLevelTitle - 1 && $title[$i] !== $data['tree'][$i]['id']) {
                             $section->addTitle(_WT($data['tree'][$i]['name' . $this->currentLangAnrIndex]), $i + 3);
@@ -1492,7 +1486,7 @@ class DeliverableGenerationService
             $instance = $operationalInstanceRisk->getInstance();
             if (!isset($lst[$instance->getId()])) {
                 $ascendants = $instance->getHierarchyArray();
-                $levelTree = \count($ascendants);
+                $levelTree = count($ascendants);
                 if ($levelTree > $maxLevelDeep) {
                     $maxLevelDeep = $levelTree;
                 }
@@ -1641,7 +1635,7 @@ class DeliverableGenerationService
                             $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndBlackCell);
                             if ($this->anr->showRolfBrut()) {
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
-                                    ->addText($this->anrTranslate('Prob.'), $this->whiteFont,);
+                                    ->addText($this->anrTranslate('Prob.'), $this->whiteFont);
                                 $table->addCell(
                                     PhpWord\Shared\Converter::cmToTwip($sizeCellImpact),
                                     $this->setColSpanCell(count($opRisksImpactsScales), '444444')
@@ -1685,7 +1679,7 @@ class DeliverableGenerationService
                                         PhpWord\Shared\Converter::cmToTwip(0.70),
                                         array_merge($this->rotate90TextCell, ['bgcolor' => '444444'])
                                     )
-                                        ->addText($label, $this->whiteFont,);
+                                        ->addText($label, $this->whiteFont);
                                 }
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                             }
@@ -3219,7 +3213,7 @@ class DeliverableGenerationService
                     ->addText(_WT($jc->get('label')), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                     ->addText(_WT($jc->get('contact')), $this->normalFont, $this->leftParagraph);
-                if ($i !== \count($jointControllers) - 1) {
+                if ($i !== count($jointControllers) - 1) {
                     $table->addRow(400);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell);
                 }
@@ -3960,8 +3954,8 @@ class DeliverableGenerationService
             if (preg_match_all("'<ol>(.*?)</ol>'", $input, $groups)) {
                 foreach ($groups as $group) {
                     $index = 0;
-                    while (strpos($group[0], '<li>') !== false) {
-                        $index += 1;
+                    while (str_contains($group[0], '<li>')) {
+                        ++$index;
                         $group[0] = preg_replace(
                             ["'<li><!--block-->'", "'</li>'"],
                             ["<!--block-->&nbsp;&nbsp;[$index]&nbsp;", '<!--block-->'],
@@ -4025,14 +4019,12 @@ class DeliverableGenerationService
     {
         $singleLevelArray = [];
         foreach ($multiLevelArray as $a) {
+            $singleLevelArray[] = $a;
             if (isset($a['children'])) {
-                $singleLevelArray[] = $a;
                 $children_array = $this->singleLevelArray($a['children']);
                 foreach ($children_array as $children) {
                     $singleLevelArray[] = $children;
                 }
-            } else {
-                $singleLevelArray[] = $a;
             }
         }
 

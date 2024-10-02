@@ -392,10 +392,10 @@ class AnrInstanceService
         $anr = $instance->getAnr();
         $otherInstances = $this->instanceTable->findByAnrAndObject($anr, $instance->getObject());
         $names = [
-            'name1' => $anr->getLabel(1),
-            'name2' => $anr->getLabel(2),
-            'name3' => $anr->getLabel(3),
-            'name4' => $anr->getLabel(4),
+            'name1' => $anr->getLabel(),
+            'name2' => $anr->getLabel(),
+            'name3' => $anr->getLabel(),
+            'name4' => $anr->getLabel(),
         ];
         $otherInstancesData = [];
         foreach ($otherInstances as $otherInstance) {

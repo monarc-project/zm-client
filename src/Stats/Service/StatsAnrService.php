@@ -19,6 +19,7 @@ use Monarc\FrontOffice\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Entity\SoaCategory;
 use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Entity\UserRole;
+use Monarc\FrontOffice\Import\Traits\EvaluationConverterTrait;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Exception\StatsAlreadyCollectedException;
@@ -31,6 +32,8 @@ use function in_array;
 
 class StatsAnrService
 {
+    use EvaluationConverterTrait;
+
     public const LOW_RISKS = 'Low risks';
     public const MEDIUM_RISKS = 'Medium risks';
     public const HIGH_RISKS = 'High risks';
@@ -1047,9 +1050,10 @@ class StatsAnrService
             $minProbability = empty($data['scales']['probability']) ? 0 : min($data['scales']['probability']);
 
             foreach ($scalesImpact as $impactValue) {
-                $y = $this->approximate($impactValue, $minImpact, $maxImpact, 0, 4);
+                $y = $this->convertValueWithinNewScalesRange($impactValue, $minImpact, $maxImpact, 0, 4);
                 foreach ($data['scales']['likelihood'] as $likelihoodValue) {
-                    $x = $this->approximate($likelihoodValue, $minLikelihood, $maxLikelihood, 0, 20);
+                    $x = $this
+                        ->convertValueWithinNewScalesRange($likelihoodValue, $minLikelihood, $maxLikelihood, 0, 20);
                     $seriesKey = $y . $x;
                     if (!isset($formattedResult[$anrUuid]['informational']['currentInfo']['series'][$seriesKey])) {
                         $formattedResult[$anrUuid]['informational']['currentInfo']['series'][$seriesKey] = [
@@ -1077,7 +1081,8 @@ class StatsAnrService
                 }
 
                 foreach ($data['scales']['probability'] as $probabilityValue) {
-                    $x = $this->approximate($probabilityValue, $minProbability, $maxProbability, 0, 4);
+                    $x = $this
+                        ->convertValueWithinNewScalesRange($probabilityValue, $minProbability, $maxProbability, 0, 4);
                     $seriesKey = $y . $x;
                     if (!isset($formattedResult[$anrUuid]['operational']['currentOp']['series'][$seriesKey])) {
                         $formattedResult[$anrUuid]['operational']['currentOp']['series'][$seriesKey] = [
@@ -1137,7 +1142,7 @@ class StatsAnrService
                 });
             }
             unset($value);
-            foreach ($formattedResult['operational'] as $key => &$value) {
+            foreach ($formattedResult['operational'] as &$value) {
                 usort($value, static function ($a, $b) {
                     return $a['category'] <=> $b['category'];
                 });
@@ -1145,19 +1150,6 @@ class StatsAnrService
         }
 
         return $formattedResult;
-    }
-
-    private function approximate($x, $minorig, $maxorig, $mindest, $maxdest, $defaultvalue = -1)
-    {
-        if ($x === $maxorig) {
-            return $maxdest;
-        }
-
-        if ($x !== -1 && ($maxorig - $minorig) !== -1) {
-            return min(max(round(($x / ($maxorig - $minorig + 1)) * ($maxdest - $mindest + 1)), $mindest), $maxdest);
-        }
-
-        return $defaultvalue;
     }
 
     /**

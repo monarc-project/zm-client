@@ -224,14 +224,13 @@ class OperationalRiskScaleService
                 foreach ($operationalRiskScaleComments as $operationalRiskScaleComment) {
                     if ($operationalRiskScaleComment->getScaleIndex() < $levelsNumber) {
                         $operationalRiskScaleComment->setIsHidden(false);
-                        $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment, false);
                     } else {
                         $operationalRiskScaleComment->setIsHidden(true);
                         if ($operationalRiskScaleComment->getScaleValue() <= $maxScaleValue) {
                             $operationalRiskScaleComment->setScaleValue(++$maxScaleValue);
                         }
-                        $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment, false);
                     }
+                    $this->operationalRiskScaleCommentTable->save($operationalRiskScaleComment, false);
                     if ($operationalRiskScaleComment->getScaleValue() > $maxScaleValue) {
                         $maxScaleValue = $operationalRiskScaleComment->getScaleValue();
                     }

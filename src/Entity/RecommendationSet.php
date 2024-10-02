@@ -133,18 +133,4 @@ class RecommendationSet
     {
         return $this->label;
     }
-
-    public static function getCustomImportLabelByLanguageCode(string $languageCode): string
-    {
-        switch ($languageCode) {
-            case 'fr':
-                return 'Recommandations importées';
-            case 'de':
-                return 'Importierte empfehlungen';
-            case 'nl':
-                return 'Geïmporteerde aanbevelingen';
-            default:
-                return 'Imported recommendations';
-        }
-    }
 }
